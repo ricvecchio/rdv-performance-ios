@@ -1,8 +1,54 @@
-//
-//  Theme.swift
-//  rdvperfomance
-//
-//  Created by Ricardo Del Vecchio on 26/12/25.
-//
+import SwiftUI
 
-import Foundation
+// MARK: - Theme
+// Centraliza constantes visuais para manter consistência no app.
+// Evita "números mágicos" espalhados pelas telas e facilita manutenção.
+enum Theme {
+
+    // MARK: - Cores
+    enum Colors {
+        static let selected = Color.green
+        static let unselected = Color.white.opacity(0.7)
+
+        static let headerBackground = Color.black.opacity(0.70)
+        static let footerBackground = Color.black.opacity(0.75)
+
+        static let divider = Color.white.opacity(0.2)
+        static let cardBackground = Color.black.opacity(0.65)
+    }
+
+    // MARK: - Layout
+    enum Layout {
+        static let headerHeight: CGFloat = 52
+        static let footerHeight: CGFloat = 70
+
+        /// Largura padrão usada nos itens do rodapé (Home/Sobre)
+        static let footerItemWidthHomeSobre: CGFloat = 88
+
+        /// Largura padrão usada no rodapé de Treinos (Home/Treinos/Sobre)
+        static let footerItemWidthTreinos: CGFloat = 110
+
+        /// Espaço do meio do rodapé Home/Sobre, para manter alinhamento visual
+        static let footerMiddleSpacerWidth: CGFloat = 88
+
+        static let footerVerticalPadding: CGFloat = 10
+        static let footerItemIconSize: CGFloat = 20
+        static let footerItemTitleSize: CGFloat = 11
+    }
+
+    // MARK: - Fontes
+    enum Fonts {
+        static func footerTitle() -> Font {
+            .system(size: Layout.footerItemTitleSize, weight: .medium)
+        }
+
+        static func footerIcon() -> Font {
+            .system(size: Layout.footerItemIconSize)
+        }
+
+        static func headerTitle() -> Font {
+            .system(size: 17, weight: .semibold)
+        }
+    }
+}
+

@@ -11,10 +11,6 @@ struct TreinosView: View {
     // Tipo de treino atual (Crossfit, Academia ou Em Casa)
     let tipo: TreinoTipo
 
-    // Alturas fixas para header e footer
-    private let headerHeight: CGFloat = 52
-    private let footerHeight: CGFloat = 70
-
     var body: some View {
         ZStack {
 
@@ -28,9 +24,9 @@ struct TreinosView: View {
 
                 // Header com título do tipo de treino e botão voltar
                 headerBar(title: tipo.titulo)
-                    .frame(height: headerHeight)
+                    .frame(height: Theme.Layout.headerHeight)
                     .frame(maxWidth: .infinity)
-                    .background(Color.black.opacity(0.70))
+                    .background(Theme.Colors.headerBackground)
 
                 // Área central com imagem + título sobreposto
                 GeometryReader { proxy in
@@ -63,10 +59,19 @@ struct TreinosView: View {
                 }
 
                 // Rodapé com Home | Treinos (custom) | Sobre
-                footerBarTreinos()
-                    .frame(height: footerHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.black.opacity(0.75))
+                FooterBar(
+                    path: $path,
+                    kind: .treinos(
+                        treinoTitle: tipo.titulo,
+                        treinoIcon: AnyView(tipo.iconeRodapeTreinos),
+                        isHomeSelected: false,
+                        isTreinoSelected: true,
+                        isSobreSelected: false
+                    )
+                )
+                .frame(height: Theme.Layout.footerHeight)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -96,7 +101,7 @@ struct TreinosView: View {
 
             // Título do header (depende do tipo)
             Text(title)
-                .font(.system(size: 17, weight: .semibold))
+                .font(Theme.Fonts.headerTitle())
                 .foregroundColor(.white)
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
@@ -113,71 +118,6 @@ struct TreinosView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
-    }
-
-    // MARK: - FOOTER BAR (Treinos)
-    // Rodapé padrão das telas de treino:
-    // Home | Treinos (customizado de acordo com o tipo) | Sobre
-    private func footerBarTreinos() -> some View {
-        VStack(spacing: 0) {
-            Divider().background(Color.white.opacity(0.2))
-
-            HStack(spacing: 28) {
-
-                // Vai para Home limpando toda a pilha
-                Button {
-                    path.removeAll()
-                    path.append(.home)
-                } label: {
-                    footerItem(icon: "house", title: "Home", isSelected: false)
-                }
-                .buttonStyle(.plain)
-
-                // Item central com ícone custom e título do tipo
-                footerItemCustom(iconView: {
-                    tipo.iconeRodapeTreinos
-                }, title: tipo.titulo, isSelected: true)
-
-                // Vai para Sobre
-                Button {
-                    path.append(.sobre)
-                } label: {
-                    footerItem(icon: "bubble.left", title: "Sobre", isSelected: false)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(.vertical, 10)
-        }
-    }
-
-    // Item padrão do rodapé com SF Symbol
-    private func footerItem(icon: String, title: String, isSelected: Bool) -> some View {
-        VStack(spacing: 6) {
-            Image(systemName: icon).font(.system(size: 20))
-            Text(title)
-                .font(.system(size: 11, weight: .medium))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-        }
-        .foregroundColor(isSelected ? .green : .white.opacity(0.7))
-        .frame(width: 110)
-    }
-
-    // Item do rodapé que aceita qualquer View como ícone (customização do TreinoTipo)
-    private func footerItemCustom<Icon: View>(
-        @ViewBuilder iconView: () -> Icon,
-        title: String,
-        isSelected: Bool
-    ) -> some View {
-        VStack(spacing: 6) {
-            iconView()
-            Text(title)
-                .font(.system(size: 11, weight: .medium))
-                .lineLimit(1)
-                .minimumScaleFactor(0.75)
-        }
-        .foregroundColor(isSelected ? .green : .white.opacity(0.7))
-        .frame(width: 110)
     }
 }
 
