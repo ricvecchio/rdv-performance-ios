@@ -1,0 +1,23 @@
+{
+  "images" : [
+    {
+      "filename" : "rdv_programa_crossfit_horizontal.jpeg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "rdv_programa_crossfit_horizontal 1.jpeg",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "rdv_programa_crossfit_horizontal 2.jpeg",
+      "idiom" : "universal",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
