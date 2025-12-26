@@ -1,18 +1,11 @@
-//
-//  registerPage.swift
-//  rdvperfomance
-//
-//  Created by Ricardo Del Vecchio on 23/12/25.
-//
-
 import SwiftUI
 
-struct registerPage: View {
+// MARK: - REGISTER PAGE
+// Tela placeholder para cadastro.
+// Ainda não está integrada ao fluxo de navegação.
+struct RegisterPage: View {
     var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
+        Text("Página de Cadastro")
     }
 }
 
-#Preview {
-    registerPage()
-}

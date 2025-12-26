@@ -1,18 +1,13 @@
-//
-//  TreinosCrossfitPage.swift
-//  rdvperfomance
-//
-//  Created by Ricardo Del Vecchio on 25/12/25.
-//
-
 import SwiftUI
 
-struct TreinosCrossfitPage: View {
-    var body: some View {
-        Text(/*@START_MENU_TOKEN@*/"Hello, World!"/*@END_MENU_TOKEN@*/)
-    }
-}
+// MARK: - WRAPPERS DE TREINOS (opcionais)
+// Estas telas são “atalhos” que reaproveitam a TreinosPage com tipo fixo.
+// Útil caso você queira registrar rotas diretas no futuro ou separar arquivos por tela.
 
-#Preview {
-    TreinosCrossfitPage()
+struct TreinosCrossfitPage: View {
+    @Binding var path: [AppRoute]
+
+    var body: some View {
+        TreinosPage(path: $path, tipo: .crossfit)
+    }
 }

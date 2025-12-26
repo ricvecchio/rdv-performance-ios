@@ -1,19 +1,27 @@
 import SwiftUI
 
-// MARK: - HOME PAGE (antiga ProgramaPage)
+// MARK: - HOME PAGE (tela com 3 opções)
+// Tela inicial após o login.
+// Exibe três opções de programa (Crossfit, Academia, Treinos em casa).
+// Ao tocar em uma opção, salva o último treino selecionado e navega para a tela de treinos.
 struct HomePage: View {
 
+    // Binding para controlar a navegação do app via NavigationStack
     @Binding var path: [AppRoute]
 
+    // Alturas fixas do header e do footer para manter layout consistente
     private let headerHeight: CGFloat = 52
     private let footerHeight: CGFloat = 70
 
-    // ✅ guarda o último treino escolhido (para o botão "Treinos" do meio)
-    @AppStorage("ultimoTreinoSelecionado") private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+    // Salva em cache o último treino escolhido (persistido no aparelho)
+    // Útil caso você queira abrir direto no último treino no futuro.
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
     var body: some View {
         ZStack {
 
+            // Fundo da tela
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -21,16 +29,19 @@ struct HomePage: View {
 
             VStack(spacing: 0) {
 
+                // Header fixo com título e botão voltar
                 headerView()
                     .frame(height: headerHeight)
                     .frame(maxWidth: .infinity)
                     .background(Color.black.opacity(0.70))
 
+                // Divide a área central em 3 “faixas” de altura igual
                 GeometryReader { proxy in
                     let tileHeight = proxy.size.height / 3
 
                     VStack(spacing: 0) {
 
+                        // Opção Crossfit
                         programaTile(
                             title: "Crossfit",
                             imageName: "rdv_programa_crossfit_horizontal",
@@ -39,6 +50,7 @@ struct HomePage: View {
                             tipo: .crossfit
                         )
 
+                        // Opção Academia
                         programaTile(
                             title: "Academia",
                             imageName: "rdv_programa_academia_horizontal",
@@ -47,29 +59,34 @@ struct HomePage: View {
                             tipo: .academia
                         )
 
+                        // Opção Treinos em casa
                         programaTile(
-                            title: "Séries em casa",
-                            imageName: "rdv_programa_series_em_casa_horizontal",
+                            title: "Treinos em casa",
+                            imageName: "rdv_programa_treinos_em_casa_horizontal",
                             height: tileHeight,
-                            imageTitle: "Séries em casa",
+                            imageTitle: "Treinos em casa",
                             tipo: .emCasa
                         )
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
-                footerView()
+                // Rodapé somente com Home e Sobre (sem Treinos)
+                footerViewSomenteHomeSobre()
                     .frame(height: footerHeight)
                     .frame(maxWidth: .infinity)
                     .background(Color.black.opacity(0.75))
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // Remove o back button padrão do NavigationStack
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    // MARK: - TILE
+    // MARK: - TILE (botão de programa)
+    // Cria um “bloco clicável” com imagem + textos.
+    // Ao tocar, salva o treino selecionado e navega para a tela TreinosPage.
     private func programaTile(
         title: String,
         imageName: String,
@@ -79,7 +96,7 @@ struct HomePage: View {
     ) -> some View {
 
         Button {
-            // ✅ salva o último treino e navega para Treinos
+            // Salva o último treino escolhido e navega para a tela de treinos
             ultimoTreinoSelecionado = tipo.rawValue
             path.append(.treinos(tipo))
         } label: {
@@ -89,13 +106,17 @@ struct HomePage: View {
                     let w = geo.size.width
 
                     ZStack {
+                        // Base escura para garantir contraste
                         Color.black
 
+                        // Imagem do programa
                         Image(imageName)
                             .resizable()
                             .scaledToFit()
                             .frame(maxWidth: w - 16)
                             .frame(maxHeight: .infinity)
+
+                            // Máscara lateral para criar “fade” nas bordas
                             .overlay(
                                 Rectangle()
                                     .fill(Color.black.opacity(0.7))
@@ -122,6 +143,8 @@ struct HomePage: View {
                     }
                     .frame(width: w, height: height)
                     .clipped()
+
+                    // Texto grande sobre a imagem (overlay principal)
                     .overlay(alignment: .bottomLeading) {
                         Text(imageTitle)
                             .font(.system(size: 25, weight: .bold))
@@ -134,6 +157,8 @@ struct HomePage: View {
                             .padding(.bottom, 40)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
+
+                    // Gradiente inferior para melhorar legibilidade do texto de baixo
                     .overlay {
                         LinearGradient(
                             colors: [
@@ -145,6 +170,8 @@ struct HomePage: View {
                             endPoint: .top
                         )
                     }
+
+                    // Texto pequeno inferior (nome do programa)
                     .overlay(alignment: .bottomLeading) {
                         Text(title)
                             .font(.system(size: 16, weight: .medium))
@@ -159,6 +186,7 @@ struct HomePage: View {
                 }
                 .frame(height: height)
 
+                // Pequenos gradientes superior/inferior para “acabamento”
                 VStack {
                     LinearGradient(
                         colors: [.black.opacity(0.15), .clear],
@@ -179,12 +207,14 @@ struct HomePage: View {
                 .frame(height: height)
                 .allowsHitTesting(false)
             }
+            // Borda suave para dar destaque ao tile
             .overlay(
                 Rectangle()
                     .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
             )
         }
         .buttonStyle(.plain)
+        // Sombra/contraste de fundo do botão
         .background(
             Color.black.opacity(0.3)
                 .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
@@ -193,6 +223,7 @@ struct HomePage: View {
     }
 
     // MARK: - HEADER
+    // Header simples com título no centro e botão de voltar à esquerda.
     private func headerView() -> some View {
         ZStack {
             Text("Home")
@@ -201,6 +232,7 @@ struct HomePage: View {
 
             HStack {
                 Button {
+                    // Volta uma rota na pilha, caso exista
                     if !path.isEmpty { path.removeLast() }
                 } label: {
                     Image(systemName: "chevron.left")
@@ -215,15 +247,15 @@ struct HomePage: View {
         }
     }
 
-    // MARK: - FOOTER (Home | Treinos | Sobre)
-    private func footerView() -> some View {
+    // MARK: - FOOTER (Home | Sobre)  ✅ sem Treinos
+    // Rodapé utilizado quando ainda não estamos dentro de uma tela de treinos.
+    private func footerViewSomenteHomeSobre() -> some View {
         VStack(spacing: 0) {
             Divider()
                 .background(Color.white.opacity(0.2))
 
             HStack(spacing: 28) {
 
-                // ✅ Home selecionado
                 Button {
                     goHome()
                 } label: {
@@ -231,17 +263,12 @@ struct HomePage: View {
                 }
                 .buttonStyle(.plain)
 
-                // ✅ Treinos (meio)
-                Button {
-                    let tipo = TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
-                    path.append(.treinos(tipo))
-                } label: {
-                    footerItem(icon: "dumbbell", title: "Treinos", isSelected: false)
-                }
-                .buttonStyle(.plain)
+                // Espaço central para manter proporção/centralização
+                Color.clear
+                    .frame(width: 88, height: 1)
 
-                // ✅ Sobre
                 Button {
+                    // Abre tela Sobre
                     path.append(.sobre)
                 } label: {
                     footerItem(icon: "bubble.left", title: "Sobre", isSelected: false)
@@ -252,12 +279,13 @@ struct HomePage: View {
         }
     }
 
+    // Centraliza a navegação para voltar à Home (limpa pilha)
     private func goHome() {
-        // ✅ garante que volta pra Home (e não para Login)
         path.removeAll()
         path.append(.home)
     }
 
+    // Item padrão do rodapé com ícone + texto
     private func footerItem(icon: String, title: String, isSelected: Bool) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon).font(.system(size: 20))
