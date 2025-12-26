@@ -116,8 +116,46 @@ Utilizado na tela de login.
 
 ## 🗂 Estrutura Geral do App
 
-Login → Home → Treinos  
-    ↘ Sobre  
+rdvperformance
+└─ rdvperformance
+   ├─ App
+   │  ├─ RDVPerformanceApp.swift
+   │  ├─ AppRouter.swift
+   │  └─ AppRoute.swift
+   │
+   ├─ Features
+   │  ├─ Auth
+   │  │  ├─ Views
+   │  │  │  ├─ LoginView.swift
+   │  │  │  └─ RegisterView.swift
+   │  │  └─ ViewModels
+   │  │     └─ LoginViewModel.swift   
+   │  │
+   │  ├─ Home
+   │  │  └─ Views
+   │  │     ├─ HomeView.swift
+   │  │     └─ AboutView.swift
+   │  │
+   │  └─ Treinos
+   │     ├─ Models
+   │     │  └─ TreinoTipo.swift
+   │     └─ Views
+   │        ├─ TreinosView.swift
+   │        ├─ TreinosAcademiaView.swift   
+   │        ├─ TreinosCrossfitView.swift   
+   │        └─ TreinosEmCasaView.swift     
+   │
+   ├─ Shared
+   │  ├─ Components
+   │  │  ├─ UnderlineTextField.swift
+   │  │  └─ FooterBar.swift              
+   │  ├─ UI
+   │  │  └─ Theme.swift                  
+   │  └─ Extensions
+   │     └─ (se surgir necessidade)
+   │
+   └─ Resources
+      └─ Assets.xcassets
 
 ---
 
