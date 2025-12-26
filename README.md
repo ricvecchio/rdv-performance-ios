@@ -116,6 +116,7 @@ Utilizado na tela de login.
 
 ## 🗂 Estrutura Geral do App
 
+```
 rdvperformance
 └─ rdvperformance
    ├─ App
@@ -156,6 +157,7 @@ rdvperformance
    │
    └─ Resources
       └─ Assets.xcassets
+```
 
 ---
 
