@@ -6,3 +6,6 @@ enum AppRoute: Hashable {
     case sobre
     case treinos(TreinoTipo)
 }
+
+
+// TESTANDO COMMIT XCODE
