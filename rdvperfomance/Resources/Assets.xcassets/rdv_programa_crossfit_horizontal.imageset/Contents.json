@@ -1,18 +1,33 @@
 {
   "images" : [
     {
-      "filename" : "rdv_programa_crossfit_horizontal.jpeg",
+      "filename" : "rdv_programa_crossfit_tile_UHD.jpg",
       "idiom" : "universal",
       "scale" : "1x"
     },
     {
-      "filename" : "rdv_programa_crossfit_horizontal 1.jpeg",
+      "filename" : "rdv_programa_crossfit_tile_UHD 1.jpg",
       "idiom" : "universal",
       "scale" : "2x"
     },
     {
-      "filename" : "rdv_programa_crossfit_horizontal 2.jpeg",
+      "filename" : "rdv_programa_crossfit_tile_UHD 2.jpg",
       "idiom" : "universal",
+      "scale" : "3x"
+    },
+    {
+      "filename" : "rdv_programa_crossfit_tile_UHD 3.jpg",
+      "idiom" : "iphone",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "rdv_programa_crossfit_tile_UHD 4.jpg",
+      "idiom" : "iphone",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "rdv_programa_crossfit_tile_UHD 5.jpg",
+      "idiom" : "iphone",
       "scale" : "3x"
     }
   ],
