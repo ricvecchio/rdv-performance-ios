@@ -23,10 +23,9 @@ struct TreinosView: View {
             VStack(spacing: 0) {
 
                 // Header com título do tipo de treino e botão voltar
-                headerBar(title: tipo.titulo)
-                    .frame(height: Theme.Layout.headerHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Theme.Colors.headerBackground)
+                HeaderBar {
+                    headerBar(title: tipo.titulo)
+                }
 
                 // Área central com imagem + título sobreposto
                 GeometryReader { proxy in

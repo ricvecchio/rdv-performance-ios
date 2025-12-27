@@ -2,7 +2,6 @@ import SwiftUI
 
 // MARK: - APP CONTAINER / NAVIGATION
 // View principal que contém o NavigationStack e controla a pilha de rotas (path).
-// É aqui que centralizamos a navegação do app usando AppRoute.
 struct AppRouter: View {
 
     // Estado responsável por armazenar a pilha de rotas do NavigationStack
@@ -29,6 +28,13 @@ struct AppRouter: View {
 
                     case .treinos(let tipo):
                         TreinosView(path: $path, tipo: tipo)
+
+                    // ✅ Novas telas
+                    case .perfil:
+                        ProfileView(path: $path)
+
+                    case .configuracoes:
+                        SettingsView(path: $path)
                     }
                 }
         }

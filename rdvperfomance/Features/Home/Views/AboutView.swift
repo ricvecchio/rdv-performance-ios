@@ -28,10 +28,9 @@ struct AboutView: View {
             VStack(spacing: 0) {
 
                 // ✅ HEADER FIXO
-                headerBar()
-                    .frame(height: Theme.Layout.headerHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Theme.Colors.headerBackground)
+                HeaderBar {
+                    headerBar()
+                }
 
                 // 🔹 CONTEÚDO
                 ScrollView(showsIndicators: false) {
@@ -62,7 +61,11 @@ struct AboutView: View {
                 // ✅ FOOTER FIXO (IGUAL AO DA HOME)
                 FooterBar(
                     path: $path,
-                    kind: .homeSobre(isHomeSelected: false, isSobreSelected: true)
+                    kind: .homeSobrePerfil(
+                        isHomeSelected: false,
+                        isSobreSelected: true,
+                        isPerfilSelected: false
+                    )
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .frame(maxWidth: .infinity)

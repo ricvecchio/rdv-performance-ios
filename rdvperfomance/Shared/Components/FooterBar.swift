@@ -1,148 +1,151 @@
 import SwiftUI
 
 // MARK: - FooterBar
-// Componente reutilizável para o rodapé do app.
-// Cobre dois cenários do teu projeto:
-//
-// 1) Rodapé simples: Home | (espaço) | Sobre
-//    - usado em HomeView e AboutView (tela Sobre)
-//
-// 2) Rodapé de Treinos: Home | Treinos (custom icon) | Sobre
-//    - usado em TreinosView
-//
-// O componente recebe o `path` para navegar via AppRoute, igual ao teu padrão atual.
+// Rodapé reutilizável. Importante:
+// ✅ NÃO fixa altura aqui dentro (quem define a altura é a tela).
+// ✅ Linha separadora fica colada no topo do rodapé, sempre.
 struct FooterBar: View {
 
-    // MARK: - Tipos de Rodapé
     enum Kind {
-        /// Home | (espaço) | Sobre
-        case homeSobre(
+        case homeSobre(isHomeSelected: Bool, isSobreSelected: Bool)
+
+        case homeSobrePerfil(
             isHomeSelected: Bool,
-            isSobreSelected: Bool
+            isSobreSelected: Bool,
+            isPerfilSelected: Bool
         )
 
-        /// Home | Treinos (custom icon) | Sobre
         case treinos(
             treinoTitle: String,
-            treinoIcon: AnyView,     // permite receber ícone custom como view
+            treinoIcon: AnyView,
             isHomeSelected: Bool,
             isTreinoSelected: Bool,
             isSobreSelected: Bool
         )
     }
 
-    // MARK: - Inputs
     @Binding var path: [AppRoute]
     let kind: Kind
 
-    // MARK: - Body
     var body: some View {
         VStack(spacing: 0) {
-            Divider()
-                .background(Theme.Colors.divider)
 
-            switch kind {
-            case .homeSobre(let isHomeSelected, let isSobreSelected):
-                homeSobreRow(isHomeSelected: isHomeSelected, isSobreSelected: isSobreSelected)
+            // ✅ Separador fixo colado no topo do rodapé
+            Rectangle()
+                .fill(Theme.Colors.divider)
+                .frame(height: 1)
+                .frame(maxWidth: .infinity)
 
-            case .treinos(let treinoTitle, let treinoIcon, let isHomeSelected, let isTreinoSelected, let isSobreSelected):
-                treinosRow(
-                    treinoTitle: treinoTitle,
-                    treinoIcon: treinoIcon,
-                    isHomeSelected: isHomeSelected,
-                    isTreinoSelected: isTreinoSelected,
-                    isSobreSelected: isSobreSelected
-                )
-            }
+            contentRow()
+                .padding(.top, 8)
+                .padding(.bottom, 10)
         }
-        .padding(.vertical, Theme.Layout.footerVerticalPadding)
+        // ✅ Preenche o espaço do container e ancora no topo
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .background(Theme.Colors.footerBackground)
     }
 
-    // MARK: - Rows
+    @ViewBuilder
+    private func contentRow() -> some View {
+        switch kind {
 
-    private func homeSobreRow(isHomeSelected: Bool, isSobreSelected: Bool) -> some View {
-        HStack(spacing: 28) {
+        case .homeSobre(let isHomeSelected, let isSobreSelected):
+            HStack(spacing: 28) {
+                Button { goHome() } label: {
+                    FooterItem(
+                        icon: .system("house"),
+                        title: "Home",
+                        isSelected: isHomeSelected,
+                        width: Theme.Layout.footerItemWidthHomeSobre
+                    )
+                }
+                .buttonStyle(.plain)
 
-            // Home
-            Button { goHome() } label: {
-                FooterItem(
-                    icon: .system("house"),
-                    title: "Home",
-                    isSelected: isHomeSelected,
-                    width: Theme.Layout.footerItemWidthHomeSobre
-                )
+                Color.clear
+                    .frame(width: Theme.Layout.footerMiddleSpacerWidth, height: 1)
+
+                Button { goSobre(avoidDuplicate: true) } label: {
+                    FooterItem(
+                        icon: .system("bubble.left"),
+                        title: "Sobre",
+                        isSelected: isSobreSelected,
+                        width: Theme.Layout.footerItemWidthHomeSobre
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
-            // Spacer central (para manter o visual igual ao teu código atual)
-            Color.clear
-                .frame(width: Theme.Layout.footerMiddleSpacerWidth, height: 1)
+        case .homeSobrePerfil(let isHomeSelected, let isSobreSelected, let isPerfilSelected):
+            HStack(spacing: 26) {
+                Button { goHome() } label: {
+                    FooterItem(
+                        icon: .system("house"),
+                        title: "Home",
+                        isSelected: isHomeSelected,
+                        width: Theme.Layout.footerItemWidthHomeSobrePerfil
+                    )
+                }
+                .buttonStyle(.plain)
 
-            // Sobre
-            Button { goSobre(avoidDuplicate: true) } label: {
-                FooterItem(
-                    icon: .system("bubble.left"),
-                    title: "Sobre",
-                    isSelected: isSobreSelected,
-                    width: Theme.Layout.footerItemWidthHomeSobre
-                )
+                Button { goSobre(avoidDuplicate: true) } label: {
+                    FooterItem(
+                        icon: .system("bubble.left"),
+                        title: "Sobre",
+                        isSelected: isSobreSelected,
+                        width: Theme.Layout.footerItemWidthHomeSobrePerfil
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button { goPerfil(avoidDuplicate: true) } label: {
+                    FooterItem(
+                        icon: .system("person"),
+                        title: "Perfil",
+                        isSelected: isPerfilSelected,
+                        width: Theme.Layout.footerItemWidthHomeSobrePerfil
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
-        }
-    }
 
-    private func treinosRow(
-        treinoTitle: String,
-        treinoIcon: AnyView,
-        isHomeSelected: Bool,
-        isTreinoSelected: Bool,
-        isSobreSelected: Bool
-    ) -> some View {
+        case .treinos(let treinoTitle, let treinoIcon, let isHomeSelected, let isTreinoSelected, let isSobreSelected):
+            HStack(spacing: 28) {
+                Button { goHome() } label: {
+                    FooterItem(
+                        icon: .system("house"),
+                        title: "Home",
+                        isSelected: isHomeSelected,
+                        width: Theme.Layout.footerItemWidthTreinos
+                    )
+                }
+                .buttonStyle(.plain)
 
-        HStack(spacing: 28) {
-
-            // Home
-            Button { goHome() } label: {
                 FooterItem(
-                    icon: .system("house"),
-                    title: "Home",
-                    isSelected: isHomeSelected,
+                    icon: .custom(treinoIcon),
+                    title: treinoTitle,
+                    isSelected: isTreinoSelected,
                     width: Theme.Layout.footerItemWidthTreinos
                 )
-            }
-            .buttonStyle(.plain)
 
-            // Treinos (custom icon)
-            FooterItem(
-                icon: .custom(treinoIcon),
-                title: treinoTitle,
-                isSelected: isTreinoSelected,
-                width: Theme.Layout.footerItemWidthTreinos
-            )
-
-            // Sobre
-            Button { goSobre(avoidDuplicate: false) } label: {
-                FooterItem(
-                    icon: .system("bubble.left"),
-                    title: "Sobre",
-                    isSelected: isSobreSelected,
-                    width: Theme.Layout.footerItemWidthTreinos
-                )
+                Button { goSobre(avoidDuplicate: false) } label: {
+                    FooterItem(
+                        icon: .system("bubble.left"),
+                        title: "Sobre",
+                        isSelected: isSobreSelected,
+                        width: Theme.Layout.footerItemWidthTreinos
+                    )
+                }
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
         }
     }
 
     // MARK: - Navigation helpers
-
-    /// Volta para Home limpando a pilha (padrão consistente do teu projeto)
     private func goHome() {
         path.removeAll()
         path.append(.home)
     }
 
-    /// Navega para Sobre.
-    /// `avoidDuplicate=true` evita empilhar várias vezes a mesma tela, como você já faz no Sobre.
     private func goSobre(avoidDuplicate: Bool) {
         if avoidDuplicate {
             if path.last != .sobre { path.append(.sobre) }
@@ -150,11 +153,17 @@ struct FooterBar: View {
             path.append(.sobre)
         }
     }
+
+    private func goPerfil(avoidDuplicate: Bool) {
+        if avoidDuplicate {
+            if path.last != .perfil { path.append(.perfil) }
+        } else {
+            path.append(.perfil)
+        }
+    }
 }
 
 // MARK: - FooterItem (internal)
-// Item padrão do rodapé: ícone + texto.
-// Aceita SF Symbol OU uma View custom (caso do TreinoTipo).
 private struct FooterItem: View {
 
     enum Icon {
@@ -169,7 +178,6 @@ private struct FooterItem: View {
 
     var body: some View {
         VStack(spacing: 6) {
-
             switch icon {
             case .system(let name):
                 Image(systemName: name)

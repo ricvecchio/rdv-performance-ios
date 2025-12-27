@@ -32,6 +32,8 @@ struct LoginView: View {
 
             VStack(spacing: 0) {
 
+                // ✅ SEM HEADER (conforme solicitado)
+
                 // Logo do app
                 Image("rdv_logo")
                     .resizable()
@@ -56,7 +58,7 @@ struct LoginView: View {
                         title: "E-mail",
                         text: $email,
                         isSecure: false,
-                        showPassword: .constant(false), // não usado no modo e-mail
+                        showPassword: .constant(false),
                         lineColor: lineColor,
                         textColor: .white,
                         placeholderColor: textSecondary
@@ -99,14 +101,11 @@ struct LoginView: View {
                 Spacer()
             }
         }
-        // Remove navegação padrão
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
     }
 
     // MARK: - Validação do login
-    // Validação simples: se e-mail e senha estiverem preenchidos, navega para Home.
-    // Aqui é o local ideal para integrar autenticação real via API.
     private func validarLogin() {
         let emailTrim = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let passwordTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
