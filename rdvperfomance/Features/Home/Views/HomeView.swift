@@ -53,7 +53,6 @@ struct HomeView: View {
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
-                // ✅ Rodapé agora: Home | Sobre | Perfil
                 FooterBar(
                     path: $path,
                     kind: .homeSobrePerfil(
@@ -89,6 +88,7 @@ struct HomeView: View {
                 GeometryReader { geo in
                     let w = geo.size.width
 
+                    // Base (imagem)
                     ZStack {
                         Color.black
 
@@ -124,19 +124,7 @@ struct HomeView: View {
                     .frame(width: w, height: height)
                     .clipped()
 
-                    .overlay(alignment: .bottomLeading) {
-                        Text(imageTitle)
-                            .font(.system(size: 25, weight: .bold))
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.9), radius: 6, x: 0, y: 3)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.65)
-                            .padding(.leading, 200)
-                            .padding(.trailing, 24)
-                            .padding(.bottom, 40)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-
+                    // ✅ 1) PRIMEIRO aplica o gradiente (por trás dos textos)
                     .overlay {
                         LinearGradient(
                             colors: [
@@ -149,20 +137,38 @@ struct HomeView: View {
                         )
                     }
 
+                    // ✅ 2) DEPOIS desenha os textos (sempre sólidos, sem “lavar”)
                     .overlay(alignment: .bottomLeading) {
-                        Text(title)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.7), radius: 4, y: 2)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .padding(.leading, 24)
-                            .padding(.trailing, 24)
-                            .padding(.bottom, 12)
+                        ZStack(alignment: .bottomLeading) {
+
+                            // Texto grande
+                            Text(imageTitle)
+                                .font(.system(size: 25, weight: .bold))
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.9), radius: 6, x: 0, y: 3)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.65)
+                                .padding(.leading, 200)
+                                .padding(.trailing, 24)
+                                .padding(.bottom, 40)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+
+                            // Texto pequeno (Crossfit / Academia / Treinos em casa)
+                            Text(title)
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white)
+                                .shadow(color: .black.opacity(0.7), radius: 4, y: 2)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
+                                .padding(.leading, 24)
+                                .padding(.trailing, 24)
+                                .padding(.bottom, 12)
+                        }
                     }
                 }
                 .frame(height: height)
 
+                // Gradientes finos top/bottom
                 VStack {
                     LinearGradient(
                         colors: [.black.opacity(0.15), .clear],

@@ -6,11 +6,13 @@ struct SettingsView: View {
 
     @Binding var path: [AppRoute]
 
+    // largura máxima do “miolo” (conteúdo central)
     private let contentMaxWidth: CGFloat = 380
 
     var body: some View {
         ZStack {
 
+            // FUNDO
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -31,18 +33,17 @@ struct SettingsView: View {
 
                         VStack(alignment: .leading, spacing: 16) {
 
-                            settingsCardTop()
+                            // ===== CONTA =====
+                            sectionTitle("CONTA")
+                            accountCard()
 
-                            Text("SEGURANÇA")
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.35))
-                                .padding(.horizontal, 6)
+                            // ===== PREFERÊNCIAS =====
+                            sectionTitle("PREFERÊNCIAS")
+                            preferencesCard()
 
-                            securityCard()
-                            extraCard()
-
-                            feedbackRow()
-                                .padding(.top, 4)
+                            // ===== SUPORTE & LEGAL =====
+                            sectionTitle("SUPORTE & LEGAL")
+                            supportLegalCard()
 
                             Color.clear.frame(height: 16)
                         }
@@ -71,7 +72,6 @@ struct SettingsView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
-
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
@@ -90,53 +90,74 @@ struct SettingsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
+    // MARK: - Navegação
+
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // MARK: - Cards (inalterados)
+    // MARK: - Seções
 
-    private func settingsCardTop() -> some View {
+    private func sectionTitle(_ text: String) -> some View {
+        Text(text)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(.white.opacity(0.35))
+            .padding(.horizontal, 6)
+    }
+
+    // MARK: - Cards (organizados conforme solicitado)
+
+    private func accountCard() -> some View {
+        card {
+            cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
+                // TODO: navegar para tela de edição de perfil
+            }
+            divider()
+            cardRow(icon: "key.fill", title: "Alterar Senha") {
+                // TODO: navegar para fluxo de alteração de senha
+            }
+            divider()
+            cardRow(icon: "trash.fill", title: "Excluir Conta") {
+                // TODO: abrir confirmação e executar exclusão
+            }
+        }
+    }
+
+    private func preferencesCard() -> some View {
+        card {
+            cardRow(icon: "ruler.fill", title: "Unidade de Medida") {
+                // TODO: navegar para tela de unidade de medida
+            }
+        }
+    }
+
+    private func supportLegalCard() -> some View {
+        card {
+            cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
+                // TODO: navegar para central de ajuda
+            }
+            divider()
+            cardRow(icon: "hand.raised.fill", title: "Políticas de Privacidade") {
+                // TODO: abrir políticas de privacidade
+            }
+            divider()
+            cardRow(icon: "doc.text.fill", title: "Termos de Uso") {
+                // TODO: abrir termos de uso
+            }
+        }
+    }
+
+    // MARK: - Componentes base
+
+    private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) {
-            row(icon: "person.fill", title: "Editar Perfil")
-            divider()
-            row(icon: "bell.fill", title: "Alterar Senha")
-            divider()
-            row(icon: "slider.horizontal.3", title: "Excluir Conta")
+            content()
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
-    }
-
-    private func securityCard() -> some View {
-        VStack(spacing: 0) {
-            row(icon: "checkmark.shield.fill", title: "Alterar Senha")
-            divider()
-            row(icon: "globe", title: "Idiomas")
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-    }
-
-    private func extraCard() -> some View {
-        VStack(spacing: 0) {
-            row(icon: "questionmark.circle.fill", title: "Ajuda")
-            divider()
-            row(icon: "info.circle.fill", title: "Sobre")
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-    }
-
-    private func feedbackRow() -> some View {
-        row(icon: "text.bubble.fill", title: "Feedback")
     }
 
     private func divider() -> some View {
@@ -145,27 +166,30 @@ struct SettingsView: View {
             .padding(.leading, 54)
     }
 
-    private func row(icon: String, title: String) -> some View {
-        HStack(spacing: 14) {
+    /// Linha usada dentro dos cards (sem fundo próprio, para não “duplicar card”).
+    private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
 
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundColor(.green.opacity(0.85))
-                .frame(width: 28)
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(.green.opacity(0.85))
+                    .frame(width: 28)
 
-            Text(title)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.white.opacity(0.92))
+                Text(title)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
 
-            Spacer()
+                Spacer()
 
-            Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        .buttonStyle(.plain)
     }
 }
 
