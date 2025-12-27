@@ -192,13 +192,22 @@ struct ProfileView: View {
             path.removeAll()
         } label: {
             Text("Sair")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.black.opacity(0.85))
+                .font(.system(size: 17, weight: .medium)) // mais leve que semibold
+                .foregroundColor(.white.opacity(0.9))     // melhor contraste no verde suave
                 .frame(maxWidth: .infinity)
-                .frame(height: 54)
-                .background(Capsule().fill(Color.green.opacity(0.75)))
+                .frame(height: 52)                        // um pouco menor
+                .background(
+                    Capsule()
+                        .fill(Color.green.opacity(0.28))  // ✅ mais suave
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1) // borda sutil
+                        )
+                )
+                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6) // sombra bem leve
         }
         .buttonStyle(.plain)
     }
+
 }
 
