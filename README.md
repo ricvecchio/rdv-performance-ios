@@ -128,9 +128,20 @@ rdv-performance-ios
    ├─ Features
    │  ├─ Auth
    │  │  ├─ Views
-   │  │  │  └─ LoginView.swift
-   │  │  └─ ViewModels
-   │  │     └─ LoginViewModel.swift
+   │  │  │  ├─ LoginView.swift                     ✅ (Tela 1 - Login)
+   │  │  │  ├─ AccountTypeSelectionView.swift      ✅ (Tela 2 - Aluno ou Professor)
+   │  │  │  ├─ RegisterStudentView.swift           ✅ (Tela 3 - Cadastro Aluno)
+   │  │  │  └─ RegisterTrainerView.swift           ✅ (Tela 4 - Cadastro Professor)
+   │  │  │
+   │  │  ├─ ViewModels
+   │  │  │  ├─ LoginViewModel.swift
+   │  │  │  └─ RegisterViewModel.swift             
+   │  │  │
+   │  │  ├─ Services
+   │  │  │  └─ AuthService.swift                   
+   │  │  │
+   │  │  └─ Models
+   │  │     └─ AuthDTOs.swift                      
    │  │
    │  ├─ Home
    │  │  └─ Views
