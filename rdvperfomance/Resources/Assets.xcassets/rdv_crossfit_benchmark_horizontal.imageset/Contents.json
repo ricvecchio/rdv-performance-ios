@@ -1,0 +1,38 @@
+{
+  "images" : [
+    {
+      "filename" : "rdv_crossfit_benchmark_horizontal.jpeg",
+      "idiom" : "universal",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "rdv_crossfit_benchmark_horizontal 1.jpeg",
+      "idiom" : "universal",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "rdv_crossfit_benchmark_horizontal 2.jpeg",
+      "idiom" : "universal",
+      "scale" : "3x"
+    },
+    {
+      "filename" : "rdv_crossfit_benchmark_horizontal 3.jpeg",
+      "idiom" : "iphone",
+      "scale" : "1x"
+    },
+    {
+      "filename" : "rdv_crossfit_benchmark_horizontal 4.jpeg",
+      "idiom" : "iphone",
+      "scale" : "2x"
+    },
+    {
+      "filename" : "rdv_crossfit_benchmark_horizontal 5.jpeg",
+      "idiom" : "iphone",
+      "scale" : "3x"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
+}
