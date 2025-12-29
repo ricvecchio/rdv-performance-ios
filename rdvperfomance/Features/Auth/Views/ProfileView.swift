@@ -65,10 +65,21 @@ struct ProfileView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
+            // ✅ Voltar (mesmo padrão do AboutView)
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { pop() } label: {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.green)
+                }
+                .buttonStyle(.plain)
+            }
+
             ToolbarItem(placement: .principal) {
                 Text("Perfil")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
             }
 
             ToolbarItem(placement: .navigationBarTrailing) {
@@ -78,10 +89,17 @@ struct ProfileView: View {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green) // mantém coerência visual
                 }
+                .buttonStyle(.plain)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+    }
+
+    // ✅ Remove a última rota da pilha (evita crash se estiver vazia)
+    private func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
     }
 
     // MARK: - Card superior
@@ -155,7 +173,7 @@ struct ProfileView: View {
 
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundColor(.green.opacity(0.85)) // 🔥 CORRIGIDO
+                .foregroundColor(.green.opacity(0.85))
                 .frame(width: 28)
 
             Text(title)
@@ -192,22 +210,21 @@ struct ProfileView: View {
             path.removeAll()
         } label: {
             Text("Sair")
-                .font(.system(size: 17, weight: .medium)) // mais leve que semibold
-                .foregroundColor(.white.opacity(0.9))     // melhor contraste no verde suave
+                .font(.system(size: 17, weight: .medium))
+                .foregroundColor(.white.opacity(0.9))
                 .frame(maxWidth: .infinity)
-                .frame(height: 52)                        // um pouco menor
+                .frame(height: 52)
                 .background(
                     Capsule()
-                        .fill(Color.green.opacity(0.28))  // ✅ mais suave
+                        .fill(Color.green.opacity(0.28))
                         .overlay(
                             Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1) // borda sutil
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
                         )
                 )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6) // sombra bem leve
+                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
         }
         .buttonStyle(.plain)
     }
-
 }
 
