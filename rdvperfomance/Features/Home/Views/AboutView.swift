@@ -1,38 +1,34 @@
 import SwiftUI
 
 // MARK: - TELA SOBRE (AboutView)
-// Tela institucional do app (Sobre).
-// Exibe informações do aplicativo e mantém header/footer fixos.
 struct AboutView: View {
 
-    // ✅ Navegação controlada via NavigationStack
     @Binding var path: [AppRoute]
 
     // MARK: - Layout
     private let cardMaxWidth: CGFloat = 360
-
-    // Ajustes finos (subir logo e card)
     private let logoLift: CGFloat = 30
     private let cardLift: CGFloat = 26
 
     var body: some View {
         ZStack {
 
-            // 🔹 FUNDO
+            // FUNDO
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
 
-            // 🔹 ESTRUTURA FIXA: HEADER / CONTEÚDO / FOOTER
+            // ESTRUTURA: CONTEÚDO / FOOTER
             VStack(spacing: 0) {
 
-                // ✅ HEADER FIXO
-                HeaderBar {
-                    headerBar()
-                }
+                // ✅ Separador entre NavigationBar e corpo (mesmo padrão das outras telas)
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+                    .frame(maxWidth: .infinity)
 
-                // 🔹 CONTEÚDO
+                // CONTEÚDO
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
 
@@ -58,7 +54,7 @@ struct AboutView: View {
                     .padding(.horizontal, 20)
                 }
 
-                // ✅ FOOTER FIXO (IGUAL AO DA HOME)
+                // FOOTER FIXO
                 FooterBar(
                     path: $path,
                     kind: .homeSobrePerfil(
@@ -74,46 +70,39 @@ struct AboutView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
-    }
 
-    // MARK: - HEADER BAR (com "< Voltar" verde)
-    private func headerBar() -> some View {
-        HStack {
+        // ✅ TOOLBAR PADRÃO (igual Home/Treinos)
+        .toolbar(content: {
 
-            // Botão voltar: remove a última rota com segurança
-            Button {
-                pop()
-            } label: {
-                HStack(spacing: 6) {
+            // Voltar verde
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { pop() } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .semibold))
-
-                    Text("Voltar")
-                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.green)
                 }
-                .foregroundColor(.green)
-                .padding(.leading, 16)
-                .padding(.vertical, 10)
-                .contentShape(Rectangle())
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
-            Spacer()
+            // Título central
+            ToolbarItem(placement: .principal) {
+                Text("Sobre")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
 
-            // Título central do header
-            Text("Sobre")
-                .font(Theme.Fonts.headerTitle())
-                .foregroundColor(.white)
-
-            Spacer()
-
-            // Placeholder para manter título centralizado
-            Color.clear
-                .frame(width: 80, height: 1)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.top, 6)
+            // Avatar no canto direito (mesmo padrão da HomeView)
+            ToolbarItem(placement: .navigationBarTrailing) {
+                MiniProfileHeader(imageName: "rdv_eu", size: 38)
+                    .onTapGesture {
+                        // Se quiser navegar ao tocar:
+                        // path.append(.perfil)
+                    }
+            }
+        })
+        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
     }
 
     // Remove a última rota da pilha (evita crash se estiver vazia)

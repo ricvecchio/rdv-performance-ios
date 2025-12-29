@@ -23,8 +23,12 @@ enum Theme {
         static let footerItemWidthTreinos: CGFloat = 110
         static let footerMiddleSpacerWidth: CGFloat = 88
 
-        // ✅ Novo: largura para o rodapé com 3 itens
+        // ✅ Rodapé com 3 itens (Home/Sobre/Perfil)
         static let footerItemWidthHomeSobrePerfil: CGFloat = 92
+
+        // ✅ NOVO: Rodapé com 4 itens (Home/Treinos/Sobre/Perfil)
+        // Ajuste fino: se ainda ficar apertado no seu device, pode reduzir p/ 78–82.
+        static let footerItemWidthTreinosComPerfil: CGFloat = 84
 
         static let footerVerticalPadding: CGFloat = 10
         static let footerItemIconSize: CGFloat = 20
@@ -45,4 +49,3 @@ enum Theme {
         }
     }
 }
-

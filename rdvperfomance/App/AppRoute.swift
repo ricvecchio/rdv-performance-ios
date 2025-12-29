@@ -11,5 +11,8 @@ enum AppRoute: Hashable {
     // ✅ Novas rotas
     case perfil
     case configuracoes
+
+    // ✅ NOVO: menu do Crossfit (tela intermediária com 5 opções)
+    case crossfitMenu
 }
 

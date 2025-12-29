@@ -35,6 +35,10 @@ struct AppRouter: View {
 
                     case .configuracoes:
                         SettingsView(path: $path)
+
+                    // ✅ NOVA tela do Crossfit (menu com 5 itens)
+                    case .crossfitMenu:
+                        CrossfitMenuView(path: $path)
                     }
                 }
         }

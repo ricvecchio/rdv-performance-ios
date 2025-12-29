@@ -18,8 +18,6 @@ struct LoginView: View {
     // Cores de estilo da tela
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
-    private let buttonBackground = Color(red: 0.22, green: 0.33, blue: 0.18)
-    private let buttonText = Color.white.opacity(0.92)
 
     var body: some View {
         ZStack {
@@ -32,28 +30,25 @@ struct LoginView: View {
 
             VStack(spacing: 0) {
 
-                // ✅ SEM HEADER (conforme solicitado)
-
-                // Logo do app
+                // LOGO
                 Image("rdv_logo")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 260)
+                    .frame(width: 300)
                     .opacity(0.9)
                     .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
-                    .padding(.top, 60)
+                    .padding(.top, 20)
 
                 // Texto auxiliar
                 Text("Entre com sua conta")
-                    .font(.system(size: 17))
-                    .foregroundColor(textSecondary)
-                    .padding(.top, 20)
-                    .padding(.bottom, 28)
+                    .font(.system(size: 17, weight: .medium))
+                    .foregroundColor(.white)
+                    .padding(.top, 10)
+                    .padding(.bottom, 18)
 
                 // Campos
                 VStack(spacing: 22) {
 
-                    // Campo de e-mail
                     UnderlineTextField(
                         title: "E-mail",
                         text: $email,
@@ -64,7 +59,6 @@ struct LoginView: View {
                         placeholderColor: textSecondary
                     )
 
-                    // Campo de senha (com botão olho)
                     UnderlineTextField(
                         title: "Senha",
                         text: $password,
@@ -77,26 +71,53 @@ struct LoginView: View {
                 }
                 .frame(width: 260)
 
-                // Ação futura: recuperar senha
+                // Recuperar senha
                 Button { } label: {
                     Text("Esqueceu a senha?")
                         .font(.system(size: 14))
                         .foregroundColor(textSecondary)
-                        .padding(.top, 18)
+                        .padding(.top, 14)
                 }
                 .buttonStyle(.plain)
 
-                // Botão principal de login
+                // 🔽 Botão principal — mais fino e mais para baixo
                 Button {
                     validarLogin()
                 } label: {
                     Text("Acessar")
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(buttonText)
-                        .frame(width: 260, height: 50)
-                        .background(Capsule().fill(buttonBackground.opacity(0.75)))
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+                        .frame(width: 260, height: 44) // ⬅️ afinado
+                        .background(
+                            Capsule()
+                                .fill(Color.green.opacity(0.28))
+                                .overlay(
+                                    Capsule()
+                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                )
+                        )
+                        .shadow(
+                            color: Color.green.opacity(0.10),
+                            radius: 10,
+                            x: 0,
+                            y: 6
+                        )
                 }
-                .padding(.top, 20)
+                .buttonStyle(.plain)
+                .padding(.top, 30) // ⬅️ desceu
+
+                // 🔽 Texto de cadastro — acompanha o botão
+                Button {
+                    // ação futura: navegação para cadastro
+                    // path.append(.register)
+                } label: {
+                    Text("Inscreva-se gratuitamente")
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white)
+                        .underline()
+                        .padding(.top, 18) // ⬅️ desceu
+                }
+                .buttonStyle(.plain)
 
                 Spacer()
             }

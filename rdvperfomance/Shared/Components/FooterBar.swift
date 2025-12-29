@@ -3,8 +3,8 @@ import SwiftUI
 // MARK: - FooterBar
 // Rodapé reutilizável.
 // ✅ Linha separadora colada no topo do rodapé.
-// ✅ Navegação com padrão "push" (direita→esquerda) ao avançar e "pop" (esquerda→direita) ao voltar,
-//    seguindo a mesma lógica de Home <-> Sobre, agora também para Sobre <-> Perfil.
+// ✅ Navegação com padrão "push/pop" para Home/Sobre/Perfil.
+// ✅ NOVO: suporte a 4 itens (Home | Treinos | Sobre | Perfil) para CrossfitMenuView.
 struct FooterBar: View {
 
     enum Kind {
@@ -22,6 +22,16 @@ struct FooterBar: View {
             isHomeSelected: Bool,
             isTreinoSelected: Bool,
             isSobreSelected: Bool
+        )
+
+        // ✅ NOVO: Treinos com Perfil (4 itens)
+        case treinosComPerfil(
+            treinoTitle: String,
+            treinoIcon: AnyView,
+            isHomeSelected: Bool,
+            isTreinoSelected: Bool,
+            isSobreSelected: Bool,
+            isPerfilSelected: Bool
         )
     }
 
@@ -137,19 +147,61 @@ struct FooterBar: View {
                 }
                 .buttonStyle(.plain)
             }
+
+        case .treinosComPerfil(
+            let treinoTitle,
+            let treinoIcon,
+            let isHomeSelected,
+            let isTreinoSelected,
+            let isSobreSelected,
+            let isPerfilSelected
+        ):
+            // ✅ 4 itens: Home | Treinos | Sobre | Perfil
+            HStack(spacing: 16) {
+                Button { goHome() } label: {
+                    FooterItem(
+                        icon: .system("house"),
+                        title: "Home",
+                        isSelected: isHomeSelected,
+                        width: Theme.Layout.footerItemWidthTreinosComPerfil
+                    )
+                }
+                .buttonStyle(.plain)
+
+                FooterItem(
+                    icon: .custom(treinoIcon),
+                    title: treinoTitle,
+                    isSelected: isTreinoSelected,
+                    width: Theme.Layout.footerItemWidthTreinosComPerfil
+                )
+
+                Button { goSobre() } label: {
+                    FooterItem(
+                        icon: .system("bubble.left"),
+                        title: "Sobre",
+                        isSelected: isSobreSelected,
+                        width: Theme.Layout.footerItemWidthTreinosComPerfil
+                    )
+                }
+                .buttonStyle(.plain)
+
+                Button { goPerfil() } label: {
+                    FooterItem(
+                        icon: .system("person"),
+                        title: "Perfil",
+                        isSelected: isPerfilSelected,
+                        width: Theme.Layout.footerItemWidthTreinosComPerfil
+                    )
+                }
+                .buttonStyle(.plain)
+            }
         }
     }
 
-    // MARK: - Navegação com padrão de "push/pop" (igual Home <-> Sobre)
+    // MARK: - Navegação (push/pop)
 
-    /// Monta a pilha principal SEMPRE na ordem:
+    /// Pilha principal canônica:
     /// [.home] -> [.home, .sobre] -> [.home, .sobre, .perfil]
-    ///
-    /// Isso garante:
-    /// - Home -> Sobre = push (direita→esquerda)
-    /// - Sobre -> Home = pop  (esquerda→direita)
-    /// - Sobre -> Perfil = push (direita→esquerda)
-    /// - Perfil -> Sobre = pop  (esquerda→direita)
     private func canonicalStack(for destination: AppRoute) -> [AppRoute] {
         switch destination {
         case .home:
@@ -159,12 +211,10 @@ struct FooterBar: View {
         case .perfil:
             return [.home, .sobre, .perfil]
         default:
-            // fallback seguro
             return [.home]
         }
     }
 
-    /// Encontra a "tela principal" atual (home/sobre/perfil) olhando do fim do path.
     private func currentMainRoute() -> AppRoute? {
         for r in path.reversed() {
             if r == .home || r == .sobre || r == .perfil {
@@ -176,16 +226,12 @@ struct FooterBar: View {
 
     private func goHome() {
         withAnimation {
-            // Se já estamos no fluxo principal, preferimos "pop" quando possível.
             if path.last == .sobre || path.last == .perfil {
-                // pop até home (mantém animação de voltar)
                 while path.last != .home && !path.isEmpty {
                     path.removeLast()
                 }
-                // se por algum motivo não havia home, reconstrói
                 if path.last != .home { path = canonicalStack(for: .home) }
             } else {
-                // caso esteja em treinos/login/etc: reseta pro canonical
                 path = canonicalStack(for: .home)
             }
         }
@@ -197,28 +243,21 @@ struct FooterBar: View {
 
             switch current {
             case .perfil:
-                // ✅ Perfil -> Sobre = POP (esquerda→direita)
-                // Como garantimos pilha canonical, basta remover o último (.perfil).
                 if path.last == .perfil {
                     path.removeLast()
                 } else {
-                    // fallback
                     path = canonicalStack(for: .sobre)
                 }
 
             case .home:
-                // ✅ Home -> Sobre = PUSH (direita→esquerda)
                 if path.last != .sobre {
-                    // Garante que Home está na base e faz push do Sobre
                     path = canonicalStack(for: .sobre)
                 }
 
             case .sobre:
-                // já está no Sobre
                 break
 
             default:
-                // vindo de treinos/login/etc: reconstrói canonical do Sobre
                 path = canonicalStack(for: .sobre)
             }
         }
@@ -230,22 +269,17 @@ struct FooterBar: View {
 
             switch current {
             case .sobre:
-                // ✅ Sobre -> Perfil = PUSH (direita→esquerda)
                 if path.last != .perfil {
                     path.append(.perfil)
                 }
 
             case .home:
-                // Para manter o padrão consistente (e permitir Perfil -> Sobre = POP),
-                // montamos o canonical completo: Home -> Sobre -> Perfil.
                 path = canonicalStack(for: .perfil)
 
             case .perfil:
-                // já está no Perfil
                 break
 
             default:
-                // vindo de treinos/login/etc: reconstrói canonical do Perfil
                 path = canonicalStack(for: .perfil)
             }
         }
