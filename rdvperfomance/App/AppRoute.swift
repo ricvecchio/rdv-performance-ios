@@ -12,7 +12,12 @@ enum AppRoute: Hashable {
     case perfil
     case configuracoes
 
-    // ✅ NOVO: menu do Crossfit (tela intermediária com 5 opções)
+    // ✅ Menu Crossfit
     case crossfitMenu
+
+    // ✅ Fluxo Auth (cadastro)
+    case accountTypeSelection
+    case registerStudent
+    case registerTrainer
 }
 

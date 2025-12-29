@@ -29,16 +29,24 @@ struct AppRouter: View {
                     case .treinos(let tipo):
                         TreinosView(path: $path, tipo: tipo)
 
-                    // ✅ Novas telas
                     case .perfil:
                         ProfileView(path: $path)
 
                     case .configuracoes:
                         SettingsView(path: $path)
 
-                    // ✅ NOVA tela do Crossfit (menu com 5 itens)
                     case .crossfitMenu:
                         CrossfitMenuView(path: $path)
+
+                    // ✅ Fluxo Cadastro
+                    case .accountTypeSelection:
+                        AccountTypeSelectionView(path: $path)
+
+                    case .registerStudent:
+                        RegisterStudentView(path: $path)
+
+                    case .registerTrainer:
+                        RegisterTrainerView(path: $path)
                     }
                 }
         }

@@ -71,7 +71,7 @@ struct LoginView: View {
                 }
                 .frame(width: 260)
 
-                // Recuperar senha
+                // Recuperar senha (placeholder)
                 Button { } label: {
                     Text("Esqueceu a senha?")
                         .font(.system(size: 14))
@@ -80,14 +80,14 @@ struct LoginView: View {
                 }
                 .buttonStyle(.plain)
 
-                // 🔽 Botão principal — mais fino e mais para baixo
+                // Botão principal
                 Button {
                     validarLogin()
                 } label: {
                     Text("Acessar")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
-                        .frame(width: 260, height: 44) // ⬅️ afinado
+                        .frame(width: 260, height: 44)
                         .background(
                             Capsule()
                                 .fill(Color.green.opacity(0.28))
@@ -104,18 +104,17 @@ struct LoginView: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 30) // ⬅️ desceu
+                .padding(.top, 30)
 
-                // 🔽 Texto de cadastro — acompanha o botão
+                // ✅ Abre Tela 1 (Seleção Aluno/Professor)
                 Button {
-                    // ação futura: navegação para cadastro
-                    // path.append(.register)
+                    path.append(.accountTypeSelection)
                 } label: {
                     Text("Inscreva-se gratuitamente")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white)
                         .underline()
-                        .padding(.top, 18) // ⬅️ desceu
+                        .padding(.top, 18)
                 }
                 .buttonStyle(.plain)
 
@@ -126,13 +125,14 @@ struct LoginView: View {
         .toolbar(.hidden, for: .navigationBar)
     }
 
-    // MARK: - Validação do login
+    // MARK: - Validação do login (MVP)
     private func validarLogin() {
         let emailTrim = email.trimmingCharacters(in: .whitespacesAndNewlines)
         let passwordTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !emailTrim.isEmpty, !passwordTrim.isEmpty else { return }
 
+        // MVP: navega direto
         path.append(.home)
     }
 }
