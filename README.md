@@ -117,89 +117,57 @@ Utilizado na tela de login.
 ## 🗂 Estrutura Geral do App
 
 ```
-rdvperformance
-└─ rdvperformance
+rdv-performance-ios
+├─ rdvperfomance.xcodeproj
+└─ rdvperfomance
    ├─ App
    │  ├─ RDVPerformanceApp.swift
-   │  ├─ Routing
-   │  │  ├─ AppRouter.swift
-   │  │  └─ AppRoute.swift
-   │  ├─ DI
-   │  │  └─ AppContainer.swift
-   │  └─ AppState
-   │     └─ SessionStore.swift
-   │
-   ├─ Core
-   │  ├─ Networking
-   │  │  ├─ HTTPClient.swift
-   │  │  ├─ Endpoint.swift
-   │  │  └─ NetworkError.swift
-   │  ├─ Persistence
-   │  │  ├─ KeyValueStore.swift
-   │  │  └─ AppStorageStore.swift
-   │  └─ Foundations
-   │     ├─ AppError.swift
-   │     └─ Logger.swift
+   │  ├─ AppRouter.swift
+   │  └─ AppRoute.swift
    │
    ├─ Features
    │  ├─ Auth
-   │  │  ├─ Presentation
-   │  │  │  ├─ Views
-   │  │  │  │  ├─ LoginView.swift
-   │  │  │  │  └─ RegisterView.swift
-   │  │  │  └─ ViewModels
-   │  │  │     └─ LoginViewModel.swift
-   │  │  ├─ Domain
-   │  │  │  ├─ Models
-   │  │  │  │  └─ User.swift
-   │  │  │  ├─ UseCases
-   │  │  │  │  └─ LoginUseCase.swift
-   │  │  │  └─ Repositories
-   │  │  │     └─ AuthRepository.swift
-   │  │  └─ Data
-   │  │     ├─ Datasources
-   │  │     │  ├─ AuthRemoteDataSource.swift
-   │  │     │  └─ AuthLocalDataSource.swift
-   │  │     └─ Repositories
-   │  │        └─ AuthRepositoryImpl.swift
+   │  │  ├─ Views
+   │  │  │  └─ LoginView.swift
+   │  │  └─ ViewModels
+   │  │     └─ LoginViewModel.swift
    │  │
    │  ├─ Home
-   │  │  ├─ Presentation
-   │  │  │  └─ Views
-   │  │  │     ├─ HomeView.swift
-   │  │  │     └─ AboutView.swift
-   │  │  └─ Domain
-   │  │     └─ (se surgir necessidade)
+   │  │  └─ Views
+   │  │     └─ HomeView.swift
    │  │
-   │  └─ Treinos
-   │     ├─ Presentation
-   │     │  └─ Views
-   │     │     ├─ TreinosView.swift
-   │     │     ├─ TreinosAcademiaView.swift
-   │     │     ├─ TreinosCrossfitView.swift
-   │     │     └─ TreinosEmCasaView.swift
-   │     └─ Domain
-   │        └─ Models
-   │           └─ TreinoTipo.swift
+   │  ├─ About
+   │  │  └─ Views
+   │  │     └─ AboutView.swift
+   │  │
+   │  ├─ Treinos
+   │  │  ├─ Models
+   │  │  │  └─ TreinoTipo.swift
+   │  │  └─ Views
+   │  │     ├─ TreinosView.swift
+   │  │     ├─ TreinosCrossfitView.swift
+   │  │     ├─ TreinosAcademiaView.swift
+   │  │     ├─ TreinosEmCasaView.swift
+   │  │     └─ CrossfitMenuView.swift
+   │  │
+   │  └─ Profile
+   │     ├─ Views
+   │     │  └─ ProfileView.swift
+   │     └─ Settings
+   │        └─ Views
+   │           └─ SettingsView.swift
    │
    ├─ Shared
-   │  ├─ DesignSystem
-   │  │  ├─ Theme
-   │  │  │  └─ Theme.swift
-   │  │  ├─ Components
-   │  │  │  ├─ UnderlineTextField.swift
-   │  │  │  └─ FooterBar.swift
-   │  │  └─ AssetsHelpers
-   │  │     └─ SFSymbols.swift
-   │  ├─ Extensions
-   │  │  └─ (se surgir necessidade)
-   │  └─ Utils
-   │     └─ Constants.swift
+   │  ├─ Components
+   │  │  ├─ UnderlineTextField.swift
+   │  │  └─ FooterBar.swift
+   │  ├─ UI
+   │  │  └─ Theme.swift
+   │  └─ Extensions
+   │     └─ (quando necessário)
    │
    └─ Resources
-      ├─ Assets.xcassets
-      └─ Localizable.strings
-
+      └─ Assets.xcassets
 ```
 
 ---
