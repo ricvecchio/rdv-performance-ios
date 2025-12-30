@@ -51,6 +51,15 @@ struct AppRouter: View {
                             weekTitle: weekTitle
                         )
 
+                    // ===== PUBLICAR TREINOS (PROFESSOR) =====
+                    case .createTrainingWeek(let category):
+                        Text("Criar Semana - \(category.rawValue)")
+                            .environmentObject(session)
+
+                    case .createTrainingDay(let weekId, let category):
+                        Text("Criar Dia - weekId: \(weekId) | \(category.rawValue)")
+                            .environmentObject(session)
+
                     // ===== COMUM =====
                     case .sobre:
                         AboutView(path: $path)

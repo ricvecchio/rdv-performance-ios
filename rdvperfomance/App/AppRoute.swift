@@ -1,40 +1,37 @@
-import SwiftUI
+import Foundation
 
 // MARK: - Rotas do app
-// Define todas as rotas possíveis da navegação via NavigationStack
 enum AppRoute: Hashable {
 
-    // MARK: - Fluxo Base
+    // Base
     case login
     case home
     case sobre
-    case perfil
-    case configuracoes
 
-    // MARK: - Treinos
+    // Treinos
     case treinos(TreinoTipo)
     case crossfitMenu
 
-    // MARK: - Cadastro
+    // Perfil / Settings
+    case perfil
+    case configuracoes
+
+    // Auth
     case accountTypeSelection
     case registerStudent
     case registerTrainer
 
-    // MARK: - Fluxo PROFESSOR
-    /// Tela 3 – Lista de alunos após selecionar categoria
+    // Professor
     case teacherStudentsList(TreinoTipo)
+    case teacherStudentDetail(Student, TreinoTipo)
 
-    /// Tela 4 – Perfil do aluno selecionado
-    case teacherStudentDetail(
-        student: Student,
-        category: TreinoTipo
-    )
-
-    // MARK: - Fluxo ALUNO
-    /// Tela principal do aluno (Agenda / Treinos)
+    // Aluno
     case studentAgenda(studentId: String, studentName: String)
-
-    /// Detalhe da semana de treino
     case studentWeekDetail(studentId: String, weekId: String, weekTitle: String)
+
+    // ✅ Futuras rotas do professor (publicar semana/dia)
+    // (Vamos usar depois quando você criar as telas)
+    case createTrainingWeek(category: TreinoTipo)
+    case createTrainingDay(weekId: String, category: TreinoTipo)
 }
 
