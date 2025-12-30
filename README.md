@@ -120,36 +120,38 @@ Utilizado na tela de login.
 rdv-performance-ios
 ├─ rdvperfomance.xcodeproj
 └─ rdvperfomance
+   │  ├─ About
+   │  │  └─ Views
+   │  │     └─ AboutView.swift
    ├─ App
-   │  ├─ RDVPerformanceApp.swift
+   │  ├─ rdvperformanceApp.swift
+   │  ├─ AppSession.swift
    │  ├─ AppRouter.swift
    │  └─ AppRoute.swift
    │
    ├─ Features
    │  ├─ Auth
-   │  │  ├─ Views
-   │  │  │  ├─ LoginView.swift                     ✅ (Tela 1 - Login)
-   │  │  │  ├─ AccountTypeSelectionView.swift      ✅ (Tela 2 - Aluno ou Professor)
-   │  │  │  ├─ RegisterStudentView.swift           ✅ (Tela 3 - Cadastro Aluno)
-   │  │  │  └─ RegisterTrainerView.swift           ✅ (Tela 4 - Cadastro Professor)
-   │  │  │
+   │  │  ├─ Models
+   │  │  │  └─ AuthDTOs.swift
+   │  │  ├─ Services
+   │  │  │  └─ AuthService.swift
    │  │  ├─ ViewModels
    │  │  │  ├─ LoginViewModel.swift
-   │  │  │  └─ RegisterViewModel.swift             
-   │  │  │
-   │  │  ├─ Services
-   │  │  │  └─ AuthService.swift                   
-   │  │  │
-   │  │  └─ Models
-   │  │     └─ AuthDTOs.swift                      
+   │  │  │  └─ RegisterViewModel.swift
+   │  │  └─ Views
+   │  │     ├─ AccountTypeSelectionView.swift
+   │  │     ├─ LoginView.swift
+   │  │     ├─ ProfileView.swift
+   │  │     ├─ RegisterStudentView.swift
+   │  │     └─ RegisterTrainerView.swift
    │  │
    │  ├─ Home
    │  │  └─ Views
    │  │     └─ HomeView.swift
    │  │
-   │  ├─ About
+   │  ├─ Settings
    │  │  └─ Views
-   │  │     └─ AboutView.swift
+   │  │     └─ SettingsView.swift
    │  │
    │  ├─ Treinos
    │  │  ├─ Models
@@ -161,17 +163,28 @@ rdv-performance-ios
    │  │     ├─ TreinosEmCasaView.swift
    │  │     └─ CrossfitMenuView.swift
    │  │
-   │  └─ Profile
-   │     ├─ Views
-   │     │  └─ ProfileView.swift
-   │     └─ Settings
-   │        └─ Views
-   │           └─ SettingsView.swift
+   │  ├─ Teacher
+   │  │  ├─ Models
+   │  │     ├─ MockStudents.swift
+   │  │  │  └─ Student.swift
+   │  │  └─ Views
+   │  │     ├─ TeacherStudentDetailView.swift
+   │  │     └─ TeacherStudentsListView.swift
+   │  │
+   │  └─ Student
+   │     ├─ Models
+   │     │  ├─ MockWeeks.swift
+   │     │  └─ TrainingDay.swift
+   │     └─ Views
+   │        ├─ StudentAgendaView.swift
+   │        └─ StudentWeekDetailView.swift
    │
    ├─ Shared
    │  ├─ Components
-   │  │  ├─ UnderlineTextField.swift
-   │  │  └─ FooterBar.swift
+   │  │  ├─ FooterBar.swift
+   │  │  ├─ HeaderBar.swift
+   │  │  ├─ MiniProfileHeader.swift
+   │  │  └─ UnderlineTextField.swift
    │  ├─ UI
    │  │  └─ Theme.swift
    │  └─ Extensions
