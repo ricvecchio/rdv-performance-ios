@@ -1,5 +1,5 @@
 import Foundation
-import Combine
+import Combine // ✅ necessário por causa do @Published
 
 @MainActor
 final class RegisterViewModel: ObservableObject {
@@ -13,7 +13,7 @@ final class RegisterViewModel: ObservableObject {
     @Published var focusArea: FocusAreaDTO = .CROSSFIT
     @Published var planType: PlanTypeDTO = .FREE
 
-    // Campos do treinador
+    // TRAINER
     @Published var cref: String = ""
     @Published var bio: String = ""
     @Published var gymName: String = ""
@@ -23,14 +23,14 @@ final class RegisterViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
     @Published var successMessage: String? = nil
 
-    private let service = AuthService()
+    private let service = FirebaseAuthService()
 
     func submit(userType: UserTypeDTO) async {
         errorMessage = nil
         successMessage = nil
 
         let nameTrim = name.trimmingCharacters(in: .whitespacesAndNewlines)
-        let emailTrim = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        let emailTrim = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let passTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
         let phoneTrim = phone.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -46,24 +46,26 @@ final class RegisterViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
-        let dto = RegisterRequestDTO(
+        let form = RegisterFormDTO(
             name: nameTrim,
             email: emailTrim,
             password: passTrim,
             phone: phoneTrim.isEmpty ? nil : phoneTrim,
             userType: userType,
-            focusArea: focusArea,
-            planType: planType,
+            focusArea: focusArea.rawValue,
+            planType: planType.rawValue,
             cref: userType == .TRAINER ? cref.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
             bio: userType == .TRAINER ? bio.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
-            gymName: userType == .TRAINER ? gymName.trimmingCharacters(in: .whitespacesAndNewlines) : nil
+            gymName: userType == .TRAINER ? gymName.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+            defaultCategory: userType == .STUDENT ? "crossfit" : nil,
+            active: userType == .STUDENT ? true : nil
         )
 
         do {
-            let response = try await service.register(dto)
-            successMessage = response.message ?? "Cadastro realizado com sucesso."
+            _ = try await service.register(form)
+            successMessage = "Cadastro realizado com sucesso."
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = "Falha ao cadastrar. Tente novamente."
         }
     }
 

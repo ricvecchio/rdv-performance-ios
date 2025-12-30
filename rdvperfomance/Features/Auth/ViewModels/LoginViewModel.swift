@@ -1,5 +1,5 @@
 import Foundation
-import Combine
+import Combine // ✅ necessário por causa do @Published
 
 @MainActor
 final class LoginViewModel: ObservableObject {
@@ -10,9 +10,9 @@ final class LoginViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
-    private let service = AuthService()
+    private let service = FirebaseAuthService()
 
-    func submitLogin() async throws -> LoginResponseDTO {
+    func submitLogin() async -> Bool {
 
         errorMessage = nil
 
@@ -21,17 +21,24 @@ final class LoginViewModel: ObservableObject {
 
         guard !emailTrim.isEmpty else {
             errorMessage = "Informe seu e-mail."
-            throw NSError(domain: "Login", code: 0, userInfo: [NSLocalizedDescriptionKey: "E-mail vazio"])
+            return false
         }
 
         guard !passTrim.isEmpty else {
             errorMessage = "Informe sua senha."
-            throw NSError(domain: "Login", code: 0, userInfo: [NSLocalizedDescriptionKey: "Senha vazia"])
+            return false
         }
 
         isLoading = true
         defer { isLoading = false }
 
-        return try await service.login(LoginRequestDTO(email: emailTrim, password: passTrim))
+        do {
+            _ = try await service.login(email: emailTrim, password: passTrim)
+            return true
+        } catch {
+            errorMessage = "E-mail ou senha inválidos."
+            return false
+        }
     }
 }
+

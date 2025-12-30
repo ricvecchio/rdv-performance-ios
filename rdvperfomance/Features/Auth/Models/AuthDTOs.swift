@@ -1,6 +1,5 @@
 import Foundation
 
-// MARK: - Enums alinhados ao backend
 enum UserTypeDTO: String, Codable, CaseIterable {
     case TRAINER
     case STUDENT
@@ -14,44 +13,24 @@ enum PlanTypeDTO: String, Codable, CaseIterable {
     case FREE, BRONZE, SILVER, GOLD
 }
 
-// MARK: - Request/Response
-struct RegisterRequestDTO: Codable {
+/// Dados usados para cadastro (FirebaseAuth + Firestore)
+struct RegisterFormDTO: Codable {
     let name: String
     let email: String
     let password: String
     let phone: String?
 
     let userType: UserTypeDTO
-    let focusArea: FocusAreaDTO?
-    let planType: PlanTypeDTO
+    let focusArea: String?
+    let planType: String
 
-    // Campos TRAINER (opcionais no banco; obrigatórios por validação quando TRAINER)
+    // TRAINER
     let cref: String?
     let bio: String?
     let gymName: String?
-}
 
-struct RegisterResponseDTO: Codable {
-    // Você pode ajustar quando souber o payload real do backend.
-    // Mantive genérico para não travar o app.
-    let idUser: String?
-    let message: String?
-}
-
-// MARK: - Login Request/Response (MVP)
-struct LoginRequestDTO: Codable {
-    let email: String
-    let password: String
-}
-
-// ✅ IMPORTANTE:
-// Ajuste os nomes dos campos para bater com o seu backend.
-// A ideia é o backend devolver userType + token.
-struct LoginResponseDTO: Codable {
-    let token: String?
-    let userType: UserTypeDTO?
-    let name: String?
-    let idUser: String?
-    let message: String?
+    // STUDENT
+    let defaultCategory: String?
+    let active: Bool?
 }
 

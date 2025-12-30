@@ -1,32 +1,20 @@
 import SwiftUI
 
-// MARK: - LOGIN (com mocks do AppSession)
 struct LoginView: View {
 
-    // Binding da navegação centralizada
     @Binding var path: [AppRoute]
-
-    // Sessão global do app
     @EnvironmentObject private var session: AppSession
 
-    // Estados de formulário
-    @State private var email: String = ""
-    @State private var password: String = ""
+    @StateObject private var vm = LoginViewModel()
 
-    // Controla exibição/ocultação da senha
     @State private var showPassword: Bool = false
 
-    // Mensagem de erro (ex.: credenciais inválidas)
-    @State private var errorMessage: String? = nil
-
-    // Cores de estilo da tela
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
     var body: some View {
         ZStack {
 
-            // Fundo da tela
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -34,7 +22,6 @@ struct LoginView: View {
 
             VStack(spacing: 0) {
 
-                // LOGO
                 Image("rdv_logo")
                     .resizable()
                     .scaledToFit()
@@ -43,19 +30,17 @@ struct LoginView: View {
                     .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
                     .padding(.top, 20)
 
-                // Texto auxiliar
                 Text("Entre com sua conta")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white)
                     .padding(.top, 10)
                     .padding(.bottom, 18)
 
-                // Campos
                 VStack(spacing: 22) {
 
                     UnderlineTextField(
                         title: "E-mail",
-                        text: $email,
+                        text: $vm.email,
                         isSecure: false,
                         showPassword: .constant(false),
                         lineColor: lineColor,
@@ -65,7 +50,7 @@ struct LoginView: View {
 
                     UnderlineTextField(
                         title: "Senha",
-                        text: $password,
+                        text: $vm.password,
                         isSecure: true,
                         showPassword: $showPassword,
                         lineColor: lineColor,
@@ -75,8 +60,7 @@ struct LoginView: View {
                 }
                 .frame(width: 260)
 
-                // Mensagem de erro (se existir)
-                if let errorMessage {
+                if let errorMessage = vm.errorMessage {
                     Text(errorMessage)
                         .font(.system(size: 13, weight: .medium))
                         .foregroundColor(.white.opacity(0.95))
@@ -88,7 +72,6 @@ struct LoginView: View {
                         .padding(.top, 14)
                 }
 
-                // Recuperar senha (placeholder)
                 Button { } label: {
                     Text("Esqueceu a senha?")
                         .font(.system(size: 14))
@@ -97,33 +80,29 @@ struct LoginView: View {
                 }
                 .buttonStyle(.plain)
 
-                // Botão principal
                 Button {
-                    validarLoginMock()
+                    Task { await doLogin() }
                 } label: {
-                    Text("Acessar")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-                        .frame(width: 260, height: 44)
-                        .background(
-                            Capsule()
-                                .fill(Color.green.opacity(0.28))
-                                .overlay(
-                                    Capsule()
-                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                                )
-                        )
-                        .shadow(
-                            color: Color.green.opacity(0.10),
-                            radius: 10,
-                            x: 0,
-                            y: 6
-                        )
+                    HStack(spacing: 10) {
+                        if vm.isLoading {
+                            ProgressView().tint(.white.opacity(0.9))
+                        }
+                        Text(vm.isLoading ? "Entrando..." : "Acessar")
+                            .font(.system(size: 16, weight: .medium))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                    .frame(width: 260, height: 44)
+                    .background(
+                        Capsule()
+                            .fill(Color.green.opacity(0.28))
+                            .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                    )
+                    .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 22)
+                .disabled(vm.isLoading)
 
-                // ✅ Abre Tela 1 (Seleção Aluno/Professor) — cadastro
                 Button {
                     path.append(.accountTypeSelection)
                 } label: {
@@ -140,35 +119,27 @@ struct LoginView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear {
-            // ✅ Sempre que voltar ao Login, limpa mensagens de erro
-            errorMessage = nil
-        }
+        .onAppear { vm.errorMessage = nil }
     }
 
-    // MARK: - Login Mockado (via AppSession)
-    private func validarLoginMock() {
-        errorMessage = nil
+    private func doLogin() async {
+        let ok = await vm.submitLogin()
+        guard ok else { return }
 
-        let emailTrim = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        let passTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        // ✅ aguarda o AppSession buscar o userType no Firestore
+        // (loop simples e curto - educacional; sem “mocks”)
+        for _ in 0..<20 {
+            if session.userType != nil { break }
+            try? await Task.sleep(nanoseconds: 120_000_000) // 0.12s
+        }
 
-        guard !emailTrim.isEmpty, !passTrim.isEmpty else {
-            errorMessage = "Informe e-mail e senha."
+        guard let type = session.userType else {
+            vm.errorMessage = "Seu perfil não foi encontrado no Firestore (users/{uid})."
             return
         }
 
-        let ok = session.mockLogin(email: emailTrim, password: passTrim)
-
-        guard ok else {
-            errorMessage = "E-mail ou senha inválidos."
-            return
-        }
-
-        // ✅ Redireciona conforme tipo
         path.removeAll()
-
-        if session.userType == .STUDENT {
+        if type == .STUDENT {
             path.append(.studentAgenda)
         } else {
             path.append(.home)
