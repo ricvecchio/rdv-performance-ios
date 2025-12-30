@@ -1,12 +1,13 @@
 import SwiftUI
 
-// MARK: - LOGIN
-// Tela de login do app.
-// Possui campos de e-mail e senha e navega para Home quando ambos estão preenchidos.
+// MARK: - LOGIN (com mocks do AppSession)
 struct LoginView: View {
 
     // Binding da navegação centralizada
     @Binding var path: [AppRoute]
+
+    // Sessão global do app
+    @EnvironmentObject private var session: AppSession
 
     // Estados de formulário
     @State private var email: String = ""
@@ -14,6 +15,9 @@ struct LoginView: View {
 
     // Controla exibição/ocultação da senha
     @State private var showPassword: Bool = false
+
+    // Mensagem de erro (ex.: credenciais inválidas)
+    @State private var errorMessage: String? = nil
 
     // Cores de estilo da tela
     private let textSecondary = Color.white.opacity(0.60)
@@ -71,6 +75,19 @@ struct LoginView: View {
                 }
                 .frame(width: 260)
 
+                // Mensagem de erro (se existir)
+                if let errorMessage {
+                    Text(errorMessage)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.95))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .frame(width: 260)
+                        .background(Color.red.opacity(0.25))
+                        .cornerRadius(12)
+                        .padding(.top, 14)
+                }
+
                 // Recuperar senha (placeholder)
                 Button { } label: {
                     Text("Esqueceu a senha?")
@@ -82,7 +99,7 @@ struct LoginView: View {
 
                 // Botão principal
                 Button {
-                    validarLogin()
+                    validarLoginMock()
                 } label: {
                     Text("Acessar")
                         .font(.system(size: 16, weight: .medium))
@@ -104,9 +121,9 @@ struct LoginView: View {
                         )
                 }
                 .buttonStyle(.plain)
-                .padding(.top, 30)
+                .padding(.top, 22)
 
-                // ✅ Abre Tela 1 (Seleção Aluno/Professor)
+                // ✅ Abre Tela 1 (Seleção Aluno/Professor) — cadastro
                 Button {
                     path.append(.accountTypeSelection)
                 } label: {
@@ -123,17 +140,39 @@ struct LoginView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
+        .onAppear {
+            // ✅ Sempre que voltar ao Login, limpa mensagens de erro
+            errorMessage = nil
+        }
     }
 
-    // MARK: - Validação do login (MVP)
-    private func validarLogin() {
+    // MARK: - Login Mockado (via AppSession)
+    private func validarLoginMock() {
+        errorMessage = nil
+
         let emailTrim = email.trimmingCharacters(in: .whitespacesAndNewlines)
-        let passwordTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
+        let passTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !emailTrim.isEmpty, !passwordTrim.isEmpty else { return }
+        guard !emailTrim.isEmpty, !passTrim.isEmpty else {
+            errorMessage = "Informe e-mail e senha."
+            return
+        }
 
-        // MVP: navega direto
-        path.append(.home)
+        let ok = session.mockLogin(email: emailTrim, password: passTrim)
+
+        guard ok else {
+            errorMessage = "E-mail ou senha inválidos."
+            return
+        }
+
+        // ✅ Redireciona conforme tipo
+        path.removeAll()
+
+        if session.userType == .STUDENT {
+            path.append(.studentAgenda)
+        } else {
+            path.append(.home)
+        }
     }
 }
 

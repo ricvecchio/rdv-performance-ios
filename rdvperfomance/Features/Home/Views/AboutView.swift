@@ -4,11 +4,20 @@ import SwiftUI
 struct AboutView: View {
 
     @Binding var path: [AppRoute]
+    @EnvironmentObject private var session: AppSession
 
     // MARK: - Layout
     private let cardMaxWidth: CGFloat = 360
     private let logoLift: CGFloat = 30
     private let cardLift: CGFloat = 26
+
+    // ✅ Última categoria (para Professor → botão "Alunos" no footer)
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+
+    private var categoriaAtualProfessor: TreinoTipo {
+        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+    }
 
     var body: some View {
         ZStack {
@@ -22,7 +31,7 @@ struct AboutView: View {
             // ESTRUTURA: CONTEÚDO / FOOTER
             VStack(spacing: 0) {
 
-                // ✅ Separador entre NavigationBar e corpo (mesmo padrão das outras telas)
+                // ✅ Separador entre NavigationBar e corpo
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
@@ -54,24 +63,17 @@ struct AboutView: View {
                     .padding(.horizontal, 20)
                 }
 
-                // FOOTER FIXO
-                FooterBar(
-                    path: $path,
-                    kind: .homeSobrePerfil(
-                        isHomeSelected: false,
-                        isSobreSelected: true,
-                        isPerfilSelected: false
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
+                // ✅ FOOTER DINÂMICO por tipo de usuário
+                footerForUser()
+                    .frame(height: Theme.Layout.footerHeight)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
 
-        // ✅ TOOLBAR PADRÃO (igual Home/Treinos)
+        // ✅ TOOLBAR PADRÃO
         .toolbar(content: {
 
             // Voltar verde
@@ -92,20 +94,43 @@ struct AboutView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            // Avatar no canto direito (mesmo padrão da HomeView)
+            // Avatar canto direito
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
-                    .onTapGesture {
-                        // Se quiser navegar ao tocar:
-                        // path.append(.perfil)
-                    }
             }
         })
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Remove a última rota da pilha (evita crash se estiver vazia)
+    // MARK: - Footer por userType
+    @ViewBuilder
+    private func footerForUser() -> some View {
+        if session.userType == .STUDENT {
+            // ✅ Aluno: Agenda | Sobre | Perfil (Sobre selecionado)
+            FooterBar(
+                path: $path,
+                kind: .agendaSobrePerfil(
+                    isAgendaSelected: false,
+                    isSobreSelected: true,
+                    isPerfilSelected: false
+                )
+            )
+        } else {
+            // ✅ Professor: Home | Alunos | Sobre | Perfil (Sobre selecionado)
+            FooterBar(
+                path: $path,
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: categoriaAtualProfessor,
+                    isHomeSelected: false,
+                    isAlunosSelected: false,
+                    isSobreSelected: true,
+                    isPerfilSelected: false
+                )
+            )
+        }
+    }
+
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
@@ -142,7 +167,6 @@ struct AboutView: View {
         .cornerRadius(12)
     }
 
-    // Item com checkmark para listar funcionalidades
     private func featureItem(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
 

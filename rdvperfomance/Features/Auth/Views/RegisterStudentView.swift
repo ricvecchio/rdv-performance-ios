@@ -1,6 +1,6 @@
 import SwiftUI
 
-// MARK: - Tela 2: Cadastro Aluno (STUDENT)
+// MARK: - Tela: Cadastro Aluno (STUDENT)
 struct RegisterStudentView: View {
 
     @Binding var path: [AppRoute]
@@ -39,19 +39,17 @@ struct RegisterStudentView: View {
 
                         VStack(spacing: 18) {
 
-                            // ⬇️ Formulário começa um pouco mais abaixo
                             formCardStudent()
                                 .padding(.top, 24)
 
                             actionArea()
 
-                            // Respiro extra para não colar no rodapé
                             Color.clear
                                 .frame(height: Theme.Layout.footerHeight + 24)
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
-                        .padding(.top, 8) // ⬅️ ajuste fino do corpo inteiro
+                        .padding(.top, 8)
 
                         Spacer(minLength: 0)
                     }
@@ -62,7 +60,6 @@ struct RegisterStudentView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            // Voltar
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -71,7 +68,6 @@ struct RegisterStudentView: View {
                 .buttonStyle(.plain)
             }
 
-            // Título da NavigationBar
             ToolbarItem(placement: .principal) {
                 Text("Cadastro Aluno")
                     .font(Theme.Fonts.headerTitle())
@@ -260,7 +256,6 @@ struct RegisterStudentView: View {
         }
     }
 
-    // MARK: - Navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

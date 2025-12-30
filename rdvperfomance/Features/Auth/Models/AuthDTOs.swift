@@ -37,3 +37,21 @@ struct RegisterResponseDTO: Codable {
     let idUser: String?
     let message: String?
 }
+
+// MARK: - Login Request/Response (MVP)
+struct LoginRequestDTO: Codable {
+    let email: String
+    let password: String
+}
+
+// ✅ IMPORTANTE:
+// Ajuste os nomes dos campos para bater com o seu backend.
+// A ideia é o backend devolver userType + token.
+struct LoginResponseDTO: Codable {
+    let token: String?
+    let userType: UserTypeDTO?
+    let name: String?
+    let idUser: String?
+    let message: String?
+}
+

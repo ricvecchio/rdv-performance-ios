@@ -3,6 +3,7 @@ import SwiftUI
 struct HomeView: View {
 
     @Binding var path: [AppRoute]
+    @EnvironmentObject private var session: AppSession
 
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
@@ -27,11 +28,12 @@ struct HomeView: View {
 
                     VStack(spacing: 0) {
 
-                        programaTileHomeCrossfit(
+                        programaTile(
                             title: "Crossfit",
                             imageName: "rdv_programa_crossfit_horizontal",
                             height: tileHeight,
-                            imageTitle: "Crossfit"
+                            imageTitle: "Crossfit",
+                            tipo: .crossfit
                         )
 
                         programaTile(
@@ -53,32 +55,19 @@ struct HomeView: View {
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
-                FooterBar(
-                    path: $path,
-                    kind: .homeSobrePerfil(
-                        isHomeSelected: true,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
+                // ✅ Professor: Home|Sobre|Perfil
+                // ✅ Aluno: Agenda|Sobre|Perfil (se você estiver usando esse padrão)
+                footerForCurrentUser()
+                    .frame(height: Theme.Layout.footerHeight)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(content: {
-
-            // ✅ REMOVIDO: botão de voltar SOMENTE na HomeView
-
-            // ✅ Perfil no canto direito: apenas foto redonda (SEM Button para não criar estilo/bolha)
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
-                    .onTapGesture {
-                        // Se quiser navegar ao tocar:
-                        // path.append(.perfil)
-                    }
                     .background(Color.clear)
             }
         })
@@ -86,32 +75,31 @@ struct HomeView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    private func programaTileHomeCrossfit(
-        title: String,
-        imageName: String,
-        height: CGFloat,
-        imageTitle: String
-    ) -> some View {
-
-        Button {
-            ultimoTreinoSelecionado = TreinoTipo.crossfit.rawValue
-            path.append(.crossfitMenu)
-        } label: {
-            tileLayout(
-                title: title,
-                imageName: imageName,
-                height: height,
-                imageTitle: imageTitle
+    // MARK: - Footer por userType
+    @ViewBuilder
+    private func footerForCurrentUser() -> some View {
+        if session.userType == .STUDENT {
+            FooterBar(
+                path: $path,
+                kind: .agendaSobrePerfil(
+                    isAgendaSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: false
+                )
+            )
+        } else {
+            FooterBar(
+                path: $path,
+                kind: .homeSobrePerfil(
+                    isHomeSelected: true,
+                    isSobreSelected: false,
+                    isPerfilSelected: false
+                )
             )
         }
-        .buttonStyle(.plain)
-        .background(
-            Color.black.opacity(0.3)
-                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-        )
-        .frame(height: height)
     }
 
+    // MARK: - Tile (Categoria)
     private func programaTile(
         title: String,
         imageName: String,
@@ -121,8 +109,18 @@ struct HomeView: View {
     ) -> some View {
 
         Button {
+
             ultimoTreinoSelecionado = tipo.rawValue
-            path.append(.treinos(tipo))
+
+            // ✅ CORREÇÃO AQUI:
+            // Professor -> Tela 3 (Lista de Alunos)
+            if session.userType == .TRAINER {
+                path.append(.teacherStudentsList(tipo))
+            } else {
+                // fallback
+                path.append(.studentAgenda)
+            }
+
         } label: {
             tileLayout(
                 title: title,

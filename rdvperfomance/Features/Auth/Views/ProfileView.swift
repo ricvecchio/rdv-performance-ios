@@ -1,22 +1,29 @@
 import SwiftUI
 
 // MARK: - ProfileView
-// Tela de perfil (pós-login). Exibe informações e opções do usuário.
 struct ProfileView: View {
 
     @Binding var path: [AppRoute]
+    @EnvironmentObject private var session: AppSession
 
-    // largura máxima do “miolo” (conteúdo central)
+    // largura máxima do “miolo”
     private let contentMaxWidth: CGFloat = 380
 
-    // Exemplo de check-ins da semana
+    // ✅ Última categoria (para Professor → botão "Alunos" no footer)
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+
+    private var categoriaAtualProfessor: TreinoTipo {
+        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+    }
+
+    // Exemplo de check-ins
     private let checkinsRealizados: Int = 2
     private let checkinsMetaSemana: Int = 6
 
     var body: some View {
         ZStack {
 
-            // FUNDO
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -24,13 +31,11 @@ struct ProfileView: View {
 
             VStack(spacing: 0) {
 
-                // Separador entre NavigationBar e corpo
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                // Conteúdo
                 ScrollView(showsIndicators: false) {
                     HStack {
                         Spacer(minLength: 0)
@@ -49,23 +54,18 @@ struct ProfileView: View {
                     }
                 }
 
-                // Footer
-                FooterBar(
-                    path: $path,
-                    kind: .homeSobrePerfil(
-                        isHomeSelected: false,
-                        isSobreSelected: false,
-                        isPerfilSelected: true
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
+                // ✅ FOOTER DINÂMICO por tipo de usuário
+                footerForUser()
+                    .frame(height: Theme.Layout.footerHeight)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            // ✅ Voltar (mesmo padrão do AboutView)
+            // ✅ Voltar
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -87,7 +87,7 @@ struct ProfileView: View {
                     path.append(.configuracoes)
                 } label: {
                     Image(systemName: "gearshape.fill")
-                        .foregroundColor(.green) // mantém coerência visual
+                        .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
             }
@@ -96,7 +96,34 @@ struct ProfileView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // ✅ Remove a última rota da pilha (evita crash se estiver vazia)
+    // MARK: - Footer por userType
+    @ViewBuilder
+    private func footerForUser() -> some View {
+        if session.userType == .STUDENT {
+            // ✅ Aluno: Agenda | Sobre | Perfil (Perfil selecionado)
+            FooterBar(
+                path: $path,
+                kind: .agendaSobrePerfil(
+                    isAgendaSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: true
+                )
+            )
+        } else {
+            // ✅ Professor: Home | Alunos | Sobre | Perfil (Perfil selecionado)
+            FooterBar(
+                path: $path,
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: categoriaAtualProfessor,
+                    isHomeSelected: false,
+                    isAlunosSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: true
+                )
+            )
+        }
+    }
+
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
@@ -167,7 +194,6 @@ struct ProfileView: View {
         case badge(String)
     }
 
-    // ✅ ÍCONES AGORA VERDES (PADRÃO SETTINGSVIEW)
     private func optionRow(icon: String, title: String, trailing: Trailing) -> some View {
         HStack(spacing: 14) {
 
@@ -204,10 +230,12 @@ struct ProfileView: View {
         .padding(.vertical, 14)
     }
 
-    // MARK: - Logout
+    // MARK: - Logout (corrigido: volta para Login de verdade)
     private func logoutButton() -> some View {
         Button {
+            session.logout()
             path.removeAll()
+            path.append(.login)
         } label: {
             Text("Sair")
                 .font(.system(size: 17, weight: .medium))
