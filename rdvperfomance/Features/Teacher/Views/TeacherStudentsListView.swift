@@ -1,24 +1,25 @@
 import SwiftUI
-import FirebaseAuth
-import FirebaseFirestore
+import Combine
 
 struct TeacherStudentsListView: View {
 
     @Binding var path: [AppRoute]
     let selectedCategory: TreinoTipo
 
-    @State private var filter: TreinoTipo? = nil // nil = todos
-    @State private var students: [Student] = []
-    @State private var isLoading: Bool = false
-    @State private var errorMessage: String? = nil
+    @EnvironmentObject private var session: AppSession
+    @StateObject private var vm: TeacherStudentsListViewModel
 
+    @State private var filter: TreinoTipo? = nil
     private let contentMaxWidth: CGFloat = 380
-    private let service = TeacherStudentsService()
 
-    // Computed: aplica filtro no array carregado do Firestore
-    private var filteredStudents: [Student] {
-        guard let filter else { return students }
-        return students.filter { $0.program == filter }
+    init(
+        path: Binding<[AppRoute]>,
+        selectedCategory: TreinoTipo,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.selectedCategory = selectedCategory
+        _vm = StateObject(wrappedValue: TeacherStudentsListViewModel(repository: repository))
     }
 
     var body: some View {
@@ -36,39 +37,20 @@ struct TeacherStudentsListView: View {
                     .frame(height: 1)
 
                 ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                    VStack(spacing: 16) {
 
-                        VStack(spacing: 14) {
-
-                            filterCard()
-
-                            // ✅ Estados: loading / erro / vazio / lista
-                            if isLoading {
-                                loadingCard()
-                            } else if let errorMessage {
-                                errorCard(errorMessage)
-                            } else if filteredStudents.isEmpty {
-                                emptyStateCard()
-                            } else {
-                                VStack(spacing: 10) {
-                                    ForEach(filteredStudents) { s in
-                                        studentRow(student: s)
-                                    }
-                                }
-                            }
-
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
-                        }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
+                        header
+                        filterRow
+                        contentCard
                     }
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 28)
+                    .frame(maxWidth: .infinity)
                 }
 
-                // ✅ PROFESSOR: Home | Alunos | Sobre | Perfil
+                // ✅ Rodapé do Professor no padrão do app
                 FooterBar(
                     path: $path,
                     kind: .teacherHomeAlunosSobrePerfil(
@@ -80,272 +62,253 @@ struct TeacherStudentsListView: View {
                     )
                 )
                 .frame(height: Theme.Layout.footerHeight)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .onAppear {
+            if filter == nil { filter = selectedCategory }
+        }
+        .task { await loadStudents() }
         .navigationBarBackButtonHidden(true)
+
+        // ✅ Cabeçalho padrão (igual HomeView)
         .toolbar {
-
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
-                }
-                .buttonStyle(.plain)
-            }
-
-            ToolbarItem(placement: .principal) {
-                Text("Lista de Alunos")
-                    .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
-            }
-
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
+                    .background(Color.clear)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .onAppear {
-            if filter == nil { filter = selectedCategory } // abre filtrado pela categoria
-            Task { await loadStudents() }
-        }
-        .refreshable {
-            await loadStudents()
-        }
     }
 
-    // MARK: - Firestore Load
+    // MARK: - Header
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Alunos")
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.white)
 
-    private func loadStudents() async {
-        errorMessage = nil
-        isLoading = true
-        defer { isLoading = false }
-
-        do {
-            let fetched = try await service.fetchStudentsForLoggedTeacher()
-            self.students = fetched
-        } catch {
-            self.students = []
-            self.errorMessage = error.localizedDescription
+            Text("Selecione um aluno para ver as semanas de treino.")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.35))
         }
-    }
-
-    // MARK: - UI
-
-    private func filterCard() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-
-            Text("Filtro")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-
-            Menu {
-                Button("Todos") { filter = nil }
-                Divider()
-                Button("Crossfit") { filter = .crossfit }
-                Button("Academia") { filter = .academia }
-                Button("Treinos em Casa") { filter = .emCasa }
-            } label: {
-                HStack {
-                    Text(filterTitle())
-                        .foregroundColor(.white.opacity(0.92))
-                        .font(.system(size: 16, weight: .medium))
-
-                    Spacer()
-
-                    Image(systemName: "line.3.horizontal.decrease.circle")
-                        .foregroundColor(.green.opacity(0.85))
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 14)
-                .background(Theme.Colors.cardBackground)
-                .cornerRadius(14)
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func loadingCard() -> some View {
-        HStack(spacing: 12) {
-            ProgressView()
-                .tint(.white)
-            Text("Carregando alunos...")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
-            Spacer()
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
-
-    private func errorCard(_ msg: String) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Falha ao carregar")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.95))
-            Text(msg)
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.75))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.red.opacity(0.18))
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
     }
 
-    private func emptyStateCard() -> some View {
-        VStack(spacing: 10) {
-            Text("Nenhum aluno encontrado")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+    // MARK: - Filtro (padrão Settings/Profile)
+    private var filterRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("FILTRO")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.35))
+                .padding(.horizontal, 6)
 
-            Text("Vincule alunos ao seu perfil para que apareçam aqui.")
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.65))
-                .multilineTextAlignment(.center)
-        }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 18)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
 
-    private func studentRow(student: Student) -> some View {
-        Button {
-            path.append(.teacherStudentDetail(student: student, category: selectedCategory))
-        } label: {
-            VStack(alignment: .leading, spacing: 10) {
+                    filterChip(
+                        title: selectedCategory.displayNameFallback,
+                        isSelected: filter == selectedCategory
+                    ) { filter = selectedCategory }
 
-                HStack {
-                    Text("Programa: \(student.program.tituloOverlayImagem)")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.green.opacity(0.85))
-
-                    Spacer()
-
-                    Text("\(Int(student.progress * 100))%")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.85))
+                    filterChip(
+                        title: "Todos",
+                        isSelected: filter == nil
+                    ) { filter = nil }
                 }
-
-                Text("Nome: \(student.name)")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.95))
-
-                Text("Período: \(student.periodText)")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.65))
+                .padding(.vertical, 2)
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-            )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func filterChip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color.green.opacity(0.16) : Color.white.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 999)
+                        .stroke(isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.12), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 999))
         }
         .buttonStyle(.plain)
     }
 
-    private func filterTitle() -> String {
-        switch filter {
-        case .none: return "Todos os alunos"
-        case .some(let v): return v.tituloOverlayImagem
+    // MARK: - Card padrão do app (igual Settings)
+    private var contentCard: some View {
+        VStack(spacing: 0) {
+            if vm.isLoading {
+                loadingView
+            } else if let msg = vm.errorMessage {
+                errorView(message: msg)
+            } else if vm.students.isEmpty {
+                emptyView
+            } else {
+                studentsList
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    // MARK: - Lista (linhas dentro do card, sem mini-cards)
+    private var studentsList: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(vm.students.enumerated()), id: \.offset) { idx, student in
+                Button {
+
+                    guard let sid = student.id, !sid.isEmpty else {
+                        vm.errorMessage = "Aluno inválido: id não encontrado."
+                        return
+                    }
+
+                    let sname = student.name ?? "Aluno"
+                    path.append(.studentAgenda(studentId: sid, studentName: sname))
+
+                } label: {
+                    HStack(spacing: 14) {
+
+                        Image(systemName: "person.crop.circle")
+                            .font(.system(size: 18))
+                            .foregroundColor(.green.opacity(0.85))
+                            .frame(width: 28)
+
+                        Text(student.name ?? "Aluno")
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+
+                if idx < vm.students.count - 1 {
+                    innerDivider(leading: 54)
+                }
+            }
         }
     }
 
-    private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
+    // MARK: - Estados (cores padrão)
+    private var loadingView: some View {
+        VStack(spacing: 10) {
+            ProgressView()
+            Text("Carregando alunos...")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+    }
+
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 10) {
+            Text("Ops! Não foi possível carregar.")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+
+            Text(message)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+
+            Button {
+                Task { await loadStudents() }
+            } label: {
+                Text("Tentar novamente")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Color.green.opacity(0.16)))
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 10)
+    }
+
+    private var emptyView: some View {
+        VStack(spacing: 10) {
+            Text("Nenhum aluno encontrado")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+
+            Text("Ainda não há alunos nessa categoria.")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 10)
+    }
+
+    private func innerDivider(leading: CGFloat) -> some View {
+        Divider()
+            .background(Theme.Colors.divider)
+            .padding(.leading, leading)
+    }
+
+    // MARK: - Load
+    private func loadStudents() async {
+        guard let teacherId = session.uid else {
+            vm.errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+
+        let categoryKey = selectedCategory.firestoreCategoryKeyFallback
+        await vm.loadStudents(teacherId: teacherId, category: categoryKey)
     }
 }
 
-// ============================================================
-// MARK: - Service (Firestore) — simples e direto (educacional)
-// ============================================================
+@MainActor
+final class TeacherStudentsListViewModel: ObservableObject {
 
-private final class TeacherStudentsService {
+    @Published private(set) var students: [AppUser] = []
+    @Published private(set) var isLoading: Bool = false
+    @Published var errorMessage: String? = nil
 
-    private let db = Firestore.firestore()
+    private let repository: FirestoreRepository
 
-    /// Busca alunos vinculados ao professor logado:
-    /// - teacher_students: teacherId == currentUser.uid
-    /// - para cada relação, busca o doc em users/{studentId}
-    func fetchStudentsForLoggedTeacher() async throws -> [Student] {
-
-        guard let teacherUID = Auth.auth().currentUser?.uid else {
-            throw NSError(
-                domain: "TeacherStudents",
-                code: 401,
-                userInfo: [NSLocalizedDescriptionKey: "Você precisa estar logado como professor."]
-            )
-        }
-
-        // 1) pega relações teacher_students do professor
-        let relSnapshot = try await db.collection("teacher_students")
-            .whereField("teacherId", isEqualTo: teacherUID)
-            .getDocuments()
-
-        let relations = relSnapshot.documents.compactMap { doc -> (studentId: String, categories: [String])? in
-            let data = doc.data()
-            let studentId = data["studentId"] as? String ?? ""
-            let categories = data["categories"] as? [String] ?? []
-            guard !studentId.isEmpty else { return nil }
-            return (studentId: studentId, categories: categories)
-        }
-
-        if relations.isEmpty { return [] }
-
-        // 2) busca cada aluno em users/{uid}
-        var result: [Student] = []
-        result.reserveCapacity(relations.count)
-
-        for rel in relations {
-            let userDoc = try await db.collection("users").document(rel.studentId).getDocument()
-            guard let data = userDoc.data() else { continue }
-
-            let name = (data["name"] as? String) ?? "Aluno"
-            // Para o app: o "program" vem da categoria vinculada (primeira) ou fallback
-            let programRaw = rel.categories.first ?? TreinoTipo.crossfit.rawValue
-            let program = TreinoTipo(rawValue: programRaw) ?? .crossfit
-
-            // Valores educacionais (até você plugar progress real)
-            let progress = 0.0
-            let periodText = "Semana atual • (Firebase)"
-
-            result.append(
-                Student(
-                    name: name,
-                    program: program,
-                    periodText: periodText,
-                    progress: progress
-                )
-            )
-        }
-
-        // 3) ordena por nome para ficar bonito
-        return result.sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    init(repository: FirestoreRepository) {
+        self.repository = repository
     }
+
+    func loadStudents(teacherId: String, category: String) async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let result = try await repository.getStudentsForTeacher(teacherId: teacherId, category: category)
+            self.students = result
+        } catch {
+            self.errorMessage = (error as NSError).localizedDescription
+        }
+
+        isLoading = false
+    }
+}
+
+private extension TreinoTipo {
+    var firestoreCategoryKeyFallback: String { String(describing: self).uppercased() }
+    var displayNameFallback: String { String(describing: self).capitalized }
 }
 

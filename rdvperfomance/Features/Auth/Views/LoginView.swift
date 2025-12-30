@@ -127,7 +127,6 @@ struct LoginView: View {
         guard ok else { return }
 
         // ✅ aguarda o AppSession buscar o userType no Firestore
-        // (loop simples e curto - educacional; sem “mocks”)
         for _ in 0..<20 {
             if session.userType != nil { break }
             try? await Task.sleep(nanoseconds: 120_000_000) // 0.12s
@@ -139,8 +138,14 @@ struct LoginView: View {
         }
 
         path.removeAll()
+
         if type == .STUDENT {
-            path.append(.studentAgenda)
+            guard let uid = session.uid else {
+                vm.errorMessage = "Não foi possível identificar o usuário logado."
+                return
+            }
+            let name = session.userName ?? "Aluno"
+            path.append(.studentAgenda(studentId: uid, studentName: name))
         } else {
             path.append(.home)
         }

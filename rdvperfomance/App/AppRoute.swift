@@ -32,9 +32,9 @@ enum AppRoute: Hashable {
 
     // MARK: - Fluxo ALUNO
     /// Tela principal do aluno (Agenda / Treinos)
-    case studentAgenda
+    case studentAgenda(studentId: String, studentName: String)
 
     /// Detalhe da semana de treino
-    case studentWeekDetail(TrainingWeek)
+    case studentWeekDetail(studentId: String, weekId: String, weekTitle: String)
 }
 

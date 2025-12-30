@@ -55,8 +55,6 @@ struct HomeView: View {
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
-                // ✅ Professor: Home|Sobre|Perfil
-                // ✅ Aluno: Agenda|Sobre|Perfil (se você estiver usando esse padrão)
                 footerForCurrentUser()
                     .frame(height: Theme.Layout.footerHeight)
                     .frame(maxWidth: .infinity)
@@ -87,6 +85,7 @@ struct HomeView: View {
                     isPerfilSelected: false
                 )
             )
+            .environmentObject(session) // ✅ garante session no footer
         } else {
             FooterBar(
                 path: $path,
@@ -96,6 +95,7 @@ struct HomeView: View {
                     isPerfilSelected: false
                 )
             )
+            .environmentObject(session)
         }
     }
 
@@ -112,13 +112,13 @@ struct HomeView: View {
 
             ultimoTreinoSelecionado = tipo.rawValue
 
-            // ✅ CORREÇÃO AQUI:
-            // Professor -> Tela 3 (Lista de Alunos)
             if session.userType == .TRAINER {
                 path.append(.teacherStudentsList(tipo))
             } else {
-                // fallback
-                path.append(.studentAgenda)
+                // ✅ Aluno: precisa studentId + studentName
+                guard let uid = session.uid else { return }
+                let name = session.userName ?? "Aluno"
+                path.append(.studentAgenda(studentId: uid, studentName: name))
             }
 
         } label: {

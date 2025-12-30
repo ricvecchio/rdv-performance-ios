@@ -68,6 +68,9 @@ struct FooterBar: View {
     @Binding var path: [AppRoute]
     let kind: Kind
 
+    // ✅ Precisamos do uid/name do aluno para montar a rota .studentAgenda(...)
+    @EnvironmentObject private var session: AppSession
+
     var body: some View {
         VStack(spacing: 0) {
 
@@ -236,7 +239,6 @@ struct FooterBar: View {
                 }
                 .buttonStyle(.plain)
 
-                // ✅ ÍCONE 1 PESSOA + TEXTO "Aluno"
                 Button { goTeacherAlunos(category: selectedCategory) } label: {
                     FooterItem(icon: .system("person"), title: "Aluno", isSelected: isAlunoSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
@@ -269,11 +271,31 @@ struct FooterBar: View {
     private func goSobreBasic() { withAnimation { path = canonicalStackBasic(for: .sobre) } }
     private func goPerfilBasic(){ withAnimation { path = canonicalStackBasic(for: .perfil) } }
 
-    // MARK: - Navegação Aluno
-    private func goAgenda() { withAnimation { path = [.studentAgenda] } }
-    private func goTreinosAluno() { withAnimation { path = [.studentAgenda] } }
-    private func goSobreStudent() { withAnimation { path = [.studentAgenda, .sobre] } }
-    private func goPerfilStudent() { withAnimation { path = [.studentAgenda, .sobre, .perfil] } }
+    // MARK: - Navegação Aluno (AGORA com parâmetros)
+    private func goAgenda() {
+        guard let studentId = session.uid else { return }
+        let studentName = session.userName ?? "Aluno"
+        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName)] }
+    }
+
+    private func goTreinosAluno() {
+        // no seu fluxo atual, "Treinos" do aluno cai na agenda
+        guard let studentId = session.uid else { return }
+        let studentName = session.userName ?? "Aluno"
+        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName)] }
+    }
+
+    private func goSobreStudent() {
+        guard let studentId = session.uid else { return }
+        let studentName = session.userName ?? "Aluno"
+        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre] }
+    }
+
+    private func goPerfilStudent() {
+        guard let studentId = session.uid else { return }
+        let studentName = session.userName ?? "Aluno"
+        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre, .perfil] }
+    }
 
     // MARK: - Navegação Professor
     private enum TeacherDestination { case home, alunos, sobre, perfil }

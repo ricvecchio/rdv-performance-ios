@@ -1,13 +1,30 @@
 import SwiftUI
+import Combine
 
-// MARK: - Tela 7 (Aluno): Treinos da Semana (Detalhe)
 struct StudentWeekDetailView: View {
 
     @Binding var path: [AppRoute]
 
-    let week: TrainingWeek
+    let studentId: String
+    let weekId: String
+    let weekTitle: String
 
+    @StateObject private var vm: StudentWeekDetailViewModel
     private let contentMaxWidth: CGFloat = 380
+
+    init(
+        path: Binding<[AppRoute]>,
+        studentId: String,
+        weekId: String,
+        weekTitle: String,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.studentId = studentId
+        self.weekId = weekId
+        self.weekTitle = weekTitle
+        _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, repository: repository))
+    }
 
     var body: some View {
         ZStack {
@@ -22,35 +39,25 @@ struct StudentWeekDetailView: View {
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
-                    .frame(maxWidth: .infinity)
 
                 ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                    VStack(spacing: 16) {
 
-                        VStack(spacing: 14) {
+                        header
 
-                            headerCard()
-
-                            daysCard()
-
-                            Color.clear
-                                .frame(height: Theme.Layout.footerHeight + 20)
-                        }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
+                        contentCard
                     }
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 28)
+                    .frame(maxWidth: .infinity)
                 }
 
-                // ✅ Aluno: Agenda | Treinos | Sobre | Perfil (Treinos selecionado)
                 FooterBar(
                     path: $path,
-                    kind: .agendaTreinosSobrePerfil(
-                        isAgendaSelected: false,
-                        isTreinosSelected: true,
+                    kind: .agendaSobrePerfil(
+                        isAgendaSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -62,106 +69,182 @@ struct StudentWeekDetailView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
-        .toolbar {
-
-            // ✅ Botão voltar aqui faz sentido (volta para a Agenda)
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
-                }
-                .buttonStyle(.plain)
-            }
-
-            ToolbarItem(placement: .principal) {
-                Text("Treinos da Semana")
-                    .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
-            }
-
-            ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_eu", size: 38)
-            }
-        }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbar(.hidden, for: .navigationBar)
+        .task { await vm.loadDays() }
     }
 
-    private func headerCard() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-
-            Text("Resumo")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-
-            Text("Aqui você verá o detalhamento do treino da semana (Segunda a Sábado).")
-                .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.92))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
-
-    private func daysCard() -> some View {
-        VStack(alignment: .leading, spacing: 12) {
-
-            Text("Treinos (01 a 06)")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-
-            VStack(spacing: 10) {
-                dayRow(day: "Segunda", detail: "Treino 01 — (resumo)")
-                dayRow(day: "Terça", detail: "Treino 02 — (resumo)")
-                dayRow(day: "Quarta", detail: "Treino 03 — (resumo)")
-                dayRow(day: "Quinta", detail: "Treino 04 — (resumo)")
-                dayRow(day: "Sexta", detail: "Treino 05 — (resumo)")
-                dayRow(day: "Sábado", detail: "Treino 06 — (resumo)")
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
-
-    private func dayRow(day: String, detail: String) -> some View {
+    private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(day)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.95))
+            Text("Semana")
+                .font(.system(size: 26, weight: .bold))
 
-            Text(detail)
+            Text(weekTitle)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            Text("Dias de treino")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.70))
+                .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.vertical, 8)
-
-        // divisor sutil
-        .overlay(
-            Rectangle()
-                .fill(Color.white.opacity(0.06))
-                .frame(height: 1),
-            alignment: .bottom
-        )
     }
 
-    private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
+    private var contentCard: some View {
+        VStack(spacing: 12) {
+            if vm.isLoading {
+                loadingView
+            } else if let errorMessage = vm.errorMessage {
+                errorView(message: errorMessage)
+            } else if vm.days.isEmpty {
+                emptyView
+            } else {
+                daysList
+            }
+        }
+        .padding(14)
+        .background(Theme.Colors.cardBackground)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 8)
+    }
+
+    private var daysList: some View {
+        VStack(spacing: 10) {
+            ForEach(Array(vm.days.enumerated()), id: \.offset) { _, day in
+                HStack(spacing: 12) {
+
+                    Circle()
+                        .fill(Theme.Colors.selected.opacity(0.20))
+                        .frame(width: 42, height: 42)
+                        .overlay(
+                            Image(systemName: "flame.fill")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundStyle(Theme.Colors.selected.opacity(0.9))
+                        )
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(day.titleFallback)
+                            .font(.system(size: 15, weight: .semibold))
+
+                        Text(day.subtitleFallback)
+                            .font(.system(size: 13))
+                            .foregroundStyle(.secondary)
+                    }
+
+                    Spacer()
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 12)
+                .background(Color.white.opacity(0.08))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+            }
+        }
+    }
+
+    private var loadingView: some View {
+        VStack(spacing: 10) {
+            ProgressView()
+            Text("Carregando dias...")
+                .font(.system(size: 14))
+                .foregroundStyle(.secondary)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+    }
+
+    private func errorView(message: String) -> some View {
+        VStack(spacing: 10) {
+            Text("Ops! Não foi possível carregar.")
+                .font(.system(size: 15, weight: .semibold))
+            Text(message)
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+
+            Button {
+                Task { await vm.loadDays() }
+            } label: {
+                Text("Tentar novamente")
+                    .font(.system(size: 14, weight: .semibold))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Theme.Colors.selected.opacity(0.22))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+            }
+            .buttonStyle(.plain)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+    }
+
+    private var emptyView: some View {
+        VStack(spacing: 10) {
+            Text("Nenhum dia cadastrado")
+                .font(.system(size: 15, weight: .semibold))
+            Text("O professor ainda não adicionou dias para esta semana.")
+                .font(.system(size: 13))
+                .foregroundStyle(.secondary)
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+    }
+}
+
+@MainActor
+final class StudentWeekDetailViewModel: ObservableObject {
+
+    @Published private(set) var days: [TrainingDayFS] = []
+    @Published private(set) var isLoading: Bool = false
+    @Published var errorMessage: String? = nil
+
+    private let weekId: String
+    private let repository: FirestoreRepository
+
+    init(weekId: String, repository: FirestoreRepository) {
+        self.weekId = weekId
+        self.repository = repository
+    }
+
+    func loadDays() async {
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            let result = try await repository.getDaysForWeek(weekId: weekId)
+            self.days = result
+        } catch {
+            self.errorMessage = (error as NSError).localizedDescription
+        }
+
+        isLoading = false
+    }
+}
+
+private extension TrainingDayFS {
+
+    var titleFallback: String {
+        if let title = (Mirror(reflecting: self).children.first { $0.label == "title" }?.value as? String),
+           !title.isEmpty { return title }
+        if let name = (Mirror(reflecting: self).children.first { $0.label == "name" }?.value as? String),
+           !name.isEmpty { return name }
+        if let dayTitle = (Mirror(reflecting: self).children.first { $0.label == "dayTitle" }?.value as? String),
+           !dayTitle.isEmpty { return dayTitle }
+        return "Treino"
+    }
+
+    var subtitleFallback: String {
+        if let order = (Mirror(reflecting: self).children.first { $0.label == "order" }?.value as? Int) {
+            return "Ordem: \(order)"
+        }
+        return "Dia de treino"
     }
 }
 

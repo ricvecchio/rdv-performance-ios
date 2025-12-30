@@ -25,6 +25,7 @@ struct AppRouter: View {
 
                     case .teacherStudentsList(let tipo):
                         TeacherStudentsListView(path: $path, selectedCategory: tipo)
+                            .environmentObject(session)
 
                     case .teacherStudentDetail(let student, let category):
                         TeacherStudentDetailView(
@@ -32,13 +33,23 @@ struct AppRouter: View {
                             student: student,
                             category: category
                         )
+                        .environmentObject(session)
 
                     // ===== ALUNO =====
-                    case .studentAgenda:
-                        StudentAgendaView(path: $path)
+                    case .studentAgenda(let studentId, let studentName):
+                        StudentAgendaView(
+                            path: $path,
+                            studentId: studentId,
+                            studentName: studentName
+                        )
 
-                    case .studentWeekDetail(let week):
-                        StudentWeekDetailView(path: $path, week: week)
+                    case .studentWeekDetail(let studentId, let weekId, let weekTitle):
+                        StudentWeekDetailView(
+                            path: $path,
+                            studentId: studentId,
+                            weekId: weekId,
+                            weekTitle: weekTitle
+                        )
 
                     // ===== COMUM =====
                     case .sobre:
