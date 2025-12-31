@@ -12,6 +12,11 @@ struct LoginView: View {
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
+    // ✅ Persistência simples (educacional): salva o último usuário logado
+    // ⚠️ Em app real, senha não deve ser salva em texto puro (use Keychain).
+    @AppStorage("last_login_email") private var lastLoginEmail: String = ""
+    @AppStorage("last_login_password") private var lastLoginPassword: String = ""
+
     var body: some View {
         ZStack {
 
@@ -119,12 +124,26 @@ struct LoginView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar(.hidden, for: .navigationBar)
-        .onAppear { vm.errorMessage = nil }
+        .onAppear {
+            vm.errorMessage = nil
+
+            // ✅ restaura último login (sem sobrescrever o que o usuário já digitou)
+            if vm.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                vm.email = lastLoginEmail
+            }
+            if vm.password.isEmpty {
+                vm.password = lastLoginPassword
+            }
+        }
     }
 
     private func doLogin() async {
         let ok = await vm.submitLogin()
         guard ok else { return }
+
+        // ✅ salva o último usuário logado (apenas após login OK)
+        lastLoginEmail = vm.email
+        lastLoginPassword = vm.password
 
         // ✅ aguarda o AppSession buscar o userType no Firestore
         for _ in 0..<20 {

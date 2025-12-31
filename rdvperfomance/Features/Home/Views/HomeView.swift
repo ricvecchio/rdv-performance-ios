@@ -27,6 +27,18 @@ struct HomeView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
+                // ✅ Área do Professor MOVIDA para o início do corpo
+                if session.userType == .TRAINER {
+                    HStack {
+                        Spacer(minLength: 0)
+                        teacherAreaCard
+                            .frame(maxWidth: contentMaxWidth)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                }
+
                 GeometryReader { proxy in
                     let tileHeight = proxy.size.height / 3
 
@@ -57,18 +69,6 @@ struct HomeView: View {
                         )
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
-                }
-
-                // ✅ Área do Professor no padrão + tamanho correto (igual Settings/Profile)
-                if session.userType == .TRAINER {
-                    HStack {
-                        Spacer(minLength: 0)
-                        teacherAreaCard
-                            .frame(maxWidth: contentMaxWidth)
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
                 }
 
                 footerForCurrentUser()

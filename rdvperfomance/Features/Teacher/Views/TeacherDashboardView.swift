@@ -103,10 +103,6 @@ struct TeacherDashboardView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Área do Professor")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundColor(.white.opacity(0.95))
-
             Text("Aqui você gerencia alunos e publica treinos da semana.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
