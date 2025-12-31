@@ -112,10 +112,6 @@ struct CreateTrainingWeekView: View {
     // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Publicar semana")
-                .font(.system(size: 22, weight: .bold))
-                .foregroundColor(.white.opacity(0.95))
-
             Text("Categoria: \(category.displayName)")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))

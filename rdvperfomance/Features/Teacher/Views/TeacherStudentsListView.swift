@@ -70,6 +70,17 @@ struct TeacherStudentsListView: View {
         .task { await loadStudents() }
         .navigationBarBackButtonHidden(true)
         .toolbar {
+            
+
+            // ✅ Título central
+            ToolbarItem(placement: .principal) {
+                Text("Alunos")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+            
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
                     .background(Color.clear)
@@ -82,10 +93,6 @@ struct TeacherStudentsListView: View {
     // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Alunos")
-                .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white)
-
             Text("Selecione um aluno para ver as semanas de treino.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))

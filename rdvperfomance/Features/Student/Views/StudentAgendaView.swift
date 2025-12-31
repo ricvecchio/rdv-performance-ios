@@ -128,9 +128,6 @@ struct StudentAgendaView: View {
     // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Agenda")
-                .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white)
 
             Text("Aluno: \(studentName)")
                 .font(.system(size: 14, weight: .semibold))
