@@ -57,7 +57,6 @@ final class AppSession: ObservableObject {
         do {
             let snap = try await db.collection("users").document(uid).getDocument()
             guard let data = snap.data() else {
-                // Se não existe o doc, mantém auth logado, mas sem perfil
                 self.userType = nil
                 self.userName = nil
                 self.storedUserTypeRaw = ""
@@ -66,13 +65,17 @@ final class AppSession: ObservableObject {
             }
 
             let name = data["name"] as? String
-            let typeRaw = data["userType"] as? String
+            let typeRaw = data["userType"] as? String // ✅ CORRETO (confirmado no Firebase)
 
             self.userName = name
             self.userType = typeRaw.flatMap { UserTypeDTO(rawValue: $0) }
 
             self.storedUserName = name ?? ""
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
+
+            // Debug opcional:
+            // print("✅ Perfil carregado: uid=\(uid), type=\(typeRaw ?? "-"), name=\(name ?? "-")")
+
         } catch {
             // Em erro de rede, mantém o que estiver armazenado
         }
@@ -83,7 +86,6 @@ final class AppSession: ObservableObject {
         do {
             try Auth.auth().signOut()
         } catch {
-            // mesmo se falhar, limpa local (para app educacional, ok)
             clearSession()
         }
     }

@@ -5,8 +5,12 @@ struct HomeView: View {
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
+    // mantém como você já tinha
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+
+    // ✅ largura máxima do miolo (mesmo padrão das outras telas)
+    private let contentMaxWidth: CGFloat = 380
 
     var body: some View {
         ZStack {
@@ -55,6 +59,18 @@ struct HomeView: View {
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
+                // ✅ Área do Professor no padrão + tamanho correto (igual Settings/Profile)
+                if session.userType == .TRAINER {
+                    HStack {
+                        Spacer(minLength: 0)
+                        teacherAreaCard
+                            .frame(maxWidth: contentMaxWidth)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                }
+
                 footerForCurrentUser()
                     .frame(height: Theme.Layout.footerHeight)
                     .frame(maxWidth: .infinity)
@@ -73,6 +89,41 @@ struct HomeView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
+    // MARK: - Card “Área do Professor” (padrão Settings/Profile)
+    private var teacherAreaCard: some View {
+        Button {
+            let categoria = TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+            path.append(.teacherDashboard(category: categoria))
+        } label: {
+            HStack(spacing: 12) {
+
+                Image(systemName: "person.3.fill")
+                    .foregroundColor(.green.opacity(0.85))
+                    .font(.system(size: 16))
+                    .frame(width: 26)
+
+                Text("Área do Professor")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Footer por userType
     @ViewBuilder
     private func footerForCurrentUser() -> some View {
@@ -85,7 +136,7 @@ struct HomeView: View {
                     isPerfilSelected: false
                 )
             )
-            .environmentObject(session) // ✅ garante session no footer
+            .environmentObject(session)
         } else {
             FooterBar(
                 path: $path,
@@ -110,12 +161,13 @@ struct HomeView: View {
 
         Button {
 
+            // ✅ mantém como era
             ultimoTreinoSelecionado = tipo.rawValue
 
             if session.userType == .TRAINER {
+                // ✅ aqui é o que define a categoria da próxima tela
                 path.append(.teacherStudentsList(tipo))
             } else {
-                // ✅ Aluno: precisa studentId + studentName
                 guard let uid = session.uid else { return }
                 let name = session.userName ?? "Aluno"
                 path.append(.studentAgenda(studentId: uid, studentName: name))
@@ -137,6 +189,7 @@ struct HomeView: View {
         .frame(height: height)
     }
 
+    // ✅ VOLTA EXATAMENTE AO SEU TILE ANTIGO (tamanho correto)
     private func tileLayout(
         title: String,
         imageName: String,
@@ -153,7 +206,7 @@ struct HomeView: View {
 
                     Image(imageName)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)
+                        .aspectRatio(contentMode: .fit)   // ✅ como era antes
                         .frame(width: w, height: height)
                         .overlay(
                             Rectangle()

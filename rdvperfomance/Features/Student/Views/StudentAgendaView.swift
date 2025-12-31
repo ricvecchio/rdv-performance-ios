@@ -7,6 +7,11 @@ struct StudentAgendaView: View {
     let studentId: String
     let studentName: String
 
+    @EnvironmentObject private var session: AppSession
+
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+
     @StateObject private var vm: StudentAgendaViewModel
     private let contentMaxWidth: CGFloat = 380
 
@@ -20,6 +25,14 @@ struct StudentAgendaView: View {
         self.studentId = studentId
         self.studentName = studentName
         _vm = StateObject(wrappedValue: StudentAgendaViewModel(studentId: studentId, repository: repository))
+    }
+
+    private var isTeacherViewing: Bool {
+        session.userType == .TRAINER
+    }
+
+    private var teacherSelectedCategory: TreinoTipo {
+        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
     var body: some View {
@@ -38,9 +51,7 @@ struct StudentAgendaView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-
                         header
-
                         contentCard
                     }
                     .frame(maxWidth: contentMaxWidth)
@@ -50,22 +61,30 @@ struct StudentAgendaView: View {
                     .frame(maxWidth: .infinity)
                 }
 
-                FooterBar(
-                    path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: true,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
+                footer
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
+
+            // ✅ Só professor tem voltar
+            if isTeacherViewing {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { pop() } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("Agenda")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+            }
+
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
                     .background(Color.clear)
@@ -76,7 +95,37 @@ struct StudentAgendaView: View {
         .task { await vm.loadWeeks() }
     }
 
-    // MARK: - Header (apenas cores no padrão do app)
+    // MARK: - Footer (isolado para não quebrar com if/else)
+    private var footer: some View {
+        Group {
+            if isTeacherViewing {
+                FooterBar(
+                    path: $path,
+                    kind: .teacherHomeAlunosSobrePerfil(
+                        selectedCategory: teacherSelectedCategory,
+                        isHomeSelected: false,
+                        isAlunosSelected: true,
+                        isSobreSelected: false,
+                        isPerfilSelected: false
+                    )
+                )
+            } else {
+                FooterBar(
+                    path: $path,
+                    kind: .agendaSobrePerfil(
+                        isAgendaSelected: true,
+                        isSobreSelected: false,
+                        isPerfilSelected: false
+                    )
+                )
+            }
+        }
+        .frame(height: Theme.Layout.footerHeight)
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.footerBackground)
+    }
+
+    // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Agenda")
@@ -94,7 +143,7 @@ struct StudentAgendaView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Card padrão (igual Settings/Profile)
+    // MARK: - Card
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -113,7 +162,6 @@ struct StudentAgendaView: View {
         .cornerRadius(14)
     }
 
-    // MARK: - Lista no estilo “cardRow” (sem mini-cards)
     private var weeksList: some View {
         VStack(spacing: 0) {
             ForEach(Array(vm.weeks.enumerated()), id: \.offset) { idx, week in
@@ -165,7 +213,6 @@ struct StudentAgendaView: View {
         }
     }
 
-    // MARK: - Estados (cores no padrão)
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
@@ -188,9 +235,7 @@ struct StudentAgendaView: View {
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
-            Button {
-                Task { await vm.loadWeeks() }
-            } label: {
+            Button { Task { await vm.loadWeeks() } } label: {
                 Text("Tentar novamente")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
@@ -225,6 +270,11 @@ struct StudentAgendaView: View {
         Divider()
             .background(Theme.Colors.divider)
             .padding(.leading, leading)
+    }
+
+    private func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
     }
 }
 

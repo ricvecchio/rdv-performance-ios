@@ -9,6 +9,11 @@ struct StudentWeekDetailView: View {
     let weekId: String
     let weekTitle: String
 
+    @EnvironmentObject private var session: AppSession
+
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+
     @StateObject private var vm: StudentWeekDetailViewModel
     private let contentMaxWidth: CGFloat = 380
 
@@ -24,6 +29,14 @@ struct StudentWeekDetailView: View {
         self.weekId = weekId
         self.weekTitle = weekTitle
         _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, repository: repository))
+    }
+
+    private var isTeacherViewing: Bool {
+        session.userType == .TRAINER
+    }
+
+    private var teacherSelectedCategory: TreinoTipo {
+        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
     var body: some View {
@@ -44,7 +57,6 @@ struct StudentWeekDetailView: View {
                     VStack(spacing: 16) {
 
                         header
-
                         contentCard
                     }
                     .frame(maxWidth: contentMaxWidth)
@@ -54,6 +66,53 @@ struct StudentWeekDetailView: View {
                     .frame(maxWidth: .infinity)
                 }
 
+                footer
+            }
+            .ignoresSafeArea(.container, edges: [.bottom])
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+
+            if isTeacherViewing {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button { pop() } label: {
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("Semana")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+            }
+
+            ToolbarItem(placement: .navigationBarTrailing) {
+                MiniProfileHeader(imageName: "rdv_eu", size: 38)
+                    .background(Color.clear)
+            }
+        }
+        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .task { await vm.loadDays() }
+    }
+
+    private var footer: some View {
+        Group {
+            if isTeacherViewing {
+                FooterBar(
+                    path: $path,
+                    kind: .teacherHomeAlunosSobrePerfil(
+                        selectedCategory: teacherSelectedCategory,
+                        isHomeSelected: false,
+                        isAlunosSelected: true,
+                        isSobreSelected: false,
+                        isPerfilSelected: false
+                    )
+                )
+            } else {
                 FooterBar(
                     path: $path,
                     kind: .agendaSobrePerfil(
@@ -62,35 +121,29 @@ struct StudentWeekDetailView: View {
                         isPerfilSelected: false
                     )
                 )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
             }
-            .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .navigationBarBackButtonHidden(true)
-        .toolbar(.hidden, for: .navigationBar)
-        .task { await vm.loadDays() }
+        .frame(height: Theme.Layout.footerHeight)
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.footerBackground)
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Semana")
-                .font(.system(size: 26, weight: .bold))
 
             Text(weekTitle)
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(.secondary)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
 
             Text("Dias de treino")
                 .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var contentCard: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 0) {
             if vm.isLoading {
                 loadingView
             } else if let errorMessage = vm.errorMessage {
@@ -101,49 +154,44 @@ struct StudentWeekDetailView: View {
                 daysList
             }
         }
-        .padding(14)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-        )
-        .clipShape(RoundedRectangle(cornerRadius: 16))
-        .shadow(color: .black.opacity(0.12), radius: 12, x: 0, y: 8)
+        .cornerRadius(14)
     }
 
     private var daysList: some View {
-        VStack(spacing: 10) {
-            ForEach(Array(vm.days.enumerated()), id: \.offset) { _, day in
-                HStack(spacing: 12) {
+        VStack(spacing: 0) {
+            ForEach(Array(vm.days.enumerated()), id: \.offset) { idx, day in
 
-                    Circle()
-                        .fill(Theme.Colors.selected.opacity(0.20))
-                        .frame(width: 42, height: 42)
-                        .overlay(
-                            Image(systemName: "flame.fill")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundStyle(Theme.Colors.selected.opacity(0.9))
-                        )
+                HStack(spacing: 14) {
+
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green.opacity(0.85))
+                        .frame(width: 28)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(day.titleFallback)
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
 
                         Text(day.subtitleFallback)
-                            .font(.system(size: 13))
-                            .foregroundStyle(.secondary)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.35))
                     }
 
                     Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.35))
                 }
-                .padding(.horizontal, 12)
-                .padding(.vertical, 12)
-                .background(Color.white.opacity(0.08))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                )
-                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+
+                if idx < vm.days.count - 1 {
+                    innerDivider(leading: 54)
+                }
             }
         }
     }
@@ -153,7 +201,7 @@ struct StudentWeekDetailView: View {
             ProgressView()
             Text("Carregando dias...")
                 .font(.system(size: 14))
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -163,9 +211,11 @@ struct StudentWeekDetailView: View {
         VStack(spacing: 10) {
             Text("Ops! Não foi possível carregar.")
                 .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+
             Text(message)
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
             Button {
@@ -173,28 +223,43 @@ struct StudentWeekDetailView: View {
             } label: {
                 Text("Tentar novamente")
                     .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
-                    .background(Theme.Colors.selected.opacity(0.22))
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .background(Capsule().fill(Color.green.opacity(0.16)))
             }
             .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
+        .padding(.horizontal, 10)
     }
 
     private var emptyView: some View {
         VStack(spacing: 10) {
             Text("Nenhum dia cadastrado")
                 .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+
             Text("O professor ainda não adicionou dias para esta semana.")
                 .font(.system(size: 13))
-                .foregroundStyle(.secondary)
+                .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
+        .padding(.horizontal, 10)
+    }
+
+    private func innerDivider(leading: CGFloat) -> some View {
+        Divider()
+            .background(Theme.Colors.divider)
+            .padding(.leading, leading)
+    }
+
+    private func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
     }
 }
 
