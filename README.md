@@ -165,7 +165,6 @@ rdv-performance-ios
    │  │
    │  ├─ Teacher
    │  │  ├─ Models
-   │  │     ├─ MockStudents.swift
    │  │  │  └─ Student.swift
    │  │  └─ Views
    │  │     ├─ TeacherStudentDetailView.swift
@@ -193,6 +192,238 @@ rdv-performance-ios
    └─ Resources
       └─ Assets.xcassets
 ```
+
+---
+## 📋 Mapa de Telas e Dependências
+
+Este documento fornece um mapeamento completo das telas do aplicativo RDV Performance e seus arquivos relacionados. Use-o como guia para entender o impacto de alterações no código.
+
+---
+
+### 📊 Relação Completa Telas ↔ Arquivos
+
+| Tela / Módulo                 | Arquivo Principal da View        | ViewModels, Models e Outros Arquivos Relacionados                      | Componentes Compartilhados           |
+| ----------------------------- | -------------------------------- | ---------------------------------------------------------------------- | ------------------------------------ |
+| **Login**                     | `LoginView.swift`                | `LoginViewModel.swift`, `AuthService.swift`, `AuthDTOs.swift`          | `UnderlineTextField.swift`           |
+| **Cadastro (Aluno)**          | `RegisterStudentView.swift`      | `RegisterViewModel.swift`, `AuthService.swift`, `AuthDTOs.swift`       | `UnderlineTextField.swift`           |
+| **Cadastro (Professor)**      | `RegisterTrainerView.swift`      | `RegisterViewModel.swift`, `AuthService.swift`, `AuthDTOs.swift`       | `UnderlineTextField.swift`           |
+| **Seleção de Conta**          | `AccountTypeSelectionView.swift` | —                                                                      | —                                    |
+| **Perfil**                    | `ProfileView.swift`              | `AuthService.swift`, `AuthDTOs.swift`                                  | `MiniProfileHeader.swift`            |
+| **Home (Principal)**          | `HomeView.swift`                 | `TreinoTipo.swift` (enum)                                              | `FooterBar.swift`                    |
+| **Treinos (Genérica)**        | `TreinosView.swift`              | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
+| **Treino – Crossfit**         | `TreinosCrossfitView.swift`      | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
+| **Treino – Academia**         | `TreinosAcademiaView.swift`      | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
+| **Treino – Em Casa**          | `TreinosEmCasaView.swift`        | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
+| **Menu Crossfit**             | `CrossfitMenuView.swift`         | —                                                                      | —                                    |
+| **Sobre**                     | `AboutView.swift`                | —                                                                      | `HeaderBar.swift`, `FooterBar.swift` |
+| **Configurações**             | `SettingsView.swift`             | —                                                                      | —                                    |
+| **Aluno – Agenda**            | `StudentAgendaView.swift`        | `TrainingDay.swift`, `MockWeeks.swift`                                 | —                                    |
+| **Aluno – Detalhe Semana**    | `StudentWeekDetailView.swift`    | `TrainingDay.swift`, `MockWeeks.swift`                                 | —                                    |
+| **Professor – Lista Alunos**  | `TeacherStudentsListView.swift`  | `Student.swift`                                                        | —                                    |
+| **Professor – Detalhe Aluno** | `TeacherStudentDetailView.swift` | `Student.swift`                                                        | —                                    |
+| **Navegação & App**           | `rdvperformanceApp.swift`        | `AppRouter.swift`, `AppRoute.swift`, `AppSession.swift`, `Theme.swift` | —                                    |
+---
+
+# 🔐 AUTH (Login / Cadastro / Perfil)
+
+## 1) Login
+
+### Tela
+- `Features/Auth/Views/LoginView.swift`  
+  GitHub
+
+### Arquivos relacionados (Auth)
+- `Features/Auth/ViewModels/LoginViewModel.swift`  
+  GitHub
+- `Features/Auth/Services/AuthService.swift`  
+  GitHub
+- `Features/Auth/Models/AuthDTOs.swift`  
+  GitHub
+
+### Dependências globais típicas desta tela
+- `AppSession.swift` (estado de login)
+- `AppRoute.swift / AppRouter.swift` (navegação pós-login)  
+  GitHub
+
+---
+
+## 2) Seleção do tipo de conta
+
+### Tela
+- `Features/Auth/Views/AccountTypeSelectionView.swift`  
+  GitHub
+
+### Arquivos relacionados
+- `Features/Auth/ViewModels/RegisterViewModel.swift`  
+  GitHub
+- `Features/Auth/Services/AuthService.swift`  
+  GitHub
+- `Features/Auth/Models/AuthDTOs.swift`  
+  GitHub
+
+### Dependências globais
+- `AppRoute.swift / AppRouter.swift`  
+  GitHub
+
+---
+
+## 3) Cadastro Aluno
+
+### Tela
+- `Features/Auth/Views/RegisterStudentView.swift`  
+  GitHub
+
+### Arquivos relacionados
+- `Features/Auth/ViewModels/RegisterViewModel.swift`  
+  GitHub
+- `Features/Auth/Services/AuthService.swift`  
+  GitHub
+- `Features/Auth/Models/AuthDTOs.swift`  
+  GitHub
+
+---
+
+## 4) Cadastro Professor / Trainer
+
+### Tela
+- `Features/Auth/Views/RegisterTrainerView.swift`  
+  GitHub
+
+### Arquivos relacionados
+- `Features/Auth/ViewModels/RegisterViewModel.swift`  
+  GitHub
+- `Features/Auth/Services/AuthService.swift`  
+  GitHub
+- `Features/Auth/Models/AuthDTOs.swift`  
+  GitHub
+
+---
+
+## 5) Perfil
+
+### Tela
+- `Features/Auth/Views/ProfileView.swift`  
+  GitHub
+
+### Arquivos relacionados (prováveis pelo README)
+- `AppSession.swift` (dados do usuário)  
+  GitHub
+- `Features/Treinos/Models/TreinoTipo.swift` (você mencionou categoria/treino no Profile no histórico)  
+  GitHub
+
+---
+
+# 🏠 HOME
+
+## 6) Home
+
+### Tela
+- `Features/Home/Views/HomeView.swift`  
+  GitHub
+
+### Arquivos relacionados
+- `Features/Treinos/Models/TreinoTipo.swift` (tipos de treino)  
+  GitHub
+- `AppRoute.swift / AppRouter.swift` (ir para Treinos / About etc.)  
+  GitHub
+
+---
+
+# ⚙️ SETTINGS
+
+## 7) Settings
+
+### Tela
+- `Features/Settings/Views/SettingsView.swift`  
+  GitHub
+
+### Arquivos relacionados (mais comuns nesse tipo de tela)
+- `AppSession.swift` (logout, limpar sessão, exibir dados)  
+  GitHub
+
+---
+
+# ℹ️ ABOUT
+
+## 8) Sobre
+
+### Tela
+- `About/Views/AboutView.swift`  
+  GitHub
+
+### Arquivos relacionados
+- `AppRoute.swift / AppRouter.swift` (voltar / navegar)  
+  GitHub
+
+---
+
+# 🏋️ TREINOS
+
+Aqui seu app tem um **“núcleo” de treino + variações por categoria**.
+
+## Arquivos do módulo
+- `Features/Treinos/Models/TreinoTipo.swift`  
+  GitHub
+- `Features/Treinos/Views/TreinosView.swift`  
+  GitHub
+- `Features/Treinos/Views/TreinosCrossfitView.swift`  
+  GitHub
+- `Features/Treinos/Views/TreinosAcademiaView.swift`  
+  GitHub
+- `Features/Treinos/Views/TreinosEmCasaView.swift`  
+  GitHub
+- `Features/Treinos/Views/CrossfitMenuView.swift`  
+  GitHub
+
+## Matriz (telas)
+- **Treinos genérico** → `TreinosView.swift` + `TreinoTipo.swift` + router  
+  GitHub
+- **Crossfit** → `TreinosCrossfitView.swift` + `TreinoTipo.swift` + (possível) `CrossfitMenuView.swift`  
+  GitHub
+- **Academia** → `TreinosAcademiaView.swift` + `TreinoTipo.swift`  
+  GitHub
+- **Em Casa** → `TreinosEmCasaView.swift` + `TreinoTipo.swift`  
+  GitHub
+
+---
+
+# 👨‍🏫 TEACHER (Lista e detalhe de alunos)
+
+## Arquivos do módulo
+- `Features/Teacher/Models/Student.swift`  
+  GitHub
+- `Features/Teacher/Views/TeacherStudentsListView.swift`  
+  GitHub
+- `Features/Teacher/Views/TeacherStudentDetailView.swift`  
+  GitHub
+
+---
+
+## 9) Lista de alunos (Professor)
+
+### Tela
+- `TeacherStudentsListView.swift`  
+  GitHub
+
+### Arquivos relacionados
+- `Student.swift` (modelo)  
+  GitHub
+- `TeacherStudentDetailView.swift` (navega para detalhe)  
+  GitHub
+- (se filtra por treino/categoria) `TreinoTipo.swift`  
+  GitHub
+
+---
+
+## 10) Detalhe do aluno
+
+### Tela
+- `TeacherStudentDetailView.swift`  
+  GitHub
+
+### Arquivos relacionados
+- `Student.swift`  
+  GitHub
 
 ---
 
