@@ -31,6 +31,7 @@ struct TeacherDashboardView: View {
                             header
 
                             VStack(spacing: 12) {
+
                                 actionRow(
                                     title: "Meus alunos",
                                     icon: "person.3.fill"
@@ -42,7 +43,9 @@ struct TeacherDashboardView: View {
                                     title: "Publicar semana",
                                     icon: "calendar.badge.plus"
                                 ) {
-                                    path.append(.createTrainingWeek(category: category))
+                                    // ✅ MVP correto: primeiro escolhe o aluno na lista
+                                    // (CreateTrainingWeekView exige student: AppUser)
+                                    path.append(.teacherStudentsList(category))
                                 }
                             }
                             .padding(.top, 8)
@@ -57,7 +60,6 @@ struct TeacherDashboardView: View {
                     }
                 }
 
-                // ✅ Rodapé correto do professor (no padrão do app)
                 FooterBar(
                     path: $path,
                     kind: .teacherHomeAlunosSobrePerfil(
@@ -77,7 +79,6 @@ struct TeacherDashboardView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            // ✅ Botão voltar (padrão do app)
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")

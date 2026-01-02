@@ -28,25 +28,3 @@ struct TeacherStudentRelation: Identifiable, Codable, Hashable {
     var studentId: String
     var categories: [String]
 }
-
-// MARK: - training_weeks
-struct TrainingWeekFS: Identifiable, Codable, Hashable {
-    @DocumentID var id: String?
-    var studentId: String
-    var teacherId: String
-    var category: String
-    var weekTitle: String
-    var progress: Double
-    var status: String
-}
-
-// MARK: - training_weeks/{weekId}/days
-struct TrainingDayFS: Identifiable, Codable, Hashable {
-    @DocumentID var id: String?
-    var order: Int
-    var title: String
-    var summary: String
-    var details: String
-    var done: Bool
-}
-

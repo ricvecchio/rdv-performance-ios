@@ -68,7 +68,6 @@ struct StudentAgendaView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            // ✅ Só professor tem voltar
             if isTeacherViewing {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button { pop() } label: {
@@ -92,10 +91,13 @@ struct StudentAgendaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .task { await vm.loadWeeks() }
+        .task {
+            if vm.weeks.isEmpty && !vm.isLoading {
+                await vm.loadWeeks()
+            }
+        }
     }
 
-    // MARK: - Footer (isolado para não quebrar com if/else)
     private var footer: some View {
         Group {
             if isTeacherViewing {
@@ -125,7 +127,6 @@ struct StudentAgendaView: View {
         .background(Theme.Colors.footerBackground)
     }
 
-    // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
 
@@ -140,7 +141,6 @@ struct StudentAgendaView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Card
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -169,11 +169,13 @@ struct StudentAgendaView: View {
                         return
                     }
 
+                    // ✅ MVP simples: sempre usa a rota existente (sem duplicar rotas My*)
                     path.append(.studentWeekDetail(
                         studentId: studentId,
                         weekId: weekId,
                         weekTitle: week.weekTitle
                     ))
+
                 } label: {
                     HStack(spacing: 14) {
 

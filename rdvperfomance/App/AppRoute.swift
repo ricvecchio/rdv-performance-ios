@@ -23,15 +23,21 @@ enum AppRoute: Hashable {
 
     // Professor
     case teacherStudentsList(TreinoTipo)
-    case teacherStudentDetail(Student, TreinoTipo)
-    case teacherDashboard(category: TreinoTipo) // ✅ NOVO
+    case teacherStudentDetail(AppUser, TreinoTipo)
+    case teacherDashboard(category: TreinoTipo)
+
+    // ✅ Professor: vincular alunos
+    case teacherLinkStudent(category: TreinoTipo)
 
     // Aluno
     case studentAgenda(studentId: String, studentName: String)
     case studentWeekDetail(studentId: String, weekId: String, weekTitle: String)
 
+    // Aluno (detalhe do dia)
+    case studentDayDetail(day: TrainingDayFS, weekTitle: String)
+
     // Publicar treinos
-    case createTrainingWeek(category: TreinoTipo)
+    case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 }
 

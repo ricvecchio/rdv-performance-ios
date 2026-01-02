@@ -55,7 +55,6 @@ struct StudentWeekDetailView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-
                         header
                         contentCard
                     }
@@ -73,14 +72,13 @@ struct StudentWeekDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            if isTeacherViewing {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button { pop() } label: {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
-                    }
-                    .buttonStyle(.plain)
+            // ✅ Agora sempre tem voltar
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { pop() } label: {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.green)
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
@@ -96,7 +94,11 @@ struct StudentWeekDetailView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .task { await vm.loadDays() }
+        .task {
+            if vm.days.isEmpty && !vm.isLoading {
+                await vm.loadDays()
+            }
+        }
     }
 
     private var footer: some View {
@@ -163,31 +165,36 @@ struct StudentWeekDetailView: View {
     private var daysList: some View {
         VStack(spacing: 0) {
             ForEach(Array(vm.days.enumerated()), id: \.offset) { idx, day in
+                Button {
+                    path.append(.studentDayDetail(day: day, weekTitle: weekTitle))
+                } label: {
+                    HStack(spacing: 14) {
 
-                HStack(spacing: 14) {
+                        Image(systemName: "flame.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.green.opacity(0.85))
+                            .frame(width: 28)
 
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.green.opacity(0.85))
-                        .frame(width: 28)
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(day.title)
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.92))
 
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(day.titleFallback)
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white.opacity(0.92))
+                            Text(day.subtitleText)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.35))
+                        }
 
-                        Text(day.subtitleFallback)
-                            .font(.system(size: 14))
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
                             .foregroundColor(.white.opacity(0.35))
                     }
-
-                    Spacer()
-
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.white.opacity(0.35))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .contentShape(Rectangle())
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+                .buttonStyle(.plain)
 
                 if idx < vm.days.count - 1 {
                     innerDivider(leading: 54)
@@ -218,9 +225,7 @@ struct StudentWeekDetailView: View {
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
-            Button {
-                Task { await vm.loadDays() }
-            } label: {
+            Button { Task { await vm.loadDays() } } label: {
                 Text("Tentar novamente")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
@@ -290,26 +295,6 @@ final class StudentWeekDetailViewModel: ObservableObject {
         }
 
         isLoading = false
-    }
-}
-
-private extension TrainingDayFS {
-
-    var titleFallback: String {
-        if let title = (Mirror(reflecting: self).children.first { $0.label == "title" }?.value as? String),
-           !title.isEmpty { return title }
-        if let name = (Mirror(reflecting: self).children.first { $0.label == "name" }?.value as? String),
-           !name.isEmpty { return name }
-        if let dayTitle = (Mirror(reflecting: self).children.first { $0.label == "dayTitle" }?.value as? String),
-           !dayTitle.isEmpty { return dayTitle }
-        return "Treino"
-    }
-
-    var subtitleFallback: String {
-        if let order = (Mirror(reflecting: self).children.first { $0.label == "order" }?.value as? Int) {
-            return "Ordem: \(order)"
-        }
-        return "Dia de treino"
     }
 }
 

@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import FirebaseAuth
 
 @MainActor
 final class RegisterViewModel: ObservableObject {
@@ -24,7 +25,11 @@ final class RegisterViewModel: ObservableObject {
     @Published var successMessage: String? = nil
 
     private let service = FirebaseAuthService()
-    private let usersService = UsersService()
+    private let repository: FirestoreRepository
+
+    init(repository: FirestoreRepository = .shared) {
+        self.repository = repository
+    }
 
     func submit(userType: UserTypeDTO) async {
         errorMessage = nil
@@ -64,20 +69,17 @@ final class RegisterViewModel: ObservableObject {
 
         do {
             // 1) cria no Firebase Auth
-            _ = try await service.register(form)
+            // ✅ no seu projeto, isso retorna String (uid)
+            let createdUid: String = try await service.register(form)
 
             // 2) grava perfil no Firestore (/users/{uid})
             do {
-                try await usersService.upsertCurrentUserProfile(
-                    userType: userType,
-                    name: nameTrim,
-                    email: emailTrim,
-                    defaultCategory: userType == .STUDENT ? "crossfit" : nil,
-                    active: userType == .STUDENT ? true : nil
+                try await repository.upsertUserProfile(
+                    uid: createdUid,
+                    form: form
                 )
                 successMessage = "Cadastro realizado com sucesso."
             } catch {
-                // Aqui você vê o motivo real (quase sempre PERMISSION_DENIED nas regras)
                 let msg = (error as NSError).localizedDescription
                 errorMessage = """
                 Usuário criado no Auth, mas falhou ao salvar no Firestore.

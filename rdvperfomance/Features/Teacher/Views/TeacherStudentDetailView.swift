@@ -1,11 +1,11 @@
 import SwiftUI
 
-// MARK: - Tela 4 (Professor): Perfil do Aluno (Detalhe)
+// MARK: - Tela (Professor): Perfil do Aluno (Detalhe)
 struct TeacherStudentDetailView: View {
 
     @Binding var path: [AppRoute]
 
-    let student: Student
+    let student: AppUser
     let category: TreinoTipo
 
     private let contentMaxWidth: CGFloat = 380
@@ -45,8 +45,6 @@ struct TeacherStudentDetailView: View {
                     }
                 }
 
-                // ✅ PROFESSOR (singular): Home | Aluno | Sobre | Perfil
-                // ✅ "Aluno" selecionado na tela expandida
                 FooterBar(
                     path: $path,
                     kind: .teacherHomeAlunoSobrePerfil(
@@ -112,7 +110,7 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.95))
 
-            Text("Período: \(student.periodText)")
+            Text("Plano: \(student.planType ?? "—")")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.70))
         }
@@ -128,20 +126,22 @@ struct TeacherStudentDetailView: View {
     }
 
     private func progressCard() -> some View {
-        VStack(alignment: .leading, spacing: 12) {
+        let progress: Double = 0.0
+
+        return VStack(alignment: .leading, spacing: 12) {
 
             Text("Progresso do Aluno")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
             HStack {
-                Text("\(Int(student.progress * 100))% completo")
+                Text("\(Int(progress * 100))% completo")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
 
-            ProgressView(value: student.progress)
+            ProgressView(value: progress)
                 .tint(.green.opacity(0.85))
         }
         .padding(.horizontal, 16)
@@ -162,15 +162,19 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
+            actionButton(title: "Publicar Semana", icon: "square.and.pencil") {
+                path.append(.createTrainingWeek(student: student, category: category))
+            }
+
+            actionButton(title: "Ver Agenda do Aluno", icon: "calendar") {
+                openAgenda()
+            }
+
             actionButton(title: "Enviar Mensagem", icon: "paperplane.fill") {
                 // TODO
             }
 
             actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
-                // TODO
-            }
-
-            actionButton(title: "Enviar Planilha (12/01 a 16/01)", icon: "doc.fill") {
                 // TODO
             }
         }
@@ -213,7 +217,11 @@ struct TeacherStudentDetailView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Navegação
+    private func openAgenda() {
+        guard let sid = student.id, !sid.isEmpty else { return }
+        path.append(.studentAgenda(studentId: sid, studentName: student.name))
+    }
+
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

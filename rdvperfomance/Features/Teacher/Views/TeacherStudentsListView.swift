@@ -14,11 +14,12 @@ struct TeacherStudentsListView: View {
 
     init(
         path: Binding<[AppRoute]>,
-        selectedCategory: TreinoTipo
+        selectedCategory: TreinoTipo,
+        repository: FirestoreRepository = .shared
     ) {
         self._path = path
         self.selectedCategory = selectedCategory
-        _vm = StateObject(wrappedValue: TeacherStudentsListViewModel())
+        _vm = StateObject(wrappedValue: TeacherStudentsListViewModel(repository: repository))
     }
 
     var body: some View {
@@ -70,9 +71,16 @@ struct TeacherStudentsListView: View {
         .task { await loadStudents() }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            
 
-            // ✅ Título central
+            // ✅ VOLTAR (padrão do app)
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { pop() } label: {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.green)
+                }
+                .buttonStyle(.plain)
+            }
+
             ToolbarItem(placement: .principal) {
                 Text("Alunos")
                     .font(Theme.Fonts.headerTitle())
@@ -80,8 +88,18 @@ struct TeacherStudentsListView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
-            
-            ToolbarItem(placement: .navigationBarTrailing) {
+
+            // ✅ AÇÕES À DIREITA: Vincular + MiniProfile
+            ToolbarItemGroup(placement: .navigationBarTrailing) {
+
+                Button {
+                    path.append(.teacherLinkStudent(category: selectedCategory))
+                } label: {
+                    Image(systemName: "person.badge.plus")
+                        .foregroundColor(.green)
+                }
+                .buttonStyle(.plain)
+
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
                     .background(Color.clear)
             }
@@ -93,7 +111,7 @@ struct TeacherStudentsListView: View {
     // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Selecione um aluno para ver as semanas de treino.")
+            Text("Selecione um aluno para ver detalhes e criar treinos.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -112,7 +130,7 @@ struct TeacherStudentsListView: View {
                 HStack(spacing: 10) {
 
                     filterChip(
-                        title: selectedCategory.displayNameFallback,
+                        title: selectedCategory.displayName,
                         isSelected: filter == selectedCategory
                     ) { filter = selectedCategory }
 
@@ -167,7 +185,7 @@ struct TeacherStudentsListView: View {
     }
 
     // MARK: - Lista
-    private func studentsList(_ list: [UserFS]) -> some View {
+    private func studentsList(_ list: [AppUser]) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(list.enumerated()), id: \.offset) { idx, student in
                 Button {
@@ -177,8 +195,7 @@ struct TeacherStudentsListView: View {
                         return
                     }
 
-                    let sname = student.name
-                    path.append(.studentAgenda(studentId: sid, studentName: sname))
+                    path.append(.teacherStudentDetail(student, selectedCategory))
 
                 } label: {
                     HStack(spacing: 14) {
@@ -251,15 +268,28 @@ struct TeacherStudentsListView: View {
     }
 
     private var emptyView: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
             Text("Nenhum aluno encontrado")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Cadastre alunos para aparecerem aqui.")
+            Text("Vincule alunos ao seu perfil para aparecerem aqui.")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
+
+            Button {
+                path.append(.teacherLinkStudent(category: selectedCategory))
+            } label: {
+                Text("Vincular aluno")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Color.green.opacity(0.16)))
+            }
+            .buttonStyle(.plain)
+            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -274,29 +304,43 @@ struct TeacherStudentsListView: View {
 
     // MARK: - Load
     private func loadStudents() async {
-        guard session.uid != nil else {
+        guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.errorMessage = "Não foi possível identificar o professor logado."
             return
         }
-        await vm.loadStudents()
+        await vm.loadStudents(teacherId: teacherId, selectedCategory: selectedCategory)
+    }
+
+    // MARK: - Navigation
+    private func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
     }
 }
 
 @MainActor
 final class TeacherStudentsListViewModel: ObservableObject {
 
-    @Published private(set) var students: [UserFS] = []
+    @Published private(set) var students: [AppUser] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
-    private let usersService = UsersService()
+    private let repository: FirestoreRepository
 
-    func loadStudents() async {
+    init(repository: FirestoreRepository) {
+        self.repository = repository
+    }
+
+    func loadStudents(teacherId: String, selectedCategory: TreinoTipo) async {
         isLoading = true
         errorMessage = nil
 
         do {
-            let result = try await usersService.fetchStudentsForTeacherFallbackAll()
+            // Busca via teacher_students: teacherId + categories arrayContains
+            let result = try await repository.getStudentsForTeacher(
+                teacherId: teacherId,
+                category: selectedCategory.rawValue
+            )
             self.students = result
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
@@ -305,14 +349,10 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isLoading = false
     }
 
-    func filteredStudents(filter: TreinoTipo?) -> [UserFS] {
+    func filteredStudents(filter: TreinoTipo?) -> [AppUser] {
         guard let filter else { return students }
-        let key = filter.rawValue // "crossfit" etc
-        return students.filter { ($0.defaultCategory ?? "").lowercased() == key.lowercased() }
+        let key = filter.rawValue.lowercased()
+        return students.filter { ($0.defaultCategory ?? "").lowercased() == key }
     }
-}
-
-private extension TreinoTipo {
-    var displayNameFallback: String { String(describing: self).capitalized }
 }
 
