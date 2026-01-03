@@ -1,27 +1,6 @@
 import SwiftUI
 import Combine
 
-// MARK: - Helpers fora do @MainActor (NÃO isolados)
-private enum AgendaHelpers {
-
-    static func computePercent(completed: Int, total: Int) -> Int {
-        guard total > 0 else { return 0 }
-        let v = (Double(completed) / Double(total)) * 100.0
-        return Int(v.rounded())
-    }
-
-    static func computeRangeText(days: [TrainingDayFS]) -> String? {
-        let dates = days.compactMap { $0.date }
-        guard let minDate = dates.min(), let maxDate = dates.max() else { return nil }
-
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy"
-
-        return "\(f.string(from: minDate)) a \(f.string(from: maxDate))"
-    }
-}
-
 // MARK: - Aluno/Professor: Agenda (lista de semanas)
 struct StudentAgendaView: View {
 
@@ -111,10 +90,10 @@ struct StudentAgendaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .task {
-            if vm.weeks.isEmpty && !vm.isLoading {
-                await vm.loadWeeksAndMeta()
-            }
+
+        // ✅ Sempre que voltar para a Agenda, recarrega os metadados
+        .onAppear {
+            Task { await vm.loadWeeksAndMeta() }
         }
     }
 
@@ -181,7 +160,6 @@ struct StudentAgendaView: View {
 
     private var weeksList: some View {
         VStack(spacing: 0) {
-
             ForEach(Array(vm.weeks.enumerated()), id: \.offset) { item in
                 let idx = item.offset
                 let week = item.element
@@ -338,40 +316,35 @@ final class StudentAgendaViewModel: ObservableObject {
         isLoading = false
     }
 
-    /// ✅ Faz requests em paralelo e só atualiza estado no MainActor
     private func loadMetaForWeeks(_ weeks: [TrainingWeekFS]) async {
 
-        var newRanges: [String: String] = [:]
-        var newPercents: [String: Int] = [:]
+        // ✅ limpa cache antes de recarregar (garante atualização)
+        weekRangeText.removeAll()
+        weekProgressPercent.removeAll()
 
-        await withTaskGroup(of: (String, String?, Int?).self) { group in
+        await withTaskGroup(of: Void.self) { group in
             for week in weeks {
                 guard let weekId = week.id, !weekId.isEmpty else { continue }
 
-                group.addTask { [repository] in
+                group.addTask { [studentId] in
                     do {
-                        let days = try await repository.getDaysForWeek(weekId: weekId)
-                        let range = AgendaHelpers.computeRangeText(days: days)
+                        let days = try await self.repository.getDaysForWeek(weekId: weekId)
+                        if let range = StudentAgendaViewModel.computeRangeTextStatic(days: days) {
+                            await MainActor.run { self.weekRangeText[weekId] = range }
+                        }
 
-                        let p = try await repository.getWeekProgress(weekId: weekId)
-                        let percent = AgendaHelpers.computePercent(completed: p.completed, total: p.total)
+                        let p = try await self.repository.getWeekProgress(weekId: weekId, studentId: studentId)
+                        let percent = StudentAgendaViewModel.computePercentStatic(completed: p.completed, total: p.total)
+                        await MainActor.run { self.weekProgressPercent[weekId] = percent }
 
-                        return (weekId, range, percent)
                     } catch {
-                        return (weekId, nil, nil)
+                        // fallback silencioso
                     }
                 }
             }
-
-            for await (weekId, range, percent) in group {
-                if let range { newRanges[weekId] = range }
-                if let percent { newPercents[weekId] = percent }
-            }
         }
 
-        // Atualiza cache no MainActor
-        self.weekRangeText = newRanges
-        self.weekProgressPercent = newPercents
+        // força refresh da lista
         objectWillChange.send()
     }
 
@@ -382,6 +355,24 @@ final class StudentAgendaViewModel: ObservableObject {
         let percent = weekProgressPercent[weekId] ?? 0
 
         return "\(range) • \(percent)%"
+    }
+
+    // ✅ STATIC / NON-ACTOR helpers
+    nonisolated static func computePercentStatic(completed: Int, total: Int) -> Int {
+        guard total > 0 else { return 0 }
+        let v = (Double(completed) / Double(total)) * 100.0
+        return Int(v.rounded())
+    }
+
+    nonisolated static func computeRangeTextStatic(days: [TrainingDayFS]) -> String? {
+        let dates = days.compactMap { $0.date }
+        guard let minDate = dates.min(), let maxDate = dates.max() else { return nil }
+
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "pt_BR")
+        f.dateFormat = "dd/MM/yyyy"
+
+        return "\(f.string(from: minDate)) a \(f.string(from: maxDate))"
     }
 }
 

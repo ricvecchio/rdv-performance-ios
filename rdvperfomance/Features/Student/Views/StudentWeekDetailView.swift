@@ -29,7 +29,7 @@ struct StudentWeekDetailView: View {
         self.studentId = studentId
         self.weekId = weekId
         self.weekTitle = weekTitle
-        _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, repository: repository))
+        _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, studentId: studentId, repository: repository))
     }
 
     private var isTeacherViewing: Bool { session.userType == .TRAINER }
@@ -163,55 +163,52 @@ struct StudentWeekDetailView: View {
 
     private var daysList: some View {
         VStack(spacing: 0) {
-
-            // ✅ evita erros de inferência usando `item.offset` / `item.element`
             ForEach(Array(vm.days.enumerated()), id: \.offset) { item in
                 let idx = item.offset
                 let day = item.element
 
-                Button {
-                    path.append(.studentDayDetail(day: day, weekTitle: weekTitle))
-                } label: {
-                    HStack(spacing: 14) {
+                HStack(spacing: 14) {
 
-                        Image(systemName: "flame.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(.green.opacity(0.85))
-                            .frame(width: 28)
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green.opacity(0.85))
+                        .frame(width: 28)
 
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(day.title)
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white.opacity(0.92))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(day.title)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
 
-                            Text(day.subtitleText)
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.35))
-                        }
-
-                        Spacer()
-
-                        // ✅ Concluir dia (somente aluno)
-                        if isStudentViewing, let dayId = day.id {
-                            Button {
-                                Task { await vm.toggleCompleted(dayId: dayId) }
-                            } label: {
-                                Image(systemName: vm.isCompleted(dayId: dayId) ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(vm.isCompleted(dayId: dayId) ? .green.opacity(0.85) : .white.opacity(0.35))
-                            }
-                            .buttonStyle(.plain)
-                            .padding(.trailing, 6)
-                        } else {
-                            Image(systemName: "chevron.right")
-                                .foregroundColor(.white.opacity(0.35))
-                        }
+                        Text(day.subtitleText)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.35))
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-                    .contentShape(Rectangle())
+
+                    Spacer()
+
+                    // ✅ Concluir dia (somente aluno) — AGORA FUNCIONA
+                    if isStudentViewing, let dayId = day.id {
+                        Button {
+                            Task { await vm.toggleCompleted(dayId: dayId) }
+                        } label: {
+                            Image(systemName: vm.isCompleted(dayId: dayId) ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 20))
+                                .foregroundColor(vm.isCompleted(dayId: dayId) ? .green.opacity(0.85) : .white.opacity(0.35))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.trailing, 6)
+                    } else {
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.white.opacity(0.35))
+                    }
                 }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    // ✅ abre detalhe do dia (sem usar Button externo)
+                    path.append(.studentDayDetail(day: day, weekTitle: weekTitle))
+                }
 
                 if idx < vm.days.count - 1 {
                     innerDivider(leading: 54)
@@ -296,10 +293,12 @@ final class StudentWeekDetailViewModel: ObservableObject {
     @Published private(set) var completedDayIds: Set<String> = []
 
     private let weekId: String
+    private let studentId: String
     private let repository: FirestoreRepository
 
-    init(weekId: String, repository: FirestoreRepository) {
+    init(weekId: String, studentId: String, repository: FirestoreRepository) {
         self.weekId = weekId
+        self.studentId = studentId
         self.repository = repository
     }
 
@@ -311,7 +310,7 @@ final class StudentWeekDetailViewModel: ObservableObject {
             let result = try await repository.getDaysForWeek(weekId: weekId)
             self.days = result
 
-            let statusMap = try await repository.getDayStatusMap(weekId: weekId)
+            let statusMap = try await repository.getDayStatusMap(weekId: weekId, studentId: studentId)
             let completed = statusMap.compactMap { (key: String, value: Bool) -> String? in
                 value ? key : nil
             }
@@ -332,13 +331,19 @@ final class StudentWeekDetailViewModel: ObservableObject {
         let newValue = !isCompleted(dayId: dayId)
 
         do {
-            try await repository.setDayCompleted(weekId: weekId, dayId: dayId, completed: newValue)
+            try await repository.setDayCompleted(
+                weekId: weekId,
+                studentId: studentId,
+                dayId: dayId,
+                completed: newValue
+            )
 
             if newValue {
                 completedDayIds.insert(dayId)
             } else {
                 completedDayIds.remove(dayId)
             }
+
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
         }

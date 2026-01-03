@@ -178,8 +178,8 @@ final class FirestoreRepository {
         let payload: [String: Any] = [
             "studentId": cleanStudentId,
             "teacherId": cleanTeacherId,
-            "title": cleanTitle,       // compatibilidade
-            "weekTitle": cleanTitle,   // usado no app
+            "title": cleanTitle,
+            "weekTitle": cleanTitle,
             "categoryRaw": categoryRaw,
             "startDate": Timestamp(date: startDate),
             "endDate": Timestamp(date: endDate),
@@ -273,7 +273,7 @@ final class FirestoreRepository {
             .setData(
                 [
                     "weekTitle": titleTrim,
-                    "title": titleTrim, // compatibilidade
+                    "title": titleTrim,
                     "updatedAt": FieldValue.serverTimestamp()
                 ],
                 merge: true
@@ -353,129 +353,115 @@ final class FirestoreRepository {
             .document(cleanUid)
             .setData(payload, merge: true)
     }
-}
 
-// ============================================================
-// MARK: - Progress / Status (Aluno marca concluído)
-// ============================================================
+    // ============================================================
+    // MARK: - ✅ PROGRESSO DO ALUNO (por semana)
+    // ============================================================
 
-private extension TrainingFS {
-    static let statusSubcollection: String = "day_status"
-}
+    // Subcoleção: training_weeks/{weekId}/student_progress/{studentId}
+    private let progressSubcollection = "student_progress"
 
-extension FirestoreRepository {
+    /// Retorna o mapa dayId -> Bool (concluído ou não) PARA UM ALUNO
+    func getDayStatusMap(weekId: String, studentId: String) async throws -> [String: Bool] {
+        let w = clean(weekId)
+        let s = clean(studentId)
+        guard !w.isEmpty else { throw RepositoryError.missingWeekId }
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
 
-    /// Retorna mapa: dayId -> completed
-    func getDayStatusMap(weekId: String) async throws -> [String: Bool] {
-
-        let cleanWeekId = clean(weekId)
-        guard !cleanWeekId.isEmpty else { throw RepositoryError.missingWeekId }
-
-        let snap = try await db
+        let doc = try await db
             .collection(TrainingFS.weeksCollection)
-            .document(cleanWeekId)
-            .collection(TrainingFS.statusSubcollection)
-            .getDocuments()
+            .document(w)
+            .collection(progressSubcollection)
+            .document(s)
+            .getDocument()
 
-        var map: [String: Bool] = [:]
-        map.reserveCapacity(snap.documents.count)
+        guard doc.exists else { return [:] }
 
-        for doc in snap.documents {
-            let data = doc.data()
-            let completed = (data["completed"] as? Bool) ?? false
-            map[doc.documentID] = completed
-        }
-
-        return map
+        let data = doc.data() ?? [:]
+        return data["completedMap"] as? [String: Bool] ?? [:]
     }
 
-    /// Marca/desmarca um dia como concluído (docId = dayId)
-    func setDayCompleted(weekId: String, dayId: String, completed: Bool) async throws {
+    /// Marca/desmarca um dia como concluído PARA UM ALUNO
+    func setDayCompleted(weekId: String, studentId: String, dayId: String, completed: Bool) async throws {
+        let w = clean(weekId)
+        let s = clean(studentId)
+        let d = clean(dayId)
 
-        let cleanWeekId = clean(weekId)
-        guard !cleanWeekId.isEmpty else { throw RepositoryError.missingWeekId }
-
-        let cleanDayId = clean(dayId)
-        guard !cleanDayId.isEmpty else { throw RepositoryError.invalidData }
+        guard !w.isEmpty else { throw RepositoryError.missingWeekId }
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !d.isEmpty else { throw RepositoryError.invalidData }
 
         let ref = db
             .collection(TrainingFS.weeksCollection)
-            .document(cleanWeekId)
-            .collection(TrainingFS.statusSubcollection)
-            .document(cleanDayId)
+            .document(w)
+            .collection(progressSubcollection)
+            .document(s)
 
+        // Usa "campo dinâmico" dentro de um map: completedMap.<dayId> = true/false
         try await ref.setData(
             [
-                "completed": completed,
-                "updatedAt": FieldValue.serverTimestamp()
+                "studentId": s,
+                "updatedAt": FieldValue.serverTimestamp(),
+                "completedMap": [d: completed]
             ],
             merge: true
         )
     }
 
-    /// Progresso de uma semana: total de dias x concluídos
-    func getWeekProgress(weekId: String) async throws -> (completed: Int, total: Int) {
+    /// Retorna (completed, total) PARA UM ALUNO naquela semana
+    func getWeekProgress(weekId: String, studentId: String) async throws -> (completed: Int, total: Int) {
+        let days = try await getDaysForWeek(weekId: weekId)
+        let total = days.count
 
-        let cleanWeekId = clean(weekId)
-        guard !cleanWeekId.isEmpty else { throw RepositoryError.missingWeekId }
-
-        async let days = getDaysForWeek(weekId: cleanWeekId)
-        async let statusMap = getDayStatusMap(weekId: cleanWeekId)
-
-        let (daysResult, statusResult) = try await (days, statusMap)
-
-        let total = daysResult.count
         guard total > 0 else { return (0, 0) }
 
-        // Concluído = status true cujo id exista nos days (evita lixo)
-        let dayIds = Set(daysResult.compactMap { $0.id })
-        let completed = statusResult.filter { (key, value) in
-            value == true && dayIds.contains(key)
-        }.count
+        let map = try await getDayStatusMap(weekId: weekId, studentId: studentId)
+        let completed = map.values.filter { $0 }.count
 
         return (completed, total)
     }
 
-    /// ✅ Progresso geral do aluno (todas as semanas publicadas)
-    /// Retorna: (completed, total, percent)
-    func getStudentOverallProgress(studentId: String) async throws -> (completed: Int, total: Int, percent: Int) {
+    // ============================================================
+    // MARK: - ✅ PROGRESSO GERAL DO ALUNO (todas as semanas)
+    // ============================================================
 
-        let cleanStudentId = clean(studentId)
-        guard !cleanStudentId.isEmpty else { throw RepositoryError.missingStudentId }
+    /// Progresso geral em % considerando TODAS as semanas publicadas do aluno.
+    /// Retorna Int percent (0..100). (Assinatura usada no seu TeacherStudentDetailView.)
+    func getStudentOverallProgress(studentId: String) async throws -> (percent: Int, completed: Int, total: Int) {
 
-        // Considera apenas publicadas (pro aluno)
-        let weeks = try await getWeeksForStudent(studentId: cleanStudentId, onlyPublished: true)
-        let weekIds = weeks.compactMap { $0.id }.filter { !$0.isEmpty }
+        let s = clean(studentId)
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
 
-        guard !weekIds.isEmpty else { return (0, 0, 0) }
+        let weeks = try await getWeeksForStudent(studentId: s, onlyPublished: true)
+        guard !weeks.isEmpty else { return (0, 0, 0) }
 
-        var totalAll = 0
-        var completedAll = 0
+        var totalDays = 0
+        var totalCompleted = 0
 
-        // Paraleliza por weekId
+        // Carrega em paralelo por performance (MVP ok)
         try await withThrowingTaskGroup(of: (Int, Int).self) { group in
-            for wid in weekIds {
+            for w in weeks {
+                guard let weekId = w.id else { continue }
                 group.addTask {
-                    let p = try await self.getWeekProgress(weekId: wid)
+                    let p = try await self.getWeekProgress(weekId: weekId, studentId: s)
                     return (p.completed, p.total)
                 }
             }
 
-            for try await (c, t) in group {
-                completedAll += c
-                totalAll += t
+            for try await result in group {
+                totalCompleted += result.0
+                totalDays += result.1
             }
         }
 
         let percent: Int
-        if totalAll <= 0 {
-            percent = 0
+        if totalDays > 0 {
+            percent = Int(((Double(totalCompleted) / Double(totalDays)) * 100.0).rounded())
         } else {
-            let v = (Double(completedAll) / Double(totalAll)) * 100.0
-            percent = Int(v.rounded())
+            percent = 0
         }
 
-        return (completedAll, totalAll, percent)
+        return (percent, totalCompleted, totalDays)
     }
 }
 
