@@ -172,7 +172,6 @@ rdv-performance-ios
    │  │
    │  └─ Student
    │     ├─ Models
-   │     │  ├─ MockWeeks.swift
    │     │  └─ TrainingDay.swift
    │     └─ Views
    │        ├─ StudentAgendaView.swift
@@ -217,8 +216,8 @@ Este documento fornece um mapeamento completo das telas do aplicativo RDV Perfor
 | **Menu Crossfit**             | `CrossfitMenuView.swift`         | —                                                                      | —                                    |
 | **Sobre**                     | `AboutView.swift`                | —                                                                      | `HeaderBar.swift`, `FooterBar.swift` |
 | **Configurações**             | `SettingsView.swift`             | —                                                                      | —                                    |
-| **Aluno – Agenda**            | `StudentAgendaView.swift`        | `TrainingDay.swift`, `MockWeeks.swift`                                 | —                                    |
-| **Aluno – Detalhe Semana**    | `StudentWeekDetailView.swift`    | `TrainingDay.swift`, `MockWeeks.swift`                                 | —                                    |
+| **Aluno – Agenda**            | `StudentAgendaView.swift`        | `TrainingDay.swift`                                                    | —                                    |
+| **Aluno – Detalhe Semana**    | `StudentWeekDetailView.swift`    | `TrainingDay.swift`                                                    | —                                    |
 | **Professor – Lista Alunos**  | `TeacherStudentsListView.swift`  | `Student.swift`                                                        | —                                    |
 | **Professor – Detalhe Aluno** | `TeacherStudentDetailView.swift` | `Student.swift`                                                        | —                                    |
 | **Navegação & App**           | `rdvperformanceApp.swift`        | `AppRouter.swift`, `AppRoute.swift`, `AppSession.swift`, `Theme.swift` | —                                    |
