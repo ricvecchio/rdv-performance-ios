@@ -1,6 +1,28 @@
 import SwiftUI
 import Combine
 
+// MARK: - Helpers fora do @MainActor (NÃO isolados)
+private enum AgendaHelpers {
+
+    static func computePercent(completed: Int, total: Int) -> Int {
+        guard total > 0 else { return 0 }
+        let v = (Double(completed) / Double(total)) * 100.0
+        return Int(v.rounded())
+    }
+
+    static func computeRangeText(days: [TrainingDayFS]) -> String? {
+        let dates = days.compactMap { $0.date }
+        guard let minDate = dates.min(), let maxDate = dates.max() else { return nil }
+
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "pt_BR")
+        f.dateFormat = "dd/MM/yyyy"
+
+        return "\(f.string(from: minDate)) a \(f.string(from: maxDate))"
+    }
+}
+
+// MARK: - Aluno/Professor: Agenda (lista de semanas)
 struct StudentAgendaView: View {
 
     @Binding var path: [AppRoute]
@@ -27,9 +49,7 @@ struct StudentAgendaView: View {
         _vm = StateObject(wrappedValue: StudentAgendaViewModel(studentId: studentId, repository: repository))
     }
 
-    private var isTeacherViewing: Bool {
-        session.userType == .TRAINER
-    }
+    private var isTeacherViewing: Bool { session.userType == .TRAINER }
 
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
@@ -93,7 +113,7 @@ struct StudentAgendaView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .task {
             if vm.weeks.isEmpty && !vm.isLoading {
-                await vm.loadWeeks()
+                await vm.loadWeeksAndMeta()
             }
         }
     }
@@ -161,7 +181,10 @@ struct StudentAgendaView: View {
 
     private var weeksList: some View {
         VStack(spacing: 0) {
-            ForEach(Array(vm.weeks.enumerated()), id: \.offset) { idx, week in
+
+            ForEach(Array(vm.weeks.enumerated()), id: \.offset) { item in
+                let idx = item.offset
+                let week = item.element
 
                 Button {
                     guard let weekId = week.id, !weekId.isEmpty else {
@@ -169,7 +192,6 @@ struct StudentAgendaView: View {
                         return
                     }
 
-                    // ✅ MVP simples: sempre usa a rota existente (sem duplicar rotas My*)
                     path.append(.studentWeekDetail(
                         studentId: studentId,
                         weekId: weekId,
@@ -189,7 +211,7 @@ struct StudentAgendaView: View {
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(.white.opacity(0.92))
 
-                            Text(week.subtitleText)
+                            Text(vm.subtitleForWeek(week))
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
                         }
@@ -234,7 +256,7 @@ struct StudentAgendaView: View {
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
-            Button { Task { await vm.loadWeeks() } } label: {
+            Button { Task { await vm.loadWeeksAndMeta() } } label: {
                 Text("Tentar novamente")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
@@ -277,12 +299,19 @@ struct StudentAgendaView: View {
     }
 }
 
+// MARK: - ViewModel
 @MainActor
 final class StudentAgendaViewModel: ObservableObject {
 
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+
+    // weekId -> "12/01/2026 a 14/01/2026"
+    private var weekRangeText: [String: String] = [:]
+
+    // weekId -> 35
+    private var weekProgressPercent: [String: Int] = [:]
 
     private let studentId: String
     private let repository: FirestoreRepository
@@ -292,22 +321,67 @@ final class StudentAgendaViewModel: ObservableObject {
         self.repository = repository
     }
 
-    func loadWeeks() async {
+    func loadWeeksAndMeta() async {
         isLoading = true
         errorMessage = nil
 
         do {
             let result = try await repository.getWeeksForStudent(studentId: studentId)
             self.weeks = result
+
+            await loadMetaForWeeks(result)
+
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
         }
 
         isLoading = false
     }
-}
 
-private extension TrainingWeekFS {
-    var subtitleText: String { "Treinos da semana" }
+    /// ✅ Faz requests em paralelo e só atualiza estado no MainActor
+    private func loadMetaForWeeks(_ weeks: [TrainingWeekFS]) async {
+
+        var newRanges: [String: String] = [:]
+        var newPercents: [String: Int] = [:]
+
+        await withTaskGroup(of: (String, String?, Int?).self) { group in
+            for week in weeks {
+                guard let weekId = week.id, !weekId.isEmpty else { continue }
+
+                group.addTask { [repository] in
+                    do {
+                        let days = try await repository.getDaysForWeek(weekId: weekId)
+                        let range = AgendaHelpers.computeRangeText(days: days)
+
+                        let p = try await repository.getWeekProgress(weekId: weekId)
+                        let percent = AgendaHelpers.computePercent(completed: p.completed, total: p.total)
+
+                        return (weekId, range, percent)
+                    } catch {
+                        return (weekId, nil, nil)
+                    }
+                }
+            }
+
+            for await (weekId, range, percent) in group {
+                if let range { newRanges[weekId] = range }
+                if let percent { newPercents[weekId] = percent }
+            }
+        }
+
+        // Atualiza cache no MainActor
+        self.weekRangeText = newRanges
+        self.weekProgressPercent = newPercents
+        objectWillChange.send()
+    }
+
+    func subtitleForWeek(_ week: TrainingWeekFS) -> String {
+        guard let weekId = week.id else { return "Treinos da semana" }
+
+        let range = weekRangeText[weekId] ?? "Treinos da semana"
+        let percent = weekProgressPercent[weekId] ?? 0
+
+        return "\(range) • \(percent)%"
+    }
 }
 

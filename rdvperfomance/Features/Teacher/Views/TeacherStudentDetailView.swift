@@ -1,6 +1,5 @@
 import SwiftUI
 
-// MARK: - Tela (Professor): Perfil do Aluno (Detalhe)
 struct TeacherStudentDetailView: View {
 
     @Binding var path: [AppRoute]
@@ -8,7 +7,12 @@ struct TeacherStudentDetailView: View {
     let student: AppUser
     let category: TreinoTipo
 
+    @EnvironmentObject private var session: AppSession
+
     private let contentMaxWidth: CGFloat = 380
+
+    @State private var progress: Double = 0.0
+    @State private var isLoadingProgress: Bool = false
 
     var body: some View {
         ZStack {
@@ -84,6 +88,9 @@ struct TeacherStudentDetailView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .task {
+            await loadProgress()
+        }
     }
 
     // MARK: - Cards
@@ -126,16 +133,25 @@ struct TeacherStudentDetailView: View {
     }
 
     private func progressCard() -> some View {
-        let progress: Double = 0.0
+
+        let percent = Int((progress * 100.0).rounded())
 
         return VStack(alignment: .leading, spacing: 12) {
 
-            Text("Progresso do Aluno")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+            HStack {
+                Text("Progresso do Aluno")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Spacer()
+
+                if isLoadingProgress {
+                    ProgressView().tint(.white)
+                }
+            }
 
             HStack {
-                Text("\(Int(progress * 100))% completo")
+                Text("\(percent)% completo")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
@@ -225,6 +241,27 @@ struct TeacherStudentDetailView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
+    }
+
+    // MARK: - Load progress
+    private func loadProgress() async {
+        guard session.userType == .TRAINER else { return }
+        guard let sid = student.id, !sid.isEmpty else { return }
+
+        isLoadingProgress = true
+        defer { isLoadingProgress = false }
+
+        do {
+            // ✅ Método correto: NÃO recebe categoryRaw
+            let p = try await FirestoreRepository.shared.getStudentOverallProgress(studentId: sid)
+
+            // p.percent vem como Int (0..100)
+            self.progress = Double(p.percent) / 100.0
+
+        } catch {
+            // Mantém 0.0 em caso de falha; não quebra UI.
+            self.progress = 0.0
+        }
     }
 }
 

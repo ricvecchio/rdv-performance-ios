@@ -1,6 +1,7 @@
 import SwiftUI
 import Combine
 
+// MARK: - Semana (lista de dias)
 struct StudentWeekDetailView: View {
 
     @Binding var path: [AppRoute]
@@ -31,9 +32,8 @@ struct StudentWeekDetailView: View {
         _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, repository: repository))
     }
 
-    private var isTeacherViewing: Bool {
-        session.userType == .TRAINER
-    }
+    private var isTeacherViewing: Bool { session.userType == .TRAINER }
+    private var isStudentViewing: Bool { session.userType == .STUDENT }
 
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
@@ -72,7 +72,6 @@ struct StudentWeekDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            // ✅ Agora sempre tem voltar
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -96,7 +95,7 @@ struct StudentWeekDetailView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .task {
             if vm.days.isEmpty && !vm.isLoading {
-                await vm.loadDays()
+                await vm.loadDaysAndStatus()
             }
         }
     }
@@ -137,7 +136,7 @@ struct StudentWeekDetailView: View {
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Dias de treino")
+            Text(isStudentViewing ? "Marque os dias como concluídos." : "Dias de treino")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -164,7 +163,12 @@ struct StudentWeekDetailView: View {
 
     private var daysList: some View {
         VStack(spacing: 0) {
-            ForEach(Array(vm.days.enumerated()), id: \.offset) { idx, day in
+
+            // ✅ evita erros de inferência usando `item.offset` / `item.element`
+            ForEach(Array(vm.days.enumerated()), id: \.offset) { item in
+                let idx = item.offset
+                let day = item.element
+
                 Button {
                     path.append(.studentDayDetail(day: day, weekTitle: weekTitle))
                 } label: {
@@ -187,8 +191,21 @@ struct StudentWeekDetailView: View {
 
                         Spacer()
 
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.white.opacity(0.35))
+                        // ✅ Concluir dia (somente aluno)
+                        if isStudentViewing, let dayId = day.id {
+                            Button {
+                                Task { await vm.toggleCompleted(dayId: dayId) }
+                            } label: {
+                                Image(systemName: vm.isCompleted(dayId: dayId) ? "checkmark.circle.fill" : "circle")
+                                    .font(.system(size: 20))
+                                    .foregroundColor(vm.isCompleted(dayId: dayId) ? .green.opacity(0.85) : .white.opacity(0.35))
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.trailing, 6)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.white.opacity(0.35))
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
@@ -225,7 +242,7 @@ struct StudentWeekDetailView: View {
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
-            Button { Task { await vm.loadDays() } } label: {
+            Button { Task { await vm.loadDaysAndStatus() } } label: {
                 Text("Tentar novamente")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
@@ -268,12 +285,15 @@ struct StudentWeekDetailView: View {
     }
 }
 
+// MARK: - ViewModel
 @MainActor
 final class StudentWeekDetailViewModel: ObservableObject {
 
     @Published private(set) var days: [TrainingDayFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+
+    @Published private(set) var completedDayIds: Set<String> = []
 
     private let weekId: String
     private let repository: FirestoreRepository
@@ -283,18 +303,45 @@ final class StudentWeekDetailViewModel: ObservableObject {
         self.repository = repository
     }
 
-    func loadDays() async {
+    func loadDaysAndStatus() async {
         isLoading = true
         errorMessage = nil
 
         do {
             let result = try await repository.getDaysForWeek(weekId: weekId)
             self.days = result
+
+            let statusMap = try await repository.getDayStatusMap(weekId: weekId)
+            let completed = statusMap.compactMap { (key: String, value: Bool) -> String? in
+                value ? key : nil
+            }
+            self.completedDayIds = Set(completed)
+
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
         }
 
         isLoading = false
+    }
+
+    func isCompleted(dayId: String) -> Bool {
+        completedDayIds.contains(dayId)
+    }
+
+    func toggleCompleted(dayId: String) async {
+        let newValue = !isCompleted(dayId: dayId)
+
+        do {
+            try await repository.setDayCompleted(weekId: weekId, dayId: dayId, completed: newValue)
+
+            if newValue {
+                completedDayIds.insert(dayId)
+            } else {
+                completedDayIds.remove(dayId)
+            }
+        } catch {
+            self.errorMessage = (error as NSError).localizedDescription
+        }
     }
 }
 
