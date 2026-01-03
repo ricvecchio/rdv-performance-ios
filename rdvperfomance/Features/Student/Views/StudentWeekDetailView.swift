@@ -86,6 +86,7 @@ struct StudentWeekDetailView: View {
                     .foregroundColor(.white)
             }
 
+            // ✅ Mantém SOMENTE o perfil (remove o botão + do cabeçalho)
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
                     .background(Color.clear)
@@ -130,7 +131,7 @@ struct StudentWeekDetailView: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
 
             Text(weekTitle)
                 .font(.system(size: 18, weight: .semibold))
@@ -139,6 +140,24 @@ struct StudentWeekDetailView: View {
             Text(isStudentViewing ? "Marque os dias como concluídos." : "Dias de treino")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
+
+            // ✅ CTA para professor quando ainda não tem dias (mantido)
+            if isTeacherViewing && !vm.isLoading && vm.days.isEmpty {
+                Button {
+                    path.append(.createTrainingDay(weekId: weekId, category: teacherSelectedCategory))
+                } label: {
+                    HStack {
+                        Image(systemName: "plus")
+                        Text("Adicionar primeiro dia")
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                }
+                .buttonStyle(.plain)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -186,7 +205,6 @@ struct StudentWeekDetailView: View {
 
                     Spacer()
 
-                    // ✅ Concluir dia (somente aluno) — AGORA FUNCIONA
                     if isStudentViewing, let dayId = day.id {
                         Button {
                             Task { await vm.toggleCompleted(dayId: dayId) }
@@ -206,7 +224,6 @@ struct StudentWeekDetailView: View {
                 .padding(.vertical, 14)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    // ✅ abre detalhe do dia (sem usar Button externo)
                     path.append(.studentDayDetail(day: day, weekTitle: weekTitle))
                 }
 
@@ -260,7 +277,9 @@ struct StudentWeekDetailView: View {
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("O professor ainda não adicionou dias para esta semana.")
+            Text(isTeacherViewing
+                 ? "Adicione dias para esta semana."
+                 : "O professor ainda não adicionou dias para esta semana.")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
@@ -279,74 +298,6 @@ struct StudentWeekDetailView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
-    }
-}
-
-// MARK: - ViewModel
-@MainActor
-final class StudentWeekDetailViewModel: ObservableObject {
-
-    @Published private(set) var days: [TrainingDayFS] = []
-    @Published private(set) var isLoading: Bool = false
-    @Published var errorMessage: String? = nil
-
-    @Published private(set) var completedDayIds: Set<String> = []
-
-    private let weekId: String
-    private let studentId: String
-    private let repository: FirestoreRepository
-
-    init(weekId: String, studentId: String, repository: FirestoreRepository) {
-        self.weekId = weekId
-        self.studentId = studentId
-        self.repository = repository
-    }
-
-    func loadDaysAndStatus() async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            let result = try await repository.getDaysForWeek(weekId: weekId)
-            self.days = result
-
-            let statusMap = try await repository.getDayStatusMap(weekId: weekId, studentId: studentId)
-            let completed = statusMap.compactMap { (key: String, value: Bool) -> String? in
-                value ? key : nil
-            }
-            self.completedDayIds = Set(completed)
-
-        } catch {
-            self.errorMessage = (error as NSError).localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    func isCompleted(dayId: String) -> Bool {
-        completedDayIds.contains(dayId)
-    }
-
-    func toggleCompleted(dayId: String) async {
-        let newValue = !isCompleted(dayId: dayId)
-
-        do {
-            try await repository.setDayCompleted(
-                weekId: weekId,
-                studentId: studentId,
-                dayId: dayId,
-                completed: newValue
-            )
-
-            if newValue {
-                completedDayIds.insert(dayId)
-            } else {
-                completedDayIds.remove(dayId)
-            }
-
-        } catch {
-            self.errorMessage = (error as NSError).localizedDescription
-        }
     }
 }
 

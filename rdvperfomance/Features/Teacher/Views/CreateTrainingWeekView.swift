@@ -441,9 +441,52 @@ struct CreateTrainingWeekView: View {
         isEditSheetOpen = false
     }
 
+    /// ✅ Fluxo "NOVA SEMANA" - botão Publicar
     private func publishWeek() async {
-        // Mantido como estava no seu arquivo.
-        // (Não alterei porque sua solicitação atual é sobre range por dias.)
+        errorMessage = nil
+        successMessage = nil
+
+        guard !isSaving else { return }
+
+        guard let studentId = student.id, !studentId.isEmpty else {
+            errorMessage = "Aluno inválido: id não encontrado."
+            return
+        }
+
+        let trimmedTitle = weekTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedTitle.isEmpty else {
+            errorMessage = "Informe o título da semana."
+            return
+        }
+
+        guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            let now = Date()
+
+            _ = try await FirestoreRepository.shared.createWeekForStudent(
+                studentId: studentId,
+                teacherId: teacherId,
+                title: trimmedTitle,
+                categoryRaw: category.rawValue,
+                startDate: now,
+                endDate: now,
+                isPublished: true
+            )
+
+            weekTitle = ""
+            successMessage = "Semana publicada com sucesso."
+            await loadWeeks()
+
+        } catch {
+            errorMessage = (error as NSError).localizedDescription
+        }
     }
 
     private func weekDateRangeText(_ week: TrainingWeekFS) -> String? {
@@ -457,75 +500,6 @@ struct CreateTrainingWeekView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
-    }
-}
-
-// MARK: - ViewModel
-@MainActor
-final class CreateTrainingWeekViewModel: ObservableObject {
-
-    @Published private(set) var weeks: [TrainingWeekFS] = []
-    @Published private(set) var isLoading: Bool = false
-    @Published var errorMessage: String? = nil
-
-    private let studentId: String
-    private let repository: FirestoreRepository
-
-    init(studentId: String, repository: FirestoreRepository) {
-        self.studentId = studentId
-        self.repository = repository
-    }
-
-    func loadWeeks(studentId: String) async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            let result = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: false)
-
-            self.weeks = result.sorted { a, b in
-                let ad = a.createdAt?.dateValue() ?? Date.distantPast
-                let bd = b.createdAt?.dateValue() ?? Date.distantPast
-                return ad > bd
-            }
-
-        } catch {
-            self.errorMessage = (error as NSError).localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    /// ✅ Corrige weeks já existentes para refletirem o range real dos dias
-    func repairWeekRangesIfNeeded() async {
-        let ids = weeks.compactMap { $0.id }
-        guard !ids.isEmpty else { return }
-
-        // roda em paralelo, mas sem travar UI
-        await withTaskGroup(of: Void.self) { group in
-            for weekId in ids {
-                group.addTask {
-                    do {
-                        try await FirestoreRepository.shared.updateWeekDateRangeFromDays(weekId: weekId)
-                    } catch {
-                        // Silencioso para não poluir UI;
-                        // se precisar, podemos logar.
-                    }
-                }
-            }
-        }
-
-        // Recarrega para refletir as datas corrigidas na lista
-        do {
-            let result = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: false)
-            self.weeks = result.sorted { a, b in
-                let ad = a.createdAt?.dateValue() ?? Date.distantPast
-                let bd = b.createdAt?.dateValue() ?? Date.distantPast
-                return ad > bd
-            }
-        } catch {
-            // mantém lista atual
-        }
     }
 }
 

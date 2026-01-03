@@ -35,6 +35,9 @@ struct CreateTrainingDayView: View {
     @State private var currentEditingDayId: String? = nil
     @State private var baseWeekStartDate: Date? = nil
 
+    // ✅ Ajuda a não sobrescrever a data quando o usuário escolhe manualmente
+    @State private var didUserManuallyPickDate: Bool = false
+
     private let contentMaxWidth: CGFloat = 380
 
     var body: some View {
@@ -163,6 +166,10 @@ struct CreateTrainingDayView: View {
                     .labelsHidden()
                     .tint(.green.opacity(0.85))
                     .colorScheme(.dark)
+                    .onChange(of: date) { _, _ in
+                        // ✅ usuário mexeu manualmente
+                        didUserManuallyPickDate = true
+                    }
             }
 
             Divider().background(Theme.Colors.divider)
@@ -174,7 +181,6 @@ struct CreateTrainingDayView: View {
 
                 Picker("Ordem do dia", selection: $dayIndex) {
                     ForEach(0..<7, id: \.self) { i in
-                        // ✅ Marca visualmente os que já existem
                         let exists = existingDaysByIndex[i] != nil
                         Text(exists ? "Dia \(i + 1) ✓" : "Dia \(i + 1)").tag(i)
                     }
@@ -390,26 +396,32 @@ struct CreateTrainingDayView: View {
 
         do {
             let days = try await FirestoreRepository.shared.getDaysForWeek(weekId: weekId)
+
             var dict: [Int: TrainingDayFS] = [:]
             for d in days { dict[d.dayIndex] = d }
             existingDaysByIndex = dict
 
-            // Base start = menor data cadastrada
+            // Base start = menor data cadastrada (se existir)
             let dates = days.compactMap { $0.date }
             baseWeekStartDate = dates.min()
 
-            // Abre no primeiro dia que ainda não existe (Dia 4 no seu caso)
+            // Abre no primeiro dia que ainda não existe
             let firstMissing = (0...6).first(where: { dict[$0] == nil }) ?? 0
             dayIndex = firstMissing
 
+            // Ao entrar/trocar, como é "novo dia" geralmente, permitimos auto data
+            didUserManuallyPickDate = false
             loadDayIntoFormIfExists(index: dayIndex)
 
         } catch {
-            // Se falhar, mantém como está
+            errorMessage = (error as NSError).localizedDescription
         }
     }
 
     private func loadDayIntoFormIfExists(index: Int) {
+        errorMessage = nil
+        successMessage = nil
+
         // Se já existe, carrega para edição
         if let existing = existingDaysByIndex[index] {
             currentEditingDayId = existing.id
@@ -418,6 +430,9 @@ struct CreateTrainingDayView: View {
             title = existing.title
             description = existing.description
             blocks = existing.blocks.map { BlockDraft(id: $0.id, name: $0.name, details: $0.details) }
+
+            // Ao carregar existente, não queremos sobrescrever a data automaticamente
+            didUserManuallyPickDate = true
             return
         }
 
@@ -431,12 +446,15 @@ struct CreateTrainingDayView: View {
             BlockDraft(name: "WOD", details: "")
         ]
 
-        // Nome default
+        // Nome default (Dia X)
         dayName = ""
         syncDayName()
 
-        // ✅ Data automática baseada na primeira data da semana
-        if let base = baseWeekStartDate {
+        // ✅ Data automática
+        // - Se existe baseWeekStartDate (algum dia já cadastrado), usa base + index
+        // - Se não existe (semana recém criada), usa "hoje + index"
+        if !didUserManuallyPickDate {
+            let base = baseWeekStartDate ?? Date()
             if let computed = Calendar.current.date(byAdding: .day, value: index, to: base) {
                 date = computed
             }
@@ -479,7 +497,6 @@ struct CreateTrainingDayView: View {
                 .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
                 .map { BlockFS(id: $0.id, name: $0.name, details: $0.details) }
 
-            // ✅ Se existe dia, edita (dayId). Se não, cria novo.
             _ = try await FirestoreRepository.shared.upsertDay(
                 weekId: cleanWeekId,
                 dayId: currentEditingDayId,
@@ -493,7 +510,8 @@ struct CreateTrainingDayView: View {
 
             successMessage = currentEditingDayId == nil ? "Dia salvo com sucesso!" : "Alterações salvas com sucesso!"
 
-            // Recarrega mapa de dias e abre próximo faltante
+            // ✅ Após salvar, atualiza lista e abre o próximo dia faltante
+            didUserManuallyPickDate = false
             await bootstrapDays()
 
         } catch {

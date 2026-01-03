@@ -1,6 +1,7 @@
 import Foundation
 import FirebaseFirestore
 
+// MARK: - TrainingWeekFS (Firestore: training_weeks)
 struct TrainingWeekFS: Identifiable, Codable, Hashable {
 
     @DocumentID var id: String?
@@ -19,7 +20,9 @@ struct TrainingWeekFS: Identifiable, Codable, Hashable {
     @ServerTimestamp var updatedAt: Timestamp?
 }
 
+// MARK: - Helpers
 extension TrainingWeekFS {
+
     var category: TreinoTipo {
         TreinoTipo(rawValue: categoryRaw) ?? .crossfit
     }
