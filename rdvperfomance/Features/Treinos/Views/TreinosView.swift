@@ -87,7 +87,7 @@ struct TreinosView: View {
 
             // ✅ PERFIL — mesmo padrão da HomeView
             ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_eu", size: 38)
+                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
                     .onTapGesture {
                         // path.append(.perfil) // opcional
                     }

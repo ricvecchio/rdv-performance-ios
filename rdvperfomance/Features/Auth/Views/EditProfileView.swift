@@ -1,0 +1,457 @@
+import SwiftUI
+import PhotosUI
+import UIKit
+
+// MARK: - EditProfileView
+// ✅ Importar foto do celular
+// ✅ Editar WhatsApp
+// ✅ Editar Área de foco (Aluno: Crossfit / Academia / Treinos em Casa)
+//
+// Persistência (AGORA POR USUÁRIO):
+// - Foto: LocalProfileStore (Base64 por UID)
+// - WhatsApp: LocalProfileStore (por UID)
+// - Área de foco: LocalProfileStore (rawValue por UID)
+//
+// ✅ Importante:
+// - Cada usuário tem seus próprios dados.
+// - Ao trocar de usuário, a tela recarrega corretamente.
+struct EditProfileView: View {
+
+    @Binding var path: [AppRoute]
+    @EnvironmentObject private var session: AppSession
+
+    // MARK: - Estados locais (foto)
+    @State private var selectedItem: PhotosPickerItem? = nil
+    @State private var previewImage: UIImage? = nil
+    @State private var isLoadingImage: Bool = false
+
+    // MARK: - Estados locais (form)
+    @State private var whatsappDraft: String = ""
+    @State private var focusAreaDraft: FocusAreaDTO = .CROSSFIT
+
+    @State private var showError: Bool = false
+    @State private var errorMessage: String = ""
+
+    // Mantém coerência com o app
+    private let textSecondary = Color.white.opacity(0.60)
+    private let lineColor = Color.white.opacity(0.35)
+
+    private let contentMaxWidth: CGFloat = 380
+
+    // ✅ Opções permitidas para Aluno (mesma regra do RegisterStudentView)
+    private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
+
+    // MARK: - Helpers
+    private var currentUid: String? { session.currentUid }
+
+    private var storedImageForUser: UIImage? {
+        LocalProfileStore.shared.getPhotoImage(userId: currentUid)
+    }
+
+    var body: some View {
+        ZStack {
+
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+                    .frame(maxWidth: .infinity)
+
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(spacing: 16) {
+
+                            avatarCard()
+                            formCard()
+                            actionCard()
+
+                            if showError {
+                                Text(errorMessage)
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.95))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 10)
+                                    .frame(maxWidth: .infinity)
+                                    .background(Color.red.opacity(0.25))
+                                    .cornerRadius(12)
+                            }
+
+                            Color.clear.frame(height: 18)
+                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .frame(maxHeight: .infinity)
+            }
+            .ignoresSafeArea(.container, edges: [.bottom])
+        }
+        // ✅ Força reconstrução quando troca de usuário (evita “reuso” com estado antigo)
+        .id(session.currentUid ?? "anonymous")
+
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button { pop() } label: {
+                    Image(systemName: "chevron.left")
+                        .foregroundColor(.green)
+                }
+                .buttonStyle(.plain)
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("Editar Perfil")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+        }
+        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+
+        // ✅ Carrega valores do usuário logado
+        .onAppear {
+            loadFromStore()
+        }
+
+        // Foto selecionada
+        .onChange(of: selectedItem) { _, newItem in
+            guard let newItem else { return }
+            Task { await loadImage(from: newItem) }
+        }
+    }
+
+    // MARK: - UI
+
+    private func avatarCard() -> some View {
+        VStack(spacing: 12) {
+
+            ZStack {
+                avatarView()
+                    .frame(width: 112, height: 112)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+
+                if isLoadingImage {
+                    ProgressView()
+                        .tint(.white.opacity(0.9))
+                }
+            }
+
+            Text("Foto de Perfil")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+
+            Text("A foto escolhida será exibida no seu perfil e no cabeçalho quando logado.")
+                .font(.system(size: 13, weight: .regular))
+                .foregroundColor(.white.opacity(0.60))
+                .multilineTextAlignment(.center)
+                .padding(.horizontal, 8)
+        }
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private func formCard() -> some View {
+        VStack(spacing: 18) {
+
+            underlineTextField(
+                title: "WhatsApp (opcional)",
+                text: $whatsappDraft
+            )
+
+            pickerRow(
+                title: "Área de foco",
+                selection: $focusAreaDraft,
+                options: studentFocusOptions,
+                displayText: displayTextForFocusArea
+            )
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 18)
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private func actionCard() -> some View {
+        VStack(spacing: 10) {
+
+            PhotosPicker(
+                selection: $selectedItem,
+                matching: .images,
+                photoLibrary: .shared()
+            ) {
+                HStack(spacing: 10) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                        .foregroundColor(.white.opacity(0.9))
+
+                    Text(isLoadingImage ? "Carregando..." : "Importar foto do celular")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 46)
+                .frame(maxWidth: .infinity)
+                .background(
+                    Capsule()
+                        .fill(Color.green.opacity(0.28))
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        )
+                )
+                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoadingImage)
+
+            Button {
+                saveAll()
+                pop()
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(.white.opacity(0.9))
+
+                    Text("Salvar")
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .frame(height: 46)
+                .frame(maxWidth: .infinity)
+                .background(
+                    Capsule()
+                        .fill(Color.white.opacity(0.10))
+                        .overlay(
+                            Capsule()
+                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        )
+                )
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                clearPhotoOnly()
+            } label: {
+                Text("Remover foto")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.85))
+                    .underline()
+                    .padding(.top, 2)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    @ViewBuilder
+    private func avatarView() -> some View {
+        if let previewImage {
+            Image(uiImage: previewImage)
+                .resizable()
+                .scaledToFill()
+        } else if let stored = storedImageForUser {
+            Image(uiImage: stored)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image("rdv_user_default")
+                .resizable()
+                .scaledToFill()
+        }
+    }
+
+    // MARK: - Carregar/Salvar (LocalProfileStore por UID)
+
+    private func loadFromStore() {
+        // ✅ Se não estiver logado, mantém defaults de UI
+        guard let _ = currentUid else {
+            whatsappDraft = ""
+            focusAreaDraft = .CROSSFIT
+            previewImage = nil
+            return
+        }
+
+        whatsappDraft = LocalProfileStore.shared.getWhatsapp(userId: currentUid)
+
+        let raw = LocalProfileStore.shared.getFocusAreaRaw(userId: currentUid)
+        focusAreaDraft = FocusAreaDTO(rawValue: raw.isEmpty ? FocusAreaDTO.CROSSFIT.rawValue : raw) ?? .CROSSFIT
+
+        // Foto (carrega no preview só se ainda não escolheu outra)
+        if previewImage == nil, let img = LocalProfileStore.shared.getPhotoImage(userId: currentUid) {
+            previewImage = img
+        }
+
+        showError = false
+        errorMessage = ""
+    }
+
+    private func saveAll() {
+        saveWhatsapp()
+        saveFocusArea()
+        savePhotoIfNeeded()
+        showError = false
+        errorMessage = ""
+    }
+
+    private func saveWhatsapp() {
+        let v = whatsappDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        LocalProfileStore.shared.setWhatsapp(v, userId: currentUid)
+    }
+
+    private func saveFocusArea() {
+        LocalProfileStore.shared.setFocusAreaRaw(focusAreaDraft.rawValue, userId: currentUid)
+    }
+
+    private func savePhotoIfNeeded() {
+        guard let previewImage else { return }
+        let ok = LocalProfileStore.shared.setPhotoImage(previewImage, userId: currentUid, compressionQuality: 0.82)
+        if !ok {
+            presentError("Não foi possível preparar a imagem para salvar.")
+        }
+    }
+
+    private func clearPhotoOnly() {
+        previewImage = nil
+        selectedItem = nil
+        LocalProfileStore.shared.clearPhoto(userId: currentUid)
+        showError = false
+        errorMessage = ""
+    }
+
+    // MARK: - Carregar imagem do PhotosPicker
+
+    private func loadImage(from item: PhotosPickerItem) async {
+        isLoadingImage = true
+        defer { isLoadingImage = false }
+
+        do {
+            if let data = try await item.loadTransferable(type: Data.self),
+               let uiImage = UIImage(data: data) {
+                await MainActor.run {
+                    self.previewImage = uiImage
+                    self.showError = false
+                    self.errorMessage = ""
+                }
+            } else {
+                presentError("Não foi possível carregar a imagem selecionada.")
+            }
+        } catch {
+            presentError("Erro ao carregar imagem: \(error.localizedDescription)")
+        }
+    }
+
+    private func presentError(_ message: String) {
+        Task { @MainActor in
+            self.showError = true
+            self.errorMessage = message
+        }
+    }
+
+    // MARK: - Navegação
+
+    private func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
+    }
+
+    // MARK: - UI Components (Underline / Picker)
+
+    private func underlineTextField(title: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            TextField("", text: text)
+                .foregroundColor(.white.opacity(0.92))
+                .font(.system(size: 16))
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .keyboardType(.phonePad)
+                .padding(.vertical, 10)
+
+            Rectangle()
+                .fill(lineColor)
+                .frame(height: 1)
+        }
+    }
+
+    private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        switch opt {
+        case .CROSSFIT: return "Crossfit"
+        case .GYM: return "Academia"
+        case .HOME: return "Treinos em Casa"
+        default: return opt.rawValue
+        }
+    }
+
+    private func pickerRow<T: RawRepresentable & CaseIterable>(
+        title: String,
+        selection: Binding<T>,
+        options: [T],
+        displayText: ((T) -> String)? = nil
+    ) -> some View where T.RawValue == String {
+        VStack(alignment: .leading, spacing: 8) {
+
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            Menu {
+                ForEach(options, id: \.rawValue) { opt in
+                    Button(displayText?(opt) ?? opt.rawValue) {
+                        selection.wrappedValue = opt
+                    }
+                }
+            } label: {
+                HStack {
+                    Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
+                        .foregroundColor(.white.opacity(0.92))
+                        .font(.system(size: 16))
+
+                    Spacer()
+
+                    Image(systemName: "chevron.down")
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                .contentShape(Rectangle())
+                .padding(.vertical, 10)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(.plain)
+
+            Rectangle()
+                .fill(lineColor)
+                .frame(height: 1)
+        }
+    }
+}
+

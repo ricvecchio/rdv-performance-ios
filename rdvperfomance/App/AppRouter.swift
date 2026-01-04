@@ -123,6 +123,13 @@ struct AppRouter: View {
                         SettingsView(path: $path)
                             .environmentObject(session)
 
+                    // ✅ NOVO: Editar Perfil
+                    case .editarPerfil:
+                        // A tela será criada no próximo passo.
+                        // Mantemos o padrão de environmentObject e path.
+                        EditProfileView(path: $path)
+                            .environmentObject(session)
+
                     // ===== CADASTRO =====
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)

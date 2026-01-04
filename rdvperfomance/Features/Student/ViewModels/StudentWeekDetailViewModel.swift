@@ -23,22 +23,24 @@ final class StudentWeekDetailViewModel: ObservableObject {
     func loadDaysAndStatus() async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
             let result = try await repository.getDaysForWeek(weekId: weekId)
             self.days = result
 
             let statusMap = try await repository.getDayStatusMap(weekId: weekId, studentId: studentId)
-            let completed = statusMap.compactMap { (key: String, value: Bool) -> String? in
-                value ? key : nil
+
+            // ✅ Correção: Dictionary.compactMap recebe um tuple (key/value)
+            let completed = statusMap.compactMap { pair -> String? in
+                pair.value ? pair.key : nil
             }
+
             self.completedDayIds = Set(completed)
 
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
         }
-
-        isLoading = false
     }
 
     func isCompleted(dayId: String) -> Bool {
@@ -67,3 +69,4 @@ final class StudentWeekDetailViewModel: ObservableObject {
         }
     }
 }
+

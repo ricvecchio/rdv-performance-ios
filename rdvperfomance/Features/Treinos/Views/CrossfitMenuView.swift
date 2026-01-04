@@ -86,7 +86,7 @@ struct CrossfitMenuView: View {
 
             // ✅ Perfil no canto direito: apenas foto redonda (SEM Button para não criar estilo/bolha)
             ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_eu", size: 38)
+                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
                     .onTapGesture {
                         // Se quiser navegar ao tocar:
                         // path.append(.perfil)

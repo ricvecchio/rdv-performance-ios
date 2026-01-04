@@ -83,7 +83,7 @@ struct TeacherStudentDetailView: View {
             }
 
             ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_eu", size: 38)
+                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)

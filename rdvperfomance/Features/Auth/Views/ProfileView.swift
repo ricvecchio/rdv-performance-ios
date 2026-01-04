@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - ProfileView
 struct ProfileView: View {
@@ -16,6 +17,12 @@ struct ProfileView: View {
     private var categoriaAtualProfessor: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
+
+    // ✅ Foto persistida do perfil (Base64)
+    // - Será preenchida na tela "Editar Perfil"
+    // - Aqui é somente leitura para refletir no app quando existir
+    @AppStorage("profile_photo_data")
+    private var profilePhotoBase64: String = ""
 
     // Exemplo de check-ins
     private let checkinsRealizados: Int = 2
@@ -129,13 +136,31 @@ struct ProfileView: View {
         path.removeLast()
     }
 
+    // MARK: - Helpers (foto)
+    private var profileUIImage: UIImage? {
+        guard !profilePhotoBase64.isEmpty else { return nil }
+        guard let data = Data(base64Encoded: profilePhotoBase64) else { return nil }
+        return UIImage(data: data)
+    }
+
+    @ViewBuilder
+    private func profileAvatarView() -> some View {
+        if let uiImage = profileUIImage {
+            Image(uiImage: uiImage)
+                .resizable()
+                .scaledToFill()
+        } else {
+            Image("rdv_user_default")
+                .resizable()
+                .scaledToFill()
+        }
+    }
+
     // MARK: - Card superior
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
-            Image("rdv_eu")
-                .resizable()
-                .scaledToFill()
+            profileAvatarView()
                 .frame(width: 92, height: 92)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))

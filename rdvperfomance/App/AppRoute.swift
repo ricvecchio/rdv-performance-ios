@@ -16,6 +16,9 @@ enum AppRoute: Hashable {
     case perfil
     case configuracoes
 
+    // ✅ NOVO: Editar Perfil
+    case editarPerfil
+
     // Auth
     case accountTypeSelection
     case registerStudent

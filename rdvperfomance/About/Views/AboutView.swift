@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 // MARK: - TELA SOBRE (AboutView)
 struct AboutView: View {
@@ -22,48 +23,39 @@ struct AboutView: View {
     var body: some View {
         ZStack {
 
-            // FUNDO
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
 
-            // ESTRUTURA: CONTEÚDO / FOOTER
             VStack(spacing: 0) {
 
-                // ✅ Separador entre NavigationBar e corpo
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                // CONTEÚDO
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
 
-                        Color.clear
-                            .frame(height: 8)
+                        Color.clear.frame(height: 8)
 
-                        // LOGO (subido)
                         Image("rdv_logo")
                             .resizable()
                             .scaledToFit()
                             .frame(width: 260)
                             .padding(.top, -logoLift)
 
-                        // CARD (subido)
                         contentCard()
                             .frame(maxWidth: cardMaxWidth)
                             .padding(.top, -38 - cardLift)
 
-                        Color.clear
-                            .frame(height: 16)
+                        Color.clear.frame(height: 16)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 20)
                 }
 
-                // ✅ FOOTER DINÂMICO por tipo de usuário
                 footerForUser()
                     .frame(height: Theme.Layout.footerHeight)
                     .frame(maxWidth: .infinity)
@@ -72,33 +64,26 @@ struct AboutView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .toolbar {
 
-        // ✅ TOOLBAR PADRÃO
-        .toolbar(content: {
-
-            // Voltar verde
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
                 }
-                .buttonStyle(.plain)
             }
 
-            // Título central
             ToolbarItem(placement: .principal) {
                 Text("Sobre")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
             }
 
-            // Avatar canto direito
+            // ✅ Avatar canto direito: componente único (LocalProfileStore por UID)
             ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_eu", size: 38)
+                HeaderAvatarView(size: 38)
             }
-        })
+        }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
@@ -107,7 +92,6 @@ struct AboutView: View {
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
-            // ✅ Aluno: Agenda | Sobre | Perfil (Sobre selecionado)
             FooterBar(
                 path: $path,
                 kind: .agendaSobrePerfil(
@@ -117,7 +101,6 @@ struct AboutView: View {
                 )
             )
         } else {
-            // ✅ Professor: Home | Alunos | Sobre | Perfil (Sobre selecionado)
             FooterBar(
                 path: $path,
                 kind: .teacherHomeAlunosSobrePerfil(
@@ -136,51 +119,35 @@ struct AboutView: View {
         path.removeLast()
     }
 
-    // MARK: - CARD (conteúdo da tela Sobre)
     private func contentCard() -> some View {
         VStack(spacing: 14) {
-
             Text("GERENCIE SEUS ALUNOS E PERSONALIZE TREINOS COM FACILIDADE")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .fixedSize(horizontal: false, vertical: true)
 
             VStack(alignment: .leading, spacing: 12) {
                 featureItem("Crie treinos personalizados para seus alunos")
                 featureItem("Acompanhe a evolução de cada aluno baseado no programa selecionado")
                 featureItem("Tudo em um só lugar com interface intuitiva e prática")
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
 
             Text("Sua ferramenta para otimizar o acompanhamento dos seus alunos e seus treinos!")
-                .font(.system(size: 14, weight: .regular))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.92))
                 .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-                .fixedSize(horizontal: false, vertical: true)
         }
-        .padding(.horizontal, 18)
-        .padding(.vertical, 16)
+        .padding()
         .background(Theme.Colors.cardBackground)
         .cornerRadius(12)
     }
 
     private func featureItem(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
-
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(.green)
-                .font(.system(size: 16))
-                .padding(.top, 2)
-
             Text(text)
-                .font(.system(size: 15))
-                .foregroundColor(.white.opacity(0.95))
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .fixedSize(horizontal: false, vertical: true)
+                .foregroundColor(.white)
         }
     }
 }

@@ -111,7 +111,8 @@ struct SettingsView: View {
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
-                // TODO: navegar para tela de edição de perfil
+                // ✅ Navega para a nova tela de edição de perfil
+                path.append(.editarPerfil)
             }
             divider()
             cardRow(icon: "key.fill", title: "Alterar Senha") {
