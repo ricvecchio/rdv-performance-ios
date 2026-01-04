@@ -491,3 +491,48 @@ final class FirestoreRepository {
     }
 }
 
+extension FirestoreRepository {
+
+    /// ✅ Exclui uma semana e limpa subcoleções principais (days + student_progress) antes de deletar o doc.
+    func deleteTrainingWeekCascade(weekId: String) async throws {
+        let w = weekId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !w.isEmpty else { throw RepositoryError.missingWeekId }
+
+        let weekRef = db.collection(TrainingFS.weeksCollection).document(w)
+
+        // 1) Deletar days
+        let daysSnap = try await weekRef.collection(TrainingFS.daysSubcollection).getDocuments()
+        for doc in daysSnap.documents {
+            try await doc.reference.delete()
+        }
+
+        // 2) Deletar student_progress
+        let progressSnap = try await weekRef.collection("student_progress").getDocuments()
+        for doc in progressSnap.documents {
+            try await doc.reference.delete()
+        }
+
+        // 3) Deletar semana
+        try await weekRef.delete()
+    }
+
+    /// ✅ Exclui um dia específico
+    func deleteTrainingDay(weekId: String, dayId: String) async throws {
+        let w = weekId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let d = dayId.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !w.isEmpty else { throw RepositoryError.missingWeekId }
+        guard !d.isEmpty else { throw RepositoryError.invalidData }
+
+        try await db.collection(TrainingFS.weeksCollection)
+            .document(w)
+            .collection(TrainingFS.daysSubcollection)
+            .document(d)
+            .delete()
+
+        // opcional: atualiza updatedAt do week (boa prática)
+        try await db.collection(TrainingFS.weeksCollection)
+            .document(w)
+            .setData(["updatedAt": FieldValue.serverTimestamp()], merge: true)
+    }
+}

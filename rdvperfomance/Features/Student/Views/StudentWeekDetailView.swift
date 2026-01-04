@@ -94,9 +94,15 @@ struct StudentWeekDetailView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .task {
-            if vm.days.isEmpty && !vm.isLoading {
-                await vm.loadDaysAndStatus()
+
+        // ✅ AJUSTE SOLICITADO:
+        // Ao voltar da tela do dia (ex.: após excluir), esta tela reaparece.
+        // Recarregamos aqui para garantir que a lista reflita o Firestore.
+        .onAppear {
+            Task {
+                if !vm.isLoading {
+                    await vm.loadDaysAndStatus()
+                }
             }
         }
     }
@@ -224,7 +230,8 @@ struct StudentWeekDetailView: View {
                 .padding(.vertical, 14)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    path.append(.studentDayDetail(day: day, weekTitle: weekTitle))
+                    // ✅ Ajuste: rota agora exige weekId
+                    path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: weekTitle))
                 }
 
                 if idx < vm.days.count - 1 {

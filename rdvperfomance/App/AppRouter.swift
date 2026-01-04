@@ -76,11 +76,16 @@ struct AppRouter: View {
                             .environmentObject(session)
                         }
 
-                    // ✅ Ajuste: professor também pode ver (modo leitura)
-                    case .studentDayDetail(let day, let weekTitle):
+                    // ✅ Ajuste: professor também pode ver + (agora precisa weekId)
+                    case .studentDayDetail(let weekId, let day, let weekTitle):
                         guardedHome() {
-                            StudentDayDetailView(path: $path, day: day, weekTitle: weekTitle)
-                                .environmentObject(session)
+                            StudentDayDetailView(
+                                path: $path,
+                                weekId: weekId,
+                                day: day,
+                                weekTitle: weekTitle
+                            )
+                            .environmentObject(session)
                         }
 
                     // ===== PUBLICAR TREINOS (PROFESSOR) =====

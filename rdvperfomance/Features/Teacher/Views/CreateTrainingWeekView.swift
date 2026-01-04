@@ -24,6 +24,11 @@ struct CreateTrainingWeekView: View {
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
 
+    // ✅ Excluir semana
+    @State private var weekPendingDelete: TrainingWeekFS? = nil
+    @State private var showDeleteWeekConfirm: Bool = false
+    @State private var isDeletingWeek: Bool = false
+
     private let contentMaxWidth: CGFloat = 380
 
     init(
@@ -133,6 +138,16 @@ struct CreateTrainingWeekView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await loadWeeks() }
         .sheet(isPresented: $isEditSheetOpen) { editWeekSheet }
+        .alert("Excluir semana?", isPresented: $showDeleteWeekConfirm) {
+            Button("Cancelar", role: .cancel) {
+                weekPendingDelete = nil
+            }
+            Button("Excluir", role: .destructive) {
+                Task { await confirmDeleteWeek() }
+            }
+        } message: {
+            Text(deleteWeekMessageText())
+        }
     }
 
     private var header: some View {
@@ -162,7 +177,7 @@ struct CreateTrainingWeekView: View {
 
                 Spacer()
 
-                if vm.isLoading {
+                if vm.isLoading || isDeletingWeek {
                     ProgressView().tint(.white)
                 }
             }
@@ -222,6 +237,30 @@ struct CreateTrainingWeekView: View {
                 }
 
                 Spacer()
+
+                // ✅ Menu (⋯): Editar / Excluir semana
+                Menu {
+                    Button {
+                        openEditWeekTitle(week)
+                    } label: {
+                        Label("Editar título", systemImage: "pencil")
+                    }
+
+                    Button(role: .destructive) {
+                        weekPendingDelete = week
+                        showDeleteWeekConfirm = true
+                    } label: {
+                        Label("Excluir semana", systemImage: "trash")
+                    }
+
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .foregroundColor(.white.opacity(0.65))
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 4)
+                }
+                .buttonStyle(.plain)
+                .disabled(isDeletingWeek || vm.isLoading)
             }
 
             HStack(spacing: 10) {
@@ -253,12 +292,6 @@ struct CreateTrainingWeekView: View {
                 .buttonStyle(.plain)
 
                 Spacer()
-
-                Button { openEditWeekTitle(week) } label: {
-                    Image(systemName: "pencil")
-                        .foregroundColor(.white.opacity(0.75))
-                }
-                .buttonStyle(.plain)
             }
         }
         .padding(.vertical, 12)
@@ -304,7 +337,7 @@ struct CreateTrainingWeekView: View {
                 )
             }
             .buttonStyle(.plain)
-            .disabled(isSaving)
+            .disabled(isSaving || isDeletingWeek)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
@@ -354,9 +387,6 @@ struct CreateTrainingWeekView: View {
         }
 
         await vm.loadWeeks(studentId: studentId)
-
-        // ✅ IMPORTANTÍSSIMO: corrige semanas já existentes
-        // para que start/end reflitam os dias cadastrados.
         await vm.repairWeekRangesIfNeeded()
     }
 
@@ -437,8 +467,33 @@ struct CreateTrainingWeekView: View {
 
     private func saveEditedTitle() async {
         // Mantido como estava no seu arquivo.
-        // (Não alterei porque não foi solicitado aqui.)
         isEditSheetOpen = false
+    }
+
+    private func deleteWeekMessageText() -> String {
+        guard let w = weekPendingDelete else { return "Tem certeza que deseja excluir esta semana?" }
+        return "A semana \"\(w.weekTitle)\" será excluída (dias e progresso também)."
+    }
+
+    private func confirmDeleteWeek() async {
+        errorMessage = nil
+        successMessage = nil
+
+        guard !isDeletingWeek else { return }
+        guard let week = weekPendingDelete, let weekId = week.id, !weekId.isEmpty else { return }
+
+        isDeletingWeek = true
+        defer { isDeletingWeek = false }
+
+        do {
+            try await FirestoreRepository.shared.deleteTrainingWeekCascade(weekId: weekId)
+            successMessage = "Semana excluída com sucesso."
+            weekPendingDelete = nil
+            await loadWeeks()
+        } catch {
+            errorMessage = (error as NSError).localizedDescription
+            weekPendingDelete = nil
+        }
     }
 
     /// ✅ Fluxo "NOVA SEMANA" - botão Publicar

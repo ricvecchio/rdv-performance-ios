@@ -33,8 +33,8 @@ enum AppRoute: Hashable {
     case studentAgenda(studentId: String, studentName: String)
     case studentWeekDetail(studentId: String, weekId: String, weekTitle: String)
 
-    // Aluno (detalhe do dia)
-    case studentDayDetail(day: TrainingDayFS, weekTitle: String)
+    // ✅ Aluno (detalhe do dia) - AGORA PRECISA DO weekId
+    case studentDayDetail(weekId: String, day: TrainingDayFS, weekTitle: String)
 
     // Publicar treinos
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
