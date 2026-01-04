@@ -12,6 +12,10 @@ struct TeacherStudentsListView: View {
     @State private var filter: TreinoTipo? = nil
     private let contentMaxWidth: CGFloat = 380
 
+    // UI: Desvincular
+    @State private var studentPendingUnlink: AppUser? = nil
+    @State private var showUnlinkConfirm: Bool = false
+
     init(
         path: Binding<[AppRoute]>,
         selectedCategory: TreinoTipo,
@@ -89,31 +93,49 @@ struct TeacherStudentsListView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            // ✅ AÇÕES À DIREITA: Vincular + MiniProfile
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
-
-                Button {
-                    path.append(.teacherLinkStudent(category: selectedCategory))
-                } label: {
-                    Image(systemName: "person.badge.plus")
-                        .foregroundColor(.green)
-                }
-                .buttonStyle(.plain)
-
+            // ✅ Mantém SOMENTE o perfil (remove ações do cabeçalho)
+            ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
                     .background(Color.clear)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
+            Button("Cancelar", role: .cancel) {
+                studentPendingUnlink = nil
+            }
+            Button("Desvincular", role: .destructive) {
+                Task { await confirmUnlink() }
+            }
+        } message: {
+            Text(unlinkMessageText())
+        }
     }
 
     // MARK: - Header
     private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 10) {
+
             Text("Selecione um aluno para ver detalhes e criar treinos.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
+
+            // ✅ CTA no corpo (mesmo padrão da tela Semana)
+            Button {
+                path.append(.teacherLinkStudent(category: selectedCategory))
+            } label: {
+                HStack {
+                    Image(systemName: "plus")
+                    Text("Vincular aluno")
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(Color.green.opacity(0.16)))
+            }
+            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -188,37 +210,52 @@ struct TeacherStudentsListView: View {
     private func studentsList(_ list: [AppUser]) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(list.enumerated()), id: \.offset) { idx, student in
-                Button {
 
+                HStack(spacing: 14) {
+
+                    Image(systemName: "person.crop.circle")
+                        .font(.system(size: 18))
+                        .foregroundColor(.green.opacity(0.85))
+                        .frame(width: 28)
+
+                    Text(student.name)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+
+                    Spacer()
+
+                    // ✅ Menu (⋯) para ações do aluno
+                    Menu {
+                        Button(role: .destructive) {
+                            studentPendingUnlink = student
+                            showUnlinkConfirm = true
+                        } label: {
+                            Label("Desvincular", systemImage: "link.badge.minus")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.55))
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 8)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isUnlinking)
+
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.35))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .contentShape(Rectangle())
+                .onTapGesture {
                     guard let sid = student.id, !sid.isEmpty else {
                         vm.errorMessage = "Aluno inválido: id não encontrado."
                         return
                     }
-
                     path.append(.teacherStudentDetail(student, selectedCategory))
-
-                } label: {
-                    HStack(spacing: 14) {
-
-                        Image(systemName: "person.crop.circle")
-                            .font(.system(size: 18))
-                            .foregroundColor(.green.opacity(0.85))
-                            .frame(width: 28)
-
-                        Text(student.name)
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white.opacity(0.92))
-
-                        Spacer()
-
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
-                    .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
 
                 if idx < list.count - 1 {
                     innerDivider(leading: 54)
@@ -281,12 +318,15 @@ struct TeacherStudentsListView: View {
             Button {
                 path.append(.teacherLinkStudent(category: selectedCategory))
             } label: {
-                Text("Vincular aluno")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                HStack {
+                    Image(systemName: "plus")
+                    Text("Vincular aluno")
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 10)
+                .background(Capsule().fill(Color.green.opacity(0.16)))
             }
             .buttonStyle(.plain)
             .padding(.top, 2)
@@ -311,48 +351,38 @@ struct TeacherStudentsListView: View {
         await vm.loadStudents(teacherId: teacherId, selectedCategory: selectedCategory)
     }
 
+    // MARK: - Unlink
+    private func unlinkMessageText() -> String {
+        guard let student = studentPendingUnlink else { return "Tem certeza que deseja desvincular este aluno?" }
+        return "O aluno \"\(student.name)\" será desvinculado da categoria \(selectedCategory.displayName)."
+    }
+
+    private func confirmUnlink() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty else {
+            vm.errorMessage = "Não foi possível identificar o professor logado."
+            studentPendingUnlink = nil
+            return
+        }
+        guard let student = studentPendingUnlink, let studentId = student.id, !studentId.isEmpty else {
+            vm.errorMessage = "Não foi possível identificar o aluno para desvincular."
+            studentPendingUnlink = nil
+            return
+        }
+
+        await vm.unlinkStudent(
+            teacherId: teacherId,
+            studentId: studentId,
+            category: selectedCategory.rawValue,
+            selectedCategory: selectedCategory
+        )
+
+        studentPendingUnlink = nil
+    }
+
     // MARK: - Navigation
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
-    }
-}
-
-@MainActor
-final class TeacherStudentsListViewModel: ObservableObject {
-
-    @Published private(set) var students: [AppUser] = []
-    @Published private(set) var isLoading: Bool = false
-    @Published var errorMessage: String? = nil
-
-    private let repository: FirestoreRepository
-
-    init(repository: FirestoreRepository) {
-        self.repository = repository
-    }
-
-    func loadStudents(teacherId: String, selectedCategory: TreinoTipo) async {
-        isLoading = true
-        errorMessage = nil
-
-        do {
-            // Busca via teacher_students: teacherId + categories arrayContains
-            let result = try await repository.getStudentsForTeacher(
-                teacherId: teacherId,
-                category: selectedCategory.rawValue
-            )
-            self.students = result
-        } catch {
-            self.errorMessage = (error as NSError).localizedDescription
-        }
-
-        isLoading = false
-    }
-
-    func filteredStudents(filter: TreinoTipo?) -> [AppUser] {
-        guard let filter else { return students }
-        let key = filter.rawValue.lowercased()
-        return students.filter { ($0.defaultCategory ?? "").lowercased() == key }
     }
 }
 

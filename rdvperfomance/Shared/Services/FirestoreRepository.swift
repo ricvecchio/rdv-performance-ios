@@ -68,7 +68,6 @@ final class FirestoreRepository {
             .whereField("categories", arrayContains: category)
             .getDocuments()
 
-        // ✅ TeacherStudentRelation já existe no seu projeto (NÃO redeclarar aqui)
         let relations = try relSnap.documents.compactMap { doc in
             try doc.data(as: TeacherStudentRelation.self)
         }
@@ -77,7 +76,6 @@ final class FirestoreRepository {
 
         let studentIds = relations.map { $0.studentId }
 
-        // Busca paralela dos perfis
         let tasks: [Task<AppUser?, Never>] = studentIds.map { sid in
             Task {
                 do {
@@ -100,6 +98,56 @@ final class FirestoreRepository {
         }
 
         return students.sorted { $0.name.lowercased() < $1.name.lowercased() }
+    }
+
+    // MARK: - ✅ Desvincular aluno do professor (remove categoria; se vazio, apaga relação)
+    func unlinkStudentFromTeacher(teacherId: String, studentId: String, category: String) async throws {
+
+        let t = clean(teacherId)
+        let s = clean(studentId)
+        let c = clean(category)
+
+        guard !t.isEmpty else { throw RepositoryError.missingTeacherId }
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+
+        let snap = try await db.collection("teacher_students")
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("studentId", isEqualTo: s)
+            .getDocuments()
+
+        guard !snap.documents.isEmpty else {
+            throw RepositoryError.notFound
+        }
+
+        let target = c.lowercased()
+
+        for doc in snap.documents {
+            let ref = doc.reference
+            let data = doc.data()
+
+            let categories = (data["categories"] as? [String]) ?? []
+
+            // ✅ remove comparando case-insensitive (evita “não remove” por diferença de caixa)
+            let newCategories = categories.filter { clean($0).lowercased() != target }
+
+            // Se não mudou, não grava nada.
+            if newCategories.count == categories.count {
+                continue
+            }
+
+            if newCategories.isEmpty {
+                try await ref.delete()
+            } else {
+                try await ref.setData(
+                    [
+                        "categories": newCategories,
+                        "updatedAt": FieldValue.serverTimestamp()
+                    ],
+                    merge: true
+                )
+            }
+        }
     }
 
     // MARK: - training_weeks por aluno (LEITURA)
@@ -194,7 +242,6 @@ final class FirestoreRepository {
         return ref.documentID
     }
 
-    /// Cria/atualiza um dia dentro da semana (subcoleção days)
     func upsertDay(
         weekId: String,
         dayId: String? = nil,
@@ -260,7 +307,6 @@ final class FirestoreRepository {
             )
     }
 
-    // MARK: - Atualizar título da semana
     func updateWeekTitle(weekId: String, newTitle: String) async throws {
         let cleanWeekId = clean(weekId)
         guard !cleanWeekId.isEmpty else { throw RepositoryError.missingWeekId }
@@ -280,7 +326,6 @@ final class FirestoreRepository {
             )
     }
 
-    // MARK: - ✅ Atualizar startDate/endDate da semana baseado nos days
     func updateWeekDateRangeFromDays(weekId: String) async throws {
 
         let cleanWeekId = clean(weekId)
@@ -322,7 +367,6 @@ final class FirestoreRepository {
             )
     }
 
-    // MARK: - users/{uid} (ESCRITA)
     func upsertUserProfile(uid: String, form: RegisterFormDTO) async throws {
 
         let cleanUid = uid.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -337,12 +381,10 @@ final class FirestoreRepository {
             "focusArea": form.focusArea,
             "planType": form.planType,
 
-            // TRAINER
             "cref": form.cref as Any,
             "bio": form.bio as Any,
             "gymName": form.gymName as Any,
 
-            // STUDENT
             "defaultCategory": form.defaultCategory as Any,
             "active": form.active as Any,
 
@@ -354,14 +396,8 @@ final class FirestoreRepository {
             .setData(payload, merge: true)
     }
 
-    // ============================================================
-    // MARK: - ✅ PROGRESSO DO ALUNO (por semana)
-    // ============================================================
-
-    // Subcoleção: training_weeks/{weekId}/student_progress/{studentId}
     private let progressSubcollection = "student_progress"
 
-    /// Retorna o mapa dayId -> Bool (concluído ou não) PARA UM ALUNO
     func getDayStatusMap(weekId: String, studentId: String) async throws -> [String: Bool] {
         let w = clean(weekId)
         let s = clean(studentId)
@@ -381,7 +417,6 @@ final class FirestoreRepository {
         return data["completedMap"] as? [String: Bool] ?? [:]
     }
 
-    /// Marca/desmarca um dia como concluído PARA UM ALUNO
     func setDayCompleted(weekId: String, studentId: String, dayId: String, completed: Bool) async throws {
         let w = clean(weekId)
         let s = clean(studentId)
@@ -397,7 +432,6 @@ final class FirestoreRepository {
             .collection(progressSubcollection)
             .document(s)
 
-        // Usa "campo dinâmico" dentro de um map: completedMap.<dayId> = true/false
         try await ref.setData(
             [
                 "studentId": s,
@@ -408,7 +442,6 @@ final class FirestoreRepository {
         )
     }
 
-    /// Retorna (completed, total) PARA UM ALUNO naquela semana
     func getWeekProgress(weekId: String, studentId: String) async throws -> (completed: Int, total: Int) {
         let days = try await getDaysForWeek(weekId: weekId)
         let total = days.count
@@ -421,12 +454,6 @@ final class FirestoreRepository {
         return (completed, total)
     }
 
-    // ============================================================
-    // MARK: - ✅ PROGRESSO GERAL DO ALUNO (todas as semanas)
-    // ============================================================
-
-    /// Progresso geral em % considerando TODAS as semanas publicadas do aluno.
-    /// Retorna Int percent (0..100). (Assinatura usada no seu TeacherStudentDetailView.)
     func getStudentOverallProgress(studentId: String) async throws -> (percent: Int, completed: Int, total: Int) {
 
         let s = clean(studentId)
@@ -438,7 +465,6 @@ final class FirestoreRepository {
         var totalDays = 0
         var totalCompleted = 0
 
-        // Carrega em paralelo por performance (MVP ok)
         try await withThrowingTaskGroup(of: (Int, Int).self) { group in
             for w in weeks {
                 guard let weekId = w.id else { continue }
