@@ -15,6 +15,10 @@ struct RegisterStudentView: View {
     // Largura máxima do conteúdo central (igual Settings/Profile)
     private let contentMaxWidth: CGFloat = 380
 
+    // ✅ Opções permitidas somente para o cadastro de Aluno
+    // (não altera o enum global para não quebrar outros fluxos)
+    private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
+
     var body: some View {
         ZStack {
 
@@ -130,10 +134,12 @@ struct RegisterStudentView: View {
                 placeholderColor: textSecondary
             )
 
+            // ✅ Agora exibindo "Crossfit / Academia / Treinos em Casa"
             pickerRow(
                 title: "Área de foco",
                 selection: $vm.focusArea,
-                options: FocusAreaDTO.allCases
+                options: studentFocusOptions,
+                displayText: displayTextForFocusArea
             )
 
             pickerRow(
@@ -217,11 +223,23 @@ struct RegisterStudentView: View {
         .padding(.top, 12)
     }
 
+    // MARK: - Texto amigável para FocusArea (sem alterar rawValue)
+    private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        switch opt {
+        case .CROSSFIT: return "Crossfit"
+        case .GYM: return "Academia"
+        case .HOME: return "Treinos em Casa"
+        default: return opt.rawValue
+        }
+    }
+
     // MARK: - Picker (padrão underline)
+    // ✅ Versão com displayText opcional (mantém compatibilidade com PlanTypeDTO)
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
         selection: Binding<T>,
-        options: [T]
+        options: [T],
+        displayText: ((T) -> String)? = nil
     ) -> some View where T.RawValue == String {
         VStack(alignment: .leading, spacing: 8) {
 
@@ -231,11 +249,13 @@ struct RegisterStudentView: View {
 
             Menu {
                 ForEach(options, id: \.rawValue) { opt in
-                    Button(opt.rawValue) { selection.wrappedValue = opt }
+                    Button(displayText?(opt) ?? opt.rawValue) {
+                        selection.wrappedValue = opt
+                    }
                 }
             } label: {
                 HStack {
-                    Text(selection.wrappedValue.rawValue)
+                    Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
                         .foregroundColor(.white.opacity(0.92))
                         .font(.system(size: 16))
 
