@@ -22,7 +22,8 @@ enum AppRoute: Hashable {
     case registerTrainer
 
     // Professor
-    case teacherStudentsList(TreinoTipo)
+    // ✅ Agora recebe o filtro inicial (nil = Todos)
+    case teacherStudentsList(selectedCategory: TreinoTipo, initialFilter: TreinoTipo?)
     case teacherStudentDetail(AppUser, TreinoTipo)
     case teacherDashboard(category: TreinoTipo)
 

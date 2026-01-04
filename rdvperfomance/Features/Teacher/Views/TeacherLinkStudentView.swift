@@ -13,8 +13,15 @@ struct TeacherLinkStudentView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    @State private var filterOnlyCategory: Bool = true
+    // ✅ Agora só existe "Todos": removemos filtros por categoria
     @State private var searchText: String = ""
+
+    // ✅ Controle do dialog de escolha de categoria
+    @State private var studentPendingLink: StudentLinkItem? = nil
+    @State private var showCategoryDialog: Bool = false
+
+    // ✅ Uma opção precisa estar selecionada (default)
+    @State private var selectedLinkCategory: TreinoTipo = .crossfit
 
     var body: some View {
         ZStack {
@@ -99,41 +106,48 @@ struct TeacherLinkStudentView: View {
         } message: {
             Text(vm.successMessage ?? "Aluno vinculado.")
         }
+        // ✅ Escolha obrigatória de categoria ao vincular
+        .confirmationDialog(
+            "Selecione a categoria do vínculo",
+            isPresented: $showCategoryDialog,
+            titleVisibility: .visible
+        ) {
+            Button(TreinoTipo.crossfit.displayName) { Task { await confirmLink(.crossfit) } }
+            Button(TreinoTipo.academia.displayName) { Task { await confirmLink(.academia) } }
+            Button(TreinoTipo.emCasa.displayName) { Task { await confirmLink(.emCasa) } }
+            Button("Cancelar", role: .cancel) { studentPendingLink = nil }
+        } message: {
+            Text(dialogMessageText())
+        }
     }
 
     // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Vincule alunos ao seu perfil para a categoria \(category.displayName).")
+
+            // ✅ Agora não força categoria fixa do parâmetro; a categoria será escolhida no ato do vínculo
+            Text("Vincule alunos ao seu perfil.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
-            Text("Depois disso, eles aparecerão na sua lista de alunos.")
+            Text("Ao clicar em Vincular, selecione a categoria (Crossfit, Academia ou Treinos em casa).")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Controls
+    // MARK: - Controls (somente busca + informativo "Todos")
     private var controlsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("FILTROS")
+            Text("FILTRO")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.35))
 
+            // ✅ Apenas "Todos" (visual)
             HStack(spacing: 10) {
-
-                chip(
-                    title: "Somente \(category.displayName)",
-                    isSelected: filterOnlyCategory
-                ) { filterOnlyCategory = true }
-
-                chip(
-                    title: "Todos",
-                    isSelected: !filterOnlyCategory
-                ) { filterOnlyCategory = false }
+                chip(title: "Todos", isSelected: true) { /* fixo */ }
             }
 
             searchField
@@ -219,7 +233,7 @@ struct TeacherLinkStudentView: View {
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
 
-                    Text("Tente mudar o filtro ou a busca.")
+                    Text("Tente mudar a busca.")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                         .multilineTextAlignment(.center)
@@ -241,7 +255,11 @@ struct TeacherLinkStudentView: View {
 
     private func row(item: StudentLinkItem) -> some View {
         Button {
-            Task { await link(item: item) }
+            // ✅ Ao clicar em "Vincular": abre seleção de categoria (obrigatória)
+            studentPendingLink = item
+            // default já definido (uma opção selecionada)
+            selectedLinkCategory = .crossfit
+            showCategoryDialog = true
         } label: {
             HStack(spacing: 14) {
 
@@ -324,17 +342,11 @@ struct TeacherLinkStudentView: View {
         await vm.loadAllStudents(teacherId: teacherId)
     }
 
+    // ✅ Agora sempre "Todos": só filtra por busca
     private func filteredItems() -> [StudentLinkItem] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         return vm.items
-            .filter { item in
-                if filterOnlyCategory {
-                    let cat = (item.defaultCategory ?? "").lowercased()
-                    return cat == category.rawValue.lowercased()
-                }
-                return true
-            }
             .filter { item in
                 if q.isEmpty { return true }
                 return item.name.lowercased().contains(q)
@@ -342,16 +354,28 @@ struct TeacherLinkStudentView: View {
             .sorted { $0.name.lowercased() < $1.name.lowercased() }
     }
 
-    private func link(item: StudentLinkItem) async {
+    private func dialogMessageText() -> String {
+        guard let item = studentPendingLink else { return "Selecione uma categoria." }
+        return "Aluno: \(item.name)\nEscolha a categoria para vincular."
+    }
+
+    private func confirmLink(_ chosen: TreinoTipo) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.setError("Não foi possível identificar o professor logado.")
+            studentPendingLink = nil
             return
         }
+        guard let item = studentPendingLink else { return }
+
+        selectedLinkCategory = chosen
+
         await vm.linkStudent(
             teacherId: teacherId,
             studentId: item.id,
-            category: category.rawValue
+            category: chosen.rawValue
         )
+
+        studentPendingLink = nil
     }
 
     private func pop() {
@@ -449,3 +473,4 @@ struct StudentLinkItem: Identifiable, Hashable {
     let name: String
     let defaultCategory: String?
 }
+

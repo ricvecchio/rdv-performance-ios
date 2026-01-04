@@ -36,7 +36,8 @@ struct TeacherDashboardView: View {
                                     title: "Meus alunos",
                                     icon: "person.3.fill"
                                 ) {
-                                    path.append(.teacherStudentsList(category))
+                                    // ✅ Ao vir da Área do Professor, abre em "Todos"
+                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
 
                                 actionRow(
@@ -44,8 +45,8 @@ struct TeacherDashboardView: View {
                                     icon: "calendar.badge.plus"
                                 ) {
                                     // ✅ MVP correto: primeiro escolhe o aluno na lista
-                                    // (CreateTrainingWeekView exige student: AppUser)
-                                    path.append(.teacherStudentsList(category))
+                                    // ✅ Ao vir da Área do Professor, abre em "Todos"
+                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
                             }
                             .padding(.top, 8)

@@ -279,7 +279,6 @@ struct FooterBar: View {
     }
 
     private func goTreinosAluno() {
-        // no seu fluxo atual, "Treinos" do aluno cai na agenda
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
         withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName)] }
@@ -304,12 +303,26 @@ struct FooterBar: View {
         switch destination {
         case .home:
             return [.home]
+
         case .alunos:
-            return [.home, .teacherStudentsList(category)]
+            // ✅ Corrigido: rota agora exige initialFilter
+            // ✅ Rodapé do professor deve abrir os alunos já filtrados na categoria atual
+            return [.home, .teacherStudentsList(selectedCategory: category, initialFilter: category)]
+
         case .sobre:
-            return [.home, .teacherStudentsList(category), .sobre]
+            return [
+                .home,
+                .teacherStudentsList(selectedCategory: category, initialFilter: category),
+                .sobre
+            ]
+
         case .perfil:
-            return [.home, .teacherStudentsList(category), .sobre, .perfil]
+            return [
+                .home,
+                .teacherStudentsList(selectedCategory: category, initialFilter: category),
+                .sobre,
+                .perfil
+            ]
         }
     }
 

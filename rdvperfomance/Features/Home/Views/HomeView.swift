@@ -165,8 +165,8 @@ struct HomeView: View {
             ultimoTreinoSelecionado = tipo.rawValue
 
             if session.userType == .TRAINER {
-                // ✅ aqui é o que define a categoria da próxima tela
-                path.append(.teacherStudentsList(tipo))
+                // ✅ NOVO: ao vir do Home, a lista deve abrir já filtrada na categoria clicada
+                path.append(.teacherStudentsList(selectedCategory: tipo, initialFilter: tipo))
             } else {
                 guard let uid = session.uid else { return }
                 let name = session.userName ?? "Aluno"

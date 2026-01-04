@@ -24,10 +24,14 @@ struct AppRouter: View {
                             .environmentObject(session)
 
                     // ===== PROFESSOR =====
-                    case .teacherStudentsList(let tipo):
+                    case .teacherStudentsList(let selectedCategory, let initialFilter):
                         guardedTeacher {
-                            TeacherStudentsListView(path: $path, selectedCategory: tipo)
-                                .environmentObject(session)
+                            TeacherStudentsListView(
+                                path: $path,
+                                selectedCategory: selectedCategory,
+                                initialFilter: initialFilter
+                            )
+                            .environmentObject(session)
                         }
 
                     case .teacherStudentDetail(let student, let category):
@@ -53,7 +57,6 @@ struct AppRouter: View {
                         }
 
                     // ===== ALUNO =====
-                    // ✅ Ajuste: professor também pode ver (modo leitura)
                     case .studentAgenda(let studentId, let studentName):
                         guardedHome() {
                             StudentAgendaView(
@@ -64,7 +67,6 @@ struct AppRouter: View {
                             .environmentObject(session)
                         }
 
-                    // ✅ Ajuste: professor também pode ver (modo leitura)
                     case .studentWeekDetail(let studentId, let weekId, let weekTitle):
                         guardedHome() {
                             StudentWeekDetailView(
@@ -76,7 +78,6 @@ struct AppRouter: View {
                             .environmentObject(session)
                         }
 
-                    // ✅ Ajuste: professor também pode ver + (agora precisa weekId)
                     case .studentDayDetail(let weekId, let day, let weekTitle):
                         guardedHome() {
                             StudentDayDetailView(
@@ -173,7 +174,6 @@ private extension AppRouter {
         }
     }
 
-    // ✅ overload: permite usar guardedHome { ... }
     @ViewBuilder
     func guardedHome<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         if session.isLoggedIn {

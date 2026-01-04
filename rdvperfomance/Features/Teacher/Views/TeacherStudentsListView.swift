@@ -6,23 +6,28 @@ struct TeacherStudentsListView: View {
     @Binding var path: [AppRoute]
     let selectedCategory: TreinoTipo
 
+    // ✅ novo
+    let initialFilter: TreinoTipo?
+
     @EnvironmentObject private var session: AppSession
     @StateObject private var vm: TeacherStudentsListViewModel
 
+    // nil = Todos
     @State private var filter: TreinoTipo? = nil
     private let contentMaxWidth: CGFloat = 380
 
-    // UI: Desvincular
     @State private var studentPendingUnlink: AppUser? = nil
     @State private var showUnlinkConfirm: Bool = false
 
     init(
         path: Binding<[AppRoute]>,
         selectedCategory: TreinoTipo,
+        initialFilter: TreinoTipo?,
         repository: FirestoreRepository = .shared
     ) {
         self._path = path
         self.selectedCategory = selectedCategory
+        self.initialFilter = initialFilter
         _vm = StateObject(wrappedValue: TeacherStudentsListViewModel(repository: repository))
     }
 
@@ -70,13 +75,13 @@ struct TeacherStudentsListView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .onAppear {
-            if filter == nil { filter = selectedCategory }
+            // ✅ Agora: HomeView abre filtrado; TeacherDashboard abre em Todos
+            filter = initialFilter
         }
         .task { await loadStudents() }
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            // ✅ VOLTAR (padrão do app)
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -93,7 +98,6 @@ struct TeacherStudentsListView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            // ✅ Mantém SOMENTE o perfil (remove ações do cabeçalho)
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_eu", size: 38)
                     .background(Color.clear)
@@ -102,18 +106,13 @@ struct TeacherStudentsListView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
-            Button("Cancelar", role: .cancel) {
-                studentPendingUnlink = nil
-            }
-            Button("Desvincular", role: .destructive) {
-                Task { await confirmUnlink() }
-            }
+            Button("Cancelar", role: .cancel) { studentPendingUnlink = nil }
+            Button("Desvincular", role: .destructive) { Task { await confirmUnlink() } }
         } message: {
             Text(unlinkMessageText())
         }
     }
 
-    // MARK: - Header
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
 
@@ -121,7 +120,6 @@ struct TeacherStudentsListView: View {
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
 
-            // ✅ CTA no corpo (mesmo padrão da tela Semana)
             Button {
                 path.append(.teacherLinkStudent(category: selectedCategory))
             } label: {
@@ -140,7 +138,6 @@ struct TeacherStudentsListView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Filtro
     private var filterRow: some View {
         VStack(alignment: .leading, spacing: 10) {
             Text("FILTRO")
@@ -151,15 +148,11 @@ struct TeacherStudentsListView: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
 
-                    filterChip(
-                        title: selectedCategory.displayName,
-                        isSelected: filter == selectedCategory
-                    ) { filter = selectedCategory }
+                    filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
 
-                    filterChip(
-                        title: "Todos",
-                        isSelected: filter == nil
-                    ) { filter = nil }
+                    filterChip(title: TreinoTipo.crossfit.displayName, isSelected: filter == .crossfit) { filter = .crossfit }
+                    filterChip(title: TreinoTipo.academia.displayName, isSelected: filter == .academia) { filter = .academia }
+                    filterChip(title: TreinoTipo.emCasa.displayName, isSelected: filter == .emCasa) { filter = .emCasa }
                 }
                 .padding(.vertical, 2)
             }
@@ -184,7 +177,6 @@ struct TeacherStudentsListView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Card
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -193,11 +185,7 @@ struct TeacherStudentsListView: View {
                 errorView(message: msg)
             } else {
                 let list = vm.filteredStudents(filter: filter)
-                if list.isEmpty {
-                    emptyView
-                } else {
-                    studentsList(list)
-                }
+                if list.isEmpty { emptyView } else { studentsList(list) }
             }
         }
         .padding(.vertical, 8)
@@ -206,7 +194,6 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
     }
 
-    // MARK: - Lista
     private func studentsList(_ list: [AppUser]) -> some View {
         VStack(spacing: 0) {
             ForEach(Array(list.enumerated()), id: \.offset) { idx, student in
@@ -224,7 +211,6 @@ struct TeacherStudentsListView: View {
 
                     Spacer()
 
-                    // ✅ Menu (⋯) para ações do aluno
                     Menu {
                         Button(role: .destructive) {
                             studentPendingUnlink = student
@@ -264,7 +250,6 @@ struct TeacherStudentsListView: View {
         }
     }
 
-    // MARK: - Estados
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
@@ -348,13 +333,27 @@ struct TeacherStudentsListView: View {
             vm.errorMessage = "Não foi possível identificar o professor logado."
             return
         }
-        await vm.loadStudents(teacherId: teacherId, selectedCategory: selectedCategory)
+
+        // ✅ Se abriu filtrado (HomeView): carrega só a categoria selecionada.
+        // ✅ Se abriu em "Todos" (TeacherDashboard): carrega tudo.
+        if let initial = initialFilter {
+            await vm.loadStudentsOnlyOneCategory(teacherId: teacherId, category: initial)
+        } else {
+            await vm.loadStudents(teacherId: teacherId)
+        }
     }
 
-    // MARK: - Unlink
+    // MARK: - Unlink (mantém o que você já tinha)
     private func unlinkMessageText() -> String {
-        guard let student = studentPendingUnlink else { return "Tem certeza que deseja desvincular este aluno?" }
-        return "O aluno \"\(student.name)\" será desvinculado da categoria \(selectedCategory.displayName)."
+        guard let student = studentPendingUnlink else {
+            return "Tem certeza que deseja desvincular este aluno?"
+        }
+
+        if let chipCategory = filter {
+            return "O aluno \"\(student.name)\" será desvinculado da categoria \(chipCategory.displayName)."
+        } else {
+            return "O aluno \"\(student.name)\" será desvinculado de todas as categorias."
+        }
     }
 
     private func confirmUnlink() async {
@@ -372,14 +371,12 @@ struct TeacherStudentsListView: View {
         await vm.unlinkStudent(
             teacherId: teacherId,
             studentId: studentId,
-            category: selectedCategory.rawValue,
-            selectedCategory: selectedCategory
+            categoryToRemove: filter
         )
 
         studentPendingUnlink = nil
     }
 
-    // MARK: - Navigation
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
