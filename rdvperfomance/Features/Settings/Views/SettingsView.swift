@@ -111,16 +111,15 @@ struct SettingsView: View {
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
-                // ✅ Navega para a nova tela de edição de perfil
                 path.append(.editarPerfil)
             }
             divider()
             cardRow(icon: "key.fill", title: "Alterar Senha") {
-                // TODO: navegar para fluxo de alteração de senha
+                path.append(.alterarSenha)
             }
             divider()
             cardRow(icon: "trash.fill", title: "Excluir Conta") {
-                // TODO: abrir confirmação e executar exclusão
+                path.append(.excluirConta)
             }
         }
     }
@@ -128,7 +127,7 @@ struct SettingsView: View {
     private func preferencesCard() -> some View {
         card {
             cardRow(icon: "ruler.fill", title: "Unidade de Medida") {
-                // TODO: navegar para tela de unidade de medida
+                // TODO: navegar para tela de unidade de medida (mantido como estava)
             }
         }
     }

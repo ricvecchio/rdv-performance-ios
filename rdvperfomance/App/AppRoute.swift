@@ -24,6 +24,8 @@ enum AppRoute: Hashable {
     case configuracoes
 
     case editarPerfil
+    case alterarSenha
+    case excluirConta
 
     // ✅ Tela única: Ajuda / Privacidade / Termos
     case infoLegal(InfoLegalKind)

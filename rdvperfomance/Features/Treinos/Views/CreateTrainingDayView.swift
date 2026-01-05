@@ -273,8 +273,9 @@ struct CreateTrainingDayView: View {
             ForEach($blocks) { $b in
                 VStack(alignment: .leading, spacing: 10) {
 
+                    // ✅ Topo do bloco: agora mostra SOMENTE o nome do bloco (Aquecimento/Técnica/WOD)
                     HStack {
-                        Text("Bloco")
+                        Text(b.name.isEmpty ? "Sem nome" : b.name)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.70))
 
@@ -291,8 +292,10 @@ struct CreateTrainingDayView: View {
                         .buttonStyle(.plain)
                     }
 
+                    // ✅ Campo de nome sem label "Nome"
+                    // Mantém editável, mas sem mostrar o texto "Nome" na UI.
                     UnderlineTextField(
-                        title: "Nome",
+                        title: "",                // <-- remove o "Nome"
                         text: $b.name,
                         isSecure: false,
                         showPassword: $showPasswordDummy,
@@ -340,6 +343,7 @@ struct CreateTrainingDayView: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
+
 
     private var saveButtonCard: some View {
         Button {

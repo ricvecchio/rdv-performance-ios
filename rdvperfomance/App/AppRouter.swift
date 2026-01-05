@@ -123,14 +123,24 @@ struct AppRouter: View {
                         SettingsView(path: $path)
                             .environmentObject(session)
 
-                    // ✅ NOVO: Central de Ajuda / Privacidade / Termos
+                    // ✅ Central de Ajuda / Privacidade / Termos
                     case .infoLegal(let kind):
                         InfoLegalView(path: $path, kind: kind)
                             .environmentObject(session)
 
-                    // ✅ NOVO: Editar Perfil
+                    // ✅ Editar Perfil
                     case .editarPerfil:
                         EditProfileView(path: $path)
+                            .environmentObject(session)
+
+                    // ✅ NOVO: Alterar senha
+                    case .alterarSenha:
+                        ChangePasswordView(path: $path)
+                            .environmentObject(session)
+
+                    // ✅ NOVO: Excluir conta
+                    case .excluirConta:
+                        DeleteAccountView(path: $path)
                             .environmentObject(session)
 
                     // ===== CADASTRO =====
@@ -214,3 +224,4 @@ private extension AppRouter {
         }
     }
 }
+
