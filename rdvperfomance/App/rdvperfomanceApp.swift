@@ -1,12 +1,14 @@
+// rdvperfomanceApp.swift — Ponto de entrada do aplicativo e inicialização do Firebase
 import SwiftUI
 import FirebaseCore
 
 @main
 struct rdvperfomanceApp: App {
 
-    // ✅ Inicializa Firebase no ciclo correto do iOS
+    // Inicializa AppDelegate para configurar Firebase
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
 
+    // Sessão global do app
     @StateObject private var session = AppSession()
 
     var body: some Scene {
@@ -17,7 +19,7 @@ struct rdvperfomanceApp: App {
     }
 }
 
-// ✅ AppDelegate só para configurar Firebase
+// AppDelegate usado apenas para configurar Firebase no lançamento
 final class AppDelegate: NSObject, UIApplicationDelegate {
     func application(
         _ application: UIApplication,
@@ -27,4 +29,3 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 }
-

@@ -1,3 +1,4 @@
+// StudentFeedbacksView.swift — Lista de feedbacks recebidos pelo aluno para uma categoria
 import SwiftUI
 import FirebaseAuth
 
@@ -14,6 +15,7 @@ struct StudentFeedbacksView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Corpo principal com header, lista e footer
     var body: some View {
         ZStack {
 
@@ -98,6 +100,7 @@ struct StudentFeedbacksView: View {
         .task { await load() }
     }
 
+    // Header de contexto com categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Categoria: \(category.displayName)")
@@ -111,6 +114,7 @@ struct StudentFeedbacksView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Card com lista de feedbacks
     private var listCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -167,6 +171,7 @@ struct StudentFeedbacksView: View {
         )
     }
 
+    // Mensagem de erro/aviso estilizada
     private func messageCard(text: String, isError: Bool) -> some View {
         HStack(spacing: 10) {
             Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
@@ -188,6 +193,7 @@ struct StudentFeedbacksView: View {
         )
     }
 
+    // Carrega feedbacks do Firestore para o aluno logado
     private func load() async {
         errorMessage = nil
 
@@ -216,6 +222,7 @@ struct StudentFeedbacksView: View {
         }
     }
 
+    // Formata data para exibição
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")

@@ -1,3 +1,4 @@
+// TeacherDashboardView.swift — Painel inicial do professor com ações rápidas
 import SwiftUI
 
 struct TeacherDashboardView: View {
@@ -7,6 +8,7 @@ struct TeacherDashboardView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Corpo com ações principais (Meus alunos, Publicar semana)
     var body: some View {
         ZStack {
 
@@ -36,7 +38,6 @@ struct TeacherDashboardView: View {
                                     title: "Meus alunos",
                                     icon: "person.3.fill"
                                 ) {
-                                    // ✅ Ao vir da Área do Professor, abre em "Todos"
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
 
@@ -44,8 +45,6 @@ struct TeacherDashboardView: View {
                                     title: "Publicar semana",
                                     icon: "calendar.badge.plus"
                                 ) {
-                                    // ✅ MVP correto: primeiro escolhe o aluno na lista
-                                    // ✅ Ao vir da Área do Professor, abre em "Todos"
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
                             }
@@ -94,8 +93,7 @@ struct TeacherDashboardView: View {
                     .foregroundColor(.white)
             }
 
-            // ✅ AJUSTE SOLICITADO:
-            // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
+            // Avatar do cabeçalho (foto real do usuário)
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -147,4 +145,3 @@ struct TeacherDashboardView: View {
         path.removeLast()
     }
 }
-

@@ -1,11 +1,13 @@
+// DeleteAccountView.swift — Tela para exclusão permanente de conta com confirmação e validação
 import SwiftUI
 
-// MARK: - DeleteAccountView
 struct DeleteAccountView: View {
 
+    // Binding de rotas e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
+    // Campos do formulário
     @State private var currentPassword: String = ""
     @State private var confirmText: String = ""
 
@@ -17,12 +19,14 @@ struct DeleteAccountView: View {
     private let lineColor = Color.white.opacity(0.35)
     private let contentMaxWidth: CGFloat = 380
 
+    // Valida se a ação pode ser executada
     private var canDelete: Bool {
         !currentPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         && confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR"
         && !isLoading
     }
 
+    // Corpo com aviso, formulário e ações
     var body: some View {
         ZStack {
 
@@ -97,8 +101,7 @@ struct DeleteAccountView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // MARK: - UI
-
+    // Card de aviso sobre a ação permanente
     private func warningCard() -> some View {
         VStack(spacing: 10) {
 
@@ -128,6 +131,7 @@ struct DeleteAccountView: View {
         .cornerRadius(14)
     }
 
+    // Formulário com senha e confirmação
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
@@ -145,6 +149,7 @@ struct DeleteAccountView: View {
         .cornerRadius(14)
     }
 
+    // Área de ações com botão excluir e cancelar
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
@@ -194,8 +199,7 @@ struct DeleteAccountView: View {
         .cornerRadius(14)
     }
 
-    // MARK: - Actions
-
+    // Submete exclusão chamando o serviço e trata feedback
     private func submitDelete() async {
         showError = false
         errorMessage = ""
@@ -222,8 +226,7 @@ struct DeleteAccountView: View {
         do {
             try await AccountSecurityService.shared.deleteAccount(currentPassword: pw)
 
-            // ✅ Após deletar, o Firebase geralmente desloga automaticamente (auth state muda).
-            // Como redundância segura: voltar para raiz e deixar o AppRouter decidir Login.
+            // Após deletar, limpa caminho para forçar flow de login
             path.removeAll()
 
         } catch {
@@ -231,18 +234,19 @@ struct DeleteAccountView: View {
         }
     }
 
+    // Mostra erro na UI
     private func presentError(_ message: String) {
         showError = true
         errorMessage = message
     }
 
+    // Navegação: voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // MARK: - Components
-
+    // Componentes: campos com underline
     private func underlineField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 

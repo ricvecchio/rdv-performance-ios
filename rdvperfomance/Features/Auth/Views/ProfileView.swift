@@ -1,10 +1,11 @@
+// ProfileView.swift — Tela de perfil com informações do usuário, opções e footer adaptado por tipo
 import SwiftUI
 import UIKit
 import FirebaseAuth
 
-// MARK: - ProfileView
 struct ProfileView: View {
 
+    // Binding e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
@@ -17,7 +18,6 @@ struct ProfileView: View {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    // ⚠️ Mantido para compatibilidade, mas o avatar do Perfil agora usa HeaderAvatarView (mesma fonte do header)
     @AppStorage("profile_photo_data")
     private var profilePhotoBase64: String = ""
 
@@ -27,13 +27,12 @@ struct ProfileView: View {
         (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    // MARK: - Estado (por usuário)
+    // Estados da tela
     @State private var userName: String = ""
-    @State private var unitName: String = ""          // aluno e professor
-    @State private var isPlanActive: Bool = false     // aluno calcula / professor força true
+    @State private var unitName: String = ""
+    @State private var isPlanActive: Bool = false
     @State private var isLoading: Bool = false
 
-    // ✅ Categoria do aluno (vinda do Firestore, com fallback)
     @State private var studentDefaultCategoryRaw: String = ""
 
     private var categoriaAtualAluno: TreinoTipo {
@@ -56,6 +55,7 @@ struct ProfileView: View {
     @State private var showErrorAlert: Bool = false
     @State private var errorMessage: String? = nil
 
+    // Corpo principal com cards e footer
     var body: some View {
         ZStack {
 
@@ -126,8 +126,6 @@ struct ProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-
-        // ✅ Trocar unidade (aluno e professor)
         .alert("Trocar unidade", isPresented: $showTrocarUnidadeAlert) {
             TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
 
@@ -139,8 +137,6 @@ struct ProfileView: View {
         } message: {
             Text("Digite a unidade onde você treina. Se deixar em branco, a unidade será removida do perfil.")
         }
-
-        // ✅ Erro
         .alert("Erro", isPresented: $showErrorAlert) {
             Button("OK", role: .cancel) {
                 showErrorAlert = false
@@ -149,14 +145,12 @@ struct ProfileView: View {
         } message: {
             Text(errorMessage ?? "")
         }
-
-        // ✅ Recarrega quando mudar o usuário logado
         .task(id: currentUid) {
             await loadUserData()
         }
     }
 
-    // MARK: - Footer
+    // Footer adaptado por tipo de usuário
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -182,12 +176,13 @@ struct ProfileView: View {
         }
     }
 
+    // Navegação: voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // MARK: - Load
+    // Carrega dados do usuário do Firestore
     private func loadUserData() async {
         let uid = currentUid
         guard !uid.isEmpty else {
@@ -204,7 +199,6 @@ struct ProfileView: View {
         defer { isLoading = false }
 
         do {
-            // ✅ Nome e unidade vêm do Firestore (sem hardcode)
             if let user = try await repository.getUser(uid: uid) {
                 userName = user.name
                 unitName = (user.unitName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -216,13 +210,9 @@ struct ProfileView: View {
             }
 
             if session.userType == .STUDENT {
-                // ✅ Planos do aluno: Ativo se existir qualquer week vinculada
                 isPlanActive = try await repository.hasAnyWeeksForStudent(studentId: uid)
-
-                // ✅ Check-ins da semana em andamento
                 await loadCheckinsSemanaEmAndamento(studentId: uid)
             } else {
-                // ✅ Professor: Planos sempre Ativo e não tem check-ins
                 isPlanActive = true
                 checkinsConcluidos = 0
                 checkinsTotalSemana = 0
@@ -241,7 +231,7 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Check-ins (apenas aluno)
+    // Carrega check-ins da semana atual
     private func loadCheckinsSemanaEmAndamento(studentId: String) async {
         do {
             let weeks = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: true)
@@ -288,12 +278,13 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Unidade (aluno e professor)
+    // Abrir diálogo para trocar unidade
     private func openTrocarUnidade() {
         unidadeDraft = unitName
         showTrocarUnidadeAlert = true
     }
 
+    // Salva unidade no Firestore
     private func salvarUnidade() async {
         let uid = currentUid
         guard !uid.isEmpty else { return }
@@ -302,7 +293,6 @@ struct ProfileView: View {
         unitName = trimmed
 
         do {
-            // ✅ Salva por usuário; se vazio, remove o campo no Firestore
             try await repository.setStudentUnitName(uid: uid, unitName: trimmed)
         } catch {
             errorMessage = error.localizedDescription
@@ -310,27 +300,23 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Planos
+    // Texto e cores para status de plano
     private var planoStatusTexto: String { isPlanActive ? "Ativo" : "Inativo" }
     private var planoStatusForeground: Color { isPlanActive ? Color.green.opacity(0.9) : Color.red.opacity(0.95) }
     private var planoStatusBackground: Color { isPlanActive ? Color.green.opacity(0.16) : Color.red.opacity(0.18) }
 
-    // MARK: - UI Cards
+    // UI: card de perfil com avatar e nome
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
-            // ✅ Agora usa o MESMO componente do header (LocalProfileStore por UID),
-            // garantindo que a foto do Perfil reflita a mesma foto dos cabeçalhos.
             HeaderAvatarView(size: 92)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
 
-            // ✅ Nome sem hardcode
             Text(userName.isEmpty ? " " : userName)
                 .font(.system(size: 28, weight: .semibold))
                 .foregroundColor(.white)
 
-            // ✅ Unidade para ambos (aluno e professor)
             Text(unitName.isEmpty ? " " : unitName)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
@@ -341,23 +327,21 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
+    // UI: opções e navegação dentro do perfil
     private func optionsCard() -> some View {
         VStack(spacing: 0) {
 
-            // ✅ Aluno e Professor podem trocar unidade
             optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron) {
                 openTrocarUnidade()
             }
             divider()
 
-            // ✅ Planos: aluno calcula / professor sempre ativo
             optionRow(
                 icon: "crown.fill",
                 title: "Planos",
                 trailing: .coloredBadge(planoStatusTexto, fg: planoStatusForeground, bg: planoStatusBackground)
             )
 
-            // ✅ Check-ins só para aluno
             if session.userType == .STUDENT {
                 divider()
                 optionRow(
@@ -382,6 +366,7 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
+    // Divisor estilizado
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
@@ -395,6 +380,7 @@ struct ProfileView: View {
         case coloredBadge(String, fg: Color, bg: Color)
     }
 
+    // Linha de opção reutilizável
     private func optionRow(
         icon: String,
         title: String,
@@ -458,6 +444,7 @@ struct ProfileView: View {
     }
 
     // MARK: - Logout
+    // Botão de logout estilizado
     private func logoutButton() -> some View {
         Button {
             session.logout()
@@ -482,4 +469,3 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
 }
-

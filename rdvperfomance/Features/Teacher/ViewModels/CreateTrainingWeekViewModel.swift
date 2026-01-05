@@ -1,3 +1,4 @@
+// CreateTrainingWeekViewModel.swift — ViewModel para carregar e reparar semanas de treino de um aluno
 import Foundation
 import Combine
 import FirebaseFirestore
@@ -6,6 +7,7 @@ import FirebaseFirestore
 @MainActor
 final class CreateTrainingWeekViewModel: ObservableObject {
 
+    // Semanas do aluno
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
@@ -18,6 +20,7 @@ final class CreateTrainingWeekViewModel: ObservableObject {
         self.repository = repository
     }
 
+    // Carrega semanas (inclui rascunhos)
     func loadWeeks(studentId: String) async {
         isLoading = true
         errorMessage = nil
@@ -38,7 +41,7 @@ final class CreateTrainingWeekViewModel: ObservableObject {
         isLoading = false
     }
 
-    /// ✅ Corrige weeks já existentes para refletirem o range real dos dias
+    // Repara ranges de semanas a partir dos dias, se necessário
     func repairWeekRangesIfNeeded() async {
         let ids = weeks.compactMap { $0.id }
         guard !ids.isEmpty else { return }
@@ -49,7 +52,7 @@ final class CreateTrainingWeekViewModel: ObservableObject {
                     do {
                         try await FirestoreRepository.shared.updateWeekDateRangeFromDays(weekId: weekId)
                     } catch {
-                        // silencioso
+                        // fallback silencioso
                     }
                 }
             }
@@ -67,4 +70,3 @@ final class CreateTrainingWeekViewModel: ObservableObject {
         }
     }
 }
-

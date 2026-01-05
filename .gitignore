@@ -29,3 +29,6 @@ fastlane/test_output/
 
 # Logs
 *.log
+
+# IDEs JetBrains (IntelliJ / Android Studio / etc)
+.idea/

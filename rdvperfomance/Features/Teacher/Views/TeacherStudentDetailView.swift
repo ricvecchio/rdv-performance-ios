@@ -1,3 +1,4 @@
+// TeacherStudentDetailView.swift — Detalhes do aluno para o professor (progresso, ações e navegação)
 import SwiftUI
 
 struct TeacherStudentDetailView: View {
@@ -14,6 +15,7 @@ struct TeacherStudentDetailView: View {
     @State private var progress: Double = 0.0
     @State private var isLoadingProgress: Bool = false
 
+    // Corpo com cards: header, progresso e ações
     var body: some View {
         ZStack {
 
@@ -82,8 +84,7 @@ struct TeacherStudentDetailView: View {
                     .foregroundColor(.white)
             }
 
-            // ✅ AJUSTE SOLICITADO:
-            // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
+            // Avatar do cabeçalho (foto real do usuário)
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -95,8 +96,7 @@ struct TeacherStudentDetailView: View {
         }
     }
 
-    // MARK: - Cards
-
+    // Header com informações do aluno e plano
     private func headerCard() -> some View {
         VStack(alignment: .leading, spacing: 10) {
 
@@ -134,6 +134,7 @@ struct TeacherStudentDetailView: View {
         )
     }
 
+    // Card mostrando progresso geral do aluno
     private func progressCard() -> some View {
 
         let percent = Int((progress * 100.0).rounded())
@@ -173,6 +174,7 @@ struct TeacherStudentDetailView: View {
         )
     }
 
+    // Ações do professor relacionadas ao aluno
     private func actionsCard() -> some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -235,6 +237,7 @@ struct TeacherStudentDetailView: View {
         .buttonStyle(.plain)
     }
 
+    // Navega para agenda do aluno
     private func openAgenda() {
         guard let sid = student.id, !sid.isEmpty else { return }
         path.append(.studentAgenda(studentId: sid, studentName: student.name))
@@ -245,7 +248,7 @@ struct TeacherStudentDetailView: View {
         path.removeLast()
     }
 
-    // MARK: - Load progress
+    // Carrega progresso geral do aluno
     private func loadProgress() async {
         guard session.userType == .TRAINER else { return }
         guard let sid = student.id, !sid.isEmpty else { return }

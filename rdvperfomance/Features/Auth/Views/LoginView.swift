@@ -1,7 +1,9 @@
+// LoginView.swift — Tela de login com campos, validação e navegação pós-login
 import SwiftUI
 
 struct LoginView: View {
 
+    // Binding de rotas e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
@@ -12,11 +14,11 @@ struct LoginView: View {
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
-    // ✅ Persistência simples (educacional): salva o último usuário logado
-    // ⚠️ Em app real, senha não deve ser salva em texto puro (use Keychain).
+    // Persistência educacional do último login (não é segura para produção)
     @AppStorage("last_login_email") private var lastLoginEmail: String = ""
     @AppStorage("last_login_password") private var lastLoginPassword: String = ""
 
+    // Corpo principal da tela de login
     var body: some View {
         ZStack {
 
@@ -127,7 +129,7 @@ struct LoginView: View {
         .onAppear {
             vm.errorMessage = nil
 
-            // ✅ restaura último login (sem sobrescrever o que o usuário já digitou)
+            // Restaura o último login caso os campos estejam vazios
             if vm.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 vm.email = lastLoginEmail
             }
@@ -137,15 +139,14 @@ struct LoginView: View {
         }
     }
 
+    // Realiza fluxo de login, salva último usuário e direciona conforme userType
     private func doLogin() async {
         let ok = await vm.submitLogin()
         guard ok else { return }
 
-        // ✅ salva o último usuário logado (apenas após login OK)
         lastLoginEmail = vm.email
         lastLoginPassword = vm.password
 
-        // ✅ aguarda o AppSession buscar o userType no Firestore
         for _ in 0..<20 {
             if session.userType != nil { break }
             try? await Task.sleep(nanoseconds: 120_000_000) // 0.12s
@@ -170,4 +171,3 @@ struct LoginView: View {
         }
     }
 }
-

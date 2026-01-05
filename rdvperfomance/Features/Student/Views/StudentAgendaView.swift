@@ -1,10 +1,11 @@
+// StudentAgendaView.swift — Lista de semanas do aluno com metadados e navegação
 import SwiftUI
 import Combine
 import UIKit
 
-// MARK: - Aluno/Professor: Agenda (lista de semanas)
 struct StudentAgendaView: View {
 
+    // Bindings, parâmetros e ViewModel
     @Binding var path: [AppRoute]
     let studentId: String
     let studentName: String
@@ -30,11 +31,11 @@ struct StudentAgendaView: View {
     }
 
     private var isTeacherViewing: Bool { session.userType == .TRAINER }
-
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
+    // Corpo com header, conteúdo (cards) e footer
     var body: some View {
         ZStack {
 
@@ -84,7 +85,7 @@ struct StudentAgendaView: View {
                     .foregroundColor(.white)
             }
 
-            // ✅ Avatar no cabeçalho (LocalProfileStore por UID)
+            // Avatar no cabeçalho mostrando foto do usuário
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
                     .background(Color.clear)
@@ -98,6 +99,7 @@ struct StudentAgendaView: View {
         }
     }
 
+    // Footer que varia conforme o usuário (professor/aluno)
     private var footer: some View {
         Group {
             if isTeacherViewing {
@@ -127,6 +129,7 @@ struct StudentAgendaView: View {
         .background(Theme.Colors.footerBackground)
     }
 
+    // Header informativo
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
 
@@ -141,6 +144,7 @@ struct StudentAgendaView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Conteúdo principal com estados (loading / error / empty / list)
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -159,6 +163,7 @@ struct StudentAgendaView: View {
         .cornerRadius(14)
     }
 
+    // Lista de semanas como botões navegáveis
     private var weeksList: some View {
         VStack(spacing: 0) {
             ForEach(Array(vm.weeks.enumerated()), id: \.offset) { item in
@@ -277,4 +282,3 @@ struct StudentAgendaView: View {
         path.removeLast()
     }
 }
-

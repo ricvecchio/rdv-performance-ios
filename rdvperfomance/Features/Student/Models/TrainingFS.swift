@@ -1,12 +1,14 @@
+// TrainingFS.swift — Namespace com constantes e modelos relacionados a treinos no Firestore
 import Foundation
 import FirebaseFirestore
 
-// Namespace único (NÃO duplicar em outros arquivos)
+// Namespace único para estruturas de treino
 enum TrainingFS {
 
     static let weeksCollection: String = "training_weeks"
     static let daysSubcollection: String = "days"
 
+    // Estrutura de Week usada em consultas
     struct Week: Identifiable, Codable, Hashable {
 
         @DocumentID var id: String?
@@ -22,6 +24,7 @@ enum TrainingFS {
         @ServerTimestamp var updatedAt: Timestamp?
     }
 
+    // Estrutura Day usada em subcoleção de semanas
     struct Day: Identifiable, Codable, Hashable {
 
         @DocumentID var id: String?
@@ -45,4 +48,3 @@ enum TrainingFS {
         }
     }
 }
-

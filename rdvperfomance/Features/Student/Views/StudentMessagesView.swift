@@ -1,3 +1,4 @@
+// StudentMessagesView.swift — Lista de mensagens enviadas pelo treinador para o aluno
 import SwiftUI
 import FirebaseAuth
 
@@ -14,6 +15,7 @@ struct StudentMessagesView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Corpo principal com header, lista e footer
     var body: some View {
         ZStack {
 
@@ -98,6 +100,7 @@ struct StudentMessagesView: View {
         .task { await load() }
     }
 
+    // Header com categoria e descrição
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Categoria: \(category.displayName)")
@@ -111,6 +114,7 @@ struct StudentMessagesView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Card com lista de mensagens
     private var listCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -172,6 +176,7 @@ struct StudentMessagesView: View {
         )
     }
 
+    // Card com mensagem de erro ou sucesso
     private func messageCard(text: String, isError: Bool) -> some View {
         HStack(spacing: 10) {
             Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
@@ -193,6 +198,7 @@ struct StudentMessagesView: View {
         )
     }
 
+    // Carrega mensagens do Firestore para o aluno logado
     private func load() async {
         errorMessage = nil
 
@@ -221,6 +227,7 @@ struct StudentMessagesView: View {
         }
     }
 
+    // Formata data para exibição
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")
@@ -233,4 +240,3 @@ struct StudentMessagesView: View {
         path.removeLast()
     }
 }
-

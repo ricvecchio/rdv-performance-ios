@@ -1,3 +1,4 @@
+// CreateTrainingWeekView.swift — Tela para publicar e gerenciar semanas de treino de um aluno
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
@@ -5,6 +6,7 @@ import Combine
 
 struct CreateTrainingWeekView: View {
 
+    // Bindings, parâmetros e ViewModel
     @Binding var path: [AppRoute]
     let student: AppUser
     let category: TreinoTipo
@@ -24,7 +26,7 @@ struct CreateTrainingWeekView: View {
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
 
-    // ✅ Excluir semana
+    // Estado para exclusão de semana
     @State private var weekPendingDelete: TrainingWeekFS? = nil
     @State private var showDeleteWeekConfirm: Bool = false
     @State private var isDeletingWeek: Bool = false
@@ -43,6 +45,7 @@ struct CreateTrainingWeekView: View {
         _vm = StateObject(wrappedValue: CreateTrainingWeekViewModel(studentId: student.id ?? "", repository: repository))
     }
 
+    // Corpo principal com header, lista de semanas e formulário de nova semana
     var body: some View {
         ZStack {
 
@@ -130,8 +133,7 @@ struct CreateTrainingWeekView: View {
                 }
                 .buttonStyle(.plain)
 
-                // ✅ AJUSTE SOLICITADO:
-                // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
+                // Avatar do cabeçalho (foto real do usuário)
                 HeaderAvatarView(size: 38)
             }
         }
@@ -151,6 +153,7 @@ struct CreateTrainingWeekView: View {
         }
     }
 
+    // Header com contexto do aluno e categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Aluno: \(student.name)")
@@ -168,6 +171,7 @@ struct CreateTrainingWeekView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Card que exibe semanas existentes
     private var weeksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -211,6 +215,7 @@ struct CreateTrainingWeekView: View {
         )
     }
 
+    // Linha de cada semana com ações
     private func weekRow(_ week: TrainingWeekFS) -> some View {
         VStack(alignment: .leading, spacing: 10) {
 
@@ -239,7 +244,7 @@ struct CreateTrainingWeekView: View {
 
                 Spacer()
 
-                // ✅ Menu (⋯): Editar / Excluir semana
+                // Menu de ações por semana
                 Menu {
                     Button {
                         openEditWeekTitle(week)
@@ -376,8 +381,7 @@ struct CreateTrainingWeekView: View {
             .padding(.leading, leading)
     }
 
-    // MARK: - Actions
-
+    // Actions: load, publish, edit, delete
     private func loadWeeks() async {
         errorMessage = nil
         successMessage = nil
@@ -558,4 +562,3 @@ struct CreateTrainingWeekView: View {
         path.removeLast()
     }
 }
-

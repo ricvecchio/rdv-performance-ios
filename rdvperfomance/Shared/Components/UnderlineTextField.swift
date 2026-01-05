@@ -1,9 +1,6 @@
+// UnderlineTextField.swift — Campo de texto com estilo underline e suporte a senha
 import SwiftUI
 
-// MARK: - COMPONENTE REUTILIZÁVEL (TextField com linha)
-// Este componente cria um campo de texto com estilo "underline" (linha embaixo).
-// Ele pode funcionar como campo normal (TextField) ou campo de senha (SecureField),
-// com opção de mostrar/ocultar a senha através do ícone de "olho".
 struct UnderlineTextField: View {
 
     // Título exibido acima do campo (ex.: "E-mail", "Senha")
@@ -23,6 +20,7 @@ struct UnderlineTextField: View {
     let textColor: Color
     let placeholderColor: Color
 
+    // Layout do campo com label, input e underline
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
 
@@ -34,7 +32,7 @@ struct UnderlineTextField: View {
             // Campo com ícone do "olho" (apenas quando for senha)
             ZStack(alignment: .trailing) {
 
-                // Alterna entre SecureField e TextField conforme showPassword
+                // Alterna entre SecureField e TextField conforme necessidade
                 Group {
                     if isSecure && !showPassword {
                         SecureField("", text: $text)
@@ -48,7 +46,7 @@ struct UnderlineTextField: View {
                 .autocorrectionDisabled(true)
                 .keyboardType(title == "E-mail" ? .emailAddress : .default)
 
-                // Botão para mostrar/ocultar senha
+                // Ícone de mostrar/ocultar senha quando aplicável
                 if isSecure {
                     Button {
                         showPassword.toggle()
@@ -67,4 +65,3 @@ struct UnderlineTextField: View {
         }
     }
 }
-

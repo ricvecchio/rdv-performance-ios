@@ -1,11 +1,14 @@
+// AppRouter.swift — Componente responsável pela navegação e roteamento do app
 import SwiftUI
 
-// MARK: - APP CONTAINER / NAVIGATION
+// Container principal de navegação
 struct AppRouter: View {
 
+    // Estado local de rotas e sessão
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
 
+    // Corpo com NavigationStack e destinos de navegação
     var body: some View {
         NavigationStack(path: $path) {
 
@@ -15,9 +18,7 @@ struct AppRouter: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
 
-                    // =====================================================
                     // BASE
-                    // =====================================================
                     case .login:
                         LoginView(path: $path)
                             .environmentObject(session)
@@ -25,9 +26,7 @@ struct AppRouter: View {
                     case .home:
                         guardedHome()
 
-                    // =====================================================
                     // PROFESSOR (exclusivo)
-                    // =====================================================
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
                         guardedTeacher {
                             TeacherStudentsListView(
@@ -98,9 +97,7 @@ struct AppRouter: View {
                             )
                         }
 
-                    // =====================================================
                     // ALUNO + PROFESSOR (COMPARTILHADO)
-                    // =====================================================
                     case .studentAgenda(let studentId, let studentName):
                         guardedHome {
                             StudentAgendaView(
@@ -130,9 +127,7 @@ struct AppRouter: View {
                             )
                         }
 
-                    // =====================================================
                     // ALUNO (exclusivo)
-                    // =====================================================
                     case .studentMessages(let category):
                         guardedStudent {
                             StudentMessagesView(
@@ -149,9 +144,7 @@ struct AppRouter: View {
                             )
                         }
 
-                    // =====================================================
                     // COMUM (login obrigatório)
-                    // =====================================================
                     case .sobre:
                         guardedHome {
                             AboutView(path: $path)
@@ -197,9 +190,7 @@ struct AppRouter: View {
                             DeleteAccountView(path: $path)
                         }
 
-                    // =====================================================
                     // CADASTRO (sem login)
-                    // =====================================================
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)
                             .environmentObject(session)
@@ -221,7 +212,7 @@ struct AppRouter: View {
     }
 }
 
-// MARK: - Root decision
+// Root decision: escolhe tela inicial baseada no estado de sessão
 private extension AppRouter {
 
     @ViewBuilder
@@ -234,7 +225,7 @@ private extension AppRouter {
     }
 }
 
-// MARK: - Guards
+// Guards: funções auxiliares para proteger rotas por tipo de usuário
 private extension AppRouter {
 
     @ViewBuilder
@@ -273,4 +264,3 @@ private extension AppRouter {
         }
     }
 }
-

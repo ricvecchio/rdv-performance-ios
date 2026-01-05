@@ -1,7 +1,8 @@
+// StudentFeedbackFS.swift — Modelo de feedbacks entre professor e aluno armazenado no Firestore
 import Foundation
 import FirebaseFirestore
 
-// MARK: - student_feedbacks/{feedbackId}
+// Documento student_feedbacks/{feedbackId}
 struct StudentFeedbackFS: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
 
@@ -11,7 +12,7 @@ struct StudentFeedbackFS: Identifiable, Codable, Hashable {
 
     var text: String
 
-    // Pra evoluir depois (ex.: aluno também criando feedback)
+    // Autor opcional (para futuras evoluções)
     var authorType: String?
     var authorId: String?
 

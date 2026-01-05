@@ -1,3 +1,4 @@
+// CreateTrainingDayView.swift — Tela para criar/editar um dia de treino dentro de uma semana
 import SwiftUI
 
 struct CreateTrainingDayView: View {
@@ -30,16 +31,17 @@ struct CreateTrainingDayView: View {
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
 
-    // ✅ Controle de edição / dias existentes
+    // Controles de edição e dias existentes
     @State private var existingDaysByIndex: [Int: TrainingDayFS] = [:]
     @State private var currentEditingDayId: String? = nil
     @State private var baseWeekStartDate: Date? = nil
 
-    // ✅ Ajuda a não sobrescrever a data quando o usuário escolhe manualmente
+    // Evita sobrescrever data quando usuário escolhe manualmente
     @State private var didUserManuallyPickDate: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Corpo com header, meta do dia, treino, blocos e ação de salvar
     var body: some View {
         ZStack {
 
@@ -119,8 +121,6 @@ struct CreateTrainingDayView: View {
                     .foregroundColor(.white)
             }
 
-            // ✅ AJUSTE SOLICITADO:
-            // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -154,6 +154,7 @@ struct CreateTrainingDayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // MARK: - Day metadata card (data, ordem e nome)
     private var dayMetaCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -168,7 +169,6 @@ struct CreateTrainingDayView: View {
                     .tint(.green.opacity(0.85))
                     .colorScheme(.dark)
                     .onChange(of: date) { _, _ in
-                        // ✅ usuário mexeu manualmente
                         didUserManuallyPickDate = true
                     }
             }
@@ -212,6 +212,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
+    // MARK: - Training card (título e descrição)
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -256,6 +257,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
+    // MARK: - Blocks editor
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -274,7 +276,6 @@ struct CreateTrainingDayView: View {
             ForEach($blocks) { $b in
                 VStack(alignment: .leading, spacing: 10) {
 
-                    // ✅ Topo do bloco: agora mostra SOMENTE o nome do bloco (Aquecimento/Técnica/WOD)
                     HStack {
                         Text(b.name.isEmpty ? "Sem nome" : b.name)
                             .font(.system(size: 13, weight: .semibold))
@@ -293,10 +294,8 @@ struct CreateTrainingDayView: View {
                         .buttonStyle(.plain)
                     }
 
-                    // ✅ Campo de nome sem label "Nome"
-                    // Mantém editável, mas sem mostrar o texto "Nome" na UI.
                     UnderlineTextField(
-                        title: "",                // <-- remove o "Nome"
+                        title: "",
                         text: $b.name,
                         isSecure: false,
                         showPassword: $showPasswordDummy,
@@ -345,6 +344,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
+    // Botão salvar
     private var saveButtonCard: some View {
         Button {
             Task { await saveDay() }
@@ -393,7 +393,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    // MARK: - Bootstrap (carrega dias e já abre no primeiro faltante)
+    // Bootstrap: carrega dias e posiciona no primeiro dia ausente
     private func bootstrapDays() async {
         isLoadingDays = true
         defer { isLoadingDays = false }
@@ -405,15 +405,12 @@ struct CreateTrainingDayView: View {
             for d in days { dict[d.dayIndex] = d }
             existingDaysByIndex = dict
 
-            // Base start = menor data cadastrada (se existir)
             let dates = days.compactMap { $0.date }
             baseWeekStartDate = dates.min()
 
-            // Abre no primeiro dia que ainda não existe
             let firstMissing = (0...6).first(where: { dict[$0] == nil }) ?? 0
             dayIndex = firstMissing
 
-            // Ao entrar/trocar, como é "novo dia" geralmente, permitimos auto data
             didUserManuallyPickDate = false
             loadDayIntoFormIfExists(index: dayIndex)
 
@@ -422,11 +419,11 @@ struct CreateTrainingDayView: View {
         }
     }
 
+    // Carrega um dia existente no formulário quando aplicável
     private func loadDayIntoFormIfExists(index: Int) {
         errorMessage = nil
         successMessage = nil
 
-        // Se já existe, carrega para edição
         if let existing = existingDaysByIndex[index] {
             currentEditingDayId = existing.id
             dayName = existing.dayName
@@ -435,12 +432,10 @@ struct CreateTrainingDayView: View {
             description = existing.description
             blocks = existing.blocks.map { BlockDraft(id: $0.id, name: $0.name, details: $0.details) }
 
-            // Ao carregar existente, não queremos sobrescrever a data automaticamente
             didUserManuallyPickDate = true
             return
         }
 
-        // Se não existe, prepara formulário vazio
         currentEditingDayId = nil
         title = ""
         description = ""
@@ -450,13 +445,9 @@ struct CreateTrainingDayView: View {
             BlockDraft(name: "WOD", details: "")
         ]
 
-        // Nome default (Dia X)
         dayName = ""
         syncDayName()
 
-        // ✅ Data automática
-        // - Se existe baseWeekStartDate (algum dia já cadastrado), usa base + index
-        // - Se não existe (semana recém criada), usa "hoje + index"
         if !didUserManuallyPickDate {
             let base = baseWeekStartDate ?? Date()
             if let computed = Calendar.current.date(byAdding: .day, value: index, to: base) {
@@ -465,7 +456,7 @@ struct CreateTrainingDayView: View {
         }
     }
 
-    // MARK: - Save
+    // Salva ou atualiza o dia no Firestore
     private func saveDay() async {
         errorMessage = nil
         successMessage = nil
@@ -514,7 +505,6 @@ struct CreateTrainingDayView: View {
 
             successMessage = currentEditingDayId == nil ? "Dia salvo com sucesso!" : "Alterações salvas com sucesso!"
 
-            // ✅ Após salvar, atualiza lista e abre o próximo dia faltante
             didUserManuallyPickDate = false
             await bootstrapDays()
 
@@ -523,6 +513,7 @@ struct CreateTrainingDayView: View {
         }
     }
 
+    // Mantém nome do dia coerente com o índice quando vazio
     private func syncDayName() {
         if dayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || dayName.hasPrefix("Dia ") {
             dayName = "Dia \(dayIndex + 1)"
@@ -546,4 +537,3 @@ private struct BlockDraft: Identifiable, Hashable {
         self.details = details
     }
 }
-

@@ -1,8 +1,8 @@
+// StudentWeekDetailView.swift — Exibe dias de uma semana com opção de marcar conclusão e navegação para detalhes
 import SwiftUI
 import Combine
 import UIKit
 
-// MARK: - Semana (lista de dias)
 struct StudentWeekDetailView: View {
 
     @Binding var path: [AppRoute]
@@ -40,6 +40,7 @@ struct StudentWeekDetailView: View {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
+    // Corpo principal com header, lista de dias e footer
     var body: some View {
         ZStack {
 
@@ -87,7 +88,7 @@ struct StudentWeekDetailView: View {
                     .foregroundColor(.white)
             }
 
-            // ✅ Avatar no cabeçalho: mesmo padrão do AboutView
+            // Avatar no cabeçalho (foto real do usuário)
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -95,9 +96,6 @@ struct StudentWeekDetailView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
 
-        // ✅ AJUSTE SOLICITADO:
-        // Ao voltar da tela do dia (ex.: após excluir), esta tela reaparece.
-        // Recarregamos aqui para garantir que a lista reflita o Firestore.
         .onAppear {
             Task {
                 if !vm.isLoading {
@@ -107,6 +105,7 @@ struct StudentWeekDetailView: View {
         }
     }
 
+    // Footer adaptado por tipo de usuário
     private var footer: some View {
         Group {
             if isTeacherViewing {
@@ -136,6 +135,7 @@ struct StudentWeekDetailView: View {
         .background(Theme.Colors.footerBackground)
     }
 
+    // Header com título e CTA para professor quando não houver dias
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
 
@@ -147,7 +147,6 @@ struct StudentWeekDetailView: View {
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
 
-            // ✅ CTA para professor quando ainda não tem dias (mantido)
             if isTeacherViewing && !vm.isLoading && vm.days.isEmpty {
                 Button {
                     path.append(.createTrainingDay(weekId: weekId, category: teacherSelectedCategory))
@@ -168,6 +167,7 @@ struct StudentWeekDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Conteúdo principal com estados (loading / error / empty / list)
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -186,6 +186,7 @@ struct StudentWeekDetailView: View {
         .cornerRadius(14)
     }
 
+    // Lista de dias com ação de marcar concluído para alunos
     private var daysList: some View {
         VStack(spacing: 0) {
             ForEach(Array(vm.days.enumerated()), id: \.offset) { item in
@@ -230,7 +231,6 @@ struct StudentWeekDetailView: View {
                 .padding(.vertical, 14)
                 .contentShape(Rectangle())
                 .onTapGesture {
-                    // ✅ Ajuste: rota agora exige weekId
                     path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: weekTitle))
                 }
 
@@ -307,4 +307,3 @@ struct StudentWeekDetailView: View {
         path.removeLast()
     }
 }
-

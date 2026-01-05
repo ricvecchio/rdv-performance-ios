@@ -1,11 +1,10 @@
+// FooterBar.swift — Rodapé reutilizável com variantes por tipo de tela
 import SwiftUI
 
-// MARK: - FooterBar
 struct FooterBar: View {
 
     enum Kind {
 
-        // ====== BÁSICOS ======
         case homeSobre(isHomeSelected: Bool, isSobreSelected: Bool)
 
         case homeSobrePerfil(
@@ -31,7 +30,6 @@ struct FooterBar: View {
             isPerfilSelected: Bool
         )
 
-        // ====== ALUNO ======
         case agendaSobrePerfil(
             isAgendaSelected: Bool,
             isSobreSelected: Bool,
@@ -45,8 +43,6 @@ struct FooterBar: View {
             isPerfilSelected: Bool
         )
 
-        // ====== PROFESSOR ======
-        /// ✅ Professor: Home | Alunos | Sobre | Perfil
         case teacherHomeAlunosSobrePerfil(
             selectedCategory: TreinoTipo,
             isHomeSelected: Bool,
@@ -55,7 +51,6 @@ struct FooterBar: View {
             isPerfilSelected: Bool
         )
 
-        /// ✅ NOVO: Professor: Home | Aluno | Sobre | Perfil (singular) — usado na tela expandida
         case teacherHomeAlunoSobrePerfil(
             selectedCategory: TreinoTipo,
             isHomeSelected: Bool,
@@ -68,7 +63,6 @@ struct FooterBar: View {
     @Binding var path: [AppRoute]
     let kind: Kind
 
-    // ✅ Precisamos do uid/name do aluno para montar a rota .studentAgenda(...)
     @EnvironmentObject private var session: AppSession
 
     var body: some View {
@@ -87,12 +81,10 @@ struct FooterBar: View {
         .background(Theme.Colors.footerBackground)
     }
 
-    // MARK: - Conteúdo do rodapé
+    // Conteúdo do rodapé — renderiza diferentes layouts conforme `Kind`
     @ViewBuilder
     private func contentRow() -> some View {
         switch kind {
-
-        // ====== BÁSICOS ======
         case .homeSobre(let isHomeSelected, let isSobreSelected):
             HStack(spacing: 28) {
                 Button { goHomeBasic() } label: {
@@ -162,7 +154,6 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        // ====== ALUNO ======
         case .agendaSobrePerfil(let isAgendaSelected, let isSobreSelected, let isPerfilSelected):
             HStack(spacing: 26) {
                 Button { goAgenda() } label: {
@@ -205,7 +196,6 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        // ====== PROFESSOR (plural) ======
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, let isSobreSelected, let isPerfilSelected):
             HStack(spacing: 12) {
 
@@ -230,7 +220,6 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        // ====== PROFESSOR (singular) ======
         case .teacherHomeAlunoSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunoSelected, let isSobreSelected, let isPerfilSelected):
             HStack(spacing: 12) {
 
@@ -257,7 +246,7 @@ struct FooterBar: View {
         }
     }
 
-    // MARK: - Navegação Básica
+    // Navegação básica — retorna pilha canônica para rotas simples
     private func canonicalStackBasic(for destination: AppRoute) -> [AppRoute] {
         switch destination {
         case .home:  return [.home]
@@ -271,7 +260,7 @@ struct FooterBar: View {
     private func goSobreBasic() { withAnimation { path = canonicalStackBasic(for: .sobre) } }
     private func goPerfilBasic(){ withAnimation { path = canonicalStackBasic(for: .perfil) } }
 
-    // MARK: - Navegação Aluno (AGORA com parâmetros)
+    // Navegação aluno — constrói pilha com parâmetros do aluno
     private func goAgenda() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
@@ -296,7 +285,7 @@ struct FooterBar: View {
         withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre, .perfil] }
     }
 
-    // MARK: - Navegação Professor
+    // Navegação professor — constrói pilha canônica para professor
     private enum TeacherDestination { case home, alunos, sobre, perfil }
 
     private func teacherCanonicalStack(category: TreinoTipo, destination: TeacherDestination) -> [AppRoute] {
@@ -305,8 +294,6 @@ struct FooterBar: View {
             return [.home]
 
         case .alunos:
-            // ✅ Corrigido: rota agora exige initialFilter
-            // ✅ Rodapé do professor deve abrir os alunos já filtrados na categoria atual
             return [.home, .teacherStudentsList(selectedCategory: category, initialFilter: category)]
 
         case .sobre:
@@ -343,7 +330,7 @@ struct FooterBar: View {
     }
 }
 
-// MARK: - FooterItem (internal)
+// FooterItem interno — ícone + título
 private struct FooterItem: View {
 
     enum Icon {
@@ -375,4 +362,3 @@ private struct FooterItem: View {
         .frame(width: width)
     }
 }
-

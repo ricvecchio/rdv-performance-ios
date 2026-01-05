@@ -1,3 +1,4 @@
+// TeacherStudentsListView.swift — Lista de alunos do professor com filtros e ações de desvincular
 import SwiftUI
 import Combine
 
@@ -5,14 +6,11 @@ struct TeacherStudentsListView: View {
 
     @Binding var path: [AppRoute]
     let selectedCategory: TreinoTipo
-
-    // ✅ novo
     let initialFilter: TreinoTipo?
 
     @EnvironmentObject private var session: AppSession
     @StateObject private var vm: TeacherStudentsListViewModel
 
-    // nil = Todos
     @State private var filter: TreinoTipo? = nil
     private let contentMaxWidth: CGFloat = 380
 
@@ -31,6 +29,7 @@ struct TeacherStudentsListView: View {
         _vm = StateObject(wrappedValue: TeacherStudentsListViewModel(repository: repository))
     }
 
+    // Corpo principal com header, filtro e lista
     var body: some View {
         ZStack {
 
@@ -75,7 +74,6 @@ struct TeacherStudentsListView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .onAppear {
-            // ✅ Agora: HomeView abre filtrado; TeacherDashboard abre em Todos
             filter = initialFilter
         }
         .task { await loadStudents() }
@@ -98,8 +96,6 @@ struct TeacherStudentsListView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            // ✅ AJUSTE SOLICITADO:
-            // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -328,15 +324,13 @@ struct TeacherStudentsListView: View {
             .padding(.leading, leading)
     }
 
-    // MARK: - Load
+    // Load: carrega alunos considerando filtro inicial
     private func loadStudents() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.errorMessage = "Não foi possível identificar o professor logado."
             return
         }
 
-        // ✅ Se abriu filtrado (HomeView): carrega só a categoria selecionada.
-        // ✅ Se abriu em "Todos" (TeacherDashboard): carrega tudo.
         if let initial = initialFilter {
             await vm.loadStudentsOnlyOneCategory(teacherId: teacherId, category: initial)
         } else {
@@ -344,7 +338,6 @@ struct TeacherStudentsListView: View {
         }
     }
 
-    // MARK: - Unlink (mantém o que você já tinha)
     private func unlinkMessageText() -> String {
         guard let student = studentPendingUnlink else {
             return "Tem certeza que deseja desvincular este aluno?"
@@ -383,4 +376,3 @@ struct TeacherStudentsListView: View {
         path.removeLast()
     }
 }
-

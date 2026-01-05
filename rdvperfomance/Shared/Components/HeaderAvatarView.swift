@@ -1,11 +1,7 @@
+// HeaderAvatarView.swift — Avatar do cabeçalho que usa foto local com fallback
 import SwiftUI
 import UIKit
 
-// MARK: - HeaderAvatarView
-/// Avatar único para cabeçalho (NavigationBar).
-/// ✅ Busca a foto do usuário logado via LocalProfileStore (por UID)
-/// ✅ Fallback automático para asset (rdv_user_default)
-/// ✅ Sem repetir código nas telas
 struct HeaderAvatarView: View {
 
     @EnvironmentObject private var session: AppSession
@@ -14,14 +10,12 @@ struct HeaderAvatarView: View {
     var showStroke: Bool = true
     var strokeOpacity: Double = 0.15
 
-    // Recarrega quando:
-    // - usuário muda (uid muda)
-    // - foto é salva/removida em Settings/EditProfile (UserDefaults muda)
+    // Recarrega a view quando UserDefaults muda ou uid muda
     @State private var refreshToken: UUID = UUID()
 
     var body: some View {
         content
-            .id(refreshToken) // força refresh do ViewBuilder quando necessário
+            .id(refreshToken)
             .onAppear { refreshToken = UUID() }
             .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
                 refreshToken = UUID()
@@ -31,6 +25,7 @@ struct HeaderAvatarView: View {
             }
     }
 
+    // Conteúdo condicional: imagem salva ou fallback
     @ViewBuilder
     private var content: some View {
         if let img = LocalProfileStore.shared.getPhotoImage(userId: session.currentUid) {
@@ -53,4 +48,3 @@ struct HeaderAvatarView: View {
         }
     }
 }
-

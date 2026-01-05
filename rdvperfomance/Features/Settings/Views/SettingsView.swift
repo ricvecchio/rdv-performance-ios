@@ -1,30 +1,29 @@
+// SettingsView.swift — Tela de configurações com cartões para conta, preferências e legal
 import SwiftUI
 
-// MARK: - SettingsView
-// Tela de configurações acessada pelo Perfil.
 struct SettingsView: View {
 
+    // Binding de rotas
     @Binding var path: [AppRoute]
 
-    // largura máxima do “miolo” (conteúdo central)
+    // Largura máxima do conteúdo
     private let contentMaxWidth: CGFloat = 380
 
-    // MARK: - Preferência persistida (kg / lbs)
-    // Boa prática: preference simples no AppStorage.
+    // Preferência persistida para unidade de peso
     @AppStorage("preferredWeightUnit") private var preferredWeightUnitRaw: String = WeightUnit.kg.rawValue
 
-    // Controle do modal
+    // Controle do sheet de unidade
     @State private var showWeightUnitSheet: Bool = false
 
-    // Computado para facilitar uso seguro do enum
+    // Conveniência para o enum seguro
     private var preferredWeightUnit: WeightUnit {
         WeightUnit(rawValue: preferredWeightUnitRaw) ?? .kg
     }
 
+    // Corpo principal com seções e footer
     var body: some View {
         ZStack {
 
-            // FUNDO
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -32,28 +31,23 @@ struct SettingsView: View {
 
             VStack(spacing: 0) {
 
-                // ✅ Separador entre NavigationBar e corpo
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                // Corpo
                 ScrollView(showsIndicators: false) {
                     HStack {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 16) {
 
-                            // ===== CONTA =====
                             sectionTitle("CONTA")
                             accountCard()
 
-                            // ===== PREFERÊNCIAS =====
                             sectionTitle("PREFERÊNCIAS")
                             preferencesCard()
 
-                            // ===== SUPORTE & LEGAL =====
                             sectionTitle("SUPORTE & LEGAL")
                             supportLegalCard()
 
@@ -69,7 +63,6 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                // Rodapé
                 FooterBar(
                     path: $path,
                     kind: .homeSobrePerfil(
@@ -101,7 +94,7 @@ struct SettingsView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
 
-        // MARK: - Modal: Unidade de Medida
+        // Modal para seleção de unidade de peso
         .sheet(isPresented: $showWeightUnitSheet) {
             WeightUnitSheetView(
                 selectedUnitRaw: $preferredWeightUnitRaw
@@ -111,15 +104,13 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Navegação
-
+    // Navegação: voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // MARK: - Seções
-
+    // Título de seção
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
@@ -127,8 +118,7 @@ struct SettingsView: View {
             .padding(.horizontal, 6)
     }
 
-    // MARK: - Cards (organizados conforme solicitado)
-
+    // Cartões: conta, preferências e suporte/legal
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
@@ -173,8 +163,7 @@ struct SettingsView: View {
         }
     }
 
-    // MARK: - Componentes base
-
+    // Componentes base de layout
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) {
             content()
@@ -191,7 +180,7 @@ struct SettingsView: View {
             .padding(.leading, 54)
     }
 
-    /// Linha usada dentro dos cards (sem fundo próprio, para não “duplicar card”).
+    // Linha simples do card
     private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -217,7 +206,7 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    /// Variante do cardRow com texto à direita (para exibir “kg” ou “lbs”).
+    // Variante com texto à direita
     private func cardRow(icon: String, title: String, trailingText: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -248,7 +237,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Model: Unidade de Peso
+// Enum de unidade de peso e utilitários
 private enum WeightUnit: String, CaseIterable {
     case kg
     case lbs
@@ -268,7 +257,7 @@ private enum WeightUnit: String, CaseIterable {
     }
 }
 
-// MARK: - Modal View: Seleção de Unidade (kg / lbs)
+// Sheet para selecionar unidade de peso
 private struct WeightUnitSheetView: View {
 
     @Binding var selectedUnitRaw: String
@@ -281,7 +270,6 @@ private struct WeightUnitSheetView: View {
     var body: some View {
         ZStack {
 
-            // Mantém coerência visual com o app (fundo)
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -289,7 +277,6 @@ private struct WeightUnitSheetView: View {
 
             VStack(spacing: 0) {
 
-                // Header
                 HStack {
                     Text("Unidade de Medida")
                         .font(Theme.Fonts.headerTitle())
@@ -368,4 +355,3 @@ private struct WeightUnitSheetView: View {
         }
     }
 }
-
