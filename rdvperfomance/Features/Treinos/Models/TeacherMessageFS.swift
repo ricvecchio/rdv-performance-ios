@@ -1,7 +1,8 @@
+// TeacherMessageFS.swift — Modelo de mensagens enviadas pelo professor ao aluno (Firestore)
 import Foundation
 import FirebaseFirestore
 
-// MARK: - teacher_messages/{messageId}
+// Documento teacher_messages/{messageId}
 struct TeacherMessageFS: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
 

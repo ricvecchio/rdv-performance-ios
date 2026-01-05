@@ -1,7 +1,8 @@
+// FirestoreModels.swift — Modelos leves usados para mapear documentos do Firestore
 import Foundation
 import FirebaseFirestore
 
-// MARK: - User (users/{uid})
+// User (users/{uid})
 struct AppUser: Identifiable, Codable, Hashable {
     @DocumentID var id: String? // uid
     var name: String
@@ -20,15 +21,14 @@ struct AppUser: Identifiable, Codable, Hashable {
     var defaultCategory: String?
     var active: Bool?
 
-    // ✅ Unidade (users/{uid}.unitName)
+    // Unidade associada ao usuário
     var unitName: String?
 }
 
-// MARK: - teacher_students
+// Relação teacher_students (doc com categorias vinculadas)
 struct TeacherStudentRelation: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var teacherId: String
     var studentId: String
     var categories: [String]
 }
-

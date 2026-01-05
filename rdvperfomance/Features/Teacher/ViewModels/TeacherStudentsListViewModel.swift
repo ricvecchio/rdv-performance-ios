@@ -1,9 +1,11 @@
+// TeacherStudentsListViewModel.swift — ViewModel para gerenciar a lista de alunos do professor
 import Foundation
 import Combine
 
 @MainActor
 final class TeacherStudentsListViewModel: ObservableObject {
 
+    // Lista unificada de alunos e estados
     @Published private(set) var students: [AppUser] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
@@ -12,6 +14,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     private let repository: FirestoreRepository
 
+    // Cache por categoria e categorias suportadas
     private var studentsByCategory: [TreinoTipo: [AppUser]] = [:]
     private let supportedCategories: [TreinoTipo] = [.crossfit, .academia, .emCasa]
 
@@ -19,7 +22,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         self.repository = repository
     }
 
-    // MARK: - Load (Todos)
+    // Carrega alunos de todas as categorias em paralelo
     func loadStudents(teacherId: String) async {
         isLoading = true
         errorMessage = nil
@@ -55,7 +58,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isLoading = false
     }
 
-    // MARK: - ✅ Load only one category (HomeView)
+    // Carrega apenas uma categoria (usado pelo HomeView)
     func loadStudentsOnlyOneCategory(teacherId: String, category: TreinoTipo) async {
         isLoading = true
         errorMessage = nil
@@ -66,10 +69,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 category: category.rawValue
             )
 
-            // Atualiza cache apenas dessa categoria (mantém coerência do filtro)
             studentsByCategory[category] = list
-
-            // Exibição "Todos" fica como a união do que já existir no cache
             self.students = mergeUniqueStudents(from: supportedCategories.compactMap { studentsByCategory[$0] })
 
         } catch {
@@ -79,11 +79,13 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isLoading = false
     }
 
+    // Retorna alunos filtrados por categoria
     func filteredStudents(filter: TreinoTipo?) -> [AppUser] {
         guard let filter else { return students }
         return studentsByCategory[filter] ?? []
     }
 
+    // Desvincula um aluno (por categoria ou todas)
     func unlinkStudent(
         teacherId: String,
         studentId: String,
@@ -116,7 +118,6 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 }
             }
 
-            // Recarrega tudo para refletir estado real
             await loadStudents(teacherId: teacherId)
 
         } catch {
@@ -126,6 +127,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isUnlinking = false
     }
 
+    // Retorna categorias onde o aluno está vinculado
     private func categoriesWhereStudentIsLinked(studentId: String) -> [TreinoTipo] {
         let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !sid.isEmpty else { return [] }
@@ -136,6 +138,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
+    // Une listas removendo duplicados
     private func mergeUniqueStudents(from lists: [[AppUser]]) -> [AppUser] {
         var seen: Set<String> = []
         var merged: [AppUser] = []
@@ -152,6 +155,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         return merged.sorted { $0.name.lowercased() < $1.name.lowercased() }
     }
 
+    // Chave única baseada em id, ou nome+email
     private func uniqueKey(for user: AppUser) -> String {
         if let id = user.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return id
@@ -161,4 +165,3 @@ final class TeacherStudentsListViewModel: ObservableObject {
         return "\(name)|\(email)"
     }
 }
-

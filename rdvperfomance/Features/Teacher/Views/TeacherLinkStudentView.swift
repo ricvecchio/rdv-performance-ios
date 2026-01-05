@@ -1,8 +1,8 @@
+// TeacherLinkStudentView.swift — Tela para buscar e vincular alunos ao professor por categoria
 import SwiftUI
 import Combine
 import FirebaseFirestore
 
-// MARK: - Professor: Vincular Aluno
 struct TeacherLinkStudentView: View {
 
     @Binding var path: [AppRoute]
@@ -13,16 +13,13 @@ struct TeacherLinkStudentView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Agora só existe "Todos": removemos filtros por categoria
+    // Busca e estado de diálogo de categoria
     @State private var searchText: String = ""
-
-    // ✅ Controle do dialog de escolha de categoria
     @State private var studentPendingLink: StudentLinkItem? = nil
     @State private var showCategoryDialog: Bool = false
-
-    // ✅ Uma opção precisa estar selecionada (default)
     @State private var selectedLinkCategory: TreinoTipo = .crossfit
 
+    // Corpo principal com busca, lista e confirmação de vínculo
     var body: some View {
         ZStack {
 
@@ -106,7 +103,6 @@ struct TeacherLinkStudentView: View {
         } message: {
             Text(vm.successMessage ?? "Aluno vinculado.")
         }
-        // ✅ Escolha obrigatória de categoria ao vincular
         .confirmationDialog(
             "Selecione a categoria do vínculo",
             isPresented: $showCategoryDialog,
@@ -121,11 +117,9 @@ struct TeacherLinkStudentView: View {
         }
     }
 
-    // MARK: - Header
+    // Header explicando o fluxo de vínculo
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-
-            // ✅ Agora não força categoria fixa do parâmetro; a categoria será escolhida no ato do vínculo
             Text("Vincule alunos ao seu perfil.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
@@ -137,7 +131,7 @@ struct TeacherLinkStudentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Controls (somente busca + informativo "Todos")
+    // Controles: busca e chips (apenas 'Todos' visual)
     private var controlsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -145,7 +139,6 @@ struct TeacherLinkStudentView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.35))
 
-            // ✅ Apenas "Todos" (visual)
             HStack(spacing: 10) {
                 chip(title: "Todos", isSelected: true) { /* fixo */ }
             }
@@ -206,7 +199,7 @@ struct TeacherLinkStudentView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Content Card
+    // Conteúdo: lista de possíveis alunos a vincular
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -255,9 +248,7 @@ struct TeacherLinkStudentView: View {
 
     private func row(item: StudentLinkItem) -> some View {
         Button {
-            // ✅ Ao clicar em "Vincular": abre seleção de categoria (obrigatória)
             studentPendingLink = item
-            // default já definido (uma opção selecionada)
             selectedLinkCategory = .crossfit
             showCategoryDialog = true
         } label: {
@@ -330,7 +321,7 @@ struct TeacherLinkStudentView: View {
             .padding(.leading, leading)
     }
 
-    // MARK: - Logic
+    // Lógica de carregamento e confirmação de vínculo
     private func initialLoadIfNeeded() async {
         guard vm.items.isEmpty && !vm.isLoading else { return }
 
@@ -342,7 +333,6 @@ struct TeacherLinkStudentView: View {
         await vm.loadAllStudents(teacherId: teacherId)
     }
 
-    // ✅ Agora sempre "Todos": só filtra por busca
     private func filteredItems() -> [StudentLinkItem] {
         let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
@@ -384,7 +374,6 @@ struct TeacherLinkStudentView: View {
     }
 }
 
-// MARK: - ViewModel
 @MainActor
 final class TeacherLinkStudentViewModel: ObservableObject {
 
@@ -473,4 +462,3 @@ struct StudentLinkItem: Identifiable, Hashable {
     let name: String
     let defaultCategory: String?
 }
-

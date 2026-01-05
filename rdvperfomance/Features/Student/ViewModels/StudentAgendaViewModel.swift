@@ -1,17 +1,17 @@
+// StudentAgendaViewModel.swift — ViewModel para listar semanas e metadata do aluno
 import Foundation
 import Combine
 
 @MainActor
 final class StudentAgendaViewModel: ObservableObject {
 
+    // Semanas carregadas para o aluno
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
-    // weekId -> "12/01/2026 a 14/01/2026"
+    // Cache de metadados por weekId
     private var weekRangeText: [String: String] = [:]
-
-    // weekId -> 35
     private var weekProgressPercent: [String: Int] = [:]
 
     private let studentId: String
@@ -22,6 +22,7 @@ final class StudentAgendaViewModel: ObservableObject {
         self.repository = repository
     }
 
+    // Carrega semanas e metadados assincronamente
     func loadWeeksAndMeta() async {
         isLoading = true
         errorMessage = nil
@@ -38,6 +39,7 @@ final class StudentAgendaViewModel: ObservableObject {
         }
     }
 
+    // Carrega range de datas e progresso para cada semana em paralelo
     private func loadMetaForWeeks(_ weeks: [TrainingWeekFS]) async {
 
         // ✅ limpa cache antes de recarregar (garante atualização)
@@ -70,6 +72,7 @@ final class StudentAgendaViewModel: ObservableObject {
         objectWillChange.send()
     }
 
+    // Retorna subtítulo com range e % de conclusão para exibir na UI
     func subtitleForWeek(_ week: TrainingWeekFS) -> String {
         guard let weekId = week.id else { return "Treinos da semana" }
 
@@ -79,7 +82,7 @@ final class StudentAgendaViewModel: ObservableObject {
         return "\(range) • \(percent)%"
     }
 
-    // ✅ STATIC / NON-ACTOR helpers
+    // Helpers não isolados para computação simples
     nonisolated static func computePercentStatic(completed: Int, total: Int) -> Int {
         guard total > 0 else { return 0 }
         let v = (Double(completed) / Double(total)) * 100.0

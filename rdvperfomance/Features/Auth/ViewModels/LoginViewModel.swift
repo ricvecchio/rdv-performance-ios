@@ -1,5 +1,6 @@
+// LoginViewModel.swift — ViewModel para a tela de login, validação e chamada de serviço
 import Foundation
-import Combine // ✅ necessário por causa do @Published
+import Combine
 
 @MainActor
 final class LoginViewModel: ObservableObject {
@@ -12,6 +13,7 @@ final class LoginViewModel: ObservableObject {
 
     private let service = FirebaseAuthService()
 
+    // Valida campos e chama o serviço de login, retornando sucesso
     func submitLogin() async -> Bool {
 
         errorMessage = nil
@@ -41,4 +43,3 @@ final class LoginViewModel: ObservableObject {
         }
     }
 }
-

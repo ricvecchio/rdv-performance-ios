@@ -1,36 +1,11 @@
-//
-//  LocalProfileStore.swift
-//  rdvperfomance
-//
-//  Created to support per-user local profile persistence (photo/whatsapp/focusArea)
-//  ✅ Isola os dados por usuário (UID) para evitar “vazar” foto/whats entre logins.
-//
-//  Coloque este arquivo em:
-//  ./rdvperfomance/Shared/Services/LocalProfileStore.swift
-//
-
+// LocalProfileStore.swift — Armazena perfil local por usuário (UserDefaults namespaced)
 import Foundation
 import UIKit
 
-// MARK: - LocalProfileStore
-/// Store local (UserDefaults) para persistir informações de perfil por usuário.
-///
-/// Por padrão, você estava usando @AppStorage com chaves fixas:
-/// - "profile_photo_data"
-/// - "profile_whatsapp"
-/// - "profile_focus_area"
-///
-/// Isso faz com que TODOS os usuários compartilhem os mesmos valores.
-///
-/// ✅ Solução: usar chaves "namespaced" por userId (uid).
-/// Ex.: "profile_photo_data_<uid>", "profile_whatsapp_<uid>", etc.
-///
-/// Observação:
-/// - Este store NÃO depende de Firebase diretamente.
-/// - Você deve fornecer o userId (uid) a partir do AppSession (ou equivalente).
+// Store local para persistência de foto, whatsapp e foco por UID
 final class LocalProfileStore {
 
-    // MARK: - Singleton (simples e prático)
+    // Singleton compartilhado
     static let shared = LocalProfileStore()
 
     private let defaults: UserDefaults
@@ -39,14 +14,14 @@ final class LocalProfileStore {
         self.defaults = defaults
     }
 
-    // MARK: - Tipos
-
+    // Keys base usadas para namespacing
     struct Keys {
         static let photoBase64 = "profile_photo_data"
         static let whatsapp = "profile_whatsapp"
         static let focusArea = "profile_focus_area"
     }
 
+    // Snapshot simples para uso em telas
     struct ProfileSnapshot: Equatable {
         var photoBase64: String
         var whatsapp: String
@@ -55,25 +30,20 @@ final class LocalProfileStore {
         static let empty = ProfileSnapshot(photoBase64: "", whatsapp: "", focusAreaRaw: "")
     }
 
-    // MARK: - Helpers (namespacing)
-
-    /// Cria uma chave do UserDefaults isolada por usuário.
-    /// - Ex.: baseKey="profile_photo_data", userId="abc" => "profile_photo_data_abc"
+    // MARK: - Helpers de namespacing
+    /// Cria chave isolada por usuário a partir da baseKey
     private func namespacedKey(_ baseKey: String, userId: String) -> String {
-        // evita espaços / caracteres estranhos na chave
         let safeId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
         return "\(baseKey)_\(safeId)"
     }
 
-    /// (Opcional) quando não houver userId válido, usamos um "bucket" padrão.
-    /// Isso ajuda a evitar crash e mantém comportamento previsível.
+    /// Retorna um userId seguro (fallback) para evitar chaves vazias
     private func safeUserId(_ userId: String?) -> String {
         let id = (userId ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return id.isEmpty ? "anonymous" : id
     }
 
-    // MARK: - Public API (String)
-
+    // MARK: - API String (photo/whatsapp/focus)
     func getPhotoBase64(userId: String?) -> String {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.photoBase64, userId: uid)
@@ -114,9 +84,8 @@ final class LocalProfileStore {
         defaults.set(value, forKey: key)
     }
 
-    // MARK: - Public API (UIImage)
-
-    /// Converte e retorna a foto salva do usuário como UIImage (se existir).
+    // MARK: - API UIImage (conversões práticas)
+    /// Retorna UIImage salva como Base64 para o usuário, se existir
     func getPhotoImage(userId: String?) -> UIImage? {
         let base64 = getPhotoBase64(userId: userId)
         guard !base64.isEmpty else { return nil }
@@ -124,8 +93,7 @@ final class LocalProfileStore {
         return UIImage(data: data)
     }
 
-    /// Salva uma UIImage como Base64 (JPEG) por usuário.
-    /// - compressionQuality padrão alinhado ao seu EditProfileView (0.82)
+    /// Salva UIImage como Base64 (JPEG) usando compressão configurável
     func setPhotoImage(_ image: UIImage, userId: String?, compressionQuality: CGFloat = 0.82) -> Bool {
         guard let data = image.jpegData(compressionQuality: compressionQuality) else { return false }
         let base64 = data.base64EncodedString()
@@ -133,8 +101,7 @@ final class LocalProfileStore {
         return true
     }
 
-    // MARK: - Snapshot (útil para telas)
-
+    // MARK: - Snapshot helpers
     func loadProfile(userId: String?) -> ProfileSnapshot {
         ProfileSnapshot(
             photoBase64: getPhotoBase64(userId: userId),
@@ -155,13 +122,8 @@ final class LocalProfileStore {
         setFocusAreaRaw("", userId: userId)
     }
 
-    // MARK: - Migração (uma vez)
-    /// Migra chaves antigas (globais) -> chaves por usuário.
-    ///
-    /// Use quando você implementar a mudança para UID.
-    /// Assim, o usuário atual não “perde” a foto/whats que já estava salva.
-    ///
-    /// - Atenção: após migrar, você pode optar por limpar as chaves globais.
+    // MARK: - Migração de chaves legadas
+    /// Migra chaves globais de legado para chaves por usuário quando necessário
     func migrateLegacyKeysToUser(userId: String?, clearLegacy: Bool = false) {
         let uid = safeUserId(userId)
 
@@ -169,7 +131,6 @@ final class LocalProfileStore {
         let legacyWhatsapp = defaults.string(forKey: Keys.whatsapp) ?? ""
         let legacyFocus = defaults.string(forKey: Keys.focusArea) ?? ""
 
-        // só migra se existir algo no legado e ainda não houver valor por usuário
         let currentPhoto = getPhotoBase64(userId: uid)
         let currentWhatsapp = getWhatsapp(userId: uid)
         let currentFocus = getFocusAreaRaw(userId: uid)
@@ -191,4 +152,3 @@ final class LocalProfileStore {
         }
     }
 }
-

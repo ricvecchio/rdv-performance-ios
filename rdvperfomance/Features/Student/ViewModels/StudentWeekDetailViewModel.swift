@@ -1,3 +1,4 @@
+// StudentWeekDetailViewModel.swift — ViewModel para detalhes da semana: dias e status de conclusão
 import Foundation
 import Combine
 
@@ -20,6 +21,7 @@ final class StudentWeekDetailViewModel: ObservableObject {
         self.repository = repository
     }
 
+    // Carrega dias da semana e o mapa de status (completa/pendente)
     func loadDaysAndStatus() async {
         isLoading = true
         errorMessage = nil
@@ -31,7 +33,7 @@ final class StudentWeekDetailViewModel: ObservableObject {
 
             let statusMap = try await repository.getDayStatusMap(weekId: weekId, studentId: studentId)
 
-            // ✅ Correção: Dictionary.compactMap recebe um tuple (key/value)
+            // Extrai apenas os ids completados
             let completed = statusMap.compactMap { pair -> String? in
                 pair.value ? pair.key : nil
             }
@@ -43,10 +45,12 @@ final class StudentWeekDetailViewModel: ObservableObject {
         }
     }
 
+    // Verifica se um dia está marcado como concluído
     func isCompleted(dayId: String) -> Bool {
         completedDayIds.contains(dayId)
     }
 
+    // Alterna o status concluído de um dia e atualiza no repositório
     func toggleCompleted(dayId: String) async {
         let newValue = !isCompleted(dayId: dayId)
 
@@ -69,4 +73,3 @@ final class StudentWeekDetailViewModel: ObservableObject {
         }
     }
 }
-

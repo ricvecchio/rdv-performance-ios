@@ -1,3 +1,4 @@
+// CrossfitMenuView.swift — Menu com opções específicas de Crossfit (WOD, Benchmark, etc.)
 import SwiftUI
 
 struct CrossfitMenuView: View {
@@ -88,8 +89,7 @@ struct CrossfitMenuView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_user_default", size: 38)
                     .onTapGesture {
-                        // Se quiser navegar ao tocar:
-                        // path.append(.perfil)
+                        // opcional: navegar para perfil
                     }
                     .background(Color.clear)
             }
@@ -98,6 +98,7 @@ struct CrossfitMenuView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
+    // Tile que inicia navegação para seção de treinos
     private func menuTile(
         title: String,
         imageName: String,
@@ -121,6 +122,7 @@ struct CrossfitMenuView: View {
         .frame(height: height)
     }
 
+    // Layout visual do tile com imagem e título
     private func menuTileLayout(
         title: String,
         imageName: String,
@@ -204,4 +206,3 @@ struct CrossfitMenuView: View {
         path.removeLast()
     }
 }
-

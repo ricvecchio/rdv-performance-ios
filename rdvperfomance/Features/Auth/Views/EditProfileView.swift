@@ -1,53 +1,41 @@
+// EditProfileView.swift — Tela para editar foto, WhatsApp e área de foco do perfil do usuário
 import SwiftUI
 import PhotosUI
 import UIKit
 
-// MARK: - EditProfileView
-// ✅ Importar foto do celular
-// ✅ Editar WhatsApp
-// ✅ Editar Área de foco (Aluno: Crossfit / Academia / Treinos em Casa)
-//
-// Persistência (AGORA POR USUÁRIO):
-// - Foto: LocalProfileStore (Base64 por UID)
-// - WhatsApp: LocalProfileStore (por UID)
-// - Área de foco: LocalProfileStore (rawValue por UID)
-//
-// ✅ Importante:
-// - Cada usuário tem seus próprios dados.
-// - Ao trocar de usuário, a tela recarrega corretamente.
 struct EditProfileView: View {
 
+    // Binding e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // MARK: - Estados locais (foto)
+    // Estados de imagem
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var previewImage: UIImage? = nil
     @State private var isLoadingImage: Bool = false
 
-    // MARK: - Estados locais (form)
+    // Estados do formulário
     @State private var whatsappDraft: String = ""
     @State private var focusAreaDraft: FocusAreaDTO = .CROSSFIT
 
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
 
-    // Mantém coerência com o app
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Opções permitidas para Aluno (mesma regra do RegisterStudentView)
+    // Opções válidas para alunos
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
-    // MARK: - Helpers
+    // Helpers para UID e armazenamento local
     private var currentUid: String? { session.currentUid }
-
     private var storedImageForUser: UIImage? {
         LocalProfileStore.shared.getPhotoImage(userId: currentUid)
     }
 
+    // Corpo principal com avatar, formulário e ações
     var body: some View {
         ZStack {
 
@@ -98,9 +86,7 @@ struct EditProfileView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        // ✅ Força reconstrução quando troca de usuário (evita “reuso” com estado antigo)
         .id(session.currentUid ?? "anonymous")
-
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
@@ -122,21 +108,16 @@ struct EditProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-
-        // ✅ Carrega valores do usuário logado
         .onAppear {
             loadFromStore()
         }
-
-        // Foto selecionada
         .onChange(of: selectedItem) { _, newItem in
             guard let newItem else { return }
             Task { await loadImage(from: newItem) }
         }
     }
 
-    // MARK: - UI
-
+    // Avatar com preview ou imagem armazenada
     private func avatarCard() -> some View {
         VStack(spacing: 12) {
 
@@ -168,6 +149,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
+    // Formulário com WhatsApp e área de foco
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
@@ -190,6 +172,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
+    // Ações: importar foto, salvar e remover foto
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
@@ -270,6 +253,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
+    // Escolhe a imagem de avatar correta (preview > armazenada > default)
     @ViewBuilder
     private func avatarView() -> some View {
         if let previewImage {
@@ -287,10 +271,8 @@ struct EditProfileView: View {
         }
     }
 
-    // MARK: - Carregar/Salvar (LocalProfileStore por UID)
-
+    // Carrega dados salvos para o usuário atual
     private func loadFromStore() {
-        // ✅ Se não estiver logado, mantém defaults de UI
         guard let _ = currentUid else {
             whatsappDraft = ""
             focusAreaDraft = .CROSSFIT
@@ -303,7 +285,6 @@ struct EditProfileView: View {
         let raw = LocalProfileStore.shared.getFocusAreaRaw(userId: currentUid)
         focusAreaDraft = FocusAreaDTO(rawValue: raw.isEmpty ? FocusAreaDTO.CROSSFIT.rawValue : raw) ?? .CROSSFIT
 
-        // Foto (carrega no preview só se ainda não escolheu outra)
         if previewImage == nil, let img = LocalProfileStore.shared.getPhotoImage(userId: currentUid) {
             previewImage = img
         }
@@ -312,6 +293,7 @@ struct EditProfileView: View {
         errorMessage = ""
     }
 
+    // Salva whatsapp, foco e foto quando necessário
     private func saveAll() {
         saveWhatsapp()
         saveFocusArea()
@@ -320,15 +302,18 @@ struct EditProfileView: View {
         errorMessage = ""
     }
 
+    // Salva whatsapp localmente
     private func saveWhatsapp() {
         let v = whatsappDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         LocalProfileStore.shared.setWhatsapp(v, userId: currentUid)
     }
 
+    // Salva área de foco localmente
     private func saveFocusArea() {
         LocalProfileStore.shared.setFocusAreaRaw(focusAreaDraft.rawValue, userId: currentUid)
     }
 
+    // Salva foto apenas se existir preview
     private func savePhotoIfNeeded() {
         guard let previewImage else { return }
         let ok = LocalProfileStore.shared.setPhotoImage(previewImage, userId: currentUid, compressionQuality: 0.82)
@@ -337,6 +322,7 @@ struct EditProfileView: View {
         }
     }
 
+    // Remove apenas a foto armazenada do usuário
     private func clearPhotoOnly() {
         previewImage = nil
         selectedItem = nil
@@ -345,8 +331,7 @@ struct EditProfileView: View {
         errorMessage = ""
     }
 
-    // MARK: - Carregar imagem do PhotosPicker
-
+    // Carrega imagem do PhotosPicker e prepara preview
     private func loadImage(from item: PhotosPickerItem) async {
         isLoadingImage = true
         defer { isLoadingImage = false }
@@ -367,6 +352,7 @@ struct EditProfileView: View {
         }
     }
 
+    // Mostra erro na UI de forma segura no MainActor
     private func presentError(_ message: String) {
         Task { @MainActor in
             self.showError = true
@@ -374,15 +360,13 @@ struct EditProfileView: View {
         }
     }
 
-    // MARK: - Navegação
-
+    // Navegação: voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // MARK: - UI Components (Underline / Picker)
-
+    // Componentes UI auxiliares
     private func underlineTextField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
@@ -454,4 +438,3 @@ struct EditProfileView: View {
         }
     }
 }
-

@@ -1,18 +1,18 @@
+// RegisterTrainerView.swift — Tela de cadastro para usuários tipo TRAINER
 import SwiftUI
 
-// MARK: - Tela 3: Cadastro Professor (TRAINER)
 struct RegisterTrainerView: View {
 
+    // Binding e ViewModel
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
 
     @State private var showPassword: Bool = false
 
-    // Mantém coerência com o app
+    // Estilos locais
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
-    // Largura máxima do conteúdo central (igual Settings/Profile)
     private let contentMaxWidth: CGFloat = 380
 
     var body: some View {
@@ -40,9 +40,11 @@ struct RegisterTrainerView: View {
 
                         VStack(spacing: 18) {
 
+                            // MARK: - Card do formulário (Professor)
                             formCardTrainer()
                                 .padding(.top, 8)
 
+                            // MARK: - Ações / Mensagens / Botões
                             actionArea()
 
                             // ✅ Respiro extra para não colar no final (melhor em telas pequenas)
@@ -91,7 +93,7 @@ struct RegisterTrainerView: View {
         }
     }
 
-    // MARK: - Card do formulário (Professor)
+    // Card do formulário para TRAINER
     private func formCardTrainer() -> some View {
         VStack(spacing: 18) {
 
@@ -315,4 +317,3 @@ struct RegisterTrainerView: View {
         path.removeLast()
     }
 }
-

@@ -1,7 +1,7 @@
+// TeacherSendMessageView.swift — Tela para professor enviar e listar mensagens para um aluno
 import SwiftUI
 import FirebaseAuth
 
-// MARK: - Professor: Enviar Mensagem (para Aluno)
 struct TeacherSendMessageView: View {
 
     @Binding var path: [AppRoute]
@@ -23,6 +23,7 @@ struct TeacherSendMessageView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Corpo com histórico de mensagens e formulário para nova mensagem
     var body: some View {
         ZStack {
 
@@ -111,8 +112,6 @@ struct TeacherSendMessageView: View {
                 }
                 .buttonStyle(.plain)
 
-                // ✅ AJUSTE SOLICITADO:
-                // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
                 HeaderAvatarView(size: 38)
             }
         }
@@ -309,8 +308,7 @@ struct TeacherSendMessageView: View {
             .padding(.leading, leading)
     }
 
-    // MARK: - Actions
-
+    // Actions: load and send messages
     private func loadMessages() async {
         errorMessage = nil
         successMessage = nil
@@ -387,7 +385,6 @@ struct TeacherSendMessageView: View {
                 body: bodyTrim
             )
 
-            // ✅ Mostra imediatamente no histórico (sem depender do serverTimestamp)
             let local = TeacherMessageFS(
                 id: nil,
                 teacherId: teacherId,
@@ -424,4 +421,3 @@ struct TeacherSendMessageView: View {
         path.removeLast()
     }
 }
-

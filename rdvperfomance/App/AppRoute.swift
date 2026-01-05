@@ -1,13 +1,14 @@
+// AppRoute.swift — Definição das rotas do aplicativo e tipos de conteúdo
 import Foundation
 
-// MARK: - Tipos de conteúdo (Central de Ajuda / Privacidade / Termos)
+// Tipo de conteúdo legal/ajuda
 enum InfoLegalKind: String, Hashable {
     case helpCenter
     case privacyPolicy
     case termsOfUse
 }
 
-// MARK: - Rotas do app
+// Rotas principais do aplicativo
 enum AppRoute: Hashable {
 
     // Base
@@ -27,7 +28,7 @@ enum AppRoute: Hashable {
     case alterarSenha
     case excluirConta
 
-    // ✅ Tela única: Ajuda / Privacidade / Termos
+    // Tela única: Ajuda / Privacidade / Termos
     case infoLegal(InfoLegalKind)
 
     // Auth
@@ -54,4 +55,3 @@ enum AppRoute: Hashable {
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 }
-

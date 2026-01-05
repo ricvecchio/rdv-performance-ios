@@ -1,17 +1,20 @@
+// HomeView.swift — Tela Home com tiles de treino e atalho para área do professor
 import SwiftUI
 
 struct HomeView: View {
 
+    // Binding de rotas e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // mantém como você já tinha
+    // Armazena a última categoria selecionada entre telas
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
-    // ✅ largura máxima do miolo (mesmo padrão das outras telas)
+    // Largura máxima do conteúdo central
     private let contentMaxWidth: CGFloat = 380
 
+    // Corpo principal da view
     var body: some View {
         ZStack {
 
@@ -27,7 +30,7 @@ struct HomeView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                // ✅ Área do Professor MOVIDA para o início do corpo
+                // Mostra card do professor quando o usuário é trainer
                 if session.userType == .TRAINER {
                     HStack {
                         Spacer(minLength: 0)
@@ -81,8 +84,7 @@ struct HomeView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar(content: {
 
-            // ✅ AJUSTE SOLICITADO:
-            // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
+            // Avatar do cabeçalho (foto do usuário)
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -91,7 +93,7 @@ struct HomeView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // MARK: - Card “Área do Professor” (padrão Settings/Profile)
+    // Card com atalho "Área do Professor"
     private var teacherAreaCard: some View {
         Button {
             let categoria = TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
@@ -126,7 +128,7 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Footer por userType
+    // Footer adaptado conforme tipo de usuário
     @ViewBuilder
     private func footerForCurrentUser() -> some View {
         if session.userType == .STUDENT {
@@ -152,7 +154,7 @@ struct HomeView: View {
         }
     }
 
-    // MARK: - Tile (Categoria)
+    // Tile de programa que navega conforme tipo de usuário
     private func programaTile(
         title: String,
         imageName: String,
@@ -163,11 +165,10 @@ struct HomeView: View {
 
         Button {
 
-            // ✅ mantém como era
+            // Atualiza a última seleção e navega para a rota apropriada
             ultimoTreinoSelecionado = tipo.rawValue
 
             if session.userType == .TRAINER {
-                // ✅ NOVO: ao vir do Home, a lista deve abrir já filtrada na categoria clicada
                 path.append(.teacherStudentsList(selectedCategory: tipo, initialFilter: tipo))
             } else {
                 guard let uid = session.uid else { return }
@@ -191,7 +192,7 @@ struct HomeView: View {
         .frame(height: height)
     }
 
-    // ✅ VOLTA EXATAMENTE AO SEU TILE ANTIGO (tamanho correto)
+    // Layout visual do tile com imagem, overlays e textos
     private func tileLayout(
         title: String,
         imageName: String,
@@ -208,7 +209,7 @@ struct HomeView: View {
 
                     Image(imageName)
                         .resizable()
-                        .aspectRatio(contentMode: .fit)   // ✅ como era antes
+                        .aspectRatio(contentMode: .fit)
                         .frame(width: w, height: height)
                         .overlay(
                             Rectangle()
@@ -302,4 +303,3 @@ struct HomeView: View {
         )
     }
 }
-

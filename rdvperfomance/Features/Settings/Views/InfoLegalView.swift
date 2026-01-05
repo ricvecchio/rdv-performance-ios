@@ -1,13 +1,14 @@
+// InfoLegalView.swift — Tela reutilizável para Central de Ajuda, Privacidade e Termos
 import SwiftUI
 
-// MARK: - Modelo de seção
+// Modelo simples para seções de conteúdo legal
 struct InfoLegalSection: Hashable {
     let title: String?
     let introText: String?
     let bullets: [String]?
 }
 
-// MARK: - TELA ÚNICA (reutilizável)
+// View reutilizável que exibe diferentes conteúdos legais com base em `InfoLegalKind`
 struct InfoLegalView: View {
 
     @Binding var path: [AppRoute]
@@ -17,7 +18,7 @@ struct InfoLegalView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Última categoria (para Professor → botão "Alunos" no footer)
+    // Última categoria para adaptar o footer quando necessário
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
@@ -25,6 +26,7 @@ struct InfoLegalView: View {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
+    // Corpo com conteúdo e footer
     var body: some View {
         ZStack {
 
@@ -83,7 +85,7 @@ struct InfoLegalView: View {
                     .foregroundColor(.white)
             }
 
-            // ✅ Mantém padrão do app
+            // Avatar padrão do cabeçalho
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -92,7 +94,7 @@ struct InfoLegalView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // MARK: - Footer por userType
+    // Footer que varia conforme o tipo de usuário
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -118,11 +120,13 @@ struct InfoLegalView: View {
         }
     }
 
+    // Navegação: voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
+    // Card que monta o conteúdo das seções do `InfoLegalKind`
     private func contentCard() -> some View {
         VStack(alignment: .leading, spacing: 14) {
 
@@ -169,7 +173,7 @@ struct InfoLegalView: View {
     }
 }
 
-// MARK: - Conteúdo do InfoLegalKind (mantém o arquivo limpo e evita redeclaração)
+// Mapeamentos de título e conteúdo para cada InfoLegalKind
 private extension InfoLegalKind {
 
     var screenTitle: String {
@@ -314,4 +318,3 @@ Este aplicativo tem como objetivo auxiliar no acompanhamento de treinos físicos
         }
     }
 }
-

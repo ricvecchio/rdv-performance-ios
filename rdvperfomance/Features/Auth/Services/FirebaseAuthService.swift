@@ -1,7 +1,9 @@
+// FirebaseAuthService.swift — Serviço responsável por autenticação e operações relacionadas ao usuário no Firebase
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
+// Erros locais do serviço
 enum FirebaseAuthServiceError: LocalizedError {
     case invalidState(String)
 
@@ -14,15 +16,16 @@ enum FirebaseAuthServiceError: LocalizedError {
 
 final class FirebaseAuthService {
 
+    // Firestore instance
     private let db = Firestore.firestore()
 
-    // MARK: - Login
+    // Faz login com email e senha e retorna UID
     func login(email: String, password: String) async throws -> String {
         let result = try await Auth.auth().signIn(withEmail: email, password: password)
         return result.user.uid
     }
 
-    // MARK: - Register
+    // Registra usuário no Firebase Auth e grava perfil em users/{uid}
     func register(_ form: RegisterFormDTO) async throws -> String {
 
         let result = try await Auth.auth().createUser(withEmail: form.email, password: form.password)
@@ -53,7 +56,7 @@ final class FirebaseAuthService {
         return uid
     }
 
-    // MARK: - Vincular aluno ao professor (teacher_students)
+    // Cria relação teacher_students ligando professor e aluno
     func linkStudentToTeacher(teacherId: String, studentId: String, categories: [String]) async throws {
 
         // id simples para a relação (pode ser autoId)
@@ -67,4 +70,3 @@ final class FirebaseAuthService {
         try await db.collection("teacher_students").addDocument(data: relDoc)
     }
 }
-

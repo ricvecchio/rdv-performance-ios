@@ -1,7 +1,7 @@
+// TeacherFeedbacksView.swift — Tela para professor registrar e listar feedbacks de um aluno
 import SwiftUI
 import FirebaseAuth
 
-// MARK: - Professor: Feedbacks do Aluno
 struct TeacherFeedbacksView: View {
 
     @Binding var path: [AppRoute]
@@ -22,6 +22,7 @@ struct TeacherFeedbacksView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Corpo com histórico de feedbacks e formulário para novo feedback
     var body: some View {
         ZStack {
 
@@ -110,8 +111,6 @@ struct TeacherFeedbacksView: View {
                 }
                 .buttonStyle(.plain)
 
-                // ✅ AJUSTE SOLICITADO:
-                // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
                 HeaderAvatarView(size: 38)
             }
         }
@@ -289,8 +288,7 @@ struct TeacherFeedbacksView: View {
             .padding(.leading, leading)
     }
 
-    // MARK: - Actions
-
+    // Actions: load and save feedbacks
     private func loadFeedbacks() async {
         errorMessage = nil
         successMessage = nil
@@ -385,4 +383,3 @@ struct TeacherFeedbacksView: View {
         path.removeLast()
     }
 }
-

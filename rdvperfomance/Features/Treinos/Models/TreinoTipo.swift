@@ -1,17 +1,13 @@
 import SwiftUI
 
-// MARK: - Tipos de treino
-// Enum responsável por representar os tipos de treino disponíveis no app.
-// Centraliza títulos, imagens e ícones relacionados a cada tipo.
+// TreinoTipo.swift — Enum que representa tipos de treino e fornece helpers de UI/serialização
 enum TreinoTipo: String, Hashable {
 
     case crossfit
     case academia
     case emCasa
 
-    // MARK: - UI Helpers (evita String(describing:) espalhado)
-
-    /// Nome curto para UI ("Crossfit", "Academia", "Treinos em Casa")
+    // Nome curto exibido na UI
     var displayName: String {
         switch self {
         case .crossfit: return "Crossfit"
@@ -20,8 +16,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    /// Chave padronizada para Firestore (ex: "CROSSFIT")
-    /// (se preferir salvar minúsculo no Firestore, troque para `rawValue`)
+    // Chave padronizada para armazenamento no Firestore
     var firestoreKey: String {
         switch self {
         case .crossfit: return "CROSSFIT"
@@ -30,19 +25,15 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    /// Normaliza valor vindo do AppStorage / Firestore quando existem legados
-    /// Ex: "CROSSFIT" -> .crossfit, "emcasa" -> .emCasa, "EMCASA" -> .emCasa
+    // Normaliza strings legadas/variações para o enum
     static func normalized(from any: String) -> TreinoTipo? {
         let v = any.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // 1) tenta direto com rawValue atual
         if let t = TreinoTipo(rawValue: v) { return t }
 
-        // 2) tenta versões comuns/legadas (upper/lower)
         let lower = v.lowercased()
         if let t = TreinoTipo(rawValue: lower) { return t }
 
-        // 3) mapeia chaves do firestore (upper) para enum
         let upper = v.uppercased()
         switch upper {
         case "CROSSFIT": return .crossfit
@@ -52,9 +43,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // MARK: - Texto / Imagens
-
-    // Título exibido no header da tela de treinos
+    // Título usado no header da tela de treinos
     var titulo: String {
         switch self {
         case .crossfit: return "Treinos Crossfit"
@@ -63,12 +52,12 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Texto exibido sobre a imagem principal da tela de treinos
+    // Título breve exibido sobre a imagem principal
     var tituloOverlayImagem: String {
         displayName
     }
 
-    // Nome da imagem principal associada a cada tipo de treino
+    // Nome da imagem principal associada a cada tipo
     var imagemCorpo: String {
         switch self {
         case .crossfit: return "rdv_treino1_vertical"
@@ -77,7 +66,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Ícone personalizado exibido no item central do rodapé da tela de treinos
+    // Ícone customizado exibido no rodapé da tela de treinos
     @ViewBuilder
     var iconeRodapeTreinos: some View {
         switch self {
@@ -101,4 +90,3 @@ enum TreinoTipo: String, Hashable {
         }
     }
 }
-

@@ -1,3 +1,4 @@
+// RegisterViewModel.swift — ViewModel para cadastro de usuários (student/trainer)
 import Foundation
 import Combine
 import FirebaseAuth
@@ -5,7 +6,7 @@ import FirebaseAuth
 @MainActor
 final class RegisterViewModel: ObservableObject {
 
-    // Campos comuns
+    // Campos de formulário
     @Published var name: String = ""
     @Published var email: String = ""
     @Published var password: String = ""
@@ -14,7 +15,7 @@ final class RegisterViewModel: ObservableObject {
     @Published var focusArea: FocusAreaDTO = .CROSSFIT
     @Published var planType: PlanTypeDTO = .FREE
 
-    // TRAINER
+    // Campos do TRAINER
     @Published var cref: String = ""
     @Published var bio: String = ""
     @Published var gymName: String = ""
@@ -31,6 +32,7 @@ final class RegisterViewModel: ObservableObject {
         self.repository = repository
     }
 
+    // Valida e submete o cadastro para o Auth e Firestore
     func submit(userType: UserTypeDTO) async {
         errorMessage = nil
         successMessage = nil
@@ -69,7 +71,6 @@ final class RegisterViewModel: ObservableObject {
 
         do {
             // 1) cria no Firebase Auth
-            // ✅ no seu projeto, isso retorna String (uid)
             let createdUid: String = try await service.register(form)
 
             // 2) grava perfil no Firestore (/users/{uid})
@@ -94,9 +95,9 @@ final class RegisterViewModel: ObservableObject {
         }
     }
 
+    // Limpa mensagens de erro/sucesso
     func clearMessages() {
         errorMessage = nil
         successMessage = nil
     }
 }
-

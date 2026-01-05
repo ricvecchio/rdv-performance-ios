@@ -1,28 +1,28 @@
+// RegisterStudentView.swift — Tela de cadastro para usuários tipo STUDENT
 import SwiftUI
 
-// MARK: - Tela: Cadastro Aluno (STUDENT)
 struct RegisterStudentView: View {
 
+    // Binding de rotas e ViewModel
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
 
     @State private var showPassword: Bool = false
 
-    // Mantém coerência com o app
+    // Cores e estilos locais
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
-    // Largura máxima do conteúdo central (igual Settings/Profile)
+    // Layout
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Opções permitidas somente para o cadastro de Aluno
-    // (não altera o enum global para não quebrar outros fluxos)
+    // Opções de foco válidas para estudante
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
+    // Corpo principal da tela
     var body: some View {
         ZStack {
 
-            // FUNDO
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -30,13 +30,11 @@ struct RegisterStudentView: View {
 
             VStack(spacing: 0) {
 
-                // Separador entre NavigationBar e corpo
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                // Scroll com conteúdo centralizado
                 ScrollView(showsIndicators: false) {
                     HStack {
                         Spacer(minLength: 0)
@@ -81,7 +79,6 @@ struct RegisterStudentView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onChange(of: vm.successMessage) { _, newValue in
-            // MVP: ao cadastrar com sucesso, volta pro login
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                     path.removeAll()
@@ -90,7 +87,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // MARK: - Card do formulário (Aluno)
+    // Card do formulário para STUDENT
     private func formCardStudent() -> some View {
         VStack(spacing: 18) {
 
@@ -134,7 +131,6 @@ struct RegisterStudentView: View {
                 placeholderColor: textSecondary
             )
 
-            // ✅ Agora exibindo "Crossfit / Academia / Treinos em Casa"
             pickerRow(
                 title: "Área de foco",
                 selection: $vm.focusArea,
@@ -155,7 +151,7 @@ struct RegisterStudentView: View {
         .cornerRadius(14)
     }
 
-    // MARK: - Ações / Mensagens / Botões
+    // Área de ações e mensagens do formulário
     private func actionArea() -> some View {
         VStack(spacing: 12) {
 
@@ -223,7 +219,7 @@ struct RegisterStudentView: View {
         .padding(.top, 12)
     }
 
-    // MARK: - Texto amigável para FocusArea (sem alterar rawValue)
+    // Texto amigável para FocusArea
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
         switch opt {
         case .CROSSFIT: return "Crossfit"
@@ -233,8 +229,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // MARK: - Picker (padrão underline)
-    // ✅ Versão com displayText opcional (mantém compatibilidade com PlanTypeDTO)
+    // Picker padrão underline (com displayText opcional)
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
         selection: Binding<T>,
@@ -276,9 +271,9 @@ struct RegisterStudentView: View {
         }
     }
 
+    // Navegação: voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 }
-

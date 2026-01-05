@@ -1,14 +1,12 @@
+// StudentDayDetailView.swift — Detalhe de um dia de treino com edição (professor) e visualização (aluno)
 import SwiftUI
 import UIKit
 
-// MARK: - Aluno: Detalhe do Dia (MVP)
 struct StudentDayDetailView: View {
 
+    // Bindings e parâmetros necessários (weekId para operações Firestore)
     @Binding var path: [AppRoute]
-
-    // ✅ Necessário para editar/excluir no Firestore
     let weekId: String
-
     let day: TrainingDayFS
     let weekTitle: String
 
@@ -16,22 +14,22 @@ struct StudentDayDetailView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Editar/Excluir
+    // Estados de edição/exclusão
     @State private var showEditSheet: Bool = false
     @State private var showDeleteConfirm: Bool = false
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
 
-    // Campos edição
+    // Campos de edição locais
     @State private var editTitle: String = ""
     @State private var editDescription: String = ""
     @State private var editBlocks: [BlockFS] = []
 
-    // ✅ Controle para evitar resetar campos enquanto edita
     @State private var didPrepareEditFields: Bool = false
 
     private var isTeacherViewing: Bool { session.userType == .TRAINER }
 
+    // Corpo principal com header, conteúdo do dia, blocos e footer
     var body: some View {
         ZStack {
 
@@ -86,12 +84,9 @@ struct StudentDayDetailView: View {
             }
 
             ToolbarItemGroup(placement: .navigationBarTrailing) {
-
-                // ✅ Menu para professor editar/excluir
                 if isTeacherViewing {
                     Menu {
                         Button {
-                            // ✅ Reset da flag (vamos preparar quando a sheet aparecer)
                             didPrepareEditFields = false
                             showEditSheet = true
                         } label: {
@@ -111,7 +106,6 @@ struct StudentDayDetailView: View {
                     .disabled(isSaving)
                 }
 
-                // ✅ Avatar no cabeçalho: mesmo padrão do AboutView
                 HeaderAvatarView(size: 38)
             }
         }
@@ -126,12 +120,10 @@ struct StudentDayDetailView: View {
             Text("O dia \"\(day.title)\" será excluído.")
         }
         .sheet(isPresented: $showEditSheet, onDismiss: {
-            // ✅ Ao fechar a sheet, liberamos para preparar na próxima abertura
             didPrepareEditFields = false
         }) {
             editDaySheet
                 .onAppear {
-                    // ✅ GARANTIA: quando a sheet abrir, prepara os campos 1x
                     guard !didPrepareEditFields else { return }
                     prepareEditFields()
                     didPrepareEditFields = true
@@ -139,6 +131,7 @@ struct StudentDayDetailView: View {
         }
     }
 
+    // Footer padrão da Agenda
     private var footer: some View {
         FooterBar(
             path: $path,
@@ -153,6 +146,7 @@ struct StudentDayDetailView: View {
         .background(Theme.Colors.footerBackground)
     }
 
+    // Header com título e subtítulo
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
 
@@ -167,6 +161,7 @@ struct StudentDayDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Card principal do treino
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
@@ -200,6 +195,7 @@ struct StudentDayDetailView: View {
         .cornerRadius(14)
     }
 
+    // Lista de blocos do dia
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
@@ -239,6 +235,7 @@ struct StudentDayDetailView: View {
         .cornerRadius(14)
     }
 
+    // Mensagem de erro/aviso estilizada
     private func messageCard(text: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: "exclamationmark.triangle.fill")
@@ -272,8 +269,7 @@ struct StudentDayDetailView: View {
         return f.string(from: date)
     }
 
-    // MARK: - Edit helpers
-
+    // Edit helpers: prepara os campos de edição a partir do modelo atual
     private func prepareEditFields() {
         editTitle = day.title
         editDescription = day.description
@@ -281,6 +277,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
     }
 
+    // Sheet de edição com campos e botões de ação
     private var editDaySheet: some View {
         ZStack {
             Color.black.opacity(0.92).ignoresSafeArea()
@@ -313,7 +310,7 @@ struct StudentDayDetailView: View {
 
                 Divider().background(Theme.Colors.divider)
 
-                // ✅ Blocos (Aquecimento/Técnica/WOD)
+                // Blocos editor section
                 blocksEditorSection
 
                 Divider().background(Theme.Colors.divider)

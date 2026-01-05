@@ -1,3 +1,4 @@
+// TreinosView.swift — Tela genérica de treinos (mostra imagem e título conforme tipo)
 import SwiftUI
 
 // MARK: - TELA DE TREINOS (genérica)
@@ -6,6 +7,7 @@ struct TreinosView: View {
     @Binding var path: [AppRoute]
     let tipo: TreinoTipo
 
+    // Corpo principal exibindo imagem e título do treino
     var body: some View {
         ZStack {
 
@@ -89,7 +91,7 @@ struct TreinosView: View {
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_user_default", size: 38)
                     .onTapGesture {
-                        // path.append(.perfil) // opcional
+                        // opcional: navegar para perfil
                     }
             }
         }
@@ -102,4 +104,3 @@ struct TreinosView: View {
         path.removeLast()
     }
 }
-
