@@ -9,6 +9,18 @@ struct SettingsView: View {
     // largura máxima do “miolo” (conteúdo central)
     private let contentMaxWidth: CGFloat = 380
 
+    // MARK: - Preferência persistida (kg / lbs)
+    // Boa prática: preference simples no AppStorage.
+    @AppStorage("preferredWeightUnit") private var preferredWeightUnitRaw: String = WeightUnit.kg.rawValue
+
+    // Controle do modal
+    @State private var showWeightUnitSheet: Bool = false
+
+    // Computado para facilitar uso seguro do enum
+    private var preferredWeightUnit: WeightUnit {
+        WeightUnit(rawValue: preferredWeightUnitRaw) ?? .kg
+    }
+
     var body: some View {
         ZStack {
 
@@ -88,6 +100,15 @@ struct SettingsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+
+        // MARK: - Modal: Unidade de Medida
+        .sheet(isPresented: $showWeightUnitSheet) {
+            WeightUnitSheetView(
+                selectedUnitRaw: $preferredWeightUnitRaw
+            )
+            .presentationDetents([.medium])
+            .presentationDragIndicator(.visible)
+        }
     }
 
     // MARK: - Navegação
@@ -126,8 +147,12 @@ struct SettingsView: View {
 
     private func preferencesCard() -> some View {
         card {
-            cardRow(icon: "ruler.fill", title: "Unidade de Medida") {
-                // TODO: navegar para tela de unidade de medida (mantido como estava)
+            cardRow(
+                icon: "ruler.fill",
+                title: "Unidade de Medida",
+                trailingText: preferredWeightUnit.shortLabel
+            ) {
+                showWeightUnitSheet = true
             }
         }
     }
@@ -190,6 +215,160 @@ struct SettingsView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    /// Variante do cardRow com texto à direita (para exibir “kg” ou “lbs”).
+    private func cardRow(icon: String, title: String, trailingText: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 14) {
+
+                Image(systemName: icon)
+                    .font(.system(size: 18))
+                    .foregroundColor(.green.opacity(0.85))
+                    .frame(width: 28)
+
+                Text(title)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Spacer()
+
+                Text(trailingText)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Model: Unidade de Peso
+private enum WeightUnit: String, CaseIterable {
+    case kg
+    case lbs
+
+    var title: String {
+        switch self {
+        case .kg: return "⚖️ kg (quilograma)"
+        case .lbs: return "⚖️ lbs (libra)"
+        }
+    }
+
+    var shortLabel: String {
+        switch self {
+        case .kg: return "kg"
+        case .lbs: return "lbs"
+        }
+    }
+}
+
+// MARK: - Modal View: Seleção de Unidade (kg / lbs)
+private struct WeightUnitSheetView: View {
+
+    @Binding var selectedUnitRaw: String
+    @Environment(\.dismiss) private var dismiss
+
+    // ✅ Verde “padrão do app” (igual seus ícones), sem depender do Theme.
+    private let accentGreen = Color.green.opacity(0.85)
+
+    private var selectedUnit: WeightUnit {
+        WeightUnit(rawValue: selectedUnitRaw) ?? .kg
+    }
+
+    var body: some View {
+        ZStack {
+
+            // Mantém coerência visual com o app (fundo)
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                // Header
+                HStack {
+                    Text("Unidade de Medida")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+
+                    Spacer()
+
+                    Button("Fechar") {
+                        dismiss()
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(accentGreen)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 18)
+                .padding(.bottom, 14)
+
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+                    .frame(maxWidth: .infinity)
+
+                VStack(alignment: .leading, spacing: 12) {
+
+                    VStack(spacing: 0) {
+                        ForEach(WeightUnit.allCases, id: \.self) { unit in
+                            Button {
+                                selectedUnitRaw = unit.rawValue
+                                dismiss()
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Text(unit.title)
+                                        .font(.system(size: 17, weight: .medium))
+                                        .foregroundColor(.white.opacity(0.92))
+
+                                    Spacer()
+
+                                    if unit == selectedUnit {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(accentGreen)
+                                            .font(.system(size: 18, weight: .semibold))
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.white.opacity(0.25))
+                                            .font(.system(size: 18, weight: .regular))
+                                    }
+                                }
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 14)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            if unit != WeightUnit.allCases.last {
+                                Divider()
+                                    .background(Theme.Colors.divider)
+                                    .padding(.leading, 16)
+                            }
+                        }
+                    }
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+
+                    Text("Essa preferência será usada para exibir cargas e referências de treino.")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundColor(.white.opacity(0.45))
+                        .padding(.horizontal, 6)
+
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+            }
+        }
     }
 }
 
