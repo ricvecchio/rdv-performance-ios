@@ -117,79 +117,93 @@ Utilizado na tela de login.
 ## 🗂 Estrutura Geral do App
 
 ```
-rdv-performance-ios
+rdvperformance-ios
 ├─ rdvperfomance.xcodeproj
 └─ rdvperfomance
-   │  ├─ About
-   │  │  └─ Views
-   │  │     └─ AboutView.swift
+   ├─ About
+   │  └─ Views
+   │     └─ AboutView.swift
    ├─ App
-   │  ├─ rdvperformanceApp.swift
+   │  ├─ rdvperfomanceApp.swift
    │  ├─ AppSession.swift
    │  ├─ AppRouter.swift
    │  └─ AppRoute.swift
-   │
    ├─ Features
    │  ├─ Auth
    │  │  ├─ Models
    │  │  │  └─ AuthDTOs.swift
    │  │  ├─ Services
-   │  │  │  └─ AuthService.swift
+   │  │  │  └─ FirebaseAuthService.swift
    │  │  ├─ ViewModels
    │  │  │  ├─ LoginViewModel.swift
    │  │  │  └─ RegisterViewModel.swift
    │  │  └─ Views
    │  │     ├─ AccountTypeSelectionView.swift
+   │  │     ├─ EditProfileView.swift
    │  │     ├─ LoginView.swift
    │  │     ├─ ProfileView.swift
    │  │     ├─ RegisterStudentView.swift
    │  │     └─ RegisterTrainerView.swift
-   │  │
    │  ├─ Home
    │  │  └─ Views
    │  │     └─ HomeView.swift
-   │  │
    │  ├─ Settings
    │  │  └─ Views
+   │  │     ├─ AccountSecurityService.swift
+   │  │     ├─ ChangePasswordView.swift
+   │  │     ├─ DeleteAccountView.swift
+   │  │     ├─ InfoLegalView.swift
    │  │     └─ SettingsView.swift
-   │  │
-   │  ├─ Treinos
+   │  ├─ Student
    │  │  ├─ Models
-   │  │  │  └─ TreinoTipo.swift
+   │  │  │  ├─ TrainingDayFS.swift
+   │  │  │  ├─ TrainingFS.swift
+   │  │  │  └─ TrainingWeekFS.swift
+   │  │  ├─ ViewModels
+   │  │  │  ├─ StudentAgendaViewModel.swift
+   │  │  │  └─ StudentWeekDetailViewModel.swift
    │  │  └─ Views
-   │  │     ├─ TreinosView.swift
-   │  │     ├─ TreinosCrossfitView.swift
-   │  │     ├─ TreinosAcademiaView.swift
-   │  │     ├─ TreinosEmCasaView.swift
-   │  │     └─ CrossfitMenuView.swift
-   │  │
+   │  │     ├─ StudentAgendaView.swift
+   │  │     ├─ StudentDayDetailView.swift
+   │  │     ├─ StudentFeedbacksView.swift
+   │  │     ├─ StudentMessagesView.swift
+   │  │     └─ StudentWeekDetailView.swift
    │  ├─ Teacher
-   │  │  ├─ Models
-   │  │  │  └─ Student.swift
+   │  │  ├─ ViewModels
+   │  │  │  ├─ CreateTrainingWeekViewModel.swift
+   │  │  │  └─ TeacherStudentsListViewModel.swift
    │  │  └─ Views
+   │  │     ├─ CreateTrainingWeekView.swift
+   │  │     ├─ TeacherDashboardView.swift
+   │  │     ├─ TeacherFeedbacksView.swift
+   │  │     ├─ TeacherLinkStudentView.swift
+   │  │     ├─ TeacherSendMessageView.swift
    │  │     ├─ TeacherStudentDetailView.swift
    │  │     └─ TeacherStudentsListView.swift
-   │  │
-   │  └─ Student
+   │  └─ Treinos
    │     ├─ Models
-   │     │  └─ TrainingDay.swift
+   │     │  ├─ FirestoreModels.swift
+   │     │  ├─ StudentFeedbackFS.swift
+   │     │  ├─ TeacherMessageFS.swift
+   │     │  └─ TreinoTipo.swift
    │     └─ Views
-   │        ├─ StudentAgendaView.swift
-   │        └─ StudentWeekDetailView.swift
-   │
+   │        ├─ CreateTrainingDayView.swift
+   │        ├─ CrossfitMenuView.swift
+   │        └─ TreinosView.swift
    ├─ Shared
    │  ├─ Components
    │  │  ├─ FooterBar.swift
+   │  │  ├─ HeaderAvatarView.swift
    │  │  ├─ HeaderBar.swift
    │  │  ├─ MiniProfileHeader.swift
    │  │  └─ UnderlineTextField.swift
-   │  ├─ UI
-   │  │  └─ Theme.swift
-   │  └─ Extensions
-   │     └─ (quando necessário)
-   │
-   └─ Resources
-      └─ Assets.xcassets
+   │  ├─ Services
+   │  │  ├─ FirestoreRepository.swift
+   │  │  └─ LocalProfileStore.swift
+   │  └─ UI
+   │     └─ Theme.swift
+   ├─ GoogleService-Info.plist
+   └─ README.md
 ```
 
 ---
