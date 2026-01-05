@@ -119,9 +119,10 @@ struct CreateTrainingDayView: View {
                     .foregroundColor(.white)
             }
 
+            // ✅ AJUSTE SOLICITADO:
+            // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
             ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
-                    .background(Color.clear)
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -343,7 +344,6 @@ struct CreateTrainingDayView: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
-
 
     private var saveButtonCard: some View {
         Button {

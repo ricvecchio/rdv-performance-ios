@@ -16,10 +16,6 @@ struct StudentDayDetailView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Foto do perfil salva (Base64) - mesma chave usada no EditProfileView
-    @AppStorage("profile_photo_data")
-    private var profilePhotoBase64: String = ""
-
     // ✅ Editar/Excluir
     @State private var showEditSheet: Bool = false
     @State private var showDeleteConfirm: Bool = false
@@ -115,9 +111,8 @@ struct StudentDayDetailView: View {
                     .disabled(isSaving)
                 }
 
-                // ✅ Avatar no cabeçalho: agora usa foto salva (Base64 -> UIImage), com fallback
-                headerAvatar(size: 38)
-                    .background(Color.clear)
+                // ✅ Avatar no cabeçalho: mesmo padrão do AboutView
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -142,27 +137,6 @@ struct StudentDayDetailView: View {
                     didPrepareEditFields = true
                 }
         }
-    }
-
-    // MARK: - Avatar do Header (Base64 -> UIImage)
-    @ViewBuilder
-    private func headerAvatar(size: CGFloat) -> some View {
-        if let img = profileUIImage {
-            Image(uiImage: img)
-                .resizable()
-                .scaledToFill()
-                .frame(width: size, height: size)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
-        } else {
-            MiniProfileHeader(imageName: "rdv_user_default", size: size)
-        }
-    }
-
-    private var profileUIImage: UIImage? {
-        guard !profilePhotoBase64.isEmpty else { return nil }
-        guard let data = Data(base64Encoded: profilePhotoBase64) else { return nil }
-        return UIImage(data: data)
     }
 
     private var footer: some View {

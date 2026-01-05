@@ -130,8 +130,9 @@ struct CreateTrainingWeekView: View {
                 }
                 .buttonStyle(.plain)
 
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
-                    .background(Color.clear)
+                // ✅ AJUSTE SOLICITADO:
+                // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)

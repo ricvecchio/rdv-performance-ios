@@ -82,8 +82,10 @@ struct TeacherStudentDetailView: View {
                     .foregroundColor(.white)
             }
 
+            // ✅ AJUSTE SOLICITADO:
+            // Avatar do cabeçalho agora segue o mesmo padrão do AboutView (foto real atual do usuário).
             ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
