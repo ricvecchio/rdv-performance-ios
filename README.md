@@ -8,24 +8,26 @@ O app possui uma navegação simples, interface moderna e layout responsivo, com
 
 ## 🚀 Tecnologias Utilizadas
 
-- SwiftUI  
-- NavigationStack  
-- AppStorage  
-- SF Symbols  
-- Arquitetura declarativa  
+- SwiftUI
+- NavigationStack
+- AppStorage
+- SF Symbols
+- Arquitetura declarativa
 - iOS 16+
+- Firebase (configuração parcial via `GoogleService-Info.plist` – serviços de autenticação / Firestore presentes como referência)
 
 ---
 
 ## 🧭 Estrutura de Navegação
 
-A navegação do app é centralizada através de um `NavigationStack`, controlado por um array de rotas (`[AppRoute]`), garantindo navegação segura e previsível.
+A navegação do app é centralizada através de um `NavigationStack`, controlada por um conjunto de rotas (`[AppRoute]`) e orquestrada em `AppRouter`. Isso garante navegação previsível entre telas como Login, Home, Treinos e Sobre.
 
-### Rotas disponíveis
+### Rotas principais
 - Login
 - Home
-- Sobre
 - Treinos (Crossfit, Academia, Em Casa)
+- Sobre
+- Perfil / Settings
 
 ---
 
@@ -37,7 +39,7 @@ A navegação do app é centralizada através de um `NavigationStack`, controlad
 - Validação básica (campos não vazios)
 - Após validação, navega para a Home
 
-> Observação: autenticação apenas demonstrativa, sem backend.
+> Observação: o projeto contém uma camada de autenticação (FirebaseAuthService) — dependendo da configuração do `GoogleService-Info.plist`, a autenticação pode ser habilitada; por padrão aqui está preparada apenas como referência.
 
 ---
 
@@ -45,15 +47,11 @@ A navegação do app é centralizada através de um `NavigationStack`, controlad
 
 Apresenta três opções principais de treino:
 
-- Crossfit  
-- Academia  
-- Treinos em Casa  
+- Crossfit
+- Academia
+- Treinos em Casa
 
-Cada opção possui imagem personalizada, título sobreposto e área totalmente clicável.
-
-O rodapé exibe apenas:
-- Home (selecionado)
-- Sobre
+Cada opção possui imagem personalizada, título sobreposto e área totalmente clicável. O rodapé exibe navegação principal (Home, Treinos/Atual, Sobre).
 
 ---
 
@@ -75,23 +73,17 @@ Tipos disponíveis:
 
 ## 📊 Tela de Treinos
 
-Tela reutilizável e dinâmica conforme o tipo de treino selecionado.
-
-Características:
+Tela reutilizável e dinâmica conforme o tipo de treino selecionado. Componentes chave:
 - Header com título do treino
 - Imagem central personalizada
 - Texto sobreposto
-- Rodapé com:
-  - Home
-  - Treino atual (ícone personalizado)
-  - Sobre
+- Rodapé com Home / Treino atual / Sobre
 
 ---
 
 ## ℹ️ Tela Sobre
 
 Tela institucional do aplicativo contendo:
-
 - Logo do app
 - Texto explicativo
 - Lista de funcionalidades
@@ -103,76 +95,73 @@ Tela institucional do aplicativo contendo:
 
 ## 🧩 Componentes Reutilizáveis
 
-### UnderlineTextField
-Campo customizado com:
-- Linha inferior
-- Placeholder estilizado
-- Suporte a senha segura
-- Botão para mostrar/ocultar senha
-
-Utilizado na tela de login.
+Alguns componentes compartilhados:
+- `UnderlineTextField` — campo customizado com linha inferior e suporte a senha (mostrar/ocultar)
+- `HeaderBar`, `FooterBar` — cabeçalho e rodapé usados em várias telas
+- `MiniProfileHeader`, `HeaderAvatarView` — cabeçalhos específicos de perfis
+- `Theme` — definições visuais centrais
 
 ---
 
-## 🗂 Estrutura Geral do App
+## 🗂 Estrutura Geral do App 
 
 ```
 rdvperformance-ios
-├─ rdvperfomance.xcodeproj
-└─ rdvperfomance
-   ├─ About
-   │  └─ Views
+├─ rdvperfomance.xcodeproj/
+└─ rdvperfomance/
+   ├─ About/
+   │  └─ Views/
    │     └─ AboutView.swift
-   ├─ App
+   ├─ App/
    │  ├─ rdvperfomanceApp.swift
    │  ├─ AppSession.swift
    │  ├─ AppRouter.swift
    │  └─ AppRoute.swift
-   ├─ Features
-   │  ├─ Auth
-   │  │  ├─ Models
+   ├─ Features/
+   │  ├─ Auth/
+   │  │  ├─ Models/
    │  │  │  └─ AuthDTOs.swift
-   │  │  ├─ Services
+   │  │  ├─ Services/
    │  │  │  └─ FirebaseAuthService.swift
-   │  │  ├─ ViewModels
+   │  │  ├─ ViewModels/
    │  │  │  ├─ LoginViewModel.swift
    │  │  │  └─ RegisterViewModel.swift
-   │  │  └─ Views
+   │  │  └─ Views/
    │  │     ├─ AccountTypeSelectionView.swift
    │  │     ├─ EditProfileView.swift
    │  │     ├─ LoginView.swift
    │  │     ├─ ProfileView.swift
    │  │     ├─ RegisterStudentView.swift
    │  │     └─ RegisterTrainerView.swift
-   │  ├─ Home
-   │  │  └─ Views
+   │  ├─ Home/
+   │  │  └─ Views/
    │  │     └─ HomeView.swift
-   │  ├─ Settings
-   │  │  └─ Views
+   │  ├─ Settings/
+   │  │  └─ Views/
    │  │     ├─ AccountSecurityService.swift
    │  │     ├─ ChangePasswordView.swift
    │  │     ├─ DeleteAccountView.swift
    │  │     ├─ InfoLegalView.swift
    │  │     └─ SettingsView.swift
-   │  ├─ Student
-   │  │  ├─ Models
+   │  ├─ Student/
+   │  │  ├─ Models/
    │  │  │  ├─ TrainingDayFS.swift
    │  │  │  ├─ TrainingFS.swift
    │  │  │  └─ TrainingWeekFS.swift
-   │  │  ├─ ViewModels
+   │  │  ├─ ViewModels/
    │  │  │  ├─ StudentAgendaViewModel.swift
    │  │  │  └─ StudentWeekDetailViewModel.swift
-   │  │  └─ Views
+   │  │  └─ Views/
    │  │     ├─ StudentAgendaView.swift
    │  │     ├─ StudentDayDetailView.swift
    │  │     ├─ StudentFeedbacksView.swift
    │  │     ├─ StudentMessagesView.swift
    │  │     └─ StudentWeekDetailView.swift
-   │  ├─ Teacher
-   │  │  ├─ ViewModels
+   │  ├─ Teacher/
+   │  │  ├─ ViewModels/
    │  │  │  ├─ CreateTrainingWeekViewModel.swift
    │  │  │  └─ TeacherStudentsListViewModel.swift
-   │  │  └─ Views
+   │  │  └─ Views/
    │  │     ├─ CreateTrainingWeekView.swift
    │  │     ├─ TeacherDashboardView.swift
    │  │     ├─ TeacherFeedbacksView.swift
@@ -180,284 +169,211 @@ rdvperformance-ios
    │  │     ├─ TeacherSendMessageView.swift
    │  │     ├─ TeacherStudentDetailView.swift
    │  │     └─ TeacherStudentsListView.swift
-   │  └─ Treinos
-   │     ├─ Models
+   │  └─ Treinos/
+   │     ├─ Models/
    │     │  ├─ FirestoreModels.swift
    │     │  ├─ StudentFeedbackFS.swift
    │     │  ├─ TeacherMessageFS.swift
    │     │  └─ TreinoTipo.swift
-   │     └─ Views
+   │     └─ Views/
    │        ├─ CreateTrainingDayView.swift
    │        ├─ CrossfitMenuView.swift
    │        └─ TreinosView.swift
-   ├─ Shared
-   │  ├─ Components
+   ├─ Shared/
+   │  ├─ Components/
    │  │  ├─ FooterBar.swift
    │  │  ├─ HeaderAvatarView.swift
    │  │  ├─ HeaderBar.swift
    │  │  ├─ MiniProfileHeader.swift
    │  │  └─ UnderlineTextField.swift
-   │  ├─ Services
+   │  ├─ Services/
    │  │  ├─ FirestoreRepository.swift
    │  │  └─ LocalProfileStore.swift
-   │  └─ UI
+   │  └─ UI/
    │     └─ Theme.swift
+   ├─ Resources/
+   │  └─ Assets.xcassets/
+   │     ├─ AccentColor.colorset/
+   │     ├─ AppIcon.appiconset/
+   │     ├─ Default.colorset/
+   │     ├─ rdv_crossfit_benchmark_horizontal.imageset/
+   │     ├─ rdv_crossfit_meusrecordes_horizontal.imageset/
+   │     ├─ rdv_crossfit_monteseutreino_horizontal.imageset/
+   │     ├─ rdv_crossfit_progressos_horizontal.imageset/
+   │     ├─ rdv_crossfit_wod_horizontal.imageset/
+   │     ├─ rdv_fundo.imageset/
+   │     ├─ rdv_logo.imageset/
+   │     ├─ rdv_programa_academia_horizontal.imageset/
+   │     ├─ rdv_programa_crossfit_horizontal.imageset/
+   │     ├─ rdv_programa_treinos_em_casa_horizontal.imageset/
+   │     ├─ rdv_treino1_vertical.imageset/
+   │     ├─ rdv_treino2_vertical.imageset/
+   │     ├─ rdv_treino3_vertical.imageset/
+   │     └─ rdv_user_default.imageset/
    ├─ GoogleService-Info.plist
    └─ README.md
 ```
 
 ---
-## 📋 Mapa de Telas e Dependências
 
-Este documento fornece um mapeamento completo das telas do aplicativo RDV Performance e seus arquivos relacionados. Use-o como guia para entender o impacto de alterações no código.
+## 📋 Mapa de Telas e Dependências (detalhado)
 
----
+Abaixo um mapeamento por tela/módulo com os arquivos principais usados (Views) e os arquivos relacionados (ViewModels, Models, Services, Componentes compartilhados).
 
-### 📊 Relação Completa Telas ↔ Arquivos
-
-| Tela / Módulo                 | Arquivo Principal da View        | ViewModels, Models e Outros Arquivos Relacionados                      | Componentes Compartilhados           |
-| ----------------------------- | -------------------------------- | ---------------------------------------------------------------------- | ------------------------------------ |
-| **Login**                     | `LoginView.swift`                | `LoginViewModel.swift`, `AuthService.swift`, `AuthDTOs.swift`          | `UnderlineTextField.swift`           |
-| **Cadastro (Aluno)**          | `RegisterStudentView.swift`      | `RegisterViewModel.swift`, `AuthService.swift`, `AuthDTOs.swift`       | `UnderlineTextField.swift`           |
-| **Cadastro (Professor)**      | `RegisterTrainerView.swift`      | `RegisterViewModel.swift`, `AuthService.swift`, `AuthDTOs.swift`       | `UnderlineTextField.swift`           |
-| **Seleção de Conta**          | `AccountTypeSelectionView.swift` | —                                                                      | —                                    |
-| **Perfil**                    | `ProfileView.swift`              | `AuthService.swift`, `AuthDTOs.swift`                                  | `MiniProfileHeader.swift`            |
-| **Home (Principal)**          | `HomeView.swift`                 | `TreinoTipo.swift` (enum)                                              | `FooterBar.swift`                    |
-| **Treinos (Genérica)**        | `TreinosView.swift`              | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
-| **Treino – Crossfit**         | `TreinosCrossfitView.swift`      | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
-| **Treino – Academia**         | `TreinosAcademiaView.swift`      | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
-| **Treino – Em Casa**          | `TreinosEmCasaView.swift`        | `TreinoTipo.swift` (enum)                                              | `HeaderBar.swift`, `FooterBar.swift` |
-| **Menu Crossfit**             | `CrossfitMenuView.swift`         | —                                                                      | —                                    |
-| **Sobre**                     | `AboutView.swift`                | —                                                                      | `HeaderBar.swift`, `FooterBar.swift` |
-| **Configurações**             | `SettingsView.swift`             | —                                                                      | —                                    |
-| **Aluno – Agenda**            | `StudentAgendaView.swift`        | `TrainingDay.swift`                                                    | —                                    |
-| **Aluno – Detalhe Semana**    | `StudentWeekDetailView.swift`    | `TrainingDay.swift`                                                    | —                                    |
-| **Professor – Lista Alunos**  | `TeacherStudentsListView.swift`  | `Student.swift`                                                        | —                                    |
-| **Professor – Detalhe Aluno** | `TeacherStudentDetailView.swift` | `Student.swift`                                                        | —                                    |
-| **Navegação & App**           | `rdvperformanceApp.swift`        | `AppRouter.swift`, `AppRoute.swift`, `AppSession.swift`, `Theme.swift` | —                                    |
----
-
-# 🔐 AUTH (Login / Cadastro / Perfil)
-
-## 1) Login
-
-### Tela
-- `Features/Auth/Views/LoginView.swift`  
-  GitHub
-
-### Arquivos relacionados (Auth)
-- `Features/Auth/ViewModels/LoginViewModel.swift`  
-  GitHub
-- `Features/Auth/Services/AuthService.swift`  
-  GitHub
-- `Features/Auth/Models/AuthDTOs.swift`  
-  GitHub
-
-### Dependências globais típicas desta tela
-- `AppSession.swift` (estado de login)
-- `AppRoute.swift / AppRouter.swift` (navegação pós-login)  
-  GitHub
+### Auth
+- Views:
+  - `Features/Auth/Views/LoginView.swift`
+  - `Features/Auth/Views/RegisterStudentView.swift`
+  - `Features/Auth/Views/RegisterTrainerView.swift`
+  - `Features/Auth/Views/AccountTypeSelectionView.swift`
+  - `Features/Auth/Views/ProfileView.swift`
+  - `Features/Auth/Views/EditProfileView.swift`
+- ViewModels:
+  - `Features/Auth/ViewModels/LoginViewModel.swift`
+  - `Features/Auth/ViewModels/RegisterViewModel.swift`
+- Models:
+  - `Features/Auth/Models/AuthDTOs.swift`
+- Services:
+  - `Features/Auth/Services/FirebaseAuthService.swift`
+- Componentes compartilhados:
+  - `Shared/Components/UnderlineTextField.swift`
+  - `Shared/Components/MiniProfileHeader.swift`
 
 ---
 
-## 2) Seleção do tipo de conta
-
-### Tela
-- `Features/Auth/Views/AccountTypeSelectionView.swift`  
-  GitHub
-
-### Arquivos relacionados
-- `Features/Auth/ViewModels/RegisterViewModel.swift`  
-  GitHub
-- `Features/Auth/Services/AuthService.swift`  
-  GitHub
-- `Features/Auth/Models/AuthDTOs.swift`  
-  GitHub
-
-### Dependências globais
-- `AppRoute.swift / AppRouter.swift`  
-  GitHub
+### Home
+- View:
+  - `Features/Home/Views/HomeView.swift`
+- Relacionados:
+  - `Features/Treinos/Models/TreinoTipo.swift`
+  - `App/AppRoute.swift`, `App/AppRouter.swift`
+  - `Shared/Components/FooterBar.swift`
 
 ---
 
-## 3) Cadastro Aluno
-
-### Tela
-- `Features/Auth/Views/RegisterStudentView.swift`  
-  GitHub
-
-### Arquivos relacionados
-- `Features/Auth/ViewModels/RegisterViewModel.swift`  
-  GitHub
-- `Features/Auth/Services/AuthService.swift`  
-  GitHub
-- `Features/Auth/Models/AuthDTOs.swift`  
-  GitHub
+### Settings
+- Views:
+  - `Features/Settings/Views/SettingsView.swift`
+  - `Features/Settings/Views/ChangePasswordView.swift`
+  - `Features/Settings/Views/DeleteAccountView.swift`
+  - `Features/Settings/Views/InfoLegalView.swift`
+- Services/Helpers:
+  - `Features/Settings/Views/AccountSecurityService.swift` (serviço ligado a mudanças de senha / segurança)
 
 ---
 
-## 4) Cadastro Professor / Trainer
-
-### Tela
-- `Features/Auth/Views/RegisterTrainerView.swift`  
-  GitHub
-
-### Arquivos relacionados
-- `Features/Auth/ViewModels/RegisterViewModel.swift`  
-  GitHub
-- `Features/Auth/Services/AuthService.swift`  
-  GitHub
-- `Features/Auth/Models/AuthDTOs.swift`  
-  GitHub
-
----
-
-## 5) Perfil
-
-### Tela
-- `Features/Auth/Views/ProfileView.swift`  
-  GitHub
-
-### Arquivos relacionados (prováveis pelo README)
-- `AppSession.swift` (dados do usuário)  
-  GitHub
-- `Features/Treinos/Models/TreinoTipo.swift` (você mencionou categoria/treino no Profile no histórico)  
-  GitHub
+### Student (Aluno)
+- Views:
+  - `Features/Student/Views/StudentAgendaView.swift`
+  - `Features/Student/Views/StudentDayDetailView.swift`
+  - `Features/Student/Views/StudentFeedbacksView.swift`
+  - `Features/Student/Views/StudentMessagesView.swift`
+  - `Features/Student/Views/StudentWeekDetailView.swift`
+- ViewModels:
+  - `Features/Student/ViewModels/StudentAgendaViewModel.swift`
+  - `Features/Student/ViewModels/StudentWeekDetailViewModel.swift`
+- Models:
+  - `Features/Student/Models/TrainingDayFS.swift`
+  - `Features/Student/Models/TrainingFS.swift`
+  - `Features/Student/Models/TrainingWeekFS.swift`
 
 ---
 
-# 🏠 HOME
-
-## 6) Home
-
-### Tela
-- `Features/Home/Views/HomeView.swift`  
-  GitHub
-
-### Arquivos relacionados
-- `Features/Treinos/Models/TreinoTipo.swift` (tipos de treino)  
-  GitHub
-- `AppRoute.swift / AppRouter.swift` (ir para Treinos / About etc.)  
-  GitHub
-
----
-
-# ⚙️ SETTINGS
-
-## 7) Settings
-
-### Tela
-- `Features/Settings/Views/SettingsView.swift`  
-  GitHub
-
-### Arquivos relacionados (mais comuns nesse tipo de tela)
-- `AppSession.swift` (logout, limpar sessão, exibir dados)  
-  GitHub
+### Teacher (Professor)
+- Views:
+  - `Features/Teacher/Views/TeacherStudentsListView.swift`
+  - `Features/Teacher/Views/TeacherStudentDetailView.swift`
+  - `Features/Teacher/Views/TeacherDashboardView.swift`
+  - `Features/Teacher/Views/CreateTrainingWeekView.swift`
+  - `Features/Teacher/Views/TeacherFeedbacksView.swift`
+  - `Features/Teacher/Views/TeacherSendMessageView.swift`
+  - `Features/Teacher/Views/TeacherLinkStudentView.swift`
+- ViewModels:
+  - `Features/Teacher/ViewModels/TeacherStudentsListViewModel.swift`
+  - `Features/Teacher/ViewModels/CreateTrainingWeekViewModel.swift`
 
 ---
 
-# ℹ️ ABOUT
-
-## 8) Sobre
-
-### Tela
-- `About/Views/AboutView.swift`  
-  GitHub
-
-### Arquivos relacionados
-- `AppRoute.swift / AppRouter.swift` (voltar / navegar)  
-  GitHub
-
----
-
-# 🏋️ TREINOS
-
-Aqui seu app tem um **“núcleo” de treino + variações por categoria**.
-
-## Arquivos do módulo
-- `Features/Treinos/Models/TreinoTipo.swift`  
-  GitHub
-- `Features/Treinos/Views/TreinosView.swift`  
-  GitHub
-- `Features/Treinos/Views/TreinosCrossfitView.swift`  
-  GitHub
-- `Features/Treinos/Views/TreinosAcademiaView.swift`  
-  GitHub
-- `Features/Treinos/Views/TreinosEmCasaView.swift`  
-  GitHub
-- `Features/Treinos/Views/CrossfitMenuView.swift`  
-  GitHub
-
-## Matriz (telas)
-- **Treinos genérico** → `TreinosView.swift` + `TreinoTipo.swift` + router  
-  GitHub
-- **Crossfit** → `TreinosCrossfitView.swift` + `TreinoTipo.swift` + (possível) `CrossfitMenuView.swift`  
-  GitHub
-- **Academia** → `TreinosAcademiaView.swift` + `TreinoTipo.swift`  
-  GitHub
-- **Em Casa** → `TreinosEmCasaView.swift` + `TreinoTipo.swift`  
-  GitHub
+### Treinos
+- Views:
+  - `Features/Treinos/Views/TreinosView.swift`
+  - `Features/Treinos/Views/CrossfitMenuView.swift`
+  - `Features/Treinos/Views/CreateTrainingDayView.swift`
+- Models:
+  - `Features/Treinos/Models/TreinoTipo.swift`
+  - `Features/Treinos/Models/FirestoreModels.swift`
+  - `Features/Treinos/Models/StudentFeedbackFS.swift`
+  - `Features/Treinos/Models/TeacherMessageFS.swift`
 
 ---
 
-# 👨‍🏫 TEACHER (Lista e detalhe de alunos)
-
-## Arquivos do módulo
-- `Features/Teacher/Models/Student.swift`  
-  GitHub
-- `Features/Teacher/Views/TeacherStudentsListView.swift`  
-  GitHub
-- `Features/Teacher/Views/TeacherStudentDetailView.swift`  
-  GitHub
-
----
-
-## 9) Lista de alunos (Professor)
-
-### Tela
-- `TeacherStudentsListView.swift`  
-  GitHub
-
-### Arquivos relacionados
-- `Student.swift` (modelo)  
-  GitHub
-- `TeacherStudentDetailView.swift` (navega para detalhe)  
-  GitHub
-- (se filtra por treino/categoria) `TreinoTipo.swift`  
-  GitHub
+### Shared
+- Componentes:
+  - `Shared/Components/HeaderBar.swift`
+  - `Shared/Components/HeaderAvatarView.swift`
+  - `Shared/Components/FooterBar.swift`
+  - `Shared/Components/MiniProfileHeader.swift`
+  - `Shared/Components/UnderlineTextField.swift`
+- Services:
+  - `Shared/Services/FirestoreRepository.swift`
+  - `Shared/Services/LocalProfileStore.swift`
+- UI:
+  - `Shared/UI/Theme.swift`
 
 ---
 
-## 10) Detalhe do aluno
+## 🖼️ Recursos / Assets
 
-### Tela
-- `TeacherStudentDetailView.swift`  
-  GitHub
+Os assets do projeto ficam em `Resources/Assets.xcassets`. Resumo dos assets incluídos (cada `.imageset` contém as imagens usadas nas telas):
 
-### Arquivos relacionados
-- `Student.swift`  
-  GitHub
+- `AccentColor.colorset`
+- `AppIcon.appiconset`
+- `Default.colorset`
+- `rdv_crossfit_benchmark_horizontal.imageset`
+- `rdv_crossfit_meusrecordes_horizontal.imageset`
+- `rdv_crossfit_monteseutreino_horizontal.imageset`
+- `rdv_crossfit_progressos_horizontal.imageset`
+- `rdv_crossfit_wod_horizontal.imageset`
+- `rdv_fundo.imageset`
+- `rdv_logo.imageset`
+- `rdv_programa_academia_horizontal.imageset`
+- `rdv_programa_crossfit_horizontal.imageset`
+- `rdv_programa_treinos_em_casa_horizontal.imageset`
+- `rdv_treino1_vertical.imageset`
+- `rdv_treino2_vertical.imageset`
+- `rdv_treino3_vertical.imageset`
+- `rdv_user_default.imageset`
+
+(Se desejar, posso gerar uma listagem completa dos arquivos dentro de cada `.imageset` — por padrão deixei como resumo para manter o README enxuto.)
+
+---
+
+## 🔧 Build / Execução (notas rápidas)
+
+- Abra o workspace `rdvperfomance.xcodeproj` no Xcode 14+ / Xcode compatível com iOS 16.
+- Configure o `GoogleService-Info.plist` caso queira habilitar Firebase (Auth/Firestore) em ambiente de desenvolvimento.
+- Execute o app em um simulador iOS 16+ ou dispositivo físico com as permissões necessárias.
 
 ---
 
 ## 🎯 Destaques do Projeto
 
-- Navegação centralizada
-- Código limpo e organizado
-- Layout responsivo
-- Reutilização de componentes
-- Enum para controle visual e lógico
-- Interface moderna e intuitiva
+- Navegação centralizada por rotas (`AppRoute` / `AppRouter`)
+- Componentes reutilizáveis e layout responsivo
+- Integração básica com Firebase preparada (services/Firestore)
+- Organização por features (Auth, Home, Student, Teacher, Treinos)
 
 ---
 
-## 📌 Próximos Passos
+## 📌 Próximos Passos 
 
-- Integração com backend
-- Autenticação real
-- Cadastro de alunos
-- Persistência de dados
-- Evolução de treinos e histórico
+- Completar integração com backend (Firebase) e testar autenticação real
+- Adicionar testes unitários / UI tests
+- Documentar contratos de rede e modelos Firestore
+- Internacionalização (strings em Localizable)
+- Melhorar cobertura de assets e imagens de alta resolução
+- Funções para importar planilhas em Excel
+- Lista com exercícios pré-definidos para montagem rápida de treinos
 
 ---
 
