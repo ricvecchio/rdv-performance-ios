@@ -274,9 +274,6 @@ private struct WeightUnitSheetView: View {
     @Binding var selectedUnitRaw: String
     @Environment(\.dismiss) private var dismiss
 
-    // ✅ Verde “padrão do app” (igual seus ícones), sem depender do Theme.
-    private let accentGreen = Color.green.opacity(0.85)
-
     private var selectedUnit: WeightUnit {
         WeightUnit(rawValue: selectedUnitRaw) ?? .kg
     }
@@ -304,7 +301,7 @@ private struct WeightUnitSheetView: View {
                         dismiss()
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(accentGreen)
+                    .foregroundColor(Theme.Colors.primaryGreen)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 18)
@@ -332,7 +329,7 @@ private struct WeightUnitSheetView: View {
 
                                     if unit == selectedUnit {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(accentGreen)
+                                            .foregroundColor(Theme.Colors.primaryGreen)
                                             .font(.system(size: 18, weight: .semibold))
                                     } else {
                                         Image(systemName: "circle")

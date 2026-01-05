@@ -5,7 +5,15 @@ import SwiftUI
 enum Theme {
 
     enum Colors {
-        static let selected = Color.green
+
+        /// ✅ Verde oficial do app (mais forte e consistente que o `.green` padrão do iOS)
+        /// Ajuste fino: se quiser mais forte, aumente um pouco o green (0.84 -> 0.88)
+        /// ou reduza o blue (0.44 -> 0.40).
+        static let primaryGreen = Color(red: 0.18, green: 0.85, blue: 0.45)
+
+        /// ✅ Mantém compatibilidade com o app (qualquer lugar que usa `selected` continua funcionando)
+        static let selected = primaryGreen
+
         static let unselected = Color.white.opacity(0.7)
 
         static let headerBackground = Color.black.opacity(0.70)
@@ -49,3 +57,4 @@ enum Theme {
         }
     }
 }
+
