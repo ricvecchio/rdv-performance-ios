@@ -7,7 +7,7 @@ final class FirestoreRepository {
 
     static let shared = FirestoreRepository()
 
-    private let db = Firestore.firestore()
+    fileprivate let db = Firestore.firestore()
 
     private init() {}
 
@@ -42,7 +42,7 @@ final class FirestoreRepository {
     }
 
     // MARK: - Helpers
-    private func clean(_ value: String) -> String {
+    fileprivate func clean(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
@@ -535,7 +535,7 @@ extension FirestoreRepository {
             .document(w)
             .setData(["updatedAt": FieldValue.serverTimestamp()], merge: true)
     }
-    
+
     // MARK: - users/{uid} (ESCRITA) - Atualizar unidade (Student)
     func updateStudentUnitName(uid: String, unitName: String) async throws {
         let cleanUid = clean(uid)
@@ -554,7 +554,7 @@ extension FirestoreRepository {
                 merge: true
             )
     }
-    
+
     // MARK: - users/{uid} (ESCRITA) - set/unset unitName (Student)
     func setStudentUnitName(uid: String, unitName: String?) async throws {
         let cleanUid = clean(uid)
@@ -592,3 +592,198 @@ extension FirestoreRepository {
         return !snap.documents.isEmpty
     }
 }
+
+// ============================================================
+// MARK: - ✅ MENSAGENS & FEEDBACKS (Firestore real, sem mock)
+// ============================================================
+
+extension FirestoreRepository {
+
+    enum CommsFS {
+        static let messagesCollection = "teacher_messages"
+        static let feedbacksCollection = "student_feedbacks"
+    }
+
+    // MARK: - Messages (Professor -> Aluno)
+
+    func createTeacherMessage(
+        teacherId: String,
+        studentId: String,
+        categoryRaw: String,
+        subject: String?,
+        body: String
+    ) async throws -> String {
+
+        let t = clean(teacherId)
+        let s = clean(studentId)
+        let c = clean(categoryRaw)
+
+        guard !t.isEmpty else { throw RepositoryError.missingTeacherId }
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+
+        let subjectTrim = clean(subject ?? "")
+        let bodyTrim = clean(body)
+        guard !bodyTrim.isEmpty else { throw RepositoryError.invalidData }
+
+        var payload: [String: Any] = [
+            "teacherId": t,
+            "studentId": s,
+            "categoryRaw": c,
+            "body": bodyTrim,
+            "createdAt": FieldValue.serverTimestamp(),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        // ✅ opcional, só grava se tiver
+        if !subjectTrim.isEmpty {
+            payload["subject"] = subjectTrim
+        }
+
+        let ref = db.collection(CommsFS.messagesCollection).document()
+        try await ref.setData(payload, merge: true)
+        return ref.documentID
+    }
+
+    /// ✅ Professor: lista mensagens (SEM orderBy no Firestore → sem índice)
+    func getTeacherMessages(
+        teacherId: String,
+        studentId: String,
+        categoryRaw: String,
+        limit: Int = 50
+    ) async throws -> [TeacherMessageFS] {
+
+        let t = clean(teacherId)
+        let s = clean(studentId)
+        let c = clean(categoryRaw)
+
+        guard !t.isEmpty else { throw RepositoryError.missingTeacherId }
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+
+        let baseQuery: Query = db.collection(CommsFS.messagesCollection)
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("studentId", isEqualTo: s)
+            .whereField("categoryRaw", isEqualTo: c)
+            .limit(to: limit)
+
+        let snap = try await baseQuery.getDocuments()
+        let list = try snap.documents.compactMap { try $0.data(as: TeacherMessageFS.self) }
+
+        // ✅ Ordena no app
+        return list.sorted { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
+    }
+
+    /// ✅ Aluno: lista mensagens recebidas (SEM orderBy no Firestore → sem índice)
+    func getMessagesForStudent(
+        studentId: String,
+        categoryRaw: String,
+        limit: Int = 50
+    ) async throws -> [TeacherMessageFS] {
+
+        let s = clean(studentId)
+        let c = clean(categoryRaw)
+
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+
+        let baseQuery: Query = db.collection(CommsFS.messagesCollection)
+            .whereField("studentId", isEqualTo: s)
+            .whereField("categoryRaw", isEqualTo: c)
+            .limit(to: limit)
+
+        let snap = try await baseQuery.getDocuments()
+        let list = try snap.documents.compactMap { try $0.data(as: TeacherMessageFS.self) }
+
+        return list.sorted { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
+    }
+
+    // MARK: - Feedbacks (Professor -> Aluno)
+
+    func createStudentFeedback(
+        teacherId: String,
+        studentId: String,
+        categoryRaw: String,
+        text: String
+    ) async throws -> String {
+
+        let t = clean(teacherId)
+        let s = clean(studentId)
+        let c = clean(categoryRaw)
+
+        guard !t.isEmpty else { throw RepositoryError.missingTeacherId }
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+
+        let textTrim = clean(text)
+        guard !textTrim.isEmpty else { throw RepositoryError.invalidData }
+
+        let payload: [String: Any] = [
+            "teacherId": t,
+            "studentId": s,
+            "categoryRaw": c,
+            "text": textTrim,
+            "authorType": "TRAINER",
+            "authorId": t,
+            "createdAt": FieldValue.serverTimestamp(),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        let ref = db.collection(CommsFS.feedbacksCollection).document()
+        try await ref.setData(payload, merge: true)
+        return ref.documentID
+    }
+
+    /// ✅ Professor: lista feedbacks (SEM orderBy no Firestore → sem índice)
+    func getStudentFeedbacks(
+        teacherId: String,
+        studentId: String,
+        categoryRaw: String,
+        limit: Int = 50
+    ) async throws -> [StudentFeedbackFS] {
+
+        let t = clean(teacherId)
+        let s = clean(studentId)
+        let c = clean(categoryRaw)
+
+        guard !t.isEmpty else { throw RepositoryError.missingTeacherId }
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+
+        let baseQuery: Query = db.collection(CommsFS.feedbacksCollection)
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("studentId", isEqualTo: s)
+            .whereField("categoryRaw", isEqualTo: c)
+            .limit(to: limit)
+
+        let snap = try await baseQuery.getDocuments()
+        let list = try snap.documents.compactMap { try $0.data(as: StudentFeedbackFS.self) }
+
+        return list.sorted { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
+    }
+
+    /// ✅ Aluno: lista feedbacks recebidos (SEM orderBy no Firestore → sem índice)
+    func getFeedbacksForStudent(
+        studentId: String,
+        categoryRaw: String,
+        limit: Int = 50
+    ) async throws -> [StudentFeedbackFS] {
+
+        let s = clean(studentId)
+        let c = clean(categoryRaw)
+
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+
+        let baseQuery: Query = db.collection(CommsFS.feedbacksCollection)
+            .whereField("studentId", isEqualTo: s)
+            .whereField("categoryRaw", isEqualTo: c)
+            .limit(to: limit)
+
+        let snap = try await baseQuery.getDocuments()
+        let list = try snap.documents.compactMap { try $0.data(as: StudentFeedbackFS.self) }
+
+        return list.sorted { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
+    }
+}
+

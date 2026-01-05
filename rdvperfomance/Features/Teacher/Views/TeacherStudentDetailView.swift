@@ -187,11 +187,11 @@ struct TeacherStudentDetailView: View {
             }
 
             actionButton(title: "Enviar Mensagem", icon: "paperplane.fill") {
-                // TODO
+                path.append(.teacherSendMessage(student: student, category: category))
             }
 
             actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
-                // TODO
+                path.append(.teacherFeedbacks(student: student, category: category))
             }
         }
         .padding(.horizontal, 16)
@@ -252,14 +252,9 @@ struct TeacherStudentDetailView: View {
         defer { isLoadingProgress = false }
 
         do {
-            // ✅ Método correto: NÃO recebe categoryRaw
             let p = try await FirestoreRepository.shared.getStudentOverallProgress(studentId: sid)
-
-            // p.percent vem como Int (0..100)
             self.progress = Double(p.percent) / 100.0
-
         } catch {
-            // Mantém 0.0 em caso de falha; não quebra UI.
             self.progress = 0.0
         }
     }

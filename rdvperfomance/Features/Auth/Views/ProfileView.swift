@@ -32,6 +32,17 @@ struct ProfileView: View {
     @State private var isPlanActive: Bool = false     // aluno calcula / professor força true
     @State private var isLoading: Bool = false
 
+    // ✅ Categoria do aluno (vinda do Firestore, com fallback)
+    @State private var studentDefaultCategoryRaw: String = ""
+
+    private var categoriaAtualAluno: TreinoTipo {
+        let raw = studentDefaultCategoryRaw.trimmingCharacters(in: .whitespacesAndNewlines)
+        if let t = TreinoTipo(rawValue: raw), !raw.isEmpty {
+            return t
+        }
+        return TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+    }
+
     // Check-ins (apenas aluno)
     @State private var checkinsConcluidos: Int = 0
     @State private var checkinsTotalSemana: Int = 0
@@ -202,6 +213,7 @@ struct ProfileView: View {
             userName = ""
             unitName = ""
             isPlanActive = false
+            studentDefaultCategoryRaw = ""
             checkinsConcluidos = 0
             checkinsTotalSemana = 0
             return
@@ -215,9 +227,11 @@ struct ProfileView: View {
             if let user = try await repository.getUser(uid: uid) {
                 userName = user.name
                 unitName = (user.unitName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                studentDefaultCategoryRaw = (user.defaultCategory ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             } else {
                 userName = ""
                 unitName = ""
+                studentDefaultCategoryRaw = ""
             }
 
             if session.userType == .STUDENT {
@@ -236,6 +250,7 @@ struct ProfileView: View {
         } catch {
             userName = ""
             unitName = ""
+            studentDefaultCategoryRaw = ""
             isPlanActive = (session.userType != .STUDENT)
             checkinsConcluidos = 0
             checkinsTotalSemana = 0
@@ -370,6 +385,17 @@ struct ProfileView: View {
                     title: "Check-ins na semana",
                     trailing: .text("\(checkinsConcluidos)/\(checkinsTotalSemana)")
                 )
+
+                // ✅ NOVO: Mensagens e Feedbacks para o aluno
+                divider()
+                optionRow(icon: "envelope.fill", title: "Mensagens", trailing: .chevron) {
+                    path.append(.studentMessages(category: categoriaAtualAluno))
+                }
+
+                divider()
+                optionRow(icon: "text.bubble.fill", title: "Feedbacks", trailing: .chevron) {
+                    path.append(.studentFeedbacks(category: categoriaAtualAluno))
+                }
             }
         }
         .padding(.vertical, 8)

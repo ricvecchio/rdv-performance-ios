@@ -15,15 +15,19 @@ struct AppRouter: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
 
+                    // =====================================================
+                    // BASE
+                    // =====================================================
                     case .login:
                         LoginView(path: $path)
                             .environmentObject(session)
 
                     case .home:
                         guardedHome()
-                            .environmentObject(session)
 
-                    // ===== PROFESSOR =====
+                    // =====================================================
+                    // PROFESSOR (exclusivo)
+                    // =====================================================
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
                         guardedTeacher {
                             TeacherStudentsListView(
@@ -31,7 +35,6 @@ struct AppRouter: View {
                                 selectedCategory: selectedCategory,
                                 initialFilter: initialFilter
                             )
-                            .environmentObject(session)
                         }
 
                     case .teacherStudentDetail(let student, let category):
@@ -41,109 +44,162 @@ struct AppRouter: View {
                                 student: student,
                                 category: category
                             )
-                            .environmentObject(session)
                         }
 
                     case .teacherDashboard(let category):
                         guardedTeacher {
-                            TeacherDashboardView(path: $path, category: category)
-                                .environmentObject(session)
+                            TeacherDashboardView(
+                                path: $path,
+                                category: category
+                            )
                         }
 
                     case .teacherLinkStudent(let category):
                         guardedTeacher {
-                            TeacherLinkStudentView(path: $path, category: category)
-                                .environmentObject(session)
+                            TeacherLinkStudentView(
+                                path: $path,
+                                category: category
+                            )
                         }
 
-                    // ===== ALUNO =====
+                    case .teacherSendMessage(let student, let category):
+                        guardedTeacher {
+                            TeacherSendMessageView(
+                                path: $path,
+                                student: student,
+                                category: category
+                            )
+                        }
+
+                    case .teacherFeedbacks(let student, let category):
+                        guardedTeacher {
+                            TeacherFeedbacksView(
+                                path: $path,
+                                student: student,
+                                category: category
+                            )
+                        }
+
+                    case .createTrainingWeek(let student, let category):
+                        guardedTeacher {
+                            CreateTrainingWeekView(
+                                path: $path,
+                                student: student,
+                                category: category
+                            )
+                        }
+
+                    case .createTrainingDay(let weekId, let category):
+                        guardedTeacher {
+                            CreateTrainingDayView(
+                                path: $path,
+                                weekId: weekId,
+                                category: category
+                            )
+                        }
+
+                    // =====================================================
+                    // ALUNO + PROFESSOR (COMPARTILHADO)
+                    // =====================================================
                     case .studentAgenda(let studentId, let studentName):
-                        guardedHome() {
+                        guardedHome {
                             StudentAgendaView(
                                 path: $path,
                                 studentId: studentId,
                                 studentName: studentName
                             )
-                            .environmentObject(session)
                         }
 
                     case .studentWeekDetail(let studentId, let weekId, let weekTitle):
-                        guardedHome() {
+                        guardedHome {
                             StudentWeekDetailView(
                                 path: $path,
                                 studentId: studentId,
                                 weekId: weekId,
                                 weekTitle: weekTitle
                             )
-                            .environmentObject(session)
                         }
 
                     case .studentDayDetail(let weekId, let day, let weekTitle):
-                        guardedHome() {
+                        guardedHome {
                             StudentDayDetailView(
                                 path: $path,
                                 weekId: weekId,
                                 day: day,
                                 weekTitle: weekTitle
                             )
-                            .environmentObject(session)
                         }
 
-                    // ===== PUBLICAR TREINOS (PROFESSOR) =====
-                    case .createTrainingWeek(let student, let category):
-                        guardedTeacher {
-                            CreateTrainingWeekView(path: $path, student: student, category: category)
-                                .environmentObject(session)
+                    // =====================================================
+                    // ALUNO (exclusivo)
+                    // =====================================================
+                    case .studentMessages(let category):
+                        guardedStudent {
+                            StudentMessagesView(
+                                path: $path,
+                                category: category
+                            )
                         }
 
-                    case .createTrainingDay(let weekId, let category):
-                        guardedTeacher {
-                            CreateTrainingDayView(path: $path, weekId: weekId, category: category)
-                                .environmentObject(session)
+                    case .studentFeedbacks(let category):
+                        guardedStudent {
+                            StudentFeedbacksView(
+                                path: $path,
+                                category: category
+                            )
                         }
 
-                    // ===== COMUM =====
+                    // =====================================================
+                    // COMUM (login obrigatório)
+                    // =====================================================
                     case .sobre:
-                        AboutView(path: $path)
-                            .environmentObject(session)
+                        guardedHome {
+                            AboutView(path: $path)
+                        }
 
                     case .perfil:
-                        ProfileView(path: $path)
-                            .environmentObject(session)
+                        guardedHome {
+                            ProfileView(path: $path)
+                        }
 
                     case .treinos(let tipo):
-                        TreinosView(path: $path, tipo: tipo)
-                            .environmentObject(session)
+                        guardedHome {
+                            TreinosView(path: $path, tipo: tipo)
+                        }
 
                     case .crossfitMenu:
-                        CrossfitMenuView(path: $path)
-                            .environmentObject(session)
+                        guardedHome {
+                            CrossfitMenuView(path: $path)
+                        }
 
                     case .configuracoes:
-                        SettingsView(path: $path)
-                            .environmentObject(session)
+                        guardedHome {
+                            SettingsView(path: $path)
+                        }
 
-                    // ✅ Central de Ajuda / Privacidade / Termos
                     case .infoLegal(let kind):
-                        InfoLegalView(path: $path, kind: kind)
-                            .environmentObject(session)
+                        guardedHome {
+                            InfoLegalView(path: $path, kind: kind)
+                        }
 
-                    // ✅ Editar Perfil
                     case .editarPerfil:
-                        EditProfileView(path: $path)
-                            .environmentObject(session)
+                        guardedHome {
+                            EditProfileView(path: $path)
+                        }
 
-                    // ✅ NOVO: Alterar senha
                     case .alterarSenha:
-                        ChangePasswordView(path: $path)
-                            .environmentObject(session)
+                        guardedHome {
+                            ChangePasswordView(path: $path)
+                        }
 
-                    // ✅ NOVO: Excluir conta
                     case .excluirConta:
-                        DeleteAccountView(path: $path)
-                            .environmentObject(session)
+                        guardedHome {
+                            DeleteAccountView(path: $path)
+                        }
 
-                    // ===== CADASTRO =====
+                    // =====================================================
+                    // CADASTRO (sem login)
+                    // =====================================================
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)
                             .environmentObject(session)
@@ -159,8 +215,8 @@ struct AppRouter: View {
                 }
         }
         .environmentObject(session)
-        .onChange(of: session.isLoggedIn) { _, isLoggedIn in
-            if !isLoggedIn { path.removeAll() }
+        .onChange(of: session.isLoggedIn) { _, logged in
+            if !logged { path.removeAll() }
         }
     }
 }
@@ -172,10 +228,8 @@ private extension AppRouter {
     var rootView: some View {
         if session.isLoggedIn {
             HomeView(path: $path)
-                .environmentObject(session)
         } else {
             LoginView(path: $path)
-                .environmentObject(session)
         }
     }
 }
@@ -184,23 +238,20 @@ private extension AppRouter {
 private extension AppRouter {
 
     @ViewBuilder
-    func guardedHome() -> some View {
-        if session.isLoggedIn {
-            HomeView(path: $path)
-                .environmentObject(session)
-        } else {
-            LoginView(path: $path)
-                .environmentObject(session)
-        }
-    }
-
-    @ViewBuilder
     func guardedHome<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         if session.isLoggedIn {
             content()
         } else {
             LoginView(path: $path)
-                .environmentObject(session)
+        }
+    }
+
+    @ViewBuilder
+    func guardedHome() -> some View {
+        if session.isLoggedIn {
+            HomeView(path: $path)
+        } else {
+            LoginView(path: $path)
         }
     }
 
@@ -210,7 +261,6 @@ private extension AppRouter {
             content()
         } else {
             LoginView(path: $path)
-                .environmentObject(session)
         }
     }
 
@@ -220,7 +270,6 @@ private extension AppRouter {
             content()
         } else {
             LoginView(path: $path)
-                .environmentObject(session)
         }
     }
 }
