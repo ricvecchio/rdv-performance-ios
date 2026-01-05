@@ -17,6 +17,7 @@ struct ProfileView: View {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
+    // ⚠️ Mantido para compatibilidade, mas o avatar do Perfil agora usa HeaderAvatarView (mesma fonte do header)
     @AppStorage("profile_photo_data")
     private var profilePhotoBase64: String = ""
 
@@ -186,26 +187,6 @@ struct ProfileView: View {
         path.removeLast()
     }
 
-    // MARK: - Helpers (foto)
-    private var profileUIImage: UIImage? {
-        guard !profilePhotoBase64.isEmpty else { return nil }
-        guard let data = Data(base64Encoded: profilePhotoBase64) else { return nil }
-        return UIImage(data: data)
-    }
-
-    @ViewBuilder
-    private func profileAvatarView() -> some View {
-        if let uiImage = profileUIImage {
-            Image(uiImage: uiImage)
-                .resizable()
-                .scaledToFill()
-        } else {
-            Image("rdv_user_default")
-                .resizable()
-                .scaledToFill()
-        }
-    }
-
     // MARK: - Load
     private func loadUserData() async {
         let uid = currentUid
@@ -338,12 +319,11 @@ struct ProfileView: View {
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
-            profileAvatarView()
-                .frame(width: 92, height: 92)
+            // ✅ Agora usa o MESMO componente do header (LocalProfileStore por UID),
+            // garantindo que a foto do Perfil reflita a mesma foto dos cabeçalhos.
+            HeaderAvatarView(size: 92)
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
-
-            // ✅ ID removido (para aluno e professor)
 
             // ✅ Nome sem hardcode
             Text(userName.isEmpty ? " " : userName)
@@ -386,7 +366,6 @@ struct ProfileView: View {
                     trailing: .text("\(checkinsConcluidos)/\(checkinsTotalSemana)")
                 )
 
-                // ✅ NOVO: Mensagens e Feedbacks para o aluno
                 divider()
                 optionRow(icon: "envelope.fill", title: "Mensagens", trailing: .chevron) {
                     path.append(.studentMessages(category: categoriaAtualAluno))
