@@ -123,10 +123,13 @@ struct AppRouter: View {
                         SettingsView(path: $path)
                             .environmentObject(session)
 
+                    // ✅ NOVO: Central de Ajuda / Privacidade / Termos
+                    case .infoLegal(let kind):
+                        InfoLegalView(path: $path, kind: kind)
+                            .environmentObject(session)
+
                     // ✅ NOVO: Editar Perfil
                     case .editarPerfil:
-                        // A tela será criada no próximo passo.
-                        // Mantemos o padrão de environmentObject e path.
                         EditProfileView(path: $path)
                             .environmentObject(session)
 
@@ -211,4 +214,3 @@ private extension AppRouter {
         }
     }
 }
-

@@ -136,15 +136,15 @@ struct SettingsView: View {
     private func supportLegalCard() -> some View {
         card {
             cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
-                // TODO: navegar para central de ajuda
+                path.append(.infoLegal(.helpCenter))
             }
             divider()
             cardRow(icon: "hand.raised.fill", title: "Políticas de Privacidade") {
-                // TODO: abrir políticas de privacidade
+                path.append(.infoLegal(.privacyPolicy))
             }
             divider()
             cardRow(icon: "doc.text.fill", title: "Termos de Uso") {
-                // TODO: abrir termos de uso
+                path.append(.infoLegal(.termsOfUse))
             }
         }
     }

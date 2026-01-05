@@ -1,5 +1,12 @@
 import Foundation
 
+// MARK: - Tipos de conteúdo (Central de Ajuda / Privacidade / Termos)
+enum InfoLegalKind: String, Hashable {
+    case helpCenter
+    case privacyPolicy
+    case termsOfUse
+}
+
 // MARK: - Rotas do app
 enum AppRoute: Hashable {
 
@@ -16,8 +23,10 @@ enum AppRoute: Hashable {
     case perfil
     case configuracoes
 
-    // ✅ NOVO: Editar Perfil
     case editarPerfil
+
+    // ✅ Tela única: Ajuda / Privacidade / Termos
+    case infoLegal(InfoLegalKind)
 
     // Auth
     case accountTypeSelection
@@ -25,19 +34,14 @@ enum AppRoute: Hashable {
     case registerTrainer
 
     // Professor
-    // ✅ Agora recebe o filtro inicial (nil = Todos)
     case teacherStudentsList(selectedCategory: TreinoTipo, initialFilter: TreinoTipo?)
     case teacherStudentDetail(AppUser, TreinoTipo)
     case teacherDashboard(category: TreinoTipo)
-
-    // ✅ Professor: vincular alunos
     case teacherLinkStudent(category: TreinoTipo)
 
     // Aluno
     case studentAgenda(studentId: String, studentName: String)
     case studentWeekDetail(studentId: String, weekId: String, weekTitle: String)
-
-    // ✅ Aluno (detalhe do dia) - AGORA PRECISA DO weekId
     case studentDayDetail(weekId: String, day: TrainingDayFS, weekTitle: String)
 
     // Publicar treinos
