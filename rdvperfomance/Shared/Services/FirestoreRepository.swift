@@ -535,4 +535,60 @@ extension FirestoreRepository {
             .document(w)
             .setData(["updatedAt": FieldValue.serverTimestamp()], merge: true)
     }
+    
+    // MARK: - users/{uid} (ESCRITA) - Atualizar unidade (Student)
+    func updateStudentUnitName(uid: String, unitName: String) async throws {
+        let cleanUid = clean(uid)
+        guard !cleanUid.isEmpty else { throw RepositoryError.missingUserId }
+
+        let trimmed = unitName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { throw RepositoryError.invalidData }
+
+        try await db.collection("users")
+            .document(cleanUid)
+            .setData(
+                [
+                    "unitName": trimmed,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
+    }
+    
+    // MARK: - users/{uid} (ESCRITA) - set/unset unitName (Student)
+    func setStudentUnitName(uid: String, unitName: String?) async throws {
+        let cleanUid = clean(uid)
+        guard !cleanUid.isEmpty else { throw RepositoryError.missingUserId }
+
+        let trimmed = (unitName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        var payload: [String: Any] = [
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        // ✅ Se vier vazio, remove o campo (fica em branco)
+        if trimmed.isEmpty {
+            payload["unitName"] = FieldValue.delete()
+        } else {
+            payload["unitName"] = trimmed
+        }
+
+        try await db.collection("users")
+            .document(cleanUid)
+            .setData(payload, merge: true)
+    }
+
+    // MARK: - Planos (Ativo/Inativo) baseado em treinos vinculados (existência de semanas)
+    func hasAnyWeeksForStudent(studentId: String) async throws -> Bool {
+        let s = clean(studentId)
+        guard !s.isEmpty else { throw RepositoryError.missingStudentId }
+
+        // ✅ Query leve: só precisa saber se existe 1 semana vinculada ao aluno
+        let snap = try await db.collection(TrainingFS.weeksCollection)
+            .whereField("studentId", isEqualTo: s)
+            .limit(to: 1)
+            .getDocuments()
+
+        return !snap.documents.isEmpty
+    }
 }

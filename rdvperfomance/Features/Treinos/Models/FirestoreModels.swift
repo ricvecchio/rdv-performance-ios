@@ -19,6 +19,9 @@ struct AppUser: Identifiable, Codable, Hashable {
     // STUDENT
     var defaultCategory: String?
     var active: Bool?
+
+    // ✅ Unidade (users/{uid}.unitName)
+    var unitName: String?
 }
 
 // MARK: - teacher_students
@@ -28,3 +31,4 @@ struct TeacherStudentRelation: Identifiable, Codable, Hashable {
     var studentId: String
     var categories: [String]
 }
+

@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import FirebaseAuth
 
 // MARK: - ProfileView
 struct ProfileView: View {
@@ -7,10 +8,8 @@ struct ProfileView: View {
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // largura máxima do “miolo”
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Última categoria (para Professor → botão "Alunos" no footer)
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
@@ -18,15 +17,32 @@ struct ProfileView: View {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    // ✅ Foto persistida do perfil (Base64)
-    // - Será preenchida na tela "Editar Perfil"
-    // - Aqui é somente leitura para refletir no app quando existir
     @AppStorage("profile_photo_data")
     private var profilePhotoBase64: String = ""
 
-    // Exemplo de check-ins
-    private let checkinsRealizados: Int = 2
-    private let checkinsMetaSemana: Int = 6
+    private let repository: FirestoreRepository = .shared
+
+    private var currentUid: String {
+        (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    // MARK: - Estado (por usuário)
+    @State private var userName: String = ""
+    @State private var unitName: String = ""          // aluno e professor
+    @State private var isPlanActive: Bool = false     // aluno calcula / professor força true
+    @State private var isLoading: Bool = false
+
+    // Check-ins (apenas aluno)
+    @State private var checkinsConcluidos: Int = 0
+    @State private var checkinsTotalSemana: Int = 0
+
+    // Alert Trocar unidade (aluno e professor)
+    @State private var showTrocarUnidadeAlert: Bool = false
+    @State private var unidadeDraft: String = ""
+
+    // Alert erro
+    @State private var showErrorAlert: Bool = false
+    @State private var errorMessage: String? = nil
 
     var body: some View {
         ZStack {
@@ -61,7 +77,6 @@ struct ProfileView: View {
                     }
                 }
 
-                // ✅ FOOTER DINÂMICO por tipo de usuário
                 footerForUser()
                     .frame(height: Theme.Layout.footerHeight)
                     .frame(maxWidth: .infinity)
@@ -71,8 +86,6 @@ struct ProfileView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-
-            // ✅ Voltar
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -101,13 +114,40 @@ struct ProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+
+        // ✅ Trocar unidade (aluno e professor)
+        .alert("Trocar unidade", isPresented: $showTrocarUnidadeAlert) {
+            TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
+
+            Button("Cancelar", role: .cancel) { }
+
+            Button("Salvar") {
+                Task { await salvarUnidade() }
+            }
+        } message: {
+            Text("Digite a unidade onde você treina. Se deixar em branco, a unidade será removida do perfil.")
+        }
+
+        // ✅ Erro
+        .alert("Erro", isPresented: $showErrorAlert) {
+            Button("OK", role: .cancel) {
+                showErrorAlert = false
+                errorMessage = nil
+            }
+        } message: {
+            Text(errorMessage ?? "")
+        }
+
+        // ✅ Recarrega quando mudar o usuário logado
+        .task(id: currentUid) {
+            await loadUserData()
+        }
     }
 
-    // MARK: - Footer por userType
+    // MARK: - Footer
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
-            // ✅ Aluno: Agenda | Sobre | Perfil (Perfil selecionado)
             FooterBar(
                 path: $path,
                 kind: .agendaSobrePerfil(
@@ -117,7 +157,6 @@ struct ProfileView: View {
                 )
             )
         } else {
-            // ✅ Professor: Home | Alunos | Sobre | Perfil (Perfil selecionado)
             FooterBar(
                 path: $path,
                 kind: .teacherHomeAlunosSobrePerfil(
@@ -156,7 +195,131 @@ struct ProfileView: View {
         }
     }
 
-    // MARK: - Card superior
+    // MARK: - Load
+    private func loadUserData() async {
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            userName = ""
+            unitName = ""
+            isPlanActive = false
+            checkinsConcluidos = 0
+            checkinsTotalSemana = 0
+            return
+        }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // ✅ Nome e unidade vêm do Firestore (sem hardcode)
+            if let user = try await repository.getUser(uid: uid) {
+                userName = user.name
+                unitName = (user.unitName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            } else {
+                userName = ""
+                unitName = ""
+            }
+
+            if session.userType == .STUDENT {
+                // ✅ Planos do aluno: Ativo se existir qualquer week vinculada
+                isPlanActive = try await repository.hasAnyWeeksForStudent(studentId: uid)
+
+                // ✅ Check-ins da semana em andamento
+                await loadCheckinsSemanaEmAndamento(studentId: uid)
+            } else {
+                // ✅ Professor: Planos sempre Ativo e não tem check-ins
+                isPlanActive = true
+                checkinsConcluidos = 0
+                checkinsTotalSemana = 0
+            }
+
+        } catch {
+            userName = ""
+            unitName = ""
+            isPlanActive = (session.userType != .STUDENT)
+            checkinsConcluidos = 0
+            checkinsTotalSemana = 0
+
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+        }
+    }
+
+    // MARK: - Check-ins (apenas aluno)
+    private func loadCheckinsSemanaEmAndamento(studentId: String) async {
+        do {
+            let weeks = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: true)
+
+            let today = Date()
+            let calendar = Calendar.current
+
+            let currentWeek: TrainingWeekFS? = weeks.first(where: { w in
+                guard let start = w.startDate, let end = w.endDate else { return false }
+                let s = calendar.startOfDay(for: start)
+                let e = calendar.startOfDay(for: end)
+                let t = calendar.startOfDay(for: today)
+                return (t >= s && t <= e)
+            })
+
+            guard let week = currentWeek, let weekId = week.id else {
+                checkinsConcluidos = 0
+                checkinsTotalSemana = 0
+                return
+            }
+
+            let days = try await repository.getDaysForWeek(weekId: weekId)
+            let total = days.count
+
+            guard total > 0 else {
+                checkinsConcluidos = 0
+                checkinsTotalSemana = 0
+                return
+            }
+
+            let statusMap = try await repository.getDayStatusMap(weekId: weekId, studentId: studentId)
+            let dayIds = Set(days.compactMap { $0.id })
+
+            let concluidos = statusMap.filter { pair in
+                pair.value == true && dayIds.contains(pair.key)
+            }.count
+
+            checkinsConcluidos = concluidos
+            checkinsTotalSemana = total
+
+        } catch {
+            checkinsConcluidos = 0
+            checkinsTotalSemana = 0
+        }
+    }
+
+    // MARK: - Unidade (aluno e professor)
+    private func openTrocarUnidade() {
+        unidadeDraft = unitName
+        showTrocarUnidadeAlert = true
+    }
+
+    private func salvarUnidade() async {
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
+
+        let trimmed = unidadeDraft.trimmingCharacters(in: .whitespacesAndNewlines)
+        unitName = trimmed
+
+        do {
+            // ✅ Salva por usuário; se vazio, remove o campo no Firestore
+            try await repository.setStudentUnitName(uid: uid, unitName: trimmed)
+        } catch {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+        }
+    }
+
+    // MARK: - Planos
+    private var planoStatusTexto: String { isPlanActive ? "Ativo" : "Inativo" }
+    private var planoStatusForeground: Color { isPlanActive ? Color.green.opacity(0.9) : Color.red.opacity(0.95) }
+    private var planoStatusBackground: Color { isPlanActive ? Color.green.opacity(0.16) : Color.red.opacity(0.18) }
+
+    // MARK: - UI Cards
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
@@ -165,15 +328,15 @@ struct ProfileView: View {
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
 
-            Text("ID 32457")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
+            // ✅ ID removido (para aluno e professor)
 
-            Text("Ricardo Del Vecchio")
+            // ✅ Nome sem hardcode
+            Text(userName.isEmpty ? " " : userName)
                 .font(.system(size: 28, weight: .semibold))
                 .foregroundColor(.white)
 
-            Text("CROSSFIT MURALHA")
+            // ✅ Unidade para ambos (aluno e professor)
+            Text(unitName.isEmpty ? " " : unitName)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -183,24 +346,31 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
-    // MARK: - Card de opções
     private func optionsCard() -> some View {
         VStack(spacing: 0) {
 
-            optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron)
+            // ✅ Aluno e Professor podem trocar unidade
+            optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron) {
+                openTrocarUnidade()
+            }
             divider()
 
-            optionRow(icon: "crown.fill", title: "Planos", trailing: .badge("Ativo"))
-            divider()
-
+            // ✅ Planos: aluno calcula / professor sempre ativo
             optionRow(
-                icon: "checkmark.seal.fill",
-                title: "Check-ins na semana",
-                trailing: .text("\(checkinsRealizados)/\(checkinsMetaSemana)")
+                icon: "crown.fill",
+                title: "Planos",
+                trailing: .coloredBadge(planoStatusTexto, fg: planoStatusForeground, bg: planoStatusBackground)
             )
-            divider()
 
-            optionRow(icon: "trophy.fill", title: "Personal Records", trailing: .text("Ver mais"))
+            // ✅ Check-ins só para aluno
+            if session.userType == .STUDENT {
+                divider()
+                optionRow(
+                    icon: "checkmark.seal.fill",
+                    title: "Check-ins na semana",
+                    trailing: .text("\(checkinsConcluidos)/\(checkinsTotalSemana)")
+                )
+            }
         }
         .padding(.vertical, 8)
         .background(Theme.Colors.cardBackground)
@@ -217,9 +387,28 @@ struct ProfileView: View {
         case chevron
         case text(String)
         case badge(String)
+        case coloredBadge(String, fg: Color, bg: Color)
     }
 
-    private func optionRow(icon: String, title: String, trailing: Trailing) -> some View {
+    private func optionRow(
+        icon: String,
+        title: String,
+        trailing: Trailing,
+        onTap: (() -> Void)? = nil
+    ) -> some View {
+        Group {
+            if let onTap {
+                Button(action: onTap) {
+                    optionRowContent(icon: icon, title: title, trailing: trailing)
+                }
+                .buttonStyle(.plain)
+            } else {
+                optionRowContent(icon: icon, title: title, trailing: trailing)
+            }
+        }
+    }
+
+    private func optionRowContent(icon: String, title: String, trailing: Trailing) -> some View {
         HStack(spacing: 14) {
 
             Image(systemName: icon)
@@ -249,13 +438,21 @@ struct ProfileView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(Color.green.opacity(0.16)))
+
+            case .coloredBadge(let value, let fg, let bg):
+                Text(value)
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(fg)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 6)
+                    .background(Capsule().fill(bg))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
     }
 
-    // MARK: - Logout (corrigido: volta para Login de verdade)
+    // MARK: - Logout
     private func logoutButton() -> some View {
         Button {
             session.logout()
