@@ -231,8 +231,7 @@ Caso tenha dificuldades para acessar suas informações ou utilizar alguma funci
                     title: "📬 Suporte",
                     introText: """
 Se ainda precisar de ajuda, entre em contato pelo e-mail:
-suporte@appfitness.com
-(Endereço fictício – ajuste conforme necessário)
+suporte@rdvperfomance.com
 """,
                     bullets: nil
                 )
