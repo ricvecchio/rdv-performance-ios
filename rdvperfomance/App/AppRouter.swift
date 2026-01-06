@@ -190,6 +190,22 @@ struct AppRouter: View {
                             DeleteAccountView(path: $path)
                         }
 
+                    // Demo / Developer (acesso via Settings)
+                    case .mapFeature:
+                        guardedHome {
+                            MapFeatureView()
+                        }
+
+                    case .spriteDemo:
+                        guardedHome {
+                            SpriteDemoView()
+                        }
+
+                    case .arDemo:
+                        guardedHome {
+                            ARDemoView()
+                        }
+
                     // CADASTRO (sem login)
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)

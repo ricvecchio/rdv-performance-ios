@@ -1,6 +1,7 @@
 // rdvperfomanceApp.swift — Ponto de entrada do aplicativo e inicialização do Firebase
 import SwiftUI
 import FirebaseCore
+import CoreData
 
 @main
 struct rdvperfomanceApp: App {
@@ -11,10 +12,14 @@ struct rdvperfomanceApp: App {
     // Sessão global do app
     @StateObject private var session = AppSession()
 
+    // Core Data Persistence
+    private let persistenceController = PersistenceController.shared
+
     var body: some Scene {
         WindowGroup {
             AppRouter()
                 .environmentObject(session)
+                .environment(\.managedObjectContext, persistenceController.container.viewContext)
         }
     }
 }

@@ -36,6 +36,11 @@ enum AppRoute: Hashable {
     case registerStudent
     case registerTrainer
 
+    // Developer / Demos (não intrusivas)
+    case mapFeature
+    case spriteDemo
+    case arDemo
+
     // Professor
     case teacherStudentsList(selectedCategory: TreinoTipo, initialFilter: TreinoTipo?)
     case teacherStudentDetail(AppUser, TreinoTipo)

@@ -160,6 +160,20 @@ struct SettingsView: View {
             cardRow(icon: "doc.text.fill", title: "Termos de Uso") {
                 path.append(.infoLegal(.termsOfUse))
             }
+
+            // Demo entries (discretos) — não alteram fluxo principal
+            divider()
+            cardRow(icon: "map.fill", title: "Mapa (demo)") {
+                path.append(.mapFeature)
+            }
+            divider()
+            cardRow(icon: "gamecontroller.fill", title: "SpriteKit (demo)") {
+                path.append(.spriteDemo)
+            }
+            divider()
+            cardRow(icon: "arkit", title: "AR (demo)") {
+                path.append(.arDemo)
+            }
         }
     }
 
