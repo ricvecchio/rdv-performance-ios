@@ -23,9 +23,28 @@ final class AppSession: ObservableObject {
 
     // Init / Deinit: restaura estado e configura observador de autenticação
     init() {
+        // Em builds de desenvolvimento, limpar sessão para forçar início no login facilita testes.
+        // Em produção, mantemos o comportamento padrão (persistência de sessão).
+        #if DEBUG
+        self.storedUid = ""
+        self.storedUserTypeRaw = ""
+        self.storedUserName = ""
+
+        self.uid = nil
+        self.userType = nil
+        self.userName = nil
+
+        do {
+            try Auth.auth().signOut()
+        } catch {
+            // Ignora erros de signOut (por exemplo, se não houver usuário)
+        }
+        #else
+        // Em produção, restauramos o estado persistido (se houver)
         self.uid = storedUid.isEmpty ? nil : storedUid
-        self.userType = UserTypeDTO(rawValue: storedUserTypeRaw)
+        self.userType = storedUserTypeRaw.isEmpty ? nil : UserTypeDTO(rawValue: storedUserTypeRaw)
         self.userName = storedUserName.isEmpty ? nil : storedUserName
+        #endif
 
         observeAuthState()
     }

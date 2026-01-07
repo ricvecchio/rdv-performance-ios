@@ -354,6 +354,14 @@ Os assets do projeto ficam em `Resources/Assets.xcassets`. Resumo dos assets inc
 - Configure o `GoogleService-Info.plist` caso queira habilitar Firebase (Auth/Firestore) em ambiente de desenvolvimento.
 - Execute o app em um simulador iOS 16+ ou dispositivo físico com as permissões necessárias.
 
+### Permissão de localização (necessária para o demo de Mapa)
+
+Para que a opção "Mapa (demo)" funcione corretamente você precisa adicionar a chave de privacidade no `Info.plist` do target do app. Abra o arquivo `Info.plist` no Xcode e adicione a chave abaixo (valor em português ou conforme sua política de privacidade):
+
+- `NSLocationWhenInUseUsageDescription` = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo)."
+
+> Observação: não alterei o `Info.plist` automaticamente para evitar mudanças no projeto que você prefere controlar pelo Xcode; a adição manual é simples e segura.
+
 ---
 
 ## 🎯 Destaques do Projeto

@@ -10,12 +10,15 @@ final class MapViewModel: NSObject, ObservableObject {
     )
 
     @Published var authorizationStatus: CLAuthorizationStatus = .notDetermined
+    @Published var lastLocation: CLLocation? = nil
 
     private let manager = CLLocationManager()
 
     override init() {
         super.init()
         manager.delegate = self
+        manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.distanceFilter = kCLDistanceFilterNone
     }
 
     func requestPermissionIfNeeded() {
@@ -25,6 +28,10 @@ final class MapViewModel: NSObject, ObservableObject {
             self.authorizationStatus = CLLocationManager.authorizationStatus()
             if let loc = manager.location {
                 updateRegion(to: loc.coordinate)
+                self.lastLocation = loc
+            } else {
+                // Tenta iniciar atualizações contínuas para dispositivos reais
+                manager.startUpdatingLocation()
             }
         }
     }
@@ -34,6 +41,22 @@ final class MapViewModel: NSObject, ObservableObject {
             self.region.center = coordinate
         }
     }
+
+    func centerOnUser() {
+        if let loc = manager.location {
+            updateRegion(to: loc.coordinate)
+        } else if let last = lastLocation {
+            updateRegion(to: last.coordinate)
+        }
+    }
+
+    func startUpdating() {
+        manager.startUpdatingLocation()
+    }
+
+    func stopUpdating() {
+        manager.stopUpdatingLocation()
+    }
 }
 
 extension MapViewModel: CLLocationManagerDelegate {
@@ -41,18 +64,22 @@ extension MapViewModel: CLLocationManagerDelegate {
         DispatchQueue.main.async {
             self.authorizationStatus = status
             if status == .authorizedWhenInUse || status == .authorizedAlways {
+                // Em devices reais, startUpdatingLocation garante que o GPS seja ativado e entregue updates
+                manager.startUpdatingLocation()
                 manager.requestLocation()
+            } else {
+                manager.stopUpdatingLocation()
             }
         }
     }
 
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         guard let loc = locations.first else { return }
+        self.lastLocation = loc
         updateRegion(to: loc.coordinate)
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
         // apenas logar; o app continua com região padrão
-        print("Location manager failed: \(error)")
     }
 }

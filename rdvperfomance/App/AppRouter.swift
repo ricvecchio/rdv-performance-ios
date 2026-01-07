@@ -6,14 +6,13 @@ struct AppRouter: View {
 
     // Estado local de rotas e sessão
     @State private var path: [AppRoute] = []
-    @StateObject private var session = AppSession()
+    @EnvironmentObject private var session: AppSession
 
     // Corpo com NavigationStack e destinos de navegação
     var body: some View {
         NavigationStack(path: $path) {
 
             rootView
-                .environmentObject(session)
 
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
@@ -21,7 +20,6 @@ struct AppRouter: View {
                     // BASE
                     case .login:
                         LoginView(path: $path)
-                            .environmentObject(session)
 
                     case .home:
                         guardedHome()
@@ -209,19 +207,15 @@ struct AppRouter: View {
                     // CADASTRO (sem login)
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)
-                            .environmentObject(session)
 
                     case .registerStudent:
                         RegisterStudentView(path: $path)
-                            .environmentObject(session)
 
                     case .registerTrainer:
                         RegisterTrainerView(path: $path)
-                            .environmentObject(session)
                     }
                 }
         }
-        .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
             if !logged { path.removeAll() }
         }

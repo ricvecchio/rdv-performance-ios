@@ -1,6 +1,7 @@
 // LocalProfileStore.swift — Armazena perfil local por usuário (UserDefaults namespaced)
 import Foundation
 import UIKit
+import CoreLocation
 
 // Store local para persistência de foto, whatsapp e foco por UID
 final class LocalProfileStore {
@@ -19,6 +20,10 @@ final class LocalProfileStore {
         static let photoBase64 = "profile_photo_data"
         static let whatsapp = "profile_whatsapp"
         static let focusArea = "profile_focus_area"
+        // Novas chaves para map demo (persistência simples)
+        static let mapDemoEnabled = "profile_map_demo_enabled"
+        static let mapLastSeenLat = "profile_map_last_lat"
+        static let mapLastSeenLon = "profile_map_last_lon"
     }
 
     // Snapshot simples para uso em telas
@@ -120,6 +125,44 @@ final class LocalProfileStore {
         clearPhoto(userId: userId)
         setWhatsapp("", userId: userId)
         setFocusAreaRaw("", userId: userId)
+    }
+
+    // MARK: - Map demo persistence (simples e namespaced)
+    func getMapDemoEnabled(userId: String?) -> Bool {
+        let uid = safeUserId(userId)
+        let key = namespacedKey(Keys.mapDemoEnabled, userId: uid)
+        return defaults.bool(forKey: key)
+    }
+
+    func setMapDemoEnabled(_ enabled: Bool, userId: String?) {
+        let uid = safeUserId(userId)
+        let key = namespacedKey(Keys.mapDemoEnabled, userId: uid)
+        defaults.set(enabled, forKey: key)
+    }
+
+    func getLastSeenCoordinate(userId: String?) -> CLLocationCoordinate2D? {
+        let uid = safeUserId(userId)
+        let latKey = namespacedKey(Keys.mapLastSeenLat, userId: uid)
+        let lonKey = namespacedKey(Keys.mapLastSeenLon, userId: uid)
+        let lat = defaults.object(forKey: latKey) as? Double
+        let lon = defaults.object(forKey: lonKey) as? Double
+        if let lat = lat, let lon = lon {
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }
+        return nil
+    }
+
+    func setLastSeenCoordinate(_ coordinate: CLLocationCoordinate2D?, userId: String?) {
+        let uid = safeUserId(userId)
+        let latKey = namespacedKey(Keys.mapLastSeenLat, userId: uid)
+        let lonKey = namespacedKey(Keys.mapLastSeenLon, userId: uid)
+        if let c = coordinate {
+            defaults.set(c.latitude, forKey: latKey)
+            defaults.set(c.longitude, forKey: lonKey)
+        } else {
+            defaults.removeObject(forKey: latKey)
+            defaults.removeObject(forKey: lonKey)
+        }
     }
 
     // MARK: - Migração de chaves legadas
