@@ -47,6 +47,15 @@ struct TeacherDashboardView: View {
                                 ) {
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
+
+                                // Novo: Mapa da Academia
+                                actionRow(
+                                    title: "Mapa da Academia",
+                                    icon: "map.fill"
+                                ) {
+                                    path.append(.teacherMap)
+                                }
+
                             }
                             .padding(.top, 8)
 

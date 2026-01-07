@@ -95,6 +95,12 @@ struct AppRouter: View {
                             )
                         }
 
+                    // Teacher map (Mapa da Academia)
+                    case .teacherMap:
+                        guardedTeacher {
+                            TeacherMapView()
+                        }
+
                     // ALUNO + PROFESSOR (COMPARTILHADO)
                     case .studentAgenda(let studentId, let studentName):
                         guardedHome {

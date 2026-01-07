@@ -6,9 +6,6 @@ struct SettingsView: View {
     // Binding de rotas
     @Binding var path: [AppRoute]
 
-    @EnvironmentObject private var session: AppSession
-    private let profileStore = LocalProfileStore.shared
-
     // Largura máxima do conteúdo
     private let contentMaxWidth: CGFloat = 380
 
@@ -21,11 +18,6 @@ struct SettingsView: View {
     // Conveniência para o enum seguro
     private var preferredWeightUnit: WeightUnit {
         WeightUnit(rawValue: preferredWeightUnitRaw) ?? .kg
-    }
-
-    // Computed para o status do Map demo
-    private var mapDemoStatusText: String {
-        profileStore.getMapDemoEnabled(userId: session.currentUid) ? "Ativado" : "Desativado"
     }
 
     // Corpo principal com seções e footer
@@ -170,10 +162,6 @@ struct SettingsView: View {
             }
 
             // Demo entries (discretos) — não alteram fluxo principal
-            divider()
-            cardRow(icon: "map.fill", title: "Mapa (demo)", trailingText: mapDemoStatusText) {
-                path.append(.mapFeature)
-            }
             divider()
             cardRow(icon: "gamecontroller.fill", title: "SpriteKit (demo)") {
                 path.append(.spriteDemo)
