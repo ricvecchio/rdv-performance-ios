@@ -41,6 +41,9 @@ enum AppRoute: Hashable {
     case spriteDemo
     case arDemo
 
+    // ✅ Novo: Progresso gamificado (reutilizável para aluno e professor)
+    case progressGame(mode: ProgressGameMode)
+
     // AR integrado para exercícios (novo)
     case arExercise(weekId: String, dayId: String)
 
@@ -63,3 +66,4 @@ enum AppRoute: Hashable {
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 }
+

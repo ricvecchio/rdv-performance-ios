@@ -1,14 +1,11 @@
-// AppRouter.swift — Componente responsável pela navegação e roteamento do app
 import SwiftUI
 
-// Container principal de navegação
+// MARK: - APP CONTAINER / NAVIGATION
 struct AppRouter: View {
 
-    // Estado local de rotas e sessão
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
 
-    // Corpo com NavigationStack e destinos de navegação
     var body: some View {
         NavigationStack(path: $path) {
 
@@ -18,7 +15,7 @@ struct AppRouter: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
 
-                    // BASE
+                    // ===== BASE =====
                     case .login:
                         LoginView(path: $path)
                             .environmentObject(session)
@@ -26,7 +23,7 @@ struct AppRouter: View {
                     case .home:
                         guardedHome()
 
-                    // PROFESSOR (exclusivo)
+                    // ===== PROFESSOR =====
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
                         guardedTeacher {
                             TeacherStudentsListView(
@@ -79,6 +76,7 @@ struct AppRouter: View {
                             )
                         }
 
+                    // ===== PUBLICAR TREINOS (PROFESSOR) =====
                     case .createTrainingWeek(let student, let category):
                         guardedTeacher {
                             CreateTrainingWeekView(
@@ -97,7 +95,7 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ALUNO + PROFESSOR (COMPARTILHADO)
+                    // ===== ALUNO + PROFESSOR (COMPARTILHADO) =====
                     case .studentAgenda(let studentId, let studentName):
                         guardedHome {
                             StudentAgendaView(
@@ -127,7 +125,7 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ALUNO (exclusivo)
+                    // ===== ALUNO =====
                     case .studentMessages(let category):
                         guardedStudent {
                             StudentMessagesView(
@@ -144,7 +142,7 @@ struct AppRouter: View {
                             )
                         }
 
-                    // COMUM (login obrigatório)
+                    // ===== COMUM (LOGIN OBRIGATÓRIO) =====
                     case .sobre:
                         guardedHome {
                             AboutView(path: $path)
@@ -190,7 +188,7 @@ struct AppRouter: View {
                             DeleteAccountView(path: $path)
                         }
 
-                    // Demo / Developer (acesso via Settings)
+                    // ===== DEVELOPER / DEMOS (via Settings) =====
                     case .mapFeature:
                         guardedHome {
                             MapFeatureView()
@@ -198,7 +196,8 @@ struct AppRouter: View {
 
                     case .spriteDemo:
                         guardedHome {
-                            SpriteDemoView()
+                            // ✅ agora segue padrão (header/avatar/footer) porque recebe path
+                            SpriteDemoView(path: $path)
                         }
 
                     case .arDemo:
@@ -211,7 +210,7 @@ struct AppRouter: View {
                             ARExerciseView(path: $path, weekId: weekId, dayId: dayId)
                         }
 
-                    // CADASTRO (sem login)
+                    // ===== CADASTRO (SEM LOGIN) =====
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)
                             .environmentObject(session)
@@ -223,6 +222,10 @@ struct AppRouter: View {
                     case .registerTrainer:
                         RegisterTrainerView(path: $path)
                             .environmentObject(session)
+
+                    // ✅ Boa prática: evita “Switch must be exhaustive” se AppRoute ganhar novos cases
+                    @unknown default:
+                        guardedHome()
                     }
                 }
         }
@@ -233,7 +236,7 @@ struct AppRouter: View {
     }
 }
 
-// Root decision: escolhe tela inicial baseada no estado de sessão
+// MARK: - Root decision
 private extension AppRouter {
 
     @ViewBuilder
@@ -246,7 +249,7 @@ private extension AppRouter {
     }
 }
 
-// Guards: funções auxiliares para proteger rotas por tipo de usuário
+// MARK: - Guards
 private extension AppRouter {
 
     @ViewBuilder
@@ -285,3 +288,4 @@ private extension AppRouter {
         }
     }
 }
+

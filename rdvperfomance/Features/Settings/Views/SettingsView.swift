@@ -164,7 +164,9 @@ struct SettingsView: View {
                 path.append(.infoLegal(.termsOfUse))
             }
             divider()
-            cardRow(icon: "gamecontroller.fill", title: "SpriteKit (demo)") {
+
+            // ✅ Renomeado e mantendo o mesmo ícone
+            cardRow(icon: "gamecontroller.fill", title: "Preview do Progresso") {
                 path.append(.spriteDemo)
             }
         }
