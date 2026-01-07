@@ -11,53 +11,65 @@ struct TeacherMapView: View {
         profileStore.getLastSeenCoordinate(userId: session.currentUid)
     }
 
+    private var displayCoordinateText: String {
+        if let coord = academyCoordinate {
+            return String(format: "Academia: %.5f, %.5f", coord.latitude, coord.longitude)
+        } else if let last = vm.lastLocation {
+            return String(format: "Última: %.5f, %.5f", last.coordinate.latitude, last.coordinate.longitude)
+        } else {
+            return "Localização: —"
+        }
+    }
+
     @State private var annotationItems: [MapPin] = []
     @State private var showEditLocationSheet: Bool = false
 
     var body: some View {
-        VStack(spacing: 0) {
-            if vm.authorizationStatus == .denied || vm.authorizationStatus == .restricted {
-                VStack(spacing: 12) {
-                    Text("Permissão de localização negada. Habilite em Ajustes para ver a posição da sua academia.")
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal)
-                    Button(action: openSettings) {
-                        Text("Abrir Ajustes")
-                            .frame(maxWidth: .infinity)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .padding(.horizontal)
-                }
-                .padding(.vertical, 20)
+        ZStack {
+            // Map em background ocupando toda a tela
+            Map(coordinateRegion: $vm.region, showsUserLocation: true, annotationItems: annotationItems) { item in
+                MapMarker(coordinate: item.coordinate, tint: .red)
             }
+            .edgesIgnoringSafeArea(.all)
 
-            ZStack(alignment: .bottom) {
-                Map(coordinateRegion: $vm.region, showsUserLocation: true, annotationItems: annotationItems) { item in
-                    MapMarker(coordinate: item.coordinate, tint: .red)
+            // Overlay: conteúdo superior (badge)
+            VStack {
+                HStack {
+                    Spacer()
+                    Text(displayCoordinateText)
+                        .font(.system(size: 13, weight: .semibold))
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 10)
+                        .background(Color.black.opacity(0.45))
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                        .padding(.trailing, 16)
                 }
-                .onAppear {
-                    vm.requestPermissionIfNeeded()
-                    showSavedToggle = profileStore.getMapDemoEnabled(userId: session.currentUid)
-                    setupAnnotations()
-                }
-                .onChange(of: vm.lastLocation) { _ in
-                    if let loc = vm.lastLocation, showSavedToggle {
-                        profileStore.setLastSeenCoordinate(loc.coordinate, userId: session.currentUid)
-                    }
-                    setupAnnotations()
-                }
-                .onChange(of: vm.authorizationStatus) { status in
-                    if status == .authorizedWhenInUse || status == .authorizedAlways {
-                        vm.startUpdating()
-                    } else {
-                        vm.stopUpdating()
-                    }
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
-                        setupAnnotations()
-                    }
-                }
-                .edgesIgnoringSafeArea(.all)
+                .padding(.top, 8)
 
+                Spacer()
+
+                // Se permissão negada, mostra card explicativo acima dos controles
+                if vm.authorizationStatus == .denied || vm.authorizationStatus == .restricted {
+                    VStack(spacing: 12) {
+                        Text("Permissão de localização negada. Habilite em Ajustes para ver a posição da sua academia.")
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal)
+                        Button(action: openSettings) {
+                            Text("Abrir Ajustes")
+                                .frame(maxWidth: .infinity)
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .padding(.horizontal)
+                    }
+                    .padding(.vertical, 12)
+                    .padding(.horizontal, 20)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(12)
+                    .padding(.bottom, 140)
+                }
+
+                // Controles inferiores (Centrar, Toggle, Editar, Remover)
                 VStack(spacing: 8) {
                     HStack(spacing: 12) {
                         Button(action: { vm.centerOnUser() }) {
@@ -100,6 +112,8 @@ struct TeacherMapView: View {
             }
         }
         .navigationTitle("Mapa da Academia")
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear { setupAnnotations() }
         .sheet(isPresented: $showEditLocationSheet) {
             EditLocationView(

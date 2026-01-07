@@ -168,7 +168,8 @@ rdvperformance-ios
    │  │     ├─ TeacherLinkStudentView.swift
    │  │     ├─ TeacherSendMessageView.swift
    │  │     ├─ TeacherStudentDetailView.swift
-   │  │     └─ TeacherStudentsListView.swift
+   │  │     ├─ TeacherStudentsListView.swift
+   │  │     └─ TeacherMapView.swift
    │  └─ Treinos/
    │     ├─ Models/
    │     │  ├─ FirestoreModels.swift
@@ -288,6 +289,7 @@ Abaixo um mapeamento por tela/módulo com os arquivos principais usados (Views) 
   - `Features/Teacher/Views/TeacherFeedbacksView.swift`
   - `Features/Teacher/Views/TeacherSendMessageView.swift`
   - `Features/Teacher/Views/TeacherLinkStudentView.swift`
+  - `Features/Teacher/Views/TeacherMapView.swift` — Mapa da Academia (substitui o demo de mapa nas Configurações)
 - ViewModels:
   - `Features/Teacher/ViewModels/TeacherStudentsListViewModel.swift`
   - `Features/Teacher/ViewModels/CreateTrainingWeekViewModel.swift`
@@ -354,13 +356,13 @@ Os assets do projeto ficam em `Resources/Assets.xcassets`. Resumo dos assets inc
 - Configure o `GoogleService-Info.plist` caso queira habilitar Firebase (Auth/Firestore) em ambiente de desenvolvimento.
 - Execute o app em um simulador iOS 16+ ou dispositivo físico com as permissões necessárias.
 
-### Permissão de localização (necessária para o demo de Mapa)
+### Permissão de localização (necessária para o Mapa da Academia)
 
-Para que a opção "Mapa (demo)" funcione corretamente você precisa adicionar a chave de privacidade no `Info.plist` do target do app. Abra o arquivo `Info.plist` no Xcode e adicione a chave abaixo (valor em português ou conforme sua política de privacidade):
+Para que a opção "Mapa da Academia" funcione corretamente você precisa adicionar a chave de privacidade no `Info.plist` do target do app (se ainda não estiver presente). Abra o arquivo `Info.plist` no Xcode e confirme que a chave abaixo existe (valor em português ou conforme sua política de privacidade):
 
 - `NSLocationWhenInUseUsageDescription` = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo)."
 
-> Observação: não alterei o `Info.plist` automaticamente para evitar mudanças no projeto que você prefere controlar pelo Xcode; a adição manual é simples e segura.
+> Observação: o recurso de mapa foi movido da tela de Configurações para a `Área do Professor` (Menu do Professor > "Mapa da Academia"). A entrada "Mapa (demo)" nas Configurações foi removida para evitar duplicidade. A rota antiga `.mapFeature` continua mapeada para a nova tela para compatibilidade (acesso restrito a professores).
 
 ---
 

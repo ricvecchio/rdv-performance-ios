@@ -196,8 +196,9 @@ struct AppRouter: View {
 
                     // Demo / Developer (acesso via Settings)
                     case .mapFeature:
-                        guardedHome {
-                            MapFeatureView()
+                        // Para compatibilidade, encaminha demo antigo para a tela do professor (acesso restrito)
+                        guardedTeacher {
+                            TeacherMapView()
                         }
 
                     case .spriteDemo:
