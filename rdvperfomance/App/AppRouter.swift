@@ -6,13 +6,14 @@ struct AppRouter: View {
 
     // Estado local de rotas e sessão
     @State private var path: [AppRoute] = []
-    @EnvironmentObject private var session: AppSession
+    @StateObject private var session = AppSession()
 
     // Corpo com NavigationStack e destinos de navegação
     var body: some View {
         NavigationStack(path: $path) {
 
             rootView
+                .environmentObject(session)
 
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
@@ -20,6 +21,7 @@ struct AppRouter: View {
                     // BASE
                     case .login:
                         LoginView(path: $path)
+                            .environmentObject(session)
 
                     case .home:
                         guardedHome()
@@ -93,12 +95,6 @@ struct AppRouter: View {
                                 weekId: weekId,
                                 category: category
                             )
-                        }
-
-                    // Teacher map (Mapa da Academia)
-                    case .teacherMap:
-                        guardedTeacher {
-                            TeacherMapView()
                         }
 
                     // ALUNO + PROFESSOR (COMPARTILHADO)
@@ -196,9 +192,8 @@ struct AppRouter: View {
 
                     // Demo / Developer (acesso via Settings)
                     case .mapFeature:
-                        // Para compatibilidade, encaminha demo antigo para a tela do professor (acesso restrito)
-                        guardedTeacher {
-                            TeacherMapView()
+                        guardedHome {
+                            MapFeatureView()
                         }
 
                     case .spriteDemo:
@@ -211,18 +206,27 @@ struct AppRouter: View {
                             ARDemoView()
                         }
 
+                    case .arExercise(let weekId, let dayId):
+                        guardedHome {
+                            ARExerciseView(path: $path, weekId: weekId, dayId: dayId)
+                        }
+
                     // CADASTRO (sem login)
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)
+                            .environmentObject(session)
 
                     case .registerStudent:
                         RegisterStudentView(path: $path)
+                            .environmentObject(session)
 
                     case .registerTrainer:
                         RegisterTrainerView(path: $path)
+                            .environmentObject(session)
                     }
                 }
         }
+        .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
             if !logged { path.removeAll() }
         }

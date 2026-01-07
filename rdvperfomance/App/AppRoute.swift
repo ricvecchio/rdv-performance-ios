@@ -41,8 +41,8 @@ enum AppRoute: Hashable {
     case spriteDemo
     case arDemo
 
-    // Teacher map (Mapa da Academia) — disponível para professores
-    case teacherMap
+    // AR integrado para exercícios (novo)
+    case arExercise(weekId: String, dayId: String)
 
     // Professor
     case teacherStudentsList(selectedCategory: TreinoTipo, initialFilter: TreinoTipo?)

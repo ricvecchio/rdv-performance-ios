@@ -9,10 +9,12 @@ import UIKit
 struct ARContainerView: UIViewRepresentable {
     typealias UIViewType = UIView
     var onArViewCreated: ((ARView) -> Void)?
+    var onTap: ((CGPoint) -> Void)? = nil
 
     class Coordinator: NSObject, ARSessionDelegate {
         weak var statusLabel: UILabel?
         weak var arView: ARView?
+        var tapHandler: ((CGPoint) -> Void)?
 
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
             DispatchQueue.main.async {
@@ -56,6 +58,12 @@ struct ARContainerView: UIViewRepresentable {
                 self.statusLabel?.text = "Sessão AR reiniciada"
             }
         }
+
+        @objc func handleTap(_ sender: UITapGestureRecognizer) {
+            guard let ar = arView else { return }
+            let loc = sender.location(in: ar)
+            tapHandler?(loc)
+        }
     }
 
     func makeCoordinator() -> Coordinator { Coordinator() }
@@ -96,6 +104,16 @@ struct ARContainerView: UIViewRepresentable {
         coordinator.statusLabel = statusLabel
         coordinator.arView = arView
         arView.session.delegate = coordinator
+
+        // instala recognizer para tocar na view AR
+        if let onTap = onTap {
+            let tap = UITapGestureRecognizer(target: coordinator, action: #selector(Coordinator.handleTap(_:)))
+            tap.numberOfTapsRequired = 1
+            arView.addGestureRecognizer(tap)
+            coordinator.tapHandler = { point in
+                onTap(point)
+            }
+        }
 
         DispatchQueue.main.async { self.onArViewCreated?(arView) }
 
