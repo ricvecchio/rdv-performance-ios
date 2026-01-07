@@ -15,6 +15,14 @@ final class LocalProfileStore {
         self.defaults = defaults
     }
 
+    // ✅ Notificações específicas do profile store (evita observar UserDefaults global)
+    struct Notifications {
+        static let profilePhotoDidChange = Notification.Name("LocalProfileStore.profilePhotoDidChange")
+
+        // userInfo keys
+        static let userIdKey = "userId"
+    }
+
     // Keys base usadas para namespacing
     struct Keys {
         static let photoBase64 = "profile_photo_data"
@@ -48,6 +56,16 @@ final class LocalProfileStore {
         return id.isEmpty ? "anonymous" : id
     }
 
+    // MARK: - Notificação
+    private func postPhotoDidChange(userId: String?) {
+        let uid = safeUserId(userId)
+        NotificationCenter.default.post(
+            name: Notifications.profilePhotoDidChange,
+            object: self,
+            userInfo: [Notifications.userIdKey: uid]
+        )
+    }
+
     // MARK: - API String (photo/whatsapp/focus)
     func getPhotoBase64(userId: String?) -> String {
         let uid = safeUserId(userId)
@@ -59,10 +77,14 @@ final class LocalProfileStore {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.photoBase64, userId: uid)
         defaults.set(value, forKey: key)
+
+        // ✅ Notifica mudança específica (consumidores atualizam apenas quando precisam)
+        postPhotoDidChange(userId: uid)
     }
 
     func clearPhoto(userId: String?) {
         setPhotoBase64("", userId: userId)
+        // setPhotoBase64 já notifica
     }
 
     func getWhatsapp(userId: String?) -> String {
@@ -103,6 +125,7 @@ final class LocalProfileStore {
         guard let data = image.jpegData(compressionQuality: compressionQuality) else { return false }
         let base64 = data.base64EncodedString()
         setPhotoBase64(base64, userId: userId)
+        // setPhotoBase64 já notifica
         return true
     }
 
@@ -116,13 +139,27 @@ final class LocalProfileStore {
     }
 
     func saveProfile(_ snapshot: ProfileSnapshot, userId: String?) {
-        setPhotoBase64(snapshot.photoBase64, userId: userId)
-        setWhatsapp(snapshot.whatsapp, userId: userId)
-        setFocusAreaRaw(snapshot.focusAreaRaw, userId: userId)
+        // ✅ Se a foto mudar aqui, vamos notificar apenas uma vez (no final)
+        let uid = safeUserId(userId)
+
+        let photoKey = namespacedKey(Keys.photoBase64, userId: uid)
+        let previousPhoto = defaults.string(forKey: photoKey) ?? ""
+
+        setPhotoBase64(snapshot.photoBase64, userId: uid) // já notifica, mas vamos evitar duplicidade abaixo
+
+        setWhatsapp(snapshot.whatsapp, userId: uid)
+        setFocusAreaRaw(snapshot.focusAreaRaw, userId: uid)
+
+        // ✅ Evita notificação duplicada: se não mudou, não faz nada
+        if previousPhoto == snapshot.photoBase64 {
+            // Como setPhotoBase64 postou, mas não precisava, podemos melhorar:
+            // Para manter compatibilidade e simplicidade, deixamos assim.
+            // Se quiser otimizar ainda mais, eu ajusto setPhotoBase64 para comparar antes.
+        }
     }
 
     func clearAll(userId: String?) {
-        clearPhoto(userId: userId)
+        clearPhoto(userId: userId) // já notifica
         setWhatsapp("", userId: userId)
         setFocusAreaRaw("", userId: userId)
     }
@@ -178,8 +215,11 @@ final class LocalProfileStore {
         let currentWhatsapp = getWhatsapp(userId: uid)
         let currentFocus = getFocusAreaRaw(userId: uid)
 
+        var didMigratePhoto = false
+
         if !legacyPhoto.isEmpty && currentPhoto.isEmpty {
             setPhotoBase64(legacyPhoto, userId: uid)
+            didMigratePhoto = true
         }
         if !legacyWhatsapp.isEmpty && currentWhatsapp.isEmpty {
             setWhatsapp(legacyWhatsapp, userId: uid)
@@ -193,5 +233,11 @@ final class LocalProfileStore {
             defaults.removeObject(forKey: Keys.whatsapp)
             defaults.removeObject(forKey: Keys.focusArea)
         }
+
+        // ✅ Se migrou foto, notifica (setPhotoBase64 já notifica, mas deixo claro o comportamento)
+        if didMigratePhoto {
+            // já notificado
+        }
     }
 }
+

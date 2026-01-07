@@ -1,26 +1,20 @@
-// SettingsView.swift — Tela de configurações com cartões para conta, preferências e legal
 import SwiftUI
 
 struct SettingsView: View {
 
-    // Binding de rotas
     @Binding var path: [AppRoute]
 
-    // Largura máxima do conteúdo
     private let contentMaxWidth: CGFloat = 380
 
-    // Preferência persistida para unidade de peso
-    @AppStorage("preferredWeightUnit") private var preferredWeightUnitRaw: String = WeightUnit.kg.rawValue
-
-    // Controle do sheet de unidade
+    @State private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
     @State private var showWeightUnitSheet: Bool = false
 
-    // Conveniência para o enum seguro
+    private let preferredWeightUnitKey: String = "preferredWeightUnit"
+
     private var preferredWeightUnit: WeightUnit {
-        WeightUnit(rawValue: preferredWeightUnitRaw) ?? .kg
+        WeightUnit(rawValue: preferredWeightUnitRawState) ?? .kg
     }
 
-    // Corpo principal com seções e footer
     var body: some View {
         ZStack {
 
@@ -28,6 +22,8 @@ struct SettingsView: View {
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
+                // ⚠️ Removido para evitar “lavar” toolbar
+                // .drawingGroup()
 
             VStack(spacing: 0) {
 
@@ -73,6 +69,7 @@ struct SettingsView: View {
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .frame(maxWidth: .infinity)
+                .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -91,26 +88,33 @@ struct SettingsView: View {
                     .foregroundColor(.white)
             }
         }
+
+        // ✅ Força padrão da navbar (sem cinza)
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
 
-        // Modal para seleção de unidade de peso
+        .onAppear {
+            let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
+            if preferredWeightUnitRawState != raw {
+                preferredWeightUnitRawState = raw
+            }
+        }
+        .onChange(of: preferredWeightUnitRawState) { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: preferredWeightUnitKey)
+        }
         .sheet(isPresented: $showWeightUnitSheet) {
-            WeightUnitSheetView(
-                selectedUnitRaw: $preferredWeightUnitRaw
-            )
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
+            WeightUnitSheetView(selectedUnitRaw: $preferredWeightUnitRawState)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
         }
     }
 
-    // Navegação: voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Título de seção
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
@@ -118,7 +122,6 @@ struct SettingsView: View {
             .padding(.horizontal, 6)
     }
 
-    // Cartões: conta, preferências e suporte/legal
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
@@ -160,26 +163,19 @@ struct SettingsView: View {
             cardRow(icon: "doc.text.fill", title: "Termos de Uso") {
                 path.append(.infoLegal(.termsOfUse))
             }
-
-            // Demo entries (discretos) — não alteram fluxo principal
             divider()
             cardRow(icon: "gamecontroller.fill", title: "SpriteKit (demo)") {
                 path.append(.spriteDemo)
             }
-
-            // ✅ AR (demo) removido conforme solicitado
         }
     }
 
-    // Componentes base de layout
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack(spacing: 0) {
-            content()
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        VStack(spacing: 0) { content() }
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
     }
 
     private func divider() -> some View {
@@ -188,7 +184,6 @@ struct SettingsView: View {
             .padding(.leading, 54)
     }
 
-    // Linha simples do card
     private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -214,7 +209,6 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    // Variante com texto à direita
     private func cardRow(icon: String, title: String, trailingText: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -245,7 +239,6 @@ struct SettingsView: View {
     }
 }
 
-// Enum de unidade de peso e utilitários
 private enum WeightUnit: String, CaseIterable {
     case kg
     case lbs
@@ -265,7 +258,6 @@ private enum WeightUnit: String, CaseIterable {
     }
 }
 
-// Sheet para selecionar unidade de peso
 private struct WeightUnitSheetView: View {
 
     @Binding var selectedUnitRaw: String
@@ -361,6 +353,8 @@ private struct WeightUnitSheetView: View {
                 .padding(.top, 16)
             }
         }
+        // ✅ garante padrão do sheet também
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
 

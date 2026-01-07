@@ -5,8 +5,9 @@ struct HomeView: View {
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    @AppStorage("ultimoTreinoSelecionado")
-    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+    // ✅ Evita @AppStorage no body
+    @State private var ultimoTreinoSelecionadoState: String = TreinoTipo.crossfit.rawValue
+    private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -16,6 +17,8 @@ struct HomeView: View {
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
+                // ⚠️ Removido aqui para não “lavar” a toolbar com material cinza:
+                // .drawingGroup()
 
             VStack(spacing: 0) {
 
@@ -35,7 +38,6 @@ struct HomeView: View {
                     .padding(.vertical, 10)
                 }
 
-                // ✅ Um GeometryReader apenas no container para dividir alturas
                 GeometryReader { proxy in
                     let tileHeight = proxy.size.height / 3
 
@@ -80,13 +82,26 @@ struct HomeView: View {
                 HeaderAvatarView(size: 38)
             }
         }
+
+        // ✅ Força o padrão do app (remove “cinza” de material)
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+
+        .onAppear {
+            let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
+            if ultimoTreinoSelecionadoState != raw {
+                ultimoTreinoSelecionadoState = raw
+            }
+        }
+        .onChange(of: ultimoTreinoSelecionadoState) { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: ultimoTreinoKey)
+        }
     }
 
     private var teacherAreaCard: some View {
         Button {
-            let categoria = TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+            let categoria = TreinoTipo(rawValue: ultimoTreinoSelecionadoState) ?? .crossfit
             path.append(.teacherDashboard(category: categoria))
         } label: {
             HStack(spacing: 12) {
@@ -128,7 +143,6 @@ struct HomeView: View {
                     isPerfilSelected: false
                 )
             )
-            .environmentObject(session)
         } else {
             FooterBar(
                 path: $path,
@@ -138,7 +152,6 @@ struct HomeView: View {
                     isPerfilSelected: false
                 )
             )
-            .environmentObject(session)
         }
     }
 
@@ -151,7 +164,7 @@ struct HomeView: View {
     ) -> some View {
 
         Button {
-            ultimoTreinoSelecionado = tipo.rawValue
+            ultimoTreinoSelecionadoState = tipo.rawValue
 
             if session.userType == .TRAINER {
                 path.append(.teacherStudentsList(selectedCategory: tipo, initialFilter: tipo))
@@ -176,7 +189,6 @@ struct HomeView: View {
         .frame(height: height)
     }
 
-    // ✅ CORREÇÃO: remover GeometryReader do tile (evita loop de preferences/layout)
     private func tileLayout(
         title: String,
         imageName: String,
@@ -185,7 +197,6 @@ struct HomeView: View {
     ) -> some View {
 
         ZStack {
-            // Fundo + imagem ocupando toda largura disponível
             ZStack {
                 Color.black
 
@@ -252,7 +263,6 @@ struct HomeView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: height)
 
-            // Gradientes finos topo/baixo
             VStack {
                 LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .top, endPoint: .bottom)
                     .frame(height: 4)

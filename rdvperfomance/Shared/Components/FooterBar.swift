@@ -1,4 +1,3 @@
-// FooterBar.swift — Rodapé reutilizável com variantes por tipo de tela
 import SwiftUI
 
 struct FooterBar: View {
@@ -81,7 +80,6 @@ struct FooterBar: View {
         .background(Theme.Colors.footerBackground)
     }
 
-    // Conteúdo do rodapé — renderiza diferentes layouts conforme `Kind`
     @ViewBuilder
     private func contentRow() -> some View {
         switch kind {
@@ -256,33 +254,34 @@ struct FooterBar: View {
         }
     }
 
-    private func goHomeBasic()  { withAnimation { path = canonicalStackBasic(for: .home) } }
-    private func goSobreBasic() { withAnimation { path = canonicalStackBasic(for: .sobre) } }
-    private func goPerfilBasic(){ withAnimation { path = canonicalStackBasic(for: .perfil) } }
+    // ✅ Sem withAnimation: animar “reset de pilha” é caro no NavigationStack
+    private func goHomeBasic()   { path = canonicalStackBasic(for: .home) }
+    private func goSobreBasic()  { path = canonicalStackBasic(for: .sobre) }
+    private func goPerfilBasic() { path = canonicalStackBasic(for: .perfil) }
 
     // Navegação aluno — constrói pilha com parâmetros do aluno
     private func goAgenda() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName)] }
+        path = [.studentAgenda(studentId: studentId, studentName: studentName)]
     }
 
     private func goTreinosAluno() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName)] }
+        path = [.studentAgenda(studentId: studentId, studentName: studentName)]
     }
 
     private func goSobreStudent() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre] }
+        path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre]
     }
 
     private func goPerfilStudent() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        withAnimation { path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre, .perfil] }
+        path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre, .perfil]
     }
 
     // Navegação professor — constrói pilha canônica para professor
@@ -292,17 +291,14 @@ struct FooterBar: View {
         switch destination {
         case .home:
             return [.home]
-
         case .alunos:
             return [.home, .teacherStudentsList(selectedCategory: category, initialFilter: category)]
-
         case .sobre:
             return [
                 .home,
                 .teacherStudentsList(selectedCategory: category, initialFilter: category),
                 .sobre
             ]
-
         case .perfil:
             return [
                 .home,
@@ -314,19 +310,19 @@ struct FooterBar: View {
     }
 
     private func goTeacherHome() {
-        withAnimation { path = teacherCanonicalStack(category: .crossfit, destination: .home) }
+        path = teacherCanonicalStack(category: .crossfit, destination: .home)
     }
 
     private func goTeacherAlunos(category: TreinoTipo) {
-        withAnimation { path = teacherCanonicalStack(category: category, destination: .alunos) }
+        path = teacherCanonicalStack(category: category, destination: .alunos)
     }
 
     private func goTeacherSobre(category: TreinoTipo) {
-        withAnimation { path = teacherCanonicalStack(category: category, destination: .sobre) }
+        path = teacherCanonicalStack(category: category, destination: .sobre)
     }
 
     private func goTeacherPerfil(category: TreinoTipo) {
-        withAnimation { path = teacherCanonicalStack(category: category, destination: .perfil) }
+        path = teacherCanonicalStack(category: category, destination: .perfil)
     }
 }
 
@@ -362,3 +358,4 @@ private struct FooterItem: View {
         .frame(width: width)
     }
 }
+
