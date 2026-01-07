@@ -166,10 +166,8 @@ struct SettingsView: View {
             cardRow(icon: "gamecontroller.fill", title: "SpriteKit (demo)") {
                 path.append(.spriteDemo)
             }
-            divider()
-            cardRow(icon: "arkit", title: "AR (demo)") {
-                path.append(.arDemo)
-            }
+
+            // ✅ AR (demo) removido conforme solicitado
         }
     }
 
@@ -365,3 +363,4 @@ private struct WeightUnitSheetView: View {
         }
     }
 }
+

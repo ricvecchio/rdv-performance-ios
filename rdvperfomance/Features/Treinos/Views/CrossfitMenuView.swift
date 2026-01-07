@@ -1,4 +1,3 @@
-// CrossfitMenuView.swift — Menu com opções específicas de Crossfit (WOD, Benchmark, etc.)
 import SwiftUI
 
 struct CrossfitMenuView: View {
@@ -7,7 +6,6 @@ struct CrossfitMenuView: View {
 
     var body: some View {
         ZStack {
-
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -24,36 +22,11 @@ struct CrossfitMenuView: View {
                     let tileHeight = proxy.size.height / 5
 
                     VStack(spacing: 0) {
-
-                        menuTile(
-                            title: "WOD",
-                            imageName: "rdv_crossfit_wod_horizontal",
-                            height: tileHeight
-                        )
-
-                        menuTile(
-                            title: "BENCHMARK",
-                            imageName: "rdv_crossfit_benchmark_horizontal",
-                            height: tileHeight
-                        )
-
-                        menuTile(
-                            title: "MEUS RECORDES",
-                            imageName: "rdv_crossfit_meusrecordes_horizontal",
-                            height: tileHeight
-                        )
-
-                        menuTile(
-                            title: "PROGRESSOS",
-                            imageName: "rdv_crossfit_progressos_horizontal",
-                            height: tileHeight
-                        )
-
-                        menuTile(
-                            title: "MONTE SEU TREINO",
-                            imageName: "rdv_crossfit_monteseutreino_horizontal",
-                            height: tileHeight
-                        )
+                        menuTile(title: "WOD", imageName: "rdv_crossfit_wod_horizontal", height: tileHeight)
+                        menuTile(title: "BENCHMARK", imageName: "rdv_crossfit_benchmark_horizontal", height: tileHeight)
+                        menuTile(title: "MEUS RECORDES", imageName: "rdv_crossfit_meusrecordes_horizontal", height: tileHeight)
+                        menuTile(title: "PROGRESSOS", imageName: "rdv_crossfit_progressos_horizontal", height: tileHeight)
+                        menuTile(title: "MONTE SEU TREINO", imageName: "rdv_crossfit_monteseutreino_horizontal", height: tileHeight)
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
@@ -76,7 +49,7 @@ struct CrossfitMenuView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
-        .toolbar(content: {
+        .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -85,20 +58,16 @@ struct CrossfitMenuView: View {
                 .buttonStyle(.plain)
             }
 
-            // ✅ Perfil no canto direito: apenas foto redonda (SEM Button para não criar estilo/bolha)
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_user_default", size: 38)
-                    .onTapGesture {
-                        // opcional: navegar para perfil
-                    }
+                    .onTapGesture { }
                     .background(Color.clear)
             }
-        })
+        }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Tile que inicia navegação para seção de treinos
     private func menuTile(
         title: String,
         imageName: String,
@@ -108,11 +77,7 @@ struct CrossfitMenuView: View {
         Button {
             path.append(.treinos(.crossfit))
         } label: {
-            menuTileLayout(
-                title: title,
-                imageName: imageName,
-                height: height
-            )
+            menuTileLayout(title: title, imageName: imageName, height: height)
         }
         .buttonStyle(.plain)
         .background(
@@ -122,7 +87,8 @@ struct CrossfitMenuView: View {
         .frame(height: height)
     }
 
-    // Layout visual do tile com imagem e título
+    // ✅ CORREÇÃO: remover GeometryReader do tile
+    // ✅ MELHORIA: blur em imagem grande é pesado; reduzi e prendi tudo em frame/clipped
     private func menuTileLayout(
         title: String,
         imageName: String,
@@ -130,75 +96,53 @@ struct CrossfitMenuView: View {
     ) -> some View {
 
         ZStack {
-            GeometryReader { geo in
-                let w = geo.size.width
+            // Fundo "blur"
+            Image(imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+                .clipped()
+                .blur(radius: 6) // era 10 (mais pesado)
+                .opacity(0.45)
 
-                ZStack {
+            // Imagem principal
+            Image(imageName)
+                .resizable()
+                .scaledToFit()
+                .frame(maxWidth: .infinity, maxHeight: height)
 
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFill()
-                        .frame(width: w, height: height)
-                        .clipped()
-                        .blur(radius: 10)
-                        .opacity(0.55)
+            Rectangle()
+                .fill(Color.black.opacity(0.45))
 
-                    Image(imageName)
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: w, height: height)
+            LinearGradient(
+                colors: [.black.opacity(0.70), .black.opacity(0.20), .clear],
+                startPoint: .bottom,
+                endPoint: .top
+            )
 
-                    Rectangle()
-                        .fill(Color.black.opacity(0.45))
-
-                    LinearGradient(
-                        colors: [
-                            .black.opacity(0.70),
-                            .black.opacity(0.20),
-                            .clear
-                        ],
-                        startPoint: .bottom,
-                        endPoint: .top
-                    )
-
-                    Text(title)
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white)
-                        .shadow(color: .black.opacity(0.75), radius: 4, y: 2)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.80)
-                        .padding(.horizontal, 24)
-                        .frame(maxWidth: .infinity, alignment: .center)
-                }
-                .frame(width: w, height: height)
-                .contentShape(Rectangle())
-            }
-            .frame(height: height)
+            Text(title)
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white)
+                .shadow(color: .black.opacity(0.75), radius: 4, y: 2)
+                .lineLimit(1)
+                .minimumScaleFactor(0.80)
+                .padding(.horizontal, 24)
+                .frame(maxWidth: .infinity, alignment: .center)
 
             VStack {
-                LinearGradient(
-                    colors: [.black.opacity(0.15), .clear],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 4)
-
+                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 4)
                 Spacer()
-
-                LinearGradient(
-                    colors: [.black.opacity(0.15), .clear],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-                .frame(height: 4)
+                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .bottom, endPoint: .top)
+                    .frame(height: 4)
             }
             .frame(height: height)
             .allowsHitTesting(false)
         }
-        .overlay(
-            Rectangle()
-                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-        )
+        .frame(height: height)
+        .overlay(Rectangle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
+        .contentShape(Rectangle())
+        .clipped()
     }
 
     private func pop() {
@@ -206,3 +150,4 @@ struct CrossfitMenuView: View {
         path.removeLast()
     }
 }
+

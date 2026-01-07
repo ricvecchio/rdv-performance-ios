@@ -1,23 +1,17 @@
-// HomeView.swift — Tela Home com tiles de treino e atalho para área do professor
 import SwiftUI
 
 struct HomeView: View {
 
-    // Binding de rotas e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // Armazena a última categoria selecionada entre telas
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
-    // Largura máxima do conteúdo central
     private let contentMaxWidth: CGFloat = 380
 
-    // Corpo principal da view
     var body: some View {
         ZStack {
-
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -30,7 +24,6 @@ struct HomeView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                // Mostra card do professor quando o usuário é trainer
                 if session.userType == .TRAINER {
                     HStack {
                         Spacer(minLength: 0)
@@ -42,11 +35,11 @@ struct HomeView: View {
                     .padding(.vertical, 10)
                 }
 
+                // ✅ Um GeometryReader apenas no container para dividir alturas
                 GeometryReader { proxy in
                     let tileHeight = proxy.size.height / 3
 
                     VStack(spacing: 0) {
-
                         programaTile(
                             title: "Crossfit",
                             imageName: "rdv_programa_crossfit_horizontal",
@@ -82,25 +75,21 @@ struct HomeView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
-        .toolbar(content: {
-
-            // Avatar do cabeçalho (foto do usuário)
+        .toolbar {
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
-        })
+        }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Card com atalho "Área do Professor"
     private var teacherAreaCard: some View {
         Button {
             let categoria = TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
             path.append(.teacherDashboard(category: categoria))
         } label: {
             HStack(spacing: 12) {
-
                 Image(systemName: "person.3.fill")
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 16))
@@ -128,7 +117,6 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
-    // Footer adaptado conforme tipo de usuário
     @ViewBuilder
     private func footerForCurrentUser() -> some View {
         if session.userType == .STUDENT {
@@ -154,7 +142,6 @@ struct HomeView: View {
         }
     }
 
-    // Tile de programa que navega conforme tipo de usuário
     private func programaTile(
         title: String,
         imageName: String,
@@ -164,8 +151,6 @@ struct HomeView: View {
     ) -> some View {
 
         Button {
-
-            // Atualiza a última seleção e navega para a rota apropriada
             ultimoTreinoSelecionado = tipo.rawValue
 
             if session.userType == .TRAINER {
@@ -175,7 +160,6 @@ struct HomeView: View {
                 let name = session.userName ?? "Aluno"
                 path.append(.studentAgenda(studentId: uid, studentName: name))
             }
-
         } label: {
             tileLayout(
                 title: title,
@@ -192,7 +176,7 @@ struct HomeView: View {
         .frame(height: height)
     }
 
-    // Layout visual do tile com imagem, overlays e textos
+    // ✅ CORREÇÃO: remover GeometryReader do tile (evita loop de preferences/layout)
     private func tileLayout(
         title: String,
         imageName: String,
@@ -201,105 +185,87 @@ struct HomeView: View {
     ) -> some View {
 
         ZStack {
-            GeometryReader { geo in
-                let w = geo.size.width
+            // Fundo + imagem ocupando toda largura disponível
+            ZStack {
+                Color.black
 
-                ZStack {
-                    Color.black
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: height)
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.black.opacity(0.7))
+                            .mask(
+                                HStack(spacing: 0) {
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [.black, .clear]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                    .frame(width: 28)
 
-                    Image(imageName)
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(width: w, height: height)
-                        .overlay(
-                            Rectangle()
-                                .fill(Color.black.opacity(0.7))
-                                .mask(
-                                    HStack(spacing: 0) {
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [.black, .clear]),
-                                            startPoint: .leading,
-                                            endPoint: .trailing
-                                        )
-                                        .frame(width: 28)
+                                    Spacer()
 
-                                        Spacer()
-
-                                        LinearGradient(
-                                            gradient: Gradient(colors: [.black, .clear]),
-                                            startPoint: .trailing,
-                                            endPoint: .leading
-                                        )
-                                        .frame(width: 28)
-                                    }
-                                )
-                        )
-                }
-                .frame(width: w, height: height)
-
-                .overlay {
-                    LinearGradient(
-                        colors: [
-                            .black.opacity(0.70),
-                            .black.opacity(0.15),
-                            .clear
-                        ],
-                        startPoint: .bottom,
-                        endPoint: .top
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [.black, .clear]),
+                                        startPoint: .trailing,
+                                        endPoint: .leading
+                                    )
+                                    .frame(width: 28)
+                                }
+                            )
                     )
-                }
-
-                .overlay(alignment: .bottomLeading) {
-                    ZStack(alignment: .bottomLeading) {
-
-                        Text(imageTitle)
-                            .font(.system(size: 25, weight: .bold))
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.9), radius: 6, x: 0, y: 3)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.65)
-                            .padding(.leading, 200)
-                            .padding(.trailing, 24)
-                            .padding(.bottom, 40)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
-                        Text(title)
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white)
-                            .shadow(color: .black.opacity(0.7), radius: 4, y: 2)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .padding(.leading, 24)
-                            .padding(.trailing, 24)
-                            .padding(.bottom, 12)
-                    }
-                }
             }
-            .frame(height: height)
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+
+            LinearGradient(
+                colors: [.black.opacity(0.70), .black.opacity(0.15), .clear],
+                startPoint: .bottom,
+                endPoint: .top
+            )
 
             VStack {
-                LinearGradient(
-                    colors: [.black.opacity(0.15), .clear],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-                .frame(height: 4)
-
                 Spacer()
+                ZStack(alignment: .bottomLeading) {
+                    Text(imageTitle)
+                        .font(.system(size: 25, weight: .bold))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.9), radius: 6, x: 0, y: 3)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.65)
+                        .padding(.leading, 200)
+                        .padding(.trailing, 24)
+                        .padding(.bottom, 40)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                LinearGradient(
-                    colors: [.black.opacity(0.15), .clear],
-                    startPoint: .bottom,
-                    endPoint: .top
-                )
-                .frame(height: 4)
+                    Text(title)
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white)
+                        .shadow(color: .black.opacity(0.7), radius: 4, y: 2)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                        .padding(.leading, 24)
+                        .padding(.trailing, 24)
+                        .padding(.bottom, 12)
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: height)
+
+            // Gradientes finos topo/baixo
+            VStack {
+                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 4)
+                Spacer()
+                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .bottom, endPoint: .top)
+                    .frame(height: 4)
             }
             .frame(height: height)
             .allowsHitTesting(false)
         }
-        .overlay(
-            Rectangle()
-                .stroke(Color.white.opacity(0.1), lineWidth: 0.5)
-        )
+        .frame(height: height)
+        .overlay(Rectangle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
+        .clipped()
     }
 }
+
