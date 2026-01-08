@@ -12,6 +12,10 @@ O app possui uma navegação simples, interface moderna e layout responsivo, com
 - NavigationStack
 - AppStorage
 - SF Symbols
+- ARKit (Realidade Aumentada)
+- CoreData (Persistência Local)
+- MapKit (Mapas e Localização)
+- SpriteKit (Animações e Jogos)
 - Arquitetura declarativa
 - iOS 16+
 - Firebase (configuração parcial via `GoogleService-Info.plist` – serviços de autenticação / Firestore presentes como referência)
@@ -118,6 +122,15 @@ rdvperformance-ios
    │  ├─ AppRouter.swift
    │  └─ AppRoute.swift
    ├─ Features/
+   │  ├─ AR/
+   │  │  ├─ Models/
+   │  │  │  └─ ARCorrectionPoint.swift
+   │  │  ├─ Services/
+   │  │  │  └─ ARLocalStorage.swift
+   │  │  ├─ ARExerciseView.swift
+   │  │  ├─ ARExerciseViewModel.swift
+   │  │  ├─ ARViewContainer.swift
+   │  │  └─ DebugAROverlay.swift
    │  ├─ Auth/
    │  │  ├─ Models/
    │  │  │  └─ AuthDTOs.swift
@@ -133,9 +146,34 @@ rdvperformance-ios
    │  │     ├─ ProfileView.swift
    │  │     ├─ RegisterStudentView.swift
    │  │     └─ RegisterTrainerView.swift
+   │  ├─ CoreData/
+   │  │  ├─ ActivityListView.swift
+   │  │  ├─ PersistenceController.swift
+   │  │  └─ UserActivity.swift
+   │  ├─ Gamification/
+   │  │  ├─ Models/
+   │  │  │  ├─ Badge.swift
+   │  │  │  ├─ ProgressGameMode.swift
+   │  │  │  └─ ProgressMetrics.swift
+   │  │  ├─ Services/
+   │  │  │  ├─ ProgressMetricsCalculator.swift
+   │  │  │  ├─ ProgressMetricsMock.swift
+   │  │  │  └─ ProgressMetricsProvider.swift
+   │  │  ├─ SpriteKit/
+   │  │  │  ├─ ProgressGameScene.swift
+   │  │  │  └─ ProgressGameSceneFactory.swift
+   │  │  ├─ ViewModels/
+   │  │  │  └─ ProgressGameViewModel.swift
+   │  │  └─ Views/
+   │  │     ├─ ProgressGamePreviewView.swift
+   │  │     └─ ProgressGameView.swift
    │  ├─ Home/
    │  │  └─ Views/
    │  │     └─ HomeView.swift
+   │  ├─ Map/
+   │  │  ├─ MapDemoView.swift
+   │  │  ├─ MapView.swift
+   │  │  └─ MapViewModel.swift
    │  ├─ Settings/
    │  │  └─ Views/
    │  │     ├─ AccountSecurityService.swift
@@ -143,6 +181,9 @@ rdvperformance-ios
    │  │     ├─ DeleteAccountView.swift
    │  │     ├─ InfoLegalView.swift
    │  │     └─ SettingsView.swift
+   │  ├─ Sprites/
+   │  │  ├─ GameScene.swift
+   │  │  └─ SpriteDemoView.swift
    │  ├─ Student/
    │  │  ├─ Models/
    │  │  │  ├─ TrainingDayFS.swift
@@ -221,6 +262,25 @@ rdvperformance-ios
 
 Abaixo um mapeamento por tela/módulo com os arquivos principais usados (Views) e os arquivos relacionados (ViewModels, Models, Services, Componentes compartilhados).
 
+### AR (Realidade Aumentada)
+- Views:
+  - `Features/AR/ARExerciseView.swift`
+  - `Features/AR/ARViewContainer.swift`
+  - `Features/AR/DebugAROverlay.swift`
+- ViewModels:
+  - `Features/AR/ARExerciseViewModel.swift`
+- Models:
+  - `Features/AR/Models/ARCorrectionPoint.swift`
+- Services:
+  - `Features/AR/Services/ARLocalStorage.swift`
+- Descrição:
+  - Sistema de visualização de exercícios em realidade aumentada
+  - Detecção e correção de postura através de ARKit
+  - Armazenamento local de pontos de correção
+  - Overlay de debug para desenvolvimento
+
+---
+
 ### Auth
 - Views:
   - `Features/Auth/Views/LoginView.swift`
@@ -242,6 +302,45 @@ Abaixo um mapeamento por tela/módulo com os arquivos principais usados (Views) 
 
 ---
 
+### CoreData (Persistência Local)
+- Views:
+  - `Features/CoreData/ActivityListView.swift`
+- Controllers:
+  - `Features/CoreData/PersistenceController.swift`
+- Models:
+  - `Features/CoreData/UserActivity.swift`
+- Descrição:
+  - Gerenciamento de atividades do usuário
+  - Armazenamento local com CoreData
+  - Listagem e histórico de atividades
+
+---
+
+### Gamification (Gamificação e Progressos)
+- Views:
+  - `Features/Gamification/Views/ProgressGameView.swift`
+  - `Features/Gamification/Views/ProgressGamePreviewView.swift`
+- ViewModels:
+  - `Features/Gamification/ViewModels/ProgressGameViewModel.swift`
+- Models:
+  - `Features/Gamification/Models/Badge.swift`
+  - `Features/Gamification/Models/ProgressGameMode.swift`
+  - `Features/Gamification/Models/ProgressMetrics.swift`
+- Services:
+  - `Features/Gamification/Services/ProgressMetricsCalculator.swift`
+  - `Features/Gamification/Services/ProgressMetricsMock.swift`
+  - `Features/Gamification/Services/ProgressMetricsProvider.swift`
+- SpriteKit:
+  - `Features/Gamification/SpriteKit/ProgressGameScene.swift`
+  - `Features/Gamification/SpriteKit/ProgressGameSceneFactory.swift`
+- Descrição:
+  - Sistema de badges e conquistas
+  - Visualização de progressos com SpriteKit
+  - Métricas e cálculos de desempenho
+  - Modos de jogo interativos
+
+---
+
 ### Home
 - View:
   - `Features/Home/Views/HomeView.swift`
@@ -249,6 +348,19 @@ Abaixo um mapeamento por tela/módulo com os arquivos principais usados (Views) 
   - `Features/Treinos/Models/TreinoTipo.swift`
   - `App/AppRoute.swift`, `App/AppRouter.swift`
   - `Shared/Components/FooterBar.swift`
+
+---
+
+### Map (Mapas e Localização)
+- Views:
+  - `Features/Map/MapView.swift`
+  - `Features/Map/MapDemoView.swift`
+- ViewModels:
+  - `Features/Map/MapViewModel.swift`
+- Descrição:
+  - Visualização de localizações em mapa
+  - Integração com MapKit
+  - Demo de funcionalidades de mapa
 
 ---
 
@@ -260,6 +372,18 @@ Abaixo um mapeamento por tela/módulo com os arquivos principais usados (Views) 
   - `Features/Settings/Views/InfoLegalView.swift`
 - Services/Helpers:
   - `Features/Settings/Views/AccountSecurityService.swift` (serviço ligado a mudanças de senha / segurança)
+
+---
+
+### Sprites (Demonstrações SpriteKit)
+- Views:
+  - `Features/Sprites/SpriteDemoView.swift`
+- SpriteKit:
+  - `Features/Sprites/GameScene.swift`
+- Descrição:
+  - Demonstrações de animações com SpriteKit
+  - Cenas de jogo interativas
+  - Testes de funcionalidades visuais
 
 ---
 
@@ -368,22 +492,34 @@ Para que a opção "Mapa da Academia" funcione corretamente você precisa adicio
 
 ## 🎯 Destaques do Projeto
 
-- Navegação centralizada por rotas (`AppRoute` / `AppRouter`)
-- Componentes reutilizáveis e layout responsivo
-- Integração básica com Firebase preparada (services/Firestore)
-- Organização por features (Auth, Home, Student, Teacher, Treinos)
+- **Navegação centralizada** por rotas (`AppRoute` / `AppRouter`)
+- **Componentes reutilizáveis** e layout responsivo
+- **Realidade Aumentada (AR)** para análise de exercícios e correção de postura
+- **Gamificação** com sistema de badges, conquistas e visualização de progressos
+- **SpriteKit** para animações e jogos interativos
+- **CoreData** para persistência local de atividades
+- **MapKit** para visualização de localizações e academias
+- **Integração com Firebase** (Auth/Firestore) preparada
+- **Organização por features** (AR, Auth, CoreData, Gamification, Home, Map, Settings, Sprites, Student, Teacher, Treinos)
+- **Arquitetura MVVM** com separação clara de responsabilidades
 
 ---
 
 ## 📌 Próximos Passos 
 
 - Completar integração com backend (Firebase) e testar autenticação real
+- Aprimorar sistema de AR com mais exercícios e detecção de postura
+- Expandir sistema de gamificação com mais badges e desafios
+- Adicionar sincronização de dados CoreData com Firestore
+- Implementar notificações push para lembretes de treino
 - Adicionar testes unitários / UI tests
 - Documentar contratos de rede e modelos Firestore
 - Internacionalização (strings em Localizable)
 - Melhorar cobertura de assets e imagens de alta resolução
 - Funções para importar planilhas em Excel
 - Lista com exercícios pré-definidos para montagem rápida de treinos
+- Melhorar overlay de debug do AR para facilitar desenvolvimento
+- Adicionar mais modos de jogo no sistema de gamificação
 
 ---
 
