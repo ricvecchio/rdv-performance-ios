@@ -224,6 +224,7 @@ struct TeacherStudentDetailView: View {
         path.removeLast()
     }
 
+    // Carrega progresso geral do aluno
     private func loadProgress() async {
         guard session.userType == .TRAINER else { return }
         guard let sid = student.id, !sid.isEmpty else { return }

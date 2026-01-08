@@ -468,6 +468,7 @@ struct StudentDayDetailView: View {
         }
     }
 
+    // Exclui dia do Firestore
     private func deleteDay() async {
         errorMessage = nil
 

@@ -350,6 +350,7 @@ struct TeacherStudentsListView: View {
         }
     }
 
+    // Confirma desvinculação do aluno
     private func confirmUnlink() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.errorMessage = "Não foi possível identificar o professor logado."

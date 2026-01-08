@@ -127,6 +127,7 @@ struct TeacherDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Cria botão de ação estilizado
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {

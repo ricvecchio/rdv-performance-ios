@@ -198,6 +198,7 @@ private struct EditLocationView: View {
     }
 }
 
+// Modelo de pin para o mapa
 private struct MapPin: Identifiable {
     let id: String
     let coordinate: CLLocationCoordinate2D

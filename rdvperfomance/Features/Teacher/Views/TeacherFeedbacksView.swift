@@ -325,6 +325,7 @@ struct TeacherFeedbacksView: View {
         }
     }
 
+    // Salva novo feedback no Firestore
     private func saveFeedback() async {
         errorMessage = nil
         successMessage = nil

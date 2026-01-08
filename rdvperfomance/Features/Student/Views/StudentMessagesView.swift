@@ -198,7 +198,7 @@ struct StudentMessagesView: View {
         )
     }
 
-    // Carrega mensagens do Firestore para o aluno logado
+    // Carrega mensagens do Firestore
     private func load() async {
         errorMessage = nil
 
