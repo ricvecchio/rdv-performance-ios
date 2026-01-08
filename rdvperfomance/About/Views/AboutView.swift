@@ -1,7 +1,8 @@
-// View da tela "Sobre" com informações do app
+// Tela que exibe informações sobre o aplicativo
 import SwiftUI
 import UIKit
 
+// View da tela Sobre com card de informações e funcionalidades
 struct AboutView: View {
 
     @Binding var path: [AppRoute]
@@ -14,12 +15,12 @@ struct AboutView: View {
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
-    // Retorna a categoria de treino selecionada pelo professor
+    // Retorna a categoria selecionada pelo professor
     private var categoriaAtualProfessor: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    // Interface principal da tela Sobre
+    // Constrói a interface da tela Sobre
     var body: some View {
         ZStack {
 
@@ -87,7 +88,7 @@ struct AboutView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Renderiza o footer de acordo com o tipo de usuário
+    // Retorna o footer apropriado baseado no tipo de usuário
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -113,13 +114,13 @@ struct AboutView: View {
         }
     }
 
-    // Remove a última rota da pilha de navegação
+    // Remove a última rota da pilha para voltar
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Retorna o card principal com título, funcionalidades e descrição do app
+    // Retorna o card com informações do app
     private func contentCard() -> some View {
         VStack(spacing: 14) {
             Text("GERENCIE SEUS ALUNOS E PERSONALIZE TREINOS COM FACILIDADE")
@@ -143,7 +144,7 @@ struct AboutView: View {
         .cornerRadius(12)
     }
 
-    // Retorna uma linha de funcionalidade com ícone de check e texto
+    // Retorna uma linha com ícone de check e texto descritivo
     private func featureItem(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.circle.fill")

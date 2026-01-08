@@ -1,13 +1,13 @@
 import Foundation
 
-/// Define os tipos de conteúdo legal disponíveis no app
+// Define os tipos de conteúdo legal e informativo disponíveis
 enum InfoLegalKind: String, Hashable {
     case helpCenter
     case privacyPolicy
     case termsOfUse
 }
 
-/// Enum que representa todas as rotas de navegação do aplicativo
+// Representa todas as rotas de navegação disponíveis no aplicativo
 enum AppRoute: Hashable {
 
     case login
