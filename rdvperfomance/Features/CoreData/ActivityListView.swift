@@ -1,8 +1,11 @@
 import SwiftUI
 import CoreData
 
+/// View que exibe lista de atividades do usuário com opções de adicionar e deletar
 struct ActivityListView: View {
+    /// Contexto do Core Data injetado pelo ambiente
     @Environment(\.managedObjectContext) private var viewContext
+    /// Request de busca que retorna atividades ordenadas por data decrescente
     @FetchRequest(entity: UserActivity.entity(), sortDescriptors: [NSSortDescriptor(keyPath: \UserActivity.date, ascending: false)]) private var activities: FetchedResults<UserActivity>
 
     var body: some View {
@@ -32,6 +35,7 @@ struct ActivityListView: View {
         }
     }
 
+    /// Adiciona uma nova atividade com título aleatório e data atual
     private func add() {
         let newItem = UserActivity(context: viewContext)
         newItem.id = UUID()
@@ -45,6 +49,7 @@ struct ActivityListView: View {
         }
     }
 
+    /// Remove atividades selecionadas pelos índices fornecidos
     private func delete(at offsets: IndexSet) {
         for index in offsets {
             let item = activities[index]
@@ -58,6 +63,7 @@ struct ActivityListView: View {
     }
 }
 
+/// Provider para preview da ActivityListView com contexto em memória
 struct ActivityListView_Previews: PreviewProvider {
     static var previews: some View {
         let controller = PersistenceController(inMemory: true)

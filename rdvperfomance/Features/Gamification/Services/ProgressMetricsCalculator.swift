@@ -1,7 +1,2 @@
-//
-//  ProgressMetricsCalculator.swift
-//  rdvperfomance
-//
-//  Created by Ricardo Del Vecchio on 07/01/26.
-//
+/// Calculadora de métricas de progresso (arquivo placeholder para implementação futura)
 

@@ -1,9 +1,9 @@
 import Foundation
 
-// MARK: - Mock Metrics
-// Mantém cenários prontos para o "demo" no Settings.
+/// Fornece cenários mock de métricas de progresso para demos e testes
 enum ProgressMetricsMock {
 
+    /// Retorna métricas de usuário iniciante com progresso mínimo
     static func beginner() -> ProgressMetrics {
         ProgressMetrics(
             weeklyCompletion: 0.20,
@@ -16,6 +16,7 @@ enum ProgressMetricsMock {
         )
     }
 
+    /// Retorna métricas de usuário consistente com bom progresso
     static func consistent() -> ProgressMetrics {
         ProgressMetrics(
             weeklyCompletion: 0.75,
@@ -29,6 +30,7 @@ enum ProgressMetricsMock {
         )
     }
 
+    /// Retorna métricas de usuário expert com progresso máximo
     static func beastMode() -> ProgressMetrics {
         ProgressMetrics(
             weeklyCompletion: 1.0,
@@ -43,6 +45,7 @@ enum ProgressMetricsMock {
         )
     }
 
+    /// Retorna métricas aleatórias entre os cenários disponíveis
     static func random() -> ProgressMetrics {
         let options = [beginner(), consistent(), beastMode()]
         return options.randomElement() ?? beginner()

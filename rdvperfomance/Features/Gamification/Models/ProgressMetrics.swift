@@ -1,24 +1,24 @@
 import Foundation
 
-// MARK: - ProgressMetrics
-// Modelo "agnóstico de UI" que a SpriteKit Scene consome.
+/// Modelo de métricas de progresso consumido pela interface SpriteKit
 struct ProgressMetrics: Hashable, Codable {
 
-    // 0...1
+    /// Percentual de conclusão semanal normalizado entre 0 e 1
     var weeklyCompletion: Double
 
-    // Dias consecutivos (streak)
+    /// Quantidade de dias consecutivos de atividade
     var streakDays: Int
 
-    // Badges desbloqueadas
+    /// Lista de badges conquistadas pelo usuário
     var badges: [Badge]
 
-    // Exibição opcional (útil para professor)
+    /// Nome de exibição opcional do usuário
     var displayName: String?
 
-    // Label opcional (ex.: "Semana atual")
+    /// Label opcional para identificar o período
     var weekLabel: String?
 
+    /// Retorna instância vazia com valores padrão
     static var empty: ProgressMetrics {
         .init(
             weeklyCompletion: 0.0,

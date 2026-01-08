@@ -1,26 +1,25 @@
 import Foundation
 
-// MARK: - ProgressMetricsProvider
-// Fornece métricas para preview / aluno / professor.
-// Boa prática: separar "obter dados" da UI.
+/// Provedor responsável por carregar métricas de progresso em diferentes modos
 final class ProgressMetricsProvider {
 
+    /// Repositório Firestore para acesso aos dados
     private let repository: FirestoreRepository
 
+    /// Inicializa o provider com repositório específico ou shared por padrão
     init(repository: FirestoreRepository = .shared) {
         self.repository = repository
     }
 
-    // Preview sempre funciona sem rede
+    /// Carrega métricas mock para modo preview sem necessidade de rede
     func loadPreview() async -> ProgressMetrics {
         ProgressMetricsMock.random()
     }
 
-    // Professor visualiza aluno específico
+    /// Carrega métricas de aluno específico para visualização do professor
     func loadForTeacher(studentId: String, displayName: String?) async -> ProgressMetrics {
-        // MVP seguro: usa o progresso geral já existente no repositório.
-        // Streak/badges podem ser heurísticas por enquanto.
         do {
+            /// Busca progresso geral do aluno no repositório
             let overall = try await repository.getStudentOverallProgress(studentId: studentId)
             let completion = max(0.0, min(1.0, Double(overall.percent) / 100.0))
 
@@ -35,7 +34,7 @@ final class ProgressMetricsProvider {
                 weekLabel: "Progresso geral"
             )
         } catch {
-            // Falha segura
+            /// Retorna métricas vazias em caso de erro para garantir falha segura
             return ProgressMetrics(
                 weeklyCompletion: 0.0,
                 streakDays: 0,
@@ -46,18 +45,13 @@ final class ProgressMetricsProvider {
         }
     }
 
-    // Aluno logado (se você quiser reutilizar depois)
+    /// Carrega métricas do próprio aluno logado reutilizando estratégia do professor
     func loadForStudentMe(studentId: String, displayName: String?) async -> ProgressMetrics {
-        // Reutiliza a mesma estratégia do professor
         await loadForTeacher(studentId: studentId, displayName: displayName)
     }
 
-    // MARK: - Helpers (heurísticas simples para MVP)
+    /// Estima quantidade de dias consecutivos baseado no percentual de progresso
     private func estimateStreak(fromPercent percent: Int) -> Int {
-        // Heurística simples:
-        // 0-20% => 1
-        // 21-60% => 3-6
-        // 61-100% => 7-14
         switch percent {
         case ..<1:
             return 0
@@ -76,6 +70,7 @@ final class ProgressMetricsProvider {
         }
     }
 
+    /// Retorna lista de badges conquistadas baseado no percentual de progresso
     private func badgesFor(percent: Int) -> [Badge] {
         var list: [Badge] = []
 

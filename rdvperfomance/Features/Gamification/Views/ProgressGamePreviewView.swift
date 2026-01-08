@@ -78,9 +78,11 @@ private struct SpriteKitPreviewCard: View {
     }
 }
 
+/// Painel que renderiza a cena SpriteKit e responde a mudanças nas métricas
 private struct SpriteKitPreviewPanel: View {
 
     let metrics: ProgressMetrics
+    /// Cena SpriteKit criada uma única vez e reutilizada
     @State private var scene = ProgressGameSceneFactory.makeScene(size: CGSize(width: 380, height: 320))
 
     var body: some View {
@@ -91,4 +93,3 @@ private struct SpriteKitPreviewPanel: View {
             }
     }
 }
-

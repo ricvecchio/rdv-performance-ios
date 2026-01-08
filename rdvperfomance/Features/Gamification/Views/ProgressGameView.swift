@@ -1,14 +1,18 @@
 import SwiftUI
 import SpriteKit
 
-// MARK: - Tela reutilizável (Aluno / Professor)
+/// Tela reutilizável para exibição de progresso gamificado para aluno ou professor
 struct ProgressGameView: View {
 
+    /// Path de navegação para controle de stack
     @Binding var path: [AppRoute]
+    /// Modo de operação que define fonte de dados
     let mode: ProgressGameMode
 
+    /// ViewModel que gerencia estado e dados da tela
     @StateObject private var vm: ProgressGameViewModel
 
+    /// Inicializa a view com path de navegação e modo específico
     init(path: Binding<[AppRoute]>, mode: ProgressGameMode) {
         self._path = path
         self.mode = mode
@@ -60,6 +64,7 @@ struct ProgressGameView: View {
         .task { await vm.load() }
     }
 
+    /// View de conteúdo principal com painel SpriteKit e card fallback
     private var content: some View {
         VStack(spacing: 12) {
 
@@ -69,10 +74,10 @@ struct ProgressGameView: View {
                     .padding(.top, 20)
             }
 
-            // ✅ Painel SpriteKit maior e com clipping consistente
+            /// Painel SpriteKit com clipping para evitar overflow visual
             SpriteKitPanel(metrics: vm.metrics)
-                .frame(height: 340) // <- era 320 (expandiu um pouco)
-                .padding(.horizontal, 2) // micro-ajuste para “acompanhar” o card de baixo visualmente
+                .frame(height: 340)
+                .padding(.horizontal, 2)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
                 .overlay(
@@ -85,6 +90,7 @@ struct ProgressGameView: View {
         }
     }
 
+    /// Card de fallback com informações textuais das métricas
     private var fallbackCard: some View {
         let percent = Int((vm.metrics.weeklyCompletion * 100).rounded())
         return VStack(alignment: .leading, spacing: 8) {
@@ -117,18 +123,19 @@ struct ProgressGameView: View {
         )
     }
 
+    /// Remove última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 }
 
-// MARK: - SpriteKit container com atualização segura
+/// Container SpriteKit que atualiza cena conforme métricas mudam
 private struct SpriteKitPanel: View {
 
     let metrics: ProgressMetrics
 
-    // ✅ cena criada uma única vez; tamanho ajustado pelo container real (GeometryReader)
+    /// Cena criada uma única vez e redimensionada pelo container real
     @State private var scene: ProgressGameScene = ProgressGameSceneFactory.makeScene(
         size: CGSize(width: 10, height: 10)
     )
@@ -150,14 +157,12 @@ private struct SpriteKitPanel: View {
         .clipped()
     }
 
+    /// Atualiza tamanho da cena apenas se diferente do atual evitando trabalho desnecessário
     private func applySizeIfNeeded(_ size: CGSize) {
-        // Evita ajustes com tamanho inválido durante layout
         guard size.width > 10, size.height > 10 else { return }
 
-        // Só atualiza se mudou de fato (evita trabalho desnecessário)
         if scene.size != size {
             scene.size = size
         }
     }
 }
-

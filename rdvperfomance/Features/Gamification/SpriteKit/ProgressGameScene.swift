@@ -1,40 +1,48 @@
 import SpriteKit
 import Foundation
 
-// MARK: - ProgressGameScene
-// Cena simples: anel de progresso + streak + badges.
-// Sem dependência de Theme (SpriteKit não lê Theme facilmente), então mantemos visual neutro.
+/// Cena SpriteKit que exibe progresso gamificado com anel, streak e badges
 final class ProgressGameScene: SKScene {
 
+    /// Anel de fundo que representa o progresso total possível
     private let ringBackground = SKShapeNode()
+    /// Anel colorido que representa o progresso atual
     private let ringProgress = SKShapeNode()
 
+    /// Label principal com nome do usuário
     private let titleLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
+    /// Label secundária com período de referência
     private let subtitleLabel = SKLabelNode(fontNamed: "AvenirNext-Regular")
+    /// Label que exibe streak e percentual
     private let streakLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
 
+    /// Container para organizar badges horizontalmente
     private let badgesContainer = SKNode()
 
+    /// Métricas atualmente exibidas na cena
     private var currentMetrics: ProgressMetrics = .empty
 
+    /// Configura elementos da cena quando adicionada à view
     override func didMove(to view: SKView) {
         super.didMove(to: view)
         setupIfNeeded()
         apply(metrics: currentMetrics, animated: false)
     }
 
+    /// Recalcula layout quando tamanho da cena muda
     override func didChangeSize(_ oldSize: CGSize) {
         super.didChangeSize(oldSize)
         layoutNodes()
         apply(metrics: currentMetrics, animated: false)
     }
 
+    /// Atualiza métricas exibidas na cena com opção de animação
     func update(with metrics: ProgressMetrics, animated: Bool = true) {
         currentMetrics = metrics
         apply(metrics: metrics, animated: animated)
     }
 
-    // MARK: - Setup
+    /// Configura nós da cena uma única vez evitando duplicação
     private func setupIfNeeded() {
         guard ringBackground.parent == nil else { return }
 
@@ -46,7 +54,6 @@ final class ProgressGameScene: SKScene {
         addChild(streakLabel)
         addChild(badgesContainer)
 
-        // Labels
         titleLabel.fontSize = 18
         titleLabel.fontColor = .white
         titleLabel.horizontalAlignmentMode = .center
@@ -62,7 +69,6 @@ final class ProgressGameScene: SKScene {
         streakLabel.horizontalAlignmentMode = .center
         streakLabel.verticalAlignmentMode = .center
 
-        // Ring base style
         ringBackground.strokeColor = UIColor.white.withAlphaComponent(0.20)
         ringBackground.fillColor = .clear
         ringBackground.lineWidth = 12
@@ -76,10 +82,11 @@ final class ProgressGameScene: SKScene {
         layoutNodes()
     }
 
+    /// Posiciona todos os elementos na cena baseado no tamanho disponível
     private func layoutNodes() {
         let center = CGPoint(x: size.width / 2.0, y: size.height * 0.60)
 
-        // Ring radius adaptativo
+        /// Calcula raio adaptativo baseado no menor lado da tela
         let radius = min(size.width, size.height) * 0.18
 
         let circlePath = UIBezierPath(
@@ -103,10 +110,10 @@ final class ProgressGameScene: SKScene {
         badgesContainer.position = CGPoint(x: size.width / 2.0, y: size.height * 0.22)
     }
 
-    // MARK: - Apply metrics
+    /// Aplica métricas fornecidas aos elementos visuais da cena
     private func apply(metrics: ProgressMetrics, animated: Bool) {
 
-        // Textos
+        /// Define textos dos labels com dados das métricas
         let name = (metrics.displayName?.isEmpty == false) ? metrics.displayName! : "Progresso"
         titleLabel.text = name
         subtitleLabel.text = metrics.weekLabel ?? "Semana"
@@ -114,12 +121,10 @@ final class ProgressGameScene: SKScene {
         let percent = Int((max(0.0, min(1.0, metrics.weeklyCompletion)) * 100.0).rounded())
         streakLabel.text = "🔥 Streak: \(metrics.streakDays) dias • \(percent)%"
 
-        // Ring
+        /// Desenha arco de progresso baseado no percentual de conclusão
         let clamped = max(0.0, min(1.0, metrics.weeklyCompletion))
         let targetStrokeEnd = CGFloat(clamped)
 
-        // Em SKShapeNode não existe "strokeEnd" nativo como CAShapeLayer.
-        // Solução simples e confiável: desenhar arco do progresso.
         let radius = min(size.width, size.height) * 0.18
         let endAngle = CGFloat(-Double.pi / 2) + (CGFloat(2 * Double.pi) * targetStrokeEnd)
 
@@ -132,13 +137,14 @@ final class ProgressGameScene: SKScene {
         )
         ringProgress.path = progressPath.cgPath
 
-        // Badges
         rebuildBadges(metrics.badges, animated: animated)
     }
 
+    /// Reconstrói container de badges com animação opcional
     private func rebuildBadges(_ badges: [Badge], animated: Bool) {
         badgesContainer.removeAllChildren()
 
+        /// Exibe mensagem quando não há badges conquistadas
         guard !badges.isEmpty else {
             let empty = SKLabelNode(fontNamed: "AvenirNext-Regular")
             empty.text = "Sem badges ainda — continue treinando!"
@@ -150,7 +156,7 @@ final class ProgressGameScene: SKScene {
             return
         }
 
-        // Layout horizontal simples
+        /// Calcula layout horizontal para até 4 badges
         let spacing: CGFloat = 12
         let maxCount = min(badges.count, 4)
         let shown = Array(badges.prefix(maxCount))
@@ -175,17 +181,16 @@ final class ProgressGameScene: SKScene {
         }
     }
 
+    /// Cria nó visual para exibição de um badge individual
     private func badgeNode(title: String, systemImageName: String) -> SKNode {
         let container = SKNode()
 
-        // Fundo
         let bg = SKShapeNode(rectOf: CGSize(width: 118, height: 44), cornerRadius: 10)
         bg.fillColor = UIColor.black.withAlphaComponent(0.35)
         bg.strokeColor = UIColor.white.withAlphaComponent(0.10)
         bg.lineWidth = 1
         container.addChild(bg)
 
-        // Ícone (fallback: apenas texto se não renderizar SF Symbol no SpriteKit)
         let icon = SKLabelNode(fontNamed: "AvenirNext-Bold")
         icon.text = "★"
         icon.fontSize = 14
@@ -193,7 +198,6 @@ final class ProgressGameScene: SKScene {
         icon.position = CGPoint(x: -42, y: -6)
         container.addChild(icon)
 
-        // Título
         let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
         label.text = title
         label.fontSize = 10
