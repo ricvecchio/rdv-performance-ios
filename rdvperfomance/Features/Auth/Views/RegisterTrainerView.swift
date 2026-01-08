@@ -1,3 +1,4 @@
+// Tela de cadastro para usuários do tipo professor
 import SwiftUI
 
 struct RegisterTrainerView: View {
@@ -12,6 +13,7 @@ struct RegisterTrainerView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Interface principal com formulário de cadastro de professor
     var body: some View {
         ZStack {
 

@@ -1,3 +1,4 @@
+// Tela de perfil com informações do usuário e opções
 import SwiftUI
 import UIKit
 import FirebaseAuth
@@ -12,6 +13,7 @@ struct ProfileView: View {
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
+    // Retorna categoria de treino selecionada pelo professor
     private var categoriaAtualProfessor: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
@@ -21,6 +23,7 @@ struct ProfileView: View {
 
     private let repository: FirestoreRepository = .shared
 
+    // Retorna UID do usuário atualmente logado
     private var currentUid: String {
         (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -32,6 +35,7 @@ struct ProfileView: View {
 
     @State private var studentDefaultCategoryRaw: String = ""
 
+    // Retorna categoria padrão do aluno baseada nos dados carregados
     private var categoriaAtualAluno: TreinoTipo {
         let raw = studentDefaultCategoryRaw.trimmingCharacters(in: .whitespacesAndNewlines)
         if let t = TreinoTipo(rawValue: raw), !raw.isEmpty {
@@ -49,6 +53,7 @@ struct ProfileView: View {
     @State private var showErrorAlert: Bool = false
     @State private var errorMessage: String? = nil
 
+    // Interface principal com cards, scroll e footer adaptado por tipo de usuário
     var body: some View {
         ZStack {
 

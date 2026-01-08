@@ -1,3 +1,4 @@
+// Tela de cadastro para usuários do tipo aluno
 import SwiftUI
 
 struct RegisterStudentView: View {
@@ -14,6 +15,7 @@ struct RegisterStudentView: View {
 
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
+    // Interface principal com formulário de cadastro de aluno
     var body: some View {
         ZStack {
 
@@ -81,7 +83,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // Formulário de cadastro com campos de aluno (nome, email, senha, whatsapp, área de foco, plano)
+    // Retorna card com formulário de campos para cadastro de aluno
     private func formCardStudent() -> some View {
         VStack(spacing: 18) {
 
@@ -145,7 +147,7 @@ struct RegisterStudentView: View {
         .cornerRadius(14)
     }
 
-    // Exibe mensagens de erro/sucesso e botões de ação (criar conta, voltar ao login)
+    // Retorna área com mensagens de erro/sucesso e botões de ação
     private func actionArea() -> some View {
         VStack(spacing: 12) {
 
@@ -223,7 +225,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // Renderiza picker estilizado com linha inferior
+    // Retorna picker com menu dropdown estilizado
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
         selection: Binding<T>,
@@ -265,7 +267,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // Remove última rota da navegação
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
