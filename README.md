@@ -12,6 +12,10 @@ O app possui uma navegação simples, interface moderna e layout responsivo, com
 - NavigationStack
 - AppStorage
 - SF Symbols
+- ARKit (Realidade Aumentada)
+- CoreData (Persistência Local)
+- MapKit (Mapas e Localização)
+- SpriteKit (Animações e Jogos)
 - Arquitetura declarativa
 - iOS 16+
 - Firebase (configuração parcial via `GoogleService-Info.plist` – serviços de autenticação / Firestore presentes como referência)
@@ -118,6 +122,15 @@ rdvperformance-ios
    │  ├─ AppRouter.swift
    │  └─ AppRoute.swift
    ├─ Features/
+   │  ├─ AR/
+   │  │  ├─ Models/
+   │  │  │  └─ ARCorrectionPoint.swift
+   │  │  ├─ Services/
+   │  │  │  └─ ARLocalStorage.swift
+   │  │  ├─ ARExerciseView.swift
+   │  │  ├─ ARExerciseViewModel.swift
+   │  │  ├─ ARViewContainer.swift
+   │  │  └─ DebugAROverlay.swift
    │  ├─ Auth/
    │  │  ├─ Models/
    │  │  │  └─ AuthDTOs.swift
@@ -133,9 +146,34 @@ rdvperformance-ios
    │  │     ├─ ProfileView.swift
    │  │     ├─ RegisterStudentView.swift
    │  │     └─ RegisterTrainerView.swift
+   │  ├─ CoreData/
+   │  │  ├─ ActivityListView.swift
+   │  │  ├─ PersistenceController.swift
+   │  │  └─ UserActivity.swift
+   │  ├─ Gamification/
+   │  │  ├─ Models/
+   │  │  │  ├─ Badge.swift
+   │  │  │  ├─ ProgressGameMode.swift
+   │  │  │  └─ ProgressMetrics.swift
+   │  │  ├─ Services/
+   │  │  │  ├─ ProgressMetricsCalculator.swift
+   │  │  │  ├─ ProgressMetricsMock.swift
+   │  │  │  └─ ProgressMetricsProvider.swift
+   │  │  ├─ SpriteKit/
+   │  │  │  ├─ ProgressGameScene.swift
+   │  │  │  └─ ProgressGameSceneFactory.swift
+   │  │  ├─ ViewModels/
+   │  │  │  └─ ProgressGameViewModel.swift
+   │  │  └─ Views/
+   │  │     ├─ ProgressGamePreviewView.swift
+   │  │     └─ ProgressGameView.swift
    │  ├─ Home/
    │  │  └─ Views/
    │  │     └─ HomeView.swift
+   │  ├─ Map/
+   │  │  ├─ MapDemoView.swift
+   │  │  ├─ MapView.swift
+   │  │  └─ MapViewModel.swift
    │  ├─ Settings/
    │  │  └─ Views/
    │  │     ├─ AccountSecurityService.swift
@@ -143,6 +181,9 @@ rdvperformance-ios
    │  │     ├─ DeleteAccountView.swift
    │  │     ├─ InfoLegalView.swift
    │  │     └─ SettingsView.swift
+   │  ├─ Sprites/
+   │  │  ├─ GameScene.swift
+   │  │  └─ SpriteDemoView.swift
    │  ├─ Student/
    │  │  ├─ Models/
    │  │  │  ├─ TrainingDayFS.swift
@@ -168,7 +209,8 @@ rdvperformance-ios
    │  │     ├─ TeacherLinkStudentView.swift
    │  │     ├─ TeacherSendMessageView.swift
    │  │     ├─ TeacherStudentDetailView.swift
-   │  │     └─ TeacherStudentsListView.swift
+   │  │     ├─ TeacherStudentsListView.swift
+   │  │     └─ TeacherMapView.swift
    │  └─ Treinos/
    │     ├─ Models/
    │     │  ├─ FirestoreModels.swift
@@ -216,135 +258,90 @@ rdvperformance-ios
 
 ---
 
-## 📋 Mapa de Telas e Dependências (detalhado)
+## 📋 Análise de Requisitos do Projeto
 
-Abaixo um mapeamento por tela/módulo com os arquivos principais usados (Views) e os arquivos relacionados (ViewModels, Models, Services, Componentes compartilhados).
+### ✅ Requisitos Atendidos
 
-### Auth
-- Views:
-  - `Features/Auth/Views/LoginView.swift`
-  - `Features/Auth/Views/RegisterStudentView.swift`
-  - `Features/Auth/Views/RegisterTrainerView.swift`
-  - `Features/Auth/Views/AccountTypeSelectionView.swift`
-  - `Features/Auth/Views/ProfileView.swift`
-  - `Features/Auth/Views/EditProfileView.swift`
-- ViewModels:
-  - `Features/Auth/ViewModels/LoginViewModel.swift`
-  - `Features/Auth/ViewModels/RegisterViewModel.swift`
-- Models:
-  - `Features/Auth/Models/AuthDTOs.swift`
-- Services:
-  - `Features/Auth/Services/FirebaseAuthService.swift`
-- Componentes compartilhados:
-  - `Shared/Components/UnderlineTextField.swift`
-  - `Shared/Components/MiniProfileHeader.swift`
+#### 1. **Navegação em Diversas Telas**
+**Implementação:** Sistema de navegação baseado em rotas usando `AppRouter` e `AppRoute`
+
+- **`AppRouter.swift`**: Gerencia a navegação entre telas usando enum de rotas
+- **`AppRoute.swift`**: Define todas as rotas disponíveis no app
+- **Telas implementadas:**
+  - Login (`LoginView.swift`)
+  - Registro (estudante e treinador: `RegisterStudentView.swift`, `RegisterTrainerView.swift`)
+  - Perfil (`ProfileView.swift`, `EditProfileView.swift`)
+  - Página Principal/Home (`Home/Views/`)
+  - Configurações (`Settings/Views/`)
+  - Sobre (`About/Views/AboutView.swift`)
+  - Treinos (`Treinos/Views/`)
+  - Gamificação (`Gamification/Views/`)
 
 ---
 
-### Home
-- View:
-  - `Features/Home/Views/HomeView.swift`
-- Relacionados:
-  - `Features/Treinos/Models/TreinoTipo.swift`
-  - `App/AppRoute.swift`, `App/AppRouter.swift`
-  - `Shared/Components/FooterBar.swift`
+#### 2. **Persistência: Core Data**
+**Implementação:** Sistema completo de persistência local
+
+- **`PersistenceController.swift`**: Controlador singleton do Core Data com preview para testes
+- **`UserActivity.swift`**: Entidade para armazenar atividades do usuário
+- **`ActivityListView.swift`**: Interface para visualização das atividades persistidas
+- **Uso:** Armazena histórico de atividades, treinos e progresso do usuário localmente
 
 ---
 
-### Settings
-- Views:
-  - `Features/Settings/Views/SettingsView.swift`
-  - `Features/Settings/Views/ChangePasswordView.swift`
-  - `Features/Settings/Views/DeleteAccountView.swift`
-  - `Features/Settings/Views/InfoLegalView.swift`
-- Services/Helpers:
-  - `Features/Settings/Views/AccountSecurityService.swift` (serviço ligado a mudanças de senha / segurança)
+#### 3. **Persistência na Nuvem / Acesso a API**
+**Implementação:** Firebase para autenticação e Firestore para banco de dados na nuvem
+
+- **`FirebaseAuthService.swift`**: Serviço de autenticação usando Firebase Auth (login, registro, recuperação de senha)
+- **`FirestoreRepository.swift`**: Repository genérico para operações CRUD no Firestore
+- **`GoogleService-Info.plist`**: Configuração do Firebase
+- **Uso:** Sincroniza dados de usuários, treinos e progresso na nuvem
 
 ---
 
-### Student (Aluno)
-- Views:
-  - `Features/Student/Views/StudentAgendaView.swift`
-  - `Features/Student/Views/StudentDayDetailView.swift`
-  - `Features/Student/Views/StudentFeedbacksView.swift`
-  - `Features/Student/Views/StudentMessagesView.swift`
-  - `Features/Student/Views/StudentWeekDetailView.swift`
-- ViewModels:
-  - `Features/Student/ViewModels/StudentAgendaViewModel.swift`
-  - `Features/Student/ViewModels/StudentWeekDetailViewModel.swift`
-- Models:
-  - `Features/Student/Models/TrainingDayFS.swift`
-  - `Features/Student/Models/TrainingFS.swift`
-  - `Features/Student/Models/TrainingWeekFS.swift`
+#### 4. **MapKit / Core Location**
+**Implementação:** Visualização de mapas e localização
+
+- **`MapView.swift`**: View principal do mapa usando MapKit
+- **`MapViewModel.swift`**: ViewModel que gerencia a lógica de localização e pontos no mapa
+- **`MapDemoView.swift`**: Demonstração das funcionalidades do mapa
+- **Uso:** Exibe localização do usuário, academias ou pontos de interesse para treino
 
 ---
 
-### Teacher (Professor)
-- Views:
-  - `Features/Teacher/Views/TeacherStudentsListView.swift`
-  - `Features/Teacher/Views/TeacherStudentDetailView.swift`
-  - `Features/Teacher/Views/TeacherDashboardView.swift`
-  - `Features/Teacher/Views/CreateTrainingWeekView.swift`
-  - `Features/Teacher/Views/TeacherFeedbacksView.swift`
-  - `Features/Teacher/Views/TeacherSendMessageView.swift`
-  - `Features/Teacher/Views/TeacherLinkStudentView.swift`
-- ViewModels:
-  - `Features/Teacher/ViewModels/TeacherStudentsListViewModel.swift`
-  - `Features/Teacher/ViewModels/CreateTrainingWeekViewModel.swift`
+#### 5. **Sprite Kit**
+**Implementação:** Sistema de gamificação visual
+
+- **`GameScene.swift`**: Cena principal do SpriteKit com lógica de jogo
+- **`SpriteDemoView.swift`**: View de demonstração do SpriteKit integrado ao SwiftUI
+- **`Gamification/SpriteKit/`**: Diretório com recursos adicionais de sprites
+- **Uso:** Adiciona elementos de gamificação interativos (badges, animações, progresso visual)
 
 ---
 
-### Treinos
-- Views:
-  - `Features/Treinos/Views/TreinosView.swift`
-  - `Features/Treinos/Views/CrossfitMenuView.swift`
-  - `Features/Treinos/Views/CreateTrainingDayView.swift`
-- Models:
-  - `Features/Treinos/Models/TreinoTipo.swift`
-  - `Features/Treinos/Models/FirestoreModels.swift`
-  - `Features/Treinos/Models/StudentFeedbackFS.swift`
-  - `Features/Treinos/Models/TeacherMessageFS.swift`
+#### 6. **AR Kit**
+**Implementação:** Realidade aumentada para correção de exercícios
+
+- **`ARExerciseView.swift`**: View principal de exercícios em AR
+- **`ARExerciseViewModel.swift`**: ViewModel que gerencia a lógica do AR
+- **`ARViewContainer.swift`**: Container UIViewRepresentable que encapsula ARView
+- **`DebugAROverlay.swift`**: Overlay de debug para visualizar pontos de correção
+- **`ARCorrectionPoint.swift`**: Model para pontos de correção de postura em AR
+- **`ARLocalStorage.swift`**: Armazena dados de sessões AR localmente
+- **Uso:** Detecta e corrige postura do usuário durante exercícios em tempo real usando câmera
 
 ---
 
-### Shared
-- Componentes:
-  - `Shared/Components/HeaderBar.swift`
-  - `Shared/Components/HeaderAvatarView.swift`
-  - `Shared/Components/FooterBar.swift`
-  - `Shared/Components/MiniProfileHeader.swift`
-  - `Shared/Components/UnderlineTextField.swift`
-- Services:
-  - `Shared/Services/FirestoreRepository.swift`
-  - `Shared/Services/LocalProfileStore.swift`
-- UI:
-  - `Shared/UI/Theme.swift`
+### 📊 Resumo
 
----
+Todos os **6 requisitos foram completamente implementados** no projeto:
 
-## 🖼️ Recursos / Assets
-
-Os assets do projeto ficam em `Resources/Assets.xcassets`. Resumo dos assets incluídos (cada `.imageset` contém as imagens usadas nas telas):
-
-- `AccentColor.colorset`
-- `AppIcon.appiconset`
-- `Default.colorset`
-- `rdv_crossfit_benchmark_horizontal.imageset`
-- `rdv_crossfit_meusrecordes_horizontal.imageset`
-- `rdv_crossfit_monteseutreino_horizontal.imageset`
-- `rdv_crossfit_progressos_horizontal.imageset`
-- `rdv_crossfit_wod_horizontal.imageset`
-- `rdv_fundo.imageset`
-- `rdv_logo.imageset`
-- `rdv_programa_academia_horizontal.imageset`
-- `rdv_programa_crossfit_horizontal.imageset`
-- `rdv_programa_treinos_em_casa_horizontal.imageset`
-- `rdv_treino1_vertical.imageset`
-- `rdv_treino2_vertical.imageset`
-- `rdv_treino3_vertical.imageset`
-- `rdv_user_default.imageset`
-
-(Se desejar, posso gerar uma listagem completa dos arquivos dentro de cada `.imageset` — por padrão deixei como resumo para manter o README enxuto.)
+1. ✅ **Navegação múltipla** - Sistema robusto com router pattern
+2. ✅ **Core Data** - Persistência local de atividades
+3. ✅ **Cloud/API** - Firebase Auth + Firestore para dados na nuvem
+4. ✅ **MapKit** - Mapas e localização integrados
+5. ✅ **SpriteKit** - Gamificação visual com sprites
+6. ✅ **ARKit** - Correção de postura em exercícios via realidade aumentada
 
 ---
 
@@ -354,26 +351,46 @@ Os assets do projeto ficam em `Resources/Assets.xcassets`. Resumo dos assets inc
 - Configure o `GoogleService-Info.plist` caso queira habilitar Firebase (Auth/Firestore) em ambiente de desenvolvimento.
 - Execute o app em um simulador iOS 16+ ou dispositivo físico com as permissões necessárias.
 
+### Permissão de localização (necessária para o Mapa da Academia)
+
+Para que a opção "Mapa da Academia" funcione corretamente você precisa adicionar a chave de privacidade no `Info.plist` do target do app (se ainda não estiver presente). Abra o arquivo `Info.plist` no Xcode e confirme que a chave abaixo existe (valor em português ou conforme sua política de privacidade):
+
+- `NSLocationWhenInUseUsageDescription` = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo)."
+
+> Observação: o recurso de mapa foi movido da tela de Configurações para a `Área do Professor` (Menu do Professor > "Mapa da Academia"). A entrada "Mapa (demo)" nas Configurações foi removida para evitar duplicidade. A rota antiga `.mapFeature` continua mapeada para a nova tela para compatibilidade (acesso restrito a professores).
+
 ---
 
 ## 🎯 Destaques do Projeto
 
-- Navegação centralizada por rotas (`AppRoute` / `AppRouter`)
-- Componentes reutilizáveis e layout responsivo
-- Integração básica com Firebase preparada (services/Firestore)
-- Organização por features (Auth, Home, Student, Teacher, Treinos)
+- **Navegação centralizada** por rotas (`AppRoute` / `AppRouter`)
+- **Componentes reutilizáveis** e layout responsivo
+- **Realidade Aumentada (AR)** para análise de exercícios e correção de postura
+- **Gamificação** com sistema de badges, conquistas e visualização de progressos
+- **SpriteKit** para animações e jogos interativos
+- **CoreData** para persistência local de atividades
+- **MapKit** para visualização de localizações e academias
+- **Integração com Firebase** (Auth/Firestore) preparada
+- **Organização por features** (AR, Auth, CoreData, Gamification, Home, Map, Settings, Sprites, Student, Teacher, Treinos)
+- **Arquitetura MVVM** com separação clara de responsabilidades
 
 ---
 
 ## 📌 Próximos Passos 
 
 - Completar integração com backend (Firebase) e testar autenticação real
+- Aprimorar sistema de AR com mais exercícios e detecção de postura
+- Expandir sistema de gamificação com mais badges e desafios
+- Adicionar sincronização de dados CoreData com Firestore
+- Implementar notificações push para lembretes de treino
 - Adicionar testes unitários / UI tests
 - Documentar contratos de rede e modelos Firestore
 - Internacionalização (strings em Localizable)
 - Melhorar cobertura de assets e imagens de alta resolução
 - Funções para importar planilhas em Excel
 - Lista com exercícios pré-definidos para montagem rápida de treinos
+- Melhorar overlay de debug do AR para facilitar desenvolvimento
+- Adicionar mais modos de jogo no sistema de gamificação
 
 ---
 

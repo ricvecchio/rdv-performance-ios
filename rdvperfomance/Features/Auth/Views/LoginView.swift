@@ -1,9 +1,8 @@
-// LoginView.swift — Tela de login com campos, validação e navegação pós-login
+// Tela de login com autenticação Firebase e navegação pós-login
 import SwiftUI
 
 struct LoginView: View {
 
-    // Binding de rotas e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
@@ -14,11 +13,10 @@ struct LoginView: View {
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
-    // Persistência educacional do último login (não é segura para produção)
     @AppStorage("last_login_email") private var lastLoginEmail: String = ""
     @AppStorage("last_login_password") private var lastLoginPassword: String = ""
 
-    // Corpo principal da tela de login
+    // Interface principal da tela de login
     var body: some View {
         ZStack {
 
@@ -129,7 +127,6 @@ struct LoginView: View {
         .onAppear {
             vm.errorMessage = nil
 
-            // Restaura o último login caso os campos estejam vazios
             if vm.email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 vm.email = lastLoginEmail
             }
@@ -139,7 +136,7 @@ struct LoginView: View {
         }
     }
 
-    // Realiza fluxo de login, salva último usuário e direciona conforme userType
+    // Executa login, salva credenciais e redireciona baseado no tipo de usuário
     private func doLogin() async {
         let ok = await vm.submitLogin()
         guard ok else { return }

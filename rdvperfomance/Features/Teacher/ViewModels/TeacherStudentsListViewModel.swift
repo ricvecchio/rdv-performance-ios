@@ -155,7 +155,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         return merged.sorted { $0.name.lowercased() < $1.name.lowercased() }
     }
 
-    // Chave única baseada em id, ou nome+email
+    // Gera chave única para identificar usuário
     private func uniqueKey(for user: AppUser) -> String {
         if let id = user.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
             return id

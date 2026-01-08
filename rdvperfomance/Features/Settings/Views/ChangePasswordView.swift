@@ -1,13 +1,12 @@
-// ChangePasswordView.swift — Tela para alteração de senha com validações e feedbacks
+// Tela para alteração de senha do usuário
 import SwiftUI
 
+// View para o usuário alterar sua senha com validação
 struct ChangePasswordView: View {
 
-    // Binding de rotas e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // Campos do formulário
     @State private var currentPassword: String = ""
     @State private var newPassword: String = ""
     @State private var confirmNewPassword: String = ""
@@ -21,7 +20,7 @@ struct ChangePasswordView: View {
     private let lineColor = Color.white.opacity(0.35)
     private let contentMaxWidth: CGFloat = 380
 
-    // Corpo da tela com header, formulário e ações
+    // Constrói a interface da tela de alteração de senha
     var body: some View {
         ZStack {
 
@@ -92,7 +91,7 @@ struct ChangePasswordView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Header informativo da tela
+    // Retorna card com texto informativo sobre segurança
     private func headerCard() -> some View {
         VStack(spacing: 10) {
             Text("Segurança")
@@ -111,7 +110,7 @@ struct ChangePasswordView: View {
         .cornerRadius(14)
     }
 
-    // Card do formulário com campos seguros
+    // Retorna card com campos de senha
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
@@ -126,7 +125,7 @@ struct ChangePasswordView: View {
         .cornerRadius(14)
     }
 
-    // Área de ações com botão salvar e cancelar
+    // Retorna card com botões de salvar e cancelar
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
@@ -176,7 +175,7 @@ struct ChangePasswordView: View {
         .cornerRadius(14)
     }
 
-    // Feedback visual para sucesso/erro
+    // Retorna card de feedback de sucesso ou erro
     private func feedbackCard(text: String, isError: Bool) -> some View {
         Text(text)
             .font(.system(size: 13, weight: .medium))
@@ -188,7 +187,7 @@ struct ChangePasswordView: View {
             .cornerRadius(12)
     }
 
-    // Submete alteração de senha com validações locais e chamada ao serviço
+    // Valida e submete a alteração de senha
     private func submit() async {
         showError = false
         showSuccess = false
@@ -234,19 +233,19 @@ struct ChangePasswordView: View {
         }
     }
 
-    // Mostra erro na UI
+    // Exibe mensagem de erro na interface
     private func presentError(_ message: String) {
         showError = true
         errorMessage = message
     }
 
-    // Navegação: volta uma rota
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Componentes: campo seguro com underline
+    // Retorna campo seguro com linha inferior
     private func secureUnderlineField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 

@@ -501,7 +501,7 @@ struct CreateTrainingWeekView: View {
         }
     }
 
-    /// ✅ Fluxo "NOVA SEMANA" - botão Publicar
+    // Publica nova semana no Firestore
     private func publishWeek() async {
         errorMessage = nil
         successMessage = nil

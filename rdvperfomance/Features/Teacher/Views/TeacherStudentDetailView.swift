@@ -1,6 +1,6 @@
-// TeacherStudentDetailView.swift — Detalhes do aluno para o professor (progresso, ações e navegação)
 import SwiftUI
 
+// TeacherStudentDetailView — Detalhes do aluno para o professor
 struct TeacherStudentDetailView: View {
 
     @Binding var path: [AppRoute]
@@ -15,7 +15,6 @@ struct TeacherStudentDetailView: View {
     @State private var progress: Double = 0.0
     @State private var isLoadingProgress: Bool = false
 
-    // Corpo com cards: header, progresso e ações
     var body: some View {
         ZStack {
 
@@ -84,7 +83,6 @@ struct TeacherStudentDetailView: View {
                     .foregroundColor(.white)
             }
 
-            // Avatar do cabeçalho (foto real do usuário)
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -96,7 +94,8 @@ struct TeacherStudentDetailView: View {
         }
     }
 
-    // Header com informações do aluno e plano
+    // MARK: - Cards
+
     private func headerCard() -> some View {
         VStack(alignment: .leading, spacing: 10) {
 
@@ -123,18 +122,12 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.70))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
     }
 
-    // Card mostrando progresso geral do aluno
     private func progressCard() -> some View {
 
         let percent = Int((progress * 100.0).rounded())
@@ -153,28 +146,19 @@ struct TeacherStudentDetailView: View {
                 }
             }
 
-            HStack {
-                Text("\(percent)% completo")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-                Spacer()
-            }
+            Text("\(percent)% completo")
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
 
             ProgressView(value: progress)
                 .tint(.green.opacity(0.85))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
     }
 
-    // Ações do professor relacionadas ao aluno
     private func actionsCard() -> some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -197,47 +181,39 @@ struct TeacherStudentDetailView: View {
             actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
+
+            // ✅ AJUSTE AQUI
+            actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
+                path.append(.spriteDemo)
+            }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
     }
+
+    // MARK: - Helpers
 
     private func actionButton(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
-
                 Spacer()
-
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
+            .padding(14)
             .background(Color.black.opacity(0.25))
             .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.06), lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
     }
 
-    // Navega para agenda do aluno
     private func openAgenda() {
         guard let sid = student.id, !sid.isEmpty else { return }
         path.append(.studentAgenda(studentId: sid, studentName: student.name))

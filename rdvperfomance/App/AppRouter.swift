@@ -1,14 +1,12 @@
-// AppRouter.swift — Componente responsável pela navegação e roteamento do app
 import SwiftUI
 
-// Container principal de navegação
+// Container principal de navegação do aplicativo
 struct AppRouter: View {
 
-    // Estado local de rotas e sessão
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
 
-    // Corpo com NavigationStack e destinos de navegação
+    // Configura a pilha de navegação com todas as rotas do app
     var body: some View {
         NavigationStack(path: $path) {
 
@@ -18,7 +16,6 @@ struct AppRouter: View {
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {
 
-                    // BASE
                     case .login:
                         LoginView(path: $path)
                             .environmentObject(session)
@@ -26,7 +23,6 @@ struct AppRouter: View {
                     case .home:
                         guardedHome()
 
-                    // PROFESSOR (exclusivo)
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
                         guardedTeacher {
                             TeacherStudentsListView(
@@ -97,7 +93,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ALUNO + PROFESSOR (COMPARTILHADO)
                     case .studentAgenda(let studentId, let studentName):
                         guardedHome {
                             StudentAgendaView(
@@ -127,7 +122,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ALUNO (exclusivo)
                     case .studentMessages(let category):
                         guardedStudent {
                             StudentMessagesView(
@@ -144,7 +138,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // COMUM (login obrigatório)
                     case .sobre:
                         guardedHome {
                             AboutView(path: $path)
@@ -190,7 +183,26 @@ struct AppRouter: View {
                             DeleteAccountView(path: $path)
                         }
 
-                    // CADASTRO (sem login)
+                    case .mapFeature:
+                        guardedHome {
+                            MapFeatureView()
+                        }
+
+                    case .spriteDemo:
+                        guardedHome {
+                            SpriteDemoView(path: $path)
+                        }
+
+                    case .arDemo:
+                        guardedHome {
+                            ARDemoView()
+                        }
+
+                    case .arExercise(let weekId, let dayId):
+                        guardedHome {
+                            ARExerciseView(path: $path, weekId: weekId, dayId: dayId)
+                        }
+
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)
                             .environmentObject(session)
@@ -202,6 +214,9 @@ struct AppRouter: View {
                     case .registerTrainer:
                         RegisterTrainerView(path: $path)
                             .environmentObject(session)
+
+                    @unknown default:
+                        guardedHome()
                     }
                 }
         }
@@ -212,9 +227,10 @@ struct AppRouter: View {
     }
 }
 
-// Root decision: escolhe tela inicial baseada no estado de sessão
+// Métodos auxiliares para decidir a view raiz e aplicar guards de autenticação
 private extension AppRouter {
 
+    // Retorna a view raiz baseado no estado de autenticação
     @ViewBuilder
     var rootView: some View {
         if session.isLoggedIn {
@@ -225,9 +241,10 @@ private extension AppRouter {
     }
 }
 
-// Guards: funções auxiliares para proteger rotas por tipo de usuário
+// Métodos de proteção para garantir que usuários estejam autenticados e autorizados
 private extension AppRouter {
 
+    // Exibe conteúdo apenas se usuário estiver autenticado
     @ViewBuilder
     func guardedHome<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         if session.isLoggedIn {
@@ -237,6 +254,7 @@ private extension AppRouter {
         }
     }
 
+    // Exibe HomeView apenas se usuário estiver autenticado
     @ViewBuilder
     func guardedHome() -> some View {
         if session.isLoggedIn {
@@ -246,6 +264,7 @@ private extension AppRouter {
         }
     }
 
+    // Exibe conteúdo apenas se usuário for professor autenticado
     @ViewBuilder
     func guardedTeacher<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         if session.isLoggedIn && session.isTrainer {
@@ -255,6 +274,7 @@ private extension AppRouter {
         }
     }
 
+    // Exibe conteúdo apenas se usuário for aluno autenticado
     @ViewBuilder
     func guardedStudent<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         if session.isLoggedIn && session.isStudent {
@@ -264,3 +284,4 @@ private extension AppRouter {
         }
     }
 }
+

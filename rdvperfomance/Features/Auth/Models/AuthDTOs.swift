@@ -1,23 +1,23 @@
-// AuthDTOs.swift — DTOs e enums usados no fluxo de autenticação e cadastro
+// Modelos de dados para autenticação e cadastro de usuários
 import Foundation
 
-// Tipo de usuário no sistema
+// Tipos de usuário disponíveis no sistema
 enum UserTypeDTO: String, Codable, CaseIterable {
     case TRAINER
     case STUDENT
 }
 
-// Áreas de foco possíveis para planos/usuarios
+// Áreas de foco para os treinos do usuário
 enum FocusAreaDTO: String, Codable, CaseIterable {
     case CROSSFIT, GYM, HOME, FUNCTIONAL, OTHER
 }
 
-// Tipos de plano disponíveis
+// Tipos de planos de assinatura disponíveis
 enum PlanTypeDTO: String, Codable, CaseIterable {
     case FREE, BRONZE, SILVER, GOLD
 }
 
-// Dados do formulário de registro enviados para Auth/Firestore
+// Dados do formulário de registro completo
 struct RegisterFormDTO: Codable {
     let name: String
     let email: String
@@ -28,12 +28,10 @@ struct RegisterFormDTO: Codable {
     let focusArea: String?
     let planType: String
 
-    // Campos para TRAINER
     let cref: String?
     let bio: String?
     let gymName: String?
 
-    // Campos para STUDENT
     let defaultCategory: String?
     let active: Bool?
 }

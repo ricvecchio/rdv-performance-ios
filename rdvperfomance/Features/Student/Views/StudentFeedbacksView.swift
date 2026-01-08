@@ -193,7 +193,7 @@ struct StudentFeedbacksView: View {
         )
     }
 
-    // Carrega feedbacks do Firestore para o aluno logado
+    // Carrega feedbacks do Firestore
     private func load() async {
         errorMessage = nil
 

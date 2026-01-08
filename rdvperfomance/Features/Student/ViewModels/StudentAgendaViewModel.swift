@@ -1,16 +1,13 @@
-// StudentAgendaViewModel.swift — ViewModel para listar semanas e metadata do aluno
 import Foundation
 import Combine
 
 @MainActor
 final class StudentAgendaViewModel: ObservableObject {
 
-    // Semanas carregadas para o aluno
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
-    // Cache de metadados por weekId
     private var weekRangeText: [String: String] = [:]
     private var weekProgressPercent: [String: Int] = [:]
 
@@ -22,7 +19,7 @@ final class StudentAgendaViewModel: ObservableObject {
         self.repository = repository
     }
 
-    // Carrega semanas e metadados assincronamente
+    // Carrega semanas de treino e seus metadados
     func loadWeeksAndMeta() async {
         isLoading = true
         errorMessage = nil
@@ -39,10 +36,9 @@ final class StudentAgendaViewModel: ObservableObject {
         }
     }
 
-    // Carrega range de datas e progresso para cada semana em paralelo
+    // Carrega metadados de cada semana em paralelo
     private func loadMetaForWeeks(_ weeks: [TrainingWeekFS]) async {
 
-        // ✅ limpa cache antes de recarregar (garante atualização)
         weekRangeText.removeAll()
         weekProgressPercent.removeAll()
 
@@ -62,17 +58,15 @@ final class StudentAgendaViewModel: ObservableObject {
                         await MainActor.run { self.weekProgressPercent[weekId] = percent }
 
                     } catch {
-                        // fallback silencioso
                     }
                 }
             }
         }
 
-        // força refresh da lista
         objectWillChange.send()
     }
 
-    // Retorna subtítulo com range e % de conclusão para exibir na UI
+    // Gera subtítulo com range de datas e progresso
     func subtitleForWeek(_ week: TrainingWeekFS) -> String {
         guard let weekId = week.id else { return "Treinos da semana" }
 
@@ -82,13 +76,14 @@ final class StudentAgendaViewModel: ObservableObject {
         return "\(range) • \(percent)%"
     }
 
-    // Helpers não isolados para computação simples
+    // Calcula percentual de conclusão
     nonisolated static func computePercentStatic(completed: Int, total: Int) -> Int {
         guard total > 0 else { return 0 }
         let v = (Double(completed) / Double(total)) * 100.0
         return Int(v.rounded())
     }
 
+    // Calcula range de datas formatado
     nonisolated static func computeRangeTextStatic(days: [TrainingDayFS]) -> String? {
         let dates = days.compactMap { $0.date }
         guard let minDate = dates.min(), let maxDate = dates.max() else { return nil }

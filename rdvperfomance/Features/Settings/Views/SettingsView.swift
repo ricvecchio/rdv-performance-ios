@@ -1,26 +1,31 @@
-// SettingsView.swift — Tela de configurações com cartões para conta, preferências e legal
 import SwiftUI
 
+// Tela de configurações do aplicativo
 struct SettingsView: View {
 
-    // Binding de rotas
     @Binding var path: [AppRoute]
+    @EnvironmentObject private var session: AppSession
 
-    // Largura máxima do conteúdo
     private let contentMaxWidth: CGFloat = 380
 
-    // Preferência persistida para unidade de peso
-    @AppStorage("preferredWeightUnit") private var preferredWeightUnitRaw: String = WeightUnit.kg.rawValue
-
-    // Controle do sheet de unidade
+    @State private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
     @State private var showWeightUnitSheet: Bool = false
 
-    // Conveniência para o enum seguro
-    private var preferredWeightUnit: WeightUnit {
-        WeightUnit(rawValue: preferredWeightUnitRaw) ?? .kg
+    private let preferredWeightUnitKey: String = "preferredWeightUnit"
+
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+
+    private var categoriaAtualProfessor: TreinoTipo {
+        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    // Corpo principal com seções e footer
+    // Retorna a unidade de peso preferida
+    private var preferredWeightUnit: WeightUnit {
+        WeightUnit(rawValue: preferredWeightUnitRawState) ?? .kg
+    }
+
+    // Constrói a interface da tela de configurações
     var body: some View {
         ZStack {
 
@@ -63,16 +68,11 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                FooterBar(
-                    path: $path,
-                    kind: .homeSobrePerfil(
-                        isHomeSelected: false,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
+                // ✅ Ajuste: rodapé no padrão do AboutView (4 ícones)
+                footerForUser()
+                    .frame(height: Theme.Layout.footerHeight)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -91,26 +91,60 @@ struct SettingsView: View {
                     .foregroundColor(.white)
             }
         }
+
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
 
-        // Modal para seleção de unidade de peso
+        .onAppear {
+            let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
+            if preferredWeightUnitRawState != raw {
+                preferredWeightUnitRawState = raw
+            }
+        }
+        .onChange(of: preferredWeightUnitRawState) { _, newValue in
+            UserDefaults.standard.set(newValue, forKey: preferredWeightUnitKey)
+        }
         .sheet(isPresented: $showWeightUnitSheet) {
-            WeightUnitSheetView(
-                selectedUnitRaw: $preferredWeightUnitRaw
-            )
-            .presentationDetents([.medium])
-            .presentationDragIndicator(.visible)
+            WeightUnitSheetView(selectedUnitRaw: $preferredWeightUnitRawState)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
         }
     }
 
-    // Navegação: voltar
+    // ✅ Ajuste: Professor agora usa o MESMO padrão do AboutView (4 ícones)
+    @ViewBuilder
+    private func footerForUser() -> some View {
+        if session.userType == .STUDENT {
+            FooterBar(
+                path: $path,
+                kind: .agendaSobrePerfil(
+                    isAgendaSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: false
+                )
+            )
+        } else {
+            FooterBar(
+                path: $path,
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: categoriaAtualProfessor,
+                    isHomeSelected: false,
+                    isAlunosSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: true
+                )
+            )
+        }
+    }
+
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Título de seção
+    // Retorna o título de uma seção
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
@@ -118,7 +152,7 @@ struct SettingsView: View {
             .padding(.horizontal, 6)
     }
 
-    // Cartões: conta, preferências e suporte/legal
+    // Retorna card com opções de conta
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
@@ -135,6 +169,7 @@ struct SettingsView: View {
         }
     }
 
+    // Retorna card com preferências do usuário
     private func preferencesCard() -> some View {
         card {
             cardRow(
@@ -147,6 +182,7 @@ struct SettingsView: View {
         }
     }
 
+    // Retorna card com opções de suporte e informações legais
     private func supportLegalCard() -> some View {
         card {
             cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
@@ -160,27 +196,31 @@ struct SettingsView: View {
             cardRow(icon: "doc.text.fill", title: "Termos de Uso") {
                 path.append(.infoLegal(.termsOfUse))
             }
+            divider()
+
+            cardRow(icon: "gamecontroller.fill", title: "Preview do Progresso") {
+                path.append(.spriteDemo)
+            }
         }
     }
 
-    // Componentes base de layout
+    // Retorna container para cards de configurações
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        VStack(spacing: 0) {
-            content()
-        }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        VStack(spacing: 0) { content() }
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
     }
 
+    // Retorna linha divisória entre itens
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
             .padding(.leading, 54)
     }
 
-    // Linha simples do card
+    // Retorna linha de card clicável sem texto à direita
     private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -206,7 +246,7 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    // Variante com texto à direita
+    // Retorna linha de card clicável com texto à direita
     private func cardRow(icon: String, title: String, trailingText: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -237,11 +277,12 @@ struct SettingsView: View {
     }
 }
 
-// Enum de unidade de peso e utilitários
+// Define as unidades de peso disponíveis no aplicativo
 private enum WeightUnit: String, CaseIterable {
     case kg
     case lbs
 
+    // Retorna o título completo da unidade
     var title: String {
         switch self {
         case .kg: return "⚖️ kg (quilograma)"
@@ -249,6 +290,7 @@ private enum WeightUnit: String, CaseIterable {
         }
     }
 
+    // Retorna a sigla da unidade
     var shortLabel: String {
         switch self {
         case .kg: return "kg"
@@ -257,16 +299,18 @@ private enum WeightUnit: String, CaseIterable {
     }
 }
 
-// Sheet para selecionar unidade de peso
+// Sheet para seleção de unidade de peso
 private struct WeightUnitSheetView: View {
 
     @Binding var selectedUnitRaw: String
     @Environment(\.dismiss) private var dismiss
 
+    // Retorna a unidade selecionada
     private var selectedUnit: WeightUnit {
         WeightUnit(rawValue: selectedUnitRaw) ?? .kg
     }
 
+    // Constrói a interface do seletor de unidade
     var body: some View {
         ZStack {
 
@@ -353,5 +397,7 @@ private struct WeightUnitSheetView: View {
                 .padding(.top, 16)
             }
         }
+        .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
+

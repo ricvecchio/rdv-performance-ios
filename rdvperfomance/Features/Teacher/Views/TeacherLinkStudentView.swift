@@ -131,7 +131,7 @@ struct TeacherLinkStudentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Controles: busca e chips (apenas 'Todos' visual)
+    // Card com filtro e busca
     private var controlsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -450,13 +450,14 @@ final class TeacherLinkStudentViewModel: ObservableObject {
         }
     }
 
+    // Define mensagem de erro
     func setError(_ msg: String) {
         errorMessage = msg
         showErrorAlert = true
     }
 }
 
-// MARK: - DTO leve (não depende do AppUser)
+// Modelo simplificado de aluno para vínculo
 struct StudentLinkItem: Identifiable, Hashable {
     let id: String
     let name: String

@@ -186,7 +186,7 @@ struct StudentWeekDetailView: View {
         .cornerRadius(14)
     }
 
-    // Lista de dias com ação de marcar concluído para alunos
+    // Lista de dias com marcação de conclusão
     private var daysList: some View {
         VStack(spacing: 0) {
             ForEach(Array(vm.days.enumerated()), id: \.offset) { item in

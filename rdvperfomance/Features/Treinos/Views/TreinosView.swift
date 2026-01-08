@@ -1,16 +1,12 @@
-// TreinosView.swift — Tela genérica de treinos (mostra imagem e título conforme tipo)
 import SwiftUI
 
-// MARK: - TELA DE TREINOS (genérica)
 struct TreinosView: View {
 
     @Binding var path: [AppRoute]
     let tipo: TreinoTipo
 
-    // Corpo principal exibindo imagem e título do treino
     var body: some View {
         ZStack {
-
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -24,15 +20,16 @@ struct TreinosView: View {
                     .frame(maxWidth: .infinity)
 
                 GeometryReader { proxy in
+                    let maxContentWidth = min(proxy.size.width - 32, 520)
+
                     VStack {
                         Spacer(minLength: 12)
 
                         ZStack(alignment: .bottom) {
-
                             Image(tipo.imagemCorpo)
                                 .resizable()
                                 .scaledToFit()
-                                .frame(maxWidth: min(proxy.size.width - 32, 520))
+                                .frame(maxWidth: maxContentWidth)
                                 .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
 
                             Text(tipo.tituloOverlayImagem)
@@ -41,7 +38,7 @@ struct TreinosView: View {
                                 .shadow(color: .black.opacity(0.95), radius: 8, x: 0, y: 3)
                                 .padding(.bottom, 22)
                                 .padding(.horizontal, 22)
-                                .frame(maxWidth: min(proxy.size.width - 32, 520), alignment: .center)
+                                .frame(maxWidth: maxContentWidth, alignment: .center)
                         }
 
                         Spacer(minLength: 12)
@@ -69,8 +66,6 @@ struct TreinosView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-
-            // ✅ Botão voltar (inalterado)
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -78,7 +73,6 @@ struct TreinosView: View {
                 }
             }
 
-            // ✅ Título central (inalterado)
             ToolbarItem(placement: .principal) {
                 Text(tipo.titulo)
                     .font(Theme.Fonts.headerTitle())
@@ -87,20 +81,19 @@ struct TreinosView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            // ✅ PERFIL — mesmo padrão da HomeView
             ToolbarItem(placement: .navigationBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_user_default", size: 38)
-                    .onTapGesture {
-                        // opcional: navegar para perfil
-                    }
+                    .onTapGesture { }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
+    /// Remove a tela atual da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 }
+

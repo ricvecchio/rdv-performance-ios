@@ -1,25 +1,21 @@
-// RegisterStudentView.swift — Tela de cadastro para usuários tipo STUDENT
+// Tela de cadastro para usuários do tipo aluno
 import SwiftUI
 
 struct RegisterStudentView: View {
 
-    // Binding de rotas e ViewModel
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
 
     @State private var showPassword: Bool = false
 
-    // Cores e estilos locais
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
-    // Layout
     private let contentMaxWidth: CGFloat = 380
 
-    // Opções de foco válidas para estudante
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
-    // Corpo principal da tela
+    // Interface principal com formulário de cadastro de aluno
     var body: some View {
         ZStack {
 
@@ -87,7 +83,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // Card do formulário para STUDENT
+    // Retorna card com formulário de campos para cadastro de aluno
     private func formCardStudent() -> some View {
         VStack(spacing: 18) {
 
@@ -151,7 +147,7 @@ struct RegisterStudentView: View {
         .cornerRadius(14)
     }
 
-    // Área de ações e mensagens do formulário
+    // Retorna área com mensagens de erro/sucesso e botões de ação
     private func actionArea() -> some View {
         VStack(spacing: 12) {
 
@@ -219,7 +215,7 @@ struct RegisterStudentView: View {
         .padding(.top, 12)
     }
 
-    // Texto amigável para FocusArea
+    // Converte FocusAreaDTO em texto amigável para exibição
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
         switch opt {
         case .CROSSFIT: return "Crossfit"
@@ -229,7 +225,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // Picker padrão underline (com displayText opcional)
+    // Retorna picker com menu dropdown estilizado
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
         selection: Binding<T>,
@@ -271,7 +267,7 @@ struct RegisterStudentView: View {
         }
     }
 
-    // Navegação: voltar
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

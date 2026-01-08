@@ -1,7 +1,7 @@
-// TrainingDayFS.swift — Modelos de dia de treino e bloco para uso com Firestore
 import Foundation
 import FirebaseFirestore
 
+// Modelo de dia de treino armazenado no Firestore
 struct TrainingDayFS: Identifiable, Codable, Hashable {
 
     @DocumentID var id: String?
@@ -19,16 +19,15 @@ struct TrainingDayFS: Identifiable, Codable, Hashable {
     @ServerTimestamp var updatedAt: Timestamp?
 }
 
-// Bloco dentro de um dia (ex.: Aquecimento / Técnica / WOD)
+// Modelo de bloco dentro de um dia de treino
 struct BlockFS: Identifiable, Codable, Hashable {
     var id: String
     var name: String
     var details: String
 }
 
-// Helpers do dia (subtítulo exibido na UI)
 extension TrainingDayFS {
-    // Retorna texto curto (ex.: "Segunda • Dia 1")
+    // Retorna texto formatado para exibir na UI
     var subtitleText: String {
         let idx = max(dayIndex, 0) + 1
         if !dayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {

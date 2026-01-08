@@ -1,7 +1,8 @@
-// HeaderAvatarView.swift — Avatar do cabeçalho que usa foto local com fallback
+// Avatar do cabeçalho que exibe foto do perfil com cache otimizado
 import SwiftUI
 import UIKit
 
+// View de avatar que carrega foto do usuário do armazenamento local
 struct HeaderAvatarView: View {
 
     @EnvironmentObject private var session: AppSession
@@ -10,25 +11,34 @@ struct HeaderAvatarView: View {
     var showStroke: Bool = true
     var strokeOpacity: Double = 0.15
 
-    // Recarrega a view quando UserDefaults muda ou uid muda
-    @State private var refreshToken: UUID = UUID()
+    // Cache em memória para evitar recarregamentos desnecessários
+    @State private var cachedImage: UIImage? = nil
 
+    // Gerencia o carregamento e atualização da imagem do perfil
     var body: some View {
         content
-            .id(refreshToken)
-            .onAppear { refreshToken = UUID() }
-            .onReceive(NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification)) { _ in
-                refreshToken = UUID()
+            .onAppear {
+                reloadImageIfNeeded()
             }
             .onChange(of: session.currentUid) { _, _ in
-                refreshToken = UUID()
+                reloadImage(force: true)
+            }
+            .onReceive(NotificationCenter.default.publisher(for: LocalProfileStore.Notifications.profilePhotoDidChange)) { note in
+                let changedUserId = note.userInfo?[LocalProfileStore.Notifications.userIdKey] as? String
+                let current = (session.currentUid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+                guard !current.isEmpty else { return }
+
+                if changedUserId == current {
+                    reloadImage(force: true)
+                }
             }
     }
 
-    // Conteúdo condicional: imagem salva ou fallback
+    // Retorna a imagem do usuário ou fallback padrão
     @ViewBuilder
     private var content: some View {
-        if let img = LocalProfileStore.shared.getPhotoImage(userId: session.currentUid) {
+        if let img = cachedImage {
             Image(uiImage: img)
                 .resizable()
                 .scaledToFill()
@@ -47,4 +57,36 @@ struct HeaderAvatarView: View {
             MiniProfileHeader(imageName: "rdv_user_default", size: size)
         }
     }
+
+    // Recarrega a imagem se necessário
+    private func reloadImageIfNeeded() {
+        reloadImage(force: false)
+    }
+
+    // Recarrega a imagem do armazenamento local
+    private func reloadImage(force: Bool) {
+        let newImage = LocalProfileStore.shared.getPhotoImage(userId: session.currentUid)
+
+        if force {
+            cachedImage = newImage
+            return
+        }
+
+        if !imagesEqual(lhs: cachedImage, rhs: newImage) {
+            cachedImage = newImage
+        }
+    }
+
+    // Compara duas imagens para evitar atualizações desnecessárias
+    private func imagesEqual(lhs: UIImage?, rhs: UIImage?) -> Bool {
+        switch (lhs, rhs) {
+        case (nil, nil):
+            return true
+        case (nil, _), (_, nil):
+            return false
+        case (let a?, let b?):
+            return a.pngData() == b.pngData()
+        }
+    }
 }
+

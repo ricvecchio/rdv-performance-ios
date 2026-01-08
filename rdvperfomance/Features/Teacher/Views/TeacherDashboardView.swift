@@ -47,6 +47,22 @@ struct TeacherDashboardView: View {
                                 ) {
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
+
+                                // Restaurar: Mapa da Academia
+                                actionRow(
+                                    title: "Mapa da Academia",
+                                    icon: "map.fill"
+                                ) {
+                                    path.append(.mapFeature)
+                                }
+
+                                // Visualizar no ambiente (AR) — professor
+                                actionRow(
+                                    title: "Visualizar no ambiente",
+                                    icon: "viewfinder"
+                                ) {
+                                    path.append(.arDemo)
+                                }
                             }
                             .padding(.top, 8)
 
@@ -111,6 +127,7 @@ struct TeacherDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Cria botão de ação estilizado
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {

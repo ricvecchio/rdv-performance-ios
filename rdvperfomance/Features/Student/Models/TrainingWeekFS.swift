@@ -1,8 +1,7 @@
-// TrainingWeekFS.swift — Modelo de semana de treino armazenado no Firestore
 import Foundation
 import FirebaseFirestore
 
-// MARK: - TrainingWeekFS (Firestore: training_weeks)
+// Modelo de semana de treino armazenado no Firestore
 struct TrainingWeekFS: Identifiable, Codable, Hashable {
 
     @DocumentID var id: String?
@@ -21,9 +20,8 @@ struct TrainingWeekFS: Identifiable, Codable, Hashable {
     @ServerTimestamp var updatedAt: Timestamp?
 }
 
-// MARK: - Helpers
-// Helper para obter o tipo de treino a partir do rawValue
 extension TrainingWeekFS {
+    // Converte o valor raw para enum de categoria
     var category: TreinoTipo {
         TreinoTipo(rawValue: categoryRaw) ?? .crossfit
     }

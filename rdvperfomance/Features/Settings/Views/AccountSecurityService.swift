@@ -1,14 +1,15 @@
-// AccountSecurityService.swift — Serviço para operações sensíveis da conta: alterar senha e excluir conta
+// Serviço para operações de segurança da conta como alteração e exclusão
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
+// Gerencia operações sensíveis de conta do usuário
 final class AccountSecurityService {
 
     static let shared = AccountSecurityService()
     private init() {}
 
-    // Erros de serviço mapeados para mensagens amigáveis
+    // Erros específicos do serviço de segurança
     enum ServiceError: LocalizedError {
         case notLoggedIn
         case missingEmail
@@ -38,7 +39,7 @@ final class AccountSecurityService {
         }
     }
 
-    // Altera a senha do usuário após reautenticação
+    // Altera a senha do usuário após validar credenciais atuais
     func changePassword(currentPassword: String, newPassword: String) async throws {
 
         let currentPasswordTrim = currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -59,7 +60,7 @@ final class AccountSecurityService {
         }
     }
 
-    // Exclui conta do usuário após reautenticação e remove perfil no Firestore
+    // Exclui a conta do usuário após validação e remove dados do Firestore
     func deleteAccount(currentPassword: String) async throws {
 
         let currentPasswordTrim = currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -73,11 +74,9 @@ final class AccountSecurityService {
         do {
             _ = try await user.reauthenticate(with: credential)
 
-            // Remove perfil no Firestore
             let db = Firestore.firestore()
             try await db.collection("users").document(uid).delete()
 
-            // Remove usuário do Auth
             try await user.delete()
 
         } catch {
@@ -85,7 +84,7 @@ final class AccountSecurityService {
         }
     }
 
-    // Mapeia erros do Firebase para ServiceError legíveis
+    // Converte erros do Firebase em erros do serviço com mensagens legíveis
     private func mapFirebaseError(_ error: Error) -> Error {
         let ns = error as NSError
         if ns.domain == AuthErrorDomain {

@@ -74,9 +74,12 @@ struct TeacherStudentsListView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .onAppear {
+            // ✅ Mantém o chip inicial (quando houver) apenas como filtro visual
             filter = initialFilter
         }
-        .task { await loadStudents() }
+        // ✅ CORREÇÃO: sempre carregar a lista completa (todas as categorias),
+        // para que o chip "Todos" funcione mesmo quando a tela foi aberta com initialFilter != nil.
+        .task { await loadAllStudents() }
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
@@ -270,7 +273,7 @@ struct TeacherStudentsListView: View {
                 .multilineTextAlignment(.center)
 
             Button {
-                Task { await loadStudents() }
+                Task { await loadAllStudents() }
             } label: {
                 Text("Tentar novamente")
                     .font(.system(size: 14, weight: .semibold))
@@ -324,18 +327,15 @@ struct TeacherStudentsListView: View {
             .padding(.leading, leading)
     }
 
-    // Load: carrega alunos considerando filtro inicial
-    private func loadStudents() async {
+    // ✅ CORREÇÃO: sempre carregar todos os alunos do professor.
+    // O `initialFilter` fica apenas como estado visual do chip (filter),
+    // evitando o bug em que "Todos" não atualiza por falta de dados carregados.
+    private func loadAllStudents() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.errorMessage = "Não foi possível identificar o professor logado."
             return
         }
-
-        if let initial = initialFilter {
-            await vm.loadStudentsOnlyOneCategory(teacherId: teacherId, category: initial)
-        } else {
-            await vm.loadStudents(teacherId: teacherId)
-        }
+        await vm.loadStudents(teacherId: teacherId)
     }
 
     private func unlinkMessageText() -> String {
@@ -350,6 +350,7 @@ struct TeacherStudentsListView: View {
         }
     }
 
+    // Confirma desvinculação do aluno
     private func confirmUnlink() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.errorMessage = "Não foi possível identificar o professor logado."
@@ -369,6 +370,9 @@ struct TeacherStudentsListView: View {
         )
 
         studentPendingUnlink = nil
+
+        // ✅ Mantém consistência da lista após desfazer vínculo
+        await loadAllStudents()
     }
 
     private func pop() {
@@ -376,3 +380,4 @@ struct TeacherStudentsListView: View {
         path.removeLast()
     }
 }
+

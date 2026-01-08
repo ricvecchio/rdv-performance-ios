@@ -1,13 +1,12 @@
-// DeleteAccountView.swift — Tela para exclusão permanente de conta com confirmação e validação
+// Tela para exclusão permanente da conta do usuário
 import SwiftUI
 
+// View para exclusão de conta com confirmação rigorosa
 struct DeleteAccountView: View {
 
-    // Binding de rotas e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // Campos do formulário
     @State private var currentPassword: String = ""
     @State private var confirmText: String = ""
 
@@ -19,14 +18,14 @@ struct DeleteAccountView: View {
     private let lineColor = Color.white.opacity(0.35)
     private let contentMaxWidth: CGFloat = 380
 
-    // Valida se a ação pode ser executada
+    // Retorna verdadeiro se pode executar a exclusão
     private var canDelete: Bool {
         !currentPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         && confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR"
         && !isLoading
     }
 
-    // Corpo com aviso, formulário e ações
+    // Constrói a interface com aviso, formulário e ações
     var body: some View {
         ZStack {
 
@@ -101,7 +100,7 @@ struct DeleteAccountView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Card de aviso sobre a ação permanente
+    // Retorna card de aviso sobre a ação permanente
     private func warningCard() -> some View {
         VStack(spacing: 10) {
 
@@ -131,7 +130,7 @@ struct DeleteAccountView: View {
         .cornerRadius(14)
     }
 
-    // Formulário com senha e confirmação
+    // Retorna formulário com senha e confirmação
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
@@ -149,7 +148,7 @@ struct DeleteAccountView: View {
         .cornerRadius(14)
     }
 
-    // Área de ações com botão excluir e cancelar
+    // Retorna card com botões de excluir e cancelar
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
@@ -199,7 +198,7 @@ struct DeleteAccountView: View {
         .cornerRadius(14)
     }
 
-    // Submete exclusão chamando o serviço e trata feedback
+    // Valida e submete a exclusão da conta
     private func submitDelete() async {
         showError = false
         errorMessage = ""
@@ -234,19 +233,19 @@ struct DeleteAccountView: View {
         }
     }
 
-    // Mostra erro na UI
+    // Exibe mensagem de erro na interface
     private func presentError(_ message: String) {
         showError = true
         errorMessage = message
     }
 
-    // Navegação: voltar
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Componentes: campos com underline
+    // Retorna campo de texto com linha inferior
     private func underlineField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
@@ -265,6 +264,7 @@ struct DeleteAccountView: View {
         }
     }
 
+    // Retorna campo seguro com linha inferior
     private func secureUnderlineField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 

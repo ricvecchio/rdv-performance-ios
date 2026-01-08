@@ -277,6 +277,7 @@ struct StudentAgendaView: View {
             .padding(.leading, leading)
     }
 
+    // Volta para tela anterior
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

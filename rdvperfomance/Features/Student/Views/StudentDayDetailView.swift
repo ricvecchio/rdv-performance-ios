@@ -53,6 +53,32 @@ struct StudentDayDetailView: View {
                         }
 
                         trainingCard
+
+                        // Botão "Visualizar no ambiente" para Aluno (restaurado no local principal)
+                        if !isTeacherViewing {
+                            HStack {
+                                Spacer()
+                                Button {
+                                    path.append(.arDemo)
+                                } label: {
+                                    HStack(spacing: 8) {
+                                        Image(systemName: "viewfinder")
+                                            .foregroundColor(Theme.Colors.primaryGreen)
+                                        Text("Visualizar no ambiente")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(Theme.Colors.primaryGreen)
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 12)
+                                    .background(Theme.Colors.cardBackground)
+                                    .cornerRadius(12)
+                                }
+                                .buttonStyle(.plain)
+                                Spacer()
+                            }
+                            .padding(.top, 8)
+                        }
+
                         blocksCard
                     }
                     .frame(maxWidth: contentMaxWidth)
@@ -442,6 +468,7 @@ struct StudentDayDetailView: View {
         }
     }
 
+    // Exclui dia do Firestore
     private func deleteDay() async {
         errorMessage = nil
 
@@ -466,4 +493,3 @@ struct StudentDayDetailView: View {
         path.removeLast()
     }
 }
-

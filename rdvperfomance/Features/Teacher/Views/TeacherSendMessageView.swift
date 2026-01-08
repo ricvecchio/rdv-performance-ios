@@ -345,6 +345,7 @@ struct TeacherSendMessageView: View {
         }
     }
 
+    // Envia nova mensagem para aluno
     private func sendMessage() async {
         errorMessage = nil
         successMessage = nil

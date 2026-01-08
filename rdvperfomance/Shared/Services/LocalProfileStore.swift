@@ -1,27 +1,39 @@
-// LocalProfileStore.swift — Armazena perfil local por usuário (UserDefaults namespaced)
+// Armazenamento local de dados de perfil por usuário usando UserDefaults
 import Foundation
 import UIKit
+import CoreLocation
 
-// Store local para persistência de foto, whatsapp e foco por UID
+// Gerencia persistência local de fotos, whatsapp e outros dados por UID
 final class LocalProfileStore {
 
-    // Singleton compartilhado
+    // Instância compartilhada singleton
     static let shared = LocalProfileStore()
 
     private let defaults: UserDefaults
 
+    // Inicializador privado para garantir uso do singleton
     private init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
     }
 
-    // Keys base usadas para namespacing
+    // Notificações específicas para mudanças no perfil
+    struct Notifications {
+        static let profilePhotoDidChange = Notification.Name("LocalProfileStore.profilePhotoDidChange")
+
+        static let userIdKey = "userId"
+    }
+
+    // Chaves base para armazenamento no UserDefaults
     struct Keys {
         static let photoBase64 = "profile_photo_data"
         static let whatsapp = "profile_whatsapp"
         static let focusArea = "profile_focus_area"
+        static let mapDemoEnabled = "profile_map_demo_enabled"
+        static let mapLastSeenLat = "profile_map_last_lat"
+        static let mapLastSeenLon = "profile_map_last_lon"
     }
 
-    // Snapshot simples para uso em telas
+    // Snapshot simples dos dados de perfil
     struct ProfileSnapshot: Equatable {
         var photoBase64: String
         var whatsapp: String
@@ -30,62 +42,78 @@ final class LocalProfileStore {
         static let empty = ProfileSnapshot(photoBase64: "", whatsapp: "", focusAreaRaw: "")
     }
 
-    // MARK: - Helpers de namespacing
-    /// Cria chave isolada por usuário a partir da baseKey
+    // Cria chave isolada por usuário a partir da chave base
     private func namespacedKey(_ baseKey: String, userId: String) -> String {
         let safeId = userId.trimmingCharacters(in: .whitespacesAndNewlines)
         return "\(baseKey)_\(safeId)"
     }
 
-    /// Retorna um userId seguro (fallback) para evitar chaves vazias
+    // Retorna userId seguro evitando chaves vazias
     private func safeUserId(_ userId: String?) -> String {
         let id = (userId ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         return id.isEmpty ? "anonymous" : id
     }
 
-    // MARK: - API String (photo/whatsapp/focus)
+    // Posta notificação de mudança na foto do perfil
+    private func postPhotoDidChange(userId: String?) {
+        let uid = safeUserId(userId)
+        NotificationCenter.default.post(
+            name: Notifications.profilePhotoDidChange,
+            object: self,
+            userInfo: [Notifications.userIdKey: uid]
+        )
+    }
+
+    // Retorna a foto em base64 do usuário
     func getPhotoBase64(userId: String?) -> String {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.photoBase64, userId: uid)
         return defaults.string(forKey: key) ?? ""
     }
 
+    // Define a foto em base64 do usuário e notifica mudança
     func setPhotoBase64(_ value: String, userId: String?) {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.photoBase64, userId: uid)
         defaults.set(value, forKey: key)
+
+        postPhotoDidChange(userId: uid)
     }
 
+    // Remove a foto do usuário
     func clearPhoto(userId: String?) {
         setPhotoBase64("", userId: userId)
     }
 
+    // Retorna o whatsapp do usuário
     func getWhatsapp(userId: String?) -> String {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.whatsapp, userId: uid)
         return defaults.string(forKey: key) ?? ""
     }
 
+    // Define o whatsapp do usuário
     func setWhatsapp(_ value: String, userId: String?) {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.whatsapp, userId: uid)
         defaults.set(value, forKey: key)
     }
 
+    // Retorna a área de foco do usuário
     func getFocusAreaRaw(userId: String?) -> String {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.focusArea, userId: uid)
         return defaults.string(forKey: key) ?? ""
     }
 
+    // Define a área de foco do usuário
     func setFocusAreaRaw(_ value: String, userId: String?) {
         let uid = safeUserId(userId)
         let key = namespacedKey(Keys.focusArea, userId: uid)
         defaults.set(value, forKey: key)
     }
 
-    // MARK: - API UIImage (conversões práticas)
-    /// Retorna UIImage salva como Base64 para o usuário, se existir
+    // Retorna UIImage convertida do base64 salvo
     func getPhotoImage(userId: String?) -> UIImage? {
         let base64 = getPhotoBase64(userId: userId)
         guard !base64.isEmpty else { return nil }
@@ -93,7 +121,7 @@ final class LocalProfileStore {
         return UIImage(data: data)
     }
 
-    /// Salva UIImage como Base64 (JPEG) usando compressão configurável
+    // Salva UIImage como base64 em JPEG com compressão configurável
     func setPhotoImage(_ image: UIImage, userId: String?, compressionQuality: CGFloat = 0.82) -> Bool {
         guard let data = image.jpegData(compressionQuality: compressionQuality) else { return false }
         let base64 = data.base64EncodedString()
@@ -101,7 +129,7 @@ final class LocalProfileStore {
         return true
     }
 
-    // MARK: - Snapshot helpers
+    // Carrega snapshot completo do perfil do usuário
     func loadProfile(userId: String?) -> ProfileSnapshot {
         ProfileSnapshot(
             photoBase64: getPhotoBase64(userId: userId),
@@ -110,20 +138,71 @@ final class LocalProfileStore {
         )
     }
 
+    // Salva snapshot completo do perfil do usuário
     func saveProfile(_ snapshot: ProfileSnapshot, userId: String?) {
-        setPhotoBase64(snapshot.photoBase64, userId: userId)
-        setWhatsapp(snapshot.whatsapp, userId: userId)
-        setFocusAreaRaw(snapshot.focusAreaRaw, userId: userId)
+        let uid = safeUserId(userId)
+
+        let photoKey = namespacedKey(Keys.photoBase64, userId: uid)
+        let previousPhoto = defaults.string(forKey: photoKey) ?? ""
+
+        setPhotoBase64(snapshot.photoBase64, userId: uid)
+
+        setWhatsapp(snapshot.whatsapp, userId: uid)
+        setFocusAreaRaw(snapshot.focusAreaRaw, userId: uid)
+
+        if previousPhoto == snapshot.photoBase64 {
+        }
     }
 
+    // Remove todos os dados do perfil do usuário
     func clearAll(userId: String?) {
         clearPhoto(userId: userId)
         setWhatsapp("", userId: userId)
         setFocusAreaRaw("", userId: userId)
     }
 
-    // MARK: - Migração de chaves legadas
-    /// Migra chaves globais de legado para chaves por usuário quando necessário
+    // Retorna se o modo demo do mapa está ativado
+    func getMapDemoEnabled(userId: String?) -> Bool {
+        let uid = safeUserId(userId)
+        let key = namespacedKey(Keys.mapDemoEnabled, userId: uid)
+        return defaults.bool(forKey: key)
+    }
+
+    // Define se o modo demo do mapa está ativado
+    func setMapDemoEnabled(_ enabled: Bool, userId: String?) {
+        let uid = safeUserId(userId)
+        let key = namespacedKey(Keys.mapDemoEnabled, userId: uid)
+        defaults.set(enabled, forKey: key)
+    }
+
+    // Retorna a última coordenada salva do usuário
+    func getLastSeenCoordinate(userId: String?) -> CLLocationCoordinate2D? {
+        let uid = safeUserId(userId)
+        let latKey = namespacedKey(Keys.mapLastSeenLat, userId: uid)
+        let lonKey = namespacedKey(Keys.mapLastSeenLon, userId: uid)
+        let lat = defaults.object(forKey: latKey) as? Double
+        let lon = defaults.object(forKey: lonKey) as? Double
+        if let lat = lat, let lon = lon {
+            return CLLocationCoordinate2D(latitude: lat, longitude: lon)
+        }
+        return nil
+    }
+
+    // Define a última coordenada vista pelo usuário
+    func setLastSeenCoordinate(_ coordinate: CLLocationCoordinate2D?, userId: String?) {
+        let uid = safeUserId(userId)
+        let latKey = namespacedKey(Keys.mapLastSeenLat, userId: uid)
+        let lonKey = namespacedKey(Keys.mapLastSeenLon, userId: uid)
+        if let c = coordinate {
+            defaults.set(c.latitude, forKey: latKey)
+            defaults.set(c.longitude, forKey: lonKey)
+        } else {
+            defaults.removeObject(forKey: latKey)
+            defaults.removeObject(forKey: lonKey)
+        }
+    }
+
+    // Migra chaves globais antigas para chaves isoladas por usuário
     func migrateLegacyKeysToUser(userId: String?, clearLegacy: Bool = false) {
         let uid = safeUserId(userId)
 
@@ -135,8 +214,11 @@ final class LocalProfileStore {
         let currentWhatsapp = getWhatsapp(userId: uid)
         let currentFocus = getFocusAreaRaw(userId: uid)
 
+        var didMigratePhoto = false
+
         if !legacyPhoto.isEmpty && currentPhoto.isEmpty {
             setPhotoBase64(legacyPhoto, userId: uid)
+            didMigratePhoto = true
         }
         if !legacyWhatsapp.isEmpty && currentWhatsapp.isEmpty {
             setWhatsapp(legacyWhatsapp, userId: uid)
@@ -150,5 +232,9 @@ final class LocalProfileStore {
             defaults.removeObject(forKey: Keys.whatsapp)
             defaults.removeObject(forKey: Keys.focusArea)
         }
+
+        if didMigratePhoto {
+        }
     }
 }
+

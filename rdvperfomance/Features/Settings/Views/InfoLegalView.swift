@@ -1,14 +1,14 @@
-// InfoLegalView.swift — Tela reutilizável para Central de Ajuda, Privacidade e Termos
+// Tela reutilizável para exibir conteúdos legais e de ajuda
 import SwiftUI
 
-// Modelo simples para seções de conteúdo legal
+// Modelo para seções de conteúdo informativo
 struct InfoLegalSection: Hashable {
     let title: String?
     let introText: String?
     let bullets: [String]?
 }
 
-// View reutilizável que exibe diferentes conteúdos legais com base em `InfoLegalKind`
+// View que exibe diferentes tipos de conteúdo legal baseado no tipo
 struct InfoLegalView: View {
 
     @Binding var path: [AppRoute]
@@ -18,15 +18,15 @@ struct InfoLegalView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // Última categoria para adaptar o footer quando necessário
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
+    // Retorna a categoria atual do professor
     private var categoriaAtualProfessor: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    // Corpo com conteúdo e footer
+    // Constrói a interface com conteúdo legal e footer
     var body: some View {
         ZStack {
 
@@ -85,7 +85,6 @@ struct InfoLegalView: View {
                     .foregroundColor(.white)
             }
 
-            // Avatar padrão do cabeçalho
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -94,7 +93,7 @@ struct InfoLegalView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Footer que varia conforme o tipo de usuário
+    // Retorna o footer apropriado conforme tipo de usuário
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -120,13 +119,13 @@ struct InfoLegalView: View {
         }
     }
 
-    // Navegação: voltar
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Card que monta o conteúdo das seções do `InfoLegalKind`
+    // Retorna card com as seções de conteúdo formatadas
     private func contentCard() -> some View {
         VStack(alignment: .leading, spacing: 14) {
 
@@ -173,9 +172,10 @@ struct InfoLegalView: View {
     }
 }
 
-// Mapeamentos de título e conteúdo para cada InfoLegalKind
+// Define títulos e conteúdo para cada tipo de informação legal
 private extension InfoLegalKind {
 
+    // Retorna o título da tela
     var screenTitle: String {
         switch self {
         case .helpCenter: return "Central de Ajuda"
@@ -184,6 +184,7 @@ private extension InfoLegalKind {
         }
     }
 
+    // Retorna o título do corpo do conteúdo
     var bodyTitle: String {
         switch self {
         case .helpCenter: return "Central de Ajuda"
@@ -192,6 +193,7 @@ private extension InfoLegalKind {
         }
     }
 
+    // Retorna as seções de conteúdo formatadas
     var sections: [InfoLegalSection] {
         switch self {
 

@@ -1,24 +1,22 @@
-// RegisterTrainerView.swift — Tela de cadastro para usuários tipo TRAINER
+// Tela de cadastro para usuários do tipo professor
 import SwiftUI
 
 struct RegisterTrainerView: View {
 
-    // Binding e ViewModel
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
 
     @State private var showPassword: Bool = false
 
-    // Estilos locais
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Interface principal com formulário de cadastro de professor
     var body: some View {
         ZStack {
 
-            // FUNDO
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -26,35 +24,29 @@ struct RegisterTrainerView: View {
 
             VStack(spacing: 0) {
 
-                // Separador entre NavigationBar e corpo
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                // ✅ Scroll com conteúdo centralizado
-                // ✅ Padding inferior para garantir que o botão nunca fique escondido
                 ScrollView(showsIndicators: false) {
                     HStack {
                         Spacer(minLength: 0)
 
                         VStack(spacing: 18) {
 
-                            // MARK: - Card do formulário (Professor)
                             formCardTrainer()
                                 .padding(.top, 8)
 
-                            // MARK: - Ações / Mensagens / Botões
                             actionArea()
 
-                            // ✅ Respiro extra para não colar no final (melhor em telas pequenas)
                             Color.clear
                                 .frame(height: 12)
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
-                        .padding(.bottom, Theme.Layout.footerHeight + 32) // ✅ garante acesso ao botão
+                        .padding(.bottom, Theme.Layout.footerHeight + 32)
 
                         Spacer(minLength: 0)
                     }
@@ -65,7 +57,6 @@ struct RegisterTrainerView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            // Voltar
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -74,7 +65,6 @@ struct RegisterTrainerView: View {
                 .buttonStyle(.plain)
             }
 
-            // Título da NavigationBar
             ToolbarItem(placement: .principal) {
                 Text("Cadastro Professor")
                     .font(Theme.Fonts.headerTitle())
@@ -84,7 +74,6 @@ struct RegisterTrainerView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .onChange(of: vm.successMessage) { _, newValue in
-            // MVP: ao cadastrar com sucesso, volta pro login
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
                     path.removeAll()
@@ -93,7 +82,7 @@ struct RegisterTrainerView: View {
         }
     }
 
-    // Card do formulário para TRAINER
+    // Formulário de cadastro com campos de professor (nome, email, senha, whatsapp, CREF, academia, bio, área de foco, plano)
     private func formCardTrainer() -> some View {
         VStack(spacing: 18) {
 
@@ -137,7 +126,6 @@ struct RegisterTrainerView: View {
                 placeholderColor: textSecondary
             )
 
-            // ✅ Campo específico do TRAINER (obrigatório no MVP)
             UnderlineTextField(
                 title: "CREF",
                 text: $vm.cref,
@@ -148,7 +136,6 @@ struct RegisterTrainerView: View {
                 placeholderColor: textSecondary
             )
 
-            // Campo opcional
             UnderlineTextField(
                 title: "Nome da academia (opcional)",
                 text: $vm.gymName,
@@ -159,7 +146,6 @@ struct RegisterTrainerView: View {
                 placeholderColor: textSecondary
             )
 
-            // ✅ Bio multiline (economiza espaço e melhora UX)
             multilineBioField()
 
             pickerRow(
@@ -181,7 +167,7 @@ struct RegisterTrainerView: View {
         .cornerRadius(14)
     }
 
-    // MARK: - Bio Multiline (padrão underline)
+    // Campo de texto multilinha para biografia do professor
     private func multilineBioField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
@@ -204,7 +190,7 @@ struct RegisterTrainerView: View {
         }
     }
 
-    // MARK: - Ações / Mensagens / Botões
+    // Exibe mensagens de erro/sucesso e botões de ação (criar conta, voltar ao login)
     private func actionArea() -> some View {
         VStack(spacing: 12) {
 
@@ -272,7 +258,7 @@ struct RegisterTrainerView: View {
         .padding(.top, 12)
     }
 
-    // MARK: - Picker (padrão underline)
+    // Renderiza picker estilizado com linha inferior
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
         selection: Binding<T>,
@@ -311,7 +297,7 @@ struct RegisterTrainerView: View {
         }
     }
 
-    // MARK: - Navegação
+    // Remove última rota da navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
