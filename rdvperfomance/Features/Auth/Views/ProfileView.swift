@@ -1,11 +1,9 @@
-// ProfileView.swift — Tela de perfil com informações do usuário, opções e footer adaptado por tipo
 import SwiftUI
 import UIKit
 import FirebaseAuth
 
 struct ProfileView: View {
 
-    // Binding e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
@@ -27,7 +25,6 @@ struct ProfileView: View {
         (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    // Estados da tela
     @State private var userName: String = ""
     @State private var unitName: String = ""
     @State private var isPlanActive: Bool = false
@@ -43,19 +40,15 @@ struct ProfileView: View {
         return TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    // Check-ins (apenas aluno)
     @State private var checkinsConcluidos: Int = 0
     @State private var checkinsTotalSemana: Int = 0
 
-    // Alert Trocar unidade (aluno e professor)
     @State private var showTrocarUnidadeAlert: Bool = false
     @State private var unidadeDraft: String = ""
 
-    // Alert erro
     @State private var showErrorAlert: Bool = false
     @State private var errorMessage: String? = nil
 
-    // Corpo principal com cards e footer
     var body: some View {
         ZStack {
 
@@ -150,7 +143,7 @@ struct ProfileView: View {
         }
     }
 
-    // Footer adaptado por tipo de usuário
+    // Renderiza footer baseado no tipo de usuário (aluno ou professor)
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -176,13 +169,13 @@ struct ProfileView: View {
         }
     }
 
-    // Navegação: voltar
+    // Remove última rota da navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Carrega dados do usuário do Firestore
+    // Carrega informações do usuário e status do plano do Firestore
     private func loadUserData() async {
         let uid = currentUid
         guard !uid.isEmpty else {
@@ -231,7 +224,7 @@ struct ProfileView: View {
         }
     }
 
-    // Carrega check-ins da semana atual
+    // Busca check-ins realizados na semana de treino ativa
     private func loadCheckinsSemanaEmAndamento(studentId: String) async {
         do {
             let weeks = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: true)
@@ -278,13 +271,13 @@ struct ProfileView: View {
         }
     }
 
-    // Abrir diálogo para trocar unidade
+    // Abre modal para edição da unidade de treino
     private func openTrocarUnidade() {
         unidadeDraft = unitName
         showTrocarUnidadeAlert = true
     }
 
-    // Salva unidade no Firestore
+    // Persiste nova unidade de treino no Firestore
     private func salvarUnidade() async {
         let uid = currentUid
         guard !uid.isEmpty else { return }
@@ -300,12 +293,11 @@ struct ProfileView: View {
         }
     }
 
-    // Texto e cores para status de plano
     private var planoStatusTexto: String { isPlanActive ? "Ativo" : "Inativo" }
     private var planoStatusForeground: Color { isPlanActive ? Color.green.opacity(0.9) : Color.red.opacity(0.95) }
     private var planoStatusBackground: Color { isPlanActive ? Color.green.opacity(0.16) : Color.red.opacity(0.18) }
 
-    // UI: card de perfil com avatar e nome
+    // Exibe card com avatar, nome do usuário e unidade de treino
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
@@ -327,7 +319,7 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
-    // UI: opções e navegação dentro do perfil
+    // Lista opções do perfil (unidade, planos, check-ins, mensagens, feedbacks)
     private func optionsCard() -> some View {
         VStack(spacing: 0) {
 
@@ -366,7 +358,7 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
-    // Divisor estilizado
+    // Linha divisória entre opções do menu
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
@@ -380,7 +372,7 @@ struct ProfileView: View {
         case coloredBadge(String, fg: Color, bg: Color)
     }
 
-    // Linha de opção reutilizável
+    // Renderiza linha de opção com ícone, título e indicador à direita
     private func optionRow(
         icon: String,
         title: String,
@@ -399,6 +391,7 @@ struct ProfileView: View {
         }
     }
 
+    // Conteúdo visual da linha de opção
     private func optionRowContent(icon: String, title: String, trailing: Trailing) -> some View {
         HStack(spacing: 14) {
 
@@ -443,8 +436,7 @@ struct ProfileView: View {
         .padding(.vertical, 14)
     }
 
-    // MARK: - Logout
-    // Botão de logout estilizado
+    // Botão para deslogar usuário e retornar à tela de login
     private func logoutButton() -> some View {
         Button {
             session.logout()

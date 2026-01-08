@@ -1,3 +1,4 @@
+// Container UIViewRepresentable para ARView com gerenciamento de sessão e delegados
 import SwiftUI
 import RealityKit
 import ARKit
@@ -5,17 +6,18 @@ import AVFoundation
 import CoreMotion
 import UIKit
 
-// Minimal AR container + demo view — sem logs/debug/diagnóstico
 struct ARContainerView: UIViewRepresentable {
     typealias UIViewType = UIView
     var onArViewCreated: ((ARView) -> Void)?
     var onTap: ((CGPoint) -> Void)? = nil
 
+    // Coordenador que gerencia delegados da sessão AR e eventos de toque
     class Coordinator: NSObject, ARSessionDelegate {
         weak var statusLabel: UILabel?
         weak var arView: ARView?
         var tapHandler: ((CGPoint) -> Void)?
 
+        // Atualiza label de status baseado no estado de tracking da câmera
         func session(_ session: ARSession, didUpdate frame: ARFrame) {
             DispatchQueue.main.async {
                 guard let label = self.statusLabel else { return }
@@ -38,6 +40,7 @@ struct ARContainerView: UIViewRepresentable {
             }
         }
 
+        // Exibe mensagem de erro quando a sessão AR falha
         func session(_ session: ARSession, didFailWithError error: Error) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
@@ -45,6 +48,7 @@ struct ARContainerView: UIViewRepresentable {
             }
         }
 
+        // Exibe mensagem quando a sessão AR é interrompida
         func sessionWasInterrupted(_ session: ARSession) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
@@ -52,6 +56,7 @@ struct ARContainerView: UIViewRepresentable {
             }
         }
 
+        // Exibe mensagem quando a interrupção da sessão AR termina
         func sessionInterruptionEnded(_ session: ARSession) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
@@ -59,6 +64,7 @@ struct ARContainerView: UIViewRepresentable {
             }
         }
 
+        // Captura eventos de toque na view AR
         @objc func handleTap(_ sender: UITapGestureRecognizer) {
             guard let ar = arView else { return }
             let loc = sender.location(in: ar)
@@ -66,8 +72,10 @@ struct ARContainerView: UIViewRepresentable {
         }
     }
 
+    // Cria a instância do Coordinator
     func makeCoordinator() -> Coordinator { Coordinator() }
 
+    // Cria a view container com ARView e label de status
     func makeUIView(context: Context) -> UIView {
         let container = UIView(frame: .zero)
         container.backgroundColor = .black
@@ -105,7 +113,6 @@ struct ARContainerView: UIViewRepresentable {
         coordinator.arView = arView
         arView.session.delegate = coordinator
 
-        // instala recognizer para tocar na view AR
         if let onTap = onTap {
             let tap = UITapGestureRecognizer(target: coordinator, action: #selector(Coordinator.handleTap(_:)))
             tap.numberOfTapsRequired = 1
@@ -120,8 +127,10 @@ struct ARContainerView: UIViewRepresentable {
         return container
     }
 
+    // Método vazio requerido pelo protocolo
     func updateUIView(_ uiView: UIView, context: Context) {}
 
+    // Inicia a sessão AR com configuração de tracking mundial
     static func startSession(on arView: ARView, minimal: Bool = false) {
         guard ARWorldTrackingConfiguration.isSupported else { return }
         let motion = CMMotionManager()
@@ -139,9 +148,11 @@ struct ARContainerView: UIViewRepresentable {
     }
 }
 
+// View de demonstração simples para testar funcionalidade AR
 struct ARDemoView: View {
     @State private var arViewRef: ARView? = nil
 
+    // Interface de demonstração que inicia sessão AR automaticamente
     var body: some View {
         ZStack {
             ARContainerView(onArViewCreated: { ar in
@@ -153,7 +164,6 @@ struct ARDemoView: View {
         .navigationTitle("AR Demo")
         .onDisappear { if let ar = arViewRef { ar.session.pause() } }
         .onAppear {
-            // Minimal camera permission handling: request if not determined
             let status = AVCaptureDevice.authorizationStatus(for: .video)
             if status == .notDetermined {
                 AVCaptureDevice.requestAccess(for: .video) { _ in }

@@ -1,3 +1,4 @@
+// Tela AR para visualizar exercícios com pontos de correção interativos
 import SwiftUI
 import RealityKit
 import ARKit
@@ -12,30 +13,28 @@ struct ARExerciseView: View {
     @State private var newPointTitle: String = ""
     @State private var newPointNote: String = ""
 
-    // Task handles para cancelar operações assíncronas ao sair da tela
     @State private var modelLoadTask: Task<Void, Never>? = nil
     @State private var observerTask: Task<Void, Never>? = nil
     @State private var isModelLoading: Bool = false
 
+    // Inicializa a view com identificadores de semana e dia do treino
     init(path: Binding<[AppRoute]>, weekId: String, dayId: String) {
         self._path = path
         self._vm = StateObject(wrappedValue: ARExerciseViewModel(weekId: weekId, dayId: dayId))
     }
 
+    // Interface principal da tela AR com controles e overlay de loading
     var body: some View {
         ZStack {
             ARContainerView(onArViewCreated: { ar in
                 self.arViewRef = ar
                 ARContainerView.startSession(on: ar)
 
-                // Carrega pontos e modelo e atualiza a cena
-                // Cancela tarefa anterior e cria nova
                 modelLoadTask?.cancel()
                 modelLoadTask = Task {
                     await vm.loadLocalCorrectionPoints()
                     await vm.loadModelIfExists(named: "exercise_\(vm.weekId)_\(vm.dayId)")
                     await MainActor.run {
-                        // proteção: checa se view ainda existe
                         if let ar = arViewRef {
                             addModelToSceneIfNeeded(ar: ar)
                             renderCorrectionPoints(on: ar)
@@ -43,7 +42,6 @@ struct ARExerciseView: View {
                     }
                 }
 
-                // Observa mudanças em pontos para re-renderizar (salva handle para cancelar)
                 observerTask?.cancel()
                 observerTask = Task {
                     for await _ in vm.$correctionPoints.values {
@@ -53,22 +51,18 @@ struct ARExerciseView: View {
                     }
                 }
             }, onTap: { pt in
-                // Recebe toques vindos do ARView (coord em view)
                 guard placingPoint, let ar = arViewRef else { return }
-                // Raycast a partir do ponto tocado
                 if let result = ar.raycast(from: pt, allowing: .estimatedPlane, alignment: .any).first {
                     let world = result.worldTransform
                     let pos = SIMD3<Float>(world.columns.3.x, world.columns.3.y, world.columns.3.z)
                     newPointTitle = ""
                     newPointNote = ""
                     placingPoint = false
-                    // cria ponto temporário e adiciona entity
                     let tmp = ARCorrectionPoint(position: ARVector3Codable(from: pos))
                     vm.correctionPoints.append(tmp)
                     Task { @MainActor in
                         addCorrectionEntity(for: tmp, on: ar)
                     }
-                    // abre sheet para preencher título/nota
                     Task { await MainActor.run { showAddPointSheet = true } }
                 }
             })
@@ -184,24 +178,21 @@ struct ARExerciseView: View {
         .navigationTitle("AR")
     }
 
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // MARK: - Scene helpers
-
+    // Adiciona modelo 3D à cena AR ou placeholder caso falhe
     private func addModelToSceneIfNeeded(ar: ARView) {
-        // remove existing model anchors (anchor.name == "arModel")
         Task { @MainActor in
             let toRemove = ar.scene.anchors.filter { ($0.name ?? "") == "arModel" }
             for anchor in toRemove { ar.scene.removeAnchor(anchor) }
         }
 
         if let name = vm.modelName {
-            // inicia carregamento do modelo em background e atualiza a cena no MainActor
             Task {
-                // sinaliza loading no MainActor
                 await MainActor.run { isModelLoading = true }
                 defer { Task { await MainActor.run { isModelLoading = false } } }
 
@@ -210,7 +201,6 @@ struct ARExerciseView: View {
                     let entity = try await ModelEntity.load(named: name)
                     try Task.checkCancellation()
                     await MainActor.run {
-                        // proteção: checa se view ainda exista
                         guard let ar = arViewRef else { return }
                         let anchor = AnchorEntity(plane: .any)
                         anchor.name = "arModel"
@@ -219,9 +209,7 @@ struct ARExerciseView: View {
                         ar.scene.addAnchor(anchor)
                     }
                 } catch is CancellationError {
-                    // cancelado: não precisa fazer nada além de garantir isModelLoading desligado
                 } catch {
-                    // fallback placeholder
                     let placeholder = vm.placeholderModelEntity()
                     await MainActor.run {
                         guard let ar = arViewRef else { return }
@@ -245,9 +233,9 @@ struct ARExerciseView: View {
         }
     }
 
+    // Renderiza todos os pontos de correção como esferas vermelhas na cena AR
     private func renderCorrectionPoints(on ar: ARView) {
         Task { @MainActor in
-            // Remove previous arPoint anchors
             let toRemove = ar.scene.anchors.filter { ($0.name ?? "").hasPrefix("arPoint-") }
             for anchor in toRemove { ar.scene.removeAnchor(anchor) }
 
@@ -262,6 +250,7 @@ struct ARExerciseView: View {
         }
     }
 
+    // Adiciona uma esfera vermelha representando um ponto de correção na cena AR
     private func addCorrectionEntity(for point: ARCorrectionPoint, on ar: ARView) {
         Task { @MainActor in
             let sphere = ModelEntity(mesh: MeshResource.generateSphere(radius: 0.03), materials: [SimpleMaterial(color: .red, isMetallic: false)])

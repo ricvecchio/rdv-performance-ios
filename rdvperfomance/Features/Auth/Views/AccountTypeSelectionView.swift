@@ -1,14 +1,13 @@
-// AccountTypeSelectionView.swift — Tela inicial de escolha entre aluno ou professor
+// Tela de seleção de tipo de conta (aluno ou professor)
 import SwiftUI
 
 struct AccountTypeSelectionView: View {
 
-    // Binding de rotas
     @Binding var path: [AppRoute]
 
     private let textSecondary = Color.white.opacity(0.60)
 
-    // Corpo da tela de seleção de tipo de conta
+    // Interface principal com logo e botões de seleção
     var body: some View {
         ZStack {
 
@@ -79,7 +78,7 @@ struct AccountTypeSelectionView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Botão de seleção reutilizável
+    // Retorna botão estilizado para seleção de tipo de usuário
     private func selectionButton(title: String, subtitle: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             VStack(spacing: 8) {
@@ -107,7 +106,7 @@ struct AccountTypeSelectionView: View {
         .buttonStyle(.plain)
     }
 
-    // Navegação: voltar
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

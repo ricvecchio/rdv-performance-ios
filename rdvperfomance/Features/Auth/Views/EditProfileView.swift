@@ -1,20 +1,17 @@
-// EditProfileView.swift — Tela para editar foto, WhatsApp e área de foco do perfil do usuário
+// Tela para editar foto de perfil, WhatsApp e área de foco
 import SwiftUI
 import PhotosUI
 import UIKit
 
 struct EditProfileView: View {
 
-    // Binding e sessão
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // Estados de imagem
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var previewImage: UIImage? = nil
     @State private var isLoadingImage: Bool = false
 
-    // Estados do formulário
     @State private var whatsappDraft: String = ""
     @State private var focusAreaDraft: FocusAreaDTO = .CROSSFIT
 
@@ -26,16 +23,17 @@ struct EditProfileView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // Opções válidas para alunos
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
-    // Helpers para UID e armazenamento local
+    // Retorna UID do usuário atual
     private var currentUid: String? { session.currentUid }
+
+    // Retorna imagem armazenada localmente para o usuário
     private var storedImageForUser: UIImage? {
         LocalProfileStore.shared.getPhotoImage(userId: currentUid)
     }
 
-    // Corpo principal com avatar, formulário e ações
+    // Interface principal com avatar, formulário e ações
     var body: some View {
         ZStack {
 
@@ -117,7 +115,7 @@ struct EditProfileView: View {
         }
     }
 
-    // Avatar com preview ou imagem armazenada
+    // Retorna card com avatar e descrição
     private func avatarCard() -> some View {
         VStack(spacing: 12) {
 
@@ -149,7 +147,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
-    // Formulário com WhatsApp e área de foco
+    // Retorna card com campos do formulário
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
@@ -172,7 +170,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
-    // Ações: importar foto, salvar e remover foto
+    // Retorna card com botões de ação (importar, salvar, remover)
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
@@ -253,7 +251,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
-    // Escolhe a imagem de avatar correta (preview > armazenada > default)
+    // Escolhe imagem correta para exibir (preview > armazenada > padrão)
     @ViewBuilder
     private func avatarView() -> some View {
         if let previewImage {
@@ -271,7 +269,7 @@ struct EditProfileView: View {
         }
     }
 
-    // Carrega dados salvos para o usuário atual
+    // Carrega dados salvos do usuário atual do armazenamento local
     private func loadFromStore() {
         guard let _ = currentUid else {
             whatsappDraft = ""
@@ -293,7 +291,7 @@ struct EditProfileView: View {
         errorMessage = ""
     }
 
-    // Salva whatsapp, foco e foto quando necessário
+    // Salva todos os dados editados (WhatsApp, área de foco e foto)
     private func saveAll() {
         saveWhatsapp()
         saveFocusArea()
@@ -302,18 +300,18 @@ struct EditProfileView: View {
         errorMessage = ""
     }
 
-    // Salva whatsapp localmente
+    // Persiste WhatsApp localmente
     private func saveWhatsapp() {
         let v = whatsappDraft.trimmingCharacters(in: .whitespacesAndNewlines)
         LocalProfileStore.shared.setWhatsapp(v, userId: currentUid)
     }
 
-    // Salva área de foco localmente
+    // Persiste área de foco localmente
     private func saveFocusArea() {
         LocalProfileStore.shared.setFocusAreaRaw(focusAreaDraft.rawValue, userId: currentUid)
     }
 
-    // Salva foto apenas se existir preview
+    // Persiste foto apenas se houver imagem de preview
     private func savePhotoIfNeeded() {
         guard let previewImage else { return }
         let ok = LocalProfileStore.shared.setPhotoImage(previewImage, userId: currentUid, compressionQuality: 0.82)
@@ -322,7 +320,7 @@ struct EditProfileView: View {
         }
     }
 
-    // Remove apenas a foto armazenada do usuário
+    // Remove apenas a foto do usuário do armazenamento local
     private func clearPhotoOnly() {
         previewImage = nil
         selectedItem = nil
@@ -331,7 +329,7 @@ struct EditProfileView: View {
         errorMessage = ""
     }
 
-    // Carrega imagem do PhotosPicker e prepara preview
+    // Carrega imagem selecionada do PhotosPicker
     private func loadImage(from item: PhotosPickerItem) async {
         isLoadingImage = true
         defer { isLoadingImage = false }
@@ -352,7 +350,7 @@ struct EditProfileView: View {
         }
     }
 
-    // Mostra erro na UI de forma segura no MainActor
+    // Exibe mensagem de erro na interface
     private func presentError(_ message: String) {
         Task { @MainActor in
             self.showError = true
@@ -360,13 +358,13 @@ struct EditProfileView: View {
         }
     }
 
-    // Navegação: voltar
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Componentes UI auxiliares
+    // Retorna campo de texto com estilo underline
     private func underlineTextField(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
@@ -388,6 +386,7 @@ struct EditProfileView: View {
         }
     }
 
+    // Converte FocusAreaDTO em texto amigável
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
         switch opt {
         case .CROSSFIT: return "Crossfit"
@@ -397,6 +396,7 @@ struct EditProfileView: View {
         }
     }
 
+    // Retorna picker estilizado com underline
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
         selection: Binding<T>,

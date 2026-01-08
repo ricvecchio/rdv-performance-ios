@@ -1,3 +1,4 @@
+// Overlay de debug para visualizar estado da sessão AR e diagnósticos
 import SwiftUI
 
 struct DebugAROverlay: View {
@@ -9,6 +10,7 @@ struct DebugAROverlay: View {
     let onStartFull: () -> Void
     let onShareDiagnostic: () -> Void
 
+    // Interface de debug com informações e controles da sessão AR
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("DEBUG AR").font(.caption).bold()
