@@ -1,10 +1,12 @@
-// Theme.swift — Constantes visuais: cores, layout e fontes do app
+// Define as constantes visuais do aplicativo como cores, dimensões e fontes
 import SwiftUI
 
+// Agrupa todas as constantes de tema do aplicativo
 enum Theme {
 
+    // Cores padronizadas usadas em todo o app
     enum Colors {
-        // Cor primária verde do app
+        // Cor verde principal do aplicativo
         static let primaryGreen = Color(red: 0.18, green: 0.85, blue: 0.45)
 
         static let selected = primaryGreen
@@ -17,6 +19,7 @@ enum Theme {
         static let cardBackground = Color.black.opacity(0.65)
     }
 
+    // Dimensões e espaçamentos padronizados para layout
     enum Layout {
         static let headerHeight: CGFloat = 52
         static let footerHeight: CGFloat = 70
@@ -33,15 +36,19 @@ enum Theme {
         static let footerItemTitleSize: CGFloat = 11
     }
 
+    // Fontes padronizadas para diferentes elementos da interface
     enum Fonts {
+        // Retorna a fonte para títulos do footer
         static func footerTitle() -> Font {
             .system(size: Layout.footerItemTitleSize, weight: .medium)
         }
 
+        // Retorna a fonte para ícones do footer
         static func footerIcon() -> Font {
             .system(size: Layout.footerItemIconSize)
         }
 
+        // Retorna a fonte para títulos do header
         static func headerTitle() -> Font {
             .system(size: 17, weight: .semibold)
         }

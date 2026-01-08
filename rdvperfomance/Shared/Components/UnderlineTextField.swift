@@ -1,38 +1,36 @@
-// UnderlineTextField.swift — Campo de texto com estilo underline e suporte a senha
+// Campo de texto customizado com linha inferior e suporte para senha
 import SwiftUI
 
+// TextField com estilo personalizado e opção de mostrar/ocultar senha
 struct UnderlineTextField: View {
 
-    // Título exibido acima do campo (ex.: "E-mail", "Senha")
+    // Título exibido acima do campo
     let title: String
 
-    // Binding do texto digitado (o valor fica sincronizado com a tela pai)
+    // Texto digitado no campo
     @Binding var text: String
 
-    // Define se o campo é seguro (senha) ou normal
+    // Define se o campo exibe asteriscos para senha
     let isSecure: Bool
 
-    // Controla se a senha está visível (true) ou oculta (false)
+    // Controla visibilidade da senha
     @Binding var showPassword: Bool
 
-    // Cores configuráveis para reaproveitar o componente em outras telas
+    // Cores configuráveis do componente
     let lineColor: Color
     let textColor: Color
     let placeholderColor: Color
 
-    // Layout do campo com label, input e underline
+    // Constrói o campo com label, input e linha inferior
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
 
-            // Label do campo
             Text(title)
                 .font(.system(size: 14))
                 .foregroundColor(placeholderColor)
 
-            // Campo com ícone do "olho" (apenas quando for senha)
             ZStack(alignment: .trailing) {
 
-                // Alterna entre SecureField e TextField conforme necessidade
                 Group {
                     if isSecure && !showPassword {
                         SecureField("", text: $text)
@@ -46,7 +44,6 @@ struct UnderlineTextField: View {
                 .autocorrectionDisabled(true)
                 .keyboardType(title == "E-mail" ? .emailAddress : .default)
 
-                // Ícone de mostrar/ocultar senha quando aplicável
                 if isSecure {
                     Button {
                         showPassword.toggle()
@@ -58,7 +55,6 @@ struct UnderlineTextField: View {
                 }
             }
 
-            // Linha inferior (underline)
             Rectangle()
                 .fill(lineColor)
                 .frame(height: 1)

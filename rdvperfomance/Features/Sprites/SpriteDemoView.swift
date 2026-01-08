@@ -1,6 +1,7 @@
 import SwiftUI
 import SpriteKit
 
+// Tela de demonstração do preview de progresso com SpriteKit
 struct SpriteDemoView: View {
 
     @Binding var path: [AppRoute]
@@ -12,12 +13,14 @@ struct SpriteDemoView: View {
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
+    // Retorna a categoria atual do professor
     private var categoriaAtualProfessor: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
     @StateObject private var vm = ProgressGameViewModel(mode: .preview)
 
+    // Constrói a interface da tela de demonstração
     var body: some View {
         ZStack {
 
@@ -106,6 +109,7 @@ struct SpriteDemoView: View {
         .task { await vm.load() }
     }
 
+    // Retorna o footer apropriado conforme tipo de usuário
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -131,18 +135,17 @@ struct SpriteDemoView: View {
         }
     }
 
-    /// ✅ Ajuste final: maximiza largura útil do SpriteKit dentro do card
+    // Retorna card com preview da cena SpriteKit
     private func previewCard() -> some View {
         VStack(spacing: 0) {
 
-            // Top padding pequeno só pra “respirar”
             Color.clear.frame(height: 8)
 
             SpriteKitPreviewPanel(metrics: vm.metrics)
-                .frame(height: 420) // <- era 340
+                .frame(height: 420)
                 .frame(maxWidth: .infinity)
                 .clipped()
-                .padding(.horizontal, 2) // <- era 10 (quase full width)
+                .padding(.horizontal, 2)
 
             Color.clear.frame(height: 8)
         }
@@ -155,13 +158,14 @@ struct SpriteDemoView: View {
         )
     }
 
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 }
 
-// MARK: - Panel com sizing real (evita vazamento lateral)
+// Panel que gerencia o tamanho da cena SpriteKit
 private struct SpriteKitPreviewPanel: View {
 
     let metrics: ProgressMetrics
@@ -170,6 +174,7 @@ private struct SpriteKitPreviewPanel: View {
         size: CGSize(width: 10, height: 10)
     )
 
+    // Constrói a view do SpriteKit com gerenciamento de tamanho
     var body: some View {
         GeometryReader { geo in
             SpriteView(scene: scene)
@@ -187,6 +192,7 @@ private struct SpriteKitPreviewPanel: View {
         .clipped()
     }
 
+    // Aplica o tamanho à cena se necessário
     private func applySizeIfNeeded(_ size: CGSize) {
         guard size.width > 10, size.height > 10 else { return }
         if scene.size != size {

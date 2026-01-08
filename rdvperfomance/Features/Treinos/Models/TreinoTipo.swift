@@ -1,13 +1,13 @@
 import SwiftUI
 
-// TreinoTipo.swift — Enum que representa tipos de treino e fornece helpers de UI/serialização
+// Enum que representa os tipos de treino disponíveis no app
 enum TreinoTipo: String, Hashable {
 
     case crossfit
     case academia
     case emCasa
 
-    // Nome curto exibido na UI
+    // Retorna o nome para exibição na interface
     var displayName: String {
         switch self {
         case .crossfit: return "Crossfit"
@@ -16,7 +16,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Chave padronizada para armazenamento no Firestore
+    // Retorna a chave para armazenamento no Firestore
     var firestoreKey: String {
         switch self {
         case .crossfit: return "CROSSFIT"
@@ -25,7 +25,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Normaliza strings legadas/variações para o enum
+    // Normaliza strings variadas para o enum correto
     static func normalized(from any: String) -> TreinoTipo? {
         let v = any.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -43,7 +43,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Título usado no header da tela de treinos
+    // Retorna o título usado no header das telas
     var titulo: String {
         switch self {
         case .crossfit: return "Treinos Crossfit"
@@ -52,12 +52,12 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Título breve exibido sobre a imagem principal
+    // Retorna o título exibido sobre a imagem
     var tituloOverlayImagem: String {
         displayName
     }
 
-    // Nome da imagem principal associada a cada tipo
+    // Retorna o nome da imagem associada ao tipo
     var imagemCorpo: String {
         switch self {
         case .crossfit: return "rdv_treino1_vertical"
@@ -66,7 +66,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Ícone customizado exibido no rodapé da tela de treinos
+    // Retorna o ícone customizado para o rodapé
     @ViewBuilder
     var iconeRodapeTreinos: some View {
         switch self {
