@@ -299,18 +299,23 @@ struct FooterBar: View {
         switch destination {
         case .home:
             return [.home]
+
         case .alunos:
-            return [.home, .teacherStudentsList(selectedCategory: category, initialFilter: category)]
+            // ✅ AJUSTE: ao navegar pelo rodapé para "Alunos", sempre abrir com "Todos"
+            // (ou seja: initialFilter = nil). Isso evita voltar com "Treinos em Casa" selecionado.
+            return [.home, .teacherStudentsList(selectedCategory: category, initialFilter: nil)]
+
         case .sobre:
             return [
                 .home,
-                .teacherStudentsList(selectedCategory: category, initialFilter: category),
+                .teacherStudentsList(selectedCategory: category, initialFilter: nil),
                 .sobre
             ]
+
         case .perfil:
             return [
                 .home,
-                .teacherStudentsList(selectedCategory: category, initialFilter: category),
+                .teacherStudentsList(selectedCategory: category, initialFilter: nil),
                 .sobre,
                 .perfil
             ]

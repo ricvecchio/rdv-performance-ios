@@ -132,7 +132,7 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
-    // Retorna o footer apropriado dependendo do tipo de usuário
+    // ✅ Ajuste: Professor agora usa o MESMO padrão do AboutView (4 ícones)
     @ViewBuilder
     private func footerForCurrentUser() -> some View {
         if session.userType == .STUDENT {
@@ -145,10 +145,13 @@ struct HomeView: View {
                 )
             )
         } else {
+            let categoriaAtualProfessor = TreinoTipo(rawValue: ultimoTreinoSelecionadoState) ?? .crossfit
             FooterBar(
                 path: $path,
-                kind: .homeSobrePerfil(
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: categoriaAtualProfessor,
                     isHomeSelected: true,
+                    isAlunosSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: false
                 )

@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
+    @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -11,6 +12,13 @@ struct SettingsView: View {
     @State private var showWeightUnitSheet: Bool = false
 
     private let preferredWeightUnitKey: String = "preferredWeightUnit"
+
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
+
+    private var categoriaAtualProfessor: TreinoTipo {
+        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+    }
 
     // Retorna a unidade de peso preferida
     private var preferredWeightUnit: WeightUnit {
@@ -60,17 +68,11 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                FooterBar(
-                    path: $path,
-                    kind: .homeSobrePerfil(
-                        isHomeSelected: false,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
+                // ✅ Ajuste: rodapé no padrão do AboutView (4 ícones)
+                footerForUser()
+                    .frame(height: Theme.Layout.footerHeight)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -107,6 +109,32 @@ struct SettingsView: View {
             WeightUnitSheetView(selectedUnitRaw: $preferredWeightUnitRawState)
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
+        }
+    }
+
+    // ✅ Ajuste: Professor agora usa o MESMO padrão do AboutView (4 ícones)
+    @ViewBuilder
+    private func footerForUser() -> some View {
+        if session.userType == .STUDENT {
+            FooterBar(
+                path: $path,
+                kind: .agendaSobrePerfil(
+                    isAgendaSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: false
+                )
+            )
+        } else {
+            FooterBar(
+                path: $path,
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: categoriaAtualProfessor,
+                    isHomeSelected: false,
+                    isAlunosSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: true
+                )
+            )
         }
     }
 
