@@ -1,19 +1,17 @@
-// AppSession.swift — Sessão da aplicação: gerenciamento de autenticação e perfil do usuário
 import Foundation
 import SwiftUI
 import Combine
 import FirebaseAuth
 import FirebaseFirestore
 
+/// Gerencia o estado de autenticação e perfil do usuário no app
 @MainActor
 final class AppSession: ObservableObject {
 
-    // Persistência simples via AppStorage
     @AppStorage("auth_uid") private var storedUid: String = ""
     @AppStorage("auth_userType") private var storedUserTypeRaw: String = ""
     @AppStorage("auth_userName") private var storedUserName: String = ""
 
-    // Estado observável em memória
     @Published var uid: String? = nil
     @Published var userType: UserTypeDTO? = nil
     @Published var userName: String? = nil
@@ -21,10 +19,8 @@ final class AppSession: ObservableObject {
     private var authListener: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
 
-    // Init / Deinit: restaura estado e configura observador de autenticação
+    /// Inicializa a sessão e restaura estado persistido ou limpa em modo DEBUG
     init() {
-        // Em builds de desenvolvimento, limpar sessão para forçar início no login facilita testes.
-        // Em produção, mantemos o comportamento padrão (persistência de sessão).
         #if DEBUG
         self.storedUid = ""
         self.storedUserTypeRaw = ""
@@ -37,10 +33,8 @@ final class AppSession: ObservableObject {
         do {
             try Auth.auth().signOut()
         } catch {
-            // Ignora erros de signOut (por exemplo, se não houver usuário)
         }
         #else
-        // Em produção, restauramos o estado persistido (se houver)
         self.uid = storedUid.isEmpty ? nil : storedUid
         self.userType = storedUserTypeRaw.isEmpty ? nil : UserTypeDTO(rawValue: storedUserTypeRaw)
         self.userName = storedUserName.isEmpty ? nil : storedUserName
@@ -49,33 +43,35 @@ final class AppSession: ObservableObject {
         observeAuthState()
     }
 
+    /// Remove o listener de autenticação ao destruir o objeto
     deinit {
         if let authListener {
             Auth.auth().removeStateDidChangeListener(authListener)
         }
     }
 
-    // Computed: indica se há usuário logado
+    /// Retorna true se há um usuário autenticado
     var isLoggedIn: Bool {
         uid != nil && userType != nil
     }
 
-    // Conveniência: UID atual
+    /// Retorna o UID do usuário atual
     var currentUid: String? { uid }
 
-    // Conveniência: userType raw
+    /// Retorna o tipo de usuário em formato raw
     var currentUserTypeRaw: String? { userType?.rawValue }
 
-    // Conveniências: checagens por tipo de conta
+    /// Retorna true se o usuário é um aluno
     var isStudent: Bool {
         userType?.rawValue.lowercased() == "student"
     }
 
+    /// Retorna true se o usuário é um professor
     var isTrainer: Bool {
         userType?.rawValue.lowercased() == "trainer"
     }
 
-    // Observa mudanças reais de autenticação do Firebase
+    /// Configura observador de mudanças no estado de autenticação do Firebase
     private func observeAuthState() {
         if let authListener {
             Auth.auth().removeStateDidChangeListener(authListener)
@@ -88,8 +84,6 @@ final class AppSession: ObservableObject {
                 if let user {
                     self.uid = user.uid
                     self.storedUid = user.uid
-
-                    // Busca perfil no Firestore
                     await self.loadUserProfile(uid: user.uid)
                 } else {
                     self.clearSession()
@@ -98,13 +92,13 @@ final class AppSession: ObservableObject {
         }
     }
 
-    // Recarrega perfil do usuário de forma assíncrona
+    /// Recarrega o perfil do usuário atual do Firestore
     func refreshProfile() async {
         guard let uid else { return }
         await loadUserProfile(uid: uid)
     }
 
-    // Carrega userType e nome do Firestore
+    /// Carrega dados do perfil (nome e tipo) do Firestore
     func loadUserProfile(uid: String) async {
         do {
             let snap = try await db.collection("users").document(uid).getDocument()
@@ -127,11 +121,10 @@ final class AppSession: ObservableObject {
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
 
         } catch {
-            // Em caso de erro, mantém o estado armazenado
         }
     }
 
-    // Realiza logout no Firebase e limpa sessão local
+    /// Realiza logout do Firebase e limpa a sessão local
     func logout() {
         do {
             try Auth.auth().signOut()
@@ -141,7 +134,7 @@ final class AppSession: ObservableObject {
         }
     }
 
-    // Limpa todos os dados de sessão locais
+    /// Limpa todos os dados de sessão do app
     private func clearSession() {
         uid = nil
         userType = nil
