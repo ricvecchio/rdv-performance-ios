@@ -1,15 +1,17 @@
-// HeaderBar.swift — Componente de header reutilizável com separador inferior
+// Componente de cabeçalho reutilizável com layout padronizado
 import SwiftUI
 
+// Container para o header com fundo e separador inferior
 struct HeaderBar<Content: View>: View {
 
     let content: Content
 
+    // Inicializa o header com conteúdo customizado
     init(@ViewBuilder content: () -> Content) {
         self.content = content()
     }
 
-    // Layout do header com fundo do app e separador
+    // Constrói o header com fundo e linha separadora
     var body: some View {
         VStack(spacing: 0) {
 

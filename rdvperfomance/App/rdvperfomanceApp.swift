@@ -2,7 +2,7 @@ import SwiftUI
 import FirebaseCore
 import CoreData
 
-/// Ponto de entrada principal do aplicativo RDV Performance
+// Ponto de entrada principal do aplicativo RDV Performance
 @main
 struct rdvperfomanceApp: App {
 
@@ -10,6 +10,7 @@ struct rdvperfomanceApp: App {
     @StateObject private var session = AppSession()
     private let persistenceController = PersistenceController.shared
 
+    // Define a janela principal do aplicativo com injeção de dependências
     var body: some Scene {
         WindowGroup {
             AppRouter()
@@ -19,9 +20,9 @@ struct rdvperfomanceApp: App {
     }
 }
 
-/// Delegate para configurar Firebase no lançamento do app
+// Configuração inicial do Firebase ao lançar o aplicativo
 final class AppDelegate: NSObject, UIApplicationDelegate {
-    /// Configura Firebase quando o app é iniciado
+    // Inicializa o Firebase quando o app é iniciado
     func application(
         _ application: UIApplication,
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil

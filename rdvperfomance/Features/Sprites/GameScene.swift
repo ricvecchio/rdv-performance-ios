@@ -1,6 +1,8 @@
 import SpriteKit
 
+// Cena simples de demonstração do SpriteKit
 class GameScene: SKScene {
+    // Configura a cena quando é apresentada na view
     override func didMove(to view: SKView) {
         backgroundColor = .white
 
@@ -21,8 +23,8 @@ class GameScene: SKScene {
         sprite.run(.repeatForever(seq))
     }
 
+    // Altera cor de fundo ao tocar na tela
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-        // Example interaction: change background color on touch
         self.backgroundColor = self.backgroundColor == .white ? .lightGray : .white
     }
 }

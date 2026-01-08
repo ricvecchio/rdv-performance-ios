@@ -1,7 +1,9 @@
 import SwiftUI
 
+// Barra de navegação inferior com diferentes configurações para cada tipo de usuário
 struct FooterBar: View {
 
+    // Define os diferentes tipos de footer disponíveis no app
     enum Kind {
 
         case homeSobre(isHomeSelected: Bool, isSobreSelected: Bool)
@@ -64,6 +66,7 @@ struct FooterBar: View {
 
     @EnvironmentObject private var session: AppSession
 
+    // Constrói o footer com divider superior e botões de navegação
     var body: some View {
         VStack(spacing: 0) {
 
@@ -80,6 +83,7 @@ struct FooterBar: View {
         .background(Theme.Colors.footerBackground)
     }
 
+    // Retorna a configuração de botões apropriada baseado no Kind selecionado
     @ViewBuilder
     private func contentRow() -> some View {
         switch kind {
@@ -244,7 +248,7 @@ struct FooterBar: View {
         }
     }
 
-    // Navegação básica — retorna pilha canônica para rotas simples
+    // Retorna a pilha de navegação canônica para o destino especificado
     private func canonicalStackBasic(for destination: AppRoute) -> [AppRoute] {
         switch destination {
         case .home:  return [.home]
@@ -254,39 +258,43 @@ struct FooterBar: View {
         }
     }
 
-    // ✅ Sem withAnimation: animar “reset de pilha” é caro no NavigationStack
+    // Métodos de navegação básica sem animação
     private func goHomeBasic()   { path = canonicalStackBasic(for: .home) }
     private func goSobreBasic()  { path = canonicalStackBasic(for: .sobre) }
     private func goPerfilBasic() { path = canonicalStackBasic(for: .perfil) }
 
-    // Navegação aluno — constrói pilha com parâmetros do aluno
+    // Navega para a agenda do aluno atual
     private func goAgenda() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
         path = [.studentAgenda(studentId: studentId, studentName: studentName)]
     }
 
+    // Navega para a seção de treinos do aluno
     private func goTreinosAluno() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
         path = [.studentAgenda(studentId: studentId, studentName: studentName)]
     }
 
+    // Navega para a tela Sobre do aluno
     private func goSobreStudent() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
         path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre]
     }
 
+    // Navega para o perfil do aluno
     private func goPerfilStudent() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
         path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre, .perfil]
     }
 
-    // Navegação professor — constrói pilha canônica para professor
+    // Enum para identificar os destinos possíveis de navegação do professor
     private enum TeacherDestination { case home, alunos, sobre, perfil }
 
+    // Constrói a pilha de navegação canônica para professores
     private func teacherCanonicalStack(category: TreinoTipo, destination: TeacherDestination) -> [AppRoute] {
         switch destination {
         case .home:
@@ -309,26 +317,31 @@ struct FooterBar: View {
         }
     }
 
+    // Navega para a home do professor
     private func goTeacherHome() {
         path = teacherCanonicalStack(category: .crossfit, destination: .home)
     }
 
+    // Navega para a lista de alunos do professor
     private func goTeacherAlunos(category: TreinoTipo) {
         path = teacherCanonicalStack(category: category, destination: .alunos)
     }
 
+    // Navega para a tela Sobre do professor
     private func goTeacherSobre(category: TreinoTipo) {
         path = teacherCanonicalStack(category: category, destination: .sobre)
     }
 
+    // Navega para o perfil do professor
     private func goTeacherPerfil(category: TreinoTipo) {
         path = teacherCanonicalStack(category: category, destination: .perfil)
     }
 }
 
-// FooterItem interno — ícone + título
+// Item individual do footer com ícone e título
 private struct FooterItem: View {
 
+    // Define o tipo de ícone usado no item
     enum Icon {
         case system(String)
         case custom(AnyView)
@@ -339,6 +352,7 @@ private struct FooterItem: View {
     let isSelected: Bool
     let width: CGFloat
 
+    // Constrói o layout do item com ícone e texto
     var body: some View {
         VStack(spacing: 6) {
             switch icon {

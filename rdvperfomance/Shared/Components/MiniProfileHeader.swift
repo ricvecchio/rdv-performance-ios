@@ -1,12 +1,13 @@
-// MiniProfileHeader.swift — Componente simples para exibir imagem de perfil circular
+// Componente para exibir imagem de perfil em formato circular
 import SwiftUI
 
+// View simples que exibe uma imagem redonda
 struct MiniProfileHeader: View {
 
     let imageName: String
     var size: CGFloat = 38
 
-    // Imagem circular sem decoração adicional
+    // Retorna a imagem em formato circular
     var body: some View {
         Image(imageName)
             .resizable()

@@ -1,24 +1,24 @@
 import SwiftUI
 
+// Tela principal do app que exibe os programas de treino disponíveis
 struct HomeView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // ✅ Evita @AppStorage no body
+    // Estado local para armazenar o último treino selecionado
     @State private var ultimoTreinoSelecionadoState: String = TreinoTipo.crossfit.rawValue
     private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Constrói a interface principal com fundo, header, cards de programas e footer
     var body: some View {
         ZStack {
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
-                // ⚠️ Removido aqui para não “lavar” a toolbar com material cinza:
-                // .drawingGroup()
 
             VStack(spacing: 0) {
 
@@ -83,7 +83,6 @@ struct HomeView: View {
             }
         }
 
-        // ✅ Força o padrão do app (remove “cinza” de material)
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
@@ -99,6 +98,7 @@ struct HomeView: View {
         }
     }
 
+    // Card de acesso à área do professor
     private var teacherAreaCard: some View {
         Button {
             let categoria = TreinoTipo(rawValue: ultimoTreinoSelecionadoState) ?? .crossfit
@@ -132,6 +132,7 @@ struct HomeView: View {
         .buttonStyle(.plain)
     }
 
+    // Retorna o footer apropriado dependendo do tipo de usuário
     @ViewBuilder
     private func footerForCurrentUser() -> some View {
         if session.userType == .STUDENT {
@@ -155,6 +156,7 @@ struct HomeView: View {
         }
     }
 
+    // Cria um tile clicável para cada programa de treino
     private func programaTile(
         title: String,
         imageName: String,
@@ -189,6 +191,7 @@ struct HomeView: View {
         .frame(height: height)
     }
 
+    // Define o layout visual do tile com imagem de fundo e textos
     private func tileLayout(
         title: String,
         imageName: String,
