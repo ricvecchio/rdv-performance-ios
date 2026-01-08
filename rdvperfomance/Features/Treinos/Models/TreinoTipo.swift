@@ -1,13 +1,13 @@
 import SwiftUI
 
-// Enum que representa os tipos de treino disponíveis no app
+/// Enumeração dos tipos de treino disponíveis no aplicativo
 enum TreinoTipo: String, Hashable {
 
     case crossfit
     case academia
     case emCasa
 
-    // Retorna o nome para exibição na interface
+    /// Retorna o nome de exibição do tipo de treino
     var displayName: String {
         switch self {
         case .crossfit: return "Crossfit"
@@ -16,7 +16,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Retorna a chave para armazenamento no Firestore
+    /// Retorna a chave usada para armazenar o tipo no Firestore
     var firestoreKey: String {
         switch self {
         case .crossfit: return "CROSSFIT"
@@ -43,7 +43,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Retorna o título usado no header das telas
+    /// Retorna o título completo usado no cabeçalho das telas
     var titulo: String {
         switch self {
         case .crossfit: return "Treinos Crossfit"
@@ -52,12 +52,12 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Retorna o título exibido sobre a imagem
+    /// Retorna o título exibido sobre a imagem do tipo de treino
     var tituloOverlayImagem: String {
         displayName
     }
 
-    // Retorna o nome da imagem associada ao tipo
+    /// Retorna o nome do asset da imagem associada ao tipo de treino
     var imagemCorpo: String {
         switch self {
         case .crossfit: return "rdv_treino1_vertical"
@@ -66,7 +66,7 @@ enum TreinoTipo: String, Hashable {
         }
     }
 
-    // Retorna o ícone customizado para o rodapé
+    /// Retorna o ícone customizado usado no rodapé da tela
     @ViewBuilder
     var iconeRodapeTreinos: some View {
         switch self {

@@ -1,6 +1,6 @@
-// CreateTrainingDayView.swift — Tela para criar/editar um dia de treino dentro de uma semana
 import SwiftUI
 
+/// Tela para criar ou editar um dia de treino dentro de uma semana
 struct CreateTrainingDayView: View {
 
     @Binding var path: [AppRoute]
@@ -41,7 +41,7 @@ struct CreateTrainingDayView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // Corpo com header, meta do dia, treino, blocos e ação de salvar
+    /// Corpo principal da view com header, formulários e ações
     var body: some View {
         ZStack {
 
@@ -154,7 +154,7 @@ struct CreateTrainingDayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // MARK: - Day metadata card (data, ordem e nome)
+    /// Card com formulário de metadados do dia: data, ordem e nome
     private var dayMetaCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -212,7 +212,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    // MARK: - Training card (título e descrição)
+    /// Card com formulário de título e descrição do treino
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -257,7 +257,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    // MARK: - Blocks editor
+    /// Card com editor de blocos de exercícios do dia
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -344,7 +344,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    // Botão salvar
+    /// Botão para salvar ou atualizar o dia de treino
     private var saveButtonCard: some View {
         Button {
             Task { await saveDay() }
@@ -393,7 +393,7 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    // Bootstrap: carrega dias e posiciona no primeiro dia ausente
+    /// Carrega dias existentes da semana e posiciona no primeiro dia disponível
     private func bootstrapDays() async {
         isLoadingDays = true
         defer { isLoadingDays = false }
@@ -419,7 +419,7 @@ struct CreateTrainingDayView: View {
         }
     }
 
-    // Carrega um dia existente no formulário quando aplicável
+    /// Carrega dados de um dia existente no formulário ou limpa para novo dia
     private func loadDayIntoFormIfExists(index: Int) {
         errorMessage = nil
         successMessage = nil
@@ -456,7 +456,7 @@ struct CreateTrainingDayView: View {
         }
     }
 
-    // Salva ou atualiza o dia no Firestore
+    /// Valida e salva ou atualiza o dia de treino no Firestore
     private func saveDay() async {
         errorMessage = nil
         successMessage = nil
@@ -513,7 +513,7 @@ struct CreateTrainingDayView: View {
         }
     }
 
-    // Mantém nome do dia coerente com o índice quando vazio
+    /// Sincroniza o nome do dia com o índice quando nome estiver vazio
     private func syncDayName() {
         if dayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || dayName.hasPrefix("Dia ") {
             dayName = "Dia \(dayIndex + 1)"
@@ -526,6 +526,7 @@ struct CreateTrainingDayView: View {
     }
 }
 
+/// Modelo temporário de bloco de exercício usado durante edição
 private struct BlockDraft: Identifiable, Hashable {
     var id: String = UUID().uuidString
     var name: String

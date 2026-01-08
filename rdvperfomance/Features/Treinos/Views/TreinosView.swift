@@ -90,6 +90,7 @@ struct TreinosView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
+    /// Remove a tela atual da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

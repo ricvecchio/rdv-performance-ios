@@ -1,5 +1,6 @@
 import SwiftUI
 
+/// Tela de menu com opções de treinos de Crossfit
 struct CrossfitMenuView: View {
 
     @Binding var path: [AppRoute]
@@ -87,8 +88,7 @@ struct CrossfitMenuView: View {
         .frame(height: height)
     }
 
-    // ✅ CORREÇÃO: remover GeometryReader do tile
-    // ✅ MELHORIA: blur em imagem grande é pesado; reduzi e prendi tudo em frame/clipped
+    /// Layout visual de um tile de menu com imagem, blur e gradientes
     private func menuTileLayout(
         title: String,
         imageName: String,
@@ -96,16 +96,14 @@ struct CrossfitMenuView: View {
     ) -> some View {
 
         ZStack {
-            // Fundo "blur"
             Image(imageName)
                 .resizable()
                 .scaledToFill()
                 .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
                 .clipped()
-                .blur(radius: 6) // era 10 (mais pesado)
+                .blur(radius: 6)
                 .opacity(0.45)
 
-            // Imagem principal
             Image(imageName)
                 .resizable()
                 .scaledToFit()
@@ -145,6 +143,7 @@ struct CrossfitMenuView: View {
         .clipped()
     }
 
+    /// Remove a tela atual da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()

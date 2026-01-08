@@ -2,7 +2,7 @@ import Foundation
 import FirebaseFirestore
 import FirebaseAuth
 
-// MARK: - FirestoreRepository
+/// Gerencia todas as operações de leitura e escrita no Firestore
 final class FirestoreRepository {
 
     static let shared = FirestoreRepository()
@@ -11,7 +11,6 @@ final class FirestoreRepository {
 
     private init() {}
 
-    // MARK: - Errors
     enum RepositoryError: LocalizedError {
         case missingWeekId
         case missingUserId
@@ -41,12 +40,11 @@ final class FirestoreRepository {
         }
     }
 
-    // MARK: - Helpers
+    /// Remove espaços em branco das extremidades de uma string
     fileprivate func clean(_ value: String) -> String {
         value.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    // MARK: - users/{uid} (LEITURA)
     func getUser(uid: String) async throws -> AppUser? {
         let cleanUid = clean(uid)
         guard !cleanUid.isEmpty else { throw RepositoryError.missingUserId }
@@ -57,7 +55,6 @@ final class FirestoreRepository {
         return try snap.data(as: AppUser.self)
     }
 
-    // MARK: - teacher_students (teacherId + categoria)
     func getStudentsForTeacher(teacherId: String, category: String) async throws -> [AppUser] {
 
         let cleanTeacherId = clean(teacherId)
@@ -100,7 +97,6 @@ final class FirestoreRepository {
         return students.sorted { $0.name.lowercased() < $1.name.lowercased() }
     }
 
-    // MARK: - ✅ Desvincular aluno do professor (remove categoria; se vazio, apaga relação)
     func unlinkStudentFromTeacher(teacherId: String, studentId: String, category: String) async throws {
 
         let t = clean(teacherId)
@@ -128,10 +124,8 @@ final class FirestoreRepository {
 
             let categories = (data["categories"] as? [String]) ?? []
 
-            // ✅ remove comparando case-insensitive (evita “não remove” por diferença de caixa)
             let newCategories = categories.filter { clean($0).lowercased() != target }
 
-            // Se não mudou, não grava nada.
             if newCategories.count == categories.count {
                 continue
             }
@@ -150,7 +144,6 @@ final class FirestoreRepository {
         }
     }
 
-    // MARK: - training_weeks por aluno (LEITURA)
     func getWeeksForStudent(studentId: String, onlyPublished: Bool = true) async throws -> [TrainingWeekFS] {
 
         let cleanStudentId = clean(studentId)
@@ -177,7 +170,6 @@ final class FirestoreRepository {
         }
     }
 
-    // MARK: - days subcollection (LEITURA)
     func getDaysForWeek(weekId: String) async throws -> [TrainingDayFS] {
 
         let cleanWeekId = clean(weekId)
@@ -192,17 +184,12 @@ final class FirestoreRepository {
         return try snap.documents.compactMap { try $0.data(as: TrainingDayFS.self) }
     }
 
-    // MARK: - Helper seguro
     func getDays(for week: TrainingWeekFS) async throws -> [TrainingDayFS] {
         guard let weekId = week.id.map(clean(_:)), !weekId.isEmpty else {
             throw RepositoryError.missingWeekId
         }
         return try await getDaysForWeek(weekId: weekId)
     }
-
-    // ============================================================
-    // MARK: - ESCRITA (Trainer posta treino para aluno) - MVP
-    // ============================================================
 
     func createWeekForStudent(
         studentId: String,
@@ -762,7 +749,7 @@ extension FirestoreRepository {
         return list.sorted { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
     }
 
-    /// ✅ Aluno: lista feedbacks recebidos (SEM orderBy no Firestore → sem índice)
+    /// Lista feedbacks recebidos por um aluno ordenados por data de criação
     func getFeedbacksForStudent(
         studentId: String,
         categoryRaw: String,
