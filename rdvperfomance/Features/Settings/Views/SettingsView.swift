@@ -1,5 +1,6 @@
 import SwiftUI
 
+// Tela de configurações do aplicativo
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
@@ -11,10 +12,12 @@ struct SettingsView: View {
 
     private let preferredWeightUnitKey: String = "preferredWeightUnit"
 
+    // Retorna a unidade de peso preferida
     private var preferredWeightUnit: WeightUnit {
         WeightUnit(rawValue: preferredWeightUnitRawState) ?? .kg
     }
 
+    // Constrói a interface da tela de configurações
     var body: some View {
         ZStack {
 
@@ -22,8 +25,6 @@ struct SettingsView: View {
                 .resizable()
                 .scaledToFill()
                 .ignoresSafeArea()
-                // ⚠️ Removido para evitar “lavar” toolbar
-                // .drawingGroup()
 
             VStack(spacing: 0) {
 
@@ -89,7 +90,6 @@ struct SettingsView: View {
             }
         }
 
-        // ✅ Força padrão da navbar (sem cinza)
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
@@ -110,11 +110,13 @@ struct SettingsView: View {
         }
     }
 
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
+    // Retorna o título de uma seção
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
@@ -122,6 +124,7 @@ struct SettingsView: View {
             .padding(.horizontal, 6)
     }
 
+    // Retorna card com opções de conta
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
@@ -138,6 +141,7 @@ struct SettingsView: View {
         }
     }
 
+    // Retorna card com preferências do usuário
     private func preferencesCard() -> some View {
         card {
             cardRow(
@@ -150,6 +154,7 @@ struct SettingsView: View {
         }
     }
 
+    // Retorna card com opções de suporte e informações legais
     private func supportLegalCard() -> some View {
         card {
             cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
@@ -165,13 +170,13 @@ struct SettingsView: View {
             }
             divider()
 
-            // ✅ Renomeado e mantendo o mesmo ícone
             cardRow(icon: "gamecontroller.fill", title: "Preview do Progresso") {
                 path.append(.spriteDemo)
             }
         }
     }
 
+    // Retorna container para cards de configurações
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) { content() }
             .padding(.vertical, 8)
@@ -180,12 +185,14 @@ struct SettingsView: View {
             .cornerRadius(14)
     }
 
+    // Retorna linha divisória entre itens
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
             .padding(.leading, 54)
     }
 
+    // Retorna linha de card clicável sem texto à direita
     private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -211,6 +218,7 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
+    // Retorna linha de card clicável com texto à direita
     private func cardRow(icon: String, title: String, trailingText: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -241,10 +249,12 @@ struct SettingsView: View {
     }
 }
 
+// Define as unidades de peso disponíveis no aplicativo
 private enum WeightUnit: String, CaseIterable {
     case kg
     case lbs
 
+    // Retorna o título completo da unidade
     var title: String {
         switch self {
         case .kg: return "⚖️ kg (quilograma)"
@@ -252,6 +262,7 @@ private enum WeightUnit: String, CaseIterable {
         }
     }
 
+    // Retorna a sigla da unidade
     var shortLabel: String {
         switch self {
         case .kg: return "kg"
@@ -260,15 +271,18 @@ private enum WeightUnit: String, CaseIterable {
     }
 }
 
+// Sheet para seleção de unidade de peso
 private struct WeightUnitSheetView: View {
 
     @Binding var selectedUnitRaw: String
     @Environment(\.dismiss) private var dismiss
 
+    // Retorna a unidade selecionada
     private var selectedUnit: WeightUnit {
         WeightUnit(rawValue: selectedUnitRaw) ?? .kg
     }
 
+    // Constrói a interface do seletor de unidade
     var body: some View {
         ZStack {
 
@@ -355,7 +369,6 @@ private struct WeightUnitSheetView: View {
                 .padding(.top, 16)
             }
         }
-        // ✅ garante padrão do sheet também
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
