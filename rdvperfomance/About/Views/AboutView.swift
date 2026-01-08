@@ -1,28 +1,25 @@
-// AboutView.swift — View que apresenta a tela "Sobre" com logo, descrição e footer conforme tipo de usuário
+// View da tela "Sobre" com informações do app
 import SwiftUI
 import UIKit
 
 struct AboutView: View {
 
-    // Binding de rotas para navegação
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // Layout: dimensões e offsets usados no design
     private let cardMaxWidth: CGFloat = 360
     private let logoLift: CGFloat = 30
     private let cardLift: CGFloat = 26
 
-    // Armazena a última categoria selecionada (usada para adaptar o footer para professores)
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
-    // Computed property que retorna a categoria atual do professor a partir do AppStorage
+    // Retorna a categoria de treino selecionada pelo professor
     private var categoriaAtualProfessor: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    // Corpo principal da view: background, logo, card de conteúdo e footer
+    // Interface principal da tela Sobre
     var body: some View {
         ZStack {
 
@@ -90,7 +87,7 @@ struct AboutView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Retorna o footer apropriado conforme o tipo de usuário (aluno vs professor)
+    // Renderiza o footer de acordo com o tipo de usuário
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -116,13 +113,13 @@ struct AboutView: View {
         }
     }
 
-    // Remove a última rota do path (voltar)
+    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Gera o card de conteúdo central com título, lista de funcionalidades e texto final
+    // Retorna o card principal com título, funcionalidades e descrição do app
     private func contentCard() -> some View {
         VStack(spacing: 14) {
             Text("GERENCIE SEUS ALUNOS E PERSONALIZE TREINOS COM FACILIDADE")
@@ -146,7 +143,7 @@ struct AboutView: View {
         .cornerRadius(12)
     }
 
-    // Linha do item com ícone de check e texto da feature
+    // Retorna uma linha de funcionalidade com ícone de check e texto
     private func featureItem(_ text: String) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
