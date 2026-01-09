@@ -18,7 +18,7 @@ O app possui uma navegação simples, interface moderna e layout responsivo, com
 - SpriteKit (Animações e Jogos)
 - Arquitetura declarativa
 - iOS 16+
-- Firebase (configuração parcial via `GoogleService-Info.plist` – serviços de autenticação / Firestore presentes como referência)
+- Firebase (configuração parcial via `GoogleService-Info.plist` – serviços de autenticação / Firestore presentes como referência).
 
 ---
 
