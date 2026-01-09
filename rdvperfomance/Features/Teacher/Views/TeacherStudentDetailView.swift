@@ -103,6 +103,7 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
+            // ✅ Agora essa categoria vem correta pela navegação (TeacherStudentsListView)
             Text(category.tituloOverlayImagem)
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
@@ -182,7 +183,6 @@ struct TeacherStudentDetailView: View {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
 
-            // ✅ AJUSTE AQUI
             actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
             }

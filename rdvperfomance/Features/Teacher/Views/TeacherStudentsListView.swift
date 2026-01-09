@@ -29,7 +29,6 @@ struct TeacherStudentsListView: View {
         _vm = StateObject(wrappedValue: TeacherStudentsListViewModel(repository: repository))
     }
 
-    // Corpo principal com header, filtro e lista
     var body: some View {
         ZStack {
 
@@ -74,11 +73,8 @@ struct TeacherStudentsListView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .onAppear {
-            // ✅ Mantém o chip inicial (quando houver) apenas como filtro visual
             filter = initialFilter
         }
-        // ✅ CORREÇÃO: sempre carregar a lista completa (todas as categorias),
-        // para que o chip "Todos" funcione mesmo quando a tela foi aberta com initialFilter != nil.
         .task { await loadAllStudents() }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -205,9 +201,16 @@ struct TeacherStudentsListView: View {
                         .foregroundColor(.green.opacity(0.85))
                         .frame(width: 28)
 
-                    Text(student.name)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(student.name)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+
+                        // ✅ Categoria combinada (vínculo / cadastro)
+                        Text("Categoria: \(combinedCategoryText(student))")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.55))
+                    }
 
                     Spacer()
 
@@ -240,7 +243,13 @@ struct TeacherStudentsListView: View {
                         vm.errorMessage = "Aluno inválido: id não encontrado."
                         return
                     }
-                    path.append(.teacherStudentDetail(student, selectedCategory))
+
+                    // ✅ Navegação mantém o comportamento correto:
+                    // - Filtrado: abre detalhe na categoria do vínculo (chip)
+                    // - Todos: abre detalhe na categoria do cadastro
+                    // - Fallback: selectedCategory
+                    let resolvedCategory = resolveCategoryForNavigation(student: student)
+                    path.append(.teacherStudentDetail(student, resolvedCategory))
                 }
 
                 if idx < list.count - 1 {
@@ -327,9 +336,6 @@ struct TeacherStudentsListView: View {
             .padding(.leading, leading)
     }
 
-    // ✅ CORREÇÃO: sempre carregar todos os alunos do professor.
-    // O `initialFilter` fica apenas como estado visual do chip (filter),
-    // evitando o bug em que "Todos" não atualiza por falta de dados carregados.
     private func loadAllStudents() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.errorMessage = "Não foi possível identificar o professor logado."
@@ -350,7 +356,6 @@ struct TeacherStudentsListView: View {
         }
     }
 
-    // Confirma desvinculação do aluno
     private func confirmUnlink() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.errorMessage = "Não foi possível identificar o professor logado."
@@ -370,14 +375,101 @@ struct TeacherStudentsListView: View {
         )
 
         studentPendingUnlink = nil
-
-        // ✅ Mantém consistência da lista após desfazer vínculo
         await loadAllStudents()
     }
 
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
+    }
+
+    // MARK: - ✅ Categoria combinada (vínculo / cadastro) + navegação
+
+    /// Texto:
+    /// - Se filtro ativo (vínculo): mostra "Vínculo / Cadastro" quando diferentes.
+    /// - Se "Todos": mostra só cadastro.
+    private func combinedCategoryText(_ student: AppUser) -> String {
+        let profile = categoryFromStudentProfile(student)
+
+        // Sem filtro: não há vínculo único, então mostra só cadastro
+        guard let link = filter else {
+            return profile?.displayName ?? "—"
+        }
+
+        // Com filtro: link = categoria do vínculo (chip)
+        guard let profile else {
+            return link.displayName
+        }
+
+        if link == profile {
+            return link.displayName
+        }
+
+        return "\(link.displayName) / \(profile.displayName)"
+    }
+
+    /// Categoria do cadastro do aluno (RegisterStudentView -> users.focusArea).
+    private func categoryFromStudentProfile(_ student: AppUser) -> TreinoTipo? {
+        if let cat = mapCategoryStringToTreinoTipo(student.focusArea) {
+            return cat
+        }
+
+        // defaultCategory (se existir no AppUser)
+        let defaultRaw: String? = {
+            let mirror = Mirror(reflecting: student)
+            for child in mirror.children {
+                if child.label == "defaultCategory", let v = child.value as? String {
+                    return v
+                }
+            }
+            return nil
+        }()
+
+        if let cat = mapCategoryStringToTreinoTipo(defaultRaw) {
+            return cat
+        }
+
+        return nil
+    }
+
+    /// Navegação:
+    /// - Filtrado: abre detalhe na categoria do vínculo (chip)
+    /// - Todos: abre detalhe na categoria do cadastro
+    /// - Fallback: selectedCategory
+    private func resolveCategoryForNavigation(student: AppUser) -> TreinoTipo {
+        if let filter {
+            return filter
+        }
+        if let fromProfile = categoryFromStudentProfile(student) {
+            return fromProfile
+        }
+        return selectedCategory
+    }
+
+    /// Mapeia strings para TreinoTipo (robusto).
+    private func mapCategoryStringToTreinoTipo(_ rawOpt: String?) -> TreinoTipo? {
+        let raw = (rawOpt ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+
+        guard !raw.isEmpty else { return nil }
+
+        // FocusAreaDTO do cadastro
+        if raw == FocusAreaDTO.CROSSFIT.rawValue.lowercased() { return .crossfit }
+        if raw == FocusAreaDTO.GYM.rawValue.lowercased() { return .academia }
+        if raw == FocusAreaDTO.HOME.rawValue.lowercased() { return .emCasa }
+
+        // valores “humanos”
+        if raw.contains("cross") { return .crossfit }
+        if raw.contains("gym") || raw.contains("academ") { return .academia }
+        if raw.contains("casa") || raw.contains("home") { return .emCasa }
+
+        // rawValue do TreinoTipo
+        if raw == TreinoTipo.crossfit.rawValue.lowercased() { return .crossfit }
+        if raw == TreinoTipo.academia.rawValue.lowercased() { return .academia }
+        if raw == TreinoTipo.emCasa.rawValue.lowercased() { return .emCasa }
+
+        return nil
     }
 }
 

@@ -265,8 +265,9 @@ struct TeacherLinkStudentView: View {
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white.opacity(0.92))
 
-                    if let cat = item.defaultCategory, !cat.isEmpty {
-                        Text("Categoria: \(cat)")
+                    // ✅ CORREÇÃO: mostra a categoria do cadastro (focusArea), e faz fallback para defaultCategory só se precisar
+                    if let text = categoryTextForItem(item) {
+                        Text("Categoria: \(text)")
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.35))
                     }
@@ -286,6 +287,41 @@ struct TeacherLinkStudentView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+    }
+
+    // ✅ Converte FocusArea/defaultCategory para texto amigável
+    private func categoryTextForItem(_ item: StudentLinkItem) -> String? {
+        // prioridade: focusArea (cadastro real)
+        if let focus = item.focusArea, let cat = mapStringToTreinoTipo(focus) {
+            return cat.displayName
+        }
+        // fallback: defaultCategory (caso dados antigos)
+        if let def = item.defaultCategory, let cat = mapStringToTreinoTipo(def) {
+            return cat.displayName
+        }
+        return nil
+    }
+
+    private func mapStringToTreinoTipo(_ rawOpt: String) -> TreinoTipo? {
+        let raw = rawOpt.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        guard !raw.isEmpty else { return nil }
+
+        // focusArea (CROSSFIT / GYM / HOME)
+        if raw == FocusAreaDTO.CROSSFIT.rawValue.lowercased() { return .crossfit }
+        if raw == FocusAreaDTO.GYM.rawValue.lowercased() { return .academia }
+        if raw == FocusAreaDTO.HOME.rawValue.lowercased() { return .emCasa }
+
+        // defaultCategory (crossfit / academia / emCasa etc.)
+        if raw.contains("cross") { return .crossfit }
+        if raw.contains("gym") || raw.contains("academ") { return .academia }
+        if raw.contains("casa") || raw.contains("home") { return .emCasa }
+
+        // TreinoTipo.rawValue (caso use)
+        if raw == TreinoTipo.crossfit.rawValue.lowercased() { return .crossfit }
+        if raw == TreinoTipo.academia.rawValue.lowercased() { return .academia }
+        if raw == TreinoTipo.emCasa.rawValue.lowercased() { return .emCasa }
+
+        return nil
     }
 
     private var loadingView: some View {
@@ -400,10 +436,17 @@ final class TeacherLinkStudentViewModel: ObservableObject {
             self.items = snap.documents.compactMap { doc in
                 let data = doc.data()
                 let name = (data["name"] as? String) ?? "Sem nome"
+
+                // ✅ Categoria correta do cadastro
+                let focusArea = data["focusArea"] as? String
+
+                // fallback legado
                 let defaultCategory = data["defaultCategory"] as? String
+
                 return StudentLinkItem(
                     id: doc.documentID,
                     name: name,
+                    focusArea: focusArea,
                     defaultCategory: defaultCategory
                 )
             }
@@ -450,7 +493,6 @@ final class TeacherLinkStudentViewModel: ObservableObject {
         }
     }
 
-    // Define mensagem de erro
     func setError(_ msg: String) {
         errorMessage = msg
         showErrorAlert = true
@@ -461,5 +503,11 @@ final class TeacherLinkStudentViewModel: ObservableObject {
 struct StudentLinkItem: Identifiable, Hashable {
     let id: String
     let name: String
+
+    // ✅ novo: categoria do cadastro (RegisterStudentView)
+    let focusArea: String?
+
+    // fallback legado
     let defaultCategory: String?
 }
+

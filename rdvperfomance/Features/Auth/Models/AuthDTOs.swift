@@ -9,7 +9,7 @@ enum UserTypeDTO: String, Codable, CaseIterable {
 
 // Áreas de foco para os treinos do usuário
 enum FocusAreaDTO: String, Codable, CaseIterable {
-    case CROSSFIT, GYM, HOME, FUNCTIONAL, OTHER
+    case CROSSFIT, GYM, HOME
 }
 
 // Tipos de planos de assinatura disponíveis
