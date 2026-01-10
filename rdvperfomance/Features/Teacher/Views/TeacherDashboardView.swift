@@ -39,7 +39,8 @@ struct TeacherDashboardView: View {
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
 
-                                // ✅ ALTERADO: "Meus Treinos" -> "Biblioteca de Treinos"
+                                // ✅ "Meus Treinos" -> "Biblioteca de Treinos"
+                                // ✅ Navega corretamente para a rota que carrega o footer com a categoria atual
                                 actionRow(
                                     title: "Biblioteca de Treinos",
                                     icon: "square.grid.2x2.fill"

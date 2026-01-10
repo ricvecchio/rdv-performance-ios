@@ -76,14 +76,13 @@ enum AppRoute: Hashable {
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 
-    // ✅ Ajustado: Biblioteca de Treinos (Professor) precisa carregar o footer com a categoria atual do dashboard
+    // ✅ Biblioteca de Treinos (Professor)
     case teacherMyWorkouts(category: TreinoTipo)
-    case teacherWorkoutsCategory(category: TreinoTipo)
 
-    // ✅ NOVO: Biblioteca Crossfit (submenus)
+    // ✅ Biblioteca Crossfit (seções)
     case teacherCrossfitLibrary(section: CrossfitLibrarySection)
 
-    // ✅ NOVO: Lista de templates (qualquer categoria, por seção)
+    // ✅ Lista de templates (qualquer categoria, por seção)
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
 }
 

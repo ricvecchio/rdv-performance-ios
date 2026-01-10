@@ -3,6 +3,7 @@ import SwiftUI
 struct TeacherMyWorkoutsView: View {
 
     @Binding var path: [AppRoute]
+    let category: TreinoTipo
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -29,16 +30,27 @@ struct TeacherMyWorkoutsView: View {
 
                         VStack(spacing: 12) {
 
+                            // ✅ Agora vai direto para a biblioteca Crossfit (sem tela intermediária)
                             menuRow(title: "Treinos Crossfit", icon: "figure.strengthtraining.traditional") {
-                                path.append(.teacherWorkoutsCategory(category: .crossfit))
+                                path.append(.teacherCrossfitLibrary(section: .benchmarks))
                             }
 
+                            // ✅ Agora vai direto para a lista de templates (sem tela intermediária)
                             menuRow(title: "Treinos Academia", icon: "dumbbell") {
-                                path.append(.teacherWorkoutsCategory(category: .academia))
+                                path.append(.teacherWorkoutTemplates(
+                                    category: .academia,
+                                    sectionKey: "meusTreinos",
+                                    sectionTitle: "Meus Treinos"
+                                ))
                             }
 
+                            // ✅ Agora vai direto para a lista de templates (sem tela intermediária)
                             menuRow(title: "Treinos em Casa", icon: "house.fill") {
-                                path.append(.teacherWorkoutsCategory(category: .emCasa))
+                                path.append(.teacherWorkoutTemplates(
+                                    category: .emCasa,
+                                    sectionKey: "meusTreinos",
+                                    sectionTitle: "Meus Treinos"
+                                ))
                             }
                         }
 
@@ -53,7 +65,7 @@ struct TeacherMyWorkoutsView: View {
                 FooterBar(
                     path: $path,
                     kind: .teacherHomeAlunosSobrePerfil(
-                        selectedCategory: .crossfit,
+                        selectedCategory: category,
                         isHomeSelected: false,
                         isAlunosSelected: false,
                         isSobreSelected: false,

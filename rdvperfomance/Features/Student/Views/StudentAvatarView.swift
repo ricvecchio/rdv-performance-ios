@@ -15,27 +15,28 @@ struct StudentAvatarView: View {
                 .clipShape(Circle())
                 .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
         } else {
-            // ✅ Corrigido: fallback é avatar_default (e não ícone verde)
-            ZStack {
-                // Se o asset não existir, o SF Symbol abaixo ainda garante que nada "some"
-                Image("avatar_default")
-                    .resizable()
-                    .scaledToFill()
-
-                Image(systemName: "person.crop.circle.fill")
-                    .font(.system(size: size))
-                    .foregroundColor(.white.opacity(0.08))
-            }
-            .frame(width: size, height: size)
-            .clipShape(Circle())
-            .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
+            // ✅ Ajuste pedido: avatar_default (rdv_user_default) em vez do ícone verde
+            Image("rdv_user_default")
+                .resizable()
+                .scaledToFill()
+                .frame(width: size, height: size)
+                .clipShape(Circle())
+                .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
         }
     }
 
     private func decodeImage() -> UIImage? {
-        let raw = (base64 ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        var raw = (base64 ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else { return nil }
-        guard let data = Data(base64Encoded: raw) else { return nil }
+
+        // ✅ Suporta "data:image/jpeg;base64,...."
+        if let commaIndex = raw.firstIndex(of: ","),
+           raw.lowercased().contains("base64") {
+            raw = String(raw[raw.index(after: commaIndex)...])
+        }
+
+        // ✅ Mais tolerante a quebras de linha / caracteres inválidos
+        guard let data = Data(base64Encoded: raw, options: [.ignoreUnknownCharacters]) else { return nil }
         return UIImage(data: data)
     }
 }

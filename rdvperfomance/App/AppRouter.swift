@@ -189,16 +189,10 @@ struct AppRouter: View {
                         RegisterTrainerView(path: $path)
                             .environmentObject(session)
 
-                    // ✅ Professor: Biblioteca de Treinos (menu categorias)
-                    case .teacherMyWorkouts:
+                    // ✅ Professor: Biblioteca de Treinos
+                    case .teacherMyWorkouts(let category):
                         guardedTeacher {
-                            TeacherMyWorkoutsView(path: $path)
-                        }
-
-                    // ✅ Professor: Biblioteca por categoria
-                    case .teacherWorkoutsCategory(let category):
-                        guardedTeacher {
-                            TeacherWorkoutsCategoryView(path: $path, category: category)
+                            TeacherMyWorkoutsView(path: $path, category: category)
                         }
 
                     // ✅ Professor: Submenu Crossfit (seções)
