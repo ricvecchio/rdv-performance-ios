@@ -1,6 +1,6 @@
 import SwiftUI
 
-struct TeacherDashboardView: View {
+struct TeacherMyWorkoutsView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
@@ -20,58 +20,46 @@ struct TeacherDashboardView: View {
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
-                    .frame(maxWidth: .infinity)
 
                 ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                    VStack(alignment: .leading, spacing: 14) {
 
-                        VStack(alignment: .leading, spacing: 14) {
+                        Text("Escolha a categoria para gerenciar seus treinos.")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.55))
 
-                            header
+                        VStack(spacing: 12) {
 
-                            VStack(spacing: 12) {
-
-                                actionRow(
-                                    title: "Meus alunos",
-                                    icon: "person.3.fill"
-                                ) {
-                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
-                                }
-
-                                // ✅ "Meus Treinos" -> "Biblioteca de Treinos"
-                                // ✅ Navega corretamente para a rota que carrega o footer com a categoria atual
-                                actionRow(
-                                    title: "Biblioteca de Treinos",
-                                    icon: "square.grid.2x2.fill"
-                                ) {
-                                    path.append(.teacherMyWorkouts(category: category))
-                                }
-
-                                actionRow(
-                                    title: "Mapa da Academia",
-                                    icon: "map.fill"
-                                ) {
-                                    path.append(.mapFeature)
-                                }
-
-                                actionRow(
-                                    title: "Visualizar no ambiente",
-                                    icon: "viewfinder"
-                                ) {
-                                    path.append(.arDemo)
-                                }
+                            // ✅ Agora vai direto para a biblioteca Crossfit (sem tela intermediária)
+                            menuRow(title: "Treinos Crossfit", icon: "figure.strengthtraining.traditional") {
+                                path.append(.teacherCrossfitLibrary(section: .benchmarks))
                             }
-                            .padding(.top, 8)
 
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            // ✅ Agora vai direto para a lista de templates (sem tela intermediária)
+                            menuRow(title: "Treinos Academia", icon: "dumbbell") {
+                                path.append(.teacherWorkoutTemplates(
+                                    category: .academia,
+                                    sectionKey: "meusTreinos",
+                                    sectionTitle: "Meus Treinos"
+                                ))
+                            }
+
+                            // ✅ Agora vai direto para a lista de templates (sem tela intermediária)
+                            menuRow(title: "Treinos em Casa", icon: "house.fill") {
+                                path.append(.teacherWorkoutTemplates(
+                                    category: .emCasa,
+                                    sectionKey: "meusTreinos",
+                                    sectionTitle: "Meus Treinos"
+                                ))
+                            }
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
 
-                        Spacer(minLength: 0)
+                        Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                     }
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .frame(maxWidth: .infinity, alignment: .center)
                 }
 
                 FooterBar(
@@ -85,14 +73,12 @@ struct TeacherDashboardView: View {
                     )
                 )
                 .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
                 .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-
             ToolbarItem(placement: .navigationBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
@@ -102,7 +88,7 @@ struct TeacherDashboardView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Área do Professor")
+                Text("Biblioteca de Treinos")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -115,21 +101,12 @@ struct TeacherDashboardView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Aqui você gerencia alunos e seus treinos.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func menuRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
+                    .font(.system(size: 18))
                     .frame(width: 26)
 
                 Text(title)

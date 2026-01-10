@@ -7,6 +7,30 @@ enum InfoLegalKind: String, Hashable {
     case termsOfUse
 }
 
+// Seções de “Meus Treinos” (Crossfit)
+enum CrossfitLibrarySection: String, Hashable, CaseIterable {
+    case benchmarks
+    case competicoesOficiais
+    case formatosWod
+    case formatoSocial
+    case opens
+    case meusTreinos
+
+    var title: String {
+        switch self {
+        case .benchmarks:          return "Benchmarks"
+        case .competicoesOficiais: return "Competições Oficiais"
+        case .formatosWod:         return "Formatos de WOD"
+        case .formatoSocial:       return "Formato Social"
+        case .opens:               return "Open’s"
+        case .meusTreinos:         return "Meus Treinos"
+        }
+    }
+
+    /// Chave de persistência no Firestore (estável e sem espaços)
+    var firestoreKey: String { rawValue }
+}
+
 // Representa todas as rotas de navegação disponíveis no aplicativo
 enum AppRoute: Hashable {
 
@@ -51,5 +75,14 @@ enum AppRoute: Hashable {
 
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
+
+    // ✅ Biblioteca de Treinos (Professor)
+    case teacherMyWorkouts(category: TreinoTipo)
+
+    // ✅ Biblioteca Crossfit (seções)
+    case teacherCrossfitLibrary(section: CrossfitLibrarySection)
+
+    // ✅ Lista de templates (qualquer categoria, por seção)
+    case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
 }
 

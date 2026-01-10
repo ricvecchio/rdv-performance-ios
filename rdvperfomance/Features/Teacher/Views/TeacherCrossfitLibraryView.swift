@@ -1,9 +1,9 @@
 import SwiftUI
 
-struct TeacherDashboardView: View {
+struct TeacherCrossfitLibraryView: View {
 
     @Binding var path: [AppRoute]
-    let category: TreinoTipo
+    let section: CrossfitLibrarySection
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -20,7 +20,6 @@ struct TeacherDashboardView: View {
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
-                    .frame(maxWidth: .infinity)
 
                 ScrollView(showsIndicators: false) {
                     HStack {
@@ -28,41 +27,25 @@ struct TeacherDashboardView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            header
+                            Text("Biblioteca Crossfit")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.green.opacity(0.85))
+
+                            Text("Selecione uma seção.")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.55))
 
                             VStack(spacing: 12) {
-
-                                actionRow(
-                                    title: "Meus alunos",
-                                    icon: "person.3.fill"
-                                ) {
-                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
-                                }
-
-                                // ✅ "Meus Treinos" -> "Biblioteca de Treinos"
-                                // ✅ Navega corretamente para a rota que carrega o footer com a categoria atual
-                                actionRow(
-                                    title: "Biblioteca de Treinos",
-                                    icon: "square.grid.2x2.fill"
-                                ) {
-                                    path.append(.teacherMyWorkouts(category: category))
-                                }
-
-                                actionRow(
-                                    title: "Mapa da Academia",
-                                    icon: "map.fill"
-                                ) {
-                                    path.append(.mapFeature)
-                                }
-
-                                actionRow(
-                                    title: "Visualizar no ambiente",
-                                    icon: "viewfinder"
-                                ) {
-                                    path.append(.arDemo)
+                                ForEach(CrossfitLibrarySection.allCases, id: \.self) { item in
+                                    actionRow(title: item.title, icon: "folder.fill") {
+                                        path.append(.teacherWorkoutTemplates(
+                                            category: .crossfit,
+                                            sectionKey: item.firestoreKey,
+                                            sectionTitle: item.title
+                                        ))
+                                    }
                                 }
                             }
-                            .padding(.top, 8)
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
@@ -77,7 +60,7 @@ struct TeacherDashboardView: View {
                 FooterBar(
                     path: $path,
                     kind: .teacherHomeAlunosSobrePerfil(
-                        selectedCategory: category,
+                        selectedCategory: .crossfit,
                         isHomeSelected: false,
                         isAlunosSelected: false,
                         isSobreSelected: false,
@@ -85,7 +68,6 @@ struct TeacherDashboardView: View {
                     )
                 )
                 .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
                 .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
@@ -102,7 +84,7 @@ struct TeacherDashboardView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Área do Professor")
+                Text("Crossfit")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -113,15 +95,6 @@ struct TeacherDashboardView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Aqui você gerencia alunos e seus treinos.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
@@ -158,4 +131,3 @@ struct TeacherDashboardView: View {
         path.removeLast()
     }
 }
-

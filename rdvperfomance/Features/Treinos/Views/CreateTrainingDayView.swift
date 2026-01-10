@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 /// Tela para criar ou editar um dia de treino dentro de uma semana
 struct CreateTrainingDayView: View {
@@ -39,9 +40,13 @@ struct CreateTrainingDayView: View {
     // Evita sobrescrever data quando usuário escolhe manualmente
     @State private var didUserManuallyPickDate: Bool = false
 
+    // ✅ NOVO: anexar de Meus Treinos
+    @State private var showTemplatesSheet: Bool = false
+    @State private var templates: [WorkoutTemplateFS] = []
+    @State private var isLoadingTemplates: Bool = false
+
     private let contentMaxWidth: CGFloat = 380
 
-    /// Corpo principal da view com header, formulários e ações
     var body: some View {
         ZStack {
 
@@ -133,6 +138,9 @@ struct CreateTrainingDayView: View {
         .onChange(of: dayIndex) { _, newValue in
             loadDayIntoFormIfExists(index: newValue)
         }
+        .sheet(isPresented: $showTemplatesSheet) {
+            templatesSheet
+        }
     }
 
     private var header: some View {
@@ -154,7 +162,6 @@ struct CreateTrainingDayView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    /// Card com formulário de metadados do dia: data, ordem e nome
     private var dayMetaCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -212,9 +219,31 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    /// Card com formulário de título e descrição do treino
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
+
+            // ✅ NOVO: anexar do “Meus Treinos”
+            HStack {
+                Text("Treino")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                Spacer()
+                Button {
+                    Task { await openTemplates() }
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "paperclip")
+                        Text("Anexar de Meus Treinos")
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                }
+                .buttonStyle(.plain)
+                .disabled(isLoadingTemplates)
+            }
 
             UnderlineTextField(
                 title: "Título do treino",
@@ -257,7 +286,6 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    /// Card com editor de blocos de exercícios do dia
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -344,7 +372,6 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    /// Botão para salvar ou atualizar o dia de treino
     private var saveButtonCard: some View {
         Button {
             Task { await saveDay() }
@@ -393,7 +420,103 @@ struct CreateTrainingDayView: View {
         )
     }
 
-    /// Carrega dias existentes da semana e posiciona no primeiro dia disponível
+    // MARK: - Templates sheet (anexar)
+
+    private var templatesSheet: some View {
+        NavigationStack {
+            ZStack {
+                Theme.Colors.headerBackground.ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    if isLoadingTemplates {
+                        VStack(spacing: 10) {
+                            ProgressView()
+                            Text("Carregando Meus Treinos...")
+                                .foregroundColor(.white.opacity(0.7))
+                        }
+                        .padding(.top, 40)
+                    } else if templates.isEmpty {
+                        VStack(spacing: 10) {
+                            Text("Nenhum treino encontrado")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+
+                            Text("Crie treinos em “Meus Treinos” do professor.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.55))
+                                .multilineTextAlignment(.center)
+                                .padding(.horizontal, 18)
+                        }
+                        .padding(.top, 40)
+                    } else {
+                        List {
+                            ForEach(templates, id: \.self) { t in
+                                Button {
+                                    applyTemplate(t)
+                                    showTemplatesSheet = false
+                                } label: {
+                                    VStack(alignment: .leading, spacing: 6) {
+                                        Text(t.title)
+                                            .font(.system(size: 16, weight: .semibold))
+                                        if !t.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                                            Text(t.description)
+                                                .font(.system(size: 13))
+                                                .foregroundColor(.secondary)
+                                                .lineLimit(2)
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        .scrollContentBackground(.hidden)
+                    }
+                }
+            }
+            .navigationTitle("Meus Treinos")
+            .toolbar {
+                ToolbarItem(placement: .topBarLeading) {
+                    Button("Fechar") { showTemplatesSheet = false }
+                }
+            }
+        }
+    }
+
+    private func openTemplates() async {
+        errorMessage = nil
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+
+        isLoadingTemplates = true
+        defer { isLoadingTemplates = false }
+
+        do {
+            // ✅ aqui vamos buscar apenas “Meus Treinos” por padrão
+            templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+                teacherId: teacherId,
+                categoryRaw: category.rawValue,
+                sectionKey: "meusTreinos"
+            )
+            showTemplatesSheet = true
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func applyTemplate(_ t: WorkoutTemplateFS) {
+        title = t.title
+        description = t.description
+
+        // Evolução (opcional): se você salvar blocks no template, dá pra popular aqui.
+        if let savedBlocks = t.blocks, !savedBlocks.isEmpty {
+            blocks = savedBlocks.map { BlockDraft(id: $0.id, name: $0.name, details: $0.details) }
+        }
+    }
+
+    // MARK: - Dias existentes / salvar
+
     private func bootstrapDays() async {
         isLoadingDays = true
         defer { isLoadingDays = false }
@@ -419,7 +542,6 @@ struct CreateTrainingDayView: View {
         }
     }
 
-    /// Carrega dados de um dia existente no formulário ou limpa para novo dia
     private func loadDayIntoFormIfExists(index: Int) {
         errorMessage = nil
         successMessage = nil
@@ -456,7 +578,6 @@ struct CreateTrainingDayView: View {
         }
     }
 
-    /// Valida e salva ou atualiza o dia de treino no Firestore
     private func saveDay() async {
         errorMessage = nil
         successMessage = nil
@@ -513,7 +634,6 @@ struct CreateTrainingDayView: View {
         }
     }
 
-    /// Sincroniza o nome do dia com o índice quando nome estiver vazio
     private func syncDayName() {
         if dayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || dayName.hasPrefix("Dia ") {
             dayName = "Dia \(dayIndex + 1)"
@@ -526,7 +646,6 @@ struct CreateTrainingDayView: View {
     }
 }
 
-/// Modelo temporário de bloco de exercício usado durante edição
 private struct BlockDraft: Identifiable, Hashable {
     var id: String = UUID().uuidString
     var name: String
@@ -538,3 +657,4 @@ private struct BlockDraft: Identifiable, Hashable {
         self.details = details
     }
 }
+

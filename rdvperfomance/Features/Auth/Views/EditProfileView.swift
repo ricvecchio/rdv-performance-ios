@@ -206,8 +206,7 @@ struct EditProfileView: View {
             .disabled(isLoadingImage)
 
             Button {
-                saveAll()
-                pop()
+                Task { await saveAllAndSync() }
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "checkmark.circle.fill")
@@ -234,7 +233,7 @@ struct EditProfileView: View {
             .buttonStyle(.plain)
 
             Button {
-                clearPhotoOnly()
+                Task { await clearPhotoOnlyAndSync() }
             } label: {
                 Text("Remover foto")
                     .font(.system(size: 14, weight: .medium))
@@ -291,13 +290,21 @@ struct EditProfileView: View {
         errorMessage = ""
     }
 
-    // Salva todos os dados editados (WhatsApp, área de foco e foto)
-    private func saveAll() {
+    // ✅ Salva local + sincroniza foto no Firestore (para o professor enxergar na lista)
+    private func saveAllAndSync() async {
         saveWhatsapp()
         saveFocusArea()
-        savePhotoIfNeeded()
-        showError = false
-        errorMessage = ""
+
+        do {
+            try await savePhotoIfNeededAndSync()
+            await MainActor.run {
+                showError = false
+                errorMessage = ""
+            }
+            pop()
+        } catch {
+            presentError((error as NSError).localizedDescription)
+        }
     }
 
     // Persiste WhatsApp localmente
@@ -311,22 +318,50 @@ struct EditProfileView: View {
         LocalProfileStore.shared.setFocusAreaRaw(focusAreaDraft.rawValue, userId: currentUid)
     }
 
-    // Persiste foto apenas se houver imagem de preview
-    private func savePhotoIfNeeded() {
+    // ✅ Persiste foto localmente e no Firestore (base64)
+    private func savePhotoIfNeededAndSync() async throws {
+        guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
+            throw FirestoreRepository.RepositoryError.missingUserId
+        }
+
+        // Se não tem preview novo, não faz escrita desnecessária
         guard let previewImage else { return }
+
+        // 1) Salvar local (como já fazia)
         let ok = LocalProfileStore.shared.setPhotoImage(previewImage, userId: currentUid, compressionQuality: 0.82)
         if !ok {
-            presentError("Não foi possível preparar a imagem para salvar.")
+            throw FirestoreRepository.RepositoryError.writeFailed
         }
+
+        // 2) Salvar no Firestore em base64 (para outras telas/usuários verem)
+        guard let data = previewImage.jpegData(compressionQuality: 0.72) else {
+            throw FirestoreRepository.RepositoryError.invalidData
+        }
+
+        let base64 = data.base64EncodedString()
+        try await FirestoreRepository.shared.setUserPhotoBase64(uid: uid, photoBase64: base64)
     }
 
-    // Remove apenas a foto do usuário do armazenamento local
-    private func clearPhotoOnly() {
+    // ✅ Remove foto local + remove do Firestore
+    private func clearPhotoOnlyAndSync() async {
+        guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
+            presentError("Não foi possível identificar o usuário para remover a foto.")
+            return
+        }
+
         previewImage = nil
         selectedItem = nil
         LocalProfileStore.shared.clearPhoto(userId: currentUid)
-        showError = false
-        errorMessage = ""
+
+        do {
+            try await FirestoreRepository.shared.clearUserPhotoBase64(uid: uid)
+            await MainActor.run {
+                showError = false
+                errorMessage = ""
+            }
+        } catch {
+            presentError((error as NSError).localizedDescription)
+        }
     }
 
     // Carrega imagem selecionada do PhotosPicker

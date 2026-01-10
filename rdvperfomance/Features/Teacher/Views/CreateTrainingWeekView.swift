@@ -471,8 +471,52 @@ struct CreateTrainingWeekView: View {
     }
 
     private func saveEditedTitle() async {
-        // Mantido como estava no seu arquivo.
-        isEditSheetOpen = false
+        // ✅ Corrige o "Editar título": valida, salva no Firestore e recarrega a lista
+        await MainActor.run {
+            errorMessage = nil
+            successMessage = nil
+        }
+
+        guard let week = editingWeek, let weekId = week.id, !weekId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            await MainActor.run {
+                errorMessage = "Não foi possível editar: semana inválida."
+            }
+            return
+        }
+
+        let trimmed = editingTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else {
+            await MainActor.run {
+                errorMessage = "Informe um título válido."
+            }
+            return
+        }
+
+        // Opcional: evita escrita desnecessária se não mudou
+        if trimmed == week.weekTitle {
+            await MainActor.run {
+                isEditSheetOpen = false
+                editingWeek = nil
+            }
+            return
+        }
+
+        do {
+            try await FirestoreRepository.shared.updateWeekTitle(weekId: weekId, newTitle: trimmed)
+
+            await MainActor.run {
+                successMessage = "Título atualizado com sucesso."
+                isEditSheetOpen = false
+                editingWeek = nil
+            }
+
+            await loadWeeks()
+
+        } catch {
+            await MainActor.run {
+                errorMessage = (error as NSError).localizedDescription
+            }
+        }
     }
 
     private func deleteWeekMessageText() -> String {
@@ -562,3 +606,4 @@ struct CreateTrainingWeekView: View {
         path.removeLast()
     }
 }
+
