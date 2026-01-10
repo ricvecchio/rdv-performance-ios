@@ -19,6 +19,9 @@ struct AppUser: Identifiable, Codable, Hashable {
     var active: Bool?
 
     var unitName: String?
+
+    // ✅ NOVO: foto persistida no Firestore (Base64)
+    var photoBase64: String?
 }
 
 /// Modelo de relação entre professor e aluno com categorias vinculadas

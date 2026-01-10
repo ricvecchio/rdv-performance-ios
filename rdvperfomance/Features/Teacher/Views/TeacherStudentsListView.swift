@@ -196,9 +196,8 @@ struct TeacherStudentsListView: View {
 
                 HStack(spacing: 14) {
 
-                    Image(systemName: "person.crop.circle")
-                        .font(.system(size: 18))
-                        .foregroundColor(.green.opacity(0.85))
+                    // ✅ Corrigido: agora o fallback é avatar_default (e não ícone verde)
+                    StudentAvatarView(base64: student.photoBase64, size: 28)
                         .frame(width: 28)
 
                     VStack(alignment: .leading, spacing: 3) {

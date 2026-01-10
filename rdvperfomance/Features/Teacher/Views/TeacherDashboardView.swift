@@ -1,4 +1,3 @@
-// TeacherDashboardView.swift — Painel inicial do professor com ações rápidas
 import SwiftUI
 
 struct TeacherDashboardView: View {
@@ -8,7 +7,6 @@ struct TeacherDashboardView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // Corpo com ações principais (Meus alunos, Publicar semana)
     var body: some View {
         ZStack {
 
@@ -41,14 +39,14 @@ struct TeacherDashboardView: View {
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
 
+                                // ✅ ALTERADO: "Meus Treinos" -> "Biblioteca de Treinos"
                                 actionRow(
-                                    title: "Publicar semana",
-                                    icon: "calendar.badge.plus"
+                                    title: "Biblioteca de Treinos",
+                                    icon: "square.grid.2x2.fill"
                                 ) {
-                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
+                                    path.append(.teacherMyWorkouts(category: category))
                                 }
 
-                                // Restaurar: Mapa da Academia
                                 actionRow(
                                     title: "Mapa da Academia",
                                     icon: "map.fill"
@@ -56,7 +54,6 @@ struct TeacherDashboardView: View {
                                     path.append(.mapFeature)
                                 }
 
-                                // Visualizar no ambiente (AR) — professor
                                 actionRow(
                                     title: "Visualizar no ambiente",
                                     icon: "viewfinder"
@@ -109,7 +106,6 @@ struct TeacherDashboardView: View {
                     .foregroundColor(.white)
             }
 
-            // Avatar do cabeçalho (foto real do usuário)
             ToolbarItem(placement: .navigationBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
@@ -120,14 +116,13 @@ struct TeacherDashboardView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aqui você gerencia alunos e publica treinos da semana.")
+            Text("Aqui você gerencia alunos e seus treinos.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Cria botão de ação estilizado
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
@@ -162,3 +157,4 @@ struct TeacherDashboardView: View {
         path.removeLast()
     }
 }
+

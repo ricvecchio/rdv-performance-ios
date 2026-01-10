@@ -139,69 +139,43 @@ struct AppRouter: View {
                         }
 
                     case .sobre:
-                        guardedHome {
-                            AboutView(path: $path)
-                        }
+                        guardedHome { AboutView(path: $path) }
 
                     case .perfil:
-                        guardedHome {
-                            ProfileView(path: $path)
-                        }
+                        guardedHome { ProfileView(path: $path) }
 
                     case .treinos(let tipo):
-                        guardedHome {
-                            TreinosView(path: $path, tipo: tipo)
-                        }
+                        guardedHome { TreinosView(path: $path, tipo: tipo) }
 
                     case .crossfitMenu:
-                        guardedHome {
-                            CrossfitMenuView(path: $path)
-                        }
+                        guardedHome { CrossfitMenuView(path: $path) }
 
                     case .configuracoes:
-                        guardedHome {
-                            SettingsView(path: $path)
-                        }
+                        guardedHome { SettingsView(path: $path) }
 
                     case .infoLegal(let kind):
-                        guardedHome {
-                            InfoLegalView(path: $path, kind: kind)
-                        }
+                        guardedHome { InfoLegalView(path: $path, kind: kind) }
 
                     case .editarPerfil:
-                        guardedHome {
-                            EditProfileView(path: $path)
-                        }
+                        guardedHome { EditProfileView(path: $path) }
 
                     case .alterarSenha:
-                        guardedHome {
-                            ChangePasswordView(path: $path)
-                        }
+                        guardedHome { ChangePasswordView(path: $path) }
 
                     case .excluirConta:
-                        guardedHome {
-                            DeleteAccountView(path: $path)
-                        }
+                        guardedHome { DeleteAccountView(path: $path) }
 
                     case .mapFeature:
-                        guardedHome {
-                            MapFeatureView()
-                        }
+                        guardedHome { MapFeatureView() }
 
                     case .spriteDemo:
-                        guardedHome {
-                            SpriteDemoView(path: $path)
-                        }
+                        guardedHome { SpriteDemoView(path: $path) }
 
                     case .arDemo:
-                        guardedHome {
-                            ARDemoView()
-                        }
+                        guardedHome { ARDemoView() }
 
                     case .arExercise(let weekId, let dayId):
-                        guardedHome {
-                            ARExerciseView(path: $path, weekId: weekId, dayId: dayId)
-                        }
+                        guardedHome { ARExerciseView(path: $path, weekId: weekId, dayId: dayId) }
 
                     case .accountTypeSelection:
                         AccountTypeSelectionView(path: $path)
@@ -214,6 +188,35 @@ struct AppRouter: View {
                     case .registerTrainer:
                         RegisterTrainerView(path: $path)
                             .environmentObject(session)
+
+                    // ✅ Professor: Biblioteca de Treinos (menu categorias)
+                    case .teacherMyWorkouts:
+                        guardedTeacher {
+                            TeacherMyWorkoutsView(path: $path)
+                        }
+
+                    // ✅ Professor: Biblioteca por categoria
+                    case .teacherWorkoutsCategory(let category):
+                        guardedTeacher {
+                            TeacherWorkoutsCategoryView(path: $path, category: category)
+                        }
+
+                    // ✅ Professor: Submenu Crossfit (seções)
+                    case .teacherCrossfitLibrary(let section):
+                        guardedTeacher {
+                            TeacherCrossfitLibraryView(path: $path, section: section)
+                        }
+
+                    // ✅ Professor: Lista de templates por seção (qualquer categoria)
+                    case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle):
+                        guardedTeacher {
+                            TeacherWorkoutTemplatesView(
+                                path: $path,
+                                category: category,
+                                sectionKey: sectionKey,
+                                sectionTitle: sectionTitle
+                            )
+                        }
 
                     @unknown default:
                         guardedHome()
@@ -230,7 +233,6 @@ struct AppRouter: View {
 // Métodos auxiliares para decidir a view raiz e aplicar guards de autenticação
 private extension AppRouter {
 
-    // Retorna a view raiz baseado no estado de autenticação
     @ViewBuilder
     var rootView: some View {
         if session.isLoggedIn {
@@ -244,44 +246,24 @@ private extension AppRouter {
 // Métodos de proteção para garantir que usuários estejam autenticados e autorizados
 private extension AppRouter {
 
-    // Exibe conteúdo apenas se usuário estiver autenticado
     @ViewBuilder
     func guardedHome<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        if session.isLoggedIn {
-            content()
-        } else {
-            LoginView(path: $path)
-        }
+        if session.isLoggedIn { content() } else { LoginView(path: $path) }
     }
 
-    // Exibe HomeView apenas se usuário estiver autenticado
     @ViewBuilder
     func guardedHome() -> some View {
-        if session.isLoggedIn {
-            HomeView(path: $path)
-        } else {
-            LoginView(path: $path)
-        }
+        if session.isLoggedIn { HomeView(path: $path) } else { LoginView(path: $path) }
     }
 
-    // Exibe conteúdo apenas se usuário for professor autenticado
     @ViewBuilder
     func guardedTeacher<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        if session.isLoggedIn && session.isTrainer {
-            content()
-        } else {
-            LoginView(path: $path)
-        }
+        if session.isLoggedIn && session.isTrainer { content() } else { LoginView(path: $path) }
     }
 
-    // Exibe conteúdo apenas se usuário for aluno autenticado
     @ViewBuilder
     func guardedStudent<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        if session.isLoggedIn && session.isStudent {
-            content()
-        } else {
-            LoginView(path: $path)
-        }
+        if session.isLoggedIn && session.isStudent { content() } else { LoginView(path: $path) }
     }
 }
 

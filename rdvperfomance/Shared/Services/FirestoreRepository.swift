@@ -383,6 +383,44 @@ final class FirestoreRepository {
             .setData(payload, merge: true)
     }
 
+    // ============================================================
+    // MARK: - ✅ FOTO DO PERFIL (users/{uid}.photoBase64)
+    // ============================================================
+
+    /// ✅ Define/atualiza photoBase64 do usuário (para outras telas/usuários verem)
+    func setUserPhotoBase64(uid: String, photoBase64: String) async throws {
+        let u = clean(uid)
+        let b64 = clean(photoBase64)
+        guard !u.isEmpty else { throw RepositoryError.missingUserId }
+        guard !b64.isEmpty else { throw RepositoryError.invalidData }
+
+        try await db.collection("users")
+            .document(u)
+            .setData(
+                [
+                    "photoBase64": b64,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
+    }
+
+    /// ✅ Remove photoBase64 do usuário
+    func clearUserPhotoBase64(uid: String) async throws {
+        let u = clean(uid)
+        guard !u.isEmpty else { throw RepositoryError.missingUserId }
+
+        try await db.collection("users")
+            .document(u)
+            .setData(
+                [
+                    "photoBase64": FieldValue.delete(),
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
+    }
+
     private let progressSubcollection = "student_progress"
 
     func getDayStatusMap(weekId: String, studentId: String) async throws -> [String: Bool] {
@@ -771,6 +809,82 @@ extension FirestoreRepository {
         let list = try snap.documents.compactMap { try $0.data(as: StudentFeedbackFS.self) }
 
         return list.sorted { ($0.createdAt ?? Date.distantPast) > ($1.createdAt ?? Date.distantPast) }
+    }
+}
+
+import Foundation
+import FirebaseFirestore
+
+extension FirestoreRepository {
+
+    enum WorkoutTemplatesFS {
+        static let collection = "workout_templates"
+    }
+
+    func createWorkoutTemplate(
+        teacherId: String,
+        categoryRaw: String,
+        sectionKey: String,
+        title: String,
+        description: String
+    ) async throws -> String {
+
+        let t = clean(teacherId)
+        let c = clean(categoryRaw)
+        let s = clean(sectionKey)
+        let titleTrim = clean(title)
+        let descTrim = (description).trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !t.isEmpty else { throw RepositoryError.missingTeacherId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+        guard !s.isEmpty else { throw RepositoryError.invalidData }
+        guard !titleTrim.isEmpty else { throw RepositoryError.invalidData }
+
+        let payload: [String: Any] = [
+            "teacherId": t,
+            "categoryRaw": c,
+            "sectionKey": s,
+            "title": titleTrim,
+            "description": descTrim,
+            "createdAt": FieldValue.serverTimestamp(),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        let ref = db.collection(WorkoutTemplatesFS.collection).document()
+        try await ref.setData(payload, merge: true)
+        return ref.documentID
+    }
+
+    func getWorkoutTemplates(
+        teacherId: String,
+        categoryRaw: String,
+        sectionKey: String,
+        limit: Int = 100
+    ) async throws -> [WorkoutTemplateFS] {
+
+        let t = clean(teacherId)
+        let c = clean(categoryRaw)
+        let s = clean(sectionKey)
+
+        guard !t.isEmpty else { throw RepositoryError.missingTeacherId }
+        guard !c.isEmpty else { throw RepositoryError.invalidData }
+        guard !s.isEmpty else { throw RepositoryError.invalidData }
+
+        // ✅ SEM orderBy pra evitar índice; ordena no app
+        let snap = try await db.collection(WorkoutTemplatesFS.collection)
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("categoryRaw", isEqualTo: c)
+            .whereField("sectionKey", isEqualTo: s)
+            .limit(to: limit)
+            .getDocuments()
+
+        let list = try snap.documents.compactMap { try $0.data(as: WorkoutTemplateFS.self) }
+
+        return list.sorted {
+            let a = $0.createdAt?.dateValue() ?? Date.distantPast
+            let b = $1.createdAt?.dateValue() ?? Date.distantPast
+            return a > b
+        }
     }
 }
 
