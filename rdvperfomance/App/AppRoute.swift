@@ -9,7 +9,13 @@ enum InfoLegalKind: String, Hashable {
 
 // Seções de “Meus Treinos” (Crossfit)
 enum CrossfitLibrarySection: String, Hashable, CaseIterable {
+
+    // ✅ Girls WODs (antes: benchmarks)
     case benchmarks
+
+    // ✅ NOVO: logo abaixo de Girls WODs
+    case heroTributeWorkouts
+
     case competicoesOficiais
     case formatosWod
     case formatoSocial
@@ -18,16 +24,32 @@ enum CrossfitLibrarySection: String, Hashable, CaseIterable {
 
     var title: String {
         switch self {
-        case .benchmarks:          return "Benchmarks"
-        case .competicoesOficiais: return "Competições Oficiais"
-        case .formatosWod:         return "Formatos de WOD"
-        case .formatoSocial:       return "Formato Social"
-        case .opens:               return "Open’s"
-        case .meusTreinos:         return "Meus Treinos"
+
+        // ✅ ALTERADO: "Benchmarks" -> "Girls WODs"
+        case .benchmarks:
+            return "Girls WODs"
+
+        // ✅ NOVO
+        case .heroTributeWorkouts:
+            return "Hero & Tribute Workouts"
+
+        case .competicoesOficiais:
+            return "Competições Oficiais"
+
+        case .formatosWod:
+            return "Formatos de WOD"
+
+        case .formatoSocial:
+            return "Formato Social"
+
+        case .opens:
+            return "Open’s"
+
+        case .meusTreinos:
+            return "Meus Treinos"
         }
     }
 
-    /// Chave de persistência no Firestore (estável e sem espaços)
     var firestoreKey: String { rawValue }
 }
 
@@ -84,5 +106,8 @@ enum AppRoute: Hashable {
 
     // ✅ Lista de templates (qualquer categoria, por seção)
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
+
+    // ✅ NOVO: criar template de WOD (Girls WODs)
+    case createGirlsWOD(category: TreinoTipo, sectionKey: String, sectionTitle: String)
 }
 

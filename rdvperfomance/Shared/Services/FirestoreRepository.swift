@@ -812,8 +812,9 @@ extension FirestoreRepository {
     }
 }
 
-import Foundation
-import FirebaseFirestore
+// ============================================================
+// MARK: - ✅ WORKOUT TEMPLATES (workout_templates)
+// ============================================================
 
 extension FirestoreRepository {
 
@@ -821,12 +822,15 @@ extension FirestoreRepository {
         static let collection = "workout_templates"
     }
 
+    /// Cria um template de treino.
+    /// - Obs: `blocks` é opcional (default []), para não quebrar chamadas antigas.
     func createWorkoutTemplate(
         teacherId: String,
         categoryRaw: String,
         sectionKey: String,
         title: String,
-        description: String
+        description: String,
+        blocks: [BlockFS] = [] // ✅ opcional
     ) async throws -> String {
 
         let t = clean(teacherId)
@@ -840,7 +844,7 @@ extension FirestoreRepository {
         guard !s.isEmpty else { throw RepositoryError.invalidData }
         guard !titleTrim.isEmpty else { throw RepositoryError.invalidData }
 
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "teacherId": t,
             "categoryRaw": c,
             "sectionKey": s,
@@ -849,6 +853,11 @@ extension FirestoreRepository {
             "createdAt": FieldValue.serverTimestamp(),
             "updatedAt": FieldValue.serverTimestamp()
         ]
+
+        // ✅ grava blocks somente se tiver conteúdo
+        if !blocks.isEmpty {
+            payload["blocks"] = blocks.map { ["id": $0.id, "name": $0.name, "details": $0.details] }
+        }
 
         let ref = db.collection(WorkoutTemplatesFS.collection).document()
         try await ref.setData(payload, merge: true)

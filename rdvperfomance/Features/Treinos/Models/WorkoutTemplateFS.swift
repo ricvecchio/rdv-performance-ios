@@ -18,3 +18,4 @@ struct WorkoutTemplateFS: Identifiable, Codable, Hashable {
     @ServerTimestamp var createdAt: Timestamp?
     @ServerTimestamp var updatedAt: Timestamp?
 }
+
