@@ -18,10 +18,12 @@ struct CreateTrainingDayView: View {
     @State private var title: String = ""
     @State private var description: String = ""
 
+    // ✅ ALTERADO: adiciona "Cargas / Movimentos" abaixo do WOD
     @State private var blocks: [BlockDraft] = [
         BlockDraft(name: "Aquecimento", details: ""),
         BlockDraft(name: "Técnica", details: ""),
-        BlockDraft(name: "WOD", details: "")
+        BlockDraft(name: "WOD", details: ""),
+        BlockDraft(name: "Cargas / Movimentos", details: "")
     ]
 
     @State private var showPasswordDummy: Bool = false
@@ -561,10 +563,13 @@ struct CreateTrainingDayView: View {
         currentEditingDayId = nil
         title = ""
         description = ""
+
+        // ✅ ALTERADO: adiciona "Cargas / Movimentos" abaixo do WOD no reset
         blocks = [
             BlockDraft(name: "Aquecimento", details: ""),
             BlockDraft(name: "Técnica", details: ""),
-            BlockDraft(name: "WOD", details: "")
+            BlockDraft(name: "WOD", details: ""),
+            BlockDraft(name: "Cargas / Movimentos", details: "")
         ]
 
         dayName = ""
