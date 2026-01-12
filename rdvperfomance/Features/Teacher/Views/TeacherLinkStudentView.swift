@@ -254,9 +254,8 @@ struct TeacherLinkStudentView: View {
         } label: {
             HStack(spacing: 14) {
 
-                Image(systemName: "person.crop.circle.badge.plus")
-                    .font(.system(size: 18))
-                    .foregroundColor(.green.opacity(0.85))
+                // ✅ ALTERADO: agora mostra a foto do perfil (igual TeacherStudentsListView)
+                StudentAvatarView(base64: item.photoBase64, size: 28)
                     .frame(width: 28)
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -443,9 +442,14 @@ final class TeacherLinkStudentViewModel: ObservableObject {
                 // fallback legado
                 let defaultCategory = data["defaultCategory"] as? String
 
+                // ✅ NOVO: foto do perfil (base64) — mesmo padrão usado na TeacherStudentsListView
+                // Se o seu campo no Firestore tiver outro nome, ajuste aqui.
+                let photoBase64 = data["photoBase64"] as? String
+
                 return StudentLinkItem(
                     id: doc.documentID,
                     name: name,
+                    photoBase64: photoBase64,
                     focusArea: focusArea,
                     defaultCategory: defaultCategory
                 )
@@ -503,6 +507,9 @@ final class TeacherLinkStudentViewModel: ObservableObject {
 struct StudentLinkItem: Identifiable, Hashable {
     let id: String
     let name: String
+
+    // ✅ NOVO: foto do perfil (base64)
+    let photoBase64: String?
 
     // ✅ novo: categoria do cadastro (RegisterStudentView)
     let focusArea: String?
