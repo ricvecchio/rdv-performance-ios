@@ -104,7 +104,6 @@ struct TeacherDashboardView: View {
         }
         .navigationBarBackButtonHidden(true)
 
-        // ✅ Mantém padrão antigo de header (mesmo comportamento que a HomeView dava ao app)
         .navigationBarTitleDisplayMode(.inline)
 
         .toolbar {

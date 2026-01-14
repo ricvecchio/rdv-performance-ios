@@ -58,7 +58,6 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isLoading = false
     }
 
-    // Carrega apenas uma categoria (usado pelo HomeView)
     func loadStudentsOnlyOneCategory(teacherId: String, category: TreinoTipo) async {
         isLoading = true
         errorMessage = nil

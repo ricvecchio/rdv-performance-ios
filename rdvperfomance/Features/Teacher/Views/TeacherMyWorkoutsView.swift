@@ -20,46 +20,49 @@ struct TeacherMyWorkoutsView: View {
                 Rectangle()
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
+                    .frame(maxWidth: .infinity)
 
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 14) {
+                GeometryReader { proxy in
+                    let tileHeight = proxy.size.height / 3
 
-                        Text("Escolha a categoria para gerenciar seus treinos.")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
+                    VStack(spacing: 0) {
 
-                        VStack(spacing: 12) {
-
-                            // ✅ Agora vai direto para a biblioteca Crossfit (sem tela intermediária)
-                            menuRow(title: "Treinos Crossfit", icon: "figure.strengthtraining.traditional") {
-                                path.append(.teacherCrossfitLibrary(section: .benchmarks))
-                            }
-
-                            // ✅ Solicitado: navegar para tela no padrão Girls WODs, com título "Treinos Academia"
-                            menuRow(title: "Treinos Academia", icon: "dumbbell") {
-                                path.append(.teacherWorkoutTemplates(
-                                    category: .academia,
-                                    sectionKey: "meusTreinos",
-                                    sectionTitle: "Treinos Academia"
-                                ))
-                            }
-
-                            // ✅ Solicitado: navegar para tela no padrão Girls WODs, com título "Treinos em Casa"
-                            menuRow(title: "Treinos em Casa", icon: "house.fill") {
-                                path.append(.teacherWorkoutTemplates(
-                                    category: .emCasa,
-                                    sectionKey: "meusTreinos",
-                                    sectionTitle: "Treinos em Casa"
-                                ))
-                            }
+                        programaTile(
+                            imageName: "rdv_programa_crossfit_horizontal",
+                            height: tileHeight,
+                            badgeText: "Treinos Crossfit",
+                            badgeIcon: "figure.strengthtraining.traditional"
+                        ) {
+                            path.append(.teacherCrossfitLibrary(section: .benchmarks))
                         }
 
-                        Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                        programaTile(
+                            imageName: "rdv_programa_academia_horizontal",
+                            height: tileHeight,
+                            badgeText: "Treinos Academia",
+                            badgeIcon: "dumbbell"
+                        ) {
+                            path.append(.teacherWorkoutTemplates(
+                                category: .academia,
+                                sectionKey: "meusTreinos",
+                                sectionTitle: "Treinos Academia"
+                            ))
+                        }
+
+                        programaTile(
+                            imageName: "rdv_programa_treinos_em_casa_horizontal",
+                            height: tileHeight,
+                            badgeText: "Treinos em Casa",
+                            badgeIcon: "house.fill"
+                        ) {
+                            path.append(.teacherWorkoutTemplates(
+                                category: .emCasa,
+                                sectionKey: "meusTreinos",
+                                sectionTitle: "Treinos em Casa"
+                            ))
+                        }
                     }
-                    .frame(maxWidth: contentMaxWidth)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .frame(maxWidth: .infinity, alignment: .center)
+                    .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
                 FooterBar(
@@ -101,33 +104,129 @@ struct TeacherMyWorkoutsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    private func menuRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
+    // MARK: - Tile
+
+    private func programaTile(
+        imageName: String,
+        height: CGFloat,
+        badgeText: String,
+        badgeIcon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 18))
-                    .frame(width: 26)
-
-                Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            tileLayout(
+                imageName: imageName,
+                height: height,
+                badgeText: badgeText,
+                badgeIcon: badgeIcon
             )
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
         }
         .buttonStyle(.plain)
+        .background(
+            Color.black.opacity(0.3)
+                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
+        )
+        .frame(height: height)
+    }
+
+    private func tileLayout(
+        imageName: String,
+        height: CGFloat,
+        badgeText: String,
+        badgeIcon: String
+    ) -> some View {
+
+        tileBase(imageName: imageName, height: height)
+            .overlay(alignment: .bottomLeading) {
+                badgeView(text: badgeText, icon: badgeIcon)
+                    // ✅ AQUI: empurra o badge mais para a direita
+                    .padding(.leading, 155)
+                    .padding(.bottom, 14)
+                    .padding(.trailing, 24)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .overlay(Rectangle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
+            .clipped()
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+    }
+
+    private func tileBase(imageName: String, height: CGFloat) -> some View {
+        ZStack {
+            ZStack {
+                Color.black
+
+                Image(imageName)
+                    .resizable()
+                    .scaledToFit()
+                    .frame(maxWidth: .infinity, maxHeight: height)
+                    .overlay(
+                        Rectangle()
+                            .fill(Color.black.opacity(0.7))
+                            .mask(
+                                HStack(spacing: 0) {
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [.black, .clear]),
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                    .frame(width: 28)
+
+                                    Spacer()
+
+                                    LinearGradient(
+                                        gradient: Gradient(colors: [.black, .clear]),
+                                        startPoint: .trailing,
+                                        endPoint: .leading
+                                    )
+                                    .frame(width: 28)
+                                }
+                            )
+                    )
+            }
+            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+
+            LinearGradient(
+                colors: [.black.opacity(0.70), .black.opacity(0.15), .clear],
+                startPoint: .bottom,
+                endPoint: .top
+            )
+
+            VStack {
+                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .top, endPoint: .bottom)
+                    .frame(height: 4)
+                Spacer()
+                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .bottom, endPoint: .top)
+                    .frame(height: 4)
+            }
+            .frame(height: height)
+            .allowsHitTesting(false)
+        }
+        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+    }
+
+    private func badgeView(text: String, icon: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.green.opacity(0.90))
+
+            Text(text)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.95))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Theme.Colors.cardBackground.opacity(0.92))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
+        .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 3)
     }
 
     private func pop() {
