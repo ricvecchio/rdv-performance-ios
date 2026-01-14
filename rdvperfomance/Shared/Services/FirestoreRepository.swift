@@ -895,5 +895,28 @@ extension FirestoreRepository {
             return a > b
         }
     }
+
+    // ============================================================
+    // MARK: - ✅ UPDATE BLOCKS (Aquecimento/Técnica/Cargas)
+    // ============================================================
+
+    /// Atualiza os blocos do template (merge), mantendo o resto intacto.
+    func updateWorkoutTemplateBlocks(
+        templateId: String,
+        blocks: [BlockFS]
+    ) async throws {
+
+        let id = clean(templateId)
+        guard !id.isEmpty else { throw RepositoryError.invalidData }
+
+        let payload: [String: Any] = [
+            "blocks": blocks.map { ["id": $0.id, "name": $0.name, "details": $0.details] },
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        try await db.collection(WorkoutTemplatesFS.collection)
+            .document(id)
+            .setData(payload, merge: true)
+    }
 }
 
