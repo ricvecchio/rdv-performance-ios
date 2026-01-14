@@ -336,13 +336,15 @@ struct TeacherWorkoutTemplatesView: View {
 }
 
 // ============================================================
-// MARK: - ✅ Sheet: Detalhe do treino (COM EDIÇÃO DOS BLOCOS)
+// MARK: - ✅ Sheet: Detalhe do treino (PADRÃO + laterais iguais à lista)
 // ============================================================
 
 private struct TeacherWorkoutTemplateDetailSheet: View {
 
     let template: WorkoutTemplateFS
     @Environment(\.dismiss) private var dismiss
+
+    private let contentMaxWidth: CGFloat = 380
 
     @State private var isEditing: Bool = false
     @State private var draftBlocks: [BlockFS] = []
@@ -358,36 +360,56 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Colors.headerBackground.ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 14) {
+                Image("rdv_fundo")
+                    .resizable()
+                    .scaledToFill()
+                    .ignoresSafeArea()
 
-                        header
+                VStack(spacing: 0) {
 
-                        if isEditing {
-                            editableBlocksCard
-                        } else {
-                            readOnlyBlocks
+                    Rectangle()
+                        .fill(Theme.Colors.divider)
+                        .frame(height: 1)
+
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
+
+                            VStack(alignment: .leading, spacing: 14) {
+
+                                header
+
+                                if isEditing {
+                                    editableBlocksCard
+                                } else {
+                                    readOnlyBlocks
+                                }
+
+                                if let err = errorMessage {
+                                    messageCard(text: err, isError: true)
+                                }
+
+                                if let ok = successMessage {
+                                    messageCard(text: ok, isError: false)
+                                }
+
+                                Color.clear.frame(height: 18)
+                            }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+
+                            Spacer(minLength: 0)
                         }
-
-                        if let err = errorMessage {
-                            messageCard(text: err, isError: true)
-                                .padding(.horizontal, 16)
-                        }
-
-                        if let ok = successMessage {
-                            messageCard(text: ok, isError: false)
-                                .padding(.horizontal, 16)
-                        }
-
-                        Color.clear.frame(height: 18)
                     }
                 }
+                .ignoresSafeArea(.container, edges: [.bottom])
             }
             .navigationTitle("Treino")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Fechar") { dismiss() }
                         .disabled(isSaving)
@@ -425,6 +447,8 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
                     }
                 }
             }
+            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
             .onAppear {
                 resetDraftFromTemplate()
                 ensureEditableBlocksExist()
@@ -433,22 +457,19 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
     }
 
     private var header: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(template.title)
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+        VStack(alignment: .leading, spacing: 8) {
+            Text(template.title)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
 
-                let desc = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
-                if !desc.isEmpty {
-                    Text(desc)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.70))
-                }
+            let desc = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !desc.isEmpty {
+                Text(desc)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.70))
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 16)
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var readOnlyBlocks: some View {
@@ -478,8 +499,6 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
                         )
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.bottom, 20)
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Sem blocos cadastrados")
@@ -490,7 +509,6 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                 }
-                .padding(.horizontal, 16)
                 .padding(.vertical, 16)
             }
         }
@@ -518,8 +536,6 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
-        .padding(.horizontal, 16)
-        .padding(.bottom, 20)
     }
 
     private func blockEditor(title: String, text: Binding<String>) -> some View {
@@ -540,6 +556,7 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
                         .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 )
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func messageCard(text: String, isError: Bool) -> some View {
@@ -645,7 +662,7 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
 }
 
 // ============================================================
-// MARK: - ✅ Sheet: Enviar treino para Aluno (SEM "not in scope")
+// MARK: - ✅ Sheet: Enviar treino para Aluno
 // ============================================================
 
 private struct TeacherSendWorkoutToStudentSheet: View {
@@ -720,6 +737,7 @@ private struct TeacherSendWorkoutToStudentSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // (mantive o restante do sheet de envio igual ao seu código atual)
     private var selectionCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             if isLoading {
