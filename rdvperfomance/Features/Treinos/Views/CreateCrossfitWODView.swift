@@ -2,7 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 /// Tela para criar um WOD (template) — semelhante ao CreateTrainingDayView, porém sem Data/Ordem/Nome do dia
-struct CreateGirlsWODView: View {
+struct CreateCrossfitWODView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
