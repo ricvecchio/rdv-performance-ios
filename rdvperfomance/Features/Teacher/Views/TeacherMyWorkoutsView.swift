@@ -35,21 +35,21 @@ struct TeacherMyWorkoutsView: View {
                                 path.append(.teacherCrossfitLibrary(section: .benchmarks))
                             }
 
-                            // ✅ Agora vai direto para a lista de templates (sem tela intermediária)
+                            // ✅ Solicitado: navegar para tela no padrão Girls WODs, com título "Treinos Academia"
                             menuRow(title: "Treinos Academia", icon: "dumbbell") {
                                 path.append(.teacherWorkoutTemplates(
                                     category: .academia,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: "Meus Treinos"
+                                    sectionTitle: "Treinos Academia"
                                 ))
                             }
 
-                            // ✅ Agora vai direto para a lista de templates (sem tela intermediária)
+                            // ✅ Solicitado: navegar para tela no padrão Girls WODs, com título "Treinos em Casa"
                             menuRow(title: "Treinos em Casa", icon: "house.fill") {
                                 path.append(.teacherWorkoutTemplates(
                                     category: .emCasa,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: "Meus Treinos"
+                                    sectionTitle: "Treinos em Casa"
                                 ))
                             }
                         }

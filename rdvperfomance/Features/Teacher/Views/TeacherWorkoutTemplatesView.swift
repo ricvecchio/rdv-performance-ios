@@ -25,6 +25,17 @@ struct TeacherWorkoutTemplatesView: View {
         sectionKey == CrossfitLibrarySection.benchmarks.firestoreKey
     }
 
+    // ✅ EXCLUSIVO DO PEDIDO: mostrar botão também para Academia/Em Casa em "meusTreinos"
+    private var shouldShowAddButton: Bool {
+        if isGirlsWodsSection { return true }
+        return sectionKey == "meusTreinos" && (category == .academia || category == .emCasa)
+    }
+
+    // ✅ EXCLUSIVO DO PEDIDO: texto do botão muda para Academia/Em Casa
+    private var addButtonTitle: String {
+        isGirlsWodsSection ? "Adicionar WOD" : "Adicionar Treino"
+    }
+
     // ✅ Um sheet só (evita sheet em branco e conflito)
     @State private var activeSheet: ActiveSheet? = nil
 
@@ -70,7 +81,8 @@ struct TeacherWorkoutTemplatesView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
 
-                            if isGirlsWodsSection {
+                            // ✅ ALTERAÇÃO MÍNIMA: botão também para Academia/Em Casa
+                            if shouldShowAddButton {
                                 addWodButtonCard
                             }
 
@@ -154,7 +166,8 @@ struct TeacherWorkoutTemplatesView: View {
         } label: {
             HStack {
                 Image(systemName: "plus")
-                Text("Adicionar WOD")
+                // ✅ ALTERAÇÃO MÍNIMA: texto muda fora de Girls WODs
+                Text(addButtonTitle)
             }
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
@@ -1078,4 +1091,3 @@ private struct TeacherSendWorkoutToStudentSheet: View {
         return nil
     }
 }
-
