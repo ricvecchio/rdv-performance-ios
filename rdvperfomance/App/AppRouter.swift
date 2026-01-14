@@ -212,10 +212,32 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Adicionar WOD (Girls WODs)
-                    case .createGirlsWOD(let category, let sectionKey, let sectionTitle):
+                    // ✅ Professor -> Adicionar WOD (Girls WODs) (NÃO MEXER)
+                    case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
-                            CreateGirlsWODView(
+                            CreateCrossfitWODView(
+                                path: $path,
+                                category: category,
+                                sectionKey: sectionKey,
+                                sectionTitle: sectionTitle
+                            )
+                        }
+
+                    // ✅ NOVO: Professor -> Adicionar Treino (Academia)
+                    case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):
+                        guardedTeacher {
+                            CreateTreinoAcademiaView(
+                                path: $path,
+                                category: category,
+                                sectionKey: sectionKey,
+                                sectionTitle: sectionTitle
+                            )
+                        }
+
+                    // ✅ NOVO: Professor -> Adicionar Treino (Em Casa)
+                    case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
+                        guardedTeacher {
+                            CreateTreinoCasaView(
                                 path: $path,
                                 category: category,
                                 sectionKey: sectionKey,

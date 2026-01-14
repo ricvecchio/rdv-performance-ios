@@ -107,7 +107,12 @@ enum AppRoute: Hashable {
     // ✅ Lista de templates (qualquer categoria, por seção)
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
 
-    // ✅ NOVO: criar template de WOD (Girls WODs)
-    case createGirlsWOD(category: TreinoTipo, sectionKey: String, sectionTitle: String)
-}
+    // ✅ criar template de WOD (Girls WODs)
+    case createCrossfitWOD(category: TreinoTipo, sectionKey: String, sectionTitle: String)
 
+    // ✅ NOVO: criar Treino Academia
+    case createTreinoAcademia(category: TreinoTipo, sectionKey: String, sectionTitle: String)
+
+    // ✅ NOVO: criar Treino em Casa
+    case createTreinoCasa(category: TreinoTipo, sectionKey: String, sectionTitle: String)
+}

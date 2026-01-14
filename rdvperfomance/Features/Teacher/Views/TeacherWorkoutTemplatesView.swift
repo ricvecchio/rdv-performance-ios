@@ -25,6 +25,17 @@ struct TeacherWorkoutTemplatesView: View {
         sectionKey == CrossfitLibrarySection.benchmarks.firestoreKey
     }
 
+    // ✅ Mostrar botão também para Academia/Em Casa em "meusTreinos"
+    private var shouldShowAddButton: Bool {
+        if isGirlsWodsSection { return true }
+        return sectionKey == "meusTreinos" && (category == .academia || category == .emCasa)
+    }
+
+    // ✅ Texto do botão
+    private var addButtonTitle: String {
+        isGirlsWodsSection ? "Adicionar WOD" : "Adicionar Treino"
+    }
+
     // ✅ Um sheet só (evita sheet em branco e conflito)
     @State private var activeSheet: ActiveSheet? = nil
 
@@ -70,8 +81,9 @@ struct TeacherWorkoutTemplatesView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
 
-                            if isGirlsWodsSection {
-                                addWodButtonCard
+                            // ✅ Botão (Girls WODs ou Meus Treinos Academia/Em Casa)
+                            if shouldShowAddButton {
+                                addButtonCard
                             }
 
                             contentCard
@@ -148,13 +160,26 @@ struct TeacherWorkoutTemplatesView: View {
         }
     }
 
-    private var addWodButtonCard: some View {
+    // ✅ IMPORTANTE: aqui é onde estava o problema do fluxo:
+    // - Crossfit Girls WODs continua indo para createCrossfitWOD
+    // - Academia vai para createTreinoAcademia
+    // - Em Casa vai para createTreinoCasa
+    private var addButtonCard: some View {
         Button {
-            path.append(.createGirlsWOD(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
+            if isGirlsWodsSection {
+                path.append(.createCrossfitWOD(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
+            } else if category == .academia {
+                path.append(.createTreinoAcademia(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
+            } else if category == .emCasa {
+                path.append(.createTreinoCasa(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
+            } else {
+                // fallback seguro: não deveria acontecer
+                path.append(.createCrossfitWOD(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
+            }
         } label: {
             HStack {
                 Image(systemName: "plus")
-                Text("Adicionar WOD")
+                Text(addButtonTitle)
             }
             .font(.system(size: 14, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
@@ -337,6 +362,7 @@ struct TeacherWorkoutTemplatesView: View {
 
 // ============================================================
 // MARK: - ✅ Sheet: Detalhe do treino (PADRÃO + laterais iguais à lista)
+// (NÃO ALTERAR LAYOUT)
 // ============================================================
 
 private struct TeacherWorkoutTemplateDetailSheet: View {
@@ -663,6 +689,7 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
 
 // ============================================================
 // MARK: - ✅ Sheet: Enviar treino para Aluno
+// (mantido igual ao seu padrão atual)
 // ============================================================
 
 private struct TeacherSendWorkoutToStudentSheet: View {
@@ -737,7 +764,6 @@ private struct TeacherSendWorkoutToStudentSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // (mantive o restante do sheet de envio igual ao seu código atual)
     private var selectionCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             if isLoading {
