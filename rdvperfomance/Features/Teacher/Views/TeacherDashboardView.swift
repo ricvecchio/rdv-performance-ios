@@ -7,6 +7,8 @@ struct TeacherDashboardView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    @State private var isImportExcelSheetPresented: Bool = false
+
     var body: some View {
         ZStack {
 
@@ -32,15 +34,7 @@ struct TeacherDashboardView: View {
 
                             VStack(spacing: 12) {
 
-                                actionRow(
-                                    title: "Meus alunos",
-                                    icon: "person.3.fill"
-                                ) {
-                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
-                                }
-
-                                // ✅ "Meus Treinos" -> "Biblioteca de Treinos"
-                                // ✅ Navega corretamente para a rota que carrega o footer com a categoria atual
+                                // 1) Biblioteca de Treinos -> ✅ AGORA: TeacherMyWorkoutsView
                                 actionRow(
                                     title: "Biblioteca de Treinos",
                                     icon: "square.grid.2x2.fill"
@@ -48,6 +42,23 @@ struct TeacherDashboardView: View {
                                     path.append(.teacherMyWorkouts(category: category))
                                 }
 
+                                // 2) Meus Alunos
+                                actionRow(
+                                    title: "Meus alunos",
+                                    icon: "person.3.fill"
+                                ) {
+                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
+                                }
+
+                                // 3) Importar Excel (novo item)
+                                actionRow(
+                                    title: "Importar Treino",
+                                    icon: "tablecells.fill"
+                                ) {
+                                    isImportExcelSheetPresented = true
+                                }
+
+                                // 4) Mapa da Academia
                                 actionRow(
                                     title: "Mapa da Academia",
                                     icon: "map.fill"
@@ -55,6 +66,7 @@ struct TeacherDashboardView: View {
                                     path.append(.mapFeature)
                                 }
 
+                                // 5) Visualizar no ambiente
                                 actionRow(
                                     title: "Visualizar no ambiente",
                                     icon: "viewfinder"
@@ -78,7 +90,7 @@ struct TeacherDashboardView: View {
                     path: $path,
                     kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
-                        isHomeSelected: false,
+                        isHomeSelected: true,     // ✅ Home selecionado no rodapé nesta tela
                         isAlunosSelected: false,
                         isSobreSelected: false,
                         isPerfilSelected: false
@@ -91,15 +103,11 @@ struct TeacherDashboardView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
-        .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
-                Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
-                }
-                .buttonStyle(.plain)
-            }
+        // ✅ Mantém padrão antigo de header (mesmo comportamento que a HomeView dava ao app)
+        .navigationBarTitleDisplayMode(.inline)
+
+        .toolbar {
 
             ToolbarItem(placement: .principal) {
                 Text("Área do Professor")
@@ -113,6 +121,13 @@ struct TeacherDashboardView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+
+        // ✅ Importante para manter o mesmo padrão visual do header em todo o fluxo (sem mexer em nada global)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+
+        .sheet(isPresented: $isImportExcelSheetPresented) {
+            TeacherImportExcelSheet()
+        }
     }
 
     private var header: some View {
@@ -156,6 +171,52 @@ struct TeacherDashboardView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
+    }
+}
+
+// MARK: - Sheet Importar Treino
+private struct TeacherImportExcelSheet: View {
+
+    @Environment(\.dismiss) private var dismiss
+
+    private let contentMaxWidth: CGFloat = 420
+
+    var body: some View {
+        ZStack {
+
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 14) {
+
+                Text("Importar Treino")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+
+                Text("Aqui você poderá importar treinos via planilha (Excel/CSV).")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.65))
+
+                Spacer(minLength: 0)
+
+                Button {
+                    dismiss()
+                } label: {
+                    Text("Fechar")
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Theme.Colors.cardBackground)
+                        .foregroundColor(.white)
+                        .cornerRadius(14)
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(16)
+            .frame(maxWidth: contentMaxWidth)
+        }
     }
 }
 

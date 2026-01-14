@@ -201,7 +201,7 @@ struct FooterBar: View {
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, let isSobreSelected, let isPerfilSelected):
             HStack(spacing: 12) {
 
-                Button { goTeacherHome() } label: {
+                Button { goTeacherHome(category: selectedCategory) } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
@@ -225,7 +225,7 @@ struct FooterBar: View {
         case .teacherHomeAlunoSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunoSelected, let isSobreSelected, let isPerfilSelected):
             HStack(spacing: 12) {
 
-                Button { goTeacherHome() } label: {
+                Button { goTeacherHome(category: selectedCategory) } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
@@ -294,27 +294,28 @@ struct FooterBar: View {
     // Enum para identificar os destinos possíveis de navegação do professor
     private enum TeacherDestination { case home, alunos, sobre, perfil }
 
-    // Constrói a pilha de navegação canônica para professores
+    // ✅ AJUSTE: pilha canônica do professor passa a começar no TeacherDashboardView
     private func teacherCanonicalStack(category: TreinoTipo, destination: TeacherDestination) -> [AppRoute] {
         switch destination {
         case .home:
-            return [.home]
+            return [.teacherDashboard(category: category)]
 
         case .alunos:
-            // ✅ AJUSTE: ao navegar pelo rodapé para "Alunos", sempre abrir com "Todos"
-            // (ou seja: initialFilter = nil). Isso evita voltar com "Treinos em Casa" selecionado.
-            return [.home, .teacherStudentsList(selectedCategory: category, initialFilter: nil)]
+            return [
+                .teacherDashboard(category: category),
+                .teacherStudentsList(selectedCategory: category, initialFilter: nil)
+            ]
 
         case .sobre:
             return [
-                .home,
+                .teacherDashboard(category: category),
                 .teacherStudentsList(selectedCategory: category, initialFilter: nil),
                 .sobre
             ]
 
         case .perfil:
             return [
-                .home,
+                .teacherDashboard(category: category),
                 .teacherStudentsList(selectedCategory: category, initialFilter: nil),
                 .sobre,
                 .perfil
@@ -322,9 +323,9 @@ struct FooterBar: View {
         }
     }
 
-    // Navega para a home do professor
-    private func goTeacherHome() {
-        path = teacherCanonicalStack(category: .crossfit, destination: .home)
+    // ✅ agora recebe category para não hardcodear crossfit
+    private func goTeacherHome(category: TreinoTipo) {
+        path = teacherCanonicalStack(category: category, destination: .home)
     }
 
     // Navega para a lista de alunos do professor

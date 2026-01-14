@@ -1,6 +1,6 @@
-// Tela de login com autenticação Firebase e navegação pós-login
 import SwiftUI
 
+// Tela de login com autenticação Firebase e navegação pós-login
 struct LoginView: View {
 
     @Binding var path: [AppRoute]
@@ -15,6 +15,9 @@ struct LoginView: View {
 
     @AppStorage("last_login_email") private var lastLoginEmail: String = ""
     @AppStorage("last_login_password") private var lastLoginPassword: String = ""
+
+    // ✅ chave já usada no app
+    private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
     // Interface principal da tela de login
     var body: some View {
@@ -164,7 +167,11 @@ struct LoginView: View {
             let name = session.userName ?? "Aluno"
             path.append(.studentAgenda(studentId: uid, studentName: name))
         } else {
-            path.append(.home)
+            // ✅ SOLICITADO: professor vai direto para TeacherDashboardView
+            let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
+            let categoria = TreinoTipo(rawValue: raw) ?? .crossfit
+            path.append(.teacherDashboard(category: categoria))
         }
     }
 }
+
