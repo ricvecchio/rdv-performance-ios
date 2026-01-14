@@ -6,6 +6,9 @@ struct AppRouter: View {
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
 
+    // ✅ chave já usada no app para lembrar a categoria
+    private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
+
     // Configura a pilha de navegação com todas as rotas do app
     var body: some View {
         NavigationStack(path: $path) {
@@ -260,10 +263,23 @@ struct AppRouter: View {
 // Métodos auxiliares para decidir a view raiz e aplicar guards de autenticação
 private extension AppRouter {
 
+    // ✅ usado somente para abrir o dashboard com a categoria atual (fallback: crossfit)
+    var teacherInitialCategory: TreinoTipo {
+        let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
+        return TreinoTipo(rawValue: raw) ?? .crossfit
+    }
+
     @ViewBuilder
     var rootView: some View {
         if session.isLoggedIn {
-            HomeView(path: $path)
+
+            // ✅ SOLICITADO: professor entra direto no TeacherDashboardView (no lugar de HomeView)
+            if session.isTrainer {
+                TeacherDashboardView(path: $path, category: teacherInitialCategory)
+            } else {
+                HomeView(path: $path)
+            }
+
         } else {
             LoginView(path: $path)
         }
@@ -293,3 +309,4 @@ private extension AppRouter {
         if session.isLoggedIn && session.isStudent { content() } else { LoginView(path: $path) }
     }
 }
+
