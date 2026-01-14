@@ -57,13 +57,14 @@ struct TeacherWorkoutTemplatesView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
+                            // ✅ Ajuste: padrão do header da TeacherStudentsListView
                             Text("\(category.displayName) • \(sectionTitle)")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.green.opacity(0.85))
+                                .foregroundColor(.white.opacity(0.92))
 
                             Text("Cadastre e gerencie os WODs desta seção.")
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
+                                .foregroundColor(.white.opacity(0.35))
 
                             if isGirlsWodsSection {
                                 addWodButtonCard
@@ -144,15 +145,15 @@ struct TeacherWorkoutTemplatesView: View {
         Button {
             path.append(.createGirlsWOD(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
         } label: {
+            // ✅ Ajuste: igual ao botão "Vincular aluno" da TeacherStudentsListView
             HStack {
                 Image(systemName: "plus")
                 Text("Adicionar WOD")
-                    .font(.system(size: 14, weight: .semibold))
-                Spacer()
             }
+            .font(.system(size: 14, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
             .padding(.horizontal, 14)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(Capsule().fill(Color.green.opacity(0.16)))
         }
         .buttonStyle(.plain)
@@ -417,7 +418,7 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
 }
 
 // ============================================================
-// MARK: - ✅ Sheet: Enviar treino para Aluno (FIX: selectionCard)
+// MARK: - ✅ Sheet: Enviar treino para Aluno (fix semana vazia)
 // ============================================================
 
 private struct TeacherSendWorkoutToStudentSheet: View {
@@ -450,7 +451,6 @@ private struct TeacherSendWorkoutToStudentSheet: View {
 
                         header
 
-                        // ✅ FIX: selectionCard quebrado em partes menores
                         selectionCard
 
                         sendButtonCard
@@ -492,10 +492,6 @@ private struct TeacherSendWorkoutToStudentSheet: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
-
-    // ============================================================
-    // MARK: - ✅ Selection Card (FIX: quebra em sub-expressões)
-    // ============================================================
 
     private var selectionCard: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -543,7 +539,6 @@ private struct TeacherSendWorkoutToStudentSheet: View {
     private var studentMenu: some View {
         let label = selectedStudent?.name ?? "Selecionar aluno"
 
-        // ✅ reduz carga do compilador: trabalha com tuplas simples e id estável
         let items: [(id: String, name: String)] = students.compactMap { s in
             guard let id = s.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
             return (id: id, name: s.name)
@@ -556,6 +551,8 @@ private struct TeacherSendWorkoutToStudentSheet: View {
                         selectedStudent = s
                         selectedWeek = nil
                         weeks = []
+                        errorMessage = nil
+                        successMessage = nil
                         Task { await loadWeeksForSelectedStudent() }
                     }
                 }
@@ -580,6 +577,7 @@ private struct TeacherSendWorkoutToStudentSheet: View {
         .buttonStyle(.plain)
     }
 
+    // ✅ FIX: quando weeks está vazio, Menu não abre. Então mostramos botão que exibe a mensagem.
     private var weekPickerSection: some View {
         let hasStudent = (selectedStudent != nil)
 
@@ -588,19 +586,64 @@ private struct TeacherSendWorkoutToStudentSheet: View {
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
-            weekMenu(hasStudent: hasStudent)
-                .disabled(!hasStudent)
+            if !hasStudent {
+                weekMenuDisabledPlaceholder(text: "Selecione um aluno primeiro")
+                    .disabled(true)
+            } else if isLoading {
+                weekMenuDisabledPlaceholder(text: "Carregando semanas...")
+                    .disabled(true)
+            } else if weeks.isEmpty {
+                weekMenuEmptyButton
+            } else {
+                weekMenuWithItems
+            }
         }
     }
 
-    private func weekMenu(hasStudent: Bool) -> some View {
-        let labelText: String = {
-            if !hasStudent { return "Selecione um aluno primeiro" }
-            return selectedWeek?.weekTitle ?? "Selecionar semana"
-        }()
+    private func weekMenuDisabledPlaceholder(text: String) -> some View {
+        HStack {
+            Text(text)
+                .foregroundColor(.white.opacity(0.35))
+            Spacer()
+            Image(systemName: "chevron.down")
+                .foregroundColor(.white.opacity(0.25))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(Color.white.opacity(0.10))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
+    }
 
-        let textOpacity: Double = hasStudent ? 0.92 : 0.35
-        let chevronOpacity: Double = hasStudent ? 0.55 : 0.25
+    private var weekMenuEmptyButton: some View {
+        Button {
+            errorMessage = "O aluno deve ter uma semana cadastrada."
+            successMessage = nil
+        } label: {
+            HStack {
+                Text("Selecionar semana")
+                    .foregroundColor(.white.opacity(0.92))
+                Spacer()
+                Image(systemName: "chevron.down")
+                    .foregroundColor(.white.opacity(0.55))
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 12)
+            .background(Color.white.opacity(0.10))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var weekMenuWithItems: some View {
+        let labelText = selectedWeek?.weekTitle ?? "Selecionar semana"
 
         let items: [(id: String, title: String)] = weeks.compactMap { w in
             guard let id = w.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -613,16 +656,18 @@ private struct TeacherSendWorkoutToStudentSheet: View {
                     if let w = weeks.first(where: { $0.id == item.id }) {
                         selectedWeek = w
                         selectedDayIndex = 0
+                        errorMessage = nil
+                        successMessage = nil
                     }
                 }
             }
         } label: {
             HStack {
                 Text(labelText)
-                    .foregroundColor(.white.opacity(textOpacity))
+                    .foregroundColor(.white.opacity(0.92))
                 Spacer()
                 Image(systemName: "chevron.down")
-                    .foregroundColor(.white.opacity(chevronOpacity))
+                    .foregroundColor(.white.opacity(0.55))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 12)
@@ -651,10 +696,6 @@ private struct TeacherSendWorkoutToStudentSheet: View {
             .disabled(selectedWeek == nil)
         }
     }
-
-    // ============================================================
-    // MARK: - Enviar
-    // ============================================================
 
     private var sendButtonCard: some View {
         Button {
@@ -703,8 +744,6 @@ private struct TeacherSendWorkoutToStudentSheet: View {
                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
         )
     }
-
-    // MARK: - Data
 
     private func bootstrap() async {
         errorMessage = nil
@@ -782,7 +821,6 @@ private struct TeacherSendWorkoutToStudentSheet: View {
         }
     }
 
-    // ✅ Mantém compatível com seu modelo atual (sem assumir o tipo de startDate)
     private func weekStartDate(_ week: TrainingWeekFS?) -> Date? {
         guard let week else { return nil }
 
