@@ -212,6 +212,17 @@ struct AppRouter: View {
                             )
                         }
 
+                    // ✅ NOVO: Professor -> Adicionar WOD (Girls WODs)
+                    case .createGirlsWOD(let category, let sectionKey, let sectionTitle):
+                        guardedTeacher {
+                            CreateGirlsWODView(
+                                path: $path,
+                                category: category,
+                                sectionKey: sectionKey,
+                                sectionTitle: sectionTitle
+                            )
+                        }
+
                     @unknown default:
                         guardedHome()
                     }
@@ -260,4 +271,3 @@ private extension AppRouter {
         if session.isLoggedIn && session.isStudent { content() } else { LoginView(path: $path) }
     }
 }
-

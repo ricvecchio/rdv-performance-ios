@@ -131,3 +131,4 @@ struct TeacherCrossfitLibraryView: View {
         path.removeLast()
     }
 }
+
