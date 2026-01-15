@@ -1,18 +1,17 @@
 import SwiftUI
 
-// Tela principal do app que exibe os programas de treino disponíveis
+// Tela inicial do ALUNO (o professor não deve mais cair aqui; AppRouter já redireciona)
 struct HomeView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
-    // Estado local para armazenar o último treino selecionado
-    @State private var ultimoTreinoSelecionadoState: String = TreinoTipo.crossfit.rawValue
-    private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
+    // ✅ Persistência do último treino selecionado (sem UserDefaults manual)
+    @AppStorage("ultimoTreinoSelecionado")
+    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
     private let contentMaxWidth: CGFloat = 380
 
-    // Constrói a interface principal com fundo, header, cards de programas e footer
     var body: some View {
         ZStack {
             Image("rdv_fundo")
@@ -26,17 +25,6 @@ struct HomeView: View {
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
-
-                if session.userType == .TRAINER {
-                    HStack {
-                        Spacer(minLength: 0)
-                        teacherAreaCard
-                            .frame(maxWidth: contentMaxWidth)
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 10)
-                }
 
                 GeometryReader { proxy in
                     let tileHeight = proxy.size.height / 3
@@ -69,7 +57,7 @@ struct HomeView: View {
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
-                footerForCurrentUser()
+                footerAluno
                     .frame(height: Theme.Layout.footerHeight)
                     .frame(maxWidth: .infinity)
                     .background(Theme.Colors.footerBackground)
@@ -82,84 +70,24 @@ struct HomeView: View {
                 HeaderAvatarView(size: 38)
             }
         }
-
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-
-        .onAppear {
-            let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
-            if ultimoTreinoSelecionadoState != raw {
-                ultimoTreinoSelecionadoState = raw
-            }
-        }
-        .onChange(of: ultimoTreinoSelecionadoState) { _, newValue in
-            UserDefaults.standard.set(newValue, forKey: ultimoTreinoKey)
-        }
     }
 
-    // Card de acesso à área do professor
-    private var teacherAreaCard: some View {
-        Button {
-            let categoria = TreinoTipo(rawValue: ultimoTreinoSelecionadoState) ?? .crossfit
-            path.append(.teacherDashboard(category: categoria))
-        } label: {
-            HStack(spacing: 12) {
-                Image(systemName: "person.3.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
-
-                Text("Área do Professor")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-
-                Spacer()
-
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .frame(maxWidth: .infinity)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+    // Footer do aluno (mantém padrão atual)
+    private var footerAluno: some View {
+        FooterBar(
+            path: $path,
+            kind: .agendaSobrePerfil(
+                isAgendaSelected: false,
+                isSobreSelected: false,
+                isPerfilSelected: false
             )
-        }
-        .buttonStyle(.plain)
+        )
     }
 
-    // ✅ Ajuste: Professor agora usa o MESMO padrão do AboutView (4 ícones)
-    @ViewBuilder
-    private func footerForCurrentUser() -> some View {
-        if session.userType == .STUDENT {
-            FooterBar(
-                path: $path,
-                kind: .agendaSobrePerfil(
-                    isAgendaSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                )
-            )
-        } else {
-            let categoriaAtualProfessor = TreinoTipo(rawValue: ultimoTreinoSelecionadoState) ?? .crossfit
-            FooterBar(
-                path: $path,
-                kind: .teacherHomeAlunosSobrePerfil(
-                    selectedCategory: categoriaAtualProfessor,
-                    isHomeSelected: true,
-                    isAlunosSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                )
-            )
-        }
-    }
-
-    // Cria um tile clicável para cada programa de treino
+    // Cria um tile clicável para cada programa de treino (fluxo do aluno)
     private func programaTile(
         title: String,
         imageName: String,
@@ -169,15 +97,13 @@ struct HomeView: View {
     ) -> some View {
 
         Button {
-            ultimoTreinoSelecionadoState = tipo.rawValue
+            // ✅ Persistimos para manter consistência com outras telas
+            ultimoTreinoSelecionado = tipo.rawValue
 
-            if session.userType == .TRAINER {
-                path.append(.teacherStudentsList(selectedCategory: tipo, initialFilter: tipo))
-            } else {
-                guard let uid = session.uid else { return }
-                let name = session.userName ?? "Aluno"
-                path.append(.studentAgenda(studentId: uid, studentName: name))
-            }
+            // ✅ HomeView agora é somente do aluno
+            guard let uid = session.uid else { return }
+            let name = session.userName ?? "Aluno"
+            path.append(.studentAgenda(studentId: uid, studentName: name))
         } label: {
             tileLayout(
                 title: title,
@@ -194,7 +120,7 @@ struct HomeView: View {
         .frame(height: height)
     }
 
-    // Define o layout visual do tile com imagem de fundo e textos
+    // Layout visual do tile com imagem de fundo e textos (mantido como estava)
     private func tileLayout(
         title: String,
         imageName: String,
