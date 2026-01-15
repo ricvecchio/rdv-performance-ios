@@ -50,12 +50,20 @@ struct TeacherDashboardView: View {
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
 
-                                // 3) Importar Excel (novo item)
+                                // 3) Importar Excel
                                 actionRow(
                                     title: "Importar Treino",
                                     icon: "tablecells.fill"
                                 ) {
                                     isImportExcelSheetPresented = true
+                                }
+
+                                // ✅ 3.1) NOVO: Importar Vídeos
+                                actionRow(
+                                    title: "Importar Vídeos",
+                                    icon: "video.fill"
+                                ) {
+                                    path.append(.teacherImportVideos(category: category))
                                 }
 
                                 // 4) Mapa da Academia
@@ -90,7 +98,7 @@ struct TeacherDashboardView: View {
                     path: $path,
                     kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
-                        isHomeSelected: true,     // ✅ Home selecionado no rodapé nesta tela
+                        isHomeSelected: true,
                         isAlunosSelected: false,
                         isSobreSelected: false,
                         isPerfilSelected: false
@@ -103,9 +111,7 @@ struct TeacherDashboardView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
-
         .navigationBarTitleDisplayMode(.inline)
-
         .toolbar {
 
             ToolbarItem(placement: .principal) {
@@ -120,10 +126,7 @@ struct TeacherDashboardView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-
-        // ✅ Importante para manter o mesmo padrão visual do header em todo o fluxo (sem mexer em nada global)
         .toolbarColorScheme(.dark, for: .navigationBar)
-
         .sheet(isPresented: $isImportExcelSheetPresented) {
             TeacherImportExcelSheet()
         }

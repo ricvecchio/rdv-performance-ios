@@ -217,6 +217,15 @@ struct AppRouter: View {
                             )
                         }
 
+                    // ✅ NOVO: Professor -> Importar Vídeos (YouTube)
+                    case .teacherImportVideos(let category):
+                        guardedTeacher {
+                            TeacherImportVideosView(
+                                path: $path,
+                                category: category
+                            )
+                        }
+
                     // ✅ Professor -> Adicionar WOD (Girls WODs) (NÃO MEXER)
                     case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
