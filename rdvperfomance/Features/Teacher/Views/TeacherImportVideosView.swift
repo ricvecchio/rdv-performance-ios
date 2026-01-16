@@ -113,8 +113,8 @@ struct TeacherImportVideosView: View {
 
         // ✅ Sheet adicionar vídeo
         .sheet(isPresented: $isAddSheetPresented) {
-            TeacherAddYoutubeVideoSheet { title, url in
-                Task { await addVideo(title: title, url: url) }
+            TeacherAddYoutubeVideoSheet { title, url, videoCategory in
+                Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
             }
         }
 
@@ -205,7 +205,8 @@ struct TeacherImportVideosView: View {
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
 
-                Text(v.url)
+                // ✅ Em vez do link, mostrar a categoria salva
+                Text(v.category.rawValue)
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
@@ -373,16 +374,23 @@ struct TeacherImportVideosView: View {
 
             let parsed: [TeacherYoutubeVideo] = snap.documents.compactMap { doc in
                 let data = doc.data()
+
                 let title = (data["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 let url = (data["url"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 let videoId = (data["videoId"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+                // ✅ novo campo (backward compatible)
+                let categoryRaw = (data["category"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let videoCategory = TeacherYoutubeVideoCategory(rawValue: categoryRaw) ?? .crossfit
+
                 guard !url.isEmpty, !videoId.isEmpty else { return nil }
 
                 return TeacherYoutubeVideo(
                     id: doc.documentID,
                     title: title,
                     url: url,
-                    videoId: videoId
+                    videoId: videoId,
+                    category: videoCategory
                 )
             }
 
@@ -393,7 +401,7 @@ struct TeacherImportVideosView: View {
         }
     }
 
-    private func addVideo(title: String, url: String) async {
+    private func addVideo(title: String, url: String, videoCategory: TeacherYoutubeVideoCategory) async {
         errorMessage = nil
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -412,6 +420,7 @@ struct TeacherImportVideosView: View {
             "title": title.trimmingCharacters(in: .whitespacesAndNewlines),
             "url": cleanedUrl,
             "videoId": videoId,
+            "category": videoCategory.rawValue, // ✅ novo
             "createdAt": Timestamp(date: Date())
         ]
 
@@ -500,11 +509,21 @@ struct TeacherImportVideosView: View {
     }
 }
 
+// MARK: - Categoria do vídeo (salva no Firestore)
+private enum TeacherYoutubeVideoCategory: String, CaseIterable, Identifiable {
+    case crossfit = "Crossfit"
+    case academia = "Academia"
+    case treinosEmCasa = "Treinos em Casa"
+
+    var id: String { rawValue }
+}
+
 private struct TeacherYoutubeVideo: Identifiable, Equatable {
     let id: String
     let title: String
     let url: String
     let videoId: String
+    let category: TeacherYoutubeVideoCategory
 }
 
 // MARK: - Sheet adicionar vídeo
@@ -515,11 +534,14 @@ private struct TeacherAddYoutubeVideoSheet: View {
     @State private var title: String = ""
     @State private var url: String = ""
 
+    // ✅ novo: categoria selecionada
+    @State private var selectedCategory: TeacherYoutubeVideoCategory = .crossfit
+
     // ✅ feedback simples dentro do sheet (sem alterar layout geral)
     @State private var sheetMessage: String? = nil
     @State private var sheetMessageIsError: Bool = false
 
-    let onSave: (_ title: String, _ url: String) -> Void
+    let onSave: (_ title: String, _ url: String, _ category: TeacherYoutubeVideoCategory) -> Void
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -556,7 +578,7 @@ private struct TeacherAddYoutubeVideoSheet: View {
                                     Button {
                                         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
                                         let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        onSave(t, u)
+                                        onSave(t, u, selectedCategory)
                                         dismiss()
                                     } label: {
                                         HStack {
@@ -677,6 +699,22 @@ private struct TeacherAddYoutubeVideoSheet: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
+            }
+
+            Divider().background(Theme.Colors.divider)
+
+            // ✅ novo: seleção de categoria do vídeo
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Categoria do vídeo")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Picker("", selection: $selectedCategory) {
+                    ForEach(TeacherYoutubeVideoCategory.allCases) { c in
+                        Text(c.rawValue).tag(c)
+                    }
+                }
+                .pickerStyle(.segmented)
             }
         }
         .padding(.horizontal, 16)

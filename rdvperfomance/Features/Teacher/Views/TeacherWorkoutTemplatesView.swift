@@ -20,20 +20,22 @@ struct TeacherWorkoutTemplatesView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Girls WODs = seção "benchmarks" (chave estável no Firestore)
-    private var isGirlsWodsSection: Bool {
-        sectionKey == CrossfitLibrarySection.benchmarks.firestoreKey
+    // ✅ Crossfit: todas as seções devem seguir o mesmo padrão da Girls WODs
+    private var isCrossfitCategory: Bool {
+        category == .crossfit
     }
 
-    // ✅ Mostrar botão também para Academia/Em Casa em "meusTreinos"
+    // ✅ Mostrar botão:
+    // - Crossfit: sempre (todas as seções)
+    // - Academia/Em Casa: somente em "meusTreinos" (mantém regra existente)
     private var shouldShowAddButton: Bool {
-        if isGirlsWodsSection { return true }
+        if isCrossfitCategory { return true }
         return sectionKey == "meusTreinos" && (category == .academia || category == .emCasa)
     }
 
     // ✅ Texto do botão
     private var addButtonTitle: String {
-        isGirlsWodsSection ? "Adicionar WOD" : "Adicionar Treino"
+        isCrossfitCategory ? "Adicionar WOD" : "Adicionar Treino"
     }
 
     // ✅ Um sheet só (evita sheet em branco e conflito)
@@ -73,15 +75,19 @@ struct TeacherWorkoutTemplatesView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("\(category.displayName) • \(sectionTitle)")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                            // ✅ Remover o texto do corpo para TODO Crossfit
+                            // (Mantém para Academia/Em Casa)
+                            if !isCrossfitCategory {
+                                Text("\(category.displayName) • \(sectionTitle)")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+                            }
 
                             Text("Cadastre e gerencie os WODs desta seção.")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
 
-                            // ✅ Botão (Girls WODs ou Meus Treinos Academia/Em Casa)
+                            // ✅ Botão (Crossfit em todas as seções + Meus Treinos Academia/Em Casa)
                             if shouldShowAddButton {
                                 addButtonCard
                             }
@@ -128,6 +134,7 @@ struct TeacherWorkoutTemplatesView: View {
                 .buttonStyle(.plain)
             }
 
+            // ✅ Cabeçalho sempre com o nome do menu selecionado
             ToolbarItem(placement: .principal) {
                 Text(sectionTitle)
                     .font(Theme.Fonts.headerTitle())
@@ -160,20 +167,20 @@ struct TeacherWorkoutTemplatesView: View {
         }
     }
 
-    // ✅ IMPORTANTE: aqui é onde estava o problema do fluxo:
-    // - Crossfit Girls WODs continua indo para createCrossfitWOD
-    // - Academia vai para createTreinoAcademia
-    // - Em Casa vai para createTreinoCasa
+    // ✅ Ação do botão:
+    // - Crossfit: sempre createCrossfitWOD (qualquer seção)
+    // - Academia: createTreinoAcademia
+    // - Em Casa: createTreinoCasa
     private var addButtonCard: some View {
         Button {
-            if isGirlsWodsSection {
+            if isCrossfitCategory {
                 path.append(.createCrossfitWOD(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
             } else if category == .academia {
                 path.append(.createTreinoAcademia(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
             } else if category == .emCasa {
                 path.append(.createTreinoCasa(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
             } else {
-                // fallback seguro: não deveria acontecer
+                // fallback seguro
                 path.append(.createCrossfitWOD(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
             }
         } label: {
@@ -288,11 +295,11 @@ struct TeacherWorkoutTemplatesView: View {
 
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text("Nenhum WOD cadastrado")
+            Text(isCrossfitCategory ? "Nenhum WOD cadastrado" : "Nenhum treino cadastrado")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text(isGirlsWodsSection ? "Toque em “Adicionar WOD” para começar." : "Cadastre templates para aparecerem aqui.")
+            Text(isCrossfitCategory ? "Toque em “Adicionar WOD” para começar." : "Cadastre templates para aparecerem aqui.")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
