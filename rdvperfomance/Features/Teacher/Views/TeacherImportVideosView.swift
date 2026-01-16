@@ -515,6 +515,10 @@ private struct TeacherAddYoutubeVideoSheet: View {
     @State private var title: String = ""
     @State private var url: String = ""
 
+    // ✅ feedback simples dentro do sheet (sem alterar layout geral)
+    @State private var sheetMessage: String? = nil
+    @State private var sheetMessageIsError: Bool = false
+
     let onSave: (_ title: String, _ url: String) -> Void
 
     private let contentMaxWidth: CGFloat = 380
@@ -546,24 +550,49 @@ private struct TeacherAddYoutubeVideoSheet: View {
 
                                 formCard
 
-                                Button {
-                                    let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    onSave(t, u)
-                                    dismiss()
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "checkmark")
-                                        Text("Salvar")
+                                // ✅ Mesma linha: Salvar (esquerda) + Copiar link YouTube (direita)
+                                HStack(spacing: 10) {
+
+                                    Button {
+                                        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        onSave(t, u)
+                                        dismiss()
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "checkmark")
+                                            Text("Salvar")
+                                        }
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 10)
+                                        .background(Capsule().fill(Color.green.opacity(0.16)))
                                     }
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 10)
-                                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                                    .buttonStyle(.plain)
+                                    .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                                    Spacer(minLength: 0)
+
+                                    Button {
+                                        handleCopyYoutubeLink()
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "doc.on.doc")
+                                            Text("Copiar link YouTube")
+                                        }
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 10)
+                                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
-                                .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                                if let msg = sheetMessage {
+                                    sheetMessageCard(text: msg, isError: sheetMessageIsError)
+                                }
 
                                 Color.clear.frame(height: 18)
                             }
@@ -659,6 +688,89 @@ private struct TeacherAddYoutubeVideoSheet: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private func sheetMessageCard(text: String, isError: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
+
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.75))
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.black.opacity(0.35))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Botão "Copiar link YouTube"
+
+    private func handleCopyYoutubeLink() {
+        sheetMessage = nil
+        sheetMessageIsError = false
+
+        let clipboard = (UIPasteboard.general.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 1) Se já tiver um link válido no clipboard, cola direto no campo
+        if isValidYoutubeUrl(clipboard) {
+            url = clipboard
+            sheetMessage = "Link do YouTube colado do clipboard."
+            sheetMessageIsError = false
+            return
+        }
+
+        // 2) Caso contrário, abre o YouTube externamente (para o usuário copiar o link do vídeo)
+        openYoutubeExternal()
+        sheetMessage = "YouTube aberto. Copie o link do vídeo e volte para colar aqui."
+        sheetMessageIsError = false
+    }
+
+    private func openYoutubeExternal() {
+        guard let youtubeUrl = URL(string: "https://m.youtube.com") else { return }
+        UIApplication.shared.open(youtubeUrl, options: [:], completionHandler: nil)
+    }
+
+    private func isValidYoutubeUrl(_ urlString: String) -> Bool {
+        guard let url = URL(string: urlString) else { return false }
+
+        if let host = url.host?.lowercased(), host.contains("youtu.be") {
+            let id = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            return !id.isEmpty
+        }
+
+        if let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let host = comps.host?.lowercased(),
+           host.contains("youtube.com") {
+
+            if url.path.contains("/watch") {
+                let v = comps.queryItems?.first(where: { $0.name == "v" })?.value
+                return (v?.isEmpty == false)
+            }
+
+            if url.path.contains("/shorts/") {
+                let parts = url.path.split(separator: "/")
+                if let idx = parts.firstIndex(of: "shorts"), idx + 1 < parts.count {
+                    return !String(parts[idx + 1]).isEmpty
+                }
+            }
+
+            if url.path.contains("/embed/") {
+                let parts = url.path.split(separator: "/")
+                if let idx = parts.firstIndex(of: "embed"), idx + 1 < parts.count {
+                    return !String(parts[idx + 1]).isEmpty
+                }
+            }
+        }
+
+        return false
     }
 }
 
