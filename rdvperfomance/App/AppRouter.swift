@@ -24,6 +24,8 @@ struct AppRouter: View {
                             .environmentObject(session)
 
                     case .home:
+                        // ✅ Segurança: se por algum motivo um treinador navegar para ".home",
+                        // ele será redirecionado para o dashboard.
                         guardedHome()
 
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
@@ -215,6 +217,15 @@ struct AppRouter: View {
                             )
                         }
 
+                    // ✅ NOVO: Professor -> Importar Vídeos (YouTube)
+                    case .teacherImportVideos(let category):
+                        guardedTeacher {
+                            TeacherImportVideosView(
+                                path: $path,
+                                category: category
+                            )
+                        }
+
                     // ✅ Professor -> Adicionar WOD (Girls WODs) (NÃO MEXER)
                     case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
@@ -273,7 +284,7 @@ private extension AppRouter {
     var rootView: some View {
         if session.isLoggedIn {
 
-            // ✅ SOLICITADO: professor entra direto no TeacherDashboardView (no lugar de HomeView)
+            // ✅ Professor entra direto no TeacherDashboardView (no lugar de HomeView)
             if session.isTrainer {
                 TeacherDashboardView(path: $path, category: teacherInitialCategory)
             } else {
@@ -296,7 +307,16 @@ private extension AppRouter {
 
     @ViewBuilder
     func guardedHome() -> some View {
-        if session.isLoggedIn { HomeView(path: $path) } else { LoginView(path: $path) }
+        if session.isLoggedIn {
+            // ✅ Se for treinador, nunca mostramos a HomeView (mesmo que chamem ".home")
+            if session.isTrainer {
+                TeacherDashboardView(path: $path, category: teacherInitialCategory)
+            } else {
+                HomeView(path: $path)
+            }
+        } else {
+            LoginView(path: $path)
+        }
     }
 
     @ViewBuilder
