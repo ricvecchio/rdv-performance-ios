@@ -1,9 +1,10 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
-import WebKit
 import SafariServices
 import UIKit
+import AVKit
+import WebKit
 
 struct TeacherImportVideosView: View {
 
@@ -18,20 +19,13 @@ struct TeacherImportVideosView: View {
 
     @State private var isAddSheetPresented: Bool = false
 
-    // ✅ Player interno (embed travado)
-    @State private var activePlayer: PlayerItem? = nil
-    private struct PlayerItem: Identifiable {
+    // ✅ Sheet player travado no vídeo
+    @State private var activeLockedPlayer: LockedPlayerItem? = nil
+
+    private struct LockedPlayerItem: Identifiable {
         let id = UUID()
         let title: String
         let videoId: String
-    }
-
-    // ✅ Fallback: YouTube dentro do app (Safari)
-    @State private var activeSafari: SafariItem? = nil
-    private struct SafariItem: Identifiable {
-        let id = UUID()
-        let title: String
-        let url: URL
     }
 
     var body: some View {
@@ -124,23 +118,9 @@ struct TeacherImportVideosView: View {
             }
         }
 
-        // ✅ Sheet player embed (travado)
-        .sheet(item: $activePlayer) { item in
-            TeacherYoutubeEmbedLockedSheet(
-                title: item.title,
-                videoId: item.videoId,
-                onOpenInYoutube: {
-                    openYoutubeInsideApp(title: item.title, videoId: item.videoId)
-                }
-            )
-            .presentationDetents([.large])
-            .presentationDragIndicator(.visible)
-            .presentationCornerRadius(22)
-        }
-
-        // ✅ Fallback (Safari interno)
-        .sheet(item: $activeSafari) { item in
-            TeacherYoutubeSafariSheet(title: item.title, url: item.url)
+        // ✅ Reproduzir no app (WKWebView travado)
+        .sheet(item: $activeLockedPlayer) { item in
+            TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
                 .presentationCornerRadius(22)
@@ -156,6 +136,7 @@ struct TeacherImportVideosView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    // Botão no padrão capsule
     private var addButtonCard: some View {
         Button {
             errorMessage = nil
@@ -209,6 +190,13 @@ struct TeacherImportVideosView: View {
         }
     }
 
+    private func openLockedPlayer(for video: TeacherYoutubeVideo) {
+        activeLockedPlayer = LockedPlayerItem(
+            title: video.title.isEmpty ? "Vídeo do YouTube" : video.title,
+            videoId: video.videoId
+        )
+    }
+
     private func videoRow(video v: TeacherYoutubeVideo) -> some View {
         HStack(spacing: 12) {
 
@@ -228,19 +216,8 @@ struct TeacherImportVideosView: View {
 
             Spacer()
 
+            // ✅ Menu agora SOMENTE remover
             Menu {
-                Button {
-                    playInsideApp(video: v)
-                } label: {
-                    Label("Reproduzir no app", systemImage: "airplayvideo")
-                }
-
-                Button {
-                    openYoutubeInsideApp(title: v.title.isEmpty ? "Vídeo do YouTube" : v.title, videoId: v.videoId)
-                } label: {
-                    Label("Abrir no YouTube", systemImage: "safari.fill")
-                }
-
                 Button(role: .destructive) {
                     Task { await deleteVideo(videoId: v.id) }
                 } label: {
@@ -256,54 +233,74 @@ struct TeacherImportVideosView: View {
             }
             .buttonStyle(.plain)
 
-            Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
+            // ✅ Seta =CTA: reproduzir no app
+            Button {
+                openLockedPlayer(for: v)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            .buttonStyle(.plain)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
+        // ✅ Toque na linha: reproduzir no app
         .onTapGesture {
-            playInsideApp(video: v)
+            openLockedPlayer(for: v)
         }
     }
 
-    private func playInsideApp(video v: TeacherYoutubeVideo) {
-        errorMessage = nil
-        let title = v.title.isEmpty ? "Vídeo do YouTube" : v.title
-        activePlayer = PlayerItem(title: title, videoId: v.videoId)
-    }
-
-    private func openYoutubeInsideApp(title: String, videoId: String) {
-        guard let url = URL(string: "https://m.youtube.com/watch?v=\(videoId)") else { return }
-        activeSafari = SafariItem(title: title, url: url)
-    }
-
+    // ✅ Thumbnail com overlay do ícone PLAY
     private func thumbnailView(videoId: String) -> some View {
         let thumb = "https://img.youtube.com/vi/\(videoId)/hqdefault.jpg"
-        return AsyncImage(url: URL(string: thumb)) { phase in
-            switch phase {
-            case .empty:
-                ZStack {
+
+        return ZStack(alignment: .bottomTrailing) {
+
+            AsyncImage(url: URL(string: thumb)) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        Color.white.opacity(0.06)
+                        ProgressView().tint(.white.opacity(0.8))
+                    }
+
+                case .success(let img):
+                    img.resizable().scaledToFill()
+
+                case .failure:
+                    ZStack {
+                        Color.white.opacity(0.06)
+                        Image(systemName: "video.fill")
+                            .foregroundColor(.green.opacity(0.85))
+                    }
+
+                @unknown default:
                     Color.white.opacity(0.06)
-                    ProgressView().tint(.white.opacity(0.8))
                 }
-            case .success(let img):
-                img.resizable().scaledToFill()
-            case .failure:
-                ZStack {
-                    Color.white.opacity(0.06)
-                    Image(systemName: "video.fill")
-                        .foregroundColor(.green.opacity(0.85))
-                }
-            @unknown default:
-                Color.white.opacity(0.06)
             }
+            .frame(width: 66, height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+            )
+
+            // ✅ Ícone play (reforça ação)
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                Image(systemName: "play.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.95))
+                    .padding(.leading, 1) // leve ajuste óptico
+            }
+            .frame(width: 18, height: 18)
+            .overlay(
+                Circle()
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            )
+            .padding(6)
         }
-        .frame(width: 66, height: 40)
-        .clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-        )
     }
 
     private var loadingView: some View {
@@ -474,11 +471,13 @@ struct TeacherImportVideosView: View {
     private func extractYoutubeVideoId(from urlString: String) -> String? {
         guard let url = URL(string: urlString) else { return nil }
 
+        // 1) youtu.be/<id>
         if let host = url.host, host.contains("youtu.be") {
             let id = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             return id.isEmpty ? nil : id
         }
 
+        // 2) youtube.com/watch?v=<id>
         if let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let host = comps.host,
            host.contains("youtube.com") {
@@ -487,6 +486,7 @@ struct TeacherImportVideosView: View {
                 return (v?.isEmpty == false) ? v : nil
             }
 
+            // 3) youtube.com/shorts/<id>
             if url.path.contains("/shorts/") {
                 let parts = url.path.split(separator: "/")
                 if let idx = parts.firstIndex(of: "shorts"), idx + 1 < parts.count {
@@ -494,6 +494,7 @@ struct TeacherImportVideosView: View {
                 }
             }
 
+            // 4) youtube.com/embed/<id>
             if url.path.contains("/embed/") {
                 let parts = url.path.split(separator: "/")
                 if let idx = parts.firstIndex(of: "embed"), idx + 1 < parts.count {
@@ -511,7 +512,7 @@ struct TeacherImportVideosView: View {
     }
 }
 
-// MARK: - Model local
+// MARK: - Model local (somente para esta tela)
 private struct TeacherYoutubeVideo: Identifiable, Equatable {
     let id: String
     let title: String
@@ -519,191 +520,7 @@ private struct TeacherYoutubeVideo: Identifiable, Equatable {
     let videoId: String
 }
 
-// MARK: - Sheet player embed travado
-private struct TeacherYoutubeEmbedLockedSheet: View {
-
-    let title: String
-    let videoId: String
-    let onOpenInYoutube: () -> Void
-
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            ZStack {
-                Image("rdv_fundo")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-
-                VStack(spacing: 12) {
-
-                    // ✅ Player contido (não estoura laterais)
-                    HStack {
-                        Spacer(minLength: 0)
-                        YoutubeEmbedLockedWebView(videoId: videoId)
-                            .frame(maxWidth: 380)
-                            .clipShape(RoundedRectangle(cornerRadius: 16))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                            )
-                        Spacer(minLength: 0)
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-
-                    // ✅ Ações
-                    HStack {
-                        Spacer()
-                        Button {
-                            onOpenInYoutube()
-                        } label: {
-                            HStack(spacing: 8) {
-                                Image(systemName: "safari.fill")
-                                Text("Abrir no YouTube")
-                            }
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.green.opacity(0.16)))
-                        }
-                        .buttonStyle(.plain)
-                        Spacer()
-                    }
-                    .padding(.horizontal, 16)
-
-                    Spacer(minLength: 0)
-                }
-            }
-            .navigationTitle(title)
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
-                }
-            }
-            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-        }
-    }
-}
-
-// MARK: - WKWebView embed TRAVADO (bloqueia navegar para outros vídeos)
-private struct YoutubeEmbedLockedWebView: UIViewRepresentable {
-
-    let videoId: String
-
-    func makeCoordinator() -> Coordinator { Coordinator() }
-
-    func makeUIView(context: Context) -> WKWebView {
-        let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
-        if #available(iOS 10.0, *) {
-            config.mediaTypesRequiringUserActionForPlayback = []
-        }
-
-        let web = WKWebView(frame: .zero, configuration: config)
-        web.navigationDelegate = context.coordinator
-        web.scrollView.isScrollEnabled = false
-        web.isOpaque = false
-        web.backgroundColor = .clear
-
-        // ✅ HTML mínimo com iframe embed
-        // - rel=0: reduz recomendados
-        // - modestbranding=1: menos “cara de YouTube”
-        // - playsinline=1: toca dentro
-        // - disablekb=1: reduz controles de teclado
-        let html = """
-        <!doctype html>
-        <html>
-          <head>
-            <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
-            <style>
-              html, body { margin:0; padding:0; background: transparent; }
-              .wrap { position: relative; width: 100%; padding-top: 56.25%; }
-              iframe { position:absolute; top:0; left:0; width:100%; height:100%; border:0; }
-            </style>
-          </head>
-          <body>
-            <div class="wrap">
-              <iframe
-                src="https://www.youtube-nocookie.com/embed/\(videoId)?playsinline=1&rel=0&modestbranding=1&controls=1&fs=1&disablekb=1"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-                allowfullscreen>
-              </iframe>
-            </div>
-          </body>
-        </html>
-        """
-        web.loadHTMLString(html, baseURL: nil)
-        return web
-    }
-
-    func updateUIView(_ uiView: WKWebView, context: Context) { }
-
-    final class Coordinator: NSObject, WKNavigationDelegate {
-        // ✅ Bloqueia qualquer tentativa de navegar dentro do WebView (outros vídeos, links etc.)
-        func webView(_ webView: WKWebView,
-                     decidePolicyFor navigationAction: WKNavigationAction,
-                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
-
-            // Permite somente o carregamento inicial do HTML/iframe
-            if navigationAction.navigationType == .other || navigationAction.navigationType == .reload {
-                decisionHandler(.allow)
-                return
-            }
-
-            // Bloqueia cliques e redirecionamentos para outras páginas
-            decisionHandler(.cancel)
-        }
-    }
-}
-
-// MARK: - Sheet Safari (fallback)
-private struct TeacherYoutubeSafariSheet: View {
-
-    let title: String
-    let url: URL
-
-    @Environment(\.dismiss) private var dismiss
-
-    var body: some View {
-        NavigationStack {
-            SafariView(url: url)
-                .navigationTitle(title)
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .topBarLeading) {
-                        Button("Fechar") { dismiss() }
-                    }
-                }
-                .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-                .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarColorScheme(.dark, for: .navigationBar)
-        }
-    }
-}
-
-private struct SafariView: UIViewControllerRepresentable {
-
-    let url: URL
-
-    func makeUIViewController(context: Context) -> SFSafariViewController {
-        let config = SFSafariViewController.Configuration()
-        config.entersReaderIfAvailable = false
-        config.barCollapsingEnabled = true
-        let vc = SFSafariViewController(url: url, configuration: config)
-        vc.preferredControlTintColor = UIColor.systemGreen
-        return vc
-    }
-
-    func updateUIViewController(_ uiViewController: SFSafariViewController, context: Context) { }
-}
-
-// MARK: - Sheet adicionar vídeo (mantido aqui para não dar "Cannot find ... in scope")
+// MARK: - Sheet adicionar vídeo (incluído aqui para não dar "Cannot find ... in scope")
 private struct TeacherAddYoutubeVideoSheet: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -856,5 +673,144 @@ private struct TeacherAddYoutubeVideoSheet: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
+}
+
+// MARK: - Reproduzir no app (TRAVADO) — WKWebView sem rolagem + bloqueio de links + AirPlay no header
+private struct TeacherYoutubeLockedPlayerSheet: View {
+
+    let title: String
+    let videoId: String
+
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        NavigationStack {
+            LockedYoutubeWebView(videoId: videoId)
+                .navigationTitle(title)
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+
+                    ToolbarItem(placement: .topBarLeading) {
+                        Button("Fechar") { dismiss() }
+                    }
+
+                    ToolbarItem(placement: .topBarTrailing) {
+                        AirPlayRoutePicker()
+                            .frame(width: 34, height: 34)
+                            .accessibilityLabel("Reproduzir com AirPlay")
+                    }
+                }
+                .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+                .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+    }
+}
+
+private struct LockedYoutubeWebView: UIViewRepresentable {
+
+    let videoId: String
+
+    func makeUIView(context: Context) -> WKWebView {
+
+        let config = WKWebViewConfiguration()
+        config.allowsInlineMediaPlayback = true
+        config.allowsAirPlayForMediaPlayback = true
+        config.mediaTypesRequiringUserActionForPlayback = []
+
+        let webView = WKWebView(frame: .zero, configuration: config)
+        webView.navigationDelegate = context.coordinator
+        webView.allowsBackForwardNavigationGestures = false
+
+        webView.scrollView.isScrollEnabled = false
+        webView.scrollView.bounces = false
+
+        webView.isOpaque = false
+        webView.backgroundColor = UIColor.clear
+        webView.scrollView.backgroundColor = UIColor.clear
+
+        let urlString = "https://m.youtube.com/watch?v=\(videoId)&playsinline=1"
+        if let url = URL(string: urlString) {
+            webView.load(URLRequest(url: url))
+        }
+
+        return webView
+    }
+
+    func updateUIView(_ uiView: WKWebView, context: Context) { }
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator()
+    }
+
+    final class Coordinator: NSObject, WKNavigationDelegate {
+
+        func webView(_ webView: WKWebView,
+                     decidePolicyFor navigationAction: WKNavigationAction,
+                     decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+
+            if navigationAction.navigationType == .other {
+                decisionHandler(.allow)
+                return
+            }
+
+            decisionHandler(.cancel)
+        }
+
+        func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            let js = """
+            (function() {
+                try {
+                    document.documentElement.style.overflow = 'hidden';
+                    document.body.style.overflow = 'hidden';
+                    document.body.style.height = '100vh';
+                    document.body.style.margin = '0';
+
+                    var style = document.createElement('style');
+                    style.innerHTML = `
+                        header, ytm-pivot-bar, ytm-browse, ytm-item-section-renderer,
+                        ytm-engagement-panel-section-list-renderer, ytm-comment-section-renderer,
+                        ytm-slim-video-metadata-section-renderer,
+                        ytm-video-with-context-renderer,
+                        ytm-reel-shelf-renderer,
+                        ytm-single-column-watch-next-results-renderer,
+                        ytm-watch-next-secondary-results-renderer,
+                        ytm-watch-next-feed,
+                        #related, #secondary, #comments, #chips {
+                            display: none !important;
+                            visibility: hidden !important;
+                            height: 0 !important;
+                            overflow: hidden !important;
+                        }
+                        ytm-app, ytm-watch {
+                            overflow: hidden !important;
+                        }
+                    `;
+                    document.head.appendChild(style);
+
+                    document.addEventListener('click', function(e) {
+                        var a = e.target.closest('a');
+                        if (a) { e.preventDefault(); e.stopPropagation(); }
+                    }, true);
+                } catch (e) {}
+            })();
+            """
+            webView.evaluateJavaScript(js, completionHandler: nil)
+        }
+    }
+}
+
+// MARK: - AirPlay Picker (AVRoutePickerView)
+private struct AirPlayRoutePicker: UIViewRepresentable {
+
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let v = AVRoutePickerView(frame: .zero)
+        v.prioritizesVideoDevices = true
+        v.activeTintColor = UIColor.systemGreen
+        v.tintColor = UIColor.white.withAlphaComponent(0.90)
+        return v
+    }
+
+    func updateUIView(_ uiView: AVRoutePickerView, context: Context) { }
 }
 
