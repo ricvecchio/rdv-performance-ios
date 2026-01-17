@@ -156,7 +156,7 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 HStack {
                     Image(systemName: "plus")
-                    Text("Adicionar Treino")
+                    Text("Importar Excel")
                 }
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
