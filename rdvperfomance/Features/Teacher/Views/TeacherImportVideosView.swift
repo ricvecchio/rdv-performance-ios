@@ -19,7 +19,7 @@ struct TeacherImportVideosView: View {
 
     @State private var isAddSheetPresented: Bool = false
 
-    // ✅ Sheet player travado no vídeo
+    // ✅ Player travado no vídeo (agora abre em tela cheia)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
 
     private struct LockedPlayerItem: Identifiable {
@@ -113,17 +113,15 @@ struct TeacherImportVideosView: View {
 
         // ✅ Sheet adicionar vídeo
         .sheet(isPresented: $isAddSheetPresented) {
-            TeacherAddYoutubeVideoSheet { title, url in
-                Task { await addVideo(title: title, url: url) }
+            TeacherAddYoutubeVideoSheet { title, url, videoCategory in
+                Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
             }
         }
 
-        // ✅ Reproduzir no app (WKWebView travado)
-        .sheet(item: $activeLockedPlayer) { item in
+        // ✅ Reproduzir no app (TELA CHEIA, e com tentativa de abrir expandido)
+        // Mantém AirPlay no header.
+        .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
-                .presentationDetents([.large])
-                .presentationDragIndicator(.visible)
-                .presentationCornerRadius(22)
         }
     }
 
@@ -136,7 +134,6 @@ struct TeacherImportVideosView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Botão no padrão capsule
     private var addButtonCard: some View {
         Button {
             errorMessage = nil
@@ -208,7 +205,8 @@ struct TeacherImportVideosView: View {
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
 
-                Text(v.url)
+                // ✅ Em vez do link, mostrar a categoria salva
+                Text(v.category.rawValue)
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
@@ -216,7 +214,7 @@ struct TeacherImportVideosView: View {
 
             Spacer()
 
-            // ✅ Menu agora SOMENTE remover
+            // ✅ Menu somente remover
             Menu {
                 Button(role: .destructive) {
                     Task { await deleteVideo(videoId: v.id) }
@@ -233,7 +231,7 @@ struct TeacherImportVideosView: View {
             }
             .buttonStyle(.plain)
 
-            // ✅ Seta =CTA: reproduzir no app
+            // ✅ Seta = CTA: reproduzir no app (tela cheia)
             Button {
                 openLockedPlayer(for: v)
             } label: {
@@ -244,13 +242,11 @@ struct TeacherImportVideosView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
-        // ✅ Toque na linha: reproduzir no app
         .onTapGesture {
             openLockedPlayer(for: v)
         }
     }
 
-    // ✅ Thumbnail com overlay do ícone PLAY
     private func thumbnailView(videoId: String) -> some View {
         let thumb = "https://img.youtube.com/vi/\(videoId)/hqdefault.jpg"
 
@@ -263,17 +259,14 @@ struct TeacherImportVideosView: View {
                         Color.white.opacity(0.06)
                         ProgressView().tint(.white.opacity(0.8))
                     }
-
                 case .success(let img):
                     img.resizable().scaledToFill()
-
                 case .failure:
                     ZStack {
                         Color.white.opacity(0.06)
                         Image(systemName: "video.fill")
                             .foregroundColor(.green.opacity(0.85))
                     }
-
                 @unknown default:
                     Color.white.opacity(0.06)
                 }
@@ -285,14 +278,13 @@ struct TeacherImportVideosView: View {
                     .stroke(Color.white.opacity(0.10), lineWidth: 1)
             )
 
-            // ✅ Ícone play (reforça ação)
             ZStack {
                 Circle()
                     .fill(Color.black.opacity(0.45))
                 Image(systemName: "play.fill")
                     .font(.system(size: 10, weight: .bold))
                     .foregroundColor(.white.opacity(0.95))
-                    .padding(.leading, 1) // leve ajuste óptico
+                    .padding(.leading, 1)
             }
             .frame(width: 18, height: 18)
             .overlay(
@@ -382,16 +374,23 @@ struct TeacherImportVideosView: View {
 
             let parsed: [TeacherYoutubeVideo] = snap.documents.compactMap { doc in
                 let data = doc.data()
+
                 let title = (data["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 let url = (data["url"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 let videoId = (data["videoId"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+                // ✅ novo campo (backward compatible)
+                let categoryRaw = (data["category"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let videoCategory = TeacherYoutubeVideoCategory(rawValue: categoryRaw) ?? .crossfit
+
                 guard !url.isEmpty, !videoId.isEmpty else { return nil }
 
                 return TeacherYoutubeVideo(
                     id: doc.documentID,
                     title: title,
                     url: url,
-                    videoId: videoId
+                    videoId: videoId,
+                    category: videoCategory
                 )
             }
 
@@ -402,7 +401,7 @@ struct TeacherImportVideosView: View {
         }
     }
 
-    private func addVideo(title: String, url: String) async {
+    private func addVideo(title: String, url: String, videoCategory: TeacherYoutubeVideoCategory) async {
         errorMessage = nil
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -421,6 +420,7 @@ struct TeacherImportVideosView: View {
             "title": title.trimmingCharacters(in: .whitespacesAndNewlines),
             "url": cleanedUrl,
             "videoId": videoId,
+            "category": videoCategory.rawValue, // ✅ novo
             "createdAt": Timestamp(date: Date())
         ]
 
@@ -471,22 +471,20 @@ struct TeacherImportVideosView: View {
     private func extractYoutubeVideoId(from urlString: String) -> String? {
         guard let url = URL(string: urlString) else { return nil }
 
-        // 1) youtu.be/<id>
         if let host = url.host, host.contains("youtu.be") {
             let id = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             return id.isEmpty ? nil : id
         }
 
-        // 2) youtube.com/watch?v=<id>
         if let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
            let host = comps.host,
            host.contains("youtube.com") {
+
             if url.path.contains("/watch") {
                 let v = comps.queryItems?.first(where: { $0.name == "v" })?.value
                 return (v?.isEmpty == false) ? v : nil
             }
 
-            // 3) youtube.com/shorts/<id>
             if url.path.contains("/shorts/") {
                 let parts = url.path.split(separator: "/")
                 if let idx = parts.firstIndex(of: "shorts"), idx + 1 < parts.count {
@@ -494,7 +492,6 @@ struct TeacherImportVideosView: View {
                 }
             }
 
-            // 4) youtube.com/embed/<id>
             if url.path.contains("/embed/") {
                 let parts = url.path.split(separator: "/")
                 if let idx = parts.firstIndex(of: "embed"), idx + 1 < parts.count {
@@ -512,15 +509,24 @@ struct TeacherImportVideosView: View {
     }
 }
 
-// MARK: - Model local (somente para esta tela)
+// MARK: - Categoria do vídeo (salva no Firestore)
+private enum TeacherYoutubeVideoCategory: String, CaseIterable, Identifiable {
+    case crossfit = "Crossfit"
+    case academia = "Academia"
+    case treinosEmCasa = "Treinos em Casa"
+
+    var id: String { rawValue }
+}
+
 private struct TeacherYoutubeVideo: Identifiable, Equatable {
     let id: String
     let title: String
     let url: String
     let videoId: String
+    let category: TeacherYoutubeVideoCategory
 }
 
-// MARK: - Sheet adicionar vídeo (incluído aqui para não dar "Cannot find ... in scope")
+// MARK: - Sheet adicionar vídeo
 private struct TeacherAddYoutubeVideoSheet: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -528,7 +534,14 @@ private struct TeacherAddYoutubeVideoSheet: View {
     @State private var title: String = ""
     @State private var url: String = ""
 
-    let onSave: (_ title: String, _ url: String) -> Void
+    // ✅ novo: categoria selecionada
+    @State private var selectedCategory: TeacherYoutubeVideoCategory = .crossfit
+
+    // ✅ feedback simples dentro do sheet (sem alterar layout geral)
+    @State private var sheetMessage: String? = nil
+    @State private var sheetMessageIsError: Bool = false
+
+    let onSave: (_ title: String, _ url: String, _ category: TeacherYoutubeVideoCategory) -> Void
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -559,24 +572,49 @@ private struct TeacherAddYoutubeVideoSheet: View {
 
                                 formCard
 
-                                Button {
-                                    let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    onSave(t, u)
-                                    dismiss()
-                                } label: {
-                                    HStack {
-                                        Image(systemName: "checkmark")
-                                        Text("Salvar")
+                                // ✅ Mesma linha: Salvar (esquerda) + Copiar link YouTube (direita)
+                                HStack(spacing: 10) {
+
+                                    Button {
+                                        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        onSave(t, u, selectedCategory)
+                                        dismiss()
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "checkmark")
+                                            Text("Salvar")
+                                        }
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 10)
+                                        .background(Capsule().fill(Color.green.opacity(0.16)))
                                     }
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 10)
-                                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                                    .buttonStyle(.plain)
+                                    .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                                    Spacer(minLength: 0)
+
+                                    Button {
+                                        handleCopyYoutubeLink()
+                                    } label: {
+                                        HStack {
+                                            Image(systemName: "doc.on.doc")
+                                            Text("Copiar link YouTube")
+                                        }
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 10)
+                                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
-                                .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                                if let msg = sheetMessage {
+                                    sheetMessageCard(text: msg, isError: sheetMessageIsError)
+                                }
 
                                 Color.clear.frame(height: 18)
                             }
@@ -662,6 +700,22 @@ private struct TeacherAddYoutubeVideoSheet: View {
                         .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
             }
+
+            Divider().background(Theme.Colors.divider)
+
+            // ✅ novo: seleção de categoria do vídeo
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Categoria do vídeo")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Picker("", selection: $selectedCategory) {
+                    ForEach(TeacherYoutubeVideoCategory.allCases) { c in
+                        Text(c.rawValue).tag(c)
+                    }
+                }
+                .pickerStyle(.segmented)
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
@@ -673,9 +727,92 @@ private struct TeacherAddYoutubeVideoSheet: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
+
+    private func sheetMessageCard(text: String, isError: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
+
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.75))
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.black.opacity(0.35))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
+    }
+
+    // MARK: - Botão "Copiar link YouTube"
+
+    private func handleCopyYoutubeLink() {
+        sheetMessage = nil
+        sheetMessageIsError = false
+
+        let clipboard = (UIPasteboard.general.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        // 1) Se já tiver um link válido no clipboard, cola direto no campo
+        if isValidYoutubeUrl(clipboard) {
+            url = clipboard
+            sheetMessage = "Link do YouTube colado do clipboard."
+            sheetMessageIsError = false
+            return
+        }
+
+        // 2) Caso contrário, abre o YouTube externamente (para o usuário copiar o link do vídeo)
+        openYoutubeExternal()
+        sheetMessage = "YouTube aberto. Copie o link do vídeo e volte para colar aqui."
+        sheetMessageIsError = false
+    }
+
+    private func openYoutubeExternal() {
+        guard let youtubeUrl = URL(string: "https://m.youtube.com") else { return }
+        UIApplication.shared.open(youtubeUrl, options: [:], completionHandler: nil)
+    }
+
+    private func isValidYoutubeUrl(_ urlString: String) -> Bool {
+        guard let url = URL(string: urlString) else { return false }
+
+        if let host = url.host?.lowercased(), host.contains("youtu.be") {
+            let id = url.path.trimmingCharacters(in: CharacterSet(charactersIn: "/"))
+            return !id.isEmpty
+        }
+
+        if let comps = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let host = comps.host?.lowercased(),
+           host.contains("youtube.com") {
+
+            if url.path.contains("/watch") {
+                let v = comps.queryItems?.first(where: { $0.name == "v" })?.value
+                return (v?.isEmpty == false)
+            }
+
+            if url.path.contains("/shorts/") {
+                let parts = url.path.split(separator: "/")
+                if let idx = parts.firstIndex(of: "shorts"), idx + 1 < parts.count {
+                    return !String(parts[idx + 1]).isEmpty
+                }
+            }
+
+            if url.path.contains("/embed/") {
+                let parts = url.path.split(separator: "/")
+                if let idx = parts.firstIndex(of: "embed"), idx + 1 < parts.count {
+                    return !String(parts[idx + 1]).isEmpty
+                }
+            }
+        }
+
+        return false
+    }
 }
 
-// MARK: - Reproduzir no app (TRAVADO) — WKWebView sem rolagem + bloqueio de links + AirPlay no header
+// MARK: - Reproduzir no app (TRAVADO) — TELA CHEIA + trava rolagem/links + AirPlay no header
 private struct TeacherYoutubeLockedPlayerSheet: View {
 
     let title: String
@@ -714,7 +851,10 @@ private struct LockedYoutubeWebView: UIViewRepresentable {
     func makeUIView(context: Context) -> WKWebView {
 
         let config = WKWebViewConfiguration()
-        config.allowsInlineMediaPlayback = true
+
+        // ✅ Força o comportamento mais “expandido” (full screen ao tocar play)
+        // e mantém AirPlay habilitado.
+        config.allowsInlineMediaPlayback = false
         config.allowsAirPlayForMediaPlayback = true
         config.mediaTypesRequiringUserActionForPlayback = []
 
@@ -729,7 +869,8 @@ private struct LockedYoutubeWebView: UIViewRepresentable {
         webView.backgroundColor = UIColor.clear
         webView.scrollView.backgroundColor = UIColor.clear
 
-        let urlString = "https://m.youtube.com/watch?v=\(videoId)&playsinline=1"
+        // ✅ Endpoint mais compatível que /embed (evita erro 153 em muitos casos)
+        let urlString = "https://m.youtube.com/watch?v=\(videoId)&playsinline=0"
         if let url = URL(string: urlString) {
             webView.load(URLRequest(url: url))
         }
@@ -749,7 +890,15 @@ private struct LockedYoutubeWebView: UIViewRepresentable {
                      decidePolicyFor navigationAction: WKNavigationAction,
                      decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
 
-            if navigationAction.navigationType == .other {
+            // ✅ bloqueia cliques que tentem navegar para outros vídeos/abas
+            if navigationAction.navigationType == .linkActivated {
+                decisionHandler(.cancel)
+                return
+            }
+
+            // ✅ permite apenas YouTube (evita “pular” para fora)
+            if let host = navigationAction.request.url?.host?.lowercased(),
+               host.contains("youtube.com") || host.contains("youtu.be") {
                 decisionHandler(.allow)
                 return
             }
@@ -758,6 +907,8 @@ private struct LockedYoutubeWebView: UIViewRepresentable {
         }
 
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+
+            // ✅ “travar” a página, esconder related/comentários e impedir cliques
             let js = """
             (function() {
                 try {

@@ -217,6 +217,15 @@ struct AppRouter: View {
                             )
                         }
 
+                    // ✅ NOVO: Professor -> Importar Treinos
+                    case .teacherImportWorkouts(let category):
+                        guardedTeacher {
+                            TeacherImportWorkoutsView(
+                                path: $path,
+                                category: category
+                            )
+                        }
+
                     // ✅ NOVO: Professor -> Importar Vídeos (YouTube)
                     case .teacherImportVideos(let category):
                         guardedTeacher {

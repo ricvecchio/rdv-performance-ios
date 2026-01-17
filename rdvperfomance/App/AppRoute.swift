@@ -106,6 +106,8 @@ enum AppRoute: Hashable {
 
     // ✅ Lista de templates (qualquer categoria, por seção)
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
+    
+    case teacherImportWorkouts(category: TreinoTipo)
 
     // ✅ NOVO: Importar Vídeos (YouTube) - Professor
     case teacherImportVideos(category: TreinoTipo)

@@ -7,6 +7,25 @@ struct TeacherCrossfitLibraryView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // ✅ Itens fixos conforme solicitado (ordem + nomes)
+    private struct CrossfitMenuItem: Identifiable, Hashable {
+        let id = UUID()
+        let title: String
+        let sectionKey: String
+    }
+
+    // ✅ Chaves estáveis para o Firestore (mantidas como strings para não depender do enum)
+    // Importante: se suas keys reais no Firestore forem diferentes, ajuste SOMENTE os valores abaixo.
+    private let menuItems: [CrossfitMenuItem] = [
+        .init(title: "Girls WODs", sectionKey: "girlsWods"),
+        .init(title: "Hero & Tribute Workouts", sectionKey: "heroTributeWorkouts"),
+        .init(title: "Open WODs", sectionKey: "openWods"),
+        .init(title: "Benchmark WODs", sectionKey: "benchmarks"),
+        .init(title: "WODs Nomeados", sectionKey: "wodsNomeados"),
+        .init(title: "Qualifiers / WODs de Competições", sectionKey: "qualifiersCompeticoes"),
+        .init(title: "Meus Treinos", sectionKey: "meusTreinos")
+    ]
+
     var body: some View {
         ZStack {
 
@@ -27,20 +46,18 @@ struct TeacherCrossfitLibraryView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Biblioteca Crossfit")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.green.opacity(0.85))
+                            // ✅ Removido: Text("Biblioteca Crossfit")
 
                             Text("Selecione uma seção.")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
 
                             VStack(spacing: 12) {
-                                ForEach(CrossfitLibrarySection.allCases, id: \.self) { item in
+                                ForEach(menuItems) { item in
                                     actionRow(title: item.title, icon: "folder.fill") {
                                         path.append(.teacherWorkoutTemplates(
                                             category: .crossfit,
-                                            sectionKey: item.firestoreKey,
+                                            sectionKey: item.sectionKey,
                                             sectionTitle: item.title
                                         ))
                                     }
