@@ -7,8 +7,6 @@ struct TeacherDashboardView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    @State private var isImportExcelSheetPresented: Bool = false
-
     var body: some View {
         ZStack {
 
@@ -34,7 +32,7 @@ struct TeacherDashboardView: View {
 
                             VStack(spacing: 12) {
 
-                                // 1) Biblioteca de Treinos -> ✅ AGORA: TeacherMyWorkoutsView
+                                // 1) Biblioteca de Treinos
                                 actionRow(
                                     title: "Biblioteca de Treinos",
                                     icon: "square.grid.2x2.fill"
@@ -50,15 +48,15 @@ struct TeacherDashboardView: View {
                                     path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
                                 }
 
-                                // 3) Importar Excel
+                                // 3) Importar Treino -> ✅ AGORA ABRE NOVA TELA (igual Importar Vídeos)
                                 actionRow(
                                     title: "Importar Treino",
                                     icon: "tablecells.fill"
                                 ) {
-                                    isImportExcelSheetPresented = true
+                                    path.append(.teacherImportWorkouts(category: category))
                                 }
 
-                                // ✅ 3.1) NOVO: Importar Vídeos
+                                // 3.1) Importar Vídeos
                                 actionRow(
                                     title: "Importar Vídeos",
                                     icon: "video.fill"
@@ -127,9 +125,6 @@ struct TeacherDashboardView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        .sheet(isPresented: $isImportExcelSheetPresented) {
-            TeacherImportExcelSheet()
-        }
     }
 
     private var header: some View {
@@ -168,57 +163,6 @@ struct TeacherDashboardView: View {
             )
         }
         .buttonStyle(.plain)
-    }
-
-    private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
-    }
-}
-
-// MARK: - Sheet Importar Treino
-private struct TeacherImportExcelSheet: View {
-
-    @Environment(\.dismiss) private var dismiss
-
-    private let contentMaxWidth: CGFloat = 420
-
-    var body: some View {
-        ZStack {
-
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 14) {
-
-                Text("Importar Treino")
-                    .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
-
-                Text("Aqui você poderá importar treinos via planilha (Excel/CSV).")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.65))
-
-                Spacer(minLength: 0)
-
-                Button {
-                    dismiss()
-                } label: {
-                    Text("Fechar")
-                        .font(.system(size: 16, weight: .semibold))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Theme.Colors.cardBackground)
-                        .foregroundColor(.white)
-                        .cornerRadius(14)
-                }
-                .buttonStyle(.plain)
-            }
-            .padding(16)
-            .frame(maxWidth: contentMaxWidth)
-        }
     }
 }
 

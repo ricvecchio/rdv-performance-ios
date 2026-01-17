@@ -20,7 +20,7 @@ struct TeacherWorkoutTemplatesView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Crossfit: todas as seções devem seguir o mesmo padrão da Girls WODs
+    // ✅ Crossfit: manter como está (sem alterações)
     private var isCrossfitCategory: Bool {
         category == .crossfit
     }
@@ -36,6 +36,14 @@ struct TeacherWorkoutTemplatesView: View {
     // ✅ Texto do botão
     private var addButtonTitle: String {
         isCrossfitCategory ? "Adicionar WOD" : "Adicionar Treino"
+    }
+
+    // ✅ Texto descritivo (somente onde solicitado)
+    private var descriptionText: String {
+        if category == .academia || category == .emCasa {
+            return "Cadastre e gerencie os treinos desta seção."
+        }
+        return "Cadastre e gerencie os WODs desta seção."
     }
 
     // ✅ Um sheet só (evita sheet em branco e conflito)
@@ -75,15 +83,20 @@ struct TeacherWorkoutTemplatesView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            // ✅ Remover o texto do corpo para TODO Crossfit
-                            // (Mantém para Academia/Em Casa)
-                            if !isCrossfitCategory {
+                            // ✅ Crossfit: manter como está (sem alterações)
+                            // ✅ Academia/Em Casa: remover texto duplicado do corpo
+                            if isCrossfitCategory {
+                                // (mantém como estava antes no fluxo do Crossfit - não adiciona/remova nada aqui)
+                            } else if category == .academia || category == .emCasa {
+                                // Removido conforme solicitado
+                            } else {
+                                // fallback para outras categorias (mantém o original)
                                 Text("\(category.displayName) • \(sectionTitle)")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
                             }
 
-                            Text("Cadastre e gerencie os WODs desta seção.")
+                            Text(descriptionText)
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
 
