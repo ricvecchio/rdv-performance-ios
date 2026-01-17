@@ -18,7 +18,7 @@ O app possui uma navegação simples, interface moderna e layout responsivo, com
 - SpriteKit (Animações e Jogos)
 - Arquitetura declarativa
 - iOS 16+
-- Firebase (configuração parcial via `GoogleService-Info.plist` – serviços de autenticação / Firestore presentes como referência).
+- Firebase (configuração parcial via `GoogleService-Info.plist` – serviços de autenticação / Firestore presentes como referência)
 
 ---
 
@@ -194,6 +194,7 @@ rdvperformance-ios
    │  │  │  └─ StudentWeekDetailViewModel.swift
    │  │  └─ Views/
    │  │     ├─ StudentAgendaView.swift
+   │  │     ├─ StudentAvatarView.swift
    │  │     ├─ StudentDayDetailView.swift
    │  │     ├─ StudentFeedbacksView.swift
    │  │     ├─ StudentMessagesView.swift
@@ -204,25 +205,36 @@ rdvperformance-ios
    │  │  │  └─ TeacherStudentsListViewModel.swift
    │  │  └─ Views/
    │  │     ├─ CreateTrainingWeekView.swift
+   │  │     ├─ TeacherCrossfitLibraryView.swift
    │  │     ├─ TeacherDashboardView.swift
    │  │     ├─ TeacherFeedbacksView.swift
+   │  │     ├─ TeacherImportVideosView.swift
+   │  │     ├─ TeacherImportWorkoutsView.swift
    │  │     ├─ TeacherLinkStudentView.swift
+   │  │     ├─ TeacherMapView.swift
+   │  │     ├─ TeacherMyWorkoutsView.swift
    │  │     ├─ TeacherSendMessageView.swift
    │  │     ├─ TeacherStudentDetailView.swift
    │  │     ├─ TeacherStudentsListView.swift
-   │  │     └─ TeacherMapView.swift
+   │  │     ├─ TeacherWorkoutTemplatesListView.swift
+   │  │     └─ TeacherWorkoutTemplatesView.swift
    │  └─ Treinos/
    │     ├─ Models/
    │     │  ├─ FirestoreModels.swift
    │     │  ├─ StudentFeedbackFS.swift
    │     │  ├─ TeacherMessageFS.swift
-   │     │  └─ TreinoTipo.swift
+   │     │  ├─ TreinoTipo.swift
+   │     │  └─ WorkoutTemplateFS.swift
    │     └─ Views/
+   │        ├─ CreateCrossfitWODView.swift
    │        ├─ CreateTrainingDayView.swift
+   │        ├─ CreateTreinoAcademiaView.swift
+   │        ├─ CreateTreinoCasaView.swift
    │        ├─ CrossfitMenuView.swift
    │        └─ TreinosView.swift
    ├─ Shared/
    │  ├─ Components/
+   │  │  ├─ BlockDraft.swift
    │  │  ├─ FooterBar.swift
    │  │  ├─ HeaderAvatarView.swift
    │  │  ├─ HeaderBar.swift
