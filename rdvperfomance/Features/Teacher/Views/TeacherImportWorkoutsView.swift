@@ -7,8 +7,6 @@ import AVKit
 import WebKit
 import UniformTypeIdentifiers
 
-// ✅ CoreXLSX (SPM)
-// https://github.com/CoreOffice/CoreXLSX
 import CoreXLSX
 
 struct TeacherImportWorkoutsView: View {
@@ -24,15 +22,12 @@ struct TeacherImportWorkoutsView: View {
 
     @State private var isAddSheetPresented: Bool = false
 
-    // ✅ Baixar planilha modelo (bundle)
     @State private var isTemplateSharePresented: Bool = false
     @State private var templateFileURL: URL? = nil
 
-    // ✅ Importar planilha preenchida
     @State private var isImportPickerPresented: Bool = false
     @State private var isImporting: Bool = false
 
-    // ✅ Modal: mesmo padrão do TeacherWorkoutTemplatesView (sheet(item:))
     @State private var activeSheet: ActiveSheet? = nil
 
     private enum ActiveSheet: Identifiable {
@@ -46,11 +41,9 @@ struct TeacherImportWorkoutsView: View {
         }
     }
 
-    // ✅ Nome do arquivo no bundle (sem extensão)
     private let templateResourceName: String = "rdv_import_treinos_template_pt_crossfit"
     private let templateResourceExtension: String = "xlsx"
 
-    // ✅ Aceitar SOMENTE .xlsx no picker (evita .numbers do Numbers)
     private var xlsxUTType: UTType { UTType(filenameExtension: "xlsx") ?? .data }
 
     var body: some View {
@@ -75,10 +68,8 @@ struct TeacherImportWorkoutsView: View {
 
                             header
 
-                            // ✅ Mantém como era: botões lado a lado
                             actionsRow
 
-                            // ✅ Conteúdo no padrão do TemplatesView (um único card com lista + divisórias internas)
                             contentCard
 
                             if isImporting {
@@ -148,7 +139,6 @@ struct TeacherImportWorkoutsView: View {
             }
         }
 
-        // ✅ Share Sheet para baixar planilha modelo (do bundle)
         .sheet(isPresented: $isTemplateSharePresented) {
             if let url = templateFileURL {
                 ActivityView(activityItems: [url])
@@ -177,7 +167,6 @@ struct TeacherImportWorkoutsView: View {
             }
         }
 
-        // ✅ Document Picker para importar SOMENTE .xlsx
         .sheet(isPresented: $isImportPickerPresented) {
             DocumentPicker(
                 allowedContentTypes: [xlsxUTType],
@@ -189,8 +178,9 @@ struct TeacherImportWorkoutsView: View {
             .ignoresSafeArea()
         }
 
-        // ✅ Modal detalhes: cards separados por bloco (igual ao exemplo)
-        .sheet(item: $activeSheet) { sheet in
+        .sheet(item: $activeSheet, onDismiss: {
+            Task { await loadWorkouts() }
+        }) { sheet in
             switch sheet {
             case .detail(let w):
                 TeacherImportedWorkoutDetailsSheet(
@@ -399,7 +389,6 @@ struct TeacherImportWorkoutsView: View {
         activeSheet = .detail(workout)
     }
 
-    // MARK: - Baixar Planilha (Bundle -> Share)
     private func prepareTemplateShare() {
         errorMessage = nil
 
@@ -447,7 +436,6 @@ struct TeacherImportWorkoutsView: View {
         isTemplateSharePresented = true
     }
 
-    // MARK: - Importar Planilha (.xlsx -> Firestore)
     private func handlePickedExcel(url: URL) async {
         errorMessage = nil
 
@@ -564,7 +552,6 @@ struct TeacherImportWorkoutsView: View {
                 let data = doc.data()
 
                 let title = (data["title"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-
                 let description = (data["description"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                 let aquecimento = (data["aquecimento"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                 let tecnica = (data["tecnica"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
@@ -667,7 +654,6 @@ private struct TeacherImportedWorkout: Identifiable, Equatable {
     let cargasMovimentos: String
 }
 
-// MARK: - Payload importado
 private struct ImportedWorkoutPayload: Equatable {
     let title: String
     let description: String
@@ -677,7 +663,6 @@ private struct ImportedWorkoutPayload: Equatable {
     let cargasMovimentos: String
 }
 
-// MARK: - Importador Excel (CoreXLSX)
 private enum ExcelWorkoutImporter {
 
     enum ImportError: LocalizedError {
@@ -832,17 +817,15 @@ private enum ExcelWorkoutImporter {
         return idx
     }
 
-    // ✅ Extrai texto de um item de sharedStrings SEM depender do tipo concreto (varia por versão)
     private static func extractSharedStringText(from anyItem: Any) -> String {
-        // 1) tenta "text"
         let mirror = Mirror(reflecting: anyItem)
+
         for child in mirror.children {
             if child.label == "text", let s = child.value as? String {
                 return s
             }
         }
 
-        // 2) tenta richText -> [RichText]
         for child in mirror.children {
             if child.label == "richText" {
                 let richMirror = Mirror(reflecting: child.value)
@@ -879,15 +862,12 @@ private enum ExcelWorkoutImporter {
         return ""
     }
 
-    // ✅ Corrige casos onde o texto vem como inlineString OU sharedString index cru
     private static func cellText(_ cell: Cell, sharedStrings: SharedStrings?) -> String {
 
-        // 1) caminho ideal: CoreXLSX resolve usando sharedStrings (quando consegue)
         if let sst = sharedStrings, let v = cell.stringValue(sst) {
             return v
         }
 
-        // 2) fallback robusto: se o value for um índice de sharedStrings (ex.: "22")
         if let sst = sharedStrings,
            let raw = cell.value,
            let idx = Int(raw),
@@ -901,12 +881,10 @@ private enum ExcelWorkoutImporter {
             }
         }
 
-        // 3) inlineString
         if let inline = cell.inlineString?.text {
             return inline
         }
 
-        // 4) valor literal
         if let v = cell.value {
             return v
         }
@@ -970,7 +948,6 @@ private enum ExcelWorkoutImporter {
     }
 }
 
-// MARK: - Modal Detalhes (cards separados por bloco, igual ao exemplo)
 private struct TeacherImportedWorkoutDetailsSheet: View {
 
     let workout: TeacherImportedWorkout
@@ -979,6 +956,18 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
     @Environment(\.dismiss) private var dismiss
 
     private let contentMaxWidth: CGFloat = 380
+
+    @State private var isEditing: Bool = false
+
+    @State private var draftDescription: String = ""
+    @State private var draftAquecimento: String = ""
+    @State private var draftTecnica: String = ""
+    @State private var draftWod: String = ""
+    @State private var draftCargasMovimentos: String = ""
+
+    @State private var isSaving: Bool = false
+    @State private var errorMessage: String? = nil
+    @State private var successMessage: String? = nil
 
     var body: some View {
         NavigationStack {
@@ -1003,7 +992,19 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
 
                                 header
 
-                                blocks
+                                if isEditing {
+                                    editableBlocksCard
+                                } else {
+                                    readOnlyBlocks
+                                }
+
+                                if let err = errorMessage {
+                                    messageCard(text: err, isError: true)
+                                }
+
+                                if let ok = successMessage {
+                                    messageCard(text: ok, isError: false)
+                                }
 
                                 Color.clear.frame(height: 18)
                             }
@@ -1023,21 +1024,54 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
 
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Fechar") { dismiss() }
+                        .disabled(isSaving)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button {
-                        onSendToStudent()
-                    } label: {
-                        Image(systemName: "paperplane.fill")
+                    if isEditing {
+                        HStack(spacing: 12) {
+
+                            Button("Cancelar") {
+                                errorMessage = nil
+                                successMessage = nil
+                                isEditing = false
+                                resetDraftFromWorkout()
+                            }
+                            .disabled(isSaving)
+
+                            Button {
+                                Task { await saveEdits() }
+                            } label: {
+                                if isSaving {
+                                    ProgressView().tint(.white)
+                                } else {
+                                    Text("Salvar")
+                                }
+                            }
+                            .disabled(isSaving)
+                        }
+                    } else {
+                        Button("Editar") {
+                            errorMessage = nil
+                            successMessage = nil
+                            isEditing = true
+                            resetDraftFromWorkout()
+                        }
                     }
-                    .foregroundColor(.green)
                 }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    EmptyView()
+                }
+
             }
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .background(NavigationBarNoHairline())
+            .onAppear {
+                resetDraftFromWorkout()
+            }
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
                     .stroke(Color.white.opacity(0.20), lineWidth: 1.25)
@@ -1048,6 +1082,7 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
+
             Text(workout.title.isEmpty ? "Treino" : workout.title)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
@@ -1058,13 +1093,12 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
                 Text(desc)
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.70))
-                    .lineLimit(3)
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var blocks: some View {
+    private var readOnlyBlocks: some View {
         VStack(spacing: 12) {
             blockCard(title: "Descrição", value: workout.description)
             blockCard(title: "Aquecimento", value: workout.aquecimento)
@@ -1072,6 +1106,59 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
             blockCard(title: "WOD", value: workout.wod)
             blockCard(title: "Cargas / Movimentos", value: workout.cargasMovimentos)
         }
+    }
+
+    private var editableBlocksCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            blockEditor(title: "Descrição", text: $draftDescription)
+
+            Divider().background(Theme.Colors.divider)
+
+            blockEditor(title: "Aquecimento", text: $draftAquecimento)
+
+            Divider().background(Theme.Colors.divider)
+
+            blockEditor(title: "Técnica", text: $draftTecnica)
+
+            Divider().background(Theme.Colors.divider)
+
+            blockEditor(title: "WOD", text: $draftWod)
+
+            Divider().background(Theme.Colors.divider)
+
+            blockEditor(title: "Cargas / Movimentos", text: $draftCargasMovimentos)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private func blockEditor(title: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.85))
+
+            TextEditor(text: text)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.92))
+                .frame(minHeight: 110)
+                .scrollContentBackground(.hidden)
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func blockCard(title: String, value: String) -> some View {
@@ -1095,9 +1182,77 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
+
+    private func messageCard(text: String, isError: Bool) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
+
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.75))
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.black.opacity(0.35))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
+    }
+
+    private func resetDraftFromWorkout() {
+        draftDescription = workout.description
+        draftAquecimento = workout.aquecimento
+        draftTecnica = workout.tecnica
+        draftWod = workout.wod
+        draftCargasMovimentos = workout.cargasMovimentos
+    }
+
+    private func saveEdits() async {
+        errorMessage = nil
+        successMessage = nil
+
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+
+        let workoutId = workout.id.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        guard !workoutId.isEmpty else {
+            errorMessage = "Não foi possível salvar: id do treino inválido."
+            return
+        }
+
+        isSaving = true
+        defer { isSaving = false }
+
+        do {
+            try await Firestore.firestore()
+                .collection("teachers")
+                .document(teacherId)
+                .collection("importedWorkouts")
+                .document(workoutId)
+                .updateData([
+                    "description": draftDescription,
+                    "aquecimento": draftAquecimento,
+                    "tecnica": draftTecnica,
+                    "wod": draftWod,
+                    "cargasMovimentos": draftCargasMovimentos
+                ])
+
+            successMessage = "Alterações salvas com sucesso!"
+            isEditing = false
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
 }
 
-// MARK: - Sheet adicionar treino
 private struct TeacherAddWorkoutSheet: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -1258,7 +1413,6 @@ private struct TeacherAddWorkoutSheet: View {
     }
 }
 
-// MARK: - UIKit wrappers
 private struct ActivityView: UIViewControllerRepresentable {
     let activityItems: [Any]
 
@@ -1307,7 +1461,6 @@ private struct DocumentPicker: UIViewControllerRepresentable {
     }
 }
 
-// MARK: - Helpers
 private extension Array {
     func chunked(into size: Int) -> [[Element]] {
         guard size > 0 else { return [self] }
