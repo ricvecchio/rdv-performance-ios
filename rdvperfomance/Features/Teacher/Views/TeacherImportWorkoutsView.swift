@@ -306,7 +306,7 @@ struct TeacherImportWorkoutsView: View {
                 Button {
                     sendImportedWorkoutToStudent(workout: w)
                 } label: {
-                    Label("Enviar para aluno", systemImage: "paperplane.fill")
+                    Label("Enviar para Treinos", systemImage: "paperplane.fill")
                 }
 
                 Button(role: .destructive) {
