@@ -920,3 +920,27 @@ extension FirestoreRepository {
     }
 }
 
+import FirebaseFirestore
+
+extension FirestoreRepository {
+
+    func deleteWorkoutTemplate(templateId: String) async throws {
+        let id = templateId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !id.isEmpty else {
+            throw NSError(
+                domain: "FirestoreRepository",
+                code: 400,
+                userInfo: [NSLocalizedDescriptionKey: "templateId inválido para remoção."]
+            )
+        }
+
+        let db = Firestore.firestore()
+
+        // ✅ CORREÇÃO: Apontar para a coleção correta "workout_templates"
+        // (antes estava "workoutTemplates" que não existe)
+        try await db
+            .collection("workout_templates")
+            .document(id)
+            .delete()
+    }
+}

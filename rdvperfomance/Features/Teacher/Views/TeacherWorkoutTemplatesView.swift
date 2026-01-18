@@ -1,8 +1,8 @@
 import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
+import UIKit
 
-// ✅ Notificação interna para recarregar a lista após salvar edição
 extension Notification.Name {
     static let workoutTemplateUpdated = Notification.Name("workoutTemplateUpdated")
 }
@@ -20,25 +20,19 @@ struct TeacherWorkoutTemplatesView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // ✅ Crossfit: manter como está (sem alterações)
     private var isCrossfitCategory: Bool {
         category == .crossfit
     }
 
-    // ✅ Mostrar botão:
-    // - Crossfit: sempre (todas as seções)
-    // - Academia/Em Casa: somente em "meusTreinos" (mantém regra existente)
     private var shouldShowAddButton: Bool {
         if isCrossfitCategory { return true }
         return sectionKey == "meusTreinos" && (category == .academia || category == .emCasa)
     }
 
-    // ✅ Texto do botão
     private var addButtonTitle: String {
         isCrossfitCategory ? "Adicionar WOD" : "Adicionar Treino"
     }
 
-    // ✅ Texto descritivo (somente onde solicitado)
     private var descriptionText: String {
         if category == .academia || category == .emCasa {
             return "Cadastre e gerencie os treinos desta seção."
@@ -46,7 +40,6 @@ struct TeacherWorkoutTemplatesView: View {
         return "Cadastre e gerencie os WODs desta seção."
     }
 
-    // ✅ Um sheet só (evita sheet em branco e conflito)
     @State private var activeSheet: ActiveSheet? = nil
 
     private enum ActiveSheet: Identifiable {
@@ -83,14 +76,11 @@ struct TeacherWorkoutTemplatesView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            // ✅ Crossfit: manter como está (sem alterações)
-                            // ✅ Academia/Em Casa: remover texto duplicado do corpo
                             if isCrossfitCategory {
-                                // (mantém como estava antes no fluxo do Crossfit - não adiciona/remova nada aqui)
+                                EmptyView()
                             } else if category == .academia || category == .emCasa {
-                                // Removido conforme solicitado
+                                EmptyView()
                             } else {
-                                // fallback para outras categorias (mantém o original)
                                 Text("\(category.displayName) • \(sectionTitle)")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
@@ -100,7 +90,6 @@ struct TeacherWorkoutTemplatesView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
 
-                            // ✅ Botão (Crossfit em todas as seções + Meus Treinos Academia/Em Casa)
                             if shouldShowAddButton {
                                 addButtonCard
                             }
@@ -147,7 +136,6 @@ struct TeacherWorkoutTemplatesView: View {
                 .buttonStyle(.plain)
             }
 
-            // ✅ Cabeçalho sempre com o nome do menu selecionado
             ToolbarItem(placement: .principal) {
                 Text(sectionTitle)
                     .font(Theme.Fonts.headerTitle())
@@ -180,10 +168,6 @@ struct TeacherWorkoutTemplatesView: View {
         }
     }
 
-    // ✅ Ação do botão:
-    // - Crossfit: sempre createCrossfitWOD (qualquer seção)
-    // - Academia: createTreinoAcademia
-    // - Em Casa: createTreinoCasa
     private var addButtonCard: some View {
         Button {
             if isCrossfitCategory {
@@ -193,7 +177,6 @@ struct TeacherWorkoutTemplatesView: View {
             } else if category == .emCasa {
                 path.append(.createTreinoCasa(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
             } else {
-                // fallback seguro
                 path.append(.createCrossfitWOD(category: category, sectionKey: sectionKey, sectionTitle: sectionTitle))
             }
         } label: {
@@ -277,6 +260,12 @@ struct TeacherWorkoutTemplatesView: View {
                     activeSheet = .send(t)
                 } label: {
                     Label("Enviar para aluno", systemImage: "paperplane.fill")
+                }
+
+                Button(role: .destructive) {
+                    Task { await deleteTemplate(template: t) }
+                } label: {
+                    Label("Remover", systemImage: "trash.fill")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -374,16 +363,42 @@ struct TeacherWorkoutTemplatesView: View {
         }
     }
 
+    private func deleteTemplate(template: WorkoutTemplateFS) async {
+        errorMessage = nil
+
+        guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !templateId.isEmpty else {
+            errorMessage = "Não foi possível remover: id do treino inválido."
+            return
+        }
+
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            // ✅ Agora usa a função corrigida que aponta para "workout_templates"
+            try await FirestoreRepository.shared.deleteWorkoutTemplate(templateId: templateId)
+            
+            // Remove localmente e recarrega a lista
+            templates.removeAll { $0.id == templateId }
+            NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
+            
+        } catch {
+            errorMessage = "Falha ao remover o treino: \(error.localizedDescription)"
+        }
+    }
+
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 }
-
-// ============================================================
-// MARK: - ✅ Sheet: Detalhe do treino (PADRÃO + laterais iguais à lista)
-// (NÃO ALTERAR LAYOUT)
-// ============================================================
 
 private struct TeacherWorkoutTemplateDetailSheet: View {
 
@@ -495,10 +510,18 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
             }
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .background(NavigationBarNoHairline())
             .onAppear {
                 resetDraftFromTemplate()
                 ensureEditableBlocksExist()
             }
+            // ✅ Ajuste solicitado: contorno do modal mais aparente (principalmente no cabeçalho)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(0.20), lineWidth: 1.25)
+                    .allowsHitTesting(false)
+            )
         }
     }
 
@@ -626,8 +649,6 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
         )
     }
 
-    // MARK: - Draft helpers
-
     private func resetDraftFromTemplate() {
         draftBlocks = template.blocks ?? []
     }
@@ -707,10 +728,48 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
     }
 }
 
-// ============================================================
-// MARK: - ✅ Sheet: Enviar treino para Aluno
-// (mantido igual ao seu padrão atual)
-// ============================================================
+private struct NavigationBarNoHairline: UIViewControllerRepresentable {
+
+    func makeUIViewController(context: Context) -> UIViewController {
+        NavBarNoHairlineController()
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) { }
+
+    private final class NavBarNoHairlineController: UIViewController {
+
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            apply()
+        }
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            apply()
+        }
+
+        private func apply() {
+            guard let nav = navigationController else { return }
+            let bar = nav.navigationBar
+
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(Theme.Colors.headerBackground)
+            appearance.shadowColor = .clear
+            appearance.shadowImage = UIImage()
+            appearance.backgroundEffect = nil
+
+            bar.standardAppearance = appearance
+            bar.scrollEdgeAppearance = appearance
+            bar.compactAppearance = appearance
+
+            bar.layer.shadowOpacity = 0
+            bar.layer.shadowRadius = 0
+            bar.layer.shadowOffset = .zero
+            bar.layer.shadowColor = UIColor.clear.cgColor
+        }
+    }
+}
 
 private struct TeacherSendWorkoutToStudentSheet: View {
 
