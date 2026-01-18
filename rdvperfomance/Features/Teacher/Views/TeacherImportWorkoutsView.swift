@@ -32,9 +32,19 @@ struct TeacherImportWorkoutsView: View {
     @State private var isImportPickerPresented: Bool = false
     @State private var isImporting: Bool = false
 
-    // ✅ Abrir detalhes (modal) ao tocar na seta/linha (como no fluxo da Library)
-    @State private var isWorkoutDetailsPresented: Bool = false
-    @State private var selectedWorkout: TeacherImportedWorkout? = nil
+    // ✅ Modal: mesmo padrão do TeacherWorkoutTemplatesView (sheet(item:))
+    @State private var activeSheet: ActiveSheet? = nil
+
+    private enum ActiveSheet: Identifiable {
+        case detail(TeacherImportedWorkout)
+
+        var id: String {
+            switch self {
+            case .detail(let w):
+                return "detail-\(w.id)"
+            }
+        }
+    }
 
     // ✅ Nome do arquivo no bundle (sem extensão)
     private let templateResourceName: String = "rdv_import_treinos_template_pt_crossfit"
@@ -65,10 +75,11 @@ struct TeacherImportWorkoutsView: View {
 
                             header
 
+                            // ✅ Mantém como era: botões lado a lado
                             actionsRow
 
-                            // ✅ Lista no mesmo estilo "cards" da TeacherCrossfitLibraryView
-                            workoutsContent
+                            // ✅ Conteúdo no padrão do TemplatesView (um único card com lista + divisórias internas)
+                            contentCard
 
                             if isImporting {
                                 messageCard(text: "Importando planilha... aguarde.", isError: false)
@@ -173,34 +184,21 @@ struct TeacherImportWorkoutsView: View {
                 onPick: { pickedURL in
                     Task { await handlePickedExcel(url: pickedURL) }
                 },
-                onCancel: {
-                    // nada
-                }
+                onCancel: { }
             )
             .ignoresSafeArea()
         }
 
-        // ✅ Modal de detalhes do treino importado (abre ao tocar na seta/linha)
-        .sheet(isPresented: $isWorkoutDetailsPresented) {
-            if let w = selectedWorkout {
+        // ✅ Modal detalhes: cards separados por bloco (igual ao exemplo)
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .detail(let w):
                 TeacherImportedWorkoutDetailsSheet(
                     workout: w,
                     onSendToStudent: {
-                        // ✅ mesmo item do menu (3 pontinhos)
                         sendImportedWorkoutToStudent(workout: w)
                     }
                 )
-            } else {
-                ZStack {
-                    Color.black.opacity(0.95).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        Text("Treino não encontrado.")
-                            .foregroundColor(.white.opacity(0.85))
-                        Button("Fechar") { isWorkoutDetailsPresented = false }
-                            .foregroundColor(.green)
-                    }
-                    .padding()
-                }
             }
         }
     }
@@ -254,98 +252,18 @@ struct TeacherImportWorkoutsView: View {
         }
     }
 
-    // ✅ Conteúdo em cards (mesmo estilo da TeacherCrossfitLibraryView)
-    private var workoutsContent: some View {
-        VStack(spacing: 12) {
-
+    private var contentCard: some View {
+        VStack(spacing: 0) {
             if isLoading {
-                loadingCard
+                loadingView
             } else if workouts.isEmpty {
-                emptyCard
+                emptyView
             } else {
-                VStack(spacing: 12) {
-                    ForEach(workouts) { w in
-                        importedWorkoutCard(workout: w)
-                    }
-                }
+                workoutsList
             }
         }
-    }
-
-    private func importedWorkoutCard(workout w: TeacherImportedWorkout) -> some View {
-        Button {
-            openDetails(for: w)
-        } label: {
-            HStack(spacing: 12) {
-
-                Image(systemName: "dumbbell.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(w.title.isEmpty ? "Treino" : w.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(1)
-
-                    // ✅ mesmo padrão de detalhe abaixo do título
-                    Text("Importado via Excel")
-                        .font(.system(size: 12))
-                        .foregroundColor(.white.opacity(0.55))
-                        .lineLimit(1)
-                }
-
-                Spacer()
-
-                // ✅ 3 pontinhos com opção "Enviar para aluno" (como solicitado)
-                Menu {
-                    Button {
-                        sendImportedWorkoutToStudent(workout: w)
-                    } label: {
-                        Label("Enviar para aluno", systemImage: "paperplane.fill")
-                    }
-
-                    Button(role: .destructive) {
-                        Task { await deleteWorkout(workoutId: w.id) }
-                    } label: {
-                        Label("Remover", systemImage: "trash.fill")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 8)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(.plain)
-
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(isImporting)
-    }
-
-    private var loadingCard: some View {
-        VStack(spacing: 10) {
-            ProgressView()
-            Text("Carregando...")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        }
+        .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .padding(.vertical, 18)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
         .overlay(
@@ -354,7 +272,87 @@ struct TeacherImportWorkoutsView: View {
         )
     }
 
-    private var emptyCard: some View {
+    private var workoutsList: some View {
+        VStack(spacing: 0) {
+            ForEach(workouts.indices, id: \.self) { idx in
+                let w = workouts[idx]
+
+                importedWorkoutRow(workout: w)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        openDetails(for: w)
+                    }
+
+                if idx < workouts.count - 1 {
+                    innerDivider(leading: 14)
+                }
+            }
+        }
+    }
+
+    private func importedWorkoutRow(workout w: TeacherImportedWorkout) -> some View {
+        HStack(spacing: 12) {
+
+            Image(systemName: "dumbbell.fill")
+                .foregroundColor(.green.opacity(0.85))
+                .font(.system(size: 16))
+                .frame(width: 26)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(w.title.isEmpty ? "Treino" : w.title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+
+                Text("Importado via Excel")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.55))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Menu {
+                Button {
+                    sendImportedWorkoutToStudent(workout: w)
+                } label: {
+                    Label("Enviar para aluno", systemImage: "paperplane.fill")
+                }
+
+                Button(role: .destructive) {
+                    Task { await deleteWorkout(workoutId: w.id) }
+                } label: {
+                    Label("Remover", systemImage: "trash.fill")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.55))
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8)
+                    .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            Image(systemName: "chevron.right")
+                .foregroundColor(.white.opacity(0.35))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+    }
+
+    private var loadingView: some View {
+        VStack(spacing: 10) {
+            ProgressView()
+            Text("Carregando...")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+    }
+
+    private var emptyView: some View {
         VStack(spacing: 10) {
             Text("Nenhum treino cadastrado")
                 .font(.system(size: 15, weight: .semibold))
@@ -368,12 +366,6 @@ struct TeacherImportWorkoutsView: View {
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
         .padding(.horizontal, 10)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
     }
 
     private func messageCard(text: String, isError: Bool) -> some View {
@@ -397,9 +389,14 @@ struct TeacherImportWorkoutsView: View {
         )
     }
 
+    private func innerDivider(leading: CGFloat) -> some View {
+        Divider()
+            .background(Theme.Colors.divider)
+            .padding(.leading, leading)
+    }
+
     private func openDetails(for workout: TeacherImportedWorkout) {
-        selectedWorkout = workout
-        isWorkoutDetailsPresented = true
+        activeSheet = .detail(workout)
     }
 
     // MARK: - Baixar Planilha (Bundle -> Share)
@@ -474,7 +471,7 @@ struct TeacherImportWorkoutsView: View {
         }
 
         do {
-            let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
             guard !teacherId.isEmpty else {
                 errorMessage = "Não foi possível identificar o professor logado."
                 return
@@ -538,21 +535,14 @@ struct TeacherImportWorkoutsView: View {
         }
     }
 
-    // MARK: - Enviar para aluno (menu 3 pontinhos)
-    // ✅ Mantém o item solicitado sem alterar sua navegação atual.
-    // Se você já tiver um fluxo pronto (ex.: abrir lista de alunos), me diga qual AppRoute usar
-    // e eu conecto aqui sem quebrar nada.
     private func sendImportedWorkoutToStudent(workout: TeacherImportedWorkout) {
-        // Por enquanto, apenas exibe mensagem (não quebra fluxo).
         errorMessage = "Enviar para aluno: selecione o fluxo de alunos que você já usa (me diga a rota que abre a lista)."
     }
-
-    // MARK: - Firestore (lista / remover / manual)
 
     private func loadWorkouts() async {
         errorMessage = nil
 
-        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
             workouts = []
             errorMessage = "Não foi possível identificar o professor logado."
@@ -573,13 +563,13 @@ struct TeacherImportWorkoutsView: View {
             let parsed: [TeacherImportedWorkout] = snap.documents.compactMap { doc in
                 let data = doc.data()
 
-                let title = (data["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let title = (data["title"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 
-                let description = (data["description"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                let aquecimento = (data["aquecimento"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                let tecnica = (data["tecnica"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                let wod = (data["wod"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                let cargasMovimentos = (data["cargasMovimentos"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                let description = (data["description"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                let aquecimento = (data["aquecimento"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                let tecnica = (data["tecnica"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                let wod = (data["wod"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+                let cargasMovimentos = (data["cargasMovimentos"] as? String ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
 
                 return TeacherImportedWorkout(
                     id: doc.documentID,
@@ -602,13 +592,13 @@ struct TeacherImportWorkoutsView: View {
     private func addWorkout(title: String) async {
         errorMessage = nil
 
-        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
             errorMessage = "Não foi possível identificar o professor logado."
             return
         }
 
-        let cleanedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let cleanedTitle = title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !cleanedTitle.isEmpty else {
             errorMessage = "Informe um título para o treino."
             return
@@ -638,7 +628,7 @@ struct TeacherImportWorkoutsView: View {
     private func deleteWorkout(workoutId: String) async {
         errorMessage = nil
 
-        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
             errorMessage = "Não foi possível identificar o professor logado."
             return
@@ -732,7 +722,6 @@ private enum ExcelWorkoutImporter {
             throw ImportError.worksheetNotFound
         }
 
-        // ✅ 1) tenta achar pela aba "IMPORT_TREINOS"
         if let preferred = sheets.first(where: { normalizeSheetName($0.name ?? "") == normalizeSheetName(preferredSheetName) }) {
             let worksheet = try file.parseWorksheet(at: preferred.path)
             if let parsed = parseWorksheetRows(worksheet, sharedStrings: sharedStringsOptional), !parsed.isEmpty {
@@ -740,7 +729,6 @@ private enum ExcelWorkoutImporter {
             }
         }
 
-        // ✅ 2) fallback: procura a primeira aba que contenha o header "titulo"
         for s in sheets {
             let worksheet = try file.parseWorksheet(at: s.path)
             if let parsed = parseWorksheetRows(worksheet, sharedStrings: sharedStringsOptional), !parsed.isEmpty {
@@ -794,7 +782,7 @@ private enum ExcelWorkoutImporter {
                     return idx == colIndex
                 }) {
                     return cellText(cell, sharedStrings: sharedStrings)
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                 }
 
                 return ""
@@ -844,15 +832,90 @@ private enum ExcelWorkoutImporter {
         return idx
     }
 
-    private static func cellText(_ cell: Cell, sharedStrings: SharedStrings?) -> String {
-        if let sst = sharedStrings {
-            return cell.stringValue(sst) ?? ""
+    // ✅ Extrai texto de um item de sharedStrings SEM depender do tipo concreto (varia por versão)
+    private static func extractSharedStringText(from anyItem: Any) -> String {
+        // 1) tenta "text"
+        let mirror = Mirror(reflecting: anyItem)
+        for child in mirror.children {
+            if child.label == "text", let s = child.value as? String {
+                return s
+            }
         }
-        return cell.value ?? ""
+
+        // 2) tenta richText -> [RichText]
+        for child in mirror.children {
+            if child.label == "richText" {
+                let richMirror = Mirror(reflecting: child.value)
+                if richMirror.displayStyle == .optional {
+                    if let first = richMirror.children.first {
+                        return extractRichTextJoined(from: first.value)
+                    }
+                } else {
+                    return extractRichTextJoined(from: child.value)
+                }
+            }
+        }
+
+        return ""
+    }
+
+    private static func extractRichTextJoined(from anyRich: Any) -> String {
+        let richMirror = Mirror(reflecting: anyRich)
+        if richMirror.displayStyle == .collection {
+            var parts: [String] = []
+            parts.reserveCapacity(richMirror.children.count)
+
+            for item in richMirror.children {
+                let itemMirror = Mirror(reflecting: item.value)
+                for c in itemMirror.children {
+                    if c.label == "text", let s = c.value as? String {
+                        parts.append(s)
+                        break
+                    }
+                }
+            }
+            return parts.joined()
+        }
+        return ""
+    }
+
+    // ✅ Corrige casos onde o texto vem como inlineString OU sharedString index cru
+    private static func cellText(_ cell: Cell, sharedStrings: SharedStrings?) -> String {
+
+        // 1) caminho ideal: CoreXLSX resolve usando sharedStrings (quando consegue)
+        if let sst = sharedStrings, let v = cell.stringValue(sst) {
+            return v
+        }
+
+        // 2) fallback robusto: se o value for um índice de sharedStrings (ex.: "22")
+        if let sst = sharedStrings,
+           let raw = cell.value,
+           let idx = Int(raw),
+           idx >= 0,
+           idx < sst.items.count {
+
+            let anyItem = sst.items[idx]
+            let resolved = extractSharedStringText(from: anyItem)
+            if !resolved.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty {
+                return resolved
+            }
+        }
+
+        // 3) inlineString
+        if let inline = cell.inlineString?.text {
+            return inline
+        }
+
+        // 4) valor literal
+        if let v = cell.value {
+            return v
+        }
+
+        return ""
     }
 
     private static func normalizeHeader(_ s: String) -> String {
-        let trimmed = s.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let trimmed = s.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).lowercased()
 
         let folded = trimmed.folding(
             options: [.diacriticInsensitive, .widthInsensitive, .caseInsensitive],
@@ -860,9 +923,13 @@ private enum ExcelWorkoutImporter {
         )
 
         let cleaned = folded
+            .replacingOccurrences(of: "_", with: " ")
             .replacingOccurrences(of: "/", with: " ")
             .replacingOccurrences(of: "-", with: " ")
             .replacingOccurrences(of: "—", with: " ")
+            .replacingOccurrences(of: "(", with: " ")
+            .replacingOccurrences(of: ")", with: " ")
+            .replacingOccurrences(of: ":", with: " ")
             .replacingOccurrences(of: "  ", with: " ")
 
         let compact = cleaned.replacingOccurrences(of: " ", with: "")
@@ -873,13 +940,21 @@ private enum ExcelWorkoutImporter {
         if compact == "tecnica" { return "tecnica" }
         if compact == "wod" { return "wod" }
 
-        if compact.contains("cargas") && compact.contains("movimentos") { return "cargasmovimentos" }
+        if compact.contains("titulo") { return "titulo" }
+        if compact.contains("descricao") { return "descricao" }
+        if compact.contains("aquecimento") { return "aquecimento" }
+        if compact.contains("tecnica") { return "tecnica" }
+        if compact.contains("wod") { return "wod" }
+
+        let hasCarga = compact.contains("carga") || compact.contains("cargas")
+        let hasMov = compact.contains("movimento") || compact.contains("movimentos")
+        if hasCarga && hasMov { return "cargasmovimentos" }
 
         return compact
     }
 
     private static func normalizeSheetName(_ s: String) -> String {
-        s.trimmingCharacters(in: .whitespacesAndNewlines)
+        s.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
             .folding(options: [.diacriticInsensitive, .widthInsensitive, .caseInsensitive], locale: .current)
             .lowercased()
     }
@@ -895,50 +970,57 @@ private enum ExcelWorkoutImporter {
     }
 }
 
-// MARK: - Modal Detalhes (abre ao tocar na seta/linha)
+// MARK: - Modal Detalhes (cards separados por bloco, igual ao exemplo)
 private struct TeacherImportedWorkoutDetailsSheet: View {
-
-    @Environment(\.dismiss) private var dismiss
 
     let workout: TeacherImportedWorkout
     let onSendToStudent: () -> Void
 
-    private let contentMaxWidth: CGFloat = 420
+    @Environment(\.dismiss) private var dismiss
+
+    private let contentMaxWidth: CGFloat = 380
 
     var body: some View {
         NavigationStack {
             ZStack {
+
                 Image("rdv_fundo")
                     .resizable()
                     .scaledToFill()
                     .ignoresSafeArea()
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                VStack(spacing: 0) {
 
-                        VStack(alignment: .leading, spacing: 14) {
+                    Rectangle()
+                        .fill(Theme.Colors.divider)
+                        .frame(height: 1)
 
-                            Text(workout.title.isEmpty ? "Treino" : workout.title)
-                                .font(.system(size: 20, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-                                .lineLimit(2)
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                            detailsCard
+                            VStack(alignment: .leading, spacing: 14) {
 
-                            Color.clear.frame(height: 18)
+                                header
+
+                                blocks
+
+                                Color.clear.frame(height: 18)
+                            }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
                     }
                 }
+                .ignoresSafeArea(.container, edges: [.bottom])
             }
-            .navigationTitle("Treino Importado")
+            .navigationTitle("Treino")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+
                 ToolbarItem(placement: .topBarLeading) {
                     Button("Fechar") { dismiss() }
                 }
@@ -955,19 +1037,56 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
+            .background(NavigationBarNoHairline())
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(0.20), lineWidth: 1.25)
+                    .allowsHitTesting(false)
+            )
         }
     }
 
-    private var detailsCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            field(title: "Descrição", value: workout.description)
-            field(title: "Aquecimento", value: workout.aquecimento)
-            field(title: "Técnica", value: workout.tecnica)
-            field(title: "WOD", value: workout.wod)
-            field(title: "Cargas / Movimentos", value: workout.cargasMovimentos)
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(workout.title.isEmpty ? "Treino" : workout.title)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .lineLimit(2)
+
+            let desc = workout.description.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+            if !desc.isEmpty {
+                Text(desc)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.70))
+                    .lineLimit(3)
+            }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var blocks: some View {
+        VStack(spacing: 12) {
+            blockCard(title: "Descrição", value: workout.description)
+            blockCard(title: "Aquecimento", value: workout.aquecimento)
+            blockCard(title: "Técnica", value: workout.tecnica)
+            blockCard(title: "WOD", value: workout.wod)
+            blockCard(title: "Cargas / Movimentos", value: workout.cargasMovimentos)
+        }
+    }
+
+    private func blockCard(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.85))
+
+            Text(value.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty ? "-" : value)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.70))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
@@ -976,22 +1095,9 @@ private struct TeacherImportedWorkoutDetailsSheet: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
     }
-
-    private func field(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.70))
-
-            Text(value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "-" : value)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.90))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 }
 
-// MARK: - Sheet adicionar treino (mantido)
+// MARK: - Sheet adicionar treino
 private struct TeacherAddWorkoutSheet: View {
 
     @Environment(\.dismiss) private var dismiss
@@ -1035,7 +1141,7 @@ private struct TeacherAddWorkoutSheet: View {
                                 HStack(spacing: 10) {
 
                                     Button {
-                                        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                                        let t = title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                                         if t.isEmpty {
                                             sheetMessage = "Informe um título para o treino."
                                             sheetMessageIsError = true
@@ -1098,7 +1204,7 @@ private struct TeacherAddWorkoutSheet: View {
                     .foregroundColor(.white.opacity(0.55))
 
                 ZStack(alignment: .leading) {
-                    if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    if title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty {
                         Text("Ex: Treino A - Peito e tríceps")
                             .foregroundColor(.white.opacity(0.45))
                             .padding(.horizontal, 12)
@@ -1215,6 +1321,49 @@ private extension Array {
             idx = end
         }
         return result
+    }
+}
+
+private struct NavigationBarNoHairline: UIViewControllerRepresentable {
+
+    func makeUIViewController(context: Context) -> UIViewController {
+        NavBarNoHairlineController()
+    }
+
+    func updateUIViewController(_ uiViewController: UIViewController, context: Context) { }
+
+    private final class NavBarNoHairlineController: UIViewController {
+
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            apply()
+        }
+
+        override func viewDidAppear(_ animated: Bool) {
+            super.viewDidAppear(animated)
+            apply()
+        }
+
+        private func apply() {
+            guard let nav = navigationController else { return }
+            let bar = nav.navigationBar
+
+            let appearance = UINavigationBarAppearance()
+            appearance.configureWithOpaqueBackground()
+            appearance.backgroundColor = UIColor(Theme.Colors.headerBackground)
+            appearance.shadowColor = .clear
+            appearance.shadowImage = UIImage()
+            appearance.backgroundEffect = nil
+
+            bar.standardAppearance = appearance
+            bar.scrollEdgeAppearance = appearance
+            bar.compactAppearance = appearance
+
+            bar.layer.shadowOpacity = 0
+            bar.layer.shadowRadius = 0
+            bar.layer.shadowOffset = .zero
+            bar.layer.shadowColor = UIColor.clear.cgColor
+        }
     }
 }
 
