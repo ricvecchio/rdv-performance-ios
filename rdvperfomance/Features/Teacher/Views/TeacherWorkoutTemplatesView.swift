@@ -382,64 +382,15 @@ struct TeacherWorkoutTemplatesView: View {
         defer { isLoading = false }
 
         do {
+            // ✅ Agora usa a função corrigida que aponta para "workout_templates"
             try await FirestoreRepository.shared.deleteWorkoutTemplate(templateId: templateId)
-
+            
+            // Remove localmente e recarrega a lista
             templates.removeAll { $0.id == templateId }
-            await loadTemplates()
-            return
-
+            NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
+            
         } catch {
-            let repoError = error.localizedDescription
-
-            do {
-                let db = Firestore.firestore()
-
-                try await db
-                    .collection("workoutTemplates")
-                    .document(templateId)
-                    .delete()
-
-                templates.removeAll { $0.id == templateId }
-                await loadTemplates()
-                return
-
-            } catch {
-                do {
-                    let db = Firestore.firestore()
-
-                    let snap = try await db
-                        .collectionGroup("workoutTemplates")
-                        .whereField(FieldPath.documentID(), isEqualTo: templateId)
-                        .getDocuments()
-
-                    if snap.documents.isEmpty {
-                        throw NSError(
-                            domain: "DeleteFallback",
-                            code: 404,
-                            userInfo: [NSLocalizedDescriptionKey: "Documento não encontrado para exclusão (fallback)."]
-                        )
-                    }
-
-                    for doc in snap.documents {
-                        try await doc.reference.delete()
-                    }
-
-                    templates.removeAll { $0.id == templateId }
-                    await loadTemplates()
-                    return
-
-                } catch {
-                    errorMessage = """
-                    Falha ao remover o treino.
-
-                    Detalhe (Repo):
-                    \(repoError)
-
-                    Detalhe (Fallback):
-                    \(error.localizedDescription)
-                    """
-                }
-            }
+            errorMessage = "Falha ao remover o treino: \(error.localizedDescription)"
         }
     }
 
@@ -565,6 +516,12 @@ private struct TeacherWorkoutTemplateDetailSheet: View {
                 resetDraftFromTemplate()
                 ensureEditableBlocksExist()
             }
+            // ✅ Ajuste solicitado: contorno do modal mais aparente (principalmente no cabeçalho)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16, style: .continuous)
+                    .stroke(Color.white.opacity(0.20), lineWidth: 1.25)
+                    .allowsHitTesting(false)
+            )
         }
     }
 

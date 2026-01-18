@@ -936,8 +936,10 @@ extension FirestoreRepository {
 
         let db = Firestore.firestore()
 
+        // ✅ CORREÇÃO: Apontar para a coleção correta "workout_templates"
+        // (antes estava "workoutTemplates" que não existe)
         try await db
-            .collection("workoutTemplates")
+            .collection("workout_templates")
             .document(id)
             .delete()
     }
