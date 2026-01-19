@@ -321,7 +321,7 @@ struct EditProfileView: View {
     // ✅ Persiste foto localmente e no Firestore (base64)
     private func savePhotoIfNeededAndSync() async throws {
         guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
-            throw FirestoreRepository.RepositoryError.missingUserId
+            throw FirestoreRepositoryError.missingUserId
         }
 
         // Se não tem preview novo, não faz escrita desnecessária
@@ -330,12 +330,12 @@ struct EditProfileView: View {
         // 1) Salvar local (como já fazia)
         let ok = LocalProfileStore.shared.setPhotoImage(previewImage, userId: currentUid, compressionQuality: 0.82)
         if !ok {
-            throw FirestoreRepository.RepositoryError.writeFailed
+            throw FirestoreRepositoryError.writeFailed
         }
 
         // 2) Salvar no Firestore em base64 (para outras telas/usuários verem)
         guard let data = previewImage.jpegData(compressionQuality: 0.72) else {
-            throw FirestoreRepository.RepositoryError.invalidData
+            throw FirestoreRepositoryError.invalidData
         }
 
         let base64 = data.base64EncodedString()
