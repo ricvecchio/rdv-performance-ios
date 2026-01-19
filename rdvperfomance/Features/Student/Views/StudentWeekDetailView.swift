@@ -20,6 +20,10 @@ struct StudentWeekDetailView: View {
     @StateObject private var vm: StudentWeekDetailViewModel
     private let contentMaxWidth: CGFloat = 380
 
+    // ✅ Animação quando tudo estiver concluído
+    @State private var showWeekCompletedAnimation: Bool = false
+    @State private var hasTriggeredWeekCompletedAnimation: Bool = false
+
     init(
         path: Binding<[AppRoute]>,
         studentId: String,
@@ -52,6 +56,37 @@ struct StudentWeekDetailView: View {
         }
     }
 
+    // ✅ Lista ordenada: vídeos primeiro, mantendo a ordem original dentro de cada grupo
+    private var orderedDays: [(offset: Int, day: TrainingDayFS)] {
+        let enumerated = Array(vm.days.enumerated()).map { (offset: $0.offset, day: $0.element) }
+        return enumerated.sorted { a, b in
+            let aIsVideo = isVideoDay(a.day)
+            let bIsVideo = isVideoDay(b.day)
+            if aIsVideo != bIsVideo { return aIsVideo && !bIsVideo }
+            return a.offset < b.offset
+        }
+    }
+
+    // ✅ Particiona em dois blocos REAIS: Vídeos e Treinos (como cards separados)
+    private var videoDays: [(offset: Int, day: TrainingDayFS)] {
+        orderedDays.filter { isVideoDay($0.day) }
+    }
+
+    private var trainingDays: [(offset: Int, day: TrainingDayFS)] {
+        orderedDays.filter { !isVideoDay($0.day) }
+    }
+
+    private var hasAnyVideo: Bool { !videoDays.isEmpty }
+    private var hasAnyNonVideo: Bool { !trainingDays.isEmpty }
+
+    // ✅ Todos os registros concluídos (para aluno): se todos os dias com id estiverem marcados como concluídos
+    private var allWeekCompleted: Bool {
+        guard isStudentViewing else { return false }
+        let ids = vm.days.compactMap { $0.id }
+        guard !ids.isEmpty else { return false }
+        return ids.allSatisfy { vm.isCompleted(dayId: $0) }
+    }
+
     // Corpo principal com header, lista de dias e footer
     var body: some View {
         ZStack {
@@ -82,6 +117,13 @@ struct StudentWeekDetailView: View {
                 footer
             }
             .ignoresSafeArea(.container, edges: [.bottom])
+
+            // ✅ Animação/overlay quando concluir toda a semana
+            if showWeekCompletedAnimation {
+                weekCompletedOverlay
+                    .transition(.opacity.combined(with: .scale))
+                    .zIndex(10)
+            }
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -114,6 +156,16 @@ struct StudentWeekDetailView: View {
                     await vm.loadDaysAndStatus()
                 }
             }
+        }
+        // ✅ Dispara animação quando todos os registros forem concluídos
+        .onChange(of: allWeekCompleted) { newValue in
+            guard newValue else {
+                hasTriggeredWeekCompletedAnimation = false
+                return
+            }
+            guard !hasTriggeredWeekCompletedAnimation else { return }
+            hasTriggeredWeekCompletedAnimation = true
+            triggerWeekCompletedAnimation()
         }
     }
 
@@ -179,80 +231,166 @@ struct StudentWeekDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Conteúdo principal com estados (loading / error / empty / list)
+    // ✅ Conteúdo principal: mantém card para loading/erro/empty, e para lista usa DOIS CARDS (vídeos e treinos)
     private var contentCard: some View {
         VStack(spacing: 0) {
+
             if vm.isLoading {
                 loadingView
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+
             } else if let errorMessage = vm.errorMessage {
                 errorView(message: errorMessage)
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+
             } else if vm.days.isEmpty {
                 emptyView
+                    .padding(.vertical, 8)
+                    .frame(maxWidth: .infinity)
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+
             } else {
-                daysList
+                // ✅ Aqui ficam DOIS BLOCOS (cards) como no seu StudentDayDetailView
+                daysCards
             }
         }
-        .padding(.vertical, 8)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
-    // Lista de dias com marcação de conclusão
-    private var daysList: some View {
-        VStack(spacing: 0) {
-            ForEach(Array(vm.days.enumerated()), id: \.offset) { item in
-                let idx = item.offset
-                let day = item.element
+    // ✅ Cabeçalho de seção (laranja)
+    private func sectionHeader(_ title: String, systemImage: String) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.orange.opacity(0.9))
+                .frame(width: 18)
 
-                let isVideo = isVideoDay(day)
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.orange.opacity(0.9))
 
-                HStack(spacing: 14) {
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+    }
 
-                    Image(systemName: isVideo ? "video.fill" : "flame.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.green.opacity(0.85))
-                        .frame(width: 28)
+    // ✅ Ícone de check diferente para vídeo: representa “assistido”
+    private func completionIcon(isVideo: Bool, isCompleted: Bool) -> (name: String, color: Color) {
+        if isVideo {
+            return (isCompleted ? "checkmark.seal.fill" : "play.circle", isCompleted ? .green.opacity(0.85) : .white.opacity(0.35))
+        } else {
+            return (isCompleted ? "checkmark.circle.fill" : "circle", isCompleted ? .green.opacity(0.85) : .white.opacity(0.35))
+        }
+    }
 
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(day.title)
-                            .font(.system(size: 18, weight: .medium))
-                            .foregroundColor(.white.opacity(0.92))
+    // ✅ DOIS CARDS separados (como Treino/Vídeos no StudentDayDetailView)
+    private var daysCards: some View {
+        VStack(spacing: 16) {
 
-                        Text(day.subtitleText)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
+            if hasAnyVideo {
+                daysSectionCard(
+                    title: "Vídeos",
+                    systemImage: "video.fill",
+                    items: videoDays
+                )
+            }
 
-                    Spacer()
+            if hasAnyNonVideo {
+                daysSectionCard(
+                    title: "Treinos",
+                    systemImage: "flame.fill",
+                    items: trainingDays
+                )
+            }
+        }
+    }
 
-                    if isStudentViewing, let dayId = day.id {
-                        Button {
-                            Task { await vm.toggleCompleted(dayId: dayId) }
-                        } label: {
-                            Image(systemName: vm.isCompleted(dayId: dayId) ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: 20))
-                                .foregroundColor(vm.isCompleted(dayId: dayId) ? .green.opacity(0.85) : .white.opacity(0.35))
+    // ✅ Card de seção (mesmo padrão do seu StudentDayDetailView: background + cornerRadius)
+    private func daysSectionCard(
+        title: String,
+        systemImage: String,
+        items: [(offset: Int, day: TrainingDayFS)]
+    ) -> some View {
+
+        VStack(alignment: .leading, spacing: 10) {
+
+            // Mantém header em laranja (ícone + texto)
+            sectionHeader(title, systemImage: systemImage)
+
+            VStack(spacing: 0) {
+                ForEach(Array(items.enumerated()), id: \.element.offset) { idx, it in
+                    let day = it.day
+                    let isVideo = isVideoDay(day)
+
+                    HStack(spacing: 14) {
+
+                        Image(systemName: isVideo ? "video.fill" : "flame.fill")
+                            .font(.system(size: 16))
+                            .foregroundColor(.green.opacity(0.85))
+                            .frame(width: 28)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            Text(day.title)
+                                .font(.system(size: 18, weight: .medium))
+                                .foregroundColor(.white.opacity(0.92))
+
+                            Text(day.subtitleText)
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.35))
                         }
-                        .buttonStyle(.plain)
-                        .padding(.trailing, 6)
-                    } else {
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.white.opacity(0.35))
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: weekTitle))
-                }
 
-                if idx < vm.days.count - 1 {
-                    innerDivider(leading: 54)
+                        Spacer()
+
+                        if isStudentViewing, let dayId = day.id {
+                            Button {
+                                Task {
+                                    await vm.toggleCompleted(dayId: dayId)
+
+                                    if allWeekCompleted && !hasTriggeredWeekCompletedAnimation {
+                                        hasTriggeredWeekCompletedAnimation = true
+                                        triggerWeekCompletedAnimation()
+                                    }
+                                }
+                            } label: {
+                                let completed = vm.isCompleted(dayId: dayId)
+                                let icon = completionIcon(isVideo: isVideo, isCompleted: completed)
+
+                                Image(systemName: icon.name)
+                                    .font(.system(size: 20))
+                                    .foregroundColor(icon.color)
+                            }
+                            .buttonStyle(.plain)
+                            .padding(.trailing, 6)
+                        } else {
+                            Image(systemName: "chevron.right")
+                                .foregroundColor(.white.opacity(0.35))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: weekTitle))
+                    }
+
+                    if idx < items.count - 1 {
+                        innerDivider(leading: 54)
+                    }
                 }
             }
         }
+        .padding(.horizontal, 0) // conteúdo já tem padding nas rows
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)   // ✅ aqui é o “bloco/card” de verdade
+        .cornerRadius(14)
     }
 
     private var loadingView: some View {
@@ -319,6 +457,61 @@ struct StudentWeekDetailView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
+    }
+
+    // ✅ Overlay de conclusão da semana (mais rápido)
+    private var weekCompletedOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.55)
+                .ignoresSafeArea()
+
+            VStack(spacing: 10) {
+                Image(systemName: "sparkles")
+                    .font(.system(size: 26, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.9))
+
+                Text("Semana concluída!")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text("Parabéns! Você finalizou todos os registros da semana.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.65))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 18)
+
+                Image(systemName: "checkmark.circle.fill")
+                    .font(.system(size: 44, weight: .semibold))
+                    .foregroundColor(.green.opacity(0.9))
+                    .padding(.top, 4)
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .frame(maxWidth: 320)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(16)
+            .overlay(
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Theme.Colors.divider, lineWidth: 1)
+            )
+        }
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: showWeekCompletedAnimation)
+    }
+
+    private func triggerWeekCompletedAnimation() {
+        let generator = UINotificationFeedbackGenerator()
+        generator.notificationOccurred(.success)
+
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
+            showWeekCompletedAnimation = true
+        }
+
+        // ✅ Mais rápido
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            withAnimation(.easeOut(duration: 0.18)) {
+                showWeekCompletedAnimation = false
+            }
+        }
     }
 }
 

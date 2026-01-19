@@ -108,31 +108,6 @@ struct StudentDayDetailView: View {
                         if !shouldShowOnlyVideoForStudent {
                             blocksCard
                         }
-
-                        // ✅ Botão "Visualizar no ambiente" no FINAL da tela (após o último bloco)
-                        if !isTeacherViewing && !shouldShowOnlyVideoForStudent {
-                            HStack {
-                                Spacer()
-                                Button {
-                                    path.append(.arDemo)
-                                } label: {
-                                    HStack(spacing: 8) {
-                                        Image(systemName: "viewfinder")
-                                            .foregroundColor(Theme.Colors.primaryGreen)
-                                        Text("Visualizar no ambiente")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(Theme.Colors.primaryGreen)
-                                    }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 12)
-                                    .background(Theme.Colors.cardBackground)
-                                    .cornerRadius(12)
-                                }
-                                .buttonStyle(.plain)
-                                Spacer()
-                            }
-                            .padding(.top, 8)
-                        }
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -481,14 +456,17 @@ struct StudentDayDetailView: View {
                             Text(block.name)
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
+                                .frame(maxWidth: .infinity, alignment: .leading)
 
                             if !block.details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text(block.details)
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.65))
                                     .fixedSize(horizontal: false, vertical: true)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
                             }
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.vertical, 12)
 
                         if idx < nonVideoBlocks.count - 1 {
