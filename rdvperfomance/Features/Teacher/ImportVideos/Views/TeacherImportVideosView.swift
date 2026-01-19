@@ -14,6 +14,20 @@ struct TeacherImportVideosView: View {
     @State private var isAddSheetPresented: Bool = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
     
+    // ✅ Enviar vídeo para aluno (igual ao fluxo do Girls WODs)
+    @State private var activeSheet: ActiveSheet? = nil
+    
+    private enum ActiveSheet: Identifiable {
+        case send(TeacherYoutubeVideo)
+        
+        var id: String {
+            switch self {
+            case .send(let v):
+                return "send-\(v.id)"
+            }
+        }
+    }
+    
     var body: some View {
         ZStack {
             Image("rdv_fundo")
@@ -95,6 +109,15 @@ struct TeacherImportVideosView: View {
                 Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
             }
         }
+        .sheet(item: $activeSheet) { sheet in
+            switch sheet {
+            case .send(let v):
+                TeacherSendYoutubeVideoToStudentSheet(
+                    video: v,
+                    category: category
+                )
+            }
+        }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
@@ -169,6 +192,11 @@ struct TeacherImportVideosView: View {
         )
     }
     
+    private func openSendToStudent(for video: TeacherYoutubeVideo) {
+        errorMessage = nil
+        activeSheet = .send(video)
+    }
+    
     private func videoRow(video v: TeacherYoutubeVideo) -> some View {
         HStack(spacing: 12) {
             thumbnailView(videoId: v.videoId)
@@ -188,6 +216,12 @@ struct TeacherImportVideosView: View {
             Spacer()
             
             Menu {
+                Button {
+                    openSendToStudent(for: v)
+                } label: {
+                    Label("Enviar para aluno", systemImage: "paperplane.fill")
+                }
+                
                 Button(role: .destructive) {
                     Task { await deleteVideo(videoId: v.id) }
                 } label: {
@@ -387,3 +421,4 @@ struct TeacherImportVideosView: View {
         path.removeLast()
     }
 }
+
