@@ -20,6 +20,12 @@ struct TeacherImportWorkoutsView: View {
     @State private var isImporting: Bool = false
     @State private var activeSheet: ActiveSheet? = nil
     
+    // ✅ Envio para treinos (Crossfit / Academia / Em Casa)
+    @State private var isSendToWorkoutsDialogPresented: Bool = false
+    @State private var workoutPendingSend: TeacherImportedWorkout? = nil
+    @State private var isSendingToWorkouts: Bool = false
+    @State private var successMessage: String? = nil
+    
     private enum ActiveSheet: Identifiable {
         case detail(TeacherImportedWorkout)
         
@@ -27,6 +33,40 @@ struct TeacherImportWorkoutsView: View {
             switch self {
             case .detail(let w):
                 return "detail-\(w.id)"
+            }
+        }
+    }
+    
+    private enum SendDestination: CaseIterable {
+        case crossfit
+        case academia
+        case emCasa
+        
+        var title: String {
+            switch self {
+            case .crossfit: return "Treinos Crossfit"
+            case .academia: return "Treinos Academia"
+            case .emCasa:   return "Treinos em Casa"
+            }
+        }
+        
+        var targetCategory: TreinoTipo {
+            switch self {
+            case .crossfit: return .crossfit
+            case .academia: return .academia
+            case .emCasa:   return .emCasa
+            }
+        }
+        
+        /// ✅ SectionKey onde o TeacherWorkoutTemplatesView busca os itens.
+        /// - Crossfit: precisa cair em "Meus Treinos" do menu Crossfit (sectionKey = "meusTreinos")
+        /// - Academia/EmCasa: sua tela usa "meusTreinos" como seção principal (vide shouldShowAddButton)
+        var targetSectionKey: String {
+            switch self {
+            case .crossfit:
+                return CrossfitLibrarySection.meusTreinos.firestoreKey
+            case .academia, .emCasa:
+                return "meusTreinos"
             }
         }
     }
@@ -58,6 +98,14 @@ struct TeacherImportWorkoutsView: View {
                             
                             if isImporting {
                                 messageCard(text: "Importando planilha... aguarde.", isError: false)
+                            }
+                            
+                            if isSendingToWorkouts {
+                                messageCard(text: "Enviando treino... aguarde.", isError: false)
+                            }
+                            
+                            if let ok = successMessage {
+                                messageCard(text: ok, isError: false)
                             }
                             
                             if let err = errorMessage {
@@ -169,6 +217,30 @@ struct TeacherImportWorkoutsView: View {
                 )
             }
         }
+        // ✅ Seletor para enviar o treino para: Crossfit / Academia / Em Casa
+        .confirmationDialog(
+            "Enviar para Treinos",
+            isPresented: $isSendToWorkoutsDialogPresented,
+            titleVisibility: .visible
+        ) {
+            Button(SendDestination.crossfit.title) {
+                Task { await confirmSend(destination: .crossfit) }
+            }
+            Button(SendDestination.academia.title) {
+                Task { await confirmSend(destination: .academia) }
+            }
+            Button(SendDestination.emCasa.title) {
+                Task { await confirmSend(destination: .emCasa) }
+            }
+            Button("Cancelar", role: .cancel) { }
+        } message: {
+            let name = workoutPendingSend?.title.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            if name.isEmpty {
+                Text("Selecione o destino do treino.")
+            } else {
+                Text("Selecione o destino para: \(name)")
+            }
+        }
     }
     
     private var header: some View {
@@ -184,6 +256,7 @@ struct TeacherImportWorkoutsView: View {
         HStack(spacing: 10) {
             Button {
                 errorMessage = nil
+                successMessage = nil
                 isImportPickerPresented = true
             } label: {
                 HStack {
@@ -197,12 +270,13 @@ struct TeacherImportWorkoutsView: View {
                 .background(Capsule().fill(Color.green.opacity(0.16)))
             }
             .buttonStyle(.plain)
-            .disabled(isImporting)
+            .disabled(isImporting || isSendingToWorkouts)
             
             Spacer(minLength: 0)
             
             Button {
                 errorMessage = nil
+                successMessage = nil
                 prepareTemplateShare()
             } label: {
                 HStack {
@@ -216,6 +290,7 @@ struct TeacherImportWorkoutsView: View {
                 .background(Capsule().fill(Color.green.opacity(0.16)))
             }
             .buttonStyle(.plain)
+            .disabled(isSendingToWorkouts)
         }
     }
     
@@ -280,7 +355,8 @@ struct TeacherImportWorkoutsView: View {
             
             Menu {
                 Button {
-                    sendImportedWorkoutToStudent(workout: w)
+                    // ✅ Agora abre o seletor (Crossfit / Academia / Em Casa)
+                    openSendToWorkoutsPicker(workout: w)
                 } label: {
                     Label("Enviar para Treinos", systemImage: "paperplane.fill")
                 }
@@ -364,6 +440,100 @@ struct TeacherImportWorkoutsView: View {
     private func openDetails(for workout: TeacherImportedWorkout) {
         activeSheet = .detail(workout)
     }
+    
+    // MARK: - ✅ Enviar para Treinos
+    
+    private func openSendToWorkoutsPicker(workout: TeacherImportedWorkout) {
+        errorMessage = nil
+        successMessage = nil
+        workoutPendingSend = workout
+        isSendToWorkoutsDialogPresented = true
+    }
+    
+    private func confirmSend(destination: SendDestination) async {
+        errorMessage = nil
+        successMessage = nil
+        
+        guard let workout = workoutPendingSend else {
+            errorMessage = "Não foi possível enviar: treino inválido."
+            return
+        }
+        
+        await sendImportedWorkoutToWorkouts(workout: workout, destination: destination)
+    }
+    
+    private func sendImportedWorkoutToWorkouts(workout: TeacherImportedWorkout, destination: SendDestination) async {
+        guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+        
+        let title = workout.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let safeTitle = title.isEmpty ? "Treino" : title
+        
+        let descOnly = workout.description.trimmingCharacters(in: .whitespacesAndNewlines)
+        let blocks = buildBlocks(from: workout)
+        
+        // ✅ Evita salvar o "textão" duplicado quando já existem blocos.
+        // Mantém apenas a descrição (se existir). Caso tudo esteja vazio, salva "-" para não ficar em branco.
+        let templateDescription: String = {
+            if !descOnly.isEmpty { return descOnly }
+            if !blocks.isEmpty { return "" }
+            return "-"
+        }()
+        
+        isSendingToWorkouts = true
+        defer { isSendingToWorkouts = false }
+        
+        do {
+            _ = try await FirestoreRepository.shared.createWorkoutTemplate(
+                teacherId: teacherId,
+                categoryRaw: destination.targetCategory.rawValue,
+                sectionKey: destination.targetSectionKey,
+                title: safeTitle,
+                description: templateDescription,
+                blocks: blocks
+            )
+            
+            successMessage = "Treino enviado com sucesso para \(destination.title)!"
+            NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
+            
+        } catch {
+            errorMessage = "Falha ao enviar o treino: \(error.localizedDescription)"
+        }
+    }
+    
+    private func buildBlocks(from workout: TeacherImportedWorkout) -> [BlockFS] {
+        func cleaned(_ s: String) -> String {
+            s.trimmingCharacters(in: .whitespacesAndNewlines)
+        }
+        
+        var list: [BlockFS] = []
+        
+        let aquecimento = cleaned(workout.aquecimento)
+        if !aquecimento.isEmpty {
+            list.append(BlockFS(id: "aquecimento", name: "Aquecimento", details: aquecimento))
+        }
+        
+        let tecnica = cleaned(workout.tecnica)
+        if !tecnica.isEmpty {
+            list.append(BlockFS(id: "tecnica", name: "Técnica", details: tecnica))
+        }
+        
+        let wod = cleaned(workout.wod)
+        if !wod.isEmpty {
+            list.append(BlockFS(id: "wod", name: "WOD", details: wod))
+        }
+        
+        let cargas = cleaned(workout.cargasMovimentos)
+        if !cargas.isEmpty {
+            list.append(BlockFS(id: "cargasMovimentos", name: "Cargas / Movimentos", details: cargas))
+        }
+        
+        return list
+    }
+    
+    // MARK: - Import / Template
     
     private func prepareTemplateShare() {
         errorMessage = nil
@@ -467,6 +637,7 @@ struct TeacherImportWorkoutsView: View {
         }
     }
     
+    // ✅ Mantido (não alterei o fluxo antigo; apenas deixei como estava).
     private func sendImportedWorkoutToStudent(workout: TeacherImportedWorkout) {
         errorMessage = "Enviar para aluno: selecione o fluxo de alunos que você já usa (me diga a rota que abre a lista)."
     }
@@ -534,3 +705,4 @@ struct TeacherImportWorkoutsView: View {
         path.removeLast()
     }
 }
+
