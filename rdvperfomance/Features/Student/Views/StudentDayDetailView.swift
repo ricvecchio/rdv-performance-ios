@@ -104,7 +104,12 @@ struct StudentDayDetailView: View {
                             videosCard
                         }
 
-                        // ✅ Botão "Visualizar no ambiente" (somente quando não há vídeo para aluno)
+                        // ✅ Blocos (somente quando não há vídeo para aluno)
+                        if !shouldShowOnlyVideoForStudent {
+                            blocksCard
+                        }
+
+                        // ✅ Botão "Visualizar no ambiente" no FINAL da tela (após o último bloco)
                         if !isTeacherViewing && !shouldShowOnlyVideoForStudent {
                             HStack {
                                 Spacer()
@@ -127,11 +132,6 @@ struct StudentDayDetailView: View {
                                 Spacer()
                             }
                             .padding(.top, 8)
-                        }
-
-                        // ✅ Blocos (somente quando não há vídeo para aluno)
-                        if !shouldShowOnlyVideoForStudent {
-                            blocksCard
                         }
                     }
                     .frame(maxWidth: contentMaxWidth)
