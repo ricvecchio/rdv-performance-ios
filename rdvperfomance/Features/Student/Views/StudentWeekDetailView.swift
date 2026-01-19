@@ -67,13 +67,17 @@ struct StudentWeekDetailView: View {
         }
     }
 
-    private var hasAnyVideo: Bool {
-        vm.days.contains { isVideoDay($0) }
+    // ✅ Particiona em dois blocos REAIS: Vídeos e Treinos (sem "grudar")
+    private var videoDays: [(offset: Int, day: TrainingDayFS)] {
+        orderedDays.filter { isVideoDay($0.day) }
     }
 
-    private var hasAnyNonVideo: Bool {
-        vm.days.contains { !isVideoDay($0) }
+    private var trainingDays: [(offset: Int, day: TrainingDayFS)] {
+        orderedDays.filter { !isVideoDay($0.day) }
     }
+
+    private var hasAnyVideo: Bool { !videoDays.isEmpty }
+    private var hasAnyNonVideo: Bool { !trainingDays.isEmpty }
 
     // ✅ Todos os registros concluídos (para aluno): se todos os dias com id estiverem marcados como concluídos
     private var allWeekCompleted: Bool {
@@ -246,17 +250,17 @@ struct StudentWeekDetailView: View {
         .cornerRadius(14)
     }
 
-    // ✅ Cabeçalho de seção (para separar vídeos e treinos)
+    // ✅ Cabeçalho de seção (laranja)
     private func sectionHeader(_ title: String, systemImage: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: systemImage)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.orange.opacity(0.55))
+                .foregroundColor(.orange.opacity(0.9))
                 .frame(width: 18)
 
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.orange.opacity(0.55))
+                .foregroundColor(.orange.opacity(0.9))
 
             Spacer()
         }
@@ -274,48 +278,48 @@ struct StudentWeekDetailView: View {
         }
     }
 
-    // Lista de dias com marcação de conclusão (vídeos primeiro)
+    // ✅ Lista em DOIS BLOCOS reais: Card de Vídeos + Card de Treinos (não ficam grudados)
     private var daysList: some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
 
-            // ✅ Seção: Vídeos (aparece primeiro quando existir)
             if hasAnyVideo {
-                sectionHeader("Vídeos", systemImage: "video.fill")
-                innerDivider(leading: 16)
+                sectionBlock(
+                    title: "Vídeos",
+                    systemImage: "video.fill",
+                    items: videoDays
+                )
             }
 
-            // ✅ Renderiza: vídeos primeiro, depois os demais (mantendo ordem original)
-            let ordered = orderedDays
-            ForEach(Array(ordered.enumerated()), id: \.element.offset) { item in
+            if hasAnyNonVideo {
+                sectionBlock(
+                    title: "Treinos",
+                    systemImage: "flame.fill",
+                    items: trainingDays
+                )
+            }
+        }
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
+    }
+
+    // ✅ Bloco (mini-card) reutilizável para lista de dias
+    private func sectionBlock(
+        title: String,
+        systemImage: String,
+        items: [(offset: Int, day: TrainingDayFS)]
+    ) -> some View {
+
+        VStack(spacing: 0) {
+
+            sectionHeader(title, systemImage: systemImage)
+
+            innerDivider(leading: 16)
+
+            ForEach(Array(items.enumerated()), id: \.element.offset) { item in
                 let idx = item.offset
                 let day = item.element.day
-
                 let isVideo = isVideoDay(day)
-                let isLast = idx == ordered.count - 1
-
-                // ✅ Seção: Treinos (entra quando acabarem os vídeos e houver treinos)
-                if hasAnyVideo && hasAnyNonVideo && idx > 0 {
-                    let prevDay = ordered[idx - 1].day
-                    let prevWasVideo = isVideoDay(prevDay)
-
-                    if prevWasVideo && !isVideo {
-
-                        // Espaço visual maior entre Vídeos e Treinos
-                        Spacer(minLength: 10)
-
-                        Divider()
-                            .background(Color.orange.opacity(0.6))
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 6)
-
-                        sectionHeader("Treinos", systemImage: "flame.fill")
-
-                        Divider()
-                            .background(Theme.Colors.divider)
-                            .padding(.leading, 16)
-                    }
-                }
-
+                let isLast = idx == items.count - 1
 
                 HStack(spacing: 14) {
 
@@ -374,6 +378,13 @@ struct StudentWeekDetailView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground.opacity(0.92))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.divider.opacity(0.9), lineWidth: 1)
+        )
     }
 
     private var loadingView: some View {
@@ -442,7 +453,7 @@ struct StudentWeekDetailView: View {
         path.removeLast()
     }
 
-    // ✅ Overlay de conclusão da semana (animação simples + haptic)
+    // ✅ Overlay de conclusão da semana (mais rápido)
     private var weekCompletedOverlay: some View {
         ZStack {
             Color.black.opacity(0.55)
@@ -468,7 +479,7 @@ struct StudentWeekDetailView: View {
                     .foregroundColor(.green.opacity(0.9))
                     .padding(.top, 4)
             }
-            .padding(.vertical, 18)
+            .padding(.vertical, 16)
             .padding(.horizontal, 16)
             .frame(maxWidth: 320)
             .background(Theme.Colors.cardBackground)
@@ -478,19 +489,20 @@ struct StudentWeekDetailView: View {
                     .stroke(Theme.Colors.divider, lineWidth: 1)
             )
         }
-        .animation(.spring(response: 0.45, dampingFraction: 0.85), value: showWeekCompletedAnimation)
+        .animation(.spring(response: 0.28, dampingFraction: 0.86), value: showWeekCompletedAnimation)
     }
 
     private func triggerWeekCompletedAnimation() {
         let generator = UINotificationFeedbackGenerator()
         generator.notificationOccurred(.success)
 
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
+        withAnimation(.spring(response: 0.28, dampingFraction: 0.86)) {
             showWeekCompletedAnimation = true
         }
 
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2.0) {
-            withAnimation(.easeOut(duration: 0.25)) {
+        // ✅ Antes: 2.0s | Agora: mais rápido (0.9s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.9) {
+            withAnimation(.easeOut(duration: 0.18)) {
                 showWeekCompletedAnimation = false
             }
         }
