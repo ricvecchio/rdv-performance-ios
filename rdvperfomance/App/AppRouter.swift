@@ -297,7 +297,12 @@ private extension AppRouter {
             if session.isTrainer {
                 TeacherDashboardView(path: $path, category: teacherInitialCategory)
             } else {
-                HomeView(path: $path)
+                // ✅ ÚNICA ALTERAÇÃO: aluno inicia na Agenda (no lugar da HomeView)
+                StudentAgendaView(
+                    path: $path,
+                    studentId: session.uid ?? "",
+                    studentName: session.userName ?? ""
+                )
             }
 
         } else {

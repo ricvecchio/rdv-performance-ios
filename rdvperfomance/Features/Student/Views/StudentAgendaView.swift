@@ -93,6 +93,7 @@ struct StudentAgendaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline) // ✅ ÚNICA MUDANÇA: evita cabeçalho grande
 
         .onAppear {
             Task { await vm.loadWeeksAndMeta() }
@@ -283,3 +284,4 @@ struct StudentAgendaView: View {
         path.removeLast()
     }
 }
+
