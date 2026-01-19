@@ -2,6 +2,7 @@
 import SwiftUI
 import Combine
 import UIKit
+import Foundation
 
 struct StudentWeekDetailView: View {
 
@@ -38,6 +39,17 @@ struct StudentWeekDetailView: View {
 
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+    }
+
+    // ✅ Detecta se o dia possui um bloco "Vídeo" com link válido do YouTube
+    private func isVideoDay(_ day: TrainingDayFS) -> Bool {
+        day.blocks.contains { block in
+            let nameTrim = block.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard nameTrim.caseInsensitiveCompare("Vídeo") == .orderedSame else { return false }
+
+            let urlTrim = block.details.trimmingCharacters(in: .whitespacesAndNewlines)
+            return YouTubeVideoImporter.extractYoutubeVideoId(from: urlTrim) != nil
+        }
     }
 
     // Corpo principal com header, lista de dias e footer
@@ -193,9 +205,11 @@ struct StudentWeekDetailView: View {
                 let idx = item.offset
                 let day = item.element
 
+                let isVideo = isVideoDay(day)
+
                 HStack(spacing: 14) {
 
-                    Image(systemName: "flame.fill")
+                    Image(systemName: isVideo ? "video.fill" : "flame.fill")
                         .font(.system(size: 16))
                         .foregroundColor(.green.opacity(0.85))
                         .frame(width: 28)
@@ -307,3 +321,4 @@ struct StudentWeekDetailView: View {
         path.removeLast()
     }
 }
+
