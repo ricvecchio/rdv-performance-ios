@@ -24,14 +24,46 @@ O app possui uma navegação simples, interface moderna e layout responsivo, com
 
 ## 🧭 Estrutura de Navegação
 
-A navegação do app é centralizada através de um `NavigationStack`, controlada por um conjunto de rotas (`[AppRoute]`) e orquestrada em `AppRouter`. Isso garante navegação previsível entre telas como Login, Home, Treinos e Sobre.
+A navegação do app é centralizada através de um `NavigationStack`, controlada por um conjunto de rotas (`[AppRoute]`) e orquestrada em `AppRouter`. Isso garante navegação previsível e segura entre telas, com validação de permissões baseada no tipo de usuário.
 
 ### Rotas principais
-- Login
-- Home
-- Treinos (Crossfit, Academia, Em Casa)
+
+#### 🎓 Fluxo do Aluno
+- Login / Registro
+- **Agenda** (tela inicial) — visualização de semanas de treino
+- Detalhes de Semana — treinos programados por dia
+- Detalhes de Dia — exercícios específicos do treino
+- Mensagens — comunicação com o professor
+- Feedbacks — histórico de avaliações enviadas
+- Perfil / Configurações
 - Sobre
-- Perfil / Settings
+- AR Demo — visualização de exercícios em realidade aumentada
+- Gamificação — progresso e conquistas
+
+#### 👨‍🏫 Fluxo do Professor
+- Login / Registro
+- **Dashboard** (tela inicial) — menu de opções da área do professor
+- Lista de Alunos — gerenciamento por categoria (Crossfit/Academia/Casa)
+- Detalhes do Aluno — visualização individual e ações
+- Criação de Semana de Treino — planejamento semanal para alunos
+- Criação de Treino do Dia — definição de exercícios
+- Biblioteca de Treinos — templates e treinos salvos
+- Importar Treinos — upload via planilhas Excel
+- Importar Vídeos — gerenciamento de vídeos do YouTube
+- Enviar Mensagem — comunicação com alunos
+- Feedbacks — visualização de feedbacks dos alunos
+- Mapa da Academia — localização e visualização
+- Templates de Treino — biblioteca organizada por seções
+- Perfil / Configurações
+- Sobre
+
+### Sistema de Guards
+
+O `AppRouter` implementa proteções (guards) para garantir que:
+- Usuários não autenticados sejam redirecionados ao Login
+- Professores não acessem rotas exclusivas de alunos
+- Alunos não acessem rotas exclusivas de professores
+- Redirecionamento automático para a tela inicial apropriada
 
 ---
 
@@ -47,43 +79,61 @@ A navegação do app é centralizada através de um `NavigationStack`, controlad
 
 ---
 
-## 🏠 Tela Home
+## 🏠 Tela Home / Inicial
 
-Apresenta três opções principais de treino:
+O fluxo inicial do aplicativo varia conforme o tipo de usuário:
 
-- Crossfit
-- Academia
-- Treinos em Casa
+### 👨‍🎓 Aluno
 
-Cada opção possui imagem personalizada, título sobreposto e área totalmente clicável. O rodapé exibe navegação principal (Home, Treinos/Atual, Sobre).
+Após o login, o aluno é direcionado automaticamente para a **Agenda de Treinos** (`StudentAgendaView`):
+- Visualização de todas as semanas de treino programadas
+- Acesso rápido aos treinos do dia
+- Cards com informações de progresso e status
+- Navegação para detalhes de cada semana
+
+### 👨‍🏫 Professor
+
+Após o login, o professor é direcionado automaticamente para a **Área do Professor** (`TeacherDashboardView`) com menu de opções:
+
+- **Biblioteca de Treinos** — Acesso a templates e treinos criados
+- **Meus Alunos** — Lista e gerenciamento de alunos vinculados
+- **Importar Treino** — Importação de treinos via planilhas Excel
+- **Importar Vídeos** — Importação de vídeos do YouTube
+- **Mapa da Academia** — Visualização da localização da academia
+- **Visualizar no Ambiente** — Demonstração de exercícios em Realidade Aumentada
+
+> **Nota:** O arquivo `HomeView.swift` contém uma interface legacy com três opções de treino (Crossfit, Academia, Treinos em Casa) que foi usada em versões anteriores, mas atualmente o roteamento inteligente (`AppRouter`) garante que cada tipo de usuário veja sua interface apropriada desde o início.
 
 ---
 
 ## 🏋️ Tipos de Treino
 
-Os tipos de treino são controlados por um enum central (`TreinoTipo`), responsável por:
+Os tipos de treino são controlados por um enum central (`TreinoTipo`), responsável por categorizar e personalizar a experiência em diferentes áreas do app:
 
-- Título da tela
-- Texto sobreposto na imagem
-- Imagem principal
+### Categorias Disponíveis
+- **Crossfit** — treinos de alta intensidade com foco em funcionalidade
+- **Academia** — musculação e exercícios de academia tradicional
+- **Treinos em Casa** — exercícios que podem ser realizados sem equipamentos especiais
+
+### Personalização por Tipo
+Cada categoria possui:
+- Título específico da tela
+- Texto sobreposto personalizado em imagens
+- Imagem principal característica
 - Ícone personalizado no rodapé
+- Seções específicas de biblioteca (para professores)
 
-Tipos disponíveis:
-- Crossfit
-- Academia
-- Treinos em Casa
+### Nota sobre HomeView
+O arquivo `HomeView.swift` ainda existe no projeto com as três opções visuais de treino (Crossfit, Academia, Casa), mas atualmente funciona como:
+- **Interface legacy** preservada para compatibilidade
+- **Não é a tela inicial** de nenhum fluxo (alunos vão para Agenda, professores para Dashboard)
+- **Pode ser acessada** em casos específicos de navegação alternativa
+- Os tiles quando clicados redirecionam o aluno para sua Agenda
 
----
-
-## 📊 Tela de Treinos
-
-Tela reutilizável e dinâmica conforme o tipo de treino selecionado. Componentes chave:
-- Header com título do treino
-- Imagem central personalizada
-- Texto sobreposto
-- Rodapé com Home / Treino atual / Sobre
+Esta abordagem mantém a flexibilidade do sistema enquanto oferece experiências otimizadas para cada tipo de usuário.
 
 ---
+
 
 ## ℹ️ Tela Sobre
 
@@ -97,13 +147,97 @@ Tela institucional do aplicativo contendo:
 
 ---
 
+## 🎓 Área do Aluno
+
+Interface dedicada para alunos acompanharem seus treinos e progresso:
+
+### 📅 Agenda de Treinos
+
+- Visualização semanal de treinos programados
+- Detalhamento de treinos por dia
+- Acesso a treinos por semana
+- Interface intuitiva com calendário
+
+### 📈 Acompanhamento
+
+- Visualização de feedbacks enviados ao professor
+- Recebimento de mensagens do professor
+- Histórico de treinos realizados
+- Progresso visual através do sistema de gamificação
+
+### 🎮 Recursos Interativos
+
+- Sistema de badges e conquistas
+- Análise de exercícios com Realidade Aumentada (AR)
+- Correção de postura em tempo real
+- Visualização de vídeos instrutivos
+
+---
+
+## 👨‍🏫 Área do Professor
+
+### 📹 Importação de Vídeos (YouTube)
+
+Sistema completo para professores gerenciarem vídeos do YouTube:
+
+- Importação de vídeos através de URLs do YouTube
+- Player bloqueado para controle total do conteúdo
+- Suporte para AirPlay (espelhamento de tela)
+- Envio de vídeos específicos para alunos
+- Repository local para armazenamento de vídeos importados
+- Interface WebView customizada com UIKit
+
+### 📊 Importação de Treinos (Excel)
+
+Sistema de importação de treinos a partir de planilhas Excel:
+
+- Importação via Document Picker
+- Template pré-definido em português para CrossFit (`rdv_import_treinos_template_pt_crossfit.xlsx`)
+- Parser de planilhas Excel para estrutura de treinos
+- Repository local para armazenamento de treinos importados
+- Visualização detalhada de treinos importados
+- Envio de treinos para alunos específicos
+
+### 🎯 Outras Funcionalidades do Professor
+
+- Dashboard com visão geral de alunos e treinos
+- Gerenciamento de alunos vinculados
+- Criação de semanas de treino personalizadas
+- Biblioteca de exercícios de CrossFit
+- Templates de treinos reutilizáveis
+- Sistema de mensagens para alunos
+- Visualização de feedbacks dos alunos
+- Mapa com localização da academia
+
+---
+
 ## 🧩 Componentes Reutilizáveis
 
 Alguns componentes compartilhados:
+
+### UI Components
 - `UnderlineTextField` — campo customizado com linha inferior e suporte a senha (mostrar/ocultar)
 - `HeaderBar`, `FooterBar` — cabeçalho e rodapé usados em várias telas
 - `MiniProfileHeader`, `HeaderAvatarView` — cabeçalhos específicos de perfis
+- `BlockDraft` — componente para rascunhos de blocos de treino
+
+### Extensions
+- `Array+Chunked` — extensão para dividir arrays em grupos
+
+### Services
+- `LocalProfileStore` — armazenamento local de perfil do usuário
+- `FirestoreRepository` — repositório base para operações no Firestore
+- `FirestoreBaseRepository` — classe base para repositórios Firestore
+- `UserRepository` — gerenciamento de usuários no Firestore
+- `TrainingRepository` — gerenciamento de treinos no Firestore
+- `ProgressRepository` — gerenciamento de progresso no Firestore
+- `FeedbackRepository` — gerenciamento de feedbacks no Firestore
+- `MessageRepository` — gerenciamento de mensagens no Firestore
+- `WorkoutTemplateRepository` — gerenciamento de templates de treino
+
+### UI Utilities
 - `Theme` — definições visuais centrais
+- `NavigationBarNoHairline` — customização da barra de navegação
 
 ---
 
@@ -200,6 +334,33 @@ rdvperformance-ios
    │  │     ├─ StudentMessagesView.swift
    │  │     └─ StudentWeekDetailView.swift
    │  ├─ Teacher/
+   │  │  ├─ ImportVideos/
+   │  │  │  ├─ Models/
+   │  │  │  │  └─ TeacherImportVideosModels.swift
+   │  │  │  ├─ Services/
+   │  │  │  │  ├─ TeacherYoutubeVideosRepository.swift
+   │  │  │  │  └─ YouTubeVideoImporter.swift
+   │  │  │  ├─ UIKit/
+   │  │  │  │  ├─ AirPlayRoutePicker.swift
+   │  │  │  │  └─ LockedYoutubeWebView.swift
+   │  │  │  └─ Views/
+   │  │  │     ├─ TeacherAddYoutubeVideoSheet.swift
+   │  │  │     ├─ TeacherImportVideosView.swift
+   │  │  │     ├─ TeacherSendYoutubeVideoToStudentSheet.swift
+   │  │  │     └─ TeacherYoutubeLockedPlayerSheet.swift
+   │  │  ├─ ImportWorkouts/
+   │  │  │  ├─ Models/
+   │  │  │  │  └─ TeacherImportWorkoutsModels.swift
+   │  │  │  ├─ Services/
+   │  │  │  │  ├─ ExcelWorkoutImporter.swift
+   │  │  │  │  └─ TeacherImportedWorkoutsRepository.swift
+   │  │  │  ├─ UIKit/
+   │  │  │  │  ├─ ActivityView.swift
+   │  │  │  │  └─ DocumentPicker.swift
+   │  │  │  └─ Views/
+   │  │  │     ├─ TeacherAddWorkoutSheet.swift
+   │  │  │     ├─ TeacherImportWorkoutsView.swift
+   │  │  │     └─ TeacherImportedWorkoutDetailsSheet.swift
    │  │  ├─ ViewModels/
    │  │  │  ├─ CreateTrainingWeekViewModel.swift
    │  │  │  └─ TeacherStudentsListViewModel.swift
@@ -208,14 +369,15 @@ rdvperformance-ios
    │  │     ├─ TeacherCrossfitLibraryView.swift
    │  │     ├─ TeacherDashboardView.swift
    │  │     ├─ TeacherFeedbacksView.swift
-   │  │     ├─ TeacherImportVideosView.swift
-   │  │     ├─ TeacherImportWorkoutsView.swift
    │  │     ├─ TeacherLinkStudentView.swift
    │  │     ├─ TeacherMapView.swift
    │  │     ├─ TeacherMyWorkoutsView.swift
    │  │     ├─ TeacherSendMessageView.swift
+   │  │     ├─ TeacherSendWorkoutToStudentSheet.swift
    │  │     ├─ TeacherStudentDetailView.swift
    │  │     ├─ TeacherStudentsListView.swift
+   │  │     ├─ TeacherWorkoutTemplateDetailSheet.swift
+   │  │     ├─ TeacherWorkoutTemplatesComponents.swift
    │  │     ├─ TeacherWorkoutTemplatesListView.swift
    │  │     └─ TeacherWorkoutTemplatesView.swift
    │  └─ Treinos/
@@ -240,30 +402,49 @@ rdvperformance-ios
    │  │  ├─ HeaderBar.swift
    │  │  ├─ MiniProfileHeader.swift
    │  │  └─ UnderlineTextField.swift
+   │  ├─ Extensions/
+   │  │  └─ Array+Chunked.swift
    │  ├─ Services/
-   │  │  ├─ FirestoreRepository.swift
+   │  │  ├─ Firestore/
+   │  │  │  ├─ Base/
+   │  │  │  │  ├─ FirestoreBaseRepository.swift
+   │  │  │  │  └─ FirestoreRepositoryError.swift
+   │  │  │  ├─ Communication/
+   │  │  │  │  ├─ FeedbackRepository.swift
+   │  │  │  │  └─ MessageRepository.swift
+   │  │  │  ├─ Templates/
+   │  │  │  │  └─ WorkoutTemplateRepository.swift
+   │  │  │  ├─ Training/
+   │  │  │  │  ├─ ProgressRepository.swift
+   │  │  │  │  └─ TrainingRepository.swift
+   │  │  │  ├─ Users/
+   │  │  │  │  └─ UserRepository.swift
+   │  │  │  └─ FirestoreRepository.swift
    │  │  └─ LocalProfileStore.swift
    │  └─ UI/
+   │     ├─ NavigationBarNoHairline.swift
    │     └─ Theme.swift
    ├─ Resources/
-   │  └─ Assets.xcassets/
-   │     ├─ AccentColor.colorset/
-   │     ├─ AppIcon.appiconset/
-   │     ├─ Default.colorset/
-   │     ├─ rdv_crossfit_benchmark_horizontal.imageset/
-   │     ├─ rdv_crossfit_meusrecordes_horizontal.imageset/
-   │     ├─ rdv_crossfit_monteseutreino_horizontal.imageset/
-   │     ├─ rdv_crossfit_progressos_horizontal.imageset/
-   │     ├─ rdv_crossfit_wod_horizontal.imageset/
-   │     ├─ rdv_fundo.imageset/
-   │     ├─ rdv_logo.imageset/
-   │     ├─ rdv_programa_academia_horizontal.imageset/
-   │     ├─ rdv_programa_crossfit_horizontal.imageset/
-   │     ├─ rdv_programa_treinos_em_casa_horizontal.imageset/
-   │     ├─ rdv_treino1_vertical.imageset/
-   │     ├─ rdv_treino2_vertical.imageset/
-   │     ├─ rdv_treino3_vertical.imageset/
-   │     └─ rdv_user_default.imageset/
+   │  ├─ Assets.xcassets/
+   │  │  ├─ AccentColor.colorset/
+   │  │  ├─ AppIcon.appiconset/
+   │  │  ├─ Default.colorset/
+   │  │  ├─ rdv_crossfit_benchmark_horizontal.imageset/
+   │  │  ├─ rdv_crossfit_meusrecordes_horizontal.imageset/
+   │  │  ├─ rdv_crossfit_monteseutreino_horizontal.imageset/
+   │  │  ├─ rdv_crossfit_progressos_horizontal.imageset/
+   │  │  ├─ rdv_crossfit_wod_horizontal.imageset/
+   │  │  ├─ rdv_fundo.imageset/
+   │  │  ├─ rdv_logo.imageset/
+   │  │  ├─ rdv_programa_academia_horizontal.imageset/
+   │  │  ├─ rdv_programa_crossfit_horizontal.imageset/
+   │  │  ├─ rdv_programa_treinos_em_casa_horizontal.imageset/
+   │  │  ├─ rdv_treino1_vertical.imageset/
+   │  │  ├─ rdv_treino2_vertical.imageset/
+   │  │  ├─ rdv_treino3_vertical.imageset/
+   │  │  └─ rdv_user_default.imageset/
+   │  └─ Templates/
+   │     └─ rdv_import_treinos_template_pt_crossfit.xlsx
    ├─ GoogleService-Info.plist
    └─ README.md
 ```
@@ -383,8 +564,14 @@ Para que a opção "Mapa da Academia" funcione corretamente você precisa adicio
 - **CoreData** para persistência local de atividades
 - **MapKit** para visualização de localizações e academias
 - **Integração com Firebase** (Auth/Firestore) preparada
+- **Importação de Vídeos do YouTube** com player bloqueado e suporte AirPlay
+- **Importação de Treinos via Excel** com template pré-definido
+- **Sistema completo para Professores** (dashboard, gerenciamento de alunos, mensagens, feedbacks)
+- **Sistema completo para Alunos** (agenda, treinos, mensagens, feedbacks, progresso)
 - **Organização por features** (AR, Auth, CoreData, Gamification, Home, Map, Settings, Sprites, Student, Teacher, Treinos)
 - **Arquitetura MVVM** com separação clara de responsabilidades
+- **Repository Pattern** para acesso a dados Firestore
+- **UIKit Integration** para funcionalidades avançadas (WebView, DocumentPicker, AirPlay)
 
 ---
 
@@ -399,10 +586,11 @@ Para que a opção "Mapa da Academia" funcione corretamente você precisa adicio
 - Documentar contratos de rede e modelos Firestore
 - Internacionalização (strings em Localizable)
 - Melhorar cobertura de assets e imagens de alta resolução
-- Funções para importar planilhas em Excel
-- Lista com exercícios pré-definidos para montagem rápida de treinos
+- Expandir lista de exercícios pré-definidos para montagem rápida de treinos
 - Melhorar overlay de debug do AR para facilitar desenvolvimento
 - Adicionar mais modos de jogo no sistema de gamificação
+- Implementar suporte para AirPlay na reprodução de vídeos
+- Adicionar mais templates de importação para diferentes modalidades
 
 ---
 
