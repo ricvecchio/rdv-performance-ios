@@ -554,18 +554,13 @@ Todos os **5 requisitos principais foram completamente implementados** no projet
 ## 📌 Próximos Passos 
 
 - Completar integração com backend (Firebase) e testar autenticação real
-- Aprimorar sistema de AR com mais exercícios e detecção de postura
 - Expandir sistema de gamificação com mais badges e desafios
 - Adicionar sincronização de dados CoreData com Firestore
 - Implementar notificações push para lembretes de treino
 - Adicionar testes unitários / UI tests
 - Documentar contratos de rede e modelos Firestore
-- Internacionalização (strings em Localizable)
 - Melhorar cobertura de assets e imagens de alta resolução
 - Expandir lista de exercícios pré-definidos para montagem rápida de treinos
-- Melhorar overlay de debug do AR para facilitar desenvolvimento
-- Adicionar mais modos de jogo no sistema de gamificação
-- Implementar suporte para AirPlay na reprodução de vídeos
 - Adicionar mais templates de importação para diferentes modalidades
 
 ---
