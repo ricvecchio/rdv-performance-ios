@@ -75,9 +75,7 @@ enum AppRoute: Hashable {
     case registerStudent
     case registerTrainer
 
-    case mapFeature
     case spriteDemo
-    case arDemo
 
     case progressGame(mode: ProgressGameMode)
     case arExercise(weekId: String, dayId: String)

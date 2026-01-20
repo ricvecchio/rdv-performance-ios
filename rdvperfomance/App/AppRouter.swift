@@ -170,14 +170,9 @@ struct AppRouter: View {
                     case .excluirConta:
                         guardedHome { DeleteAccountView(path: $path) }
 
-                    case .mapFeature:
-                        guardedHome { MapFeatureView() }
-
                     case .spriteDemo:
                         guardedHome { SpriteDemoView(path: $path) }
 
-                    case .arDemo:
-                        guardedHome { ARDemoView() }
 
                     case .arExercise(let weekId, let dayId):
                         guardedHome { ARExerciseView(path: $path, weekId: weekId, dayId: dayId) }
