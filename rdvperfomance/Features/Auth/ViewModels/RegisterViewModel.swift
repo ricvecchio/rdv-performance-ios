@@ -26,8 +26,8 @@ final class RegisterViewModel: ObservableObject {
     private let repository: FirestoreRepository
 
     // Inicializa com repositório Firestore injetado
-    init(repository: FirestoreRepository = .shared) {
-        self.repository = repository
+    init(repository: FirestoreRepository? = nil) {
+        self.repository = repository ?? .shared
     }
 
     // Valida formulário e cria usuário no Firebase Auth e Firestore

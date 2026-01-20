@@ -158,7 +158,7 @@ struct StudentWeekDetailView: View {
             }
         }
         // ✅ Dispara animação quando todos os registros forem concluídos
-        .onChange(of: allWeekCompleted) { newValue in
+        .onChange(of: allWeekCompleted) { _, newValue in
             guard newValue else {
                 hasTriggeredWeekCompletedAnimation = false
                 return

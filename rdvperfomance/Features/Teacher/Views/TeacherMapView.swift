@@ -7,6 +7,9 @@ struct TeacherMapView: View {
     @State private var showSavedToggle: Bool = true
     private let profileStore = LocalProfileStore.shared
 
+    // ✅ iOS 17+: Map usa "position" ao invés de "coordinateRegion"
+    @State private var cameraPosition: MapCameraPosition = .automatic
+
     private var academyCoordinate: CLLocationCoordinate2D? {
         profileStore.getLastSeenCoordinate(userId: session.currentUid)
     }
@@ -24,13 +27,21 @@ struct TeacherMapView: View {
     @State private var annotationItems: [MapPin] = []
     @State private var showEditLocationSheet: Bool = false
 
+    // ✅ Snapshot Equatable para poder usar onChange sem exigir MKCoordinateRegion: Equatable
+    private var regionSnapshot: RegionSnapshot {
+        RegionSnapshot(
+            lat: vm.region.center.latitude,
+            lon: vm.region.center.longitude,
+            latDelta: vm.region.span.latitudeDelta,
+            lonDelta: vm.region.span.longitudeDelta
+        )
+    }
+
     var body: some View {
         ZStack {
             // Map em background ocupando toda a tela
-            Map(coordinateRegion: $vm.region, showsUserLocation: true, annotationItems: annotationItems) { item in
-                MapMarker(coordinate: item.coordinate, tint: .red)
-            }
-            .edgesIgnoringSafeArea(.all)
+            mapView
+                .edgesIgnoringSafeArea(.all)
 
             // Overlay: conteúdo superior (badge)
             VStack {
@@ -55,6 +66,7 @@ struct TeacherMapView: View {
                         Text("Permissão de localização negada. Habilite em Ajustes para ver a posição da sua academia.")
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
+
                         Button(action: openSettings) {
                             Text("Abrir Ajustes")
                                 .frame(maxWidth: .infinity)
@@ -72,7 +84,11 @@ struct TeacherMapView: View {
                 // Controles inferiores (Centrar, Toggle, Editar, Remover)
                 VStack(spacing: 8) {
                     HStack(spacing: 12) {
-                        Button(action: { vm.centerOnUser() }) {
+                        Button(action: {
+                            vm.centerOnUser()
+                            // ✅ garante que o map acompanhe o vm.region após centralizar
+                            cameraPosition = .region(vm.region)
+                        }) {
                             Label("Centrar", systemImage: "location.fill")
                         }
                         .buttonStyle(.bordered)
@@ -80,7 +96,7 @@ struct TeacherMapView: View {
                         Toggle(isOn: $showSavedToggle) {
                             Text("Salvar última localização")
                         }
-                        .onChange(of: showSavedToggle) { newValue in
+                        .onChange(of: showSavedToggle) { _, newValue in
                             profileStore.setMapDemoEnabled(newValue, userId: session.currentUid)
                             if !newValue {
                                 profileStore.setLastSeenCoordinate(nil, userId: session.currentUid)
@@ -97,7 +113,10 @@ struct TeacherMapView: View {
                         }
                         .buttonStyle(.bordered)
 
-                        Button(action: { profileStore.setLastSeenCoordinate(nil, userId: session.currentUid); setupAnnotations() }) {
+                        Button(action: {
+                            profileStore.setLastSeenCoordinate(nil, userId: session.currentUid)
+                            setupAnnotations()
+                        }) {
                             Text("Remover localização")
                                 .frame(maxWidth: .infinity)
                         }
@@ -114,7 +133,10 @@ struct TeacherMapView: View {
         .navigationTitle("Mapa da Academia")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
-        .onAppear { setupAnnotations() }
+        .onAppear {
+            setupAnnotations()
+            cameraPosition = .region(vm.region)
+        }
         .sheet(isPresented: $showEditLocationSheet) {
             EditLocationView(
                 initialCoordinate: academyCoordinate ?? vm.lastLocation?.coordinate,
@@ -127,13 +149,31 @@ struct TeacherMapView: View {
         }
     }
 
+    // ✅ Quebra o Map em uma subview e remove pattern matching que estava gerando erro com 'let'
+    private var mapView: some View {
+        Map(position: $cameraPosition, interactionModes: .all) {
+            UserAnnotation()
+
+            ForEach(annotationItems) { item in
+                Marker("", coordinate: item.coordinate)
+                    .tint(.red)
+            }
+        }
+        .onChange(of: regionSnapshot) { _, _ in
+            // ✅ Mantém o mapa sincronizado quando o app altera vm.region (ex: setupAnnotations / centrar)
+            cameraPosition = .region(vm.region)
+        }
+    }
+
     private func setupAnnotations() {
         DispatchQueue.main.async {
             annotationItems.removeAll()
+
             if let coord = academyCoordinate {
                 annotationItems.append(MapPin(id: "academy", coordinate: coord))
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
                     vm.region.center = coord
+                    cameraPosition = .region(vm.region)
                 }
             } else if let last = vm.lastLocation {
                 annotationItems.append(MapPin(id: "last", coordinate: last.coordinate))
@@ -204,9 +244,18 @@ private struct MapPin: Identifiable {
     let coordinate: CLLocationCoordinate2D
 }
 
+// ✅ Snapshot Equatable do region (pra usar onChange sem MKCoordinateRegion: Equatable)
+private struct RegionSnapshot: Equatable {
+    let lat: Double
+    let lon: Double
+    let latDelta: Double
+    let lonDelta: Double
+}
+
 struct TeacherMapView_Previews: PreviewProvider {
     static var previews: some View {
         TeacherMapView()
             .environmentObject(AppSession())
     }
 }
+

@@ -160,7 +160,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             return id
         }
         let name = user.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        let email = (user.email ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        let email = user.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         return "\(name)|\(email)"
     }
 }

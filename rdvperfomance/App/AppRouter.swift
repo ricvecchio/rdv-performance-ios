@@ -173,7 +173,6 @@ struct AppRouter: View {
                     case .spriteDemo:
                         guardedHome { SpriteDemoView(path: $path) }
 
-
                     case .arExercise(let weekId, let dayId):
                         guardedHome { ARExerciseView(path: $path, weekId: weekId, dayId: dayId) }
 
@@ -263,7 +262,7 @@ struct AppRouter: View {
                             )
                         }
 
-                    @unknown default:
+                    default:
                         guardedHome()
                     }
                 }

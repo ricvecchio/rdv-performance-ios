@@ -17,18 +17,18 @@ final class ARExerciseViewModel: ObservableObject {
     private var storage: ARLocalStorage
 
     // Inicializa o ViewModel com identificadores de semana e dia
-    init(weekId: String, dayId: String, storage: ARLocalStorage = .shared) {
+    // ✅ Evita warning: default param não referencia .shared (actor-isolated) fora do MainActor
+    init(weekId: String, dayId: String, storage: ARLocalStorage? = nil) {
         self.weekId = weekId
         self.dayId = dayId
-        self.storage = storage
+        self.storage = storage ?? ARLocalStorage.shared
     }
 
     // Carrega pontos de correção salvos localmente
     func loadLocalCorrectionPoints() async {
-        do {
-            let pts = try storage.loadCorrectionPoints(weekId: weekId, dayId: dayId)
-            correctionPoints = pts
-        } catch {
+        let pts = storage.loadCorrectionPoints(weekId: weekId, dayId: dayId)
+        correctionPoints = pts
+        if pts.isEmpty {
             errorMessage = "Falha ao carregar pontos de correção"
         }
     }
@@ -77,3 +77,4 @@ final class ARExerciseViewModel: ObservableObject {
         return e
     }
 }
+

@@ -418,7 +418,7 @@ struct StudentDayDetailView: View {
         do {
             let updatedBlocks = day.blocks.filter { $0.id != item.blockId }
 
-            try await FirestoreRepository.shared.upsertDay(
+            _ = try await FirestoreRepository.shared.upsertDay(
                 weekId: weekId,
                 dayId: dayId,
                 dayIndex: day.dayIndex,
@@ -670,7 +670,7 @@ struct StudentDayDetailView: View {
         defer { isSaving = false }
 
         do {
-            try await FirestoreRepository.shared.upsertDay(
+            _ = try await FirestoreRepository.shared.upsertDay(
                 weekId: weekId,
                 dayId: dayId,
                 dayIndex: day.dayIndex,

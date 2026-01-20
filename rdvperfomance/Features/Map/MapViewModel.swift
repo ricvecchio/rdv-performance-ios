@@ -26,10 +26,13 @@ final class MapViewModel: NSObject, ObservableObject {
 
     // Solicita permissão de localização se ainda não foi concedida
     func requestPermissionIfNeeded() {
-        if CLLocationManager.authorizationStatus() == .notDetermined {
+        let status = manager.authorizationStatus
+
+        if status == .notDetermined {
             manager.requestWhenInUseAuthorization()
         } else {
-            self.authorizationStatus = CLLocationManager.authorizationStatus()
+            self.authorizationStatus = status
+
             if let loc = manager.location {
                 updateRegion(to: loc.coordinate)
                 self.lastLocation = loc

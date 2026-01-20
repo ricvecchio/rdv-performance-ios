@@ -221,7 +221,6 @@ struct RegisterStudentView: View {
         case .CROSSFIT: return "Crossfit"
         case .GYM: return "Academia"
         case .HOME: return "Treinos em Casa"
-        default: return opt.rawValue
         }
     }
 

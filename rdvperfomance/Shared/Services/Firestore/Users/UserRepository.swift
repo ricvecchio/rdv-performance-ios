@@ -117,7 +117,7 @@ final class UserRepository: FirestoreBaseRepository {
             "userType": form.userType.rawValue,
             "phone": form.phone as Any,
             
-            "focusArea": form.focusArea,
+            "focusArea": form.focusArea as Any,
             "planType": form.planType,
             
             "cref": form.cref as Any,
