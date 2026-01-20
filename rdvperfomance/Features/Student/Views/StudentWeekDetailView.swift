@@ -305,7 +305,7 @@ struct StudentWeekDetailView: View {
             if hasAnyNonVideo {
                 daysSectionCard(
                     title: "Treinos",
-                    systemImage: "flame.fill",
+                    systemImage: "dumbbell.fill",
                     items: trainingDays
                 )
             }
@@ -331,7 +331,7 @@ struct StudentWeekDetailView: View {
 
                     HStack(spacing: 14) {
 
-                        Image(systemName: isVideo ? "video.fill" : "flame.fill")
+                        Image(systemName: isVideo ? "video.fill" : "dumbbell.fill")
                             .font(.system(size: 16))
                             .foregroundColor(.green.opacity(0.85))
                             .frame(width: 28)

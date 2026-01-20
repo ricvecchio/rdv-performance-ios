@@ -78,7 +78,7 @@ final class ProgressMetricsProvider {
             list.append(Badge(id: "b1", title: "Primeiro treino", systemImageName: "sparkles"))
         }
         if percent >= 40 {
-            list.append(Badge(id: "b2", title: "3 treinos/semana", systemImageName: "flame.fill"))
+            list.append(Badge(id: "b2", title: "3 treinos/semana", systemImageName: "dumbbell.fill"))
         }
         if percent >= 80 {
             list.append(Badge(id: "b3", title: "Consistência", systemImageName: "bolt.fill"))
