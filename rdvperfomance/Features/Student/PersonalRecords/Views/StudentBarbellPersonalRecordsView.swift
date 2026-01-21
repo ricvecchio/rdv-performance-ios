@@ -13,6 +13,12 @@ struct StudentBarbellPersonalRecordsView: View {
         let storageKey: String
     }
 
+    private struct CustomBarbellMove: Identifiable, Hashable, Codable {
+        let id: String
+        let name: String
+        let storageKey: String
+    }
+
     // ✅ Dados fixos conforme solicitado
     private let moves: [BarbellMove] = [
         .init(name: "Back Squat", storageKey: "back_squat"),
@@ -45,9 +51,24 @@ struct StudentBarbellPersonalRecordsView: View {
     @AppStorage("student_pr_barbell_values_v1")
     private var barbellValuesData: Data = Data()
 
+    // ✅ NOVO: persistência dos movimentos criados pelo aluno
+    @AppStorage("student_pr_barbell_custom_moves_v1")
+    private var customMovesData: Data = Data()
+
     @State private var showEditSheet: Bool = false
     @State private var selectedMove: BarbellMove?
     @State private var inputValue: String = ""
+
+    // ✅ NOVO: adicionar movimento
+    @State private var showAddMoveSheet: Bool = false
+    @State private var newMoveName: String = ""
+    @State private var newMoveValue: String = ""
+    @State private var addMoveErrorMessage: String? = nil
+
+    private var allMoves: [BarbellMove] {
+        let custom = loadCustomMoves().map { BarbellMove(name: $0.name, storageKey: $0.storageKey) }
+        return moves + custom
+    }
 
     var body: some View {
         ZStack {
@@ -69,9 +90,26 @@ struct StudentBarbellPersonalRecordsView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Adicione sua carga máxima por movimento.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
+                            HStack(alignment: .center, spacing: 10) {
+                                Text("Adicione sua carga máxima por movimento.")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.55))
+
+                                Spacer()
+
+                                Button {
+                                    addMoveErrorMessage = nil
+                                    newMoveName = ""
+                                    newMoveValue = ""
+                                    showAddMoveSheet = true
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Adicionar novo movimento")
+                            }
 
                             tableContainer()
 
@@ -124,6 +162,9 @@ struct StudentBarbellPersonalRecordsView: View {
         .sheet(isPresented: $showEditSheet) {
             editSheet()
         }
+        .sheet(isPresented: $showAddMoveSheet) {
+            addMoveSheet()
+        }
     }
 
     // MARK: - Tabela (Sugestão 2)
@@ -136,11 +177,13 @@ struct StudentBarbellPersonalRecordsView: View {
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
 
-            ForEach(Array(moves.enumerated()), id: \.element.id) { index, move in
+            let list = allMoves
+
+            ForEach(Array(list.enumerated()), id: \.element.id) { index, move in
 
                 tableRow(move: move)
 
-                if index != moves.count - 1 {
+                if index != list.count - 1 {
                     Rectangle()
                         .fill(Color.white.opacity(0.08))
                         .frame(height: 1)
@@ -222,7 +265,7 @@ struct StudentBarbellPersonalRecordsView: View {
         .buttonStyle(.plain)
     }
 
-    // MARK: - Sheet (mantido)
+    // MARK: - Sheet (editar PR)
     private func editSheet() -> some View {
         ZStack {
             Theme.Colors.headerBackground
@@ -317,6 +360,163 @@ struct StudentBarbellPersonalRecordsView: View {
         .presentationDetents([.medium])
     }
 
+    // MARK: - Sheet (adicionar movimento)
+    private func addMoveSheet() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 44, height: 5)
+                    .padding(.top, 10)
+
+                Text("Novo movimento")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 4)
+
+                Text("Crie um movimento e, se quiser, já informe a carga máxima em kg.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.60))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 16)
+
+                VStack(alignment: .leading, spacing: 10) {
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Nome do movimento")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        TextField("Ex: Bulgarian Split Squat", text: $newMoveName)
+                            .textInputAutocapitalization(.words)
+                            .autocorrectionDisabled(true)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 14)
+                            .background(Theme.Colors.cardBackground)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Carga máxima (kg) (opcional)")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        HStack(spacing: 10) {
+                            TextField("Ex: 90.91", text: $newMoveValue)
+                                .keyboardType(.decimalPad)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 14)
+                                .background(Theme.Colors.cardBackground)
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                )
+
+                            Text("kg")
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.70))
+                        }
+                    }
+
+                    if let msg = addMoveErrorMessage {
+                        Text(msg)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.yellow.opacity(0.85))
+                            .padding(.top, 4)
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+
+                HStack(spacing: 12) {
+
+                    Button {
+                        showAddMoveSheet = false
+                    } label: {
+                        Text("Cancelar")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        addNewMove()
+                    } label: {
+                        Text("Adicionar")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.black.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.green.opacity(0.90))
+                            .cornerRadius(14)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+
+                Spacer()
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func addNewMove() {
+        addMoveErrorMessage = nil
+
+        let cleanName = newMoveName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else {
+            addMoveErrorMessage = "Informe o nome do movimento."
+            return
+        }
+
+        let existingNames = allMoves.map { $0.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) }
+        if existingNames.contains(cleanName.lowercased()) {
+            addMoveErrorMessage = "Este movimento já existe na sua lista."
+            return
+        }
+
+        let id = UUID().uuidString
+        let key = "custom_barbell_\(id)"
+
+        var list = loadCustomMoves()
+        list.append(CustomBarbellMove(id: id, name: cleanName, storageKey: key))
+        saveCustomMoves(list)
+
+        let trimmedValue = newMoveValue
+            .replacingOccurrences(of: ",", with: ".")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if !trimmedValue.isEmpty, let value = Double(trimmedValue), value > 0 {
+            saveValue(value, for: key)
+        }
+
+        showAddMoveSheet = false
+    }
+
     private func saveCurrentInput() {
         guard let move = selectedMove else { return }
 
@@ -385,5 +585,23 @@ private extension StudentBarbellPersonalRecordsView {
         map.removeValue(forKey: key)
         saveMap(map)
     }
+
+    private func loadCustomMoves() -> [CustomBarbellMove] {
+        guard !customMovesData.isEmpty else { return [] }
+        do {
+            return try JSONDecoder().decode([CustomBarbellMove].self, from: customMovesData)
+        } catch {
+            return []
+        }
+    }
+
+    private func saveCustomMoves(_ list: [CustomBarbellMove]) {
+        do {
+            customMovesData = try JSONEncoder().encode(list)
+        } catch {
+            customMovesData = Data()
+        }
+    }
+
 }
 
