@@ -65,6 +65,9 @@ struct StudentBarbellPersonalRecordsView: View {
     @State private var newMoveValue: String = ""
     @State private var addMoveErrorMessage: String? = nil
 
+    // ✅ NOVO: confirmação de exclusão pelo modal
+    @State private var showDeleteAlert: Bool = false
+
     private var allMoves: [BarbellMove] {
         let custom = loadCustomMoves().map { BarbellMove(name: $0.name, storageKey: $0.storageKey) }
         return moves + custom
@@ -318,6 +321,13 @@ struct StudentBarbellPersonalRecordsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
 
+                Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.50))
+                    .multilineTextAlignment(.leading)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+
                 HStack(spacing: 12) {
 
                     Button {
@@ -350,6 +360,19 @@ struct StudentBarbellPersonalRecordsView: View {
                             .cornerRadius(14)
                     }
                     .buttonStyle(.plain)
+
+                    Button {
+                        showDeleteAlert = true
+                    } label: {
+                        Image(systemName: "trash.fill")
+                            .foregroundColor(.white.opacity(0.92))
+                            .font(.system(size: 16, weight: .bold))
+                            .frame(width: 50, height: 50)
+                            .background(Color.red.opacity(0.85))
+                            .cornerRadius(14)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Excluir movimento")
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
@@ -358,6 +381,14 @@ struct StudentBarbellPersonalRecordsView: View {
             }
         }
         .presentationDetents([.medium])
+        .alert("Excluir registro", isPresented: $showDeleteAlert) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Excluir", role: .destructive) {
+                deleteSelectedMove()
+            }
+        } message: {
+            Text("Deseja excluir o registro de \"\(selectedMove?.name ?? "este movimento")\"?")
+        }
     }
 
     // MARK: - Sheet (adicionar movimento)
@@ -532,6 +563,22 @@ struct StudentBarbellPersonalRecordsView: View {
         if let value = Double(trimmed), value > 0 {
             saveValue(value, for: move.storageKey)
         }
+    }
+
+    private func deleteSelectedMove() {
+        guard let move = selectedMove else { return }
+
+        let key = move.storageKey
+
+        removeValue(for: key)
+
+        if key.hasPrefix("custom_barbell_") {
+            var list = loadCustomMoves()
+            list.removeAll { $0.storageKey == key }
+            saveCustomMoves(list)
+        }
+
+        showEditSheet = false
     }
 
     private func formatNumber(_ value: Double) -> String {
