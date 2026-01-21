@@ -73,11 +73,7 @@ struct StudentBarbellPersonalRecordsView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
 
-                            VStack(spacing: 12) {
-                                ForEach(moves) { move in
-                                    movementRow(move: move)
-                                }
-                            }
+                            tableContainer()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
@@ -130,7 +126,58 @@ struct StudentBarbellPersonalRecordsView: View {
         }
     }
 
-    private func movementRow(move: BarbellMove) -> some View {
+    // MARK: - Tabela (Sugestão 2)
+    private func tableContainer() -> some View {
+        VStack(spacing: 0) {
+
+            tableHeader()
+
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
+
+            ForEach(Array(moves.enumerated()), id: \.element.id) { index, move in
+
+                tableRow(move: move)
+
+                if index != moves.count - 1 {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 1)
+                        .padding(.leading, 14) // separador recuado p/ ficar mais "iOS"
+                }
+            }
+        }
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private func tableHeader() -> some View {
+        HStack(spacing: 10) {
+
+            // Espaço do ícone nas linhas, para alinhar o texto
+            Color.clear
+                .frame(width: 26, height: 1)
+
+            Text("Movimento")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white.opacity(0.55))
+
+            Spacer()
+
+            Text("PR (kg)")
+                .font(.system(size: 12, weight: .bold))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    private func tableRow(move: BarbellMove) -> some View {
         let value = loadValue(for: move.storageKey)
 
         return Button {
@@ -138,44 +185,44 @@ struct StudentBarbellPersonalRecordsView: View {
             inputValue = value.map { formatNumber($0) } ?? ""
             showEditSheet = true
         } label: {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
 
                 Image(systemName: "dumbbell.fill")
                     .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
+                    .font(.system(size: 15))
                     .frame(width: 26)
 
                 Text(move.name)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
 
                 Spacer()
 
                 if let value {
-                    Text("\(formatNumber(value)) kg")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.85))
+                    Text(formatNumber(value))
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.88))
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundColor(.white.opacity(0.25))
+                    .font(.system(size: 13, weight: .semibold))
+                    .padding(.leading, 6)
             }
             .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-            )
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
+    // MARK: - Sheet (mantido)
     private func editSheet() -> some View {
         ZStack {
             Theme.Colors.headerBackground
@@ -339,3 +386,4 @@ private extension StudentBarbellPersonalRecordsView {
         saveMap(map)
     }
 }
+
