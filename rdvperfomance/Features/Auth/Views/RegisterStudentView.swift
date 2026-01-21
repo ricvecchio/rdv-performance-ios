@@ -133,12 +133,6 @@ struct RegisterStudentView: View {
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
             )
-
-            pickerRow(
-                title: "Plano",
-                selection: $vm.planType,
-                options: PlanTypeDTO.allCases
-            )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)

@@ -118,7 +118,6 @@ final class UserRepository: FirestoreBaseRepository {
             "phone": form.phone as Any,
             
             "focusArea": form.focusArea as Any,
-            "planType": form.planType,
             
             "cref": form.cref as Any,
             "bio": form.bio as Any,

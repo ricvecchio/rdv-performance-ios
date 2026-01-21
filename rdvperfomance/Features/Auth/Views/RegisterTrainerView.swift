@@ -153,12 +153,6 @@ struct RegisterTrainerView: View {
                 selection: $vm.focusArea,
                 options: FocusAreaDTO.allCases
             )
-
-            pickerRow(
-                title: "Plano",
-                selection: $vm.planType,
-                options: PlanTypeDTO.allCases
-            )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)

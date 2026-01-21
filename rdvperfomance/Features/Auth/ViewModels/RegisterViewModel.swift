@@ -12,7 +12,6 @@ final class RegisterViewModel: ObservableObject {
     @Published var phone: String = ""
 
     @Published var focusArea: FocusAreaDTO = .CROSSFIT
-    @Published var planType: PlanTypeDTO = .FREE
 
     @Published var cref: String = ""
     @Published var bio: String = ""
@@ -59,7 +58,6 @@ final class RegisterViewModel: ObservableObject {
             phone: phoneTrim.isEmpty ? nil : phoneTrim,
             userType: userType,
             focusArea: focusArea.rawValue,
-            planType: planType.rawValue,
             cref: userType == .TRAINER ? cref.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
             bio: userType == .TRAINER ? bio.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
             gymName: userType == .TRAINER ? gymName.trimmingCharacters(in: .whitespacesAndNewlines) : nil,

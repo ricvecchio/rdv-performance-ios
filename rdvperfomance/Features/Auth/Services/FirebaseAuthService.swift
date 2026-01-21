@@ -36,7 +36,6 @@ final class FirebaseAuthService {
             "userType": form.userType.rawValue,
             "phone": form.phone ?? "",
             "focusArea": form.focusArea ?? "",
-            "planType": form.planType,
             "createdAt": FieldValue.serverTimestamp(),
             "updatedAt": FieldValue.serverTimestamp()
         ]

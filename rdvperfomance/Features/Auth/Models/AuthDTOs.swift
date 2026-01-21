@@ -12,11 +12,6 @@ enum FocusAreaDTO: String, Codable, CaseIterable {
     case CROSSFIT, GYM, HOME
 }
 
-// Tipos de planos de assinatura disponíveis
-enum PlanTypeDTO: String, Codable, CaseIterable {
-    case FREE, BRONZE, SILVER, GOLD
-}
-
 // Dados do formulário de registro completo
 struct RegisterFormDTO: Codable {
     let name: String
@@ -26,7 +21,6 @@ struct RegisterFormDTO: Codable {
 
     let userType: UserTypeDTO
     let focusArea: String?
-    let planType: String
 
     let cref: String?
     let bio: String?
