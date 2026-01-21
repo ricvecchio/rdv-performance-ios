@@ -12,7 +12,7 @@ struct CreateTrainingDayView: View {
 
     // Form
     @State private var dayIndex: Int = 0
-    @State private var dayName: String = "Dia 1"
+    @State private var dayName: String = "Segunda-feira"
     @State private var date: Date = Date()
 
     @State private var title: String = ""
@@ -639,9 +639,24 @@ struct CreateTrainingDayView: View {
         }
     }
 
+    private func weekdayName(for index: Int) -> String {
+        let names = [
+            "Segunda-feira",
+            "Terça-feira",
+            "Quarta-feira",
+            "Quinta-feira",
+            "Sexta-feira",
+            "Sábado",
+            "Domingo"
+        ]
+        guard index >= 0 && index < names.count else { return "Dia \(index + 1)" }
+        return names[index]
+    }
+
     private func syncDayName() {
-        if dayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || dayName.hasPrefix("Dia ") {
-            dayName = "Dia \(dayIndex + 1)"
+        let trimmed = dayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed.hasPrefix("Dia ") {
+            dayName = weekdayName(for: dayIndex)
         }
     }
 
