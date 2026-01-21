@@ -174,8 +174,19 @@ struct ProfileView: View {
         }
     }
 
-    // Remove última rota da navegação
+    // Voltar: no fluxo do professor deve retornar para Alunos (TeacherStudentsListView)
     private func pop() {
+        if session.userType != .STUDENT {
+            path.removeAll()
+            path.append(
+                .teacherStudentsList(
+                    selectedCategory: categoriaAtualProfessor,
+                    initialFilter: nil
+                )
+            )
+            return
+        }
+
         guard !path.isEmpty else { return }
         path.removeLast()
     }
