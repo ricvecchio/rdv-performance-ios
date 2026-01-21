@@ -209,7 +209,6 @@ struct ProfileView: View {
 
             if session.userType == .STUDENT {
                 isPlanActive = try await repository.hasAnyWeeksForStudent(studentId: uid)
-                await loadCheckinsSemanaEmAndamento(studentId: uid)
             } else {
                 isPlanActive = true
                 checkinsConcluidos = 0
@@ -226,53 +225,6 @@ struct ProfileView: View {
 
             errorMessage = error.localizedDescription
             showErrorAlert = true
-        }
-    }
-
-    // Busca check-ins realizados na semana de treino ativa
-    private func loadCheckinsSemanaEmAndamento(studentId: String) async {
-        do {
-            let weeks = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: true)
-
-            let today = Date()
-            let calendar = Calendar.current
-
-            let currentWeek: TrainingWeekFS? = weeks.first(where: { w in
-                guard let start = w.startDate, let end = w.endDate else { return false }
-                let s = calendar.startOfDay(for: start)
-                let e = calendar.startOfDay(for: end)
-                let t = calendar.startOfDay(for: today)
-                return (t >= s && t <= e)
-            })
-
-            guard let week = currentWeek, let weekId = week.id else {
-                checkinsConcluidos = 0
-                checkinsTotalSemana = 0
-                return
-            }
-
-            let days = try await repository.getDaysForWeek(weekId: weekId)
-            let total = days.count
-
-            guard total > 0 else {
-                checkinsConcluidos = 0
-                checkinsTotalSemana = 0
-                return
-            }
-
-            let statusMap = try await repository.getDayStatusMap(weekId: weekId, studentId: studentId)
-            let dayIds = Set(days.compactMap { $0.id })
-
-            let concluidos = statusMap.filter { pair in
-                pair.value == true && dayIds.contains(pair.key)
-            }.count
-
-            checkinsConcluidos = concluidos
-            checkinsTotalSemana = total
-
-        } catch {
-            checkinsConcluidos = 0
-            checkinsTotalSemana = 0
         }
     }
 
@@ -340,13 +292,6 @@ struct ProfileView: View {
             )
 
             if session.userType == .STUDENT {
-                divider()
-                optionRow(
-                    icon: "checkmark.seal.fill",
-                    title: "Check-ins na semana",
-                    trailing: .text("\(checkinsConcluidos)/\(checkinsTotalSemana)")
-                )
-
                 divider()
                 optionRow(icon: "envelope.fill", title: "Mensagens", trailing: .chevron) {
                     path.append(.studentMessages(category: categoriaAtualAluno))
@@ -466,3 +411,4 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
 }
+
