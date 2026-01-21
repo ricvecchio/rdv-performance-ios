@@ -147,6 +147,12 @@ struct AppRouter: View {
                             StudentPersonalRecordsView(path: $path)
                         }
 
+                    // ✅ NOVO: Barbell (Recorde Pessoal > Barbell)
+                    case .studentPersonalRecordsBarbell:
+                        guardedStudent {
+                            StudentBarbellPersonalRecordsView(path: $path)
+                        }
+
                     case .sobre:
                         guardedHome { AboutView(path: $path) }
 

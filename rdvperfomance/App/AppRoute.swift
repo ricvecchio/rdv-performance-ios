@@ -96,6 +96,9 @@ enum AppRoute: Hashable {
     // ✅ NOVO: Recorde Pessoal (Aluno)
     case studentPersonalRecords
 
+    // ✅ NOVO: Recorde Pessoal > Barbell (Aluno)
+    case studentPersonalRecordsBarbell
+
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 

@@ -53,7 +53,9 @@ struct StudentPersonalRecordsView: View {
                             VStack(spacing: 12) {
                                 ForEach(menuItems) { item in
                                     actionRow(title: item.title, icon: "folder.fill") {
-                                        // Sem navegação por enquanto (não foi solicitado)
+                                        if item.sectionKey == "barbell" {
+                                            path.append(.studentPersonalRecordsBarbell)
+                                        }
                                     }
                                 }
                             }
