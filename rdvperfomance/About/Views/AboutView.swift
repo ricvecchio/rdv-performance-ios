@@ -96,7 +96,7 @@ struct AboutView: View {
                 path: $path,
                 kind: .agendaSobrePerfil(
                     isAgendaSelected: false,
-                    isSobreSelected: true,
+                    isSobreSelected: false, // ✅ Agora "Sobre" não existe no rodapé do aluno (virou "Recordes")
                     isPerfilSelected: false
                 )
             )
@@ -154,3 +154,4 @@ struct AboutView: View {
         }
     }
 }
+

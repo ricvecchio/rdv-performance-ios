@@ -93,6 +93,9 @@ enum AppRoute: Hashable {
     case studentMessages(category: TreinoTipo)
     case studentFeedbacks(category: TreinoTipo)
 
+    // ✅ NOVO: Recorde Pessoal (Aluno)
+    case studentPersonalRecords
+
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 
@@ -104,7 +107,7 @@ enum AppRoute: Hashable {
 
     // ✅ Lista de templates (qualquer categoria, por seção)
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
-    
+
     case teacherImportWorkouts(category: TreinoTipo)
 
     // ✅ NOVO: Importar Vídeos (YouTube) - Professor

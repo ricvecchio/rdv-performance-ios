@@ -156,6 +156,9 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
+        // ✅ ALUNO (3 ícones): Agenda | Recordes | Perfil
+        // Observação: mantive o parâmetro isSobreSelected para não quebrar a API atual,
+        // porém agora ele representa o estado de seleção do botão "Recordes".
         case .agendaSobrePerfil(let isAgendaSelected, let isSobreSelected, let isPerfilSelected):
             HStack(spacing: 26) {
                 Button { goAgenda() } label: {
@@ -163,8 +166,8 @@ struct FooterBar: View {
                 }
                 .buttonStyle(.plain)
 
-                Button { goSobreStudent() } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
+                Button { goPersonalRecords() } label: {
+                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
                 }
                 .buttonStyle(.plain)
 
@@ -174,6 +177,9 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
+        // ✅ ALUNO (4 ícones): Agenda | Treinos | Recordes | Perfil
+        // Observação: mantive o parâmetro isSobreSelected para não quebrar a API atual,
+        // porém agora ele representa o estado de seleção do botão "Recordes".
         case .agendaTreinosSobrePerfil(let isAgendaSelected, let isTreinosSelected, let isSobreSelected, let isPerfilSelected):
             HStack(spacing: 12) {
 
@@ -187,8 +193,8 @@ struct FooterBar: View {
                 }
                 .buttonStyle(.plain)
 
-                Button { goSobreStudent() } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                Button { goPersonalRecords() } label: {
+                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
 
@@ -277,18 +283,25 @@ struct FooterBar: View {
         path = [.studentAgenda(studentId: studentId, studentName: studentName)]
     }
 
-    // Navega para a tela Sobre do aluno
-    private func goSobreStudent() {
+    // ✅ NOVO: navega para Recordes (Aluno)
+    private func goPersonalRecords() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre]
+        path = [
+            .studentAgenda(studentId: studentId, studentName: studentName),
+            .studentPersonalRecords
+        ]
     }
 
     // Navega para o perfil do aluno
     private func goPerfilStudent() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        path = [.studentAgenda(studentId: studentId, studentName: studentName), .sobre, .perfil]
+        path = [
+            .studentAgenda(studentId: studentId, studentName: studentName),
+            .studentPersonalRecords,
+            .perfil
+        ]
     }
 
     // Enum para identificar os destinos possíveis de navegação do professor

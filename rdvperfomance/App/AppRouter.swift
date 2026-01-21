@@ -24,8 +24,6 @@ struct AppRouter: View {
                             .environmentObject(session)
 
                     case .home:
-                        // ✅ Segurança: se por algum motivo um treinador navegar para ".home",
-                        // ele será redirecionado para o dashboard.
                         guardedHome()
 
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
@@ -143,6 +141,12 @@ struct AppRouter: View {
                             )
                         }
 
+                    // ✅ NOVO: Recorde Pessoal (Aluno)
+                    case .studentPersonalRecords:
+                        guardedStudent {
+                            StudentPersonalRecordsView(path: $path)
+                        }
+
                     case .sobre:
                         guardedHome { AboutView(path: $path) }
 
@@ -188,19 +192,16 @@ struct AppRouter: View {
                         RegisterTrainerView(path: $path)
                             .environmentObject(session)
 
-                    // ✅ Professor: Biblioteca de Treinos
                     case .teacherMyWorkouts(let category):
                         guardedTeacher {
                             TeacherMyWorkoutsView(path: $path, category: category)
                         }
 
-                    // ✅ Professor: Submenu Crossfit (seções)
                     case .teacherCrossfitLibrary(let section):
                         guardedTeacher {
                             TeacherCrossfitLibraryView(path: $path, section: section)
                         }
 
-                    // ✅ Professor: Lista de templates por seção (qualquer categoria)
                     case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             TeacherWorkoutTemplatesView(
@@ -211,7 +212,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Importar Treinos
                     case .teacherImportWorkouts(let category):
                         guardedTeacher {
                             TeacherImportWorkoutsView(
@@ -220,7 +220,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Importar Vídeos (YouTube)
                     case .teacherImportVideos(let category):
                         guardedTeacher {
                             TeacherImportVideosView(
@@ -229,7 +228,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ Professor -> Adicionar WOD (Girls WODs) (NÃO MEXER)
                     case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             CreateCrossfitWODView(
@@ -240,7 +238,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Adicionar Treino (Academia)
                     case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             CreateTreinoAcademiaView(
@@ -251,7 +248,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Adicionar Treino (Em Casa)
                     case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             CreateTreinoCasaView(
@@ -277,7 +273,6 @@ struct AppRouter: View {
 // Métodos auxiliares para decidir a view raiz e aplicar guards de autenticação
 private extension AppRouter {
 
-    // ✅ usado somente para abrir o dashboard com a categoria atual (fallback: crossfit)
     var teacherInitialCategory: TreinoTipo {
         let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
         return TreinoTipo(rawValue: raw) ?? .crossfit
@@ -287,11 +282,9 @@ private extension AppRouter {
     var rootView: some View {
         if session.isLoggedIn {
 
-            // ✅ Professor entra direto no TeacherDashboardView (no lugar de HomeView)
             if session.isTrainer {
                 TeacherDashboardView(path: $path, category: teacherInitialCategory)
             } else {
-                // ✅ ÚNICA ALTERAÇÃO: aluno inicia na Agenda (no lugar da HomeView)
                 StudentAgendaView(
                     path: $path,
                     studentId: session.uid ?? "",
@@ -316,7 +309,6 @@ private extension AppRouter {
     @ViewBuilder
     func guardedHome() -> some View {
         if session.isLoggedIn {
-            // ✅ Se for treinador, nunca mostramos a HomeView (mesmo que chamem ".home")
             if session.isTrainer {
                 TeacherDashboardView(path: $path, category: teacherInitialCategory)
             } else {

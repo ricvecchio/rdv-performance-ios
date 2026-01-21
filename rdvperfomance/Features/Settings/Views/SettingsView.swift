@@ -68,7 +68,6 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                // ✅ Ajuste: rodapé no padrão do AboutView (4 ícones)
                 footerForUser()
                     .frame(height: Theme.Layout.footerHeight)
                     .frame(maxWidth: .infinity)
@@ -112,7 +111,6 @@ struct SettingsView: View {
         }
     }
 
-    // ✅ Ajuste: Professor agora usa o MESMO padrão do AboutView (4 ícones)
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -138,13 +136,11 @@ struct SettingsView: View {
         }
     }
 
-    // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
 
-    // Retorna o título de uma seção
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
@@ -152,7 +148,6 @@ struct SettingsView: View {
             .padding(.horizontal, 6)
     }
 
-    // Retorna card com opções de conta
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
@@ -169,7 +164,6 @@ struct SettingsView: View {
         }
     }
 
-    // Retorna card com preferências do usuário
     private func preferencesCard() -> some View {
         card {
             cardRow(
@@ -182,9 +176,16 @@ struct SettingsView: View {
         }
     }
 
-    // Retorna card com opções de suporte e informações legais
     private func supportLegalCard() -> some View {
         card {
+
+            // ✅ NOVO: "Sobre" agora fica aqui (primeiro item do bloco)
+            cardRow(icon: "info.circle.fill", title: "Sobre") {
+                path.append(.sobre)
+            }
+
+            divider()
+
             cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
                 path.append(.infoLegal(.helpCenter))
             }
@@ -204,7 +205,6 @@ struct SettingsView: View {
         }
     }
 
-    // Retorna container para cards de configurações
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) { content() }
             .padding(.vertical, 8)
@@ -213,14 +213,12 @@ struct SettingsView: View {
             .cornerRadius(14)
     }
 
-    // Retorna linha divisória entre itens
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
             .padding(.leading, 54)
     }
 
-    // Retorna linha de card clicável sem texto à direita
     private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -246,7 +244,6 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    // Retorna linha de card clicável com texto à direita
     private func cardRow(icon: String, title: String, trailingText: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -277,12 +274,10 @@ struct SettingsView: View {
     }
 }
 
-// Define as unidades de peso disponíveis no aplicativo
 private enum WeightUnit: String, CaseIterable {
     case kg
     case lbs
 
-    // Retorna o título completo da unidade
     var title: String {
         switch self {
         case .kg: return "⚖️ kg (quilograma)"
@@ -290,7 +285,6 @@ private enum WeightUnit: String, CaseIterable {
         }
     }
 
-    // Retorna a sigla da unidade
     var shortLabel: String {
         switch self {
         case .kg: return "kg"
@@ -299,18 +293,15 @@ private enum WeightUnit: String, CaseIterable {
     }
 }
 
-// Sheet para seleção de unidade de peso
 private struct WeightUnitSheetView: View {
 
     @Binding var selectedUnitRaw: String
     @Environment(\.dismiss) private var dismiss
 
-    // Retorna a unidade selecionada
     private var selectedUnit: WeightUnit {
         WeightUnit(rawValue: selectedUnitRaw) ?? .kg
     }
 
-    // Constrói a interface do seletor de unidade
     var body: some View {
         ZStack {
 
