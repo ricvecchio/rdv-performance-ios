@@ -128,6 +128,75 @@ final class FirestoreRepository {
         try await trainingRepository.hasAnyWeeksForStudent(studentId: studentId)
     }
     
+    // MARK: - ✅ NOVO: PR % (Barbell) no Dia (Firestore)
+    //
+    // Observação:
+    // - Este método grava um objeto simples no documento do "dia" com merge=true (não quebra nada existente).
+    // - Campos gravados:
+    //   barbellPRCalc: { movementKey: String, percent: Double, updatedAt: Timestamp }
+    //
+    // IMPORTANTE:
+    // - Caso a sua estrutura de coleções seja diferente, ajuste apenas os nomes abaixo:
+    //   weeksCollectionName e daysSubcollectionName.
+    
+    private let weeksCollectionName: String = "trainingWeeks"
+    private let daysSubcollectionName: String = "days"
+    
+    /// Salva/atualiza o cálculo % do PR (Barbell) no documento do dia (merge).
+    func upsertDayBarbellPRCalc(
+        weekId: String,
+        dayId: String,
+        movementKey: String,
+        percent: Double
+    ) async throws {
+        let wk = weekId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let dy = dayId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let mv = movementKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !wk.isEmpty else { throw NSError(domain: "FirestoreRepository", code: 400, userInfo: [NSLocalizedDescriptionKey: "weekId inválido."]) }
+        guard !dy.isEmpty else { throw NSError(domain: "FirestoreRepository", code: 400, userInfo: [NSLocalizedDescriptionKey: "dayId inválido."]) }
+        guard !mv.isEmpty else { throw NSError(domain: "FirestoreRepository", code: 400, userInfo: [NSLocalizedDescriptionKey: "movementKey inválido."]) }
+        guard percent > 0 else { throw NSError(domain: "FirestoreRepository", code: 400, userInfo: [NSLocalizedDescriptionKey: "percent deve ser maior que 0."]) }
+        
+        let docRef = Firestore.firestore()
+            .collection(weeksCollectionName)
+            .document(wk)
+            .collection(daysSubcollectionName)
+            .document(dy)
+        
+        let payload: [String: Any] = [
+            "barbellPRCalc": [
+                "movementKey": mv,
+                "percent": percent,
+                "updatedAt": FieldValue.serverTimestamp()
+            ]
+        ]
+        
+        try await docRef.setData(payload, merge: true)
+    }
+    
+    /// Remove o cálculo % do PR (Barbell) do documento do dia.
+    func clearDayBarbellPRCalc(
+        weekId: String,
+        dayId: String
+    ) async throws {
+        let wk = weekId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let dy = dayId.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        guard !wk.isEmpty else { throw NSError(domain: "FirestoreRepository", code: 400, userInfo: [NSLocalizedDescriptionKey: "weekId inválido."]) }
+        guard !dy.isEmpty else { throw NSError(domain: "FirestoreRepository", code: 400, userInfo: [NSLocalizedDescriptionKey: "dayId inválido."]) }
+        
+        let docRef = Firestore.firestore()
+            .collection(weeksCollectionName)
+            .document(wk)
+            .collection(daysSubcollectionName)
+            .document(dy)
+        
+        try await docRef.updateData([
+            "barbellPRCalc": FieldValue.delete()
+        ])
+    }
+    
     // MARK: - Progress Operations
     func getDayStatusMap(weekId: String, studentId: String) async throws -> [String: Bool] {
         try await progressRepository.getDayStatusMap(weekId: weekId, studentId: studentId)
@@ -281,3 +350,4 @@ final class FirestoreRepository {
         try await workoutTemplateRepository.deleteWorkoutTemplate(templateId: templateId)
     }
 }
+

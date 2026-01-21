@@ -71,6 +71,59 @@ struct StudentDayDetailView: View {
         !isTeacherViewing && !videoItems.isEmpty
     }
 
+    // MARK: - ✅ NOVO: % do PR (Barbell) no dia
+
+    private struct BarbellMove: Identifiable, Hashable {
+        let id = UUID()
+        let name: String
+        let storageKey: String
+    }
+
+    private let barbellMoves: [BarbellMove] = [
+        .init(name: "Back Squat", storageKey: "back_squat"),
+        .init(name: "Bench Over Row", storageKey: "bench_over_row"),
+        .init(name: "Bench Press", storageKey: "bench_press"),
+        .init(name: "Clean", storageKey: "clean"),
+        .init(name: "Clean & Jerk", storageKey: "clean_and_jerk"),
+        .init(name: "Clean Pull", storageKey: "clean_pull"),
+        .init(name: "Cluster", storageKey: "cluster"),
+        .init(name: "Deadlift", storageKey: "deadlift"),
+        .init(name: "Front Squat", storageKey: "front_squat"),
+        .init(name: "Hang Power Clean", storageKey: "hang_power_clean"),
+        .init(name: "Hang Power Snatch", storageKey: "hang_power_snatch"),
+        .init(name: "Hang Squat Clean", storageKey: "hang_squat_clean"),
+        .init(name: "Hang Squat Snatch", storageKey: "hang_squat_snatch"),
+        .init(name: "Muscle Clean", storageKey: "muscle_clean"),
+        .init(name: "Overhead Lunge", storageKey: "overhead_lunge"),
+        .init(name: "Power Clean", storageKey: "power_clean"),
+        .init(name: "Power Snatch", storageKey: "power_snatch"),
+        .init(name: "Push Jerk", storageKey: "push_jerk"),
+        .init(name: "Push Press", storageKey: "push_press"),
+        .init(name: "Shoulder Press", storageKey: "shoulder_press"),
+        .init(name: "Snatch", storageKey: "snatch"),
+        .init(name: "Snatch Balance", storageKey: "snatch_balance"),
+        .init(name: "Snatch Deadlift", storageKey: "snatch_deadlift"),
+        .init(name: "Snatch Pull", storageKey: "snatch_pull")
+    ]
+
+    // ✅ Fonte do PR (mesma chave usada na tela Barbell)
+    @AppStorage("student_pr_barbell_values_v1")
+    private var barbellValuesData: Data = Data()
+
+    // ✅ Persistência por dia (movimento + porcentagem)
+    @AppStorage("student_day_pr_calc_v1")
+    private var dayCalcData: Data = Data()
+
+    private struct DayCalcState: Codable, Hashable {
+        var movementKey: String
+        var percent: Double
+    }
+
+    @State private var showMovementPicker: Bool = false
+    @State private var selectedMovementKey: String? = nil
+    @State private var selectedMovementName: String? = nil
+    @State private var percentText: String = ""
+
     // Corpo principal com header, conteúdo do dia, blocos e footer
     var body: some View {
         ZStack {
@@ -108,6 +161,11 @@ struct StudentDayDetailView: View {
                         if !shouldShowOnlyVideoForStudent {
                             blocksCard
                         }
+
+                        // ✅ NOVO: cálculo % PR (somente aluno e quando não é "somente vídeo") — no final
+                        if !isTeacherViewing && !shouldShowOnlyVideoForStudent {
+                            prPercentCard
+                        }
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -131,8 +189,9 @@ struct StudentDayDetailView: View {
                 .buttonStyle(.plain)
             }
 
+            // ✅ ALTERADO: título do cabeçalho agora é o dia (ex: "Dia 1")
             ToolbarItem(placement: .principal) {
-                Text("Dia de treino")
+                Text(day.subtitleText)
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -194,8 +253,20 @@ struct StudentDayDetailView: View {
                     didPrepareEditFields = true
                 }
         }
+        .sheet(isPresented: $showMovementPicker) {
+            movementPickerSheet
+        }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
+        }
+        .onAppear {
+            loadSavedCalcIfExists()
+        }
+        .onChange(of: selectedMovementKey) { _, _ in
+            autoSaveCalcState()
+        }
+        .onChange(of: percentText) { _, _ in
+            autoSaveCalcState()
         }
     }
 
@@ -218,13 +289,10 @@ struct StudentDayDetailView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
 
+            // ✅ ALTERADO: manter apenas a semana no corpo (o dia foi para o cabeçalho)
             Text("Semana: \(weekTitle)")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
-
-            Text(day.subtitleText)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -261,6 +329,328 @@ struct StudentDayDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
+    }
+
+    // MARK: - ✅ NOVO CARD: cálculo % do PR
+    // ✅ ALTERADO: Movimento em uma linha; % e Peso na linha de baixo; alinhamento/laterais igual aos outros cards.
+
+    private var prPercentCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+
+            Text("Cálculo por % do PR (Barbell)")
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
+            VStack(spacing: 10) {
+
+                // Linha 1: Movimento (full)
+                Button {
+                    showMovementPicker = true
+                } label: {
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "dumbbell.fill")
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 14))
+                            .frame(width: 22)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Movimento")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.55))
+
+                            Text(selectedMovementName ?? "Selecionar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .lineLimit(1)
+                        }
+
+                        Spacer(minLength: 6)
+
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.white.opacity(0.35))
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.03))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Linha 2: Porcentagem + Peso
+                HStack(spacing: 10) {
+
+                    // % (largura fixa)
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "percent")
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 14))
+                            .frame(width: 22)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("%")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.55))
+
+                            TextField("Ex: 50", text: $percentText)
+                                .keyboardType(.decimalPad)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .frame(width: 120)
+                    .background(Color.white.opacity(0.03))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+
+                    // Peso (ocupa o resto)
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "scalemass.fill")
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 14))
+                            .frame(width: 22)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Peso")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.55))
+
+                            Text(calculatedWeightText())
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.03))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                }
+            }
+
+            Text("Os dados ficam salvos automaticamente para este dia.")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.45))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private var movementPickerSheet: some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 44, height: 5)
+                    .padding(.top, 10)
+
+                Text("Selecione o movimento")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 4)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        ForEach(Array(barbellMoves.enumerated()), id: \.element.id) { idx, move in
+
+                            Button {
+                                selectedMovementKey = move.storageKey
+                                selectedMovementName = move.name
+                                showMovementPicker = false
+                            } label: {
+                                HStack(spacing: 12) {
+
+                                    Image(systemName: "dumbbell.fill")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .font(.system(size: 15))
+                                        .frame(width: 26)
+
+                                    Text(move.name)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                        .lineLimit(1)
+
+                                    Spacer()
+
+                                    if move.storageKey == selectedMovementKey {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.green.opacity(0.90))
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.white.opacity(0.18))
+                                    }
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            if idx < barbellMoves.count - 1 {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.08))
+                                    .frame(height: 1)
+                                    .padding(.leading, 14)
+                            }
+                        }
+                    }
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 18)
+                }
+
+                Button {
+                    showMovementPicker = false
+                } label: {
+                    Text("Fechar")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.white.opacity(0.10))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                }
+                .buttonStyle(.plain)
+
+                Spacer(minLength: 10)
+            }
+        }
+        .presentationDetents([.large])
+    }
+
+    private func calculatedWeightText() -> String {
+        guard let key = selectedMovementKey else { return "—" }
+        guard let pr = loadPR(for: key), pr > 0 else { return "—" }
+        guard let pct = parsePercent(), pct > 0 else { return "—" }
+
+        let result = pr * (pct / 100.0)
+        return "\(formatNumber(result)) kg"
+    }
+
+    private func parsePercent() -> Double? {
+        let trimmed = percentText
+            .replacingOccurrences(of: ",", with: ".")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmed.isEmpty else { return nil }
+        return Double(trimmed)
+    }
+
+    private func formatNumber(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+        formatter.decimalSeparator = "."
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    private func loadPRMap() -> [String: Double] {
+        guard !barbellValuesData.isEmpty else { return [:] }
+        do {
+            return try JSONDecoder().decode([String: Double].self, from: barbellValuesData)
+        } catch {
+            return [:]
+        }
+    }
+
+    private func loadPR(for key: String) -> Double? {
+        let map = loadPRMap()
+        return map[key]
+    }
+
+    private func calcStorageKeyForThisDay() -> String {
+        let dayId = (day.id ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let safeDayId = dayId.isEmpty ? "dayIndex_\(day.dayIndex)" : dayId
+        return "wk_\(weekId)_\(safeDayId)"
+    }
+
+    private func loadCalcMap() -> [String: DayCalcState] {
+        guard !dayCalcData.isEmpty else { return [:] }
+        do {
+            return try JSONDecoder().decode([String: DayCalcState].self, from: dayCalcData)
+        } catch {
+            return [:]
+        }
+    }
+
+    private func saveCalcMap(_ map: [String: DayCalcState]) {
+        do {
+            dayCalcData = try JSONEncoder().encode(map)
+        } catch {
+            dayCalcData = Data()
+        }
+    }
+
+    private func loadSavedCalcIfExists() {
+        let map = loadCalcMap()
+        let key = calcStorageKeyForThisDay()
+
+        guard let saved = map[key] else { return }
+
+        selectedMovementKey = saved.movementKey
+        selectedMovementName = barbellMoves.first(where: { $0.storageKey == saved.movementKey })?.name
+        percentText = formatNumber(saved.percent)
+    }
+
+    private func autoSaveCalcState() {
+        guard !isTeacherViewing else { return }
+
+        let storageKey = calcStorageKeyForThisDay()
+        var map = loadCalcMap()
+
+        guard let movementKey = selectedMovementKey,
+              let pct = parsePercent() else {
+            map.removeValue(forKey: storageKey)
+            saveCalcMap(map)
+            return
+        }
+
+        map[storageKey] = DayCalcState(movementKey: movementKey, percent: pct)
+        saveCalcMap(map)
     }
 
     // MARK: - ✅ Vídeos (mesma UI da TeacherImportVideosView, só com Remover)
