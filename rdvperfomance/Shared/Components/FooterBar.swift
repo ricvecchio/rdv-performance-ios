@@ -87,31 +87,19 @@ struct FooterBar: View {
     @ViewBuilder
     private func contentRow() -> some View {
         switch kind {
-        case .homeSobre(let isHomeSelected, let isSobreSelected):
+
+        case .homeSobre(let isHomeSelected, _):
             HStack(spacing: 28) {
                 Button { goHomeBasic() } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthHomeSobre)
                 }
                 .buttonStyle(.plain)
-
-                Color.clear
-                    .frame(width: Theme.Layout.footerMiddleSpacerWidth, height: 1)
-
-                Button { goSobreBasic() } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthHomeSobre)
-                }
-                .buttonStyle(.plain)
             }
 
-        case .homeSobrePerfil(let isHomeSelected, let isSobreSelected, let isPerfilSelected):
+        case .homeSobrePerfil(let isHomeSelected, _, let isPerfilSelected):
             HStack(spacing: 26) {
                 Button { goHomeBasic() } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
-                }
-                .buttonStyle(.plain)
-
-                Button { goSobreBasic() } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
                 }
                 .buttonStyle(.plain)
 
@@ -121,7 +109,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        case .treinos(let treinoTitle, let treinoIcon, let isHomeSelected, let isTreinoSelected, let isSobreSelected):
+        case .treinos(let treinoTitle, let treinoIcon, let isHomeSelected, let isTreinoSelected, _):
             HStack(spacing: 28) {
                 Button { goHomeBasic() } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinos)
@@ -129,14 +117,9 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 FooterItem(icon: .custom(treinoIcon), title: treinoTitle, isSelected: isTreinoSelected, width: Theme.Layout.footerItemWidthTreinos)
-
-                Button { goSobreBasic() } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthTreinos)
-                }
-                .buttonStyle(.plain)
             }
 
-        case .treinosComPerfil(let treinoTitle, let treinoIcon, let isHomeSelected, let isTreinoSelected, let isSobreSelected, let isPerfilSelected):
+        case .treinosComPerfil(let treinoTitle, let treinoIcon, let isHomeSelected, let isTreinoSelected, _, let isPerfilSelected):
             HStack(spacing: 16) {
                 Button { goHomeBasic() } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
@@ -145,22 +128,15 @@ struct FooterBar: View {
 
                 FooterItem(icon: .custom(treinoIcon), title: treinoTitle, isSelected: isTreinoSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
 
-                Button { goSobreBasic() } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
-                }
-                .buttonStyle(.plain)
-
                 Button { goPerfilBasic() } label: {
                     FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
             }
 
-        // ✅ ALUNO (3 ícones): Agenda | Recordes | Perfil
-        // Observação: mantive o parâmetro isSobreSelected para não quebrar a API atual,
-        // porém agora ele representa o estado de seleção do botão "Recordes".
+        // ✅ ALUNO (3 ícones)
         case .agendaSobrePerfil(let isAgendaSelected, let isSobreSelected, let isPerfilSelected):
-            HStack(spacing: 26) {
+            HStack(spacing: 28) {
                 Button { goAgenda() } label: {
                     FooterItem(icon: .system("calendar"), title: "Agenda", isSelected: isAgendaSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
                 }
@@ -177,12 +153,9 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        // ✅ ALUNO (4 ícones): Agenda | Treinos | Recordes | Perfil
-        // Observação: mantive o parâmetro isSobreSelected para não quebrar a API atual,
-        // porém agora ele representa o estado de seleção do botão "Recordes".
+        // ✅ ALUNO (4 ícones)
         case .agendaTreinosSobrePerfil(let isAgendaSelected, let isTreinosSelected, let isSobreSelected, let isPerfilSelected):
-            HStack(spacing: 12) {
-
+            HStack(spacing: 16) {
                 Button { goAgenda() } label: {
                     FooterItem(icon: .system("calendar"), title: "Agenda", isSelected: isAgendaSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
@@ -204,9 +177,9 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, let isSobreSelected, let isPerfilSelected):
-            HStack(spacing: 12) {
-
+        // ✅ PROFESSOR (3 ícones) — espaçamento igual ao ALUNO
+        case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
+            HStack(spacing: 28) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
@@ -217,20 +190,15 @@ struct FooterBar: View {
                 }
                 .buttonStyle(.plain)
 
-                Button { goTeacherSobre(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
-                }
-                .buttonStyle(.plain)
-
                 Button { goTeacherPerfil(category: selectedCategory) } label: {
                     FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
             }
 
-        case .teacherHomeAlunoSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunoSelected, let isSobreSelected, let isPerfilSelected):
-            HStack(spacing: 12) {
-
+        // ✅ PROFESSOR (3 ícones) — espaçamento igual ao ALUNO
+        case .teacherHomeAlunoSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunoSelected, _, let isPerfilSelected):
+            HStack(spacing: 28) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
@@ -238,11 +206,6 @@ struct FooterBar: View {
 
                 Button { goTeacherAlunos(category: selectedCategory) } label: {
                     FooterItem(icon: .system("person"), title: "Aluno", isSelected: isAlunoSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
-                }
-                .buttonStyle(.plain)
-
-                Button { goTeacherSobre(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("bubble.left"), title: "Sobre", isSelected: isSobreSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
 
@@ -254,7 +217,7 @@ struct FooterBar: View {
         }
     }
 
-    // Retorna a pilha de navegação canônica para o destino especificado
+    // Métodos de navegação (inalterados)
     private func canonicalStackBasic(for destination: AppRoute) -> [AppRoute] {
         switch destination {
         case .home:  return [.home]
@@ -264,94 +227,61 @@ struct FooterBar: View {
         }
     }
 
-    // Métodos de navegação básica sem animação
     private func goHomeBasic()   { path = canonicalStackBasic(for: .home) }
     private func goSobreBasic()  { path = canonicalStackBasic(for: .sobre) }
     private func goPerfilBasic() { path = canonicalStackBasic(for: .perfil) }
 
-    // Navega para a agenda do aluno atual
     private func goAgenda() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
         path = [.studentAgenda(studentId: studentId, studentName: studentName)]
     }
 
-    // Navega para a seção de treinos do aluno
     private func goTreinosAluno() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
         path = [.studentAgenda(studentId: studentId, studentName: studentName)]
     }
 
-    // ✅ NOVO: navega para Recordes (Aluno)
     private func goPersonalRecords() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        path = [
-            .studentAgenda(studentId: studentId, studentName: studentName),
-            .studentPersonalRecords
-        ]
+        path = [.studentAgenda(studentId: studentId, studentName: studentName), .studentPersonalRecords]
     }
 
-    // Navega para o perfil do aluno
     private func goPerfilStudent() {
         guard let studentId = session.uid else { return }
         let studentName = session.userName ?? "Aluno"
-        path = [
-            .studentAgenda(studentId: studentId, studentName: studentName),
-            .studentPersonalRecords,
-            .perfil
-        ]
+        path = [.studentAgenda(studentId: studentId, studentName: studentName), .studentPersonalRecords, .perfil]
     }
 
-    // Enum para identificar os destinos possíveis de navegação do professor
     private enum TeacherDestination { case home, alunos, sobre, perfil }
 
-    // ✅ AJUSTE: pilha canônica do professor passa a começar no TeacherDashboardView
     private func teacherCanonicalStack(category: TreinoTipo, destination: TeacherDestination) -> [AppRoute] {
         switch destination {
         case .home:
             return [.teacherDashboard(category: category)]
-
         case .alunos:
-            return [
-                .teacherDashboard(category: category),
-                .teacherStudentsList(selectedCategory: category, initialFilter: nil)
-            ]
-
+            return [.teacherDashboard(category: category), .teacherStudentsList(selectedCategory: category, initialFilter: nil)]
         case .sobre:
-            return [
-                .teacherDashboard(category: category),
-                .teacherStudentsList(selectedCategory: category, initialFilter: nil),
-                .sobre
-            ]
-
+            return [.teacherDashboard(category: category), .teacherStudentsList(selectedCategory: category, initialFilter: nil), .sobre]
         case .perfil:
-            return [
-                .teacherDashboard(category: category),
-                .teacherStudentsList(selectedCategory: category, initialFilter: nil),
-                .sobre,
-                .perfil
-            ]
+            return [.teacherDashboard(category: category), .teacherStudentsList(selectedCategory: category, initialFilter: nil), .sobre, .perfil]
         }
     }
 
-    // ✅ agora recebe category para não hardcodear crossfit
     private func goTeacherHome(category: TreinoTipo) {
         path = teacherCanonicalStack(category: category, destination: .home)
     }
 
-    // Navega para a lista de alunos do professor
     private func goTeacherAlunos(category: TreinoTipo) {
         path = teacherCanonicalStack(category: category, destination: .alunos)
     }
 
-    // Navega para a tela Sobre do professor
     private func goTeacherSobre(category: TreinoTipo) {
         path = teacherCanonicalStack(category: category, destination: .sobre)
     }
 
-    // Navega para o perfil do professor
     private func goTeacherPerfil(category: TreinoTipo) {
         path = teacherCanonicalStack(category: category, destination: .perfil)
     }
@@ -360,7 +290,6 @@ struct FooterBar: View {
 // Item individual do footer com ícone e título
 private struct FooterItem: View {
 
-    // Define o tipo de ícone usado no item
     enum Icon {
         case system(String)
         case custom(AnyView)
@@ -371,7 +300,6 @@ private struct FooterItem: View {
     let isSelected: Bool
     let width: CGFloat
 
-    // Constrói o layout do item com ícone e texto
     var body: some View {
         VStack(spacing: 6) {
             switch icon {
