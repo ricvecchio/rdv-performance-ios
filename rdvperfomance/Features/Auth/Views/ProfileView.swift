@@ -54,6 +54,7 @@ struct ProfileView: View {
     @State private var copiedIconName: String? = nil
 
     private let treinoIcons = [
+        // Básicos que você já usa
         "dumbbell",
         "figure.run",
         "figure.walk",
@@ -65,7 +66,150 @@ struct ProfileView: View {
         "calendar",
         "checkmark.seal.fill",
         "chart.bar.fill",
-        "person.2.fill"
+        "person.2.fill",
+
+        // Cross training / funcional
+        "figure.cross.training",
+        "figure.cross.training.circle",
+        "figure.flexibility",
+        "figure.gymnastics",
+        "figure.highintensity.intervaltraining",
+        "figure.mixed.cardio",
+        "figure.yoga",
+        "figure.pilates",
+
+        // Musculação / força
+        "figure.strengthtraining.functional",
+        "figure.strengthtraining.functional.circle",
+        "figure.cooldown",
+        "figure.core.training",
+        "figure.arms.open",
+        "figure.stand",
+        "figure.squat",
+        "figure.lunge",
+
+        // Cardio / condicionamento
+        "figure.rower",
+        "figure.stair.stepper",
+        "figure.outdoor.cycle",
+        "figure.indoor.cycle",
+        "figure.jumprope",
+        "figure.hiking",
+
+        // Equipamentos / treino simbólicos
+        "dumbbell.fill",
+        "backpack.fill",          // bolsa de treino / gym bag
+        "waterbottle.fill",       // hidratação
+        "timer",
+        "speedometer",
+        "target",
+        "scope",
+        "line.diagonal.arrow",
+        "arrow.triangle.2.circlepath",
+
+        // Saúde / corpo / performance
+        "lungs.fill",
+        "waveform.path.ecg",
+        "heart.text.square.fill",
+        "figure.mind.and.body",
+
+        // Performance / progresso
+        "chart.line.uptrend.xyaxis",
+        "chart.pie.fill",
+        "medal.fill",
+        "trophy.fill",
+        "star.fill",
+        "crown.fill",
+        "flag.checkered",
+        
+        // === NOVOS ÍCONES ADICIONADOS ===
+        
+        // **EQUIPAMENTOS DE CROSSFIT**
+        "figure.boxing",               // Saco de pancada / boxe
+        "figure.climbing",             // Corda de escalada
+        "figure.fall",                 // Caixa de salto (drop)
+        "figure.handball",             // Bola medicinal / wall ball
+        "figure.rolling",              // Pneu de arrasto
+        "figure.surfing",              // Remo ergômetro / ski erg
+        
+        // **EQUIPAMENTOS DE ACADEMIA**
+        "bolt.badge.a.fill",           // Máquinas elétricas
+        "bolt.trianglebadge.exclamationmark.fill", // Power rack
+        "cablecar.fill",               // Máquina de cabo
+        "chevron.up.square.fill",      // Leg press / hack squat
+        "cylinder.split.1x2.fill",     // Anilhas / discos
+        "figure.2.arms.open",          // Peck deck / crucifixo
+        "figure.seated.seatbelt",      // Máquina sentada
+        "hand.raised.square.fill",     // Luvas de treino
+        "heart.square.fill",           // Monitor cardíaco
+        "lanyardcard.fill",            // Acessórios de segurança
+        "macpro.gen3.fill",            // Rack de pesos (metáfora)
+        "oval.fill",                   // Kettlebell
+        "oval.portrait.fill",          // Bola suíça / physioball
+        "pill.fill",                   // Suplementos
+        "play.square.fill",            // Início de circuito
+        "powerplug.fill",              // Energia / potência
+        "restart.circle.fill",         // Recomeçar / circuito
+        "road.lanes.curved.left",      // Trilha de corrida / pista
+        "squareshape.dotted.squareshape", // Grade / jaula
+        "trapezoid.and.line.horizontal.fill", // Banco de exercícios
+        "triangle.fill",               // Pirâmide / carga progressiva
+        "wrench.adjustable.fill",      // Ajustes de equipamento
+        
+        // **MOVIMENTOS ESPECÍFICOS**
+        "arrow.up.and.down.circle.fill",     // Thrusters / clean & jerk
+        "arrow.uturn.up.circle.fill",        // Burpees / movimentos complexos
+        "circle.grid.cross.fill",            // Snatch / arranco
+        "figure.core.training.circle.fill",  // Core training
+        "figure.open.water.swim",            // Nado seco / butterfly
+        "rotate.3d.fill",                    // Rotação / torção
+        
+        // **ACESSÓRIOS E SEGURANÇA**
+        "bandage.fill",                      // Faixas / wraps
+        "bell.and.waves.left.and.right.fill",// Sinal sonoro / timer
+        "handbag.fill",                      // Bolsa de equipamentos
+        "headphones.circle.fill",            // Fones de ouvido
+        "lock.shield.fill",                  // Cadeado / segurança
+        "shoe.circle.fill",                  // Tênis de treino
+        "wave.3.backward.circle.fill",       // Respiração / wind
+        
+        // **MEDIÇÃO E CONTROLE**
+        "gauge.with.dots.needle.bottom.0percent",  // Medidor de esforço
+        "gauge.with.dots.needle.bottom.50percent",
+        "gauge.with.dots.needle.bottom.100percent",
+        "barometer",                         // Pressão / intensidade
+        "thermometer",                       // Temperatura corporal
+        "wind",                              // Ventilação / fôlego
+        
+        // **ESTRUTURA E ORGANIZAÇÃO**
+        "list.bullet.rectangle.fill",        // Planilha de treino
+        "list.clipboard.fill",               // Clipboard de treino
+        "menucard.fill",                     // Cardápio de exercícios
+        "tablecells.fill",                   // Grade de exercícios
+        "tag.fill",                          // Etiqueta de exercício
+        "text.page",                         // Descrição técnica
+        "wifi.router.fill",                  // Conexão / app conectado
+        
+        // **COMPETIÇÃO E DESAFIO**
+        "flag.2.crossed.fill",               // Competição
+        "hourglass",                         // Contagem regressiva
+        "lines.measurement.horizontal",      // Marcação de recorde
+        "sportscourt",                       // Box de CrossFit
+        "stairs",                            // Escada / step-up
+        
+        // **RECUPERAÇÃO**
+        "bed.double.fill",                   // Descanso
+        "drop.fill",                         // Hidratação extra
+        "fork.knife",                        // Nutrição pós-treino
+        "tshirt.fill",                      // Roupa de treino
+        "wind.snow.circle.fill",            // Geladeira / água fria
+        
+        // **COMUNIDADE E SOCIAL**
+        "person.3.fill",                    // Grupo / classe
+        "megaphone.fill",                   // Coach instruindo
+        "plus.bubble.fill",                 // Feedback positivo
+        "quote.bubble.fill",                // Dicas técnicas
+        "video.fill"                        // Demonstração em vídeo
     ]
 
     var body: some View {
@@ -312,11 +456,6 @@ struct ProfileView: View {
                 trailing: .coloredBadge(planoStatusTexto, fg: planoStatusForeground, bg: planoStatusBackground)
             )
 
-            divider()
-            optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
-                showMeusIconesModal = true
-            }
-
             if session.userType == .STUDENT {
                 divider()
                 optionRow(icon: "envelope.fill", title: "Mensagens", trailing: .chevron) {
@@ -326,6 +465,19 @@ struct ProfileView: View {
                 divider()
                 optionRow(icon: "text.bubble.fill", title: "Feedbacks", trailing: .chevron) {
                     path.append(.studentFeedbacks(category: categoriaAtualAluno))
+                }
+
+                // ✅ Agora fica abaixo de Feedbacks
+                divider()
+                optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
+                    showMeusIconesModal = true
+                }
+
+            } else {
+                // Para professor (sem Feedbacks), mantém no card após Planos
+                divider()
+                optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
+                    showMeusIconesModal = true
                 }
             }
         }
