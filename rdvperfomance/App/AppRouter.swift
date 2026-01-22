@@ -6,10 +6,8 @@ struct AppRouter: View {
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
 
-    // ✅ chave já usada no app para lembrar a categoria
     private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
-    // Configura a pilha de navegação com todas as rotas do app
     var body: some View {
         NavigationStack(path: $path) {
 
@@ -141,16 +139,19 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Recorde Pessoal (Aluno)
                     case .studentPersonalRecords:
                         guardedStudent {
                             StudentPersonalRecordsView(path: $path)
                         }
 
-                    // ✅ NOVO: Barbell (Recorde Pessoal > Barbell)
                     case .studentPersonalRecordsBarbell:
                         guardedStudent {
                             StudentBarbellPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsGymnastic:
+                        guardedStudent {
+                            StudentGymnasticPersonalRecordsView(path: $path)
                         }
 
                     case .sobre:
@@ -276,7 +277,6 @@ struct AppRouter: View {
     }
 }
 
-// Métodos auxiliares para decidir a view raiz e aplicar guards de autenticação
 private extension AppRouter {
 
     var teacherInitialCategory: TreinoTipo {
@@ -304,7 +304,6 @@ private extension AppRouter {
     }
 }
 
-// Métodos de proteção para garantir que usuários estejam autenticados e autorizados
 private extension AppRouter {
 
     @ViewBuilder

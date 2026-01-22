@@ -56,6 +56,10 @@ struct StudentPersonalRecordsView: View {
                                         if item.sectionKey == "barbell" {
                                             path.append(.studentPersonalRecordsBarbell)
                                         }
+
+                                        if item.sectionKey == "gymnastic" {
+                                            path.append(.studentPersonalRecordsGymnastic)
+                                        }
                                     }
                                 }
                             }
@@ -74,7 +78,7 @@ struct StudentPersonalRecordsView: View {
                     path: $path,
                     kind: .agendaSobrePerfil(
                         isAgendaSelected: false,
-                        isSobreSelected: true,   // ✅ aqui representa "Recordes"
+                        isSobreSelected: true,
                         isPerfilSelected: false
                     )
                 )
