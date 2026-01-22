@@ -100,6 +100,12 @@ struct StudentBarbellPersonalRecordsView: View {
         return moves + custom
     }
 
+    // ✅ NOVO: só movimentos criados pelo botão + podem ser excluídos
+    private var canDeleteSelectedMove: Bool {
+        guard let key = selectedMove?.storageKey else { return false }
+        return key.hasPrefix("custom_barbell_")
+    }
+
     var body: some View {
         ZStack {
 
@@ -354,12 +360,14 @@ struct StudentBarbellPersonalRecordsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
 
-                Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
-                    .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.50))
-                    .multilineTextAlignment(.leading)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 4)
+                if canDeleteSelectedMove {
+                    Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.50))
+                        .multilineTextAlignment(.leading)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
+                }
 
                 HStack(spacing: 12) {
 
@@ -394,18 +402,20 @@ struct StudentBarbellPersonalRecordsView: View {
                     }
                     .buttonStyle(.plain)
 
-                    Button {
-                        showDeleteAlert = true
-                    } label: {
-                        Image(systemName: "trash.fill")
-                            .foregroundColor(.white.opacity(0.92))
-                            .font(.system(size: 16, weight: .bold))
-                            .frame(width: 50, height: 50)
-                            .background(Color.red.opacity(0.85))
-                            .cornerRadius(14)
+                    if canDeleteSelectedMove {
+                        Button {
+                            showDeleteAlert = true
+                        } label: {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16, weight: .bold))
+                                .frame(width: 50, height: 50)
+                                .background(Color.red.opacity(0.85))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Excluir movimento")
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Excluir movimento")
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
@@ -605,13 +615,16 @@ struct StudentBarbellPersonalRecordsView: View {
 
         let key = move.storageKey
 
+        guard key.hasPrefix("custom_barbell_") else {
+            showEditSheet = false
+            return
+        }
+
         removeValue(for: key)
 
-        if key.hasPrefix("custom_barbell_") {
-            var list = loadCustomMoves()
-            list.removeAll { $0.storageKey == key }
-            saveCustomMoves(list)
-        }
+        var list = loadCustomMoves()
+        list.removeAll { $0.storageKey == key }
+        saveCustomMoves(list)
 
         showEditSheet = false
     }
