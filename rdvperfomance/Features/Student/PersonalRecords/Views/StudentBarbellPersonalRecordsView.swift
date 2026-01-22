@@ -82,7 +82,6 @@ struct StudentBarbellPersonalRecordsView: View {
     @AppStorage("student_pr_barbell_custom_moves_v1")
     private var customMovesData: Data = Data()
 
-    @State private var showEditSheet: Bool = false
     @State private var selectedMove: BarbellMove?
     @State private var inputValue: String = ""
 
@@ -195,8 +194,8 @@ struct StudentBarbellPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(isPresented: $showEditSheet) {
-            editSheet()
+        .sheet(item: $selectedMove) { move in
+            editSheet(move: move)
         }
         .sheet(isPresented: $showAddMoveSheet) {
             addMoveSheet()
@@ -266,9 +265,8 @@ struct StudentBarbellPersonalRecordsView: View {
         let displayValue = storedKgValue.map { convertFromStorageKgToPreferredUnit($0) }
 
         return Button {
-            selectedMove = move
             inputValue = displayValue.map { formatNumber($0) } ?? ""
-            showEditSheet = true
+            selectedMove = move
         } label: {
             HStack(spacing: 10) {
 
@@ -308,7 +306,7 @@ struct StudentBarbellPersonalRecordsView: View {
     }
 
     // MARK: - Sheet (editar PR)
-    private func editSheet() -> some View {
+    private func editSheet(move: BarbellMove) -> some View {
         ZStack {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
@@ -320,7 +318,7 @@ struct StudentBarbellPersonalRecordsView: View {
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text(selectedMove?.name ?? "Movimento")
+                Text(move.name)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
@@ -332,7 +330,7 @@ struct StudentBarbellPersonalRecordsView: View {
                     .padding(.horizontal, 16)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Carga máxima (\(preferredWeightUnit.shortLabel))")
+                    Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.75))
 
@@ -372,7 +370,7 @@ struct StudentBarbellPersonalRecordsView: View {
                 HStack(spacing: 12) {
 
                     Button {
-                        showEditSheet = false
+                        selectedMove = nil
                     } label: {
                         Text("Cancelar")
                             .font(.system(size: 15, weight: .bold))
@@ -390,7 +388,7 @@ struct StudentBarbellPersonalRecordsView: View {
 
                     Button {
                         saveCurrentInput()
-                        showEditSheet = false
+                        selectedMove = nil
                     } label: {
                         Text("Salvar")
                             .font(.system(size: 15, weight: .bold))
@@ -616,7 +614,7 @@ struct StudentBarbellPersonalRecordsView: View {
         let key = move.storageKey
 
         guard key.hasPrefix("custom_barbell_") else {
-            showEditSheet = false
+            selectedMove = nil
             return
         }
 
@@ -626,7 +624,7 @@ struct StudentBarbellPersonalRecordsView: View {
         list.removeAll { $0.storageKey == key }
         saveCustomMoves(list)
 
-        showEditSheet = false
+        selectedMove = nil
     }
 
     private func formatNumber(_ value: Double) -> String {

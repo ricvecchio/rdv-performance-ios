@@ -58,7 +58,6 @@ struct StudentGymnasticPersonalRecordsView: View {
     @AppStorage("student_pr_gymnastic_custom_items_v1")
     private var customItemsData: Data = Data()
 
-    @State private var showEditSheet: Bool = false
     @State private var selectedItem: GymItem?
     @State private var inputValue: String = ""
 
@@ -172,8 +171,8 @@ struct StudentGymnasticPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(isPresented: $showEditSheet) {
-            editSheet()
+        .sheet(item: $selectedItem) { item in
+            editSheet(item: item)
         }
         .sheet(isPresented: $showAddItemSheet) {
             addItemSheet()
@@ -237,7 +236,6 @@ struct StudentGymnasticPersonalRecordsView: View {
         return Button {
             selectedItem = item
             inputValue = value ?? ""
-            showEditSheet = true
         } label: {
             HStack(spacing: 10) {
 
@@ -288,8 +286,10 @@ struct StudentGymnasticPersonalRecordsView: View {
         .buttonStyle(.plain)
     }
 
-    private func editSheet() -> some View {
-        ZStack {
+    private func editSheet(item: GymItem) -> some View {
+        let canDelete = item.storageKey.hasPrefix("custom_gym_")
+
+        return ZStack {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
@@ -300,14 +300,13 @@ struct StudentGymnasticPersonalRecordsView: View {
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text(selectedItem?.name ?? "Movimento")
+                Text(item.name)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                if let metric = selectedItem?.metric,
-                   !metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text(metric)
+                if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(item.metric)
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                 }
@@ -319,7 +318,7 @@ struct StudentGymnasticPersonalRecordsView: View {
                     .padding(.horizontal, 16)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Recorde")
+                    Text("Resultado:")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.75))
 
@@ -340,7 +339,7 @@ struct StudentGymnasticPersonalRecordsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
 
-                if canDeleteSelectedItem {
+                if canDelete {
                     Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.white.opacity(0.50))
@@ -352,7 +351,7 @@ struct StudentGymnasticPersonalRecordsView: View {
                 HStack(spacing: 12) {
 
                     Button {
-                        showEditSheet = false
+                        selectedItem = nil
                     } label: {
                         Text("Cancelar")
                             .font(.system(size: 15, weight: .bold))
@@ -370,7 +369,7 @@ struct StudentGymnasticPersonalRecordsView: View {
 
                     Button {
                         saveCurrentInput()
-                        showEditSheet = false
+                        selectedItem = nil
                     } label: {
                         Text("Salvar")
                             .font(.system(size: 15, weight: .bold))
@@ -382,7 +381,7 @@ struct StudentGymnasticPersonalRecordsView: View {
                     }
                     .buttonStyle(.plain)
 
-                    if canDeleteSelectedItem {
+                    if canDelete {
                         Button {
                             showDeleteAlert = true
                         } label: {
@@ -410,7 +409,7 @@ struct StudentGymnasticPersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \"\(selectedItem?.name ?? "este movimento")\"?")
+            Text("Deseja excluir o registro de \"\(item.name)\"?")
         }
     }
 
@@ -600,7 +599,7 @@ struct StudentGymnasticPersonalRecordsView: View {
         let key = item.storageKey
 
         guard key.hasPrefix("custom_gym_") else {
-            showEditSheet = false
+            selectedItem = nil
             return
         }
 
@@ -610,7 +609,7 @@ struct StudentGymnasticPersonalRecordsView: View {
         list.removeAll { $0.storageKey == key }
         saveCustomItems(list)
 
-        showEditSheet = false
+        selectedItem = nil
     }
 
     private func pop() {
@@ -673,3 +672,4 @@ private extension StudentGymnasticPersonalRecordsView {
         }
     }
 }
+

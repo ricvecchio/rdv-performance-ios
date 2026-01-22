@@ -13,7 +13,6 @@ struct ProfileView: View {
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
-    // Retorna categoria de treino selecionada pelo professor
     private var categoriaAtualProfessor: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
@@ -23,7 +22,6 @@ struct ProfileView: View {
 
     private let repository: FirestoreRepository = .shared
 
-    // Retorna UID do usuário atualmente logado
     private var currentUid: String {
         (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -35,7 +33,6 @@ struct ProfileView: View {
 
     @State private var studentDefaultCategoryRaw: String = ""
 
-    // Retorna categoria padrão do aluno baseada nos dados carregados
     private var categoriaAtualAluno: TreinoTipo {
         let raw = studentDefaultCategoryRaw.trimmingCharacters(in: .whitespacesAndNewlines)
         if let t = TreinoTipo(rawValue: raw), !raw.isEmpty {
@@ -53,7 +50,24 @@ struct ProfileView: View {
     @State private var showErrorAlert: Bool = false
     @State private var errorMessage: String? = nil
 
-    // Interface principal com cards, scroll e footer adaptado por tipo de usuário
+    @State private var showMeusIconesModal: Bool = false
+    @State private var copiedIconName: String? = nil
+
+    private let treinoIcons = [
+        "dumbbell",
+        "figure.run",
+        "figure.walk",
+        "figure.strengthtraining.traditional",
+        "heart.fill",
+        "flame.fill",
+        "bolt.fill",
+        "stopwatch",
+        "calendar",
+        "checkmark.seal.fill",
+        "chart.bar.fill",
+        "person.2.fill"
+    ]
+
     var body: some View {
         ZStack {
 
@@ -143,12 +157,14 @@ struct ProfileView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .sheet(isPresented: $showMeusIconesModal) {
+            meusIconesModal()
+        }
         .task(id: currentUid) {
             await loadUserData()
         }
     }
 
-    // Renderiza footer baseado no tipo de usuário (aluno ou professor)
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -174,7 +190,6 @@ struct ProfileView: View {
         }
     }
 
-    // Voltar: no fluxo do professor deve retornar para Alunos (TeacherStudentsListView)
     private func pop() {
         if session.userType != .STUDENT {
             path.removeAll()
@@ -191,7 +206,6 @@ struct ProfileView: View {
         path.removeLast()
     }
 
-    // Carrega informações do usuário e status do plano do Firestore
     private func loadUserData() async {
         let uid = currentUid
         guard !uid.isEmpty else {
@@ -239,13 +253,11 @@ struct ProfileView: View {
         }
     }
 
-    // Abre modal para edição da unidade de treino
     private func openTrocarUnidade() {
         unidadeDraft = unitName
         showTrocarUnidadeAlert = true
     }
 
-    // Persiste nova unidade de treino no Firestore
     private func salvarUnidade() async {
         let uid = currentUid
         guard !uid.isEmpty else { return }
@@ -265,7 +277,6 @@ struct ProfileView: View {
     private var planoStatusForeground: Color { isPlanActive ? Color.green.opacity(0.9) : Color.red.opacity(0.95) }
     private var planoStatusBackground: Color { isPlanActive ? Color.green.opacity(0.16) : Color.red.opacity(0.18) }
 
-    // Exibe card com avatar, nome do usuário e unidade de treino
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
@@ -287,7 +298,6 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
-    // Lista opções do perfil (unidade, planos, check-ins, mensagens, feedbacks)
     private func optionsCard() -> some View {
         VStack(spacing: 0) {
 
@@ -301,6 +311,11 @@ struct ProfileView: View {
                 title: "Planos",
                 trailing: .coloredBadge(planoStatusTexto, fg: planoStatusForeground, bg: planoStatusBackground)
             )
+
+            divider()
+            optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
+                showMeusIconesModal = true
+            }
 
             if session.userType == .STUDENT {
                 divider()
@@ -319,7 +334,6 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
-    // Linha divisória entre opções do menu
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
@@ -333,7 +347,6 @@ struct ProfileView: View {
         case coloredBadge(String, fg: Color, bg: Color)
     }
 
-    // Renderiza linha de opção com ícone, título e indicador à direita
     private func optionRow(
         icon: String,
         title: String,
@@ -352,7 +365,6 @@ struct ProfileView: View {
         }
     }
 
-    // Conteúdo visual da linha de opção
     private func optionRowContent(icon: String, title: String, trailing: Trailing) -> some View {
         HStack(spacing: 14) {
 
@@ -397,7 +409,6 @@ struct ProfileView: View {
         .padding(.vertical, 14)
     }
 
-    // Botão para deslogar usuário e retornar à tela de login
     private func logoutButton() -> some View {
         Button {
             session.logout()
@@ -420,6 +431,105 @@ struct ProfileView: View {
                 .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
         }
         .buttonStyle(.plain)
+    }
+
+    private func meusIconesModal() -> some View {
+        NavigationStack {
+            ZStack {
+                Theme.Colors.headerBackground
+                    .ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Toque em um ícone para copiar o nome.")
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white.opacity(0.65))
+                                .padding(.top, 12)
+
+                            let columns: [GridItem] = [
+                                GridItem(.flexible(), spacing: 12),
+                                GridItem(.flexible(), spacing: 12)
+                            ]
+
+                            LazyVGrid(columns: columns, spacing: 12) {
+                                ForEach(treinoIcons, id: \.self) { iconName in
+                                    Button {
+                                        UIPasteboard.general.string = iconName
+                                        copiedIconName = iconName
+                                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.3) {
+                                            if copiedIconName == iconName {
+                                                copiedIconName = nil
+                                            }
+                                        }
+                                    } label: {
+                                        HStack(spacing: 12) {
+                                            Image(systemName: iconName)
+                                                .font(.system(size: 18, weight: .semibold))
+                                                .foregroundColor(.green.opacity(0.9))
+                                                .frame(width: 28)
+
+                                            Text(iconName)
+                                                .font(.system(size: 14, weight: .semibold))
+                                                .foregroundColor(.white.opacity(0.92))
+                                                .lineLimit(1)
+                                                .minimumScaleFactor(0.85)
+
+                                            Spacer(minLength: 0)
+                                        }
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 12)
+                                        .frame(maxWidth: .infinity)
+                                        .background(Theme.Colors.cardBackground)
+                                        .cornerRadius(14)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            }
+
+                            Color.clear.frame(height: 18)
+                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                if let copied = copiedIconName {
+                    VStack {
+                        Spacer()
+                        Text("Copiado: \(copied)")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(
+                                Capsule()
+                                    .fill(Color.black.opacity(0.35))
+                                    .overlay(
+                                        Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                    )
+                            )
+                            .padding(.bottom, 18)
+                    }
+                    .transition(.opacity)
+                    .animation(.easeInOut(duration: 0.18), value: copiedIconName)
+                }
+            }
+            .navigationTitle("Meus Ícones")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Fechar") {
+                        showMeusIconesModal = false
+                    }
+                    .foregroundColor(.green)
+                }
+            }
+        }
     }
 }
 

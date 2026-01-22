@@ -65,6 +65,30 @@ struct StudentPersonalRecordsView: View {
                                         if item.sectionKey == "endurance" {
                                             path.append(.studentPersonalRecordsEndurance)
                                         }
+
+                                        if item.sectionKey == "notables" {
+                                            path.append(.studentPersonalRecordsNotables)
+                                        }
+
+                                        if item.sectionKey == "girls" {
+                                            path.append(.studentPersonalRecordsGirls)
+                                        }
+
+                                        if item.sectionKey == "open" {
+                                            path.append(.studentPersonalRecordsOpen)
+                                        }
+
+                                        if item.sectionKey == "theHeroes" {
+                                            path.append(.studentPersonalRecordsHeroes)
+                                        }
+
+                                        if item.sectionKey == "campeonatos" {
+                                            path.append(.studentPersonalRecordsCampeonatos)
+                                        }
+
+                                        if item.sectionKey == "crossfitGames" {
+                                            path.append(.studentPersonalRecordsCrossfitGames)
+                                        }
                                     }
                                 }
                             }

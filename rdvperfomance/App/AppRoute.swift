@@ -80,14 +80,16 @@ enum AppRoute: Hashable {
     case studentMessages(category: TreinoTipo)
     case studentFeedbacks(category: TreinoTipo)
 
-    // ✅ NOVO: Recorde Pessoal (Aluno)
     case studentPersonalRecords
-
-    // ✅ NOVO: Recorde Pessoal > Barbell (Aluno)
     case studentPersonalRecordsBarbell
-
-    // ✅ NOVO: Recorde Pessoal > Gymnastic (Aluno)
     case studentPersonalRecordsGymnastic
+    case studentPersonalRecordsEndurance
+    case studentPersonalRecordsNotables
+    case studentPersonalRecordsGirls
+    case studentPersonalRecordsOpen
+    case studentPersonalRecordsHeroes
+    case studentPersonalRecordsCampeonatos
+    case studentPersonalRecordsCrossfitGames
 
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)

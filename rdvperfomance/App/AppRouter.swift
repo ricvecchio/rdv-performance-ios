@@ -154,6 +154,41 @@ struct AppRouter: View {
                             StudentGymnasticPersonalRecordsView(path: $path)
                         }
 
+                    case .studentPersonalRecordsEndurance:
+                        guardedStudent {
+                            StudentEndurancePersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsNotables:
+                        guardedStudent {
+                            StudentNotablesPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsGirls:
+                        guardedStudent {
+                            StudentGirlsPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsOpen:
+                        guardedStudent {
+                            StudentOpenPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsHeroes:
+                        guardedStudent {
+                            StudentHeroesPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsCampeonatos:
+                        guardedStudent {
+                            StudentCampeonatosPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsCrossfitGames:
+                        guardedStudent {
+                            StudentCrossfitGamesPersonalRecordsView(path: $path)
+                        }
+
                     case .sobre:
                         guardedHome { AboutView(path: $path) }
 
