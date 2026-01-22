@@ -65,7 +65,13 @@ struct StudentBarbellPersonalRecordsView: View {
         .init(name: "Snatch", storageKey: "snatch"),
         .init(name: "Snatch Balance", storageKey: "snatch_balance"),
         .init(name: "Snatch Deadlift", storageKey: "snatch_deadlift"),
-        .init(name: "Snatch Pull", storageKey: "snatch_pull")
+        .init(name: "Snatch Pull", storageKey: "snatch_pull"),
+        .init(name: "Split Jerk", storageKey: "split_jerk"),
+        .init(name: "Squat Jerk", storageKey: "squat_jerk"),
+        .init(name: "Squat Snatch", storageKey: "squat_snatch"),
+        .init(name: "Sumo Deadlift", storageKey: "sumo_deadlift"),
+        .init(name: "Sumo Deadlift High Pull", storageKey: "sumo_deadlift_high_pull"),
+        .init(name: "Thruster", storageKey: "thruster")
     ]
 
     // Persistência simples (UserDefaults via AppStorage)
