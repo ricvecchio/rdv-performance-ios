@@ -37,6 +37,28 @@ struct StudentDayDetailView: View {
     @State private var showRemoveVideoConfirm: Bool = false
     @State private var videoPendingRemove: VideoDayItem? = nil
 
+    // MARK: - ✅ Unidade de medida (kg / lbs) vinda do Settings
+    private enum WeightUnit: String {
+        case kg
+        case lbs
+
+        var shortLabel: String {
+            switch self {
+            case .kg: return "kg"
+            case .lbs: return "lbs"
+            }
+        }
+    }
+
+    private let preferredWeightUnitKey: String = "preferredWeightUnit"
+
+    @AppStorage("preferredWeightUnit")
+    private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
+
+    private var preferredWeightUnit: WeightUnit {
+        WeightUnit(rawValue: preferredWeightUnitRawState) ?? .kg
+    }
+
     // MARK: - Modelo local para exibir vídeo vindo de BlockFS
     private struct VideoDayItem: Identifiable, Hashable {
         let blockId: String
@@ -260,6 +282,12 @@ struct StudentDayDetailView: View {
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
         .onAppear {
+            // garante que, se o Settings usar UserDefaults direto, ainda assim sincroniza aqui.
+            let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
+            if preferredWeightUnitRawState != raw {
+                preferredWeightUnitRawState = raw
+            }
+
             loadSavedCalcIfExists()
         }
         .onChange(of: selectedMovementKey) { _, _ in
@@ -563,11 +591,22 @@ struct StudentDayDetailView: View {
 
     private func calculatedWeightText() -> String {
         guard let key = selectedMovementKey else { return "—" }
-        guard let pr = loadPR(for: key), pr > 0 else { return "—" }
+        guard let prKg = loadPR(for: key), prKg > 0 else { return "—" }
         guard let pct = parsePercent(), pct > 0 else { return "—" }
 
-        let result = pr * (pct / 100.0)
-        return "\(formatNumber(result)) kg"
+        let resultKg = prKg * (pct / 100.0)
+        let display = convertFromStorageKgToPreferredUnit(resultKg)
+
+        return "\(formatNumber(display)) \(preferredWeightUnit.shortLabel)"
+    }
+
+    private func convertFromStorageKgToPreferredUnit(_ kg: Double) -> Double {
+        switch preferredWeightUnit {
+        case .kg:
+            return kg
+        case .lbs:
+            return kg * 2.2046226218
+        }
     }
 
     private func parsePercent() -> Double? {

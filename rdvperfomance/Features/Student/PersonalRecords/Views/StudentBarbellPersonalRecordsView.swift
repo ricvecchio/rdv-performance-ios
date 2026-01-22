@@ -19,6 +19,27 @@ struct StudentBarbellPersonalRecordsView: View {
         let storageKey: String
     }
 
+    private enum WeightUnit: String {
+        case kg
+        case lbs
+
+        var shortLabel: String {
+            switch self {
+            case .kg: return "kg"
+            case .lbs: return "lbs"
+            }
+        }
+    }
+
+    private let preferredWeightUnitKey: String = "preferredWeightUnit"
+
+    private var preferredWeightUnit: WeightUnit {
+        WeightUnit(rawValue: preferredWeightUnitRawState) ?? .kg
+    }
+
+    @AppStorage("preferredWeightUnit")
+    private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
+
     // ✅ Dados fixos conforme solicitado
     private let moves: [BarbellMove] = [
         .init(name: "Back Squat", storageKey: "back_squat"),
@@ -130,7 +151,7 @@ struct StudentBarbellPersonalRecordsView: View {
                     path: $path,
                     kind: .agendaSobrePerfil(
                         isAgendaSelected: false,
-                        isSobreSelected: true,   // ✅ aqui representa "Recordes"
+                        isSobreSelected: true,
                         isPerfilSelected: false
                     )
                 )
@@ -168,6 +189,12 @@ struct StudentBarbellPersonalRecordsView: View {
         .sheet(isPresented: $showAddMoveSheet) {
             addMoveSheet()
         }
+        .onAppear {
+            let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
+            if preferredWeightUnitRawState != raw {
+                preferredWeightUnitRawState = raw
+            }
+        }
     }
 
     // MARK: - Tabela (Sugestão 2)
@@ -190,7 +217,7 @@ struct StudentBarbellPersonalRecordsView: View {
                     Rectangle()
                         .fill(Color.white.opacity(0.08))
                         .frame(height: 1)
-                        .padding(.leading, 14) // separador recuado p/ ficar mais "iOS"
+                        .padding(.leading, 14)
                 }
             }
         }
@@ -205,7 +232,6 @@ struct StudentBarbellPersonalRecordsView: View {
     private func tableHeader() -> some View {
         HStack(spacing: 10) {
 
-            // Espaço do ícone nas linhas, para alinhar o texto
             Color.clear
                 .frame(width: 26, height: 1)
 
@@ -215,7 +241,7 @@ struct StudentBarbellPersonalRecordsView: View {
 
             Spacer()
 
-            Text("PR (kg)")
+            Text("PR (\(preferredWeightUnit.shortLabel))")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -224,11 +250,12 @@ struct StudentBarbellPersonalRecordsView: View {
     }
 
     private func tableRow(move: BarbellMove) -> some View {
-        let value = loadValue(for: move.storageKey)
+        let storedKgValue = loadValue(for: move.storageKey)
+        let displayValue = storedKgValue.map { convertFromStorageKgToPreferredUnit($0) }
 
         return Button {
             selectedMove = move
-            inputValue = value.map { formatNumber($0) } ?? ""
+            inputValue = displayValue.map { formatNumber($0) } ?? ""
             showEditSheet = true
         } label: {
             HStack(spacing: 10) {
@@ -246,8 +273,8 @@ struct StudentBarbellPersonalRecordsView: View {
 
                 Spacer()
 
-                if let value {
-                    Text(formatNumber(value))
+                if let displayValue {
+                    Text(formatNumber(displayValue))
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                 } else {
@@ -286,14 +313,14 @@ struct StudentBarbellPersonalRecordsView: View {
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                Text("Informe sua carga máxima em kg. Para remover, deixe vazio.")
+                Text("Informe sua carga máxima em \(preferredWeightUnit.shortLabel). Para remover, deixe vazio.")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Carga máxima (kg)")
+                    Text("Carga máxima (\(preferredWeightUnit.shortLabel))")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.75))
 
@@ -313,7 +340,7 @@ struct StudentBarbellPersonalRecordsView: View {
                                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
                             )
 
-                        Text("kg")
+                        Text(preferredWeightUnit.shortLabel)
                             .font(.system(size: 14, weight: .bold))
                             .foregroundColor(.white.opacity(0.70))
                     }
@@ -409,7 +436,7 @@ struct StudentBarbellPersonalRecordsView: View {
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                Text("Crie um movimento e, se quiser, já informe a carga máxima em kg.")
+                Text("Crie um movimento e, se quiser, já informe a carga máxima em \(preferredWeightUnit.shortLabel).")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
@@ -438,7 +465,7 @@ struct StudentBarbellPersonalRecordsView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Carga máxima (kg) (opcional)")
+                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)) (opcional)")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
@@ -458,7 +485,7 @@ struct StudentBarbellPersonalRecordsView: View {
                                         .stroke(Color.white.opacity(0.08), lineWidth: 1)
                                 )
 
-                            Text("kg")
+                            Text(preferredWeightUnit.shortLabel)
                                 .font(.system(size: 14, weight: .bold))
                                 .foregroundColor(.white.opacity(0.70))
                         }
@@ -542,7 +569,8 @@ struct StudentBarbellPersonalRecordsView: View {
             .trimmingCharacters(in: .whitespacesAndNewlines)
 
         if !trimmedValue.isEmpty, let value = Double(trimmedValue), value > 0 {
-            saveValue(value, for: key)
+            let storageKg = convertFromPreferredUnitToStorageKg(value)
+            saveValue(storageKg, for: key)
         }
 
         showAddMoveSheet = false
@@ -561,7 +589,8 @@ struct StudentBarbellPersonalRecordsView: View {
         }
 
         if let value = Double(trimmed), value > 0 {
-            saveValue(value, for: move.storageKey)
+            let storageKg = convertFromPreferredUnitToStorageKg(value)
+            saveValue(storageKg, for: move.storageKey)
         }
     }
 
@@ -588,6 +617,24 @@ struct StudentBarbellPersonalRecordsView: View {
         formatter.minimumFractionDigits = 0
         formatter.decimalSeparator = "."
         return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    private func convertFromStorageKgToPreferredUnit(_ kg: Double) -> Double {
+        switch preferredWeightUnit {
+        case .kg:
+            return kg
+        case .lbs:
+            return kg * 2.2046226218
+        }
+    }
+
+    private func convertFromPreferredUnitToStorageKg(_ value: Double) -> Double {
+        switch preferredWeightUnit {
+        case .kg:
+            return value
+        case .lbs:
+            return value / 2.2046226218
+        }
     }
 
     private func pop() {

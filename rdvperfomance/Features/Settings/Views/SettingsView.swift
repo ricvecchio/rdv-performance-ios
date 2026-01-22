@@ -179,7 +179,6 @@ struct SettingsView: View {
     private func supportLegalCard() -> some View {
         card {
 
-            // ✅ NOVO: "Sobre" agora fica aqui (primeiro item do bloco)
             cardRow(icon: "info.circle.fill", title: "Sobre") {
                 path.append(.sobre)
             }
