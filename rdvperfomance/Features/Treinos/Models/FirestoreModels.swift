@@ -20,7 +20,7 @@ struct AppUser: Identifiable, Codable, Hashable {
 
     var unitName: String?
 
-    // ✅ NOVO: foto persistida no Firestore (Base64)
+    // ✅ foto persistida no Firestore (Base64)
     var photoBase64: String?
 }
 
@@ -31,3 +31,27 @@ struct TeacherStudentRelation: Identifiable, Codable, Hashable {
     var studentId: String
     var categories: [String]
 }
+
+/// Convite do professor -> aluno (para aparecer como "Convite pendente" na Agenda)
+struct TeacherStudentInviteFS: Identifiable, Codable, Hashable {
+    @DocumentID var id: String?
+    var teacherId: String
+    var teacherEmail: String
+    var studentEmail: String
+    var status: String          // "pending" | "accepted" | "declined"
+    var createdAt: Timestamp?
+    var updatedAt: Timestamp?
+}
+
+/// Solicitação do aluno -> professor (fila de "Vincular aluno" do professor)
+struct TeacherStudentLinkRequestFS: Identifiable, Codable, Hashable {
+    @DocumentID var id: String?
+    var studentId: String
+    var studentEmail: String
+    var teacherId: String
+    var teacherEmail: String
+    var status: String          // "pending" | "accepted" | "declined"
+    var createdAt: Timestamp?
+    var updatedAt: Timestamp?
+}
+

@@ -18,6 +18,9 @@ struct StudentAgendaView: View {
     @StateObject private var vm: StudentAgendaViewModel
     private let contentMaxWidth: CGFloat = 380
 
+    @State private var isRequestLinkSheetPresented: Bool = false
+    @State private var teacherEmailInput: String = ""
+
     init(
         path: Binding<[AppRoute]>,
         studentId: String,
@@ -52,6 +55,12 @@ struct StudentAgendaView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
+
+                        // ✅ Banner de vínculo (somente aluno)
+                        if !isTeacherViewing {
+                            linkBannerCard
+                        }
+
                         header
                         contentCard
                     }
@@ -93,10 +102,18 @@ struct StudentAgendaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .navigationBarTitleDisplayMode(.inline) // ✅ ÚNICA MUDANÇA: evita cabeçalho grande
+        .navigationBarTitleDisplayMode(.inline)
 
         .onAppear {
-            Task { await vm.loadWeeksAndMeta() }
+            Task {
+                await vm.loadLinkStatusIfNeeded()
+                await vm.loadWeeksAndMeta()
+            }
+        }
+        .sheet(isPresented: $isRequestLinkSheetPresented) {
+            requestLinkSheet
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -143,6 +160,230 @@ struct StudentAgendaView: View {
                 .foregroundColor(.white.opacity(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // ✅ Card/banner de vínculo do aluno
+    private var linkBannerCard: some View {
+        Group {
+            switch vm.linkBannerState {
+
+            case .loading:
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack(spacing: 10) {
+                        ProgressView()
+                        Text("Verificando vínculo com professor...")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.9))
+                    }
+                    Text("Isso é necessário para receber treinos.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+
+            case .notLinked:
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "person.badge.plus")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.green.opacity(0.85))
+
+                        Text("Você ainda não está vinculado a um professor")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                    }
+
+                    Text("Para receber treinos, solicite o vínculo informando o e-mail do professor.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    Button {
+                        teacherEmailInput = ""
+                        isRequestLinkSheetPresented = true
+                    } label: {
+                        Text("Solicitar vínculo por e-mail")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.green.opacity(0.18)))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+
+            case .invitePending(let teacherEmail):
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "envelope.badge")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.green.opacity(0.85))
+
+                        Text("Convite pendente")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                    }
+
+                    Text("Você recebeu um convite de \(teacherEmail).")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    HStack(spacing: 10) {
+                        Button {
+                            Task { await vm.acceptPendingInvite() }
+                        } label: {
+                            Text("Aceitar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Capsule().fill(Color.green.opacity(0.20)))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(vm.isProcessingLinkAction)
+
+                        Button {
+                            Task { await vm.declinePendingInvite() }
+                        } label: {
+                            Text("Recusar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Capsule().fill(Color.white.opacity(0.08)))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(vm.isProcessingLinkAction)
+
+                        Spacer(minLength: 0)
+
+                        if vm.isProcessingLinkAction {
+                            ProgressView()
+                        }
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+
+            case .linked:
+                EmptyView()
+
+            case .error(let message):
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.yellow.opacity(0.9))
+
+                        Text("Não foi possível verificar o vínculo")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                    }
+
+                    Text(message)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    Button {
+                        Task { await vm.loadLinkStatus(force: true) }
+                    } label: {
+                        Text("Tentar novamente")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+            }
+        }
+    }
+
+    private var requestLinkSheet: some View {
+        ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 14) {
+
+                Text("Solicitar vínculo")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text("Digite o e-mail do professor para enviar a solicitação.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("E-mail do professor")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.75))
+
+                    TextField("professor@email.com", text: $teacherEmailInput)
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.emailAddress)
+                        .autocorrectionDisabled(true)
+                        .padding(12)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(12)
+                        .foregroundColor(.white.opacity(0.92))
+                }
+
+                if let msg = vm.linkActionMessage {
+                    Text(msg)
+                        .font(.system(size: 13))
+                        .foregroundColor(vm.linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        isRequestLinkSheetPresented = false
+                    } label: {
+                        Text("Cancelar")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.white.opacity(0.08)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isProcessingLinkAction)
+
+                    Button {
+                        Task {
+                            let ok = await vm.requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                            if ok {
+                                isRequestLinkSheetPresented = false
+                            }
+                        }
+                    } label: {
+                        Text("Enviar solicitação")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.green.opacity(0.20)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isProcessingLinkAction)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+        }
     }
 
     // Conteúdo principal com estados (loading / error / empty / list)
@@ -284,4 +525,3 @@ struct StudentAgendaView: View {
         path.removeLast()
     }
 }
-

@@ -12,6 +12,17 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     @Published private(set) var isUnlinking: Bool = false
 
+    // ✅ NOVO: convites
+    @Published private(set) var invites: [TeacherStudentInviteFS] = []
+    @Published private(set) var isInvitesLoading: Bool = false
+    @Published private(set) var invitesErrorMessageInline: String? = nil
+
+    @Published var inviteErrorMessage: String? = nil
+    @Published var showInviteErrorAlert: Bool = false
+
+    @Published var inviteSuccessMessage: String? = nil
+    @Published var showInviteSuccessAlert: Bool = false
+
     private let repository: FirestoreRepository
 
     // Cache por categoria e categorias suportadas
@@ -126,6 +137,91 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isUnlinking = false
     }
 
+    // MARK: - ✅ Convites (Professor -> Aluno)
+
+    func loadInvites(teacherId: String) async {
+        isInvitesLoading = true
+        invitesErrorMessageInline = nil
+        defer { isInvitesLoading = false }
+
+        do {
+            let list = try await repository.getInvitesSentByTeacher(teacherId: teacherId, status: nil, limit: 50)
+            self.invites = list
+        } catch {
+            self.invites = []
+            self.invitesErrorMessageInline = (error as NSError).localizedDescription
+        }
+    }
+
+    func sendInviteByEmail(teacherId: String, studentEmail: String) async {
+        let email = studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !email.isEmpty else {
+            setInviteError("Informe o e-mail do aluno.")
+            return
+        }
+
+        isInvitesLoading = true
+        invitesErrorMessageInline = nil
+        defer { isInvitesLoading = false }
+
+        do {
+            // Busca e-mail do professor pelo perfil (não depende do session ter email)
+            let teacher = try await repository.getUser(uid: teacherId)
+            let teacherEmail = teacher?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+            if teacherEmail.isEmpty {
+                setInviteError("Não foi possível identificar o e-mail do professor.")
+                return
+            }
+
+            _ = try await repository.createTeacherInviteByEmail(
+                teacherId: teacherId,
+                teacherEmail: teacherEmail,
+                studentEmail: email
+            )
+
+            inviteSuccessMessage = "Convite enviado para \(email)."
+            showInviteSuccessAlert = true
+
+            let list = try await repository.getInvitesSentByTeacher(teacherId: teacherId, status: nil, limit: 50)
+            self.invites = list
+
+        } catch {
+            setInviteError((error as NSError).localizedDescription)
+        }
+    }
+
+    func cancelInvite(inviteId: String) async {
+        let id = inviteId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !id.isEmpty else { return }
+
+        isInvitesLoading = true
+        invitesErrorMessageInline = nil
+        defer { isInvitesLoading = false }
+
+        do {
+            try await repository.cancelTeacherInvite(inviteId: id)
+        } catch {
+            setInviteError((error as NSError).localizedDescription)
+        }
+    }
+
+    func statusText(_ raw: String) -> String {
+        let v = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if v == "pending" { return "Pendente" }
+        if v == "accepted" { return "Aceito" }
+        if v == "declined" { return "Recusado" }
+        if v == "cancelled" { return "Cancelado" }
+        return raw.isEmpty ? "—" : raw
+    }
+
+    func setInviteError(_ msg: String) {
+        inviteErrorMessage = msg
+        showInviteErrorAlert = true
+    }
+
+    // MARK: - Helpers existentes
+
     // Retorna categorias onde o aluno está vinculado
     private func categoriesWhereStudentIsLinked(studentId: String) -> [TreinoTipo] {
         let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -164,3 +260,4 @@ final class TeacherStudentsListViewModel: ObservableObject {
         return "\(name)|\(email)"
     }
 }
+
