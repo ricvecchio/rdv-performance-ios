@@ -127,7 +127,7 @@ struct RegisterTrainerView: View {
             )
 
             UnderlineTextField(
-                title: "CREF",
+                title: "CREF (opcional)",
                 text: $vm.cref,
                 isSecure: false,
                 showPassword: .constant(false),

@@ -39,17 +39,20 @@ final class RegisterViewModel: ObservableObject {
         let passTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
         let phoneTrim = phone.trimmingCharacters(in: .whitespacesAndNewlines)
 
+        let crefTrim = cref.trimmingCharacters(in: .whitespacesAndNewlines)
+        let bioTrim = bio.trimmingCharacters(in: .whitespacesAndNewlines)
+        let gymNameTrim = gymName.trimmingCharacters(in: .whitespacesAndNewlines)
+
         guard !nameTrim.isEmpty else { errorMessage = "Informe seu nome."; return }
         guard !emailTrim.isEmpty else { errorMessage = "Informe seu e-mail."; return }
         guard !passTrim.isEmpty else { errorMessage = "Informe sua senha."; return }
 
-        if userType == .TRAINER {
-            let crefTrim = cref.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !crefTrim.isEmpty else { errorMessage = "Informe seu CREF."; return }
-        }
-
-        isLoading = true
-        defer { isLoading = false }
+        // ✅ Ajuste solicitado: CREF não é obrigatório para professor.
+        // Se estiver vazio, será salvo como nil (não grava string vazia).
+        let crefValueForTrainer: String? = {
+            guard userType == .TRAINER else { return nil }
+            return crefTrim.isEmpty ? nil : crefTrim
+        }()
 
         let form = RegisterFormDTO(
             name: nameTrim,
@@ -58,12 +61,15 @@ final class RegisterViewModel: ObservableObject {
             phone: phoneTrim.isEmpty ? nil : phoneTrim,
             userType: userType,
             focusArea: focusArea.rawValue,
-            cref: userType == .TRAINER ? cref.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
-            bio: userType == .TRAINER ? bio.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
-            gymName: userType == .TRAINER ? gymName.trimmingCharacters(in: .whitespacesAndNewlines) : nil,
+            cref: crefValueForTrainer,
+            bio: userType == .TRAINER ? (bioTrim.isEmpty ? nil : bioTrim) : nil,
+            gymName: userType == .TRAINER ? (gymNameTrim.isEmpty ? nil : gymNameTrim) : nil,
             defaultCategory: userType == .STUDENT ? "crossfit" : nil,
             active: userType == .STUDENT ? true : nil
         )
+
+        isLoading = true
+        defer { isLoading = false }
 
         do {
             let createdUid: String = try await service.register(form)
@@ -95,3 +101,4 @@ final class RegisterViewModel: ObservableObject {
         successMessage = nil
     }
 }
+

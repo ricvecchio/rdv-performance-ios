@@ -147,6 +147,9 @@ struct LoginView: View {
         lastLoginEmail = vm.email
         lastLoginPassword = vm.password
 
+        // ✅ Ajuste mínimo: força o carregamento do perfil após login
+        await session.refreshProfile()
+
         for _ in 0..<20 {
             if session.userType != nil { break }
             try? await Task.sleep(nanoseconds: 120_000_000) // 0.12s
