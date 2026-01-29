@@ -53,8 +53,15 @@ struct ProfileView: View {
     @State private var showMeusIconesModal: Bool = false
     @State private var copiedIconName: String? = nil
 
+    @State private var showPlanosModal: Bool = false
+    @State private var planoSliderValue: Double = 0.0
+    @State private var showConfirmacaoPro: Bool = false
+    @State private var showSimulacaoOkAlert: Bool = false
+    @State private var isConfirmingPro: Bool = false
+    @State private var showCancelarPlanoConfirm: Bool = false
+    @State private var isCancelingPlan: Bool = false
+
     private let treinoIcons = [
-        // Básicos que você já usa
         "dumbbell",
         "figure.run",
         "figure.walk",
@@ -67,8 +74,6 @@ struct ProfileView: View {
         "checkmark.seal.fill",
         "chart.bar.fill",
         "person.2.fill",
-
-        // Cross training / funcional
         "figure.cross.training",
         "figure.cross.training.circle",
         "figure.flexibility",
@@ -77,8 +82,6 @@ struct ProfileView: View {
         "figure.mixed.cardio",
         "figure.yoga",
         "figure.pilates",
-
-        // Musculação / força
         "figure.strengthtraining.functional",
         "figure.strengthtraining.functional.circle",
         "figure.cooldown",
@@ -87,33 +90,25 @@ struct ProfileView: View {
         "figure.stand",
         "figure.squat",
         "figure.lunge",
-
-        // Cardio / condicionamento
         "figure.rower",
         "figure.stair.stepper",
         "figure.outdoor.cycle",
         "figure.indoor.cycle",
         "figure.jumprope",
         "figure.hiking",
-
-        // Equipamentos / treino simbólicos
         "dumbbell.fill",
-        "backpack.fill",          // bolsa de treino / gym bag
-        "waterbottle.fill",       // hidratação
+        "backpack.fill",
+        "waterbottle.fill",
         "timer",
         "speedometer",
         "target",
         "scope",
         "line.diagonal.arrow",
         "arrow.triangle.2.circlepath",
-
-        // Saúde / corpo / performance
         "lungs.fill",
         "waveform.path.ecg",
         "heart.text.square.fill",
         "figure.mind.and.body",
-
-        // Performance / progresso
         "chart.line.uptrend.xyaxis",
         "chart.pie.fill",
         "medal.fill",
@@ -121,95 +116,75 @@ struct ProfileView: View {
         "star.fill",
         "crown.fill",
         "flag.checkered",
-        
-        // === NOVOS ÍCONES ADICIONADOS ===
-        
-        // **EQUIPAMENTOS DE CROSSFIT**
-        "figure.boxing",               // Saco de pancada / boxe
-        "figure.climbing",             // Corda de escalada
-        "figure.fall",                 // Caixa de salto (drop)
-        "figure.handball",             // Bola medicinal / wall ball
-        "figure.rolling",              // Pneu de arrasto
-        "figure.surfing",              // Remo ergômetro / ski erg
-        
-        // **EQUIPAMENTOS DE ACADEMIA**
-        "bolt.badge.a.fill",           // Máquinas elétricas
-        "bolt.trianglebadge.exclamationmark.fill", // Power rack
-        "cablecar.fill",               // Máquina de cabo
-        "chevron.up.square.fill",      // Leg press / hack squat
-        "cylinder.split.1x2.fill",     // Anilhas / discos
-        "figure.2.arms.open",          // Peck deck / crucifixo
-        "figure.seated.seatbelt",      // Máquina sentada
-        "hand.raised.square.fill",     // Luvas de treino
-        "heart.square.fill",           // Monitor cardíaco
-        "lanyardcard.fill",            // Acessórios de segurança
-        "macpro.gen3.fill",            // Rack de pesos (metáfora)
-        "oval.fill",                   // Kettlebell
-        "oval.portrait.fill",          // Bola suíça / physioball
-        "pill.fill",                   // Suplementos
-        "play.square.fill",            // Início de circuito
-        "powerplug.fill",              // Energia / potência
-        "restart.circle.fill",         // Recomeçar / circuito
-        "road.lanes.curved.left",      // Trilha de corrida / pista
-        "squareshape.dotted.squareshape", // Grade / jaula
-        "trapezoid.and.line.horizontal.fill", // Banco de exercícios
-        "triangle.fill",               // Pirâmide / carga progressiva
-        "wrench.adjustable.fill",      // Ajustes de equipamento
-        
-        // **MOVIMENTOS ESPECÍFICOS**
-        "arrow.up.and.down.circle.fill",     // Thrusters / clean & jerk
-        "arrow.uturn.up.circle.fill",        // Burpees / movimentos complexos
-        "circle.grid.cross.fill",            // Snatch / arranco
-        "figure.core.training.circle.fill",  // Core training
-        "figure.open.water.swim",            // Nado seco / butterfly
-        "rotate.3d.fill",                    // Rotação / torção
-        
-        // **ACESSÓRIOS E SEGURANÇA**
-        "bandage.fill",                      // Faixas / wraps
-        "bell.and.waves.left.and.right.fill",// Sinal sonoro / timer
-        "handbag.fill",                      // Bolsa de equipamentos
-        "headphones.circle.fill",            // Fones de ouvido
-        "lock.shield.fill",                  // Cadeado / segurança
-        "shoe.circle.fill",                  // Tênis de treino
-        "wave.3.backward.circle.fill",       // Respiração / wind
-        
-        // **MEDIÇÃO E CONTROLE**
-        "gauge.with.dots.needle.bottom.0percent",  // Medidor de esforço
+        "figure.boxing",
+        "figure.climbing",
+        "figure.fall",
+        "figure.handball",
+        "figure.rolling",
+        "figure.surfing",
+        "bolt.badge.a.fill",
+        "bolt.trianglebadge.exclamationmark.fill",
+        "cablecar.fill",
+        "chevron.up.square.fill",
+        "cylinder.split.1x2.fill",
+        "figure.2.arms.open",
+        "figure.seated.seatbelt",
+        "hand.raised.square.fill",
+        "heart.square.fill",
+        "lanyardcard.fill",
+        "macpro.gen3.fill",
+        "oval.fill",
+        "oval.portrait.fill",
+        "pill.fill",
+        "play.square.fill",
+        "powerplug.fill",
+        "restart.circle.fill",
+        "road.lanes.curved.left",
+        "squareshape.dotted.squareshape",
+        "trapezoid.and.line.horizontal.fill",
+        "triangle.fill",
+        "wrench.adjustable.fill",
+        "arrow.up.and.down.circle.fill",
+        "arrow.uturn.up.circle.fill",
+        "circle.grid.cross.fill",
+        "figure.core.training.circle.fill",
+        "figure.open.water.swim",
+        "rotate.3d.fill",
+        "bandage.fill",
+        "bell.and.waves.left.and.right.fill",
+        "handbag.fill",
+        "headphones.circle.fill",
+        "lock.shield.fill",
+        "shoe.circle.fill",
+        "wave.3.backward.circle.fill",
+        "gauge.with.dots.needle.bottom.0percent",
         "gauge.with.dots.needle.bottom.50percent",
         "gauge.with.dots.needle.bottom.100percent",
-        "barometer",                         // Pressão / intensidade
-        "thermometer",                       // Temperatura corporal
-        "wind",                              // Ventilação / fôlego
-        
-        // **ESTRUTURA E ORGANIZAÇÃO**
-        "list.bullet.rectangle.fill",        // Planilha de treino
-        "list.clipboard.fill",               // Clipboard de treino
-        "menucard.fill",                     // Cardápio de exercícios
-        "tablecells.fill",                   // Grade de exercícios
-        "tag.fill",                          // Etiqueta de exercício
-        "text.page",                         // Descrição técnica
-        "wifi.router.fill",                  // Conexão / app conectado
-        
-        // **COMPETIÇÃO E DESAFIO**
-        "flag.2.crossed.fill",               // Competição
-        "hourglass",                         // Contagem regressiva
-        "lines.measurement.horizontal",      // Marcação de recorde
-        "sportscourt",                       // Box de CrossFit
-        "stairs",                            // Escada / step-up
-        
-        // **RECUPERAÇÃO**
-        "bed.double.fill",                   // Descanso
-        "drop.fill",                         // Hidratação extra
-        "fork.knife",                        // Nutrição pós-treino
-        "tshirt.fill",                      // Roupa de treino
-        "wind.snow.circle.fill",            // Geladeira / água fria
-        
-        // **COMUNIDADE E SOCIAL**
-        "person.3.fill",                    // Grupo / classe
-        "megaphone.fill",                   // Coach instruindo
-        "plus.bubble.fill",                 // Feedback positivo
-        "quote.bubble.fill",                // Dicas técnicas
-        "video.fill"                        // Demonstração em vídeo
+        "barometer",
+        "thermometer",
+        "wind",
+        "list.bullet.rectangle.fill",
+        "list.clipboard.fill",
+        "menucard.fill",
+        "tablecells.fill",
+        "tag.fill",
+        "text.page",
+        "wifi.router.fill",
+        "flag.2.crossed.fill",
+        "hourglass",
+        "lines.measurement.horizontal",
+        "sportscourt",
+        "stairs",
+        "bed.double.fill",
+        "drop.fill",
+        "fork.knife",
+        "tshirt.fill",
+        "wind.snow.circle.fill",
+        "person.3.fill",
+        "megaphone.fill",
+        "plus.bubble.fill",
+        "quote.bubble.fill",
+        "video.fill"
     ]
 
     var body: some View {
@@ -301,11 +276,46 @@ struct ProfileView: View {
         } message: {
             Text(errorMessage ?? "")
         }
+        .alert("Simulação", isPresented: $showSimulacaoOkAlert) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Plano Pro ativado com sucesso (simulação). Nenhuma cobrança foi realizada.")
+        }
+        .alert("Cancelar Plano", isPresented: $showCancelarPlanoConfirm) {
+            Button("Voltar", role: .cancel) { }
+            Button("Confirmar cancelamento", role: .destructive) {
+                Task {
+                    isCancelingPlan = true
+                    defer { isCancelingPlan = false }
+
+                    do {
+                        try await session.cancelTrainerProAndExpireTrial()
+                        showPlanosModal = false
+                        showConfirmacaoPro = false
+                        planoSliderValue = 0.0
+                    } catch {
+                        errorMessage = error.localizedDescription
+                        showErrorAlert = true
+                    }
+                }
+            }
+        } message: {
+            Text("Ao cancelar, seu plano volta para Free e o período de 30 dias ficará expirado. Você não poderá criar ou enviar novos treinos.")
+        }
         .sheet(isPresented: $showMeusIconesModal) {
             meusIconesModal()
         }
+        .sheet(isPresented: $showPlanosModal) {
+            planosModal()
+        }
         .task(id: currentUid) {
             await loadUserData()
+        }
+        .onChange(of: session.shouldPresentPlanModal) { _, should in
+            if should {
+                session.shouldPresentPlanModal = false
+                openPlanos()
+            }
         }
     }
 
@@ -417,9 +427,58 @@ struct ProfileView: View {
         }
     }
 
+    private func openPlanos() {
+        let plan = (session.planTypeRaw ?? "FREE").uppercased()
+        planoSliderValue = (plan == "PRO") ? 1.0 : 0.0
+        showConfirmacaoPro = false
+        isConfirmingPro = false
+        isCancelingPlan = false
+        showPlanosModal = true
+    }
+
     private var planoStatusTexto: String { isPlanActive ? "Ativo" : "Inativo" }
     private var planoStatusForeground: Color { isPlanActive ? Color.green.opacity(0.9) : Color.red.opacity(0.95) }
     private var planoStatusBackground: Color { isPlanActive ? Color.green.opacity(0.16) : Color.red.opacity(0.18) }
+
+    private var planosInfoTextoProfessor: String {
+        let plan = (session.planTypeRaw ?? "FREE").uppercased()
+        if plan == "PRO" {
+            return "PRO • Ativo"
+        }
+
+        guard let start = session.trialStartedAt else {
+            return "FREE • Faltam 0 dias"
+        }
+
+        let trialSeconds: TimeInterval = 30 * 24 * 60 * 60
+        let endDate = start.addingTimeInterval(trialSeconds)
+        let remainingSeconds = endDate.timeIntervalSince(Date())
+
+        let days = Int(ceil(remainingSeconds / (24 * 60 * 60)))
+        let safeDays = max(0, days)
+
+        return "FREE • Faltam \(safeDays) dias"
+    }
+
+    private var planosBadgeFgProfessor: Color {
+        let plan = (session.planTypeRaw ?? "FREE").uppercased()
+        if plan == "PRO" {
+            return Color.green.opacity(0.9)
+        }
+
+        let canUse = session.canUseTrainerProFeatures
+        return canUse ? Color.green.opacity(0.9) : Color.red.opacity(0.95)
+    }
+
+    private var planosBadgeBgProfessor: Color {
+        let plan = (session.planTypeRaw ?? "FREE").uppercased()
+        if plan == "PRO" {
+            return Color.green.opacity(0.16)
+        }
+
+        let canUse = session.canUseTrainerProFeatures
+        return canUse ? Color.green.opacity(0.16) : Color.red.opacity(0.18)
+    }
 
     private func profileCard() -> some View {
         VStack(spacing: 10) {
@@ -450,11 +509,21 @@ struct ProfileView: View {
             }
             divider()
 
-            optionRow(
-                icon: "crown.fill",
-                title: "Planos",
-                trailing: .coloredBadge(planoStatusTexto, fg: planoStatusForeground, bg: planoStatusBackground)
-            )
+            if session.userType == .STUDENT {
+                optionRow(
+                    icon: "crown.fill",
+                    title: "Planos",
+                    trailing: .coloredBadge(planoStatusTexto, fg: planoStatusForeground, bg: planoStatusBackground)
+                )
+            } else {
+                optionRow(
+                    icon: "crown.fill",
+                    title: "Planos",
+                    trailing: .coloredBadgeWithChevron(planosInfoTextoProfessor, fg: planosBadgeFgProfessor, bg: planosBadgeBgProfessor)
+                ) {
+                    openPlanos()
+                }
+            }
 
             if session.userType == .STUDENT {
                 divider()
@@ -467,14 +536,12 @@ struct ProfileView: View {
                     path.append(.studentFeedbacks(category: categoriaAtualAluno))
                 }
 
-                // ✅ Agora fica abaixo de Feedbacks
                 divider()
                 optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
                     showMeusIconesModal = true
                 }
 
             } else {
-                // Para professor (sem Feedbacks), mantém no card após Planos
                 divider()
                 optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
                     showMeusIconesModal = true
@@ -497,6 +564,7 @@ struct ProfileView: View {
         case text(String)
         case badge(String)
         case coloredBadge(String, fg: Color, bg: Color)
+        case coloredBadgeWithChevron(String, fg: Color, bg: Color)
     }
 
     private func optionRow(
@@ -555,6 +623,19 @@ struct ProfileView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(bg))
+
+            case .coloredBadgeWithChevron(let value, let fg, let bg):
+                HStack(spacing: 10) {
+                    Text(value)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(fg)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 6)
+                        .background(Capsule().fill(bg))
+
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.35))
+                }
             }
         }
         .padding(.horizontal, 16)
@@ -583,6 +664,190 @@ struct ProfileView: View {
                 .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
         }
         .buttonStyle(.plain)
+    }
+
+    private func planosModal() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            NavigationStack {
+                ZStack {
+                    Theme.Colors.headerBackground
+                        .ignoresSafeArea()
+
+                    VStack(alignment: .leading, spacing: 14) {
+
+                        Text("Planos")
+                            .font(.system(size: 20, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+
+                        Text("Arraste para simular a mudança de Free para Pro.")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.55))
+
+                        VStack(alignment: .leading, spacing: 10) {
+                            HStack {
+                                Text("Free")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.80))
+
+                                Spacer()
+
+                                Text("Pro")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.80))
+                            }
+
+                            Slider(value: $planoSliderValue, in: 0...1, step: 0.01)
+                                .tint(Color.green.opacity(0.85))
+                                .onChange(of: planoSliderValue) { _, newValue in
+                                    if newValue >= 0.90 {
+                                        showConfirmacaoPro = true
+                                    }
+                                }
+
+                            Text(planoSliderValue >= 0.90 ? "Selecionado: Pro" : "Selecionado: Free")
+                                .font(.system(size: 13, weight: .medium))
+                                .foregroundColor(.white.opacity(0.65))
+                        }
+                        .padding(14)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+
+                        Button {
+                            showCancelarPlanoConfirm = true
+                        } label: {
+                            HStack(spacing: 10) {
+                                Text("Cancelar Plano")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+
+                                Spacer()
+
+                                if isCancelingPlan {
+                                    ProgressView()
+                                }
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 12)
+                            .background(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .fill(Color.red.opacity(0.18))
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    )
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isCancelingPlan)
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(16)
+                }
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Fechar") {
+                            showPlanosModal = false
+                        }
+                        .foregroundColor(.green)
+                    }
+                }
+                .navigationDestination(isPresented: $showConfirmacaoPro) {
+                    confirmacaoProView()
+                }
+            }
+        }
+        .onAppear {
+            let plan = (session.planTypeRaw ?? "FREE").uppercased()
+            planoSliderValue = (plan == "PRO") ? 1.0 : 0.0
+        }
+    }
+
+    private func confirmacaoProView() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 14) {
+
+                Text("Confirmar Plano Pro")
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text("Valor: R$ 49,90")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.green.opacity(0.92))
+
+                Text("Esta é uma simulação. Nenhuma cobrança real será feita neste momento.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Spacer(minLength: 0)
+
+                HStack(spacing: 10) {
+                    Button {
+                        showConfirmacaoPro = false
+                        planoSliderValue = 0.0
+                    } label: {
+                        Text("Voltar")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.white.opacity(0.08)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isConfirmingPro)
+
+                    Button {
+                        Task {
+                            isConfirmingPro = true
+                            defer { isConfirmingPro = false }
+
+                            do {
+                                try await session.upgradeTrainerToProSimulated()
+                                showPlanosModal = false
+                                showConfirmacaoPro = false
+                                showSimulacaoOkAlert = true
+                            } catch {
+                                errorMessage = error.localizedDescription
+                                showErrorAlert = true
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text("Confirmar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+
+                            if isConfirmingPro {
+                                ProgressView()
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Capsule().fill(Color.green.opacity(0.20)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isConfirmingPro)
+                }
+            }
+            .padding(16)
+        }
+        .navigationBarBackButtonHidden(true)
+        .toolbar {
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Fechar") {
+                    showPlanosModal = false
+                    showConfirmacaoPro = false
+                }
+                .foregroundColor(.green)
+            }
+        }
     }
 
     private func meusIconesModal() -> some View {

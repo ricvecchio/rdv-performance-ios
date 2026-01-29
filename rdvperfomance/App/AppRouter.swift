@@ -8,6 +8,8 @@ struct AppRouter: View {
 
     private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
+    @State private var showPlanExpiredAlert: Bool = false
+
     var body: some View {
         NavigationStack(path: $path) {
 
@@ -77,7 +79,7 @@ struct AppRouter: View {
                         }
 
                     case .createTrainingWeek(let student, let category):
-                        guardedTeacher {
+                        guardedTeacherPro {
                             CreateTrainingWeekView(
                                 path: $path,
                                 student: student,
@@ -86,7 +88,7 @@ struct AppRouter: View {
                         }
 
                     case .createTrainingDay(let weekId, let category):
-                        guardedTeacher {
+                        guardedTeacherPro {
                             CreateTrainingDayView(
                                 path: $path,
                                 weekId: weekId,
@@ -255,7 +257,7 @@ struct AppRouter: View {
                         }
 
                     case .teacherImportWorkouts(let category):
-                        guardedTeacher {
+                        guardedTeacherPro {
                             TeacherImportWorkoutsView(
                                 path: $path,
                                 category: category
@@ -271,7 +273,7 @@ struct AppRouter: View {
                         }
 
                     case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
-                        guardedTeacher {
+                        guardedTeacherPro {
                             CreateCrossfitWODView(
                                 path: $path,
                                 category: category,
@@ -281,7 +283,7 @@ struct AppRouter: View {
                         }
 
                     case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):
-                        guardedTeacher {
+                        guardedTeacherPro {
                             CreateTreinoAcademiaView(
                                 path: $path,
                                 category: category,
@@ -291,7 +293,7 @@ struct AppRouter: View {
                         }
 
                     case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
-                        guardedTeacher {
+                        guardedTeacherPro {
                             CreateTreinoCasaView(
                                 path: $path,
                                 category: category,
@@ -308,6 +310,18 @@ struct AppRouter: View {
         .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
             if !logged { path.removeAll() }
+        }
+        .alert("Plano expirado", isPresented: $showPlanExpiredAlert) {
+            Button("Agora não", role: .cancel) {
+                popDeniedRoute()
+            }
+
+            Button("Renovar/Contratar") {
+                popDeniedRoute()
+                openPlanUpgradeFromAnywhere()
+            }
+        } message: {
+            Text("Plano expirado, deseja renovar/contratar?")
         }
     }
 }
@@ -365,8 +379,39 @@ private extension AppRouter {
     }
 
     @ViewBuilder
+    func guardedTeacherPro<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
+        if session.isLoggedIn && session.isTrainer {
+            if session.canUseTrainerProFeatures {
+                content()
+            } else {
+                Color.clear
+                    .onAppear {
+                        if !showPlanExpiredAlert {
+                            showPlanExpiredAlert = true
+                        }
+                    }
+            }
+        } else {
+            LoginView(path: $path)
+        }
+    }
+
+    @ViewBuilder
     func guardedStudent<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         if session.isLoggedIn && session.isStudent { content() } else { LoginView(path: $path) }
+    }
+
+    func popDeniedRoute() {
+        if !path.isEmpty {
+            path.removeLast()
+        }
+    }
+
+    func openPlanUpgradeFromAnywhere() {
+        if path.last != .perfil {
+            path.append(.perfil)
+        }
+        session.shouldPresentPlanModal = true
     }
 }
 

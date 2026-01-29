@@ -1,4 +1,3 @@
-// Serviço para autenticação e operações de usuário no Firebase
 import Foundation
 import FirebaseAuth
 import FirebaseFirestore
@@ -44,6 +43,8 @@ final class FirebaseAuthService {
             userDoc["cref"] = form.cref ?? ""
             userDoc["bio"] = form.bio ?? ""
             userDoc["gymName"] = form.gymName ?? ""
+            userDoc["planType"] = "FREE"
+            userDoc["trialStartedAt"] = FieldValue.serverTimestamp()
         } else {
             userDoc["defaultCategory"] = form.defaultCategory ?? "crossfit"
             userDoc["active"] = form.active ?? true
@@ -66,3 +67,4 @@ final class FirebaseAuthService {
         try await db.collection("teacher_students").addDocument(data: relDoc)
     }
 }
+
