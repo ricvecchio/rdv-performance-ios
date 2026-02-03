@@ -332,22 +332,6 @@ struct TeacherStudentsListView: View {
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
-
-            Button {
-                path.append(.teacherLinkStudent(category: selectedCategory))
-            } label: {
-                HStack {
-                    Image(systemName: "plus")
-                    Text("Vincular aluno")
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -737,4 +721,3 @@ struct TeacherStudentsListView: View {
         await vm.loadInvites(teacherId: teacherId)
     }
 }
-

@@ -93,8 +93,7 @@ struct TeacherLinkStudentView: View {
             }
 
             ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
-                    .background(Color.clear)
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -539,4 +538,3 @@ struct StudentLinkItem: Identifiable, Hashable {
     let focusArea: String?
     let defaultCategory: String?
 }
-
