@@ -75,6 +75,8 @@ struct SettingsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: showWeightUnitSheet ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: showWeightUnitSheet)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -390,4 +392,3 @@ private struct WeightUnitSheetView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
-
