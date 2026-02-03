@@ -307,6 +307,8 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showPlanosModal) {
             planosModal()
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
         }
         .task(id: currentUid) {
             await loadUserData()
@@ -667,98 +669,111 @@ struct ProfileView: View {
     }
 
     private func planosModal() -> some View {
-        ZStack {
-            Theme.Colors.headerBackground
-                .ignoresSafeArea()
+        NavigationStack {
+            ZStack {
+                Theme.Colors.headerBackground
+                    .ignoresSafeArea()
 
-            NavigationStack {
-                ZStack {
-                    Theme.Colors.headerBackground
-                        .ignoresSafeArea()
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
 
-                    VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 14) {
 
-                        Text("Planos")
-                            .font(.system(size: 20, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            Text("Arraste para simular a mudança de Free para Pro.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.55))
+                                .padding(.top, 12)
 
-                        Text("Arraste para simular a mudança de Free para Pro.")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.55))
+                            VStack(alignment: .leading, spacing: 10) {
+                                HStack {
+                                    Text("Free")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.80))
 
-                        VStack(alignment: .leading, spacing: 10) {
-                            HStack {
-                                Text("Free")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.80))
+                                    Spacer()
 
-                                Spacer()
+                                    Text("Pro")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.80))
+                                }
 
-                                Text("Pro")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.80))
+                                Slider(value: $planoSliderValue, in: 0...1, step: 0.01)
+                                    .tint(Color.green.opacity(0.85))
+                                    .onChange(of: planoSliderValue) { _, newValue in
+                                        if newValue >= 0.90 {
+                                            showConfirmacaoPro = true
+                                        }
+                                    }
+
+                                Text(planoSliderValue >= 0.90 ? "Selecionado: Pro" : "Selecionado: Free")
+                                    .font(.system(size: 13, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.65))
                             }
+                            .padding(14)
+                            .background(Theme.Colors.cardBackground)
+                            .cornerRadius(14)
 
-                            Slider(value: $planoSliderValue, in: 0...1, step: 0.01)
-                                .tint(Color.green.opacity(0.85))
-                                .onChange(of: planoSliderValue) { _, newValue in
-                                    if newValue >= 0.90 {
-                                        showConfirmacaoPro = true
+                            Button {
+                                showCancelarPlanoConfirm = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Text("Cancelar Plano")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+
+                                    Spacer()
+
+                                    if isCancelingPlan {
+                                        ProgressView()
                                     }
                                 }
-
-                            Text(planoSliderValue >= 0.90 ? "Selecionado: Pro" : "Selecionado: Free")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.white.opacity(0.65))
-                        }
-                        .padding(14)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-
-                        Button {
-                            showCancelarPlanoConfirm = true
-                        } label: {
-                            HStack(spacing: 10) {
-                                Text("Cancelar Plano")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
-
-                                Spacer()
-
-                                if isCancelingPlan {
-                                    ProgressView()
-                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(Color.red.opacity(0.18))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        )
+                                )
                             }
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 12)
-                            .background(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .fill(Color.red.opacity(0.18))
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                    )
-                            )
+                            .buttonStyle(.plain)
+                            .disabled(isCancelingPlan)
+
+                            Color.clear.frame(height: 18)
                         }
-                        .buttonStyle(.plain)
-                        .disabled(isCancelingPlan)
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
 
                         Spacer(minLength: 0)
                     }
-                    .padding(16)
                 }
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Fechar") {
-                            showPlanosModal = false
-                        }
-                        .foregroundColor(.green)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Planos")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Fechar") {
+                        showPlanosModal = false
                     }
+                    .foregroundColor(.white)
                 }
-                .navigationDestination(isPresented: $showConfirmacaoPro) {
-                    confirmacaoProView()
-                }
+            }
+            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationDestination(isPresented: $showConfirmacaoPro) {
+                confirmacaoProView()
             }
         }
         .onAppear {
@@ -845,7 +860,7 @@ struct ProfileView: View {
                     showPlanosModal = false
                     showConfirmacaoPro = false
                 }
-                .foregroundColor(.green)
+                .foregroundColor(.white)
             }
         }
     }
@@ -949,4 +964,3 @@ struct ProfileView: View {
         }
     }
 }
-
