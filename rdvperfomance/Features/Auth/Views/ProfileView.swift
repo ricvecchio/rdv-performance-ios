@@ -227,6 +227,8 @@ struct ProfileView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: showPlanosModal ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: showPlanosModal)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
