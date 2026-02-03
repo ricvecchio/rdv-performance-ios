@@ -653,10 +653,9 @@ struct ProfileView: View {
             path.append(.login)
         } label: {
             Text("Sair")
-                .font(.system(size: 17, weight: .medium))
+                .font(.system(size: 16, weight: .medium))
                 .foregroundColor(.white.opacity(0.9))
-                .frame(maxWidth: .infinity)
-                .frame(height: 52)
+                .frame(width: 260, height: 44)
                 .background(
                     Capsule()
                         .fill(Color.green.opacity(0.28))
