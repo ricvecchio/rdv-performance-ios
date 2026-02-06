@@ -2,6 +2,7 @@
 import SwiftUI
 import UIKit
 import FirebaseAuth
+import FirebaseFirestore
 
 struct ProfileView: View {
 
@@ -32,6 +33,7 @@ struct ProfileView: View {
     @State private var isLoading: Bool = false
 
     @State private var studentDefaultCategoryRaw: String = ""
+    @State private var studentEmail: String = ""
 
     private var categoriaAtualAluno: TreinoTipo {
         let raw = studentDefaultCategoryRaw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -60,6 +62,18 @@ struct ProfileView: View {
     @State private var isConfirmingPro: Bool = false
     @State private var showCancelarPlanoConfirm: Bool = false
     @State private var isCancelingPlan: Bool = false
+
+    @State private var showMeusProfessoresModal: Bool = false
+    @State private var linkedTeachers: [AppUser] = []
+    @State private var linkedTeacherIds: Set<String> = []
+    @State private var isLoadingLinkedTeachers: Bool = false
+
+    @State private var teacherEmailInput: String = ""
+    @State private var linkActionMessage: String? = nil
+    @State private var linkActionMessageIsError: Bool = false
+    @State private var isProcessingLinkAction: Bool = false
+
+    @State private var goToRequestLink: Bool = false
 
     private let treinoIcons = [
         "dumbbell",
@@ -312,6 +326,9 @@ struct ProfileView: View {
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(isPresented: $showMeusProfessoresModal) {
+            meusProfessoresModal()
+        }
         .task(id: currentUid) {
             await loadUserData()
         }
@@ -371,8 +388,11 @@ struct ProfileView: View {
             unitName = ""
             isPlanActive = false
             studentDefaultCategoryRaw = ""
+            studentEmail = ""
             checkinsConcluidos = 0
             checkinsTotalSemana = 0
+            linkedTeachers = []
+            linkedTeacherIds = []
             return
         }
 
@@ -384,14 +404,17 @@ struct ProfileView: View {
                 userName = user.name
                 unitName = (user.unitName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 studentDefaultCategoryRaw = (user.defaultCategory ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                studentEmail = user.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
             } else {
                 userName = ""
                 unitName = ""
                 studentDefaultCategoryRaw = ""
+                studentEmail = ""
             }
 
             if session.userType == .STUDENT {
                 isPlanActive = try await repository.hasAnyWeeksForStudent(studentId: uid)
+                await loadLinkedTeachers(forceFallbackFromWeeks: true)
             } else {
                 isPlanActive = true
                 checkinsConcluidos = 0
@@ -402,13 +425,91 @@ struct ProfileView: View {
             userName = ""
             unitName = ""
             studentDefaultCategoryRaw = ""
+            studentEmail = ""
             isPlanActive = (session.userType != .STUDENT)
             checkinsConcluidos = 0
             checkinsTotalSemana = 0
+            linkedTeachers = []
+            linkedTeacherIds = []
 
             errorMessage = error.localizedDescription
             showErrorAlert = true
         }
+    }
+
+    private func loadLinkedTeachers(forceFallbackFromWeeks: Bool) async {
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            linkedTeachers = []
+            linkedTeacherIds = []
+            return
+        }
+
+        isLoadingLinkedTeachers = true
+        defer { isLoadingLinkedTeachers = false }
+
+        var teacherIds: [String] = []
+
+        do {
+            let relations = try await repository.getTeacherLinksForStudent(studentId: uid)
+            let ids = Array(
+                Set(
+                    relations
+                        .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                )
+            )
+            teacherIds = ids
+        } catch {
+            teacherIds = []
+        }
+
+        if teacherIds.isEmpty, forceFallbackFromWeeks {
+            do {
+                let weeks = try await repository.getWeeksForStudent(studentId: uid, onlyPublished: false)
+                let ids = Array(
+                    Set(
+                        weeks
+                            .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                            .filter { !$0.isEmpty }
+                    )
+                )
+                teacherIds = ids
+            } catch {
+                teacherIds = []
+            }
+        }
+
+        linkedTeacherIds = Set(teacherIds)
+
+        guard !teacherIds.isEmpty else {
+            linkedTeachers = []
+            return
+        }
+
+        let repo = repository
+        var result: [AppUser] = []
+
+        await withTaskGroup(of: AppUser?.self) { group in
+            for tid in teacherIds {
+                group.addTask {
+                    do {
+                        return try await repo.getUser(uid: tid)
+                    } catch {
+                        return nil
+                    }
+                }
+            }
+
+            for await user in group {
+                if let user {
+                    result.append(user)
+                }
+            }
+        }
+
+        result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        linkedTeachers = result
     }
 
     private func openTrocarUnidade() {
@@ -541,6 +642,15 @@ struct ProfileView: View {
                 }
 
                 divider()
+                optionRow(icon: "person.2.fill", title: "Meus professores", trailing: .settings) {
+                    goToRequestLink = false
+                    teacherEmailInput = ""
+                    linkActionMessage = nil
+                    linkActionMessageIsError = false
+                    showMeusProfessoresModal = true
+                }
+
+                divider()
                 optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
                     showMeusIconesModal = true
                 }
@@ -557,6 +667,319 @@ struct ProfileView: View {
         .cornerRadius(14)
     }
 
+    private func meusProfessoresModal() -> some View {
+        NavigationStack {
+            ZStack {
+                Theme.Colors.headerBackground
+                    .ignoresSafeArea()
+
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(alignment: .leading, spacing: 14) {
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Aqui você vê seus professores vinculados e pode solicitar vínculo com outro professor.")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.55))
+                                    .padding(.top, 12)
+
+                                Button {
+                                    teacherEmailInput = ""
+                                    linkActionMessage = nil
+                                    linkActionMessageIsError = false
+
+                                    goToRequestLink = false
+                                    DispatchQueue.main.async {
+                                        goToRequestLink = true
+                                    }
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "person.badge.plus")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.green.opacity(0.9))
+
+                                        Text("Solicitar vínculo")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.white.opacity(0.92))
+
+                                        Spacer(minLength: 0)
+
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.white.opacity(0.35))
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color.green.opacity(0.16))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 14)
+                                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                            )
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(isProcessingLinkAction)
+                            }
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Vinculados")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+
+                                if isLoadingLinkedTeachers {
+                                    HStack(spacing: 10) {
+                                        ProgressView()
+                                        Text("Carregando professores...")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.white.opacity(0.55))
+                                    }
+                                    .padding(.vertical, 6)
+
+                                } else if linkedTeachers.isEmpty {
+                                    Text("Nenhum professor vinculado no momento.")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.white.opacity(0.55))
+                                        .padding(.vertical, 6)
+
+                                } else {
+                                    VStack(spacing: 10) {
+                                        ForEach(linkedTeachers, id: \.id) { t in
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(t.name.trimmingCharacters(in: .whitespacesAndNewlines))
+                                                    .font(.system(size: 15, weight: .semibold))
+                                                    .foregroundColor(.white.opacity(0.92))
+
+                                                Text(t.email.trimmingCharacters(in: .whitespacesAndNewlines))
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.white.opacity(0.55))
+                                            }
+                                            .padding(14)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(Theme.Colors.cardBackground)
+                                            .cornerRadius(14)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Color.clear.frame(height: 18)
+                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Meus professores")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Fechar") {
+                        showMeusProfessoresModal = false
+                    }
+                    .foregroundColor(.white)
+                }
+            }
+            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .navigationDestination(isPresented: $goToRequestLink) {
+                requestLinkView()
+            }
+        }
+        .onAppear {
+            goToRequestLink = false
+            Task { await loadLinkedTeachers(forceFallbackFromWeeks: true) }
+        }
+    }
+
+    private func requestLinkView() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 14) {
+
+                Text("Solicitar vínculo")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text("Digite o e-mail do professor para enviar a solicitação.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("E-mail do professor")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.75))
+
+                    TextField("professor@email.com", text: $teacherEmailInput)
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.emailAddress)
+                        .autocorrectionDisabled(true)
+                        .padding(12)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(12)
+                        .foregroundColor(.white.opacity(0.92))
+                }
+
+                if let msg = linkActionMessage {
+                    Text(msg)
+                        .font(.system(size: 13))
+                        .foregroundColor(linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        goToRequestLink = false
+                    } label: {
+                        Text("Voltar")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.white.opacity(0.08)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isProcessingLinkAction)
+
+                    Button {
+                        Task {
+                            let ok = await requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                            if ok {
+                                goToRequestLink = false
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text("Enviar solicitação")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+
+                            if isProcessingLinkAction {
+                                ProgressView()
+                            }
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 10)
+                        .background(Capsule().fill(Color.green.opacity(0.20)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isProcessingLinkAction)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(16)
+        }
+        .navigationBarBackButtonHidden(true)
+    }
+
+    private func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
+        let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        guard email.contains("@"), email.contains(".") else {
+            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            linkActionMessage = "Não foi possível identificar o aluno."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        let sEmail = studentEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+        if sEmail.isEmpty {
+            linkActionMessage = "Não foi possível identificar o e-mail do aluno."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        isProcessingLinkAction = true
+        linkActionMessage = nil
+        linkActionMessageIsError = false
+        defer { isProcessingLinkAction = false }
+
+        do {
+            guard let teacher = try await repository.getTeacherByEmail(email: email),
+                  let teacherIdRaw = teacher.id else {
+                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            let teacherId = teacherIdRaw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if teacherId.isEmpty {
+                linkActionMessage = "Não foi possível identificar o professor."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+
+            if linkedTeacherIds.contains(teacherId) {
+                linkActionMessage = "Esse professor já está vinculado."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            do {
+                let requests = try await repository.getRequestsForStudent(studentId: uid)
+                let hasPendingSameTeacher = requests.contains { r in
+                    let rid = r.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let status = r.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    return rid == teacherId && status == "pending"
+                }
+                if hasPendingSameTeacher {
+                    linkActionMessage = "Já existe uma solicitação pendente para esse professor."
+                    linkActionMessageIsError = true
+                    return false
+                }
+            } catch {
+            }
+
+            try await repository.createLinkRequest(
+                studentId: uid,
+                studentEmail: sEmail,
+                teacherId: teacherId,
+                teacherEmail: email
+            )
+
+            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessageIsError = false
+
+            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+            return true
+
+        } catch {
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                linkActionMessage = "Sem permissão para solicitar vínculo. Ajuste as regras do Firestore para permitir localizar professores."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            linkActionMessage = ns.localizedDescription
+            linkActionMessageIsError = true
+            return false
+        }
+    }
+
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
@@ -569,6 +992,7 @@ struct ProfileView: View {
         case badge(String)
         case coloredBadge(String, fg: Color, bg: Color)
         case coloredBadgeWithChevron(String, fg: Color, bg: Color)
+        case settings
     }
 
     private func optionRow(
@@ -640,6 +1064,10 @@ struct ProfileView: View {
                     Image(systemName: "chevron.right")
                         .foregroundColor(.white.opacity(0.35))
                 }
+
+            case .settings:
+                Image(systemName: "gearshape.fill")
+                    .foregroundColor(.white.opacity(0.60))
             }
         }
         .padding(.horizontal, 16)
@@ -965,3 +1393,4 @@ struct ProfileView: View {
         }
     }
 }
+
