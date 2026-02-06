@@ -55,16 +55,61 @@ final class FirebaseAuthService {
     }
 
     // Cria vínculo entre professor e aluno na coleção teacher_students
+    // ✅ FIX: faz UPSERT (não duplica docs), normaliza categorias e atualiza updatedAt.
     func linkStudentToTeacher(teacherId: String, studentId: String, categories: [String]) async throws {
 
-        let relDoc: [String: Any] = [
-            "teacherId": teacherId,
-            "studentId": studentId,
-            "categories": categories,
-            "createdAt": FieldValue.serverTimestamp()
-        ]
+        let tid = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        try await db.collection("teacher_students").addDocument(data: relDoc)
+        guard !tid.isEmpty else {
+            throw FirebaseAuthServiceError.invalidState("teacherId inválido.")
+        }
+        guard !sid.isEmpty else {
+            throw FirebaseAuthServiceError.invalidState("studentId inválido.")
+        }
+
+        let normalizedCategories = Array(
+            Set(
+                categories
+                    .map { $0.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+                    .filter { !$0.isEmpty }
+            )
+        ).sorted()
+
+        guard !normalizedCategories.isEmpty else {
+            throw FirebaseAuthServiceError.invalidState("Nenhuma categoria válida para vincular.")
+        }
+
+        // 1) Procura vínculo existente para (teacherId, studentId)
+        let existing = try await db.collection("teacher_students")
+            .whereField("teacherId", isEqualTo: tid)
+            .whereField("studentId", isEqualTo: sid)
+            .limit(to: 1)
+            .getDocuments()
+
+        if let doc = existing.documents.first {
+            // 2) Atualiza categorias sem duplicar
+            try await db.collection("teacher_students")
+                .document(doc.documentID)
+                .setData(
+                    [
+                        "categories": FieldValue.arrayUnion(normalizedCategories),
+                        "updatedAt": FieldValue.serverTimestamp()
+                    ],
+                    merge: true
+                )
+        } else {
+            // 3) Cria novo vínculo
+            let relDoc: [String: Any] = [
+                "teacherId": tid,
+                "studentId": sid,
+                "categories": normalizedCategories,
+                "createdAt": FieldValue.serverTimestamp(),
+                "updatedAt": FieldValue.serverTimestamp()
+            ]
+
+            try await db.collection("teacher_students").addDocument(data: relDoc)
+        }
     }
 }
 

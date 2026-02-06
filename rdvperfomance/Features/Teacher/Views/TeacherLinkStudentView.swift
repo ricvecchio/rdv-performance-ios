@@ -1,4 +1,3 @@
-// TeacherLinkStudentView.swift — Tela para buscar e vincular alunos ao professor por categoria
 import SwiftUI
 import Combine
 
@@ -12,7 +11,6 @@ struct TeacherLinkStudentView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    // Busca e estado de diálogo de categoria
     @State private var searchText: String = ""
     @State private var studentPendingLink: StudentLinkItem? = nil
     @State private var showCategoryDialog: Bool = false
@@ -28,7 +26,6 @@ struct TeacherLinkStudentView: View {
         _vm = StateObject(wrappedValue: TeacherLinkStudentViewModel(repository: repository))
     }
 
-    // Corpo principal com busca, lista e confirmação de vínculo
     var body: some View {
         ZStack {
 
@@ -125,7 +122,6 @@ struct TeacherLinkStudentView: View {
         }
     }
 
-    // Header explicando o fluxo de vínculo (agora: pedidos recebidos)
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text("Pedidos recebidos de vínculo.")
@@ -139,7 +135,6 @@ struct TeacherLinkStudentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Card com filtro e busca
     private var controlsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -148,7 +143,7 @@ struct TeacherLinkStudentView: View {
                 .foregroundColor(.white.opacity(0.35))
 
             HStack(spacing: 10) {
-                chip(title: "Todos", isSelected: true) { /* fixo */ }
+                chip(title: "Todos", isSelected: true) { }
             }
 
             searchField
@@ -207,7 +202,6 @@ struct TeacherLinkStudentView: View {
         .buttonStyle(.plain)
     }
 
-    // Conteúdo: lista de pedidos pendentes
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -360,7 +354,6 @@ struct TeacherLinkStudentView: View {
             .padding(.leading, leading)
     }
 
-    // Lógica de carregamento e confirmação de vínculo
     private func initialLoadIfNeeded() async {
         guard vm.items.isEmpty && !vm.isLoading else { return }
 
@@ -402,7 +395,7 @@ struct TeacherLinkStudentView: View {
             teacherId: teacherId,
             requestId: item.requestId,
             studentId: item.studentId,
-            category: chosen.rawValue
+            category: chosen.firestoreKey
         )
 
         studentPendingLink = nil
@@ -432,7 +425,6 @@ final class TeacherLinkStudentViewModel: ObservableObject {
         self.repository = repository
     }
 
-    // ✅ Agora: carrega SOMENTE pedidos pendentes (alunos que solicitaram vínculo)
     func loadPendingRequests(teacherId: String) async {
         isLoading = true
         defer { isLoading = false }
@@ -440,46 +432,28 @@ final class TeacherLinkStudentViewModel: ObservableObject {
         do {
             let requests = try await repository.getPendingLinkRequestsForTeacher(teacherId: teacherId)
 
-            let results = try await withThrowingTaskGroup(of: StudentLinkItem?.self) { group in
-                for req in requests {
-                    group.addTask {
-                        let sid = req.studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+            let results: [StudentLinkItem] = requests.compactMap { req in
+                let rid = (req.id ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !rid.isEmpty else { return nil }
 
-                        var name: String = "Aluno"
-                        var focusArea: String? = nil
-                        var defaultCategory: String? = nil
-                        var photoBase64: String? = nil
+                let email = req.studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+                let sid = req.studentId.trimmingCharacters(in: .whitespacesAndNewlines)
 
-                        if !sid.isEmpty, let u = try await self.repository.getUser(uid: sid) {
-                            name = u.name
-                            focusArea = u.focusArea
-                            defaultCategory = u.defaultCategory
-                            photoBase64 = u.photoBase64
-                        } else {
-                            let email = req.studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
-                            if !email.isEmpty { name = email }
-                        }
+                let displayName: String = {
+                    if !email.isEmpty { return email }
+                    if !sid.isEmpty { return "Aluno" }
+                    return "Aluno"
+                }()
 
-                        let rid = req.id ?? ""
-                        guard !rid.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
-
-                        return StudentLinkItem(
-                            requestId: rid,
-                            studentId: req.studentId,
-                            studentEmail: req.studentEmail,
-                            name: name,
-                            photoBase64: photoBase64,
-                            focusArea: focusArea,
-                            defaultCategory: defaultCategory
-                        )
-                    }
-                }
-
-                var collected: [StudentLinkItem] = []
-                for try await item in group {
-                    if let item { collected.append(item) }
-                }
-                return collected
+                return StudentLinkItem(
+                    requestId: rid,
+                    studentId: req.studentId,
+                    studentEmail: req.studentEmail,
+                    name: displayName,
+                    photoBase64: nil,
+                    focusArea: nil,
+                    defaultCategory: nil
+                )
             }
 
             self.items = results
@@ -489,7 +463,6 @@ final class TeacherLinkStudentViewModel: ObservableObject {
         }
     }
 
-    // ✅ Aprova o pedido + vincula na categoria (mantém o padrão atual teacher_students)
     func approveRequestAndLinkStudent(
         teacherId: String,
         requestId: String,
@@ -500,11 +473,13 @@ final class TeacherLinkStudentViewModel: ObservableObject {
         defer { isLoading = false }
 
         do {
+            let normalizedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
+
             try await repository.approveLinkRequestAndLinkStudent(
                 teacherId: teacherId,
                 requestId: requestId,
                 studentId: studentId,
-                category: category
+                category: normalizedCategory
             )
 
             successMessage = "Aluno vinculado com sucesso."
@@ -523,10 +498,8 @@ final class TeacherLinkStudentViewModel: ObservableObject {
     }
 }
 
-// Modelo simplificado de aluno para vínculo (agora baseado em REQUEST)
 struct StudentLinkItem: Identifiable, Hashable {
 
-    // Identidade do item na lista = id do pedido
     var id: String { requestId }
 
     let requestId: String
@@ -538,3 +511,4 @@ struct StudentLinkItem: Identifiable, Hashable {
     let focusArea: String?
     let defaultCategory: String?
 }
+

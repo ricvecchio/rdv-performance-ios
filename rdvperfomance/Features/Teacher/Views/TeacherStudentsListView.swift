@@ -80,7 +80,10 @@ struct TeacherStudentsListView: View {
         .onAppear {
             filter = initialFilter
         }
-        .task { await loadAllStudents() }
+        // ✅ FIX: garante reload quando session.uid ficar disponível (evita lista vazia por task rodar cedo demais)
+        .task(id: session.uid ?? "") {
+            await loadAllStudents()
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
@@ -721,3 +724,4 @@ struct TeacherStudentsListView: View {
         await vm.loadInvites(teacherId: teacherId)
     }
 }
+

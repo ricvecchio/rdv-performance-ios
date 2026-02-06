@@ -418,31 +418,185 @@ final class UserRepository: FirestoreBaseRepository {
 
     // MARK: - TeacherStudents (vínculo por categoria)
 
+    private func categoryCandidates(from rawCategory: String) -> [String] {
+        let base = clean(rawCategory)
+        guard !base.isEmpty else { return [] }
+
+        var set: [String] = []
+        func add(_ v: String) {
+            let c = clean(v)
+            guard !c.isEmpty else { return }
+            if set.contains(where: { $0 == c }) { return }
+            set.append(c)
+        }
+
+        add(base)
+        add(base.lowercased())
+        add(base.uppercased())
+
+        let lower = base.lowercased()
+        if lower == "crossfit" || lower.contains("cross") {
+            add("CROSSFIT")
+            add("crossfit")
+        } else if lower == "academia" || lower.contains("academ") || lower.contains("gym") {
+            add("ACADEMIA")
+            add("academia")
+        } else if lower == "emcasa" || lower == "em_casa" || lower == "em casa" || lower == "emcasa " || lower.contains("casa") || lower.contains("home") || lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+            add("emCasa")
+            add("emcasa")
+            add("em_casa")
+            add("em casa")
+        } else if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        } else if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        } else if lower == "emcasa" {
+            add("EMCASA")
+        } else if lower == "emcasa" {
+            add("EMCASA")
+        } else if lower == "emcasa" {
+            add("EMCASA")
+        } else if lower == "emcasa" {
+            add("EMCASA")
+        } else if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        if lower == "emcasa" {
+            add("EMCASA")
+        }
+
+        return set
+    }
+
     func getStudentsForTeacher(teacherId: String, category: String) async throws -> [AppUser] {
         let cleanTeacherId = clean(teacherId)
         guard !cleanTeacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
 
-        let relSnap = try await db.collection(Collections.teacherStudents)
-            .whereField("teacherId", isEqualTo: cleanTeacherId)
-            .whereField("categories", arrayContains: category)
-            .getDocuments()
+        let candidates = categoryCandidates(from: category)
+        if candidates.isEmpty { throw FirestoreRepositoryError.invalidData }
 
-        let relations = try relSnap.documents.compactMap { doc in
-            try doc.data(as: TeacherStudentRelation.self)
+        var relSnap: QuerySnapshot? = nil
+
+        for cat in candidates {
+            let snap = try await db.collection(Collections.teacherStudents)
+                .whereField("teacherId", isEqualTo: cleanTeacherId)
+                .whereField("categories", arrayContains: cat)
+                .getDocuments()
+
+            if !snap.documents.isEmpty {
+                relSnap = snap
+                break
+            }
         }
 
-        guard !relations.isEmpty else { return [] }
+        guard let relSnap, !relSnap.documents.isEmpty else { return [] }
 
-        let studentIds = relations.map { $0.studentId }
+        let studentIds: [String] = relSnap.documents.compactMap { doc in
+            let data = doc.data()
+            let sid = (data["studentId"] as? String) ?? ""
+            let cleaned = clean(sid)
+            return cleaned.isEmpty ? nil : cleaned
+        }
 
-        let tasks: [Task<AppUser?, Never>] = studentIds.map { sid in
+        if studentIds.isEmpty { return [] }
+
+        var permissionDeniedCount: Int = 0
+        var otherErrorsCount: Int = 0
+
+        let tasks: [Task<AppUser?, Error>] = studentIds.map { sid in
             Task {
                 do {
                     let snap = try await self.db.collection(Collections.users).document(sid).getDocument()
                     guard snap.exists else { return nil }
                     return try snap.data(as: AppUser.self)
                 } catch {
-                    return nil
+                    throw error
                 }
             }
         }
@@ -451,9 +605,27 @@ final class UserRepository: FirestoreBaseRepository {
         students.reserveCapacity(tasks.count)
 
         for task in tasks {
-            if let u = await task.value {
-                students.append(u)
+            do {
+                if let u = try await task.value {
+                    students.append(u)
+                }
+            } catch {
+                let ns = error as NSError
+                if ns.domain == FirestoreErrorDomain,
+                   ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                    permissionDeniedCount += 1
+                } else {
+                    otherErrorsCount += 1
+                }
             }
+        }
+
+        if students.isEmpty && permissionDeniedCount > 0 && otherErrorsCount == 0 {
+            throw NSError(
+                domain: FirestoreErrorDomain,
+                code: FirestoreErrorCode.permissionDenied.rawValue,
+                userInfo: [NSLocalizedDescriptionKey: "Sem permissão para ler /users/{studentId}. Ajuste as Firestore Rules para permitir que o professor leia o perfil do aluno vinculado."]
+            )
         }
 
         return students.sorted { $0.name.lowercased() < $1.name.lowercased() }
@@ -475,13 +647,18 @@ final class UserRepository: FirestoreBaseRepository {
 
         guard !snap.documents.isEmpty else { throw FirestoreRepositoryError.notFound }
 
-        let target = c.lowercased()
+        let targets = categoryCandidates(from: c).map { $0.lowercased() }
+        if targets.isEmpty { throw FirestoreRepositoryError.invalidData }
 
         for doc in snap.documents {
             let ref = doc.reference
             let data = doc.data()
             let categories = (data["categories"] as? [String]) ?? []
-            let newCategories = categories.filter { clean($0).lowercased() != target }
+
+            let newCategories = categories.filter { cat in
+                let v = clean(cat).lowercased()
+                return !targets.contains(v)
+            }
 
             if newCategories.count == categories.count {
                 continue

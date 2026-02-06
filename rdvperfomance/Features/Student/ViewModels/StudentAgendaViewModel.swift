@@ -21,6 +21,8 @@ final class StudentAgendaViewModel: ObservableObject {
     @Published var linkActionMessage: String? = nil
     @Published var linkActionMessageIsError: Bool = false
 
+    @Published private(set) var teacherNameById: [String: String] = [:]
+
     private var hasLoadedLinkStatus: Bool = false
 
     private var weekRangeText: [String: String] = [:]
@@ -185,10 +187,52 @@ final class StudentAgendaViewModel: ObservableObject {
         do {
             let result = try await repository.getWeeksForStudent(studentId: studentId)
             self.weeks = result
+
+            await loadTeacherNamesForWeeks(result)
             await loadMetaForWeeks(result)
+
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
         }
+    }
+
+    private func loadTeacherNamesForWeeks(_ weeks: [TrainingWeekFS]) async {
+
+        teacherNameById.removeAll()
+
+        let ids = Array(
+            Set(
+                weeks.map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+            )
+        )
+
+        guard !ids.isEmpty else { return }
+
+        let repo = repository
+        var result: [String: String] = [:]
+
+        await withTaskGroup(of: (String, String?).self) { group in
+            for teacherId in ids {
+                group.addTask {
+                    do {
+                        let user = try await repo.getUser(uid: teacherId)
+                        let name = user?.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                        return (teacherId, (name?.isEmpty == false) ? name : nil)
+                    } catch {
+                        return (teacherId, nil)
+                    }
+                }
+            }
+
+            for await (teacherId, name) in group {
+                if let name {
+                    result[teacherId] = name
+                }
+            }
+        }
+
+        teacherNameById = result
     }
 
     private func loadMetaForWeeks(_ weeks: [TrainingWeekFS]) async {
@@ -226,6 +270,17 @@ final class StudentAgendaViewModel: ObservableObject {
         let percent = weekProgressPercent[weekId] ?? 0
 
         return "\(range) • \(percent)%"
+    }
+
+    func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
+        let teacherId = week.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else { return "Professor: —" }
+
+        if let name = teacherNameById[teacherId], !name.isEmpty {
+            return "Professor: \(name)"
+        }
+
+        return "Professor: ..."
     }
 
     nonisolated static func computePercentStatic(completed: Int, total: Int) -> Int {

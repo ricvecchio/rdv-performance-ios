@@ -437,6 +437,10 @@ struct StudentAgendaView: View {
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(.white.opacity(0.92))
 
+                            Text(vm.teacherLineForWeek(week))
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.55))
+
                             Text(vm.subtitleForWeek(week))
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
