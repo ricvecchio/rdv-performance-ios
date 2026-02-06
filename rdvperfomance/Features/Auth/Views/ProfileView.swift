@@ -73,7 +73,8 @@ struct ProfileView: View {
     @State private var linkActionMessageIsError: Bool = false
     @State private var isProcessingLinkAction: Bool = false
 
-    @State private var goToRequestLink: Bool = false
+    // ✅ NOVO: modal pequeno para inserir e-mail do professor
+    @State private var showRequestLinkModal: Bool = false
 
     private let treinoIcons = [
         "dumbbell",
@@ -144,7 +145,7 @@ struct ProfileView: View {
         "figure.2.arms.open",
         "figure.seated.seatbelt",
         "hand.raised.square.fill",
-        "heart.square.fill",
+        "heart_square.fill",
         "lanyardcard.fill",
         "macpro.gen3.fill",
         "oval.fill",
@@ -642,8 +643,7 @@ struct ProfileView: View {
                 }
 
                 divider()
-                optionRow(icon: "person.2.fill", title: "Meus professores", trailing: .settings) {
-                    goToRequestLink = false
+                optionRow(icon: "person.2.fill", title: "Meus professores", trailing: .chevron) {
                     teacherEmailInput = ""
                     linkActionMessage = nil
                     linkActionMessageIsError = false
@@ -690,10 +690,7 @@ struct ProfileView: View {
                                     linkActionMessage = nil
                                     linkActionMessageIsError = false
 
-                                    goToRequestLink = false
-                                    DispatchQueue.main.async {
-                                        goToRequestLink = true
-                                    }
+                                    showRequestLinkModal = true
                                 } label: {
                                     HStack(spacing: 10) {
                                         Image(systemName: "person.badge.plus")
@@ -774,7 +771,17 @@ struct ProfileView: View {
                         Spacer(minLength: 0)
                     }
                 }
+
+                // ✅ AJUSTE FINAL: quando o modal pequeno abrir, desfoca o fundo do modal "Meus professores"
+                if showRequestLinkModal {
+                    Color.black.opacity(0.25)
+                        .ignoresSafeArea()
+                        .transition(.opacity)
+                        .allowsHitTesting(false)
+                }
             }
+            .blur(radius: showRequestLinkModal ? 8 : 0)
+            .animation(.easeInOut(duration: 0.20), value: showRequestLinkModal)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
@@ -795,95 +802,113 @@ struct ProfileView: View {
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .navigationDestination(isPresented: $goToRequestLink) {
-                requestLinkView()
-            }
+        }
+        .sheet(isPresented: $showRequestLinkModal) {
+            requestLinkModalView()
+                .presentationDetents([.height(360)])
+                .presentationDragIndicator(.visible)
         }
         .onAppear {
-            goToRequestLink = false
             Task { await loadLinkedTeachers(forceFallbackFromWeeks: true) }
         }
     }
 
-    private func requestLinkView() -> some View {
-        ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+    private func requestLinkModalView() -> some View {
+        NavigationStack {
+            ZStack {
+                Theme.Colors.headerBackground.ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 14) {
 
-                Text("Solicitar vínculo")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-
-                Text("Digite o e-mail do professor para enviar a solicitação.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("E-mail do professor")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
-
-                    TextField("professor@email.com", text: $teacherEmailInput)
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.emailAddress)
-                        .autocorrectionDisabled(true)
-                        .padding(12)
-                        .background(Color.white.opacity(0.08))
-                        .cornerRadius(12)
-                        .foregroundColor(.white.opacity(0.92))
-                }
-
-                if let msg = linkActionMessage {
-                    Text(msg)
+                    Text("Digite o e-mail do professor para enviar a solicitação.")
                         .font(.system(size: 13))
-                        .foregroundColor(linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
-                }
+                        .foregroundColor(.white.opacity(0.55))
 
-                HStack(spacing: 10) {
-                    Button {
-                        goToRequestLink = false
-                    } label: {
-                        Text("Voltar")
-                            .font(.system(size: 14, weight: .semibold))
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("E-mail do professor")
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
+
+                        TextField("professor@email.com", text: $teacherEmailInput)
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.emailAddress)
+                            .autocorrectionDisabled(true)
+                            .padding(12)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(12)
+                            .foregroundColor(.white.opacity(0.92))
+                    }
+
+                    if let msg = linkActionMessage {
+                        Text(msg)
+                            .font(.system(size: 13))
+                            .foregroundColor(linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
+                    }
+
+                    HStack(spacing: 10) {
+                        Button {
+                            showRequestLinkModal = false
+                        } label: {
+                            Text("Voltar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Capsule().fill(Color.white.opacity(0.08)))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isProcessingLinkAction)
+
+                        Button {
+                            Task {
+                                let ok = await requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                                if ok {
+                                    showRequestLinkModal = false
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Text("Enviar solicitação")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+
+                                if isProcessingLinkAction {
+                                    ProgressView()
+                                }
+                            }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.white.opacity(0.08)))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isProcessingLinkAction)
-
-                    Button {
-                        Task {
-                            let ok = await requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
-                            if ok {
-                                goToRequestLink = false
-                            }
+                            .background(Capsule().fill(Color.green.opacity(0.20)))
                         }
-                    } label: {
-                        HStack(spacing: 10) {
-                            Text("Enviar solicitação")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-
-                            if isProcessingLinkAction {
-                                ProgressView()
-                            }
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Capsule().fill(Color.green.opacity(0.20)))
+                        .buttonStyle(.plain)
+                        .disabled(isProcessingLinkAction)
                     }
-                    .buttonStyle(.plain)
-                    .disabled(isProcessingLinkAction)
+
+                    Spacer(minLength: 0)
+                }
+                .padding(16)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Solicitar vínculo")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
 
-                Spacer(minLength: 0)
+                ToolbarItem(placement: .navigationBarTrailing) {
+                    Button("Fechar") {
+                        showRequestLinkModal = false
+                    }
+                    .foregroundColor(.white)
+                }
             }
-            .padding(16)
+            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
         }
-        .navigationBarBackButtonHidden(true)
     }
 
     private func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
