@@ -54,17 +54,14 @@ final class StudentAgendaViewModel: ObservableObject {
         linkActionMessageIsError = false
 
         do {
-            // Carrega usuário do aluno (para obter email)
             currentStudentUser = try await repository.getUser(uid: studentId)
 
-            // 1) Já existe vínculo?
             if let _ = try await repository.getActiveTeacherRelationForStudent(studentId: studentId) {
                 linkBannerState = .linked
                 hasLoadedLinkStatus = true
                 return
             }
 
-            // 2) Existe convite pendente?
             if let studentEmail = currentStudentUser?.email,
                !studentEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                 if let invite = try await repository.getPendingInviteForStudentEmail(studentEmail: studentEmail) {
@@ -75,7 +72,6 @@ final class StudentAgendaViewModel: ObservableObject {
                 }
             }
 
-            // 3) Sem vínculo e sem convite
             linkBannerState = .notLinked
             hasLoadedLinkStatus = true
 
@@ -109,6 +105,7 @@ final class StudentAgendaViewModel: ObservableObject {
             if currentStudentUser == nil {
                 currentStudentUser = try await repository.getUser(uid: studentId)
             }
+
             let studentEmail = (currentStudentUser?.email ?? "")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .lowercased()
@@ -142,7 +139,6 @@ final class StudentAgendaViewModel: ObservableObject {
         defer { isProcessingLinkAction = false }
 
         do {
-            // passa o usuário do aluno (para decidir categoria inicial)
             if currentStudentUser == nil {
                 currentStudentUser = try await repository.getUser(uid: studentId)
             }
@@ -273,6 +269,16 @@ final class StudentAgendaViewModel: ObservableObject {
     }
 
     func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
+        let explicitName = (week.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !explicitName.isEmpty {
+            return "Professor: \(explicitName)"
+        }
+
+        let explicitEmail = (week.teacherEmail ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !explicitEmail.isEmpty {
+            return "Professor: \(explicitEmail)"
+        }
+
         let teacherId = week.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else { return "Professor: —" }
 
@@ -300,3 +306,4 @@ final class StudentAgendaViewModel: ObservableObject {
         return "\(f.string(from: minDate)) a \(f.string(from: maxDate))"
     }
 }
+

@@ -274,7 +274,41 @@ struct StudentAgendaView: View {
                 .cornerRadius(14)
 
             case .linked:
-                EmptyView()
+                VStack(alignment: .leading, spacing: 10) {
+                    HStack(spacing: 10) {
+                        Image(systemName: "checkmark.seal.fill")
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.green.opacity(0.85))
+
+                        Text("Você já está vinculado a um professor")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                    }
+
+                    Text("Se desejar, você pode solicitar vínculo com outro professor informando o e-mail.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    Button {
+                        teacherEmailInput = ""
+                        vm.linkActionMessage = nil
+                        vm.linkActionMessageIsError = false
+                        isRequestLinkSheetPresented = true
+                    } label: {
+                        Text("Solicitar vínculo com outro professor")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.green.opacity(0.18)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isProcessingLinkAction)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
 
             case .error(let message):
                 VStack(alignment: .leading, spacing: 10) {
@@ -529,3 +563,4 @@ struct StudentAgendaView: View {
         path.removeLast()
     }
 }
+

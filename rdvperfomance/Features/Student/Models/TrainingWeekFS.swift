@@ -1,7 +1,6 @@
 import Foundation
 import FirebaseFirestore
 
-// Modelo de semana de treino armazenado no Firestore
 struct TrainingWeekFS: Identifiable, Codable, Hashable {
 
     @DocumentID var id: String?
@@ -18,10 +17,12 @@ struct TrainingWeekFS: Identifiable, Codable, Hashable {
 
     @ServerTimestamp var createdAt: Timestamp?
     @ServerTimestamp var updatedAt: Timestamp?
+
+    var teacherName: String?
+    var teacherEmail: String?
 }
 
 extension TrainingWeekFS {
-    // Converte o valor raw para enum de categoria
     var category: TreinoTipo {
         TreinoTipo(rawValue: categoryRaw) ?? .crossfit
     }
