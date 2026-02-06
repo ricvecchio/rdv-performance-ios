@@ -77,6 +77,10 @@ struct TeacherStudentsListView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // ✅ AJUSTE 1: desfoca a tela de fundo quando o modal "Convidar aluno" estiver aberto
+        .blur(radius: showInviteSheet ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: showInviteSheet)
+
         .onAppear {
             filter = initialFilter
         }
@@ -485,41 +489,47 @@ struct TeacherStudentsListView: View {
                 .scaledToFill()
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            // ✅ AJUSTE 2: ScrollView para evitar “expansão” que corta conteúdo ao focar no e-mail e ao trocar abas
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
 
-                Capsule()
-                    .fill(Color.white.opacity(0.22))
-                    .frame(width: 48, height: 6)
-                    .padding(.top, 10)
+                    Capsule()
+                        .fill(Color.white.opacity(0.22))
+                        .frame(width: 48, height: 6)
+                        .padding(.top, 10)
 
-                Text("Convidar aluno")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-                    .padding(.top, 2)
+                    Text("Convidar aluno")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.top, 2)
 
-                Picker("", selection: $inviteTab) {
-                    ForEach(InviteTab.allCases, id: \.rawValue) { tab in
-                        Text(tab.title).tag(tab)
+                    Picker("", selection: $inviteTab) {
+                        ForEach(InviteTab.allCases, id: \.rawValue) { tab in
+                            Text(tab.title).tag(tab)
+                        }
                     }
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
 
-                Group {
-                    switch inviteTab {
-                    case .invite:
-                        inviteByEmailCard
-                    case .sent:
-                        invitesSentCard
+                    Group {
+                        switch inviteTab {
+                        case .invite:
+                            inviteByEmailCard
+                        case .sent:
+                            invitesSentCard
+                        }
                     }
-                }
-                .padding(.horizontal, 16)
+                    .padding(.horizontal, 16)
 
-                Spacer(minLength: 10)
+                    Spacer(minLength: 10)
+                }
+                .padding(.bottom, 16)
             }
-            .padding(.bottom, 16)
+            .scrollDismissesKeyboard(.interactively)
         }
         .presentationDetents([.medium, .large])
+        // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
+        .presentationContentInteraction(.scrolls)
         .presentationDragIndicator(.hidden)
         .onAppear {
             Task { await loadInvitesIfPossible() }
