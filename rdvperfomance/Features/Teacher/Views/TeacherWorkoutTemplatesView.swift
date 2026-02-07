@@ -17,6 +17,7 @@ struct TeacherWorkoutTemplatesView: View {
     @State private var templates: [WorkoutTemplateFS] = []
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
+    @State private var isSeedingDefaults: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -198,6 +199,7 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private func loadTemplates() async {
+        if isLoading { return }
         errorMessage = nil
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -216,6 +218,34 @@ struct TeacherWorkoutTemplatesView: View {
                 categoryRaw: category.rawValue,
                 sectionKey: sectionKey
             )
+
+            // ✅ Seed controlado (evita duplicar por múltiplas chamadas de load)
+            if category == .crossfit && sectionKey == "girlsWods" && !isSeedingDefaults {
+                isSeedingDefaults = true
+                defer { isSeedingDefaults = false }
+
+                do {
+                    let didInsert = try await WorkoutTemplateDefaultsSeeder.shared.seedMissingDefaultsIfNeeded(
+                        teacherId: teacherId,
+                        category: category,
+                        sectionKey: sectionKey,
+                        sectionTitle: sectionTitle,
+                        existingTemplates: templates
+                    )
+
+                    if didInsert {
+                        templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+                            teacherId: teacherId,
+                            categoryRaw: category.rawValue,
+                            sectionKey: sectionKey
+                        )
+                    }
+
+                } catch {
+                    errorMessage = "Falha ao inserir treinos padrão: \(error.localizedDescription)"
+                }
+            }
+
         } catch {
             errorMessage = error.localizedDescription
             templates = []
@@ -241,10 +271,8 @@ struct TeacherWorkoutTemplatesView: View {
         defer { isLoading = false }
 
         do {
-            // ✅ Agora usa a função corrigida que aponta para "workout_templates"
             try await FirestoreRepository.shared.deleteWorkoutTemplate(templateId: templateId)
 
-            // Remove localmente e recarrega a lista
             templates.removeAll { $0.id == templateId }
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
 

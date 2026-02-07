@@ -530,3 +530,4 @@ private extension AppRouter {
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
+
