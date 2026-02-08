@@ -1,8 +1,9 @@
 import Foundation
 
-enum DefaultWorkoutsEmCasa {
+enum DefaultWorkoutsAcademia {
 
     static func defaults(sectionKey: String) -> [DefaultWorkoutSeed] {
         return []
     }
 }
+
