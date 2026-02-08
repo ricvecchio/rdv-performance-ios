@@ -219,8 +219,8 @@ struct TeacherWorkoutTemplatesView: View {
                 sectionKey: sectionKey
             )
 
-            // ✅ Seed controlado (evita duplicar por múltiplas chamadas de load)
-            if category == .crossfit && sectionKey == "girlsWods" && !isSeedingDefaults {
+            // ✅ Seed controlado para todas as seções do Crossfit (exceto "Meus Treinos")
+            if category == .crossfit && sectionKey != "meusTreinos" && !isSeedingDefaults {
                 isSeedingDefaults = true
                 defer { isSeedingDefaults = false }
 

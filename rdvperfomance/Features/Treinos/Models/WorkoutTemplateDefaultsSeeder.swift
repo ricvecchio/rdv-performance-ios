@@ -17,9 +17,11 @@ final class WorkoutTemplateDefaultsSeeder {
         let t = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty { return false }
 
-        // ✅ Somente Crossfit + Girls WODs
+        // ✅ Somente Crossfit
         if category != .crossfit { return false }
-        if sectionKey != "girlsWods" { return false }
+
+        // ✅ "Meus Treinos" não recebe defaults
+        if sectionKey == "meusTreinos" { return false }
 
         // ✅ Evita duplicar em aberturas futuras (persistente por professor/seção)
         let flagKey = buildFlagKey(
