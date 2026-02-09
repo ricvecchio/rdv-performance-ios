@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 import UniformTypeIdentifiers
+import FirebaseFirestore
 
 struct TeacherImportWorkoutsView: View {
     
@@ -58,9 +59,6 @@ struct TeacherImportWorkoutsView: View {
             }
         }
         
-        /// ✅ SectionKey onde o TeacherWorkoutTemplatesView busca os itens.
-        /// - Crossfit: precisa cair em "Meus Treinos" do menu Crossfit (sectionKey = "meusTreinos")
-        /// - Academia/EmCasa: sua tela usa "meusTreinos" como seção principal (vide shouldShowAddButton)
         var targetSectionKey: String {
             switch self {
             case .crossfit:
@@ -217,7 +215,6 @@ struct TeacherImportWorkoutsView: View {
                 )
             }
         }
-        // ✅ Seletor para enviar o treino para: Crossfit / Academia / Em Casa
         .confirmationDialog(
             "Enviar para Treinos",
             isPresented: $isSendToWorkoutsDialogPresented,
@@ -355,7 +352,6 @@ struct TeacherImportWorkoutsView: View {
             
             Menu {
                 Button {
-                    // ✅ Agora abre o seletor (Crossfit / Academia / Em Casa)
                     openSendToWorkoutsPicker(workout: w)
                 } label: {
                     Label("Enviar para Treinos", systemImage: "paperplane.fill")
@@ -441,8 +437,6 @@ struct TeacherImportWorkoutsView: View {
         activeSheet = .detail(workout)
     }
     
-    // MARK: - ✅ Enviar para Treinos
-    
     private func openSendToWorkoutsPicker(workout: TeacherImportedWorkout) {
         errorMessage = nil
         successMessage = nil
@@ -474,8 +468,6 @@ struct TeacherImportWorkoutsView: View {
         let descOnly = workout.description.trimmingCharacters(in: .whitespacesAndNewlines)
         let blocks = buildBlocks(from: workout)
         
-        // ✅ Evita salvar o "textão" duplicado quando já existem blocos.
-        // Mantém apenas a descrição (se existir). Caso tudo esteja vazio, salva "-" para não ficar em branco.
         let templateDescription: String = {
             if !descOnly.isEmpty { return descOnly }
             if !blocks.isEmpty { return "" }
@@ -532,8 +524,6 @@ struct TeacherImportWorkoutsView: View {
         
         return list
     }
-    
-    // MARK: - Import / Template
     
     private func prepareTemplateShare() {
         errorMessage = nil
@@ -620,7 +610,19 @@ struct TeacherImportWorkoutsView: View {
             try await TeacherImportedWorkoutsRepository.saveImportedWorkoutsBatch(teacherId: teacherId, items: parsed)
             await loadWorkouts()
         } catch {
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = "Sem permissão para importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                return
+            }
+            
             let msg = error.localizedDescription
+            if msg.contains("Missing or insufficient permissions") {
+                errorMessage = "Sem permissão para importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                return
+            }
+            
             if msg.contains("CoreXLSX") || msg.contains("CoreXLSXError") {
                 errorMessage = """
                 Não foi possível ler o arquivo .xlsx.
@@ -637,7 +639,6 @@ struct TeacherImportWorkoutsView: View {
         }
     }
     
-    // ✅ Mantido (não alterei o fluxo antigo; apenas deixei como estava).
     private func sendImportedWorkoutToStudent(workout: TeacherImportedWorkout) {
         errorMessage = "Enviar para aluno: selecione o fluxo de alunos que você já usa (me diga a rota que abre a lista)."
     }
@@ -658,7 +659,18 @@ struct TeacherImportWorkoutsView: View {
             workouts = try await TeacherImportedWorkoutsRepository.loadWorkouts(teacherId: teacherId)
         } catch {
             workouts = []
-            errorMessage = error.localizedDescription
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = "Sem permissão para acessar/importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            } else {
+                let msg = error.localizedDescription
+                if msg.contains("Missing or insufficient permissions") {
+                    errorMessage = "Sem permissão para acessar/importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                } else {
+                    errorMessage = msg
+                }
+            }
         }
     }
     
@@ -677,7 +689,18 @@ struct TeacherImportWorkoutsView: View {
             try await TeacherImportedWorkoutsRepository.addWorkout(teacherId: teacherId, title: title)
             await loadWorkouts()
         } catch {
-            errorMessage = error.localizedDescription
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = "Sem permissão para salvar treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            } else {
+                let msg = error.localizedDescription
+                if msg.contains("Missing or insufficient permissions") {
+                    errorMessage = "Sem permissão para salvar treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                } else {
+                    errorMessage = msg
+                }
+            }
         }
     }
     
@@ -696,7 +719,18 @@ struct TeacherImportWorkoutsView: View {
             try await TeacherImportedWorkoutsRepository.deleteWorkout(teacherId: teacherId, workoutId: workoutId)
             await loadWorkouts()
         } catch {
-            errorMessage = error.localizedDescription
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = "Sem permissão para remover treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            } else {
+                let msg = error.localizedDescription
+                if msg.contains("Missing or insufficient permissions") {
+                    errorMessage = "Sem permissão para remover treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                } else {
+                    errorMessage = msg
+                }
+            }
         }
     }
     

@@ -1,5 +1,6 @@
 import SwiftUI
 import FirebaseAuth
+import FirebaseFirestore
 
 struct TeacherImportVideosView: View {
     
@@ -369,7 +370,7 @@ struct TeacherImportVideosView: View {
             videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
         } catch {
             videos = []
-            errorMessage = error.localizedDescription
+            errorMessage = mapImportPermissionError(error)
         }
     }
     
@@ -393,7 +394,7 @@ struct TeacherImportVideosView: View {
             )
             await loadVideos()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = mapImportPermissionError(error)
         }
     }
     
@@ -412,8 +413,24 @@ struct TeacherImportVideosView: View {
             try await TeacherYoutubeVideosRepository.deleteVideo(teacherId: teacherId, videoId: videoId)
             await loadVideos()
         } catch {
-            errorMessage = error.localizedDescription
+            errorMessage = mapImportPermissionError(error)
         }
+    }
+    
+    private func mapImportPermissionError(_ error: Error) -> String {
+        let ns = error as NSError
+        
+        if ns.domain == FirestoreErrorDomain,
+           ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+        }
+        
+        let msg = error.localizedDescription
+        if msg.contains("Missing or insufficient permissions") {
+            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+        }
+        
+        return msg
     }
     
     private func pop() {
