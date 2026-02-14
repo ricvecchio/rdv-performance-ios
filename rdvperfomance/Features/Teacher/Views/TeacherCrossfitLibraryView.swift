@@ -20,7 +20,6 @@ struct TeacherCrossfitLibraryView: View {
         .init(title: "Girls WODs", sectionKey: "girlsWods"),
         .init(title: "Hero & Tribute Workouts", sectionKey: "heroTributeWorkouts"),
         .init(title: "Open WODs", sectionKey: "openWods"),
-        .init(title: "Benchmark WODs", sectionKey: "benchmarks"),
         .init(title: "WODs Nomeados", sectionKey: "wodsNomeados"),
         .init(title: "Qualifiers / WODs de Competições", sectionKey: "qualifiersCompeticoes"),
         .init(title: "Meus Treinos", sectionKey: "meusTreinos")

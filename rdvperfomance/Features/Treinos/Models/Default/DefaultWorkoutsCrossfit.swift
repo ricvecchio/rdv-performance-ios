@@ -16,10 +16,6 @@ enum DefaultWorkoutsCrossfit {
             return openWodsDefaults()
         }
 
-        if sectionKey == "benchmarks" {
-            return benchmarksDefaults()
-        }
-
         if sectionKey == "wodsNomeados" {
             return wodsNomeadosDefaults()
         }
