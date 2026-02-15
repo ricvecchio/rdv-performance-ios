@@ -288,6 +288,14 @@ struct TeacherFeedbacksView: View {
             .padding(.leading, leading)
     }
 
+    private func friendlyFirestoreError(_ error: Error) -> String {
+        let msg = (error as NSError).localizedDescription
+        if msg.lowercased().contains("missing or insufficient permissions") {
+            return "Sem permissão para acessar os feedbacks desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/feedbacks."
+        }
+        return msg
+    }
+
     // Actions: load and save feedbacks
     private func loadFeedbacks() async {
         errorMessage = nil
@@ -321,7 +329,7 @@ struct TeacherFeedbacksView: View {
             )
             self.feedbacks = list
         } catch {
-            self.errorMessage = (error as NSError).localizedDescription
+            self.errorMessage = friendlyFirestoreError(error)
         }
     }
 
@@ -368,7 +376,7 @@ struct TeacherFeedbacksView: View {
             await loadFeedbacks()
 
         } catch {
-            errorMessage = (error as NSError).localizedDescription
+            errorMessage = friendlyFirestoreError(error)
         }
     }
 
@@ -384,3 +392,4 @@ struct TeacherFeedbacksView: View {
         path.removeLast()
     }
 }
+

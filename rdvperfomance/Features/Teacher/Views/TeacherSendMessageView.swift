@@ -308,6 +308,14 @@ struct TeacherSendMessageView: View {
             .padding(.leading, leading)
     }
 
+    private func friendlyFirestoreError(_ error: Error) -> String {
+        let msg = (error as NSError).localizedDescription
+        if msg.lowercased().contains("missing or insufficient permissions") {
+            return "Sem permissão para acessar as mensagens desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/messages."
+        }
+        return msg
+    }
+
     // Actions: load and send messages
     private func loadMessages() async {
         errorMessage = nil
@@ -341,7 +349,7 @@ struct TeacherSendMessageView: View {
             )
             self.messages = list
         } catch {
-            self.errorMessage = (error as NSError).localizedDescription
+            self.errorMessage = friendlyFirestoreError(error)
         }
     }
 
@@ -406,7 +414,7 @@ struct TeacherSendMessageView: View {
             await loadMessages()
 
         } catch {
-            errorMessage = (error as NSError).localizedDescription
+            errorMessage = friendlyFirestoreError(error)
         }
     }
 
@@ -422,3 +430,4 @@ struct TeacherSendMessageView: View {
         path.removeLast()
     }
 }
+

@@ -30,13 +30,23 @@ final class UserRepository: FirestoreBaseRepository {
         let e = clean(email).lowercased()
         guard !e.isEmpty else { return nil }
 
+        // ✅ Não filtra por userType direto no Firestore (evita hardcode "TRAINER" e problemas com PROFESSOR/TEACHER)
         let snap = try await db.collection(Collections.users)
             .whereField("email", isEqualTo: e)
-            .whereField("userType", isEqualTo: "TRAINER")
             .limit(to: 1)
             .getDocuments()
 
-        return try snap.documents.first?.data(as: AppUser.self)
+        guard let user = try snap.documents.first?.data(as: AppUser.self) else { return nil }
+
+        // ✅ Aceita TRAINER / PROFESSOR / TEACHER (e variações comuns)
+        let ut = (user.userType ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let allowed: Set<String> = [
+            "TRAINER", "PROFESSOR", "TEACHER",
+            "trainer", "professor", "teacher",
+            "Trainer", "Professor", "Teacher"
+        ]
+
+        return allowed.contains(ut) ? user : nil
     }
 
     // MARK: - Relação ativa (status vinculado)
