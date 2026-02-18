@@ -96,6 +96,11 @@ enum AppRoute: Hashable {
 
     case teacherMyWorkouts(category: TreinoTipo)
     case teacherCrossfitLibrary(section: CrossfitLibrarySection)
+
+    // ✅ NOVO: bibliotecas/menus para separar blocos por músculo
+    case teacherAcademiaLibrary
+    case teacherEmCasaLibrary
+
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
     case teacherImportWorkouts(category: TreinoTipo)
     case teacherImportVideos(category: TreinoTipo)

@@ -25,9 +25,18 @@ struct TeacherWorkoutTemplatesView: View {
         category == .crossfit
     }
 
+    private var isAcademiaOrEmCasaCategory: Bool {
+        category == .academia || category == .emCasa
+    }
+
     private var shouldShowAddButton: Bool {
+        // ✅ Crossfit sempre mostra
         if isCrossfitCategory { return true }
-        return sectionKey == "meusTreinos" && (category == .academia || category == .emCasa)
+
+        // ✅ Academia e Em Casa também devem mostrar (independente da seção)
+        if isAcademiaOrEmCasaCategory { return true }
+
+        return false
     }
 
     private var addButtonTitle: String {
@@ -35,7 +44,7 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private var descriptionText: String {
-        if category == .academia || category == .emCasa {
+        if isAcademiaOrEmCasaCategory {
             return "Cadastre e gerencie os treinos desta seção."
         }
         return "Cadastre e gerencie os WODs desta seção."
@@ -79,7 +88,7 @@ struct TeacherWorkoutTemplatesView: View {
 
                             if isCrossfitCategory {
                                 EmptyView()
-                            } else if category == .academia || category == .emCasa {
+                            } else if isAcademiaOrEmCasaCategory {
                                 EmptyView()
                             } else {
                                 Text("\(category.displayName) • \(sectionTitle)")
@@ -219,8 +228,8 @@ struct TeacherWorkoutTemplatesView: View {
                 sectionKey: sectionKey
             )
 
-            // ✅ Seed controlado para todas as seções do Crossfit (exceto "Meus Treinos")
-            if category == .crossfit && sectionKey != "meusTreinos" && !isSeedingDefaults {
+            // ✅ Seed controlado para seções com defaults (exceto "Meus Treinos")
+            if (category == .crossfit || category == .academia || category == .emCasa) && sectionKey != "meusTreinos" && !isSeedingDefaults {
                 isSeedingDefaults = true
                 defer { isSeedingDefaults = false }
 

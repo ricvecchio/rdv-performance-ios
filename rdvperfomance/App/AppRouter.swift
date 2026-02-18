@@ -246,6 +246,17 @@ struct AppRouter: View {
                             TeacherCrossfitLibraryView(path: $path, section: section)
                         }
 
+                    // ✅ NOVO: menus para Academia e Em Casa (blocos por músculo)
+                    case .teacherAcademiaLibrary:
+                        guardedTeacher {
+                            TeacherAcademiaLibraryView(path: $path)
+                        }
+
+                    case .teacherEmCasaLibrary:
+                        guardedTeacher {
+                            TeacherEmCasaLibraryView(path: $path)
+                        }
+
                     case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             TeacherWorkoutTemplatesView(

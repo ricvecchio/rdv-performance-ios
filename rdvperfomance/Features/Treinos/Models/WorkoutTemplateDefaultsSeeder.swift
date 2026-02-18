@@ -17,8 +17,8 @@ final class WorkoutTemplateDefaultsSeeder {
         let t = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         if t.isEmpty { return false }
 
-        // ✅ Somente Crossfit
-        if category != .crossfit { return false }
+        // ✅ Somente categorias suportadas para defaults
+        if category != .crossfit && category != .academia && category != .emCasa { return false }
 
         // ✅ "Meus Treinos" não recebe defaults
         if sectionKey == "meusTreinos" { return false }
@@ -33,7 +33,7 @@ final class WorkoutTemplateDefaultsSeeder {
             return false
         }
 
-        let seeds = DefaultWorkoutsProvider.defaultsFor(category: category, sectionKey: sectionKey)
+        let seeds = defaultsFor(category: category, sectionKey: sectionKey)
         if seeds.isEmpty { return false }
 
         // ✅ Detecta títulos já existentes (case-insensitive)
@@ -91,6 +91,19 @@ final class WorkoutTemplateDefaultsSeeder {
         }
 
         return didInsertAny
+    }
+
+    private func defaultsFor(category: TreinoTipo, sectionKey: String) -> [DefaultWorkoutSeed] {
+        switch category {
+        case .crossfit:
+            return DefaultWorkoutsProvider.defaultsFor(category: category, sectionKey: sectionKey)
+        case .academia:
+            return DefaultWorkoutsAcademia.defaults(sectionKey: sectionKey)
+        case .emCasa:
+            return DefaultWorkoutsEmCasa.defaults(sectionKey: sectionKey)
+        default:
+            return []
+        }
     }
 
     private func buildTemplateDescription(seed: DefaultWorkoutSeed) -> String {

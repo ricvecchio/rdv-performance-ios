@@ -42,11 +42,7 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos Academia",
                             badgeIcon: "dumbbell"
                         ) {
-                            path.append(.teacherWorkoutTemplates(
-                                category: .academia,
-                                sectionKey: "meusTreinos",
-                                sectionTitle: "Treinos Academia"
-                            ))
+                            path.append(.teacherAcademiaLibrary)
                         }
 
                         programaTile(
@@ -55,11 +51,7 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos em Casa",
                             badgeIcon: "house.fill"
                         ) {
-                            path.append(.teacherWorkoutTemplates(
-                                category: .emCasa,
-                                sectionKey: "meusTreinos",
-                                sectionTitle: "Treinos em Casa"
-                            ))
+                            path.append(.teacherEmCasaLibrary)
                         }
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
@@ -141,7 +133,6 @@ struct TeacherMyWorkoutsView: View {
         tileBase(imageName: imageName, height: height)
             .overlay(alignment: .bottomLeading) {
                 badgeView(text: badgeText, icon: badgeIcon)
-                    // ✅ AQUI: empurra o badge mais para a direita
                     .padding(.leading, 155)
                     .padding(.bottom, 14)
                     .padding(.trailing, 24)
