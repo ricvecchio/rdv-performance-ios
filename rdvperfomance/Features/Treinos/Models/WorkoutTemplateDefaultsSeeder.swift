@@ -97,12 +97,12 @@ final class WorkoutTemplateDefaultsSeeder {
         switch category {
         case .crossfit:
             return DefaultWorkoutsProvider.defaultsFor(category: category, sectionKey: sectionKey)
+
         case .academia:
             return DefaultWorkoutsAcademia.defaults(sectionKey: sectionKey)
+
         case .emCasa:
             return DefaultWorkoutsEmCasa.defaults(sectionKey: sectionKey)
-        default:
-            return []
         }
     }
 

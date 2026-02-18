@@ -12,9 +12,6 @@ enum DefaultWorkoutsProvider {
 
         case .emCasa:
             return DefaultWorkoutsEmCasa.defaults(sectionKey: sectionKey)
-
-        default:
-            return []
         }
     }
 }

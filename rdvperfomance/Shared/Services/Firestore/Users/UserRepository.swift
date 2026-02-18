@@ -39,7 +39,8 @@ final class UserRepository: FirestoreBaseRepository {
         guard let user = try snap.documents.first?.data(as: AppUser.self) else { return nil }
 
         // ✅ Aceita TRAINER / PROFESSOR / TEACHER (e variações comuns)
-        let ut = (user.userType ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let ut = user.userType.trimmingCharacters(in: .whitespacesAndNewlines)
+
         let allowed: Set<String> = [
             "TRAINER", "PROFESSOR", "TEACHER",
             "trainer", "professor", "teacher",
@@ -457,6 +458,8 @@ final class UserRepository: FirestoreBaseRepository {
             add("emcasa")
             add("em_casa")
             add("em casa")
+        } else if lower == "emcasa" || lower == "emcasa" {
+            add("EMCASA")
         } else if lower == "emcasa" || lower == "emcasa" {
             add("EMCASA")
         } else if lower == "emcasa" || lower == "emcasa" {

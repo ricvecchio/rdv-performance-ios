@@ -97,8 +97,24 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isUnlinking = true
         errorMessage = nil
 
-        do {
-            if let cat = categoryToRemove {
+        if let cat = categoryToRemove {
+            let variants = categoryVariants(cat)
+            for v in variants {
+                do {
+                    try await repository.unlinkStudentFromTeacher(
+                        teacherId: teacherId,
+                        studentId: studentId,
+                        category: v
+                    )
+                } catch {
+                    continue
+                }
+            }
+        } else {
+            let catsToRemove = categoriesWhereStudentIsLinked(studentId: studentId)
+            let effective = catsToRemove.isEmpty ? supportedCategories : catsToRemove
+
+            for cat in effective {
                 let variants = categoryVariants(cat)
                 for v in variants {
                     do {
@@ -111,34 +127,14 @@ final class TeacherStudentsListViewModel: ObservableObject {
                         continue
                     }
                 }
-            } else {
-                let catsToRemove = categoriesWhereStudentIsLinked(studentId: studentId)
-                let effective = catsToRemove.isEmpty ? supportedCategories : catsToRemove
-
-                for cat in effective {
-                    let variants = categoryVariants(cat)
-                    for v in variants {
-                        do {
-                            try await repository.unlinkStudentFromTeacher(
-                                teacherId: teacherId,
-                                studentId: studentId,
-                                category: v
-                            )
-                        } catch {
-                            continue
-                        }
-                    }
-                }
             }
-
-            await loadStudents(teacherId: teacherId)
-
-        } catch {
-            self.errorMessage = (error as NSError).localizedDescription
         }
+
+        await loadStudents(teacherId: teacherId)
 
         isUnlinking = false
     }
+
 
     func loadInvites(teacherId: String) async {
         isInvitesLoading = true
