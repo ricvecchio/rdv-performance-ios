@@ -90,6 +90,10 @@ final class AppSession: ObservableObject {
 
     var canUseTrainerProFeatures: Bool {
         guard isLoggedIn, isTrainer else { return false }
+        return true
+
+        /*
+        guard isLoggedIn, isTrainer else { return false }
 
         let plan = (planTypeRaw ?? "FREE").uppercased()
         if plan == "PRO" { return true }
@@ -99,6 +103,7 @@ final class AppSession: ObservableObject {
         let trialSeconds: TimeInterval = 30 * 24 * 60 * 60
         let endsAt = start.addingTimeInterval(trialSeconds)
         return Date() <= endsAt
+        */
     }
 
     func upgradeTrainerToProSimulated() async throws {
@@ -120,6 +125,17 @@ final class AppSession: ObservableObject {
         guard isLoggedIn, isTrainer else { return }
         guard let uid, !uid.isEmpty else { return }
 
+        let updates: [String: Any] = [
+            "planType": "PRO",
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        try await db.collection("users").document(uid).setData(updates, merge: true)
+
+        self.planTypeRaw = "PRO"
+        self.storedPlanTypeRaw = "PRO"
+
+        /*
         let expiredDate = Date().addingTimeInterval(-(31 * 24 * 60 * 60))
         let updates: [String: Any] = [
             "planType": "FREE",
@@ -134,6 +150,7 @@ final class AppSession: ObservableObject {
 
         self.trialStartedAt = expiredDate
         self.storedTrialStartedAt = expiredDate.timeIntervalSince1970
+        */
     }
 
     // Observa mudanças no estado de autenticação do Firebase
@@ -206,6 +223,18 @@ final class AppSession: ObservableObject {
             }
 
             if self.isTrainer {
+                self.planTypeRaw = "PRO"
+                self.storedPlanTypeRaw = "PRO"
+
+                if self.trialStartedAt == nil {
+                    let now = Date()
+                    self.trialStartedAt = now
+                    self.storedTrialStartedAt = now.timeIntervalSince1970
+                }
+            }
+
+            /*
+            if self.isTrainer {
                 if self.planTypeRaw == nil {
                     self.planTypeRaw = "FREE"
                     self.storedPlanTypeRaw = "FREE"
@@ -219,6 +248,7 @@ final class AppSession: ObservableObject {
                     self.storedTrialStartedAt = now.timeIntervalSince1970
                 }
             }
+            */
 
         } catch {
         }
@@ -250,4 +280,3 @@ final class AppSession: ObservableObject {
         storedTrialStartedAt = 0
     }
 }
-

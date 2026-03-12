@@ -73,7 +73,6 @@ struct ProfileView: View {
     @State private var linkActionMessageIsError: Bool = false
     @State private var isProcessingLinkAction: Bool = false
 
-    // ✅ NOVO: modal pequeno para inserir e-mail do professor
     @State private var showRequestLinkModal: Bool = false
 
     private let treinoIcons = [
@@ -336,7 +335,10 @@ struct ProfileView: View {
         .onChange(of: session.shouldPresentPlanModal) { _, should in
             if should {
                 session.shouldPresentPlanModal = false
+
+                /*
                 openPlanos()
+                */
             }
         }
     }
@@ -414,7 +416,12 @@ struct ProfileView: View {
             }
 
             if session.userType == .STUDENT {
+                isPlanActive = true
+
+                /*
                 isPlanActive = try await repository.hasAnyWeeksForStudent(studentId: uid)
+                */
+
                 await loadLinkedTeachers(forceFallbackFromWeeks: true)
             } else {
                 isPlanActive = true
@@ -427,7 +434,7 @@ struct ProfileView: View {
             unitName = ""
             studentDefaultCategoryRaw = ""
             studentEmail = ""
-            isPlanActive = (session.userType != .STUDENT)
+            isPlanActive = true
             checkinsConcluidos = 0
             checkinsTotalSemana = 0
             linkedTeachers = []
@@ -534,7 +541,7 @@ struct ProfileView: View {
     }
 
     private func openPlanos() {
-        let plan = (session.planTypeRaw ?? "FREE").uppercased()
+        let plan = (session.planTypeRaw ?? "PRO").uppercased()
         planoSliderValue = (plan == "PRO") ? 1.0 : 0.0
         showConfirmacaoPro = false
         isConfirmingPro = false
@@ -542,11 +549,14 @@ struct ProfileView: View {
         showPlanosModal = true
     }
 
-    private var planoStatusTexto: String { isPlanActive ? "Ativo" : "Inativo" }
-    private var planoStatusForeground: Color { isPlanActive ? Color.green.opacity(0.9) : Color.red.opacity(0.95) }
-    private var planoStatusBackground: Color { isPlanActive ? Color.green.opacity(0.16) : Color.red.opacity(0.18) }
+    private var planoStatusTexto: String { "Ativo" }
+    private var planoStatusForeground: Color { Color.green.opacity(0.9) }
+    private var planoStatusBackground: Color { Color.green.opacity(0.16) }
 
     private var planosInfoTextoProfessor: String {
+        return "PRO • Ativo"
+
+        /*
         let plan = (session.planTypeRaw ?? "FREE").uppercased()
         if plan == "PRO" {
             return "PRO • Ativo"
@@ -564,9 +574,13 @@ struct ProfileView: View {
         let safeDays = max(0, days)
 
         return "FREE • Faltam \(safeDays) dias"
+        */
     }
 
     private var planosBadgeFgProfessor: Color {
+        return Color.green.opacity(0.9)
+
+        /*
         let plan = (session.planTypeRaw ?? "FREE").uppercased()
         if plan == "PRO" {
             return Color.green.opacity(0.9)
@@ -574,9 +588,13 @@ struct ProfileView: View {
 
         let canUse = session.canUseTrainerProFeatures
         return canUse ? Color.green.opacity(0.9) : Color.red.opacity(0.95)
+        */
     }
 
     private var planosBadgeBgProfessor: Color {
+        return Color.green.opacity(0.16)
+
+        /*
         let plan = (session.planTypeRaw ?? "FREE").uppercased()
         if plan == "PRO" {
             return Color.green.opacity(0.16)
@@ -584,6 +602,7 @@ struct ProfileView: View {
 
         let canUse = session.canUseTrainerProFeatures
         return canUse ? Color.green.opacity(0.16) : Color.red.opacity(0.18)
+        */
     }
 
     private func profileCard() -> some View {
@@ -625,10 +644,18 @@ struct ProfileView: View {
                 optionRow(
                     icon: "crown.fill",
                     title: "Planos",
+                    trailing: .coloredBadge("PRO • Ativo", fg: Color.green.opacity(0.9), bg: Color.green.opacity(0.16))
+                )
+
+                /*
+                optionRow(
+                    icon: "crown.fill",
+                    title: "Planos",
                     trailing: .coloredBadgeWithChevron(planosInfoTextoProfessor, fg: planosBadgeFgProfessor, bg: planosBadgeBgProfessor)
                 ) {
                     openPlanos()
                 }
+                */
             }
 
             if session.userType == .STUDENT {
@@ -772,7 +799,6 @@ struct ProfileView: View {
                     }
                 }
 
-                // ✅ AJUSTE FINAL: quando o modal pequeno abrir, desfoca o fundo do modal "Meus professores"
                 if showRequestLinkModal {
                     Color.black.opacity(0.25)
                         .ignoresSafeArea()
@@ -1231,7 +1257,7 @@ struct ProfileView: View {
             }
         }
         .onAppear {
-            let plan = (session.planTypeRaw ?? "FREE").uppercased()
+            let plan = (session.planTypeRaw ?? "PRO").uppercased()
             planoSliderValue = (plan == "PRO") ? 1.0 : 0.0
         }
     }
@@ -1418,4 +1444,3 @@ struct ProfileView: View {
         }
     }
 }
-

@@ -43,8 +43,13 @@ final class FirebaseAuthService {
             userDoc["cref"] = form.cref ?? ""
             userDoc["bio"] = form.bio ?? ""
             userDoc["gymName"] = form.gymName ?? ""
+            userDoc["planType"] = "PRO"
+            userDoc["trialStartedAt"] = FieldValue.serverTimestamp()
+
+            /*
             userDoc["planType"] = "FREE"
             userDoc["trialStartedAt"] = FieldValue.serverTimestamp()
+            */
         } else {
             userDoc["defaultCategory"] = form.defaultCategory ?? "crossfit"
             userDoc["active"] = form.active ?? true
@@ -80,7 +85,6 @@ final class FirebaseAuthService {
             throw FirebaseAuthServiceError.invalidState("Nenhuma categoria válida para vincular.")
         }
 
-        // 1) Procura vínculo existente para (teacherId, studentId)
         let existing = try await db.collection("teacher_students")
             .whereField("teacherId", isEqualTo: tid)
             .whereField("studentId", isEqualTo: sid)
@@ -88,7 +92,6 @@ final class FirebaseAuthService {
             .getDocuments()
 
         if let doc = existing.documents.first {
-            // 2) Atualiza categorias sem duplicar
             try await db.collection("teacher_students")
                 .document(doc.documentID)
                 .setData(
@@ -99,7 +102,6 @@ final class FirebaseAuthService {
                     merge: true
                 )
         } else {
-            // 3) Cria novo vínculo
             let relDoc: [String: Any] = [
                 "teacherId": tid,
                 "studentId": sid,
@@ -112,4 +114,3 @@ final class FirebaseAuthService {
         }
     }
 }
-
