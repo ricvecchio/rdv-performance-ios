@@ -632,31 +632,6 @@ struct ProfileView: View {
             optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron) {
                 openTrocarUnidade()
             }
-            divider()
-
-            if session.userType == .STUDENT {
-                optionRow(
-                    icon: "crown.fill",
-                    title: "Planos",
-                    trailing: .coloredBadge(planoStatusTexto, fg: planoStatusForeground, bg: planoStatusBackground)
-                )
-            } else {
-                optionRow(
-                    icon: "crown.fill",
-                    title: "Planos",
-                    trailing: .coloredBadge("PRO • Ativo", fg: Color.green.opacity(0.9), bg: Color.green.opacity(0.16))
-                )
-
-                /*
-                optionRow(
-                    icon: "crown.fill",
-                    title: "Planos",
-                    trailing: .coloredBadgeWithChevron(planosInfoTextoProfessor, fg: planosBadgeFgProfessor, bg: planosBadgeBgProfessor)
-                ) {
-                    openPlanos()
-                }
-                */
-            }
 
             if session.userType == .STUDENT {
                 divider()
