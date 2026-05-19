@@ -43,13 +43,6 @@ final class FirebaseAuthService {
             userDoc["cref"] = form.cref ?? ""
             userDoc["bio"] = form.bio ?? ""
             userDoc["gymName"] = form.gymName ?? ""
-            userDoc["planType"] = "PRO"
-            userDoc["trialStartedAt"] = FieldValue.serverTimestamp()
-
-            /*
-            userDoc["planType"] = "FREE"
-            userDoc["trialStartedAt"] = FieldValue.serverTimestamp()
-            */
         } else {
             userDoc["defaultCategory"] = form.defaultCategory ?? "crossfit"
             userDoc["active"] = form.active ?? true

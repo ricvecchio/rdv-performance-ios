@@ -8,7 +8,6 @@ struct AppRouter: View {
 
     private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
-    @State private var showPlanExpiredAlert: Bool = false
 
     var body: some View {
         NavigationStack(path: $path) {
@@ -79,7 +78,7 @@ struct AppRouter: View {
                         }
 
                     case .createTrainingWeek(let student, let category):
-                        guardedTeacherPro {
+                        guardedTeacher {
                             CreateTrainingWeekView(
                                 path: $path,
                                 student: student,
@@ -88,7 +87,7 @@ struct AppRouter: View {
                         }
 
                     case .createTrainingDay(let weekId, let category):
-                        guardedTeacherPro {
+                        guardedTeacher {
                             CreateTrainingDayView(
                                 path: $path,
                                 weekId: weekId,
@@ -268,7 +267,7 @@ struct AppRouter: View {
                         }
 
                     case .teacherImportWorkouts(let category):
-                        guardedTeacherPro {
+                        guardedTeacher {
                             TeacherImportWorkoutsView(
                                 path: $path,
                                 category: category
@@ -284,7 +283,7 @@ struct AppRouter: View {
                         }
 
                     case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
-                        guardedTeacherPro {
+                        guardedTeacher {
                             CreateCrossfitWODView(
                                 path: $path,
                                 category: category,
@@ -294,7 +293,7 @@ struct AppRouter: View {
                         }
 
                     case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):
-                        guardedTeacherPro {
+                        guardedTeacher {
                             CreateTreinoAcademiaView(
                                 path: $path,
                                 category: category,
@@ -304,7 +303,7 @@ struct AppRouter: View {
                         }
 
                     case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
-                        guardedTeacherPro {
+                        guardedTeacher {
                             CreateTreinoCasaView(
                                 path: $path,
                                 category: category,
@@ -321,18 +320,6 @@ struct AppRouter: View {
         .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
             if !logged { path.removeAll() }
-        }
-        .alert("Plano expirado", isPresented: $showPlanExpiredAlert) {
-            Button("Agora não", role: .cancel) {
-                popDeniedRoute()
-            }
-
-            Button("Renovar/Contratar") {
-                popDeniedRoute()
-                openPlanUpgradeFromAnywhere()
-            }
-        } message: {
-            Text("Plano expirado, deseja renovar/contratar?")
         }
     }
 }
@@ -390,155 +377,7 @@ private extension AppRouter {
     }
 
     @ViewBuilder
-    func guardedTeacherPro<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
-        if session.isLoggedIn && session.isTrainer {
-            if session.canUseTrainerProFeatures {
-                content()
-            } else {
-                planExpiredUpgradeView()
-            }
-        } else {
-            LoginView(path: $path)
-        }
-    }
-
-    @ViewBuilder
     func guardedStudent<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         if session.isLoggedIn && session.isStudent { content() } else { LoginView(path: $path) }
     }
-
-    func popDeniedRoute() {
-        if !path.isEmpty {
-            path.removeLast()
-        }
-    }
-
-    func openPlanUpgradeFromAnywhere() {
-        if path.last != .perfil {
-            path.append(.perfil)
-        }
-        session.shouldPresentPlanModal = true
-    }
-
-    func planExpiredUpgradeView() -> some View {
-        let contentMaxWidth: CGFloat = 380
-
-        return ZStack {
-            Theme.Colors.headerBackground
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-
-                Rectangle()
-                    .fill(Theme.Colors.divider)
-                    .frame(height: 1)
-                    .frame(maxWidth: .infinity)
-
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
-
-                        VStack(alignment: .leading, spacing: 14) {
-
-                            Text("Seu plano expirou.")
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-                                .padding(.top, 12)
-
-                            Text("Para adicionar novos WODs e continuar criando/enviando treinos, renove/contrate o Plano Pro.")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.55))
-
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "crown.fill")
-                                        .foregroundColor(.green.opacity(0.85))
-
-                                    Text("Plano Pro")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
-
-                                    Spacer()
-
-                                    Text("Expirado")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.red.opacity(0.95))
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
-                                        .background(Capsule().fill(Color.red.opacity(0.18)))
-                                }
-
-                                Text("Toque em “Renovar/Contratar” para abrir o modal de Planos no Perfil.")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.white.opacity(0.65))
-                            }
-                            .padding(14)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-
-                            Button {
-                                popDeniedRoute()
-                                openPlanUpgradeFromAnywhere()
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Text("Renovar/Contratar")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
-
-                                    Spacer()
-
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.white.opacity(0.35))
-                                }
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .fill(Color.green.opacity(0.20))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                        )
-                                )
-                            }
-                            .buttonStyle(.plain)
-
-                            Color.clear.frame(height: 18)
-                        }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-
-                        Spacer(minLength: 0)
-                    }
-                }
-            }
-            .ignoresSafeArea(.container, edges: [.bottom])
-        }
-        .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                Text("Planos")
-                    .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
-            }
-
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Fechar") {
-                    popDeniedRoute()
-                }
-                .foregroundColor(.white)
-            }
-        }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
-    }
 }
-

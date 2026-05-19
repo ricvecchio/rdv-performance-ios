@@ -82,7 +82,7 @@ struct RegisterTrainerView: View {
         }
     }
 
-    // Formulário de cadastro com campos de professor (nome, email, senha, whatsapp, CREF, academia, bio, área de foco, plano)
+    // Formulário de cadastro com campos de professor (nome, email, senha, whatsapp, CREF, academia, bio, área de foco)
     private func formCardTrainer() -> some View {
         VStack(spacing: 18) {
 

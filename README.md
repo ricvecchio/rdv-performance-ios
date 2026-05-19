@@ -178,7 +178,7 @@ Interface dedicada para alunos acompanharem seus treinos e progresso:
 Sistema completo para professores gerenciarem vídeos do YouTube:
 
 - Importação de vídeos através de URLs do YouTube
-- Player bloqueado para controle total do conteúdo
+- Player com controle de reprodução inline
 - Suporte para AirPlay (espelhamento de tela)
 - Envio de vídeos específicos para alunos
 - Repository local para armazenamento de vídeos importados
@@ -362,11 +362,11 @@ rdvperformance-ios
    │  │  │  └─ TeacherStudentsListViewModel.swift
    │  │  └─ Views/
    │  │     ├─ CreateTrainingWeekView.swift
-│  │     ├─ TeacherCrossfitLibraryView.swift
-│  │     ├─ TeacherDashboardView.swift
-│  │     ├─ TeacherFeedbacksView.swift
-│  │     ├─ TeacherLinkStudentView.swift
-│  │     ├─ TeacherMyWorkoutsView.swift
+   │  │     ├─ TeacherCrossfitLibraryView.swift
+   │  │     ├─ TeacherDashboardView.swift
+   │  │     ├─ TeacherFeedbacksView.swift
+   │  │     ├─ TeacherLinkStudentView.swift
+   │  │     ├─ TeacherMyWorkoutsView.swift
    │  │     ├─ TeacherSendMessageView.swift
    │  │     ├─ TeacherSendWorkoutToStudentSheet.swift
    │  │     ├─ TeacherStudentDetailView.swift
@@ -540,7 +540,7 @@ Todos os **5 requisitos principais foram completamente implementados** no projet
 - **SpriteKit** para animações e jogos interativos
 - **CoreData** para persistência local de atividades
 - **Integração com Firebase** (Auth/Firestore) preparada
-- **Importação de Vídeos do YouTube** com player bloqueado e suporte AirPlay
+- **Importação de Vídeos do YouTube** com player customizado e suporte AirPlay
 - **Importação de Treinos via Excel** com template pré-definido
 - **Sistema completo para Professores** (dashboard, gerenciamento de alunos, mensagens, feedbacks)
 - **Sistema completo para Alunos** (agenda, treinos, mensagens, feedbacks, progresso)

@@ -9,7 +9,6 @@ struct AppUser: Identifiable, Codable, Hashable {
     var userType: String
     var phone: String?
     var focusArea: String?
-    var planType: String?
 
     var cref: String?
     var bio: String?

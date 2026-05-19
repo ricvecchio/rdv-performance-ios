@@ -29,11 +29,11 @@ struct ProfileView: View {
 
     @State private var userName: String = ""
     @State private var unitName: String = ""
-    @State private var isPlanActive: Bool = false
     @State private var isLoading: Bool = false
 
     @State private var studentDefaultCategoryRaw: String = ""
     @State private var studentEmail: String = ""
+
 
     private var categoriaAtualAluno: TreinoTipo {
         let raw = studentDefaultCategoryRaw.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -43,8 +43,6 @@ struct ProfileView: View {
         return TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
-    @State private var checkinsConcluidos: Int = 0
-    @State private var checkinsTotalSemana: Int = 0
 
     @State private var showTrocarUnidadeAlert: Bool = false
     @State private var unidadeDraft: String = ""
@@ -54,14 +52,6 @@ struct ProfileView: View {
 
     @State private var showMeusIconesModal: Bool = false
     @State private var copiedIconName: String? = nil
-
-    @State private var showPlanosModal: Bool = false
-    @State private var planoSliderValue: Double = 0.0
-    @State private var showConfirmacaoPro: Bool = false
-    @State private var showSimulacaoOkAlert: Bool = false
-    @State private var isConfirmingPro: Bool = false
-    @State private var showCancelarPlanoConfirm: Bool = false
-    @State private var isCancelingPlan: Bool = false
 
     @State private var showMeusProfessoresModal: Bool = false
     @State private var linkedTeachers: [AppUser] = []
@@ -241,8 +231,6 @@ struct ProfileView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: showPlanosModal ? 8 : 0)
-        .animation(.easeInOut(duration: 0.20), value: showPlanosModal)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .navigationBarLeading) {
@@ -292,54 +280,14 @@ struct ProfileView: View {
         } message: {
             Text(errorMessage ?? "")
         }
-        .alert("Simulação", isPresented: $showSimulacaoOkAlert) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Plano Pro ativado com sucesso (simulação). Nenhuma cobrança foi realizada.")
-        }
-        .alert("Cancelar Plano", isPresented: $showCancelarPlanoConfirm) {
-            Button("Voltar", role: .cancel) { }
-            Button("Confirmar cancelamento", role: .destructive) {
-                Task {
-                    isCancelingPlan = true
-                    defer { isCancelingPlan = false }
-
-                    do {
-                        try await session.cancelTrainerProAndExpireTrial()
-                        showPlanosModal = false
-                        showConfirmacaoPro = false
-                        planoSliderValue = 0.0
-                    } catch {
-                        errorMessage = error.localizedDescription
-                        showErrorAlert = true
-                    }
-                }
-            }
-        } message: {
-            Text("Ao cancelar, seu plano volta para Free e o período de 30 dias ficará expirado. Você não poderá criar ou enviar novos treinos.")
-        }
         .sheet(isPresented: $showMeusIconesModal) {
             meusIconesModal()
-        }
-        .sheet(isPresented: $showPlanosModal) {
-            planosModal()
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showMeusProfessoresModal) {
             meusProfessoresModal()
         }
         .task(id: currentUid) {
             await loadUserData()
-        }
-        .onChange(of: session.shouldPresentPlanModal) { _, should in
-            if should {
-                session.shouldPresentPlanModal = false
-
-                /*
-                openPlanos()
-                */
-            }
         }
     }
 
@@ -389,11 +337,8 @@ struct ProfileView: View {
         guard !uid.isEmpty else {
             userName = ""
             unitName = ""
-            isPlanActive = false
             studentDefaultCategoryRaw = ""
             studentEmail = ""
-            checkinsConcluidos = 0
-            checkinsTotalSemana = 0
             linkedTeachers = []
             linkedTeacherIds = []
             return
@@ -416,17 +361,7 @@ struct ProfileView: View {
             }
 
             if session.userType == .STUDENT {
-                isPlanActive = true
-
-                /*
-                isPlanActive = try await repository.hasAnyWeeksForStudent(studentId: uid)
-                */
-
                 await loadLinkedTeachers(forceFallbackFromWeeks: true)
-            } else {
-                isPlanActive = true
-                checkinsConcluidos = 0
-                checkinsTotalSemana = 0
             }
 
         } catch {
@@ -434,9 +369,6 @@ struct ProfileView: View {
             unitName = ""
             studentDefaultCategoryRaw = ""
             studentEmail = ""
-            isPlanActive = true
-            checkinsConcluidos = 0
-            checkinsTotalSemana = 0
             linkedTeachers = []
             linkedTeacherIds = []
 
@@ -540,70 +472,6 @@ struct ProfileView: View {
         }
     }
 
-    private func openPlanos() {
-        let plan = (session.planTypeRaw ?? "PRO").uppercased()
-        planoSliderValue = (plan == "PRO") ? 1.0 : 0.0
-        showConfirmacaoPro = false
-        isConfirmingPro = false
-        isCancelingPlan = false
-        showPlanosModal = true
-    }
-
-    private var planoStatusTexto: String { "Ativo" }
-    private var planoStatusForeground: Color { Color.green.opacity(0.9) }
-    private var planoStatusBackground: Color { Color.green.opacity(0.16) }
-
-    private var planosInfoTextoProfessor: String {
-        return "PRO • Ativo"
-
-        /*
-        let plan = (session.planTypeRaw ?? "FREE").uppercased()
-        if plan == "PRO" {
-            return "PRO • Ativo"
-        }
-
-        guard let start = session.trialStartedAt else {
-            return "FREE • Faltam 0 dias"
-        }
-
-        let trialSeconds: TimeInterval = 30 * 24 * 60 * 60
-        let endDate = start.addingTimeInterval(trialSeconds)
-        let remainingSeconds = endDate.timeIntervalSince(Date())
-
-        let days = Int(ceil(remainingSeconds / (24 * 60 * 60)))
-        let safeDays = max(0, days)
-
-        return "FREE • Faltam \(safeDays) dias"
-        */
-    }
-
-    private var planosBadgeFgProfessor: Color {
-        return Color.green.opacity(0.9)
-
-        /*
-        let plan = (session.planTypeRaw ?? "FREE").uppercased()
-        if plan == "PRO" {
-            return Color.green.opacity(0.9)
-        }
-
-        let canUse = session.canUseTrainerProFeatures
-        return canUse ? Color.green.opacity(0.9) : Color.red.opacity(0.95)
-        */
-    }
-
-    private var planosBadgeBgProfessor: Color {
-        return Color.green.opacity(0.16)
-
-        /*
-        let plan = (session.planTypeRaw ?? "FREE").uppercased()
-        if plan == "PRO" {
-            return Color.green.opacity(0.16)
-        }
-
-        let canUse = session.canUseTrainerProFeatures
-        return canUse ? Color.green.opacity(0.16) : Color.red.opacity(0.18)
-        */
-    }
 
     private func profileCard() -> some View {
         VStack(spacing: 10) {
@@ -1123,202 +991,6 @@ struct ProfileView: View {
         .buttonStyle(.plain)
     }
 
-    private func planosModal() -> some View {
-        NavigationStack {
-            ZStack {
-                Theme.Colors.headerBackground
-                    .ignoresSafeArea()
-
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
-
-                        VStack(alignment: .leading, spacing: 14) {
-
-                            Text("Arraste para simular a mudança de Free para Pro.")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.55))
-                                .padding(.top, 12)
-
-                            VStack(alignment: .leading, spacing: 10) {
-                                HStack {
-                                    Text("Free")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.80))
-
-                                    Spacer()
-
-                                    Text("Pro")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.80))
-                                }
-
-                                Slider(value: $planoSliderValue, in: 0...1, step: 0.01)
-                                    .tint(Color.green.opacity(0.85))
-                                    .onChange(of: planoSliderValue) { _, newValue in
-                                        if newValue >= 0.90 {
-                                            showConfirmacaoPro = true
-                                        }
-                                    }
-
-                                Text(planoSliderValue >= 0.90 ? "Selecionado: Pro" : "Selecionado: Free")
-                                    .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.65))
-                            }
-                            .padding(14)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-
-                            Button {
-                                showCancelarPlanoConfirm = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Text("Cancelar Plano")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
-
-                                    Spacer()
-
-                                    if isCancelingPlan {
-                                        ProgressView()
-                                    }
-                                }
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .fill(Color.red.opacity(0.18))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                        )
-                                )
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(isCancelingPlan)
-
-                            Color.clear.frame(height: 18)
-                        }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
-
-                        Spacer(minLength: 0)
-                    }
-                }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .principal) {
-                    Text("Planos")
-                        .font(Theme.Fonts.headerTitle())
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-                }
-
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    Button("Fechar") {
-                        showPlanosModal = false
-                    }
-                    .foregroundColor(.white)
-                }
-            }
-            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
-            .navigationDestination(isPresented: $showConfirmacaoPro) {
-                confirmacaoProView()
-            }
-        }
-        .onAppear {
-            let plan = (session.planTypeRaw ?? "PRO").uppercased()
-            planoSliderValue = (plan == "PRO") ? 1.0 : 0.0
-        }
-    }
-
-    private func confirmacaoProView() -> some View {
-        ZStack {
-            Theme.Colors.headerBackground
-                .ignoresSafeArea()
-
-            VStack(alignment: .leading, spacing: 14) {
-
-                Text("Confirmar Plano Pro")
-                    .font(.system(size: 20, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-
-                Text("Valor: R$ 49,90")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.green.opacity(0.92))
-
-                Text("Esta é uma simulação. Nenhuma cobrança real será feita neste momento.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
-
-                Spacer(minLength: 0)
-
-                HStack(spacing: 10) {
-                    Button {
-                        showConfirmacaoPro = false
-                        planoSliderValue = 0.0
-                    } label: {
-                        Text("Voltar")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.white.opacity(0.08)))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isConfirmingPro)
-
-                    Button {
-                        Task {
-                            isConfirmingPro = true
-                            defer { isConfirmingPro = false }
-
-                            do {
-                                try await session.upgradeTrainerToProSimulated()
-                                showPlanosModal = false
-                                showConfirmacaoPro = false
-                                showSimulacaoOkAlert = true
-                            } catch {
-                                errorMessage = error.localizedDescription
-                                showErrorAlert = true
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 10) {
-                            Text("Confirmar")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-
-                            if isConfirmingPro {
-                                ProgressView()
-                            }
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Capsule().fill(Color.green.opacity(0.20)))
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isConfirmingPro)
-                }
-            }
-            .padding(16)
-        }
-        .navigationBarBackButtonHidden(true)
-        .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
-                Button("Fechar") {
-                    showPlanosModal = false
-                    showConfirmacaoPro = false
-                }
-                .foregroundColor(.white)
-            }
-        }
-    }
 
     private func meusIconesModal() -> some View {
         NavigationStack {
