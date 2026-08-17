@@ -14,6 +14,7 @@ struct AppRouter: View {
 
             rootView
                 .environmentObject(session)
+                .background(NavigationPopGestureFixer())
 
                 .navigationDestination(for: AppRoute.self) { route in
                     switch route {

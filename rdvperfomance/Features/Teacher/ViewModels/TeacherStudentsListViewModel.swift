@@ -32,56 +32,33 @@ final class TeacherStudentsListViewModel: ObservableObject {
     func loadStudents(teacherId: String) async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
-            let results = try await withThrowingTaskGroup(of: (TreinoTipo, [AppUser]).self) { group in
-                for cat in supportedCategories {
-                    group.addTask {
-                        let list = try await self.loadStudentsForCategoryWithFallback(
-                            teacherId: teacherId,
-                            category: cat
-                        )
-                        return (cat, list)
-                    }
-                }
-
-                var collected: [(TreinoTipo, [AppUser])] = []
-                for try await item in group { collected.append(item) }
-                return collected
-            }
-
-            var map: [TreinoTipo: [AppUser]] = [:]
-            for (cat, list) in results { map[cat] = list }
-            self.studentsByCategory = map
-            self.students = mergeUniqueStudents(from: supportedCategories.compactMap { map[$0] })
-
+            // ✅ 1 única query em teacher_students (agrupada por categoria) em vez de
+            // até 3 categorias x várias variantes de grafia = dezenas de queries.
+            let grouped = try await repository.getStudentsGroupedByTeacher(teacherId: teacherId)
+            self.studentsByCategory = grouped
+            self.students = mergeUniqueStudents(from: supportedCategories.compactMap { grouped[$0] })
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
             self.studentsByCategory = [:]
             self.students = []
         }
-
-        isLoading = false
     }
 
     func loadStudentsOnlyOneCategory(teacherId: String, category: TreinoTipo) async {
         isLoading = true
         errorMessage = nil
+        defer { isLoading = false }
 
         do {
-            let list = try await loadStudentsForCategoryWithFallback(
-                teacherId: teacherId,
-                category: category
-            )
-
-            studentsByCategory[category] = list
+            let grouped = try await repository.getStudentsGroupedByTeacher(teacherId: teacherId)
+            studentsByCategory[category] = grouped[category] ?? []
             self.students = mergeUniqueStudents(from: supportedCategories.compactMap { studentsByCategory[$0] })
-
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
         }
-
-        isLoading = false
     }
 
     func filteredStudents(filter: TreinoTipo?) -> [AppUser] {
@@ -150,7 +127,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
-    func sendInviteByEmail(teacherId: String, studentEmail: String) async {
+    func sendInviteByEmail(teacherId: String, studentEmail: String, category: TreinoTipo) async {
         let email = studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !email.isEmpty else {
             setInviteError("Informe o e-mail do aluno.")
@@ -170,10 +147,14 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 return
             }
 
+            // ✅ A categoria já é conhecida no momento do convite (a tela está sempre
+            // escopada a uma categoria). Isso permite que o aceite do aluno conclua o
+            // vínculo atomicamente, sem exigir uma 2ª aprovação do professor.
             _ = try await repository.createTeacherInviteByEmail(
                 teacherId: teacherId,
                 teacherEmail: teacherEmail,
-                studentEmail: email
+                studentEmail: email,
+                categoryRaw: category.firestoreKey
             )
 
             inviteSuccessMessage = "Convite enviado para \(email)."
@@ -216,47 +197,11 @@ final class TeacherStudentsListViewModel: ObservableObject {
         showInviteErrorAlert = true
     }
 
-    private func loadStudentsForCategoryWithFallback(
-        teacherId: String,
-        category: TreinoTipo
-    ) async throws -> [AppUser] {
-        let variants = categoryVariants(category)
-        var merged: [AppUser] = []
-
-        for v in variants {
-            let list = try await repository.getStudentsForTeacher(
-                teacherId: teacherId,
-                category: v
-            )
-            if !list.isEmpty {
-                merged.append(contentsOf: list)
-            }
-        }
-
-        return mergeUniqueStudents(from: [merged])
-    }
-
     private func categoryVariants(_ cat: TreinoTipo) -> [String] {
-        let raw = cat.rawValue.trimmingCharacters(in: .whitespacesAndNewlines)
-        let rawLower = raw.lowercased()
-
-        let key = cat.firestoreKey.trimmingCharacters(in: .whitespacesAndNewlines)
-        let keyLower = key.lowercased()
-
-        var set: [String] = []
-        func add(_ v: String) {
-            let vv = v.trimmingCharacters(in: .whitespacesAndNewlines)
-            guard !vv.isEmpty else { return }
-            if set.contains(vv) { return }
-            set.append(vv)
-        }
-
-        add(key)
-        add(keyLower)
-        add(raw)
-        add(rawLower)
-
-        return set
+        // Mantido apenas para a rotina de desvínculo (unlinkStudentFromTeacher), que ainda
+        // precisa remover categorias gravadas em formatos legados. Delegamos ao mesmo
+        // normalizador canônico usado no repositório.
+        [cat.firestoreKey, cat.rawValue]
     }
 
     private func categoriesWhereStudentIsLinked(studentId: String) -> [TreinoTipo] {

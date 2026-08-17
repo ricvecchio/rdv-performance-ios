@@ -1,10 +1,13 @@
 import Foundation
+import os.log
 
 final class WorkoutTemplateDefaultsSeeder {
 
     static let shared = WorkoutTemplateDefaultsSeeder()
 
     private init() {}
+
+    private static let debugLog = OSLog(subsystem: "com.rdvperformance.app", category: "WorkoutTemplateDefaultsSeeder")
 
     func seedMissingDefaultsIfNeeded(
         teacherId: String,
@@ -33,8 +36,17 @@ final class WorkoutTemplateDefaultsSeeder {
             return false
         }
 
+        #if DEBUG
+        let debugStart = Date()
+        os_log("seed START teacherId=%{public}@ category=%{public}@ section=%{public}@", log: Self.debugLog, type: .debug, t, category.rawValue, sectionKey)
+        #endif
+
         let seeds = defaultsFor(category: category, sectionKey: sectionKey)
-        if seeds.isEmpty { return false }
+        if seeds.isEmpty {
+            // Nada a semear nesta seção: já podemos travar a flag para não checar de novo.
+            UserDefaults.standard.set(true, forKey: flagKey)
+            return false
+        }
 
         // ✅ Detecta títulos já existentes (case-insensitive)
         var existingTitles = Set(
@@ -43,10 +55,9 @@ final class WorkoutTemplateDefaultsSeeder {
                 .filter { !$0.isEmpty }
         )
 
-        var didInsertAny = false
+        var itemsToInsert: [(title: String, description: String, blocks: [BlockFS])] = []
 
         for seed in seeds {
-
             let templateTitle = seed.name.trimmingCharacters(in: .whitespacesAndNewlines)
             let titleKey = templateTitle.lowercased()
 
@@ -66,29 +77,34 @@ final class WorkoutTemplateDefaultsSeeder {
                 }
 
             let templateDescription = buildTemplateDescription(seed: seed)
-
-            _ = try await FirestoreRepository.shared.createWorkoutTemplate(
-                teacherId: t,
-                categoryRaw: category.rawValue,
-                sectionKey: sectionKey,
-                title: templateTitle,
-                description: templateDescription,
-                blocks: blocksFS
-            )
-
-            didInsertAny = true
+            itemsToInsert.append((title: templateTitle, description: templateDescription, blocks: blocksFS))
             existingTitles.insert(titleKey)
         }
 
-        // ✅ Se após o processo TODOS os defaults existem, travamos para não tentar novamente
-        let allDefaultsExist = seeds.allSatisfy { seed in
-            let key = seed.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-            return !key.isEmpty && existingTitles.contains(key)
+        let didInsertAny = !itemsToInsert.isEmpty
+
+        if didInsertAny {
+            // ✅ Uma única viagem de rede (WriteBatch) em vez de N `createWorkoutTemplate`
+            // sequenciais awaited um a um — isso evitava que a tela ficasse "carregando"
+            // por vários segundos ao abrir uma seção pela primeira vez em um novo device.
+            try await FirestoreRepository.shared.createWorkoutTemplatesBatch(
+                teacherId: t,
+                categoryRaw: category.rawValue,
+                sectionKey: sectionKey,
+                items: itemsToInsert
+            )
         }
 
-        if allDefaultsExist {
-            UserDefaults.standard.set(true, forKey: flagKey)
-        }
+        // ✅ IDEMPOTENTE E BARATO: uma vez que o seed foi tentado para este professor/seção,
+        // travamos a flag independentemente de "todos os títulos baterem exatamente" — isso
+        // evitava que pequenas divergências de grafia entre defaults e títulos existentes
+        // fizessem o app tentar semear (e escrever) tudo de novo a cada abertura da tela.
+        UserDefaults.standard.set(true, forKey: flagKey)
+
+        #if DEBUG
+        let elapsedMs = Date().timeIntervalSince(debugStart) * 1000
+        os_log("seed END inserted=%d durationMs=%.0f", log: Self.debugLog, type: .debug, itemsToInsert.count, elapsedMs)
+        #endif
 
         return didInsertAny
     }
@@ -120,8 +136,9 @@ final class WorkoutTemplateDefaultsSeeder {
         let safeCategory = categoryRaw.trimmingCharacters(in: .whitespacesAndNewlines)
         let safeSection = sectionKey.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        // ✅ v5 para não conflitar com flags antigas
-        return "seeded_defaults_v5_\(safeTeacherId)_\(safeCategory)_\(safeSection)"
+        // ✅ v6: nova lógica de idempotência (trava a flag após a 1ª tentativa, mesmo que
+        // nem todos os títulos batam exatamente) — evita reseed infinito em devices antigos.
+        return "seeded_defaults_v6_\(safeTeacherId)_\(safeCategory)_\(safeSection)"
     }
 }
 

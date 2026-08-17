@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import UIKit
+import os.log
 
 extension Notification.Name {
     static let workoutTemplateUpdated = Notification.Name("workoutTemplateUpdated")
@@ -18,6 +19,11 @@ struct TeacherWorkoutTemplatesView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
     @State private var isSeedingDefaults: Bool = false
+
+    private static let debugLog = OSLog(subsystem: "com.rdvperformance.app", category: "TeacherWorkoutTemplatesView")
+    #if DEBUG
+    @State private var loadCallCount: Int = 0
+    #endif
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -177,7 +183,6 @@ struct TeacherWorkoutTemplatesView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadTemplates() }
-        .onAppear { Task { await loadTemplates() } }
         .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateUpdated)) { _ in
             Task { await loadTemplates() }
         }
@@ -211,6 +216,13 @@ struct TeacherWorkoutTemplatesView: View {
         if isLoading { return }
         errorMessage = nil
 
+        #if DEBUG
+        loadCallCount += 1
+        let callId = loadCallCount
+        let debugStart = Date()
+        os_log("loadTemplates() call #%d START category=%{public}@ section=%{public}@", log: Self.debugLog, type: .debug, callId, category.rawValue, sectionKey)
+        #endif
+
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
             errorMessage = "Não foi possível identificar o professor logado."
@@ -219,46 +231,79 @@ struct TeacherWorkoutTemplatesView: View {
         }
 
         isLoading = true
-        defer { isLoading = false }
 
         do {
-            templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+            let fetched = try await FirestoreRepository.shared.getWorkoutTemplates(
                 teacherId: teacherId,
                 categoryRaw: category.rawValue,
                 sectionKey: sectionKey
             )
+            templates = fetched
 
-            // ✅ Seed controlado para seções com defaults (exceto "Meus Treinos")
-            if (category == .crossfit || category == .academia || category == .emCasa) && sectionKey != "meusTreinos" && !isSeedingDefaults {
-                isSeedingDefaults = true
-                defer { isSeedingDefaults = false }
+            // ✅ CAUSA RAIZ da demora: antes, `isLoading` só voltava a `false` depois do
+            // seed de defaults terminar (que podia fazer dezenas de writes sequenciais).
+            // Agora liberamos a UI assim que a 1ª consulta termina; o seed roda depois,
+            // em segundo plano, sem manter o spinner cheio na tela.
+            isLoading = false
 
-                do {
-                    let didInsert = try await WorkoutTemplateDefaultsSeeder.shared.seedMissingDefaultsIfNeeded(
-                        teacherId: teacherId,
-                        category: category,
-                        sectionKey: sectionKey,
-                        sectionTitle: sectionTitle,
-                        existingTemplates: templates
-                    )
+            #if DEBUG
+            os_log("loadTemplates() call #%d fetched %d docs in %.0fms", log: Self.debugLog, type: .debug, callId, fetched.count, Date().timeIntervalSince(debugStart) * 1000)
+            #endif
 
-                    if didInsert {
-                        templates = try await FirestoreRepository.shared.getWorkoutTemplates(
-                            teacherId: teacherId,
-                            categoryRaw: category.rawValue,
-                            sectionKey: sectionKey
-                        )
-                    }
-
-                } catch {
-                    errorMessage = "Falha ao inserir treinos padrão: \(error.localizedDescription)"
-                }
-            }
+            await seedDefaultsIfNeeded(teacherId: teacherId)
 
         } catch {
             errorMessage = error.localizedDescription
             templates = []
+            isLoading = false
         }
+
+        #if DEBUG
+        os_log("loadTemplates() call #%d END totalDurationMs=%.0f", log: Self.debugLog, type: .debug, callId, Date().timeIntervalSince(debugStart) * 1000)
+        #endif
+    }
+
+    /// Semeia os treinos padrão (Hero/Tribute, Girls, Open etc.) quando ainda não existirem,
+    /// sem bloquear a exibição da lista já carregada. Idempotente: só roda de fato uma vez
+    /// por professor/seção (ver `WorkoutTemplateDefaultsSeeder`).
+    private func seedDefaultsIfNeeded(teacherId: String) async {
+        guard (category == .crossfit || category == .academia || category == .emCasa),
+              sectionKey != "meusTreinos",
+              !isSeedingDefaults else { return }
+
+        isSeedingDefaults = true
+        defer { isSeedingDefaults = false }
+
+        #if DEBUG
+        let seedStart = Date()
+        #endif
+
+        do {
+            let didInsert = try await WorkoutTemplateDefaultsSeeder.shared.seedMissingDefaultsIfNeeded(
+                teacherId: teacherId,
+                category: category,
+                sectionKey: sectionKey,
+                sectionTitle: sectionTitle,
+                existingTemplates: templates
+            )
+
+            if didInsert {
+                // Atualização silenciosa (sem reexibir o spinner cheio) assim que os
+                // defaults forem inseridos.
+                templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+                    teacherId: teacherId,
+                    categoryRaw: category.rawValue,
+                    sectionKey: sectionKey
+                )
+            }
+
+        } catch {
+            errorMessage = "Falha ao inserir treinos padrão: \(error.localizedDescription)"
+        }
+
+        #if DEBUG
+        os_log("seedDefaultsIfNeeded durationMs=%.0f", log: Self.debugLog, type: .debug, Date().timeIntervalSince(seedStart) * 1000)
+        #endif
     }
 
     private func deleteTemplate(template: WorkoutTemplateFS) async {

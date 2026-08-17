@@ -25,6 +25,12 @@ final class FirestoreRepository {
         try await userRepository.getStudentsForTeacher(teacherId: teacherId, category: category)
     }
 
+    /// Alunos do professor já agrupados por categoria canônica, com o mínimo de leituras
+    /// no Firestore (1 query em teacher_students + leitura em lote de /users).
+    func getStudentsGroupedByTeacher(teacherId: String) async throws -> [TreinoTipo: [AppUser]] {
+        try await userRepository.getStudentsGroupedByTeacher(teacherId: teacherId)
+    }
+
     func unlinkStudentFromTeacher(teacherId: String, studentId: String, category: String) async throws {
         try await userRepository.unlinkStudentFromTeacher(
             teacherId: teacherId,
@@ -107,12 +113,14 @@ final class FirestoreRepository {
     func createTeacherInviteByEmail(
         teacherId: String,
         teacherEmail: String,
-        studentEmail: String
+        studentEmail: String,
+        categoryRaw: String? = nil
     ) async throws -> String {
         try await userRepository.createTeacherInviteByEmail(
             teacherId: teacherId,
             teacherEmail: teacherEmail,
-            studentEmail: studentEmail
+            studentEmail: studentEmail,
+            categoryRaw: categoryRaw
         )
     }
 
@@ -378,6 +386,20 @@ final class FirestoreRepository {
             title: title,
             description: description,
             blocks: blocks
+        )
+    }
+
+    func createWorkoutTemplatesBatch(
+        teacherId: String,
+        categoryRaw: String,
+        sectionKey: String,
+        items: [(title: String, description: String, blocks: [BlockFS])]
+    ) async throws {
+        try await workoutTemplateRepository.createWorkoutTemplatesBatch(
+            teacherId: teacherId,
+            categoryRaw: categoryRaw,
+            sectionKey: sectionKey,
+            items: items
         )
     }
 

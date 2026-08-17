@@ -197,7 +197,8 @@ final class UserRepository: FirestoreBaseRepository {
     func createTeacherInviteByEmail(
         teacherId: String,
         teacherEmail: String,
-        studentEmail: String
+        studentEmail: String,
+        categoryRaw: String? = nil
     ) async throws -> String {
         let tid = clean(teacherId)
         let tEmail = clean(teacherEmail).lowercased()
@@ -218,15 +219,23 @@ final class UserRepository: FirestoreBaseRepository {
             return doc.documentID
         }
 
-        let docRef = db.collection(Collections.invites).document()
-        try await docRef.setData([
+        var payload: [String: Any] = [
             "teacherId": tid,
             "teacherEmail": tEmail,
             "studentEmail": sEmail,
             "status": "pending",
             "createdAt": FieldValue.serverTimestamp(),
             "updatedAt": FieldValue.serverTimestamp()
-        ])
+        ]
+
+        // ✅ Categoria canônica (CROSSFIT | ACADEMIA | EMCASA) definida no momento do convite.
+        // Isso permite que o aceite do aluno conclua o vínculo atomicamente, sem 2ª aprovação.
+        if let raw = categoryRaw, let canonical = TreinoTipo.normalized(from: raw) {
+            payload["category"] = canonical.firestoreKey
+        }
+
+        let docRef = db.collection(Collections.invites).document()
+        try await docRef.setData(payload)
 
         return docRef.documentID
     }
@@ -251,7 +260,25 @@ final class UserRepository: FirestoreBaseRepository {
         guard !sid.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
         guard let inviteId = invite.id else { throw FirestoreRepositoryError.invalidData }
 
-        _ = try await ensureRelationDoc(teacherId: invite.teacherId, studentId: sid)
+        let tid = clean(invite.teacherId)
+        guard !tid.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+
+        // ✅ REGRA DE NEGÓCIO: se o professor já definiu a categoria ao enviar o convite,
+        // o aceite do aluno é suficiente para concluir o vínculo — sem exigir uma 2ª
+        // aprovação do professor. Tudo é gravado atomicamente em um único batch.
+        if let rawCategory = invite.category, let canonical = TreinoTipo.normalized(from: rawCategory) {
+            try await linkTeacherAndStudentAtomically(
+                teacherId: tid,
+                studentId: sid,
+                category: canonical.firestoreKey,
+                inviteId: inviteId
+            )
+            return
+        }
+
+        // ⚠️ Convite legado (sem categoria): mantém o fluxo em 2 etapas já existente —
+        // o professor finaliza o vínculo escolhendo a categoria em "Vincular aluno".
+        _ = try await ensureRelationDoc(teacherId: tid, studentId: sid)
 
         try await db.collection(Collections.invites)
             .document(inviteId)
@@ -266,9 +293,83 @@ final class UserRepository: FirestoreBaseRepository {
         try await createPendingRequestIfNeeded(
             studentId: sid,
             studentEmail: invite.studentEmail,
-            teacherId: invite.teacherId,
+            teacherId: tid,
             teacherEmail: invite.teacherEmail
         )
+    }
+
+    /// Localiza o documento existente de `teacherId`+`studentId` na coleção informada,
+    /// ou reserva uma nova referência caso ainda não exista (Firestore não permite leitura
+    /// dentro de um WriteBatch, por isso essa resolução acontece antes do commit).
+    private func resolveOrCreateRef(
+        in collection: String,
+        teacherId: String,
+        studentId: String
+    ) async throws -> (ref: DocumentReference, isNew: Bool) {
+        let existing = try await db.collection(collection)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .limit(to: 1)
+            .getDocuments()
+
+        if let doc = existing.documents.first {
+            return (doc.reference, false)
+        }
+        return (db.collection(collection).document(), true)
+    }
+
+    /// Conclui o vínculo professor/aluno de forma atômica: `teacher_student_relations`,
+    /// `teacher_students` e o convite (`teacher_student_invites`) são gravados no mesmo
+    /// WriteBatch, evitando estados intermediários inconsistentes (ex.: aluno "aceito"
+    /// mas ainda não vinculado em `teacher_students`).
+    private func linkTeacherAndStudentAtomically(
+        teacherId: String,
+        studentId: String,
+        category: String,
+        inviteId: String
+    ) async throws {
+        let (relationRef, relationIsNew) = try await resolveOrCreateRef(
+            in: Collections.relations,
+            teacherId: teacherId,
+            studentId: studentId
+        )
+
+        let (teacherStudentRef, tsIsNew) = try await resolveOrCreateRef(
+            in: Collections.teacherStudents,
+            teacherId: teacherId,
+            studentId: studentId
+        )
+
+        let batch = db.batch()
+
+        var relationPayload: [String: Any] = [
+            "teacherId": teacherId,
+            "studentId": studentId,
+            "categories": FieldValue.arrayUnion([category]),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        if relationIsNew { relationPayload["createdAt"] = FieldValue.serverTimestamp() }
+        batch.setData(relationPayload, forDocument: relationRef, merge: true)
+
+        var teacherStudentPayload: [String: Any] = [
+            "teacherId": teacherId,
+            "studentId": studentId,
+            "categories": FieldValue.arrayUnion([category]),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        if tsIsNew { teacherStudentPayload["createdAt"] = FieldValue.serverTimestamp() }
+        batch.setData(teacherStudentPayload, forDocument: teacherStudentRef, merge: true)
+
+        batch.setData(
+            [
+                "status": "accepted",
+                "updatedAt": FieldValue.serverTimestamp()
+            ],
+            forDocument: db.collection(Collections.invites).document(inviteId),
+            merge: true
+        )
+
+        try await batch.commit()
     }
 
     func acceptStudentInvite(inviteId: String, studentId: String) async throws {
@@ -429,203 +530,128 @@ final class UserRepository: FirestoreBaseRepository {
 
     // MARK: - TeacherStudents (vínculo por categoria)
 
+    /// Formato canônico das categorias daqui pra frente: `TreinoTipo.firestoreKey`
+    /// ("CROSSFIT" | "ACADEMIA" | "EMCASA"). As variantes abaixo existem apenas para manter
+    /// compatibilidade de LEITURA com registros antigos gravados em formatos diferentes
+    /// (ex.: "crossfit", "emCasa", "em_casa"). Novos registros usam apenas `firestoreKey`.
     private func categoryCandidates(from rawCategory: String) -> [String] {
         let base = clean(rawCategory)
         guard !base.isEmpty else { return [] }
 
-        var set: [String] = []
+        var candidates: [String] = []
         func add(_ v: String) {
             let c = clean(v)
-            guard !c.isEmpty else { return }
-            if set.contains(where: { $0 == c }) { return }
-            set.append(c)
+            guard !c.isEmpty, !candidates.contains(c) else { return }
+            candidates.append(c)
         }
 
         add(base)
         add(base.lowercased())
         add(base.uppercased())
 
-        let lower = base.lowercased()
-        if lower == "crossfit" || lower.contains("cross") {
-            add("CROSSFIT")
-            add("crossfit")
-        } else if lower == "academia" || lower.contains("academ") || lower.contains("gym") {
-            add("ACADEMIA")
-            add("academia")
-        } else if lower == "emcasa" || lower == "em_casa" || lower == "em casa" || lower == "emcasa " || lower.contains("casa") || lower.contains("home") || lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-            add("emCasa")
-            add("emcasa")
-            add("em_casa")
-            add("em casa")
-        } else if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        } else if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        } else if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        } else if lower == "emcasa" {
-            add("EMCASA")
-        } else if lower == "emcasa" {
-            add("EMCASA")
-        } else if lower == "emcasa" {
-            add("EMCASA")
-        } else if lower == "emcasa" {
-            add("EMCASA")
-        } else if lower == "emcasa" {
-            add("EMCASA")
+        if let canonical = TreinoTipo.normalized(from: base) {
+            add(canonical.firestoreKey)
+            add(canonical.firestoreKey.lowercased())
+            add(canonical.rawValue)
         }
 
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" || lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        if lower == "emcasa" {
-            add("EMCASA")
-        }
-
-        return set
+        return candidates
     }
 
     func getStudentsForTeacher(teacherId: String, category: String) async throws -> [AppUser] {
         let cleanTeacherId = clean(teacherId)
         guard !cleanTeacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
 
-        let candidates = categoryCandidates(from: category)
-        if candidates.isEmpty { throw FirestoreRepositoryError.invalidData }
+        guard let canonical = TreinoTipo.normalized(from: category) else {
+            throw FirestoreRepositoryError.invalidData
+        }
 
-        var relSnap: QuerySnapshot? = nil
+        // ✅ Reaproveita a busca agrupada (1 única query em teacher_students + leitura em
+        // lote de /users) em vez de repetir consultas por variante de categoria.
+        let grouped = try await getStudentsGroupedByTeacher(teacherId: cleanTeacherId)
+        return grouped[canonical] ?? []
+    }
 
-        for cat in candidates {
-            let snap = try await db.collection(Collections.teacherStudents)
-                .whereField("teacherId", isEqualTo: cleanTeacherId)
-                .whereField("categories", arrayContains: cat)
+    /// Retorna todos os alunos vinculados ao professor, já agrupados por categoria canônica,
+    /// com o mínimo possível de leituras no Firestore:
+    /// 1) uma única query em `teacher_students` (sem filtro de categoria);
+    /// 2) leitura em lote de `/users/{id}` (chunks de até 30 ids via `FieldPath.documentID()`),
+    ///    evitando o padrão N+1 de 1 getDocument() por aluno.
+    func getStudentsGroupedByTeacher(teacherId: String) async throws -> [TreinoTipo: [AppUser]] {
+        let tid = clean(teacherId)
+        guard !tid.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+
+        let snap: QuerySnapshot
+        do {
+            snap = try await db.collection(Collections.teacherStudents)
+                .whereField("teacherId", isEqualTo: tid)
                 .getDocuments()
-
-            if !snap.documents.isEmpty {
-                relSnap = snap
-                break
-            }
+        } catch {
+            throw error
         }
 
-        guard let relSnap, !relSnap.documents.isEmpty else { return [] }
+        // studentId -> categorias canônicas em que ele está vinculado
+        var categoriesByStudent: [String: Set<TreinoTipo>] = [:]
 
-        let studentIds: [String] = relSnap.documents.compactMap { doc in
+        for doc in snap.documents {
             let data = doc.data()
-            let sid = (data["studentId"] as? String) ?? ""
-            let cleaned = clean(sid)
-            return cleaned.isEmpty ? nil : cleaned
-        }
+            let sid = clean((data["studentId"] as? String) ?? "")
+            guard !sid.isEmpty else { continue }
 
-        if studentIds.isEmpty { return [] }
-
-        var permissionDeniedCount: Int = 0
-        var otherErrorsCount: Int = 0
-
-        let tasks: [Task<AppUser?, Error>] = studentIds.map { sid in
-            Task {
-                do {
-                    let snap = try await self.db.collection(Collections.users).document(sid).getDocument()
-                    guard snap.exists else { return nil }
-                    return try snap.data(as: AppUser.self)
-                } catch {
-                    throw error
+            let rawCategories = (data["categories"] as? [String]) ?? []
+            var normalized: Set<TreinoTipo> = []
+            for raw in rawCategories {
+                if let cat = TreinoTipo.normalized(from: raw) {
+                    normalized.insert(cat)
                 }
             }
+            guard !normalized.isEmpty else { continue }
+            categoriesByStudent[sid, default: []].formUnion(normalized)
         }
 
-        var students: [AppUser] = []
-        students.reserveCapacity(tasks.count)
+        let studentIds = Array(categoriesByStudent.keys)
+        guard !studentIds.isEmpty else { return [:] }
 
-        for task in tasks {
+        let usersById = try await fetchUsers(byIds: studentIds)
+
+        var result: [TreinoTipo: [AppUser]] = [:]
+        for (sid, cats) in categoriesByStudent {
+            guard let user = usersById[sid] else { continue }
+            for cat in cats {
+                result[cat, default: []].append(user)
+            }
+        }
+
+        for key in result.keys {
+            result[key]?.sort { $0.name.lowercased() < $1.name.lowercased() }
+        }
+
+        return result
+    }
+
+    /// Busca perfis de usuários em lote (`whereField(FieldPath.documentID(), in:)`), evitando
+    /// 1 getDocument() por aluno. Distingue erro de permissão (Firestore Rules) de outros
+    /// erros, para não mascarar `permissionDenied` como "lista vazia".
+    private func fetchUsers(byIds ids: [String]) async throws -> [String: AppUser] {
+        var result: [String: AppUser] = [:]
+        var permissionDeniedCount = 0
+        var otherErrorsCount = 0
+
+        // Limite de 30 valores por cláusula "in" no Firestore.
+        for chunk in ids.chunked(into: 30) {
             do {
-                if let u = try await task.value {
-                    students.append(u)
+                let snap = try await db.collection(Collections.users)
+                    .whereField(FieldPath.documentID(), in: chunk)
+                    .getDocuments()
+
+                for doc in snap.documents {
+                    if let user = try? doc.data(as: AppUser.self) {
+                        result[doc.documentID] = user
+                    }
                 }
             } catch {
                 let ns = error as NSError
-                if ns.domain == FirestoreErrorDomain,
-                   ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                if ns.domain == FirestoreErrorDomain, ns.code == FirestoreErrorCode.permissionDenied.rawValue {
                     permissionDeniedCount += 1
                 } else {
                     otherErrorsCount += 1
@@ -633,15 +659,15 @@ final class UserRepository: FirestoreBaseRepository {
             }
         }
 
-        if students.isEmpty && permissionDeniedCount > 0 && otherErrorsCount == 0 {
+        if result.isEmpty && permissionDeniedCount > 0 && otherErrorsCount == 0 {
             throw NSError(
                 domain: FirestoreErrorDomain,
                 code: FirestoreErrorCode.permissionDenied.rawValue,
-                userInfo: [NSLocalizedDescriptionKey: "Sem permissão para ler /users/{studentId}. Ajuste as Firestore Rules para permitir que o professor leia o perfil do aluno vinculado."]
+                userInfo: [NSLocalizedDescriptionKey: "Sem permissão para ler /users/{studentId}. Ajuste as Firestore Rules para permitir que o professor leia o perfil dos alunos vinculados."]
             )
         }
 
-        return students.sorted { $0.name.lowercased() < $1.name.lowercased() }
+        return result
     }
 
     func unlinkStudentFromTeacher(teacherId: String, studentId: String, category: String) async throws {

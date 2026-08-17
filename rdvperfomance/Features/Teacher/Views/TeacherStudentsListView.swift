@@ -586,7 +586,7 @@ struct TeacherStudentsListView: View {
                         vm.setInviteError("Não foi possível identificar o professor logado.")
                         return
                     }
-                    await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail)
+                    await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
                     await loadInvitesIfPossible()
                 }
             } label: {

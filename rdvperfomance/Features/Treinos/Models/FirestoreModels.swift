@@ -38,6 +38,12 @@ struct TeacherStudentInviteFS: Identifiable, Codable, Hashable {
     var teacherEmail: String
     var studentEmail: String
     var status: String          // "pending" | "accepted" | "declined"
+
+    /// Categoria (CROSSFIT | ACADEMIA | EMCASA) escolhida pelo professor ao enviar o convite.
+    /// Convites antigos (criados antes desse campo existir) terão `nil` e continuam usando
+    /// o fluxo de 2 etapas (aceitar convite -> professor aprova e escolhe a categoria).
+    var category: String?
+
     var createdAt: Timestamp?
     var updatedAt: Timestamp?
 }

@@ -84,6 +84,7 @@ struct SettingsView: View {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
