@@ -79,7 +79,7 @@ struct StudentAgendaView: View {
         .toolbar {
 
             if isTeacherViewing {
-                ToolbarItem(placement: .navigationBarLeading) {
+                ToolbarItem(placement: .topBarLeading) {
                     Button { pop() } label: {
                         Image(systemName: "chevron.left")
                             .foregroundColor(.green)
@@ -95,7 +95,7 @@ struct StudentAgendaView: View {
             }
 
             // Avatar no cabeçalho mostrando foto do usuário
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
                     .background(Color.clear)
             }

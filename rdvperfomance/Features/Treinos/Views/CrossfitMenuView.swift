@@ -51,7 +51,7 @@ struct CrossfitMenuView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -59,7 +59,7 @@ struct CrossfitMenuView: View {
                 .buttonStyle(.plain)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_user_default", size: 38)
                     .onTapGesture { }
                     .background(Color.clear)

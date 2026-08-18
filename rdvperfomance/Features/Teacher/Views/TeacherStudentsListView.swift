@@ -91,7 +91,7 @@ struct TeacherStudentsListView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -108,7 +108,7 @@ struct TeacherStudentsListView: View {
             }
 
             // ✅ NOVO: botão Convidar + avatar
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HStack(spacing: 12) {
 
                     Button {

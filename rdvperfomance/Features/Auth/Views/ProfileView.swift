@@ -233,7 +233,7 @@ struct ProfileView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -249,7 +249,7 @@ struct ProfileView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     path.append(.configuracoes)
                 } label: {
@@ -663,7 +663,7 @@ struct ProfileView: View {
                         .minimumScaleFactor(0.85)
                 }
 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Fechar") {
                         showMeusProfessoresModal = false
                     }
@@ -769,7 +769,7 @@ struct ProfileView: View {
                         .minimumScaleFactor(0.85)
                 }
 
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Fechar") {
                         showRequestLinkModal = false
                     }
@@ -1083,7 +1083,7 @@ struct ProfileView: View {
             .navigationTitle("Meus Ícones")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button("Fechar") {
                         showMeusIconesModal = false
                     }

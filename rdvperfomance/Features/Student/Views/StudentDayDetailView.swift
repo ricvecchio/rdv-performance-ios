@@ -209,7 +209,7 @@ struct StudentDayDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -224,7 +224,7 @@ struct StudentDayDetailView: View {
                     .foregroundColor(.white)
             }
 
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 if isTeacherViewing {
                     Menu {
                         Button {

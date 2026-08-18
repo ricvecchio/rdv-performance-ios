@@ -107,7 +107,7 @@ struct CreateTrainingWeekView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -123,7 +123,7 @@ struct CreateTrainingWeekView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
 
                 Button {
                     Task { await loadWeeks() }
