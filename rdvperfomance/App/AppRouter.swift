@@ -17,6 +17,12 @@ struct AppRouter: View {
                 .background(NavigationPopGestureFixer())
 
                 .navigationDestination(for: AppRoute.self) { route in
+                    // `Group` + `.background(NavigationPopGestureFixer())` aplicado a CADA
+                    // destino da pilha (não só na tela raiz): o delegate do
+                    // `interactivePopGestureRecognizer` precisa ser reaplicado a cada
+                    // push/pop, pois o `UINavigationController` pode resetá-lo silenciosamente
+                    // entre transições. Ver comentário completo em `NavigationPopGestureFixer`.
+                    Group {
                     switch route {
 
                     case .login:
@@ -316,6 +322,8 @@ struct AppRouter: View {
                     default:
                         guardedHome()
                     }
+                    }
+                    .background(NavigationPopGestureFixer())
                 }
         }
         .environmentObject(session)

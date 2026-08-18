@@ -6,18 +6,34 @@ import UIKit
 /// telas do app (`.navigationBarBackButtonHidden(true)` + `Button { pop() }` no toolbar).
 ///
 /// CAUSA RAIZ do "preciso tocar duas vezes na seta `<`": mesmo com o back button do sistema
-/// oculto, o `interactivePopGestureRecognizer` continua instalado e ativo. Por padrão, o
+/// oculto, o `interactivePopGestureRecognizer` continua instalado e ativo, e ele é um
+/// `UIScreenEdgePanGestureRecognizer` que monitora justamente a faixa esquerda da tela — a
+/// mesma região onde o botão `<` customizado fica posicionado na navigation bar. Por padrão o
 /// `UINavigationController` é seu próprio delegate e exige que outros gestos (como o
-/// `UITapGestureRecognizer` interno do `Button` customizado, posicionado bem próximo à borda
-/// esquerda da navigation bar) "falhem" antes de reconhecer o toque. Isso faz o botão mostrar
-/// o estado pressionado (feedback visual) no primeiro toque, mas só disparar a ação no
-/// segundo, porque a resolução do gesto concorrente atrasa o reconhecimento do tap.
+/// `UITapGestureRecognizer` interno do `Button` customizado) "falhem" antes de reconhecer o
+/// toque. Isso faz o botão mostrar o estado pressionado (feedback visual) no primeiro toque,
+/// mas só disparar a ação no segundo, porque a resolução do gesto concorrente atrasa/perde o
+/// reconhecimento do tap.
 ///
-/// A correção reatribui o delegate do `interactivePopGestureRecognizer` para um delegate
-/// neutro que permite reconhecimento simultâneo, preservando o swipe-to-back (não removemos
-/// a funcionalidade), mas eliminando a exigência de falha mútua que causava o toque duplo.
-/// Aplicado uma única vez, no `NavigationStack` raiz (`AppRouter`), em vez de espalhado por
-/// cada tela.
+/// IMPORTANTE: reatribuir `interactivePopGestureRecognizer.delegate` UMA ÚNICA VEZ, apenas na
+/// montagem da view raiz do `NavigationStack`, não é suficiente. É um comportamento conhecido do
+/// `UINavigationController` "esquecer"/resetar esse delegate para um estado neutro em torno de
+/// transições de push/pop subsequentes (o mesmo motivo pelo qual, historicamente em UIKit puro,
+/// a recomendação é reatribuir esse delegate em `viewWillAppear`/`viewDidAppear` de cada tela, e
+/// não apenas uma vez em `viewDidLoad`). Isso explica por que o bug parecia "intermitente" e
+/// aparecia em qualquer tela com botão `<` — inclusive em telas cujo `pop()` já fazia
+/// `removeLast()` corretamente (ex.: `SettingsView`): a causa não estava na lógica do `path`, e
+/// sim no gesto de swipe voltando a exigir falha mútua depois de cada navegação, silenciosamente
+/// desfazendo a correção aplicada apenas na raiz.
+///
+/// Por isso este `UIViewControllerRepresentable` é aplicado não só na tela raiz, mas em
+/// `.background(NavigationPopGestureFixer())` de CADA destino de navegação (veja
+/// `AppRouter.navigationDestination`). Cada nova tela empurrada reaplica o delegate neutro no
+/// momento em que aparece, garantindo que a correção permaneça válida em qualquer profundidade
+/// da pilha, sem depender de uma única aplicação no início. Não sobrescrevemos
+/// `UINavigationController.delegate` (arriscaria quebrar a sincronização interna do SwiftUI
+/// entre o gesto de swipe-back e o `path` do `NavigationStack`) — mexemos apenas no delegate do
+/// `interactivePopGestureRecognizer`, de forma idempotente.
 struct NavigationPopGestureFixer: UIViewControllerRepresentable {
 
     func makeCoordinator() -> Coordinator {
