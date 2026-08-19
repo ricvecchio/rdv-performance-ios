@@ -11,12 +11,22 @@ struct EditProfileView: View {
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var previewImage: UIImage? = nil
     @State private var isLoadingImage: Bool = false
+    @State private var hasNewPhoto: Bool = false
 
-    @State private var whatsappDraft: String = ""
+    // ✅ Armazena apenas dígitos normalizados (ex.: "11988888888")
+    @State private var whatsappDigits: String = ""
     @State private var focusAreaDraft: FocusAreaDTO = .CROSSFIT
 
+    // Referência original para detectar alterações pendentes
+    @State private var originalWhatsappDigits: String = ""
+    @State private var originalFocusArea: FocusAreaDTO = .CROSSFIT
+
+    @State private var isSaving: Bool = false
     @State private var showError: Bool = false
     @State private var errorMessage: String = ""
+
+    // ✅ FocusState para fechar o teclado do campo de telefone
+    @FocusState private var phoneFieldFocused: Bool
 
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
@@ -25,12 +35,29 @@ struct EditProfileView: View {
 
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
-    // Retorna UID do usuário atual
     private var currentUid: String? { session.currentUid }
 
-    // Retorna imagem armazenada localmente para o usuário
     private var storedImageForUser: UIImage? {
         LocalProfileStore.shared.getPhotoImage(userId: currentUid)
+    }
+
+    // MARK: - Estado do formulário
+
+    /// Telefone é válido se estiver vazio, com 10 ou com 11 dígitos.
+    private var isPhoneValid: Bool {
+        BrazilianPhoneFormatter.isValid(whatsappDigits)
+    }
+
+    /// Existem alterações pendentes em relação ao estado original.
+    private var hasChanges: Bool {
+        whatsappDigits != originalWhatsappDigits ||
+        focusAreaDraft != originalFocusArea ||
+        hasNewPhoto
+    }
+
+    /// Botão Salvar fica habilitado quando há alterações válidas e não está salvando.
+    private var canSave: Bool {
+        isPhoneValid && hasChanges && !isSaving
     }
 
     // Interface principal com avatar, formulário e ações
@@ -106,6 +133,15 @@ struct EditProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        // ✅ Botão "Concluir" na toolbar do teclado para fechar o .phonePad
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Concluir") {
+                    phoneFieldFocused = false
+                }
+            }
+        }
         .onAppear {
             loadFromStore()
         }
@@ -151,10 +187,34 @@ struct EditProfileView: View {
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            underlineTextField(
-                title: "WhatsApp (opcional)",
-                text: $whatsappDraft
-            )
+            // ✅ Campo de telefone com máscara brasileira e FocusState
+            VStack(alignment: .leading, spacing: 6) {
+                Text("WhatsApp (opcional)")
+                    .font(.system(size: 14))
+                    .foregroundColor(textSecondary)
+
+                TextField("", text: Binding(
+                    get: { BrazilianPhoneFormatter.format(whatsappDigits) },
+                    set: { whatsappDigits = BrazilianPhoneFormatter.normalize($0) }
+                ))
+                .foregroundColor(.white.opacity(0.92))
+                .font(.system(size: 16))
+                .keyboardType(.phonePad)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled(true)
+                .focused($phoneFieldFocused)
+
+                Rectangle()
+                    .fill(lineColor)
+                    .frame(height: 1)
+
+                // Indicador de validação (apenas quando há dígitos e está inválido)
+                if !whatsappDigits.isEmpty && !isPhoneValid {
+                    Text("Número incompleto (mínimo 10 dígitos)")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.yellow.opacity(0.85))
+                }
+            }
 
             pickerRow(
                 title: "Área de foco",
@@ -209,10 +269,15 @@ struct EditProfileView: View {
                 Task { await saveAllAndSync() }
             } label: {
                 HStack(spacing: 10) {
-                    Image(systemName: "checkmark.circle.fill")
-                        .foregroundColor(.white.opacity(0.9))
+                    if isSaving {
+                        ProgressView()
+                            .tint(.white.opacity(0.9))
+                    } else {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(.white.opacity(0.9))
+                    }
 
-                    Text("Salvar")
+                    Text(isSaving ? "Salvando..." : "Salvar")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
 
@@ -222,8 +287,9 @@ struct EditProfileView: View {
                 .frame(height: 46)
                 .frame(maxWidth: .infinity)
                 .background(
+                    // ✅ Verde quando há alterações válidas; neutro caso contrário
                     Capsule()
-                        .fill(Color.white.opacity(0.10))
+                        .fill(canSave ? Color.green.opacity(0.28) : Color.white.opacity(0.10))
                         .overlay(
                             Capsule()
                                 .stroke(Color.white.opacity(0.12), lineWidth: 1)
@@ -231,6 +297,7 @@ struct EditProfileView: View {
                 )
             }
             .buttonStyle(.plain)
+            .disabled(!canSave)
 
             Button {
                 Task { await clearPhotoOnlyAndSync() }
@@ -271,16 +338,27 @@ struct EditProfileView: View {
     // Carrega dados salvos do usuário atual do armazenamento local
     private func loadFromStore() {
         guard let _ = currentUid else {
-            whatsappDraft = ""
+            whatsappDigits = ""
+            originalWhatsappDigits = ""
             focusAreaDraft = .CROSSFIT
+            originalFocusArea = .CROSSFIT
             previewImage = nil
+            hasNewPhoto = false
             return
         }
 
-        whatsappDraft = LocalProfileStore.shared.getWhatsapp(userId: currentUid)
+        // ✅ Normaliza sempre para dígitos (compatível com valores antigos já formatados)
+        let rawPhone = LocalProfileStore.shared.getWhatsapp(userId: currentUid)
+        let normalized = BrazilianPhoneFormatter.normalize(rawPhone)
+        whatsappDigits = normalized
+        originalWhatsappDigits = normalized
 
         let raw = LocalProfileStore.shared.getFocusAreaRaw(userId: currentUid)
-        focusAreaDraft = FocusAreaDTO(rawValue: raw.isEmpty ? FocusAreaDTO.CROSSFIT.rawValue : raw) ?? .CROSSFIT
+        let area = FocusAreaDTO(rawValue: raw.isEmpty ? FocusAreaDTO.CROSSFIT.rawValue : raw) ?? .CROSSFIT
+        focusAreaDraft = area
+        originalFocusArea = area
+
+        hasNewPhoto = false
 
         if previewImage == nil, let img = LocalProfileStore.shared.getPhotoImage(userId: currentUid) {
             previewImage = img
@@ -292,6 +370,11 @@ struct EditProfileView: View {
 
     // ✅ Salva local + sincroniza foto no Firestore (para o professor enxergar na lista)
     private func saveAllAndSync() async {
+        guard !isSaving else { return }
+        isSaving = true
+        phoneFieldFocused = false  // Fecha teclado antes de salvar
+        defer { isSaving = false }
+
         saveWhatsapp()
         saveFocusArea()
 
@@ -300,6 +383,10 @@ struct EditProfileView: View {
             await MainActor.run {
                 showError = false
                 errorMessage = ""
+                // Atualiza referência original para refletir dados salvos
+                originalWhatsappDigits = whatsappDigits
+                originalFocusArea = focusAreaDraft
+                hasNewPhoto = false
             }
             pop()
         } catch {
@@ -307,10 +394,9 @@ struct EditProfileView: View {
         }
     }
 
-    // Persiste WhatsApp localmente
+    // ✅ Persiste WhatsApp como dígitos normalizados
     private func saveWhatsapp() {
-        let v = whatsappDraft.trimmingCharacters(in: .whitespacesAndNewlines)
-        LocalProfileStore.shared.setWhatsapp(v, userId: currentUid)
+        LocalProfileStore.shared.setWhatsapp(whatsappDigits, userId: currentUid)
     }
 
     // Persiste área de foco localmente
@@ -318,13 +404,14 @@ struct EditProfileView: View {
         LocalProfileStore.shared.setFocusAreaRaw(focusAreaDraft.rawValue, userId: currentUid)
     }
 
-    // ✅ Persiste foto localmente e no Firestore (base64)
+    // ✅ Persiste foto localmente e no Firestore (base64) — apenas se há nova foto
     private func savePhotoIfNeededAndSync() async throws {
+        guard hasNewPhoto else { return }  // Sem nova foto, pula escrita desnecessária
+
         guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
             throw FirestoreRepositoryError.missingUserId
         }
 
-        // Se não tem preview novo, não faz escrita desnecessária
         guard let previewImage else { return }
 
         // 1) Salvar local (como já fazia)
@@ -374,6 +461,7 @@ struct EditProfileView: View {
                let uiImage = UIImage(data: data) {
                 await MainActor.run {
                     self.previewImage = uiImage
+                    self.hasNewPhoto = true   // ✅ Marca foto como alterada
                     self.showError = false
                     self.errorMessage = ""
                 }
@@ -397,28 +485,6 @@ struct EditProfileView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
-    }
-
-    // Retorna campo de texto com estilo underline
-    private func underlineTextField(title: String, text: Binding<String>) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-
-            Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(textSecondary)
-
-            TextField("", text: text)
-                .foregroundColor(.white.opacity(0.92))
-                .font(.system(size: 16))
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled(true)
-                .keyboardType(.phonePad)
-                .padding(.vertical, 10)
-
-            Rectangle()
-                .fill(lineColor)
-                .frame(height: 1)
-        }
     }
 
     // Converte FocusAreaDTO em texto amigável

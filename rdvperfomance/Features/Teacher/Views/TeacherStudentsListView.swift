@@ -17,10 +17,14 @@ struct TeacherStudentsListView: View {
     @State private var studentPendingUnlink: AppUser? = nil
     @State private var showUnlinkConfirm: Bool = false
 
-    // ✅ NOVO: modal convite
+    // Modal convite
     @State private var showInviteSheet: Bool = false
     @State private var inviteTab: InviteTab = .invite
     @State private var inviteEmail: String = ""
+
+    // ✅ Cancelamento de convite pendente na lista principal
+    @State private var invitePendingCancel: TeacherStudentInviteFS? = nil
+    @State private var showCancelInviteConfirm: Bool = false
 
     init(
         path: Binding<[AppRoute]>,
@@ -53,6 +57,10 @@ struct TeacherStudentsListView: View {
                         header
                         filterRow
                         contentCard
+                        // ✅ Convites pendentes na tela principal (sem precisar abrir o modal)
+                        if !vm.pendingInvites.isEmpty {
+                            pendingInvitesCard
+                        }
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -84,9 +92,10 @@ struct TeacherStudentsListView: View {
         .onAppear {
             filter = initialFilter
         }
-        // ✅ FIX: garante reload quando session.uid ficar disponível (evita lista vazia por task rodar cedo demais)
+        // Carrega alunos e convites pendentes assim que session.uid estiver disponível
         .task(id: session.uid ?? "") {
             await loadAllStudents()
+            await loadInvitesIfPossible()
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -141,8 +150,26 @@ struct TeacherStudentsListView: View {
         } message: {
             Text(unlinkMessageText())
         }
-        // ✅ NOVO: Sheet Convites
-        .sheet(isPresented: $showInviteSheet) {
+        // ✅ Cancelamento de convite pendente com confirmação
+        .alert("Cancelar convite?", isPresented: $showCancelInviteConfirm) {
+            Button("Cancelar", role: .cancel) { invitePendingCancel = nil }
+            Button("Confirmar cancelamento", role: .destructive) {
+                Task { await confirmCancelInvite() }
+            }
+        } message: {
+            if let inv = invitePendingCancel {
+                Text("O convite enviado para \(inv.studentEmail) será cancelado.")
+            } else {
+                Text("O convite será cancelado.")
+            }
+        }
+        // Sheet Convites — ao fechar, recarrega alunos e convites
+        .sheet(isPresented: $showInviteSheet, onDismiss: {
+            Task {
+                await loadAllStudents()
+                await loadInvitesIfPossible()
+            }
+        }) {
             inviteSheet
         }
     }
@@ -398,6 +425,99 @@ struct TeacherStudentsListView: View {
         path.removeLast()
     }
 
+    // MARK: - ✅ Seção de convites pendentes na tela principal
+
+    private var pendingInvitesCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+
+            Text("CONVITES PENDENTES")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.35))
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
+
+            let pending = vm.pendingInvites
+            ForEach(Array(pending.enumerated()), id: \.offset) { idx, inv in
+
+                HStack(spacing: 12) {
+
+                    Image(systemName: "clock.fill")
+                        .foregroundColor(.yellow.opacity(0.75))
+                        .font(.system(size: 15))
+                        .frame(width: 26)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(inv.studentEmail)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .lineLimit(1)
+
+                        HStack(spacing: 6) {
+                            Text("Pendente")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.yellow.opacity(0.12)))
+
+                            if let cat = inv.category, !cat.isEmpty {
+                                Text(cat)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.45))
+                            }
+                        }
+                    }
+
+                    Spacer()
+
+                    Menu {
+                        Button(role: .destructive) {
+                            invitePendingCancel = inv
+                            showCancelInviteConfirm = true
+                        } label: {
+                            Label("Cancelar convite", systemImage: "xmark.circle")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.55))
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 8)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isInvitesLoading)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+
+                if idx < pending.count - 1 {
+                    innerDivider(leading: 54)
+                }
+            }
+
+            Color.clear.frame(height: 8)
+        }
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private func confirmCancelInvite() async {
+        guard let inv = invitePendingCancel,
+              let invId = inv.id, !invId.isEmpty,
+              let teacherId = session.uid, !teacherId.isEmpty
+        else {
+            invitePendingCancel = nil
+            return
+        }
+
+        await vm.cancelInvite(inviteId: invId, teacherId: teacherId)
+        invitePendingCancel = nil
+    }
+
     // MARK: - ✅ Categoria combinada (vínculo / cadastro) + navegação
 
     private func combinedCategoryText(_ student: AppUser) -> String {
@@ -540,7 +660,11 @@ struct TeacherStudentsListView: View {
             Text(vm.inviteErrorMessage ?? "Ocorreu um erro.")
         }
         .alert("Sucesso", isPresented: $vm.showInviteSuccessAlert) {
-            Button("OK", role: .cancel) {}
+            // ✅ OK fecha o modal e limpa o campo — o onDismiss da sheet recarrega dados
+            Button("OK") {
+                inviteEmail = ""
+                showInviteSheet = false
+            }
         } message: {
             Text(vm.inviteSuccessMessage ?? "Convite enviado.")
         }
@@ -710,8 +834,8 @@ struct TeacherStudentsListView: View {
                let id = inv.id, !id.isEmpty {
                 Button {
                     Task {
-                        await vm.cancelInvite(inviteId: id)
-                        await loadInvitesIfPossible()
+                        guard let teacherId = session.uid, !teacherId.isEmpty else { return }
+                        await vm.cancelInvite(inviteId: id, teacherId: teacherId)
                     }
                 } label: {
                     Text("Cancelar")

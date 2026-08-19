@@ -168,9 +168,20 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
-    func cancelInvite(inviteId: String) async {
-        let id = inviteId.trimmingCharacters(in: .whitespacesAndNewlines)
+    /// Convites com status `pending` que devem aparecer na tela principal.
+    var pendingInvites: [TeacherStudentInviteFS] {
+        invites.filter {
+            $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending"
+        }
+    }
+
+    func cancelInvite(inviteId: String, teacherId: String) async {
+        let id  = inviteId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let tid = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !id.isEmpty else { return }
+
+        // Remoção otimista: retira da lista imediatamente para resposta visual instantânea
+        invites.removeAll { ($0.id ?? "") == id }
 
         isInvitesLoading = true
         invitesErrorMessageInline = nil
@@ -178,6 +189,12 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
         do {
             try await repository.cancelTeacherInvite(inviteId: id)
+
+            // Resync com Firestore após cancelamento
+            if !tid.isEmpty {
+                let list = try await repository.getInvitesSentByTeacher(teacherId: tid, status: nil, limit: 50)
+                self.invites = list
+            }
         } catch {
             setInviteError((error as NSError).localizedDescription)
         }

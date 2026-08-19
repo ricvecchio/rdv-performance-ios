@@ -217,73 +217,73 @@ struct FooterBar: View {
         }
     }
 
-    // Métodos de navegação (inalterados)
-    private func canonicalStackBasic(for destination: AppRoute) -> [AppRoute] {
-        switch destination {
-        case .home:  return [.home]
-        case .sobre: return [.home, .sobre]
-        case .perfil: return [.home, .sobre, .perfil]
-        default:     return [.home]
-        }
+    // MARK: - Métodos de navegação do rodapé
+    //
+    // REGRA: cada toque produz exatamente UMA mutação do path.
+    // Rotas intermediárias artificiais foram removidas pois forçavam instanciação
+    // desnecessária de Views e disparavam .task / .onAppear, criando condições de corrida
+    // com o gesto de swipe-back e causando a necessidade de múltiplos toques.
+
+    // MARK: Básico (Home, Sobre, Perfil sem contexto específico de aluno/professor)
+    private func goHomeBasic() {
+        guard !path.isEmpty else { return }
+        path = []
     }
 
-    private func goHomeBasic()   { path = canonicalStackBasic(for: .home) }
-    private func goSobreBasic()  { path = canonicalStackBasic(for: .sobre) }
-    private func goPerfilBasic() { path = canonicalStackBasic(for: .perfil) }
+    private func goPerfilBasic() {
+        let target: AppRoute = .perfil
+        guard path.last != target else { return }
+        path = [target]
+    }
 
+    // MARK: Aluno
+    // A tela raiz do aluno é StudentAgendaView; path vazio = Agenda.
     private func goAgenda() {
-        guard let studentId = session.uid else { return }
-        let studentName = session.userName ?? "Aluno"
-        path = [.studentAgenda(studentId: studentId, studentName: studentName)]
+        guard !path.isEmpty else { return }
+        path = []
     }
 
     private func goTreinosAluno() {
-        guard let studentId = session.uid else { return }
-        let studentName = session.userName ?? "Aluno"
-        path = [.studentAgenda(studentId: studentId, studentName: studentName)]
+        // Treinos do aluno também parte da agenda (root)
+        guard !path.isEmpty else { return }
+        path = []
     }
 
     private func goPersonalRecords() {
-        guard let studentId = session.uid else { return }
-        let studentName = session.userName ?? "Aluno"
-        path = [.studentAgenda(studentId: studentId, studentName: studentName), .studentPersonalRecords]
+        let target: AppRoute = .studentPersonalRecords
+        guard path.last != target else { return }
+        path = [target]
     }
 
     private func goPerfilStudent() {
-        guard let studentId = session.uid else { return }
-        let studentName = session.userName ?? "Aluno"
-        path = [.studentAgenda(studentId: studentId, studentName: studentName), .studentPersonalRecords, .perfil]
+        let target: AppRoute = .perfil
+        guard path.last != target else { return }
+        path = [target]
     }
 
-    private enum TeacherDestination { case home, alunos, sobre, perfil }
-
-    private func teacherCanonicalStack(category: TreinoTipo, destination: TeacherDestination) -> [AppRoute] {
-        switch destination {
-        case .home:
-            return [.teacherDashboard(category: category)]
-        case .alunos:
-            return [.teacherDashboard(category: category), .teacherStudentsList(selectedCategory: category, initialFilter: nil)]
-        case .sobre:
-            return [.teacherDashboard(category: category), .teacherStudentsList(selectedCategory: category, initialFilter: nil), .sobre]
-        case .perfil:
-            return [.teacherDashboard(category: category), .teacherStudentsList(selectedCategory: category, initialFilter: nil), .sobre, .perfil]
-        }
-    }
-
+    // MARK: Professor
+    // A tela raiz do professor é TeacherDashboardView; path vazio = Home.
     private func goTeacherHome(category: TreinoTipo) {
-        path = teacherCanonicalStack(category: category, destination: .home)
+        guard !path.isEmpty else { return }
+        path = []
     }
 
     private func goTeacherAlunos(category: TreinoTipo) {
-        path = teacherCanonicalStack(category: category, destination: .alunos)
+        let target: AppRoute = .teacherStudentsList(selectedCategory: category, initialFilter: nil)
+        guard path.last != target else { return }
+        path = [target]
     }
 
     private func goTeacherSobre(category: TreinoTipo) {
-        path = teacherCanonicalStack(category: category, destination: .sobre)
+        let target: AppRoute = .sobre
+        guard path.last != target else { return }
+        path = [target]
     }
 
     private func goTeacherPerfil(category: TreinoTipo) {
-        path = teacherCanonicalStack(category: category, destination: .perfil)
+        let target: AppRoute = .perfil
+        guard path.last != target else { return }
+        path = [target]
     }
 }
 

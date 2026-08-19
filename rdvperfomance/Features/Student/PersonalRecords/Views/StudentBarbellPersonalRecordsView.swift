@@ -25,8 +25,8 @@ struct StudentBarbellPersonalRecordsView: View {
 
         var shortLabel: String {
             switch self {
-            case .kg: return "kg"
-            case .lbs: return "lbs"
+            case .kg:  return "kg"
+            case .lbs: return "lb"   // ✅ Abreviação padrão (não "lbs")
             }
         }
     }
@@ -335,7 +335,7 @@ struct StudentBarbellPersonalRecordsView: View {
                         .foregroundColor(.white.opacity(0.75))
 
                     HStack(spacing: 10) {
-                        TextField("Ex: 90.91", text: $inputValue)
+                        TextField("Ex: 90,50", text: $inputValue)
                             .keyboardType(.decimalPad)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
@@ -484,7 +484,7 @@ struct StudentBarbellPersonalRecordsView: View {
                             .foregroundColor(.white.opacity(0.75))
 
                         HStack(spacing: 10) {
-                            TextField("Ex: 90.91", text: $newMoveValue)
+                            TextField("Ex: 90,50", text: $newMoveValue)
                                 .keyboardType(.decimalPad)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
@@ -578,11 +578,10 @@ struct StudentBarbellPersonalRecordsView: View {
         list.append(CustomBarbellMove(id: id, name: cleanName, storageKey: key))
         saveCustomMoves(list)
 
-        let trimmedValue = newMoveValue
-            .replacingOccurrences(of: ",", with: ".")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmedValue = newMoveValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        if !trimmedValue.isEmpty, let value = Double(trimmedValue), value > 0 {
+        // ✅ Usa WeightParser que aceita vírgula e ponto
+        if !trimmedValue.isEmpty, let value = WeightParser.parse(trimmedValue), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
             saveValue(storageKg, for: key)
         }
@@ -593,16 +592,15 @@ struct StudentBarbellPersonalRecordsView: View {
     private func saveCurrentInput() {
         guard let move = selectedMove else { return }
 
-        let trimmed = inputValue
-            .replacingOccurrences(of: ",", with: ".")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trimmed.isEmpty {
             removeValue(for: move.storageKey)
             return
         }
 
-        if let value = Double(trimmed), value > 0 {
+        // ✅ Usa WeightParser que aceita vírgula e ponto, valida casas decimais
+        if let value = WeightParser.parse(trimmed), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
             saveValue(storageKg, for: move.storageKey)
         }
@@ -627,13 +625,9 @@ struct StudentBarbellPersonalRecordsView: View {
         selectedMove = nil
     }
 
+    /// Formata um `Double` para exibição com convenção brasileira (vírgula decimal, 2 casas).
     private func formatNumber(_ value: Double) -> String {
-        let formatter = NumberFormatter()
-        formatter.numberStyle = .decimal
-        formatter.maximumFractionDigits = 2
-        formatter.minimumFractionDigits = 0
-        formatter.decimalSeparator = "."
-        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+        WeightParser.brazilianFormat(value)
     }
 
     private func convertFromStorageKgToPreferredUnit(_ kg: Double) -> Double {

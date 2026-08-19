@@ -176,19 +176,42 @@ final class StudentAgendaViewModel: ObservableObject {
     // MARK: - Semanas / Meta
 
     func loadWeeksAndMeta() async {
+        // Evita concorrência: se já carregando, aguarda conclusão
+        guard !isLoading else { return }
+
         isLoading = true
         errorMessage = nil
-        defer { isLoading = false }
 
         do {
-            let result = try await repository.getWeeksForStudent(studentId: studentId)
-            self.weeks = result
+            #if DEBUG
+            let t0 = Date()
+            #endif
 
-            await loadTeacherNamesForWeeks(result)
-            await loadMetaForWeeks(result)
+            let result = try await repository.getWeeksForStudent(studentId: studentId)
+
+            #if DEBUG
+            print("[StudentAgenda] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count) semana(s)")
+            #endif
+
+            // ✅ Publica semanas e encerra o loading principal imediatamente.
+            // Metadados secundários (nomes de professor, datas, progresso) chegam
+            // progressivamente sem bloquear a exibição da lista.
+            self.weeks = result
+            isLoading = false
+
+            // Carrega metadados em paralelo (progressivo)
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await self.loadTeacherNamesForWeeks(result) }
+                group.addTask { await self.loadMetaForWeeks(result) }
+            }
+
+            #if DEBUG
+            print("[StudentAgenda] metadata completo em \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count * 2) reads auxiliares")
+            #endif
 
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
+            isLoading = false
         }
     }
 

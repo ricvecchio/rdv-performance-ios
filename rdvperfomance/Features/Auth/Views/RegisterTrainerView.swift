@@ -1,5 +1,6 @@
 // Tela de cadastro para usuários do tipo professor
 import SwiftUI
+import UIKit
 
 struct RegisterTrainerView: View {
 
@@ -73,6 +74,18 @@ struct RegisterTrainerView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        // ✅ Botão "Concluir" para fechar o teclado .phonePad
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Concluir") {
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil, from: nil, for: nil
+                    )
+                }
+            }
+        }
         .onChange(of: vm.successMessage) { _, newValue in
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
@@ -116,11 +129,10 @@ struct RegisterTrainerView: View {
                 placeholderColor: textSecondary
             )
 
-            UnderlineTextField(
+            // ✅ Campo de telefone com máscara brasileira centralizada
+            PhoneTextField(
                 title: "WhatsApp (opcional)",
-                text: $vm.phone,
-                isSecure: false,
-                showPassword: .constant(false),
+                digits: $vm.phone,
                 lineColor: lineColor,
                 textColor: .white,
                 placeholderColor: textSecondary
