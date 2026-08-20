@@ -46,9 +46,21 @@ struct NavigationPopGestureFixer: UIViewControllerRepresentable {
             installIfPossible(reason: "didMove")
         }
 
+        override func viewWillAppear(_ animated: Bool) {
+            super.viewWillAppear(animated)
+            // `transitionCoordinator` está garantidamente disponível aqui quando existe uma
+            // transição real em andamento (push/pop/swipe), permitindo observá-la desde o início.
+            installIfPossible(reason: "viewWillAppear")
+        }
+
         override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
             installIfPossible(reason: "viewDidAppear")
+        }
+
+        override func viewWillDisappear(_ animated: Bool) {
+            super.viewWillDisappear(animated)
+            installIfPossible(reason: "viewWillDisappear")
         }
 
         func installIfPossible(reason: StaticString) {

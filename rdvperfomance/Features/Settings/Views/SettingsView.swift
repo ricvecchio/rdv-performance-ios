@@ -78,6 +78,12 @@ struct SettingsView: View {
         }
         .blur(radius: showWeightUnitSheet ? 8 : 0)
         .animation(.easeInOut(duration: 0.20), value: showWeightUnitSheet)
+        .background(
+            // Observa o ciclo de vida real desta tela (viewWillAppear/viewWillDisappear)
+            // para sincronizar `isTransitioning` com o push/pop real desta transição,
+            // já que o Probe hospedado apenas na raiz não recebe esses callbacks aqui.
+            NavigationPopGestureFixer(installer: navigationGuard, stackDepth: path.count)
+        )
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
