@@ -224,54 +224,51 @@ struct FooterBar: View {
     // desnecessária de Views e disparavam .task / .onAppear, criando condições de corrida
     // com o gesto de swipe-back e causando a necessidade de múltiplos toques.
 
+    private enum FooterTarget {
+        case studentRoot
+        case studentPersonalRecords
+        case profile
+        case teacherRoot
+        case teacherStudentsList(category: TreinoTipo)
+    }
+
     // MARK: Básico (Home, Sobre, Perfil sem contexto específico de aluno/professor)
     private func goHomeBasic() {
-        guard !path.isEmpty else { return }
-        path = []
+        navigateToRoot(.studentRoot)
     }
 
     private func goPerfilBasic() {
-        let target: AppRoute = .perfil
-        guard path.last != target else { return }
-        path = [target]
+        navigate(to: .perfil, as: .profile)
     }
 
     // MARK: Aluno
     // A tela raiz do aluno é StudentAgendaView; path vazio = Agenda.
     private func goAgenda() {
-        guard !path.isEmpty else { return }
-        path = []
+        navigateToRoot(.studentRoot)
     }
 
     private func goTreinosAluno() {
         // Treinos do aluno também parte da agenda (root)
-        guard !path.isEmpty else { return }
-        path = []
+        navigateToRoot(.studentRoot)
     }
 
     private func goPersonalRecords() {
-        let target: AppRoute = .studentPersonalRecords
-        guard path.last != target else { return }
-        path = [target]
+        navigate(to: .studentPersonalRecords, as: .studentPersonalRecords)
     }
 
     private func goPerfilStudent() {
-        let target: AppRoute = .perfil
-        guard path.last != target else { return }
-        path = [target]
+        navigate(to: .perfil, as: .profile)
     }
 
     // MARK: Professor
     // A tela raiz do professor é TeacherDashboardView; path vazio = Home.
     private func goTeacherHome(category: TreinoTipo) {
-        guard !path.isEmpty else { return }
-        path = []
+        navigateToRoot(.teacherRoot)
     }
 
     private func goTeacherAlunos(category: TreinoTipo) {
         let target: AppRoute = .teacherStudentsList(selectedCategory: category, initialFilter: nil)
-        guard path.last != target else { return }
-        path = [target]
+        navigate(to: target, as: .teacherStudentsList(category: category))
     }
 
     private func goTeacherSobre(category: TreinoTipo) {
@@ -281,9 +278,42 @@ struct FooterBar: View {
     }
 
     private func goTeacherPerfil(category: TreinoTipo) {
-        let target: AppRoute = .perfil
-        guard path.last != target else { return }
-        path = [target]
+        navigate(to: .perfil, as: .profile)
+    }
+
+    private func navigateToRoot(_ target: FooterTarget) {
+        guard !matches(target) else { return }
+        path = []
+    }
+
+    private func navigate(to route: AppRoute, as target: FooterTarget) {
+        guard !matches(target) else { return }
+        path = [route]
+    }
+
+    private func matches(_ target: FooterTarget) -> Bool {
+        switch target {
+        case .studentRoot:
+            return path.isEmpty
+        case .studentPersonalRecords:
+            return path.last == .studentPersonalRecords
+        case .profile:
+            return path.last == .perfil
+        case .teacherRoot:
+            if path.isEmpty {
+                return true
+            }
+            if let last = path.last, case .teacherDashboard = last {
+                return true
+            }
+            return false
+        case .teacherStudentsList(let category):
+            guard let last = path.last else { return false }
+            if case .teacherStudentsList(let selectedCategory, _) = last {
+                return selectedCategory == category
+            }
+            return false
+        }
     }
 }
 
@@ -319,4 +349,3 @@ private struct FooterItem: View {
         .frame(width: width)
     }
 }
-

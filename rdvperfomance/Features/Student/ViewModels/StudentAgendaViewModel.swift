@@ -24,6 +24,7 @@ final class StudentAgendaViewModel: ObservableObject {
     @Published private(set) var teacherNameById: [String: String] = [:]
 
     private var hasLoadedLinkStatus: Bool = false
+    private var hasLoadedWeeksAndMeta: Bool = false
 
     private var weekRangeText: [String: String] = [:]
     private var weekProgressPercent: [String: Int] = [:]
@@ -175,7 +176,13 @@ final class StudentAgendaViewModel: ObservableObject {
 
     // MARK: - Semanas / Meta
 
-    func loadWeeksAndMeta() async {
+    func loadWeeksAndMeta(force: Bool = false) async {
+        if force {
+            hasLoadedWeeksAndMeta = false
+        }
+
+        guard !hasLoadedWeeksAndMeta else { return }
+
         // Evita concorrência: se já carregando, aguarda conclusão
         guard !isLoading else { return }
 
@@ -197,6 +204,7 @@ final class StudentAgendaViewModel: ObservableObject {
             // Metadados secundários (nomes de professor, datas, progresso) chegam
             // progressivamente sem bloquear a exibição da lista.
             self.weeks = result
+            hasLoadedWeeksAndMeta = true
             isLoading = false
 
             // Carrega metadados em paralelo (progressivo)
@@ -210,6 +218,7 @@ final class StudentAgendaViewModel: ObservableObject {
             #endif
 
         } catch {
+            hasLoadedWeeksAndMeta = false
             self.errorMessage = (error as NSError).localizedDescription
             isLoading = false
         }
@@ -329,4 +338,3 @@ final class StudentAgendaViewModel: ObservableObject {
         return "\(f.string(from: minDate)) a \(f.string(from: maxDate))"
     }
 }
-

@@ -104,11 +104,8 @@ struct StudentAgendaView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
 
-        .onAppear {
-            Task {
-                await vm.loadLinkStatusIfNeeded()
-                await vm.loadWeeksAndMeta()
-            }
+        .task(id: studentId) {
+            await loadInitialData()
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -486,7 +483,7 @@ struct StudentAgendaView: View {
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
-            Button { Task { await vm.loadWeeksAndMeta() } } label: {
+            Button { Task { await vm.loadWeeksAndMeta(force: true) } } label: {
                 Text("Tentar novamente")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.9))
@@ -528,5 +525,12 @@ struct StudentAgendaView: View {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
-}
 
+    private func loadInitialData() async {
+        if !isTeacherViewing {
+            await vm.loadLinkStatusIfNeeded()
+        }
+
+        await vm.loadWeeksAndMeta()
+    }
+}

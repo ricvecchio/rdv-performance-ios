@@ -5,6 +5,7 @@ struct AppRouter: View {
 
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
+    @StateObject private var popGestureInstaller = NavigationPopGestureInstaller()
 
     private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
@@ -14,14 +15,9 @@ struct AppRouter: View {
 
             rootView
                 .environmentObject(session)
-                .background(NavigationPopGestureFixer())
+                .background(NavigationPopGestureFixer(installer: popGestureInstaller))
 
                 .navigationDestination(for: AppRoute.self) { route in
-                    // `Group` + `.background(NavigationPopGestureFixer())` aplicado a CADA
-                    // destino da pilha (não só na tela raiz): o delegate do
-                    // `interactivePopGestureRecognizer` precisa ser reaplicado a cada
-                    // push/pop, pois o `UINavigationController` pode resetá-lo silenciosamente
-                    // entre transições. Ver comentário completo em `NavigationPopGestureFixer`.
                     Group {
                     switch route {
 
@@ -323,7 +319,7 @@ struct AppRouter: View {
                         guardedHome()
                     }
                     }
-                    .background(NavigationPopGestureFixer())
+                    .background(NavigationPopGestureFixer(installer: popGestureInstaller))
                 }
         }
         .environmentObject(session)

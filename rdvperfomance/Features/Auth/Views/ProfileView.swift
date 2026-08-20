@@ -1,8 +1,6 @@
 // Tela de perfil com informações do usuário e opções
 import SwiftUI
 import UIKit
-import FirebaseAuth
-import FirebaseFirestore
 
 struct ProfileView: View {
 
@@ -24,7 +22,7 @@ struct ProfileView: View {
     private let repository: FirestoreRepository = .shared
 
     private var currentUid: String {
-        (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        (session.currentUid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     @State private var userName: String = ""
@@ -317,18 +315,6 @@ struct ProfileView: View {
     }
 
     // Volta exatamente uma tela, com uma única mutação atômica do `path`.
-    // Anteriormente, o fluxo do professor fazia `path.removeAll()` seguido de
-    // `path.append(...)`: duas mutações consecutivas do mesmo array observado
-    // pelo `NavigationStack`. Como o novo destino (`teacherStudentsList` com
-    // `initialFilter: nil`) frequentemente não é igual (via `Hashable`) à
-    // entrada já existente na pilha (que pode ter outro `initialFilter`), o
-    // `NavigationStack` não reconhecia um "pop para elemento existente" e
-    // processava a mudança como "pop-to-root" + "push" em sequência — duas
-    // transições de navegação concorrentes. Isso é o que fazia o botão
-    // reconhecer o toque visualmente (o `Button` disparou a ação), mas a tela
-    // só terminar a transição correta no segundo toque. A correção usa
-    // `removeLast()` para ambos os tipos de usuário, igual a todas as demais
-    // telas do app, garantindo push/pop simétrico e uma única mutação por toque.
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
@@ -362,8 +348,9 @@ struct ProfileView: View {
                 studentEmail = ""
             }
 
-            if session.userType == .STUDENT {
-                await loadLinkedTeachers(forceFallbackFromWeeks: true)
+            if session.userType != .STUDENT {
+                linkedTeachers = []
+                linkedTeacherIds = []
             }
 
         } catch {
@@ -973,8 +960,6 @@ struct ProfileView: View {
     private func logoutButton() -> some View {
         Button {
             session.logout()
-            path.removeAll()
-            path.append(.login)
         } label: {
             Text("Sair")
                 .font(.system(size: 16, weight: .medium))
