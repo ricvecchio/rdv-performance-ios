@@ -184,31 +184,41 @@ final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGesture
     @discardableResult
     func pushIfPossible(
         route: AppRoute,
-        path: inout [AppRoute],
+        path: Binding<[AppRoute]>,
         expectedTop: AppRoute? = nil,
         source: StaticString
     ) -> Bool {
-        guard canPush(route: route, onto: path, expectedTop: expectedTop, source: source) else { return false }
+        guard canPush(route: route, onto: path.wrappedValue, expectedTop: expectedTop, source: source) else { return false }
 
         // Marca a transição como iniciada imediatamente (mesmo turno de execução do tap),
         // para que o botão seja desabilitado antes que um segundo toque possa chegar.
         // O estado real é confirmado/encerrado depois via transitionCoordinator.
         _ = beginTransition(reason: source)
-        path.append(route)
+
+        // A mutação do `path` é adiada para o próximo ciclo do run loop (sem nenhuma espera
+        // artificial) para não colidir com o encerramento interno da transição anterior do
+        // NavigationStack, que pode ainda estar assentando no mesmo instante do toque.
+        DispatchQueue.main.async {
+            path.wrappedValue.append(route)
+        }
         return true
     }
 
     /// Ponto único de pop: garante que "um evento de usuário = uma operação de navegação".
     @discardableResult
     func popIfPossible(
-        path: inout [AppRoute],
+        path: Binding<[AppRoute]>,
         expectedTop: AppRoute? = nil,
         source: StaticString
     ) -> Bool {
-        guard canPop(path: path, expectedTop: expectedTop, source: source) else { return false }
+        guard canPop(path: path.wrappedValue, expectedTop: expectedTop, source: source) else { return false }
 
         _ = beginTransition(reason: source)
-        path.removeLast()
+
+        DispatchQueue.main.async {
+            guard !path.wrappedValue.isEmpty else { return }
+            path.wrappedValue.removeLast()
+        }
         return true
     }
 

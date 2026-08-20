@@ -152,10 +152,10 @@ struct SettingsView: View {
         print("[NAV] Settings back BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
         #endif
 
-        let didPop = navigationGuard.popIfPossible(path: &path, expectedTop: .configuracoes, source: "Settings back")
+        let didPop = navigationGuard.popIfPossible(path: $path, expectedTop: .configuracoes, source: "Settings back")
 
         #if DEBUG
-        print("[NAV] Settings back AFTER:", String(describing: path), "didPop:", didPop)
+        print("[NAV] Settings back SCHEDULED (path mutates next run loop tick):", "didPop:", didPop)
         #endif
     }
 

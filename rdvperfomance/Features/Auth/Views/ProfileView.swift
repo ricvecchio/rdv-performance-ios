@@ -328,10 +328,10 @@ struct ProfileView: View {
         print("[NAV] Profile back BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
         #endif
 
-        let didPop = navigationGuard.popIfPossible(path: &path, expectedTop: .perfil, source: "Profile back")
+        let didPop = navigationGuard.popIfPossible(path: $path, expectedTop: .perfil, source: "Profile back")
 
         #if DEBUG
-        print("[NAV] Profile back AFTER:", String(describing: path), "didPop:", didPop)
+        print("[NAV] Profile back SCHEDULED (path mutates next run loop tick):", "didPop:", didPop)
         #endif
     }
 
@@ -343,13 +343,13 @@ struct ProfileView: View {
 
         let didPush = navigationGuard.pushIfPossible(
             route: .configuracoes,
-            path: &path,
+            path: $path,
             expectedTop: .perfil,
             source: "Profile gear"
         )
 
         #if DEBUG
-        print("[NAV] Profile gear AFTER:", String(describing: path), "didPush:", didPush)
+        print("[NAV] Profile gear SCHEDULED (path mutates next run loop tick):", "didPush:", didPush)
         #endif
     }
 
