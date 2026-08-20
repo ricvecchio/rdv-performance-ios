@@ -4,7 +4,7 @@ import SwiftUI
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
-    @ObservedObject var navigationGuard: NavigationPopGestureInstaller
+    let navigationGuard: NavigationPopGestureInstaller
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -78,12 +78,6 @@ struct SettingsView: View {
         }
         .blur(radius: showWeightUnitSheet ? 8 : 0)
         .animation(.easeInOut(duration: 0.20), value: showWeightUnitSheet)
-        .background(
-            // Observa o ciclo de vida real desta tela (viewWillAppear/viewWillDisappear)
-            // para sincronizar `isTransitioning` com o push/pop real desta transição,
-            // já que o Probe hospedado apenas na raiz não recebe esses callbacks aqui.
-            NavigationPopGestureFixer(installer: navigationGuard, stackDepth: path.count)
-        )
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -92,7 +86,6 @@ struct SettingsView: View {
                         .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
-                .disabled(navigationGuard.isTransitioning)
             }
 
             ToolbarItem(placement: .principal) {
@@ -149,13 +142,13 @@ struct SettingsView: View {
 
     private func pop() {
         #if DEBUG
-        print("[NAV] Settings back BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
+        print("[NAV] Settings back BEFORE:", String(describing: path))
         #endif
 
         let didPop = navigationGuard.popIfPossible(path: $path, expectedTop: .configuracoes, source: "Settings back")
 
         #if DEBUG
-        print("[NAV] Settings back SCHEDULED (path mutates next run loop tick):", "didPop:", didPop)
+        print("[NAV] Settings back AFTER:", String(describing: path), "didPop:", didPop)
         #endif
     }
 

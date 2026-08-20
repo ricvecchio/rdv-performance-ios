@@ -1,11 +1,19 @@
 import SwiftUI
 import UIKit
-import Combine
 
 /// Mantém o gesto nativo de swipe-back compatível com os botões `<` customizados do app.
 ///
 /// A instalação fica centralizada em um único host estável da stack para evitar reinstalações
 /// concorrentes durante pushes/pops do `NavigationStack`.
+///
+/// IMPORTANTE: este componente NÃO tenta adivinhar/sincronizar com o timing interno de
+/// animações do UIKit (transitionCoordinator, etc). Tentativas anteriores de bloquear a
+/// navegação com base em "existe uma transição em andamento" se mostraram uma fonte de
+/// instabilidade (bloqueios intermitentes e silenciosos de toques válidos), já que o
+/// momento exato em que o UIKit expõe/limpa o `transitionCoordinator` não é 100%
+/// determinístico a partir do SwiftUI. Em vez disso, a única fonte de verdade para decidir
+/// se uma navegação pode ocorrer é o próprio `path` (array lógico do `NavigationStack`),
+/// que o SwiftUI já garante processar de forma consistente mesmo com mutações em sequência.
 struct NavigationPopGestureFixer: UIViewControllerRepresentable {
     let installer: NavigationPopGestureInstaller
     let stackDepth: Int
@@ -46,21 +54,9 @@ struct NavigationPopGestureFixer: UIViewControllerRepresentable {
             installIfPossible(reason: "didMove")
         }
 
-        override func viewWillAppear(_ animated: Bool) {
-            super.viewWillAppear(animated)
-            // `transitionCoordinator` está garantidamente disponível aqui quando existe uma
-            // transição real em andamento (push/pop/swipe), permitindo observá-la desde o início.
-            installIfPossible(reason: "viewWillAppear")
-        }
-
         override func viewDidAppear(_ animated: Bool) {
             super.viewDidAppear(animated)
             installIfPossible(reason: "viewDidAppear")
-        }
-
-        override func viewWillDisappear(_ animated: Bool) {
-            super.viewWillDisappear(animated)
-            installIfPossible(reason: "viewWillDisappear")
         }
 
         func installIfPossible(reason: StaticString) {
@@ -70,91 +66,39 @@ struct NavigationPopGestureFixer: UIViewControllerRepresentable {
 }
 
 @MainActor
-final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGestureRecognizerDelegate {
+final class NavigationPopGestureInstaller: NSObject, UIGestureRecognizerDelegate {
     private weak var navigationController: UINavigationController?
     private weak var installedGesture: UIGestureRecognizer?
     private var lastKnownStackDepth: Int = 0
 
-    /// Token da transição (push/pop programático ou swipe interativo) atualmente em andamento.
-    /// Usado para evitar que uma conclusão "atrasada" de uma transição antiga limpe o estado
-    /// de uma transição mais nova que já começou.
-    private var activeTransitionToken: UUID?
+    // MARK: - Guardas baseadas exclusivamente no `path` (fonte única de verdade)
 
-    /// Coordinator já observado (evita registrar múltiplos completions para a mesma transição).
-    private weak var observedCoordinator: UIViewControllerTransitionCoordinator?
-
-    /// Reflete se existe uma transição REAL em andamento (push, pop ou swipe interativo).
-    /// Alterado apenas por eventos reais do UIKit — nunca por timers ou delays artificiais.
-    @Published private(set) var isTransitioning: Bool = false
-
-    private func beginTransition(reason: StaticString) -> UUID {
-        let token = UUID()
-        activeTransitionToken = token
-        if !isTransitioning {
-            isTransitioning = true
-            #if DEBUG
-            log("transition-START", reason: reason, stackDepth: lastKnownStackDepth)
-            #endif
-        }
-        return token
-    }
-
-    private func endTransition(token: UUID, reason: StaticString) {
-        // Só encerra se este token ainda for o da transição ativa (evita corrida entre
-        // a conclusão de uma transição antiga e o início de uma nova).
-        guard activeTransitionToken == token else { return }
-        activeTransitionToken = nil
-        observedCoordinator = nil
-        isTransitioning = false
-        #if DEBUG
-        log("transition-END", reason: reason, stackDepth: lastKnownStackDepth)
-        #endif
-    }
-
-    /// Observa o `transitionCoordinator` real de um push/pop programático e libera o estado
-    /// de transição exatamente quando a animação termina (cancelada ou concluída).
-    private func observeCoordinatorIfNeeded(_ coordinator: UIViewControllerTransitionCoordinator, reason: StaticString) {
-        guard observedCoordinator !== coordinator else { return }
-        observedCoordinator = coordinator
-        let token = beginTransition(reason: reason)
-        coordinator.animate(alongsideTransition: nil) { [weak self] _ in
-            guard let self else { return }
-            Task { @MainActor in
-                self.endTransition(token: token, reason: "coordinator-completion")
-            }
-        }
-    }
-
+    /// Permite um push apenas se ele fizer sentido dado o estado lógico atual do `path`.
+    /// Não depende de nenhum estado de animação/UIKit — por isso é 100% determinístico.
     func canPush(
         route: AppRoute,
         onto path: [AppRoute],
         expectedTop: AppRoute? = nil,
         source: StaticString
     ) -> Bool {
-        if isTransitioning {
-            #if DEBUG
-            log("push-blocked-transition route=\(String(describing: route))", reason: source, stackDepth: path.count)
-            #endif
-            return false
-        }
-        
         if let expectedTop, path.last != expectedTop {
             #if DEBUG
             log("push-blocked-unexpected-top expected=\(String(describing: expectedTop)) actual=\(String(describing: path.last))", reason: source, stackDepth: path.count)
             #endif
             return false
         }
-        
+
         if path.last == route {
             #if DEBUG
             log("push-blocked-duplicate route=\(String(describing: route))", reason: source, stackDepth: path.count)
             #endif
             return false
         }
-        
+
         return true
     }
-    
+
+    /// Permite um pop apenas se ele fizer sentido dado o estado lógico atual do `path`.
     func canPop(path: [AppRoute], expectedTop: AppRoute? = nil, source: StaticString) -> Bool {
         guard !path.isEmpty else {
             #if DEBUG
@@ -162,25 +106,20 @@ final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGesture
             #endif
             return false
         }
-        
-        if isTransitioning {
-            #if DEBUG
-            log("pop-blocked-transition", reason: source, stackDepth: path.count)
-            #endif
-            return false
-        }
-        
+
         if let expectedTop, path.last != expectedTop {
             #if DEBUG
             log("pop-blocked-unexpected-top expected=\(String(describing: expectedTop)) actual=\(String(describing: path.last))", reason: source, stackDepth: path.count)
             #endif
             return false
         }
-        
+
         return true
     }
 
     /// Ponto único de push: garante que "um evento de usuário = uma operação de navegação".
+    /// A mutação do `path` é síncrona e imediata — o SwiftUI/NavigationStack é responsável
+    /// por processá-la corretamente mesmo que uma transição anterior ainda esteja concluindo.
     @discardableResult
     func pushIfPossible(
         route: AppRoute,
@@ -189,18 +128,7 @@ final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGesture
         source: StaticString
     ) -> Bool {
         guard canPush(route: route, onto: path.wrappedValue, expectedTop: expectedTop, source: source) else { return false }
-
-        // Marca a transição como iniciada imediatamente (mesmo turno de execução do tap),
-        // para que o botão seja desabilitado antes que um segundo toque possa chegar.
-        // O estado real é confirmado/encerrado depois via transitionCoordinator.
-        _ = beginTransition(reason: source)
-
-        // A mutação do `path` é adiada para o próximo ciclo do run loop (sem nenhuma espera
-        // artificial) para não colidir com o encerramento interno da transição anterior do
-        // NavigationStack, que pode ainda estar assentando no mesmo instante do toque.
-        DispatchQueue.main.async {
-            path.wrappedValue.append(route)
-        }
+        path.wrappedValue.append(route)
         return true
     }
 
@@ -212,15 +140,11 @@ final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGesture
         source: StaticString
     ) -> Bool {
         guard canPop(path: path.wrappedValue, expectedTop: expectedTop, source: source) else { return false }
-
-        _ = beginTransition(reason: source)
-
-        DispatchQueue.main.async {
-            guard !path.wrappedValue.isEmpty else { return }
-            path.wrappedValue.removeLast()
-        }
+        path.wrappedValue.removeLast()
         return true
     }
+
+    // MARK: - Instalação do gesto de swipe-back
 
     func install(on navigationController: UINavigationController?, stackDepth: Int, reason: StaticString) {
         guard let navigationController else { return }
@@ -233,16 +157,6 @@ final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGesture
         self.navigationController = navigationController
         self.installedGesture = gesture
         self.lastKnownStackDepth = stackDepth
-
-        if let coordinator = navigationController.transitionCoordinator {
-            // Existe uma transição real em andamento (push/pop/swipe). Anexa o observador
-            // de conclusão para liberar `isTransitioning` no momento exato em que ela termina.
-            observeCoordinatorIfNeeded(coordinator, reason: reason)
-            #if DEBUG
-            log("install-skipped-transition", reason: reason, stackDepth: stackDepth)
-            #endif
-            return
-        }
 
         if navigationControllerChanged || gestureChanged {
             #if DEBUG
@@ -257,13 +171,6 @@ final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGesture
             gesture.delegate = self
         }
 
-        if !hasObservedGesture(gesture) {
-            // addTarget não substitui os targets internos do UIKit; apenas nos permite
-            // observar o ciclo de vida real do gesto interativo (swipe-back).
-            gesture.addTarget(self, action: #selector(handleInteractivePopGesture(_:)))
-            markGestureObserved(gesture)
-        }
-
         let shouldEnable = stackDepth > 0 && navigationController.viewControllers.count > 1
         if gesture.isEnabled != shouldEnable {
             gesture.isEnabled = shouldEnable
@@ -275,43 +182,13 @@ final class NavigationPopGestureInstaller: NSObject, ObservableObject, UIGesture
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         let controllerCount = navigationController?.viewControllers.count ?? 0
-        let shouldBegin = !isTransitioning && lastKnownStackDepth > 0 && controllerCount > 1
+        let shouldBegin = lastKnownStackDepth > 0 && controllerCount > 1
 
         #if DEBUG
         log("shouldBegin=\(shouldBegin)", reason: "gesture", stackDepth: lastKnownStackDepth)
         #endif
 
         return shouldBegin
-    }
-
-    private var interactiveGestureToken: UUID?
-    private weak var gestureWithObservedTarget: UIGestureRecognizer?
-
-    private func hasObservedGesture(_ gesture: UIGestureRecognizer) -> Bool {
-        gestureWithObservedTarget === gesture
-    }
-
-    private func markGestureObserved(_ gesture: UIGestureRecognizer) {
-        gestureWithObservedTarget = gesture
-    }
-
-    /// Acompanha o ciclo de vida real do swipe-back (`.began` → `.ended`/`.cancelled`/`.failed`)
-    /// para manter `isTransitioning` sincronizado também durante o gesto interativo,
-    /// sem depender de timers.
-    @objc private func handleInteractivePopGesture(_ gesture: UIGestureRecognizer) {
-        switch gesture.state {
-        case .began:
-            interactiveGestureToken = beginTransition(reason: "swipe-began")
-
-        case .ended, .cancelled, .failed:
-            if let token = interactiveGestureToken {
-                endTransition(token: token, reason: "swipe-ended")
-            }
-            interactiveGestureToken = nil
-
-        default:
-            break
-        }
     }
 
     #if DEBUG

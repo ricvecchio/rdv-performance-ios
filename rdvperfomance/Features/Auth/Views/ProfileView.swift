@@ -6,7 +6,7 @@ import FirebaseFirestore
 struct ProfileView: View {
 
     @Binding var path: [AppRoute]
-    @ObservedObject var navigationGuard: NavigationPopGestureInstaller
+    let navigationGuard: NavigationPopGestureInstaller
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -231,12 +231,6 @@ struct ProfileView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .background(
-            // Observa o ciclo de vida real desta tela (viewWillAppear/viewWillDisappear)
-            // para sincronizar `isTransitioning` com o push/pop real desta transição,
-            // já que o Probe hospedado apenas na raiz não recebe esses callbacks aqui.
-            NavigationPopGestureFixer(installer: navigationGuard, stackDepth: path.count)
-        )
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -245,7 +239,6 @@ struct ProfileView: View {
                         .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
-                .disabled(navigationGuard.isTransitioning)
             }
 
             ToolbarItem(placement: .principal) {
@@ -262,7 +255,6 @@ struct ProfileView: View {
                         .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
-                .disabled(navigationGuard.isTransitioning)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -325,20 +317,20 @@ struct ProfileView: View {
     // Volta exatamente uma tela, com uma única mutação atômica do `path`.
     private func pop() {
         #if DEBUG
-        print("[NAV] Profile back BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
+        print("[NAV] Profile back BEFORE:", String(describing: path))
         #endif
 
         let didPop = navigationGuard.popIfPossible(path: $path, expectedTop: .perfil, source: "Profile back")
 
         #if DEBUG
-        print("[NAV] Profile back SCHEDULED (path mutates next run loop tick):", "didPop:", didPop)
+        print("[NAV] Profile back AFTER:", String(describing: path), "didPop:", didPop)
         #endif
     }
 
     // Avança para Configurações, com uma única mutação atômica do `path`.
     private func navigateToSettings() {
         #if DEBUG
-        print("[NAV] Profile gear BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
+        print("[NAV] Profile gear BEFORE:", String(describing: path))
         #endif
 
         let didPush = navigationGuard.pushIfPossible(
@@ -349,7 +341,7 @@ struct ProfileView: View {
         )
 
         #if DEBUG
-        print("[NAV] Profile gear SCHEDULED (path mutates next run loop tick):", "didPush:", didPush)
+        print("[NAV] Profile gear AFTER:", String(describing: path), "didPush:", didPush)
         #endif
     }
 
