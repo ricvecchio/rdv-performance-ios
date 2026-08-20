@@ -5,7 +5,7 @@ struct AppRouter: View {
 
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
-    @StateObject private var popGestureInstaller = NavigationPopGestureInstaller()
+    @State private var popGestureInstaller = NavigationPopGestureInstaller()
 
     private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
@@ -15,7 +15,12 @@ struct AppRouter: View {
 
             rootView
                 .environmentObject(session)
-                .background(NavigationPopGestureFixer(installer: popGestureInstaller))
+                .background(
+                    NavigationPopGestureFixer(
+                        installer: popGestureInstaller,
+                        stackDepth: path.count
+                    )
+                )
 
                 .navigationDestination(for: AppRoute.self) { route in
                     Group {
@@ -319,12 +324,23 @@ struct AppRouter: View {
                         guardedHome()
                     }
                     }
-                    .background(NavigationPopGestureFixer(installer: popGestureInstaller))
                 }
         }
         .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
-            if !logged { path.removeAll() }
+            guard !logged else { return }
+
+            #if DEBUG
+            print("[AppRouter] Session logout. Clearing path:", String(describing: path))
+            #endif
+
+            path.removeAll()
+        }
+        .onChange(of: path) { oldPath, newPath in
+            #if DEBUG
+            print("[AppRouter] Path changed from:", String(describing: oldPath))
+            print("[AppRouter] Path changed to:", String(describing: newPath))
+            #endif
         }
     }
 }

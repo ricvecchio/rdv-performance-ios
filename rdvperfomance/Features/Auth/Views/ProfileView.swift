@@ -318,7 +318,16 @@ struct ProfileView: View {
     // Volta exatamente uma tela, com uma única mutação atômica do `path`.
     private func pop() {
         guard !path.isEmpty else { return }
+
+        #if DEBUG
+        print("[ProfileView] BACK TAP - BEFORE:", String(describing: path))
+        #endif
+
         path.removeLast()
+
+        #if DEBUG
+        print("[ProfileView] BACK TAP - AFTER:", String(describing: path))
+        #endif
     }
 
     private func loadUserData() async {
