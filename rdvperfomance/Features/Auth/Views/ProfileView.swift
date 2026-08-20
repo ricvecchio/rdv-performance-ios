@@ -6,6 +6,7 @@ import FirebaseFirestore
 struct ProfileView: View {
 
     @Binding var path: [AppRoute]
+    let navigationGuard: NavigationPopGestureInstaller
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -250,7 +251,22 @@ struct ProfileView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
+                    #if DEBUG
+                    print("[NAV] Profile gear BEFORE:", String(describing: path))
+                    #endif
+
+                    guard navigationGuard.canPush(
+                        route: .configuracoes,
+                        onto: path,
+                        expectedTop: .perfil,
+                        source: "Profile gear"
+                    ) else { return }
+
                     path.append(.configuracoes)
+
+                    #if DEBUG
+                    print("[NAV] Profile gear AFTER:", String(describing: path))
+                    #endif
                 } label: {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green)
@@ -317,16 +333,16 @@ struct ProfileView: View {
 
     // Volta exatamente uma tela, com uma única mutação atômica do `path`.
     private func pop() {
-        guard !path.isEmpty else { return }
-
         #if DEBUG
-        print("[ProfileView] BACK TAP - BEFORE:", String(describing: path))
+        print("[NAV] Profile back BEFORE:", String(describing: path))
         #endif
+        
+        guard navigationGuard.canPop(path: path, expectedTop: .perfil, source: "Profile back") else { return }
 
         path.removeLast()
 
         #if DEBUG
-        print("[ProfileView] BACK TAP - AFTER:", String(describing: path))
+        print("[NAV] Profile back AFTER:", String(describing: path))
         #endif
     }
 

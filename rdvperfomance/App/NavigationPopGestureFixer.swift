@@ -61,6 +61,65 @@ final class NavigationPopGestureInstaller: NSObject, UIGestureRecognizerDelegate
     private weak var navigationController: UINavigationController?
     private weak var installedGesture: UIGestureRecognizer?
     private var lastKnownStackDepth: Int = 0
+    
+    var isTransitioning: Bool {
+        navigationController?.transitionCoordinator != nil
+    }
+    
+    func canPush(
+        route: AppRoute,
+        onto path: [AppRoute],
+        expectedTop: AppRoute? = nil,
+        source: StaticString
+    ) -> Bool {
+        if isTransitioning {
+            #if DEBUG
+            log("push-blocked-transition route=\(String(describing: route))", reason: source, stackDepth: path.count)
+            #endif
+            return false
+        }
+        
+        if let expectedTop, path.last != expectedTop {
+            #if DEBUG
+            log("push-blocked-unexpected-top expected=\(String(describing: expectedTop)) actual=\(String(describing: path.last))", reason: source, stackDepth: path.count)
+            #endif
+            return false
+        }
+        
+        if path.last == route {
+            #if DEBUG
+            log("push-blocked-duplicate route=\(String(describing: route))", reason: source, stackDepth: path.count)
+            #endif
+            return false
+        }
+        
+        return true
+    }
+    
+    func canPop(path: [AppRoute], expectedTop: AppRoute? = nil, source: StaticString) -> Bool {
+        guard !path.isEmpty else {
+            #if DEBUG
+            log("pop-blocked-empty-path", reason: source, stackDepth: path.count)
+            #endif
+            return false
+        }
+        
+        if isTransitioning {
+            #if DEBUG
+            log("pop-blocked-transition", reason: source, stackDepth: path.count)
+            #endif
+            return false
+        }
+        
+        if let expectedTop, path.last != expectedTop {
+            #if DEBUG
+            log("pop-blocked-unexpected-top expected=\(String(describing: expectedTop)) actual=\(String(describing: path.last))", reason: source, stackDepth: path.count)
+            #endif
+            return false
+        }
+        
+        return true
+    }
 
     func install(on navigationController: UINavigationController?, stackDepth: Int, reason: StaticString) {
         guard let navigationController else { return }
@@ -73,6 +132,14 @@ final class NavigationPopGestureInstaller: NSObject, UIGestureRecognizerDelegate
         self.navigationController = navigationController
         self.installedGesture = gesture
         self.lastKnownStackDepth = stackDepth
+
+        let transitioning = navigationController.transitionCoordinator != nil
+        if transitioning {
+            #if DEBUG
+            log("install-skipped-transition", reason: reason, stackDepth: stackDepth)
+            #endif
+            return
+        }
 
         if navigationControllerChanged || gestureChanged {
             #if DEBUG
@@ -98,7 +165,7 @@ final class NavigationPopGestureInstaller: NSObject, UIGestureRecognizerDelegate
 
     func gestureRecognizerShouldBegin(_ gestureRecognizer: UIGestureRecognizer) -> Bool {
         let controllerCount = navigationController?.viewControllers.count ?? 0
-        let shouldBegin = lastKnownStackDepth > 0 && controllerCount > 1
+        let shouldBegin = !isTransitioning && lastKnownStackDepth > 0 && controllerCount > 1
 
         #if DEBUG
         log("shouldBegin=\(shouldBegin)", reason: "gesture", stackDepth: lastKnownStackDepth)

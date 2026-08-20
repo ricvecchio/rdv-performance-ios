@@ -202,7 +202,7 @@ struct AppRouter: View {
                         guardedHome { AboutView(path: $path) }
 
                     case .perfil:
-                        guardedHome { ProfileView(path: $path) }
+                        guardedHome { ProfileView(path: $path, navigationGuard: popGestureInstaller) }
 
                     case .treinos(let tipo):
                         guardedHome { TreinosView(path: $path, tipo: tipo) }
@@ -211,7 +211,7 @@ struct AppRouter: View {
                         guardedHome { CrossfitMenuView(path: $path) }
 
                     case .configuracoes:
-                        guardedHome { SettingsView(path: $path) }
+                        guardedHome { SettingsView(path: $path, navigationGuard: popGestureInstaller) }
 
                     case .infoLegal(let kind):
                         guardedHome { InfoLegalView(path: $path, kind: kind) }

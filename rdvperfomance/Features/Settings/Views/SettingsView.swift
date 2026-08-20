@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
+    let navigationGuard: NavigationPopGestureInstaller
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -140,8 +141,17 @@ struct SettingsView: View {
     }
 
     private func pop() {
-        guard !path.isEmpty else { return }
+        #if DEBUG
+        print("[NAV] Settings back BEFORE:", String(describing: path))
+        #endif
+        
+        guard navigationGuard.canPop(path: path, expectedTop: .configuracoes, source: "Settings back") else { return }
+        
         path.removeLast()
+        
+        #if DEBUG
+        print("[NAV] Settings back AFTER:", String(describing: path))
+        #endif
     }
 
     private func sectionTitle(_ text: String) -> some View {
