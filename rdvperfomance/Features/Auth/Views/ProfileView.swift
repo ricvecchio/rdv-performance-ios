@@ -6,7 +6,7 @@ import FirebaseFirestore
 struct ProfileView: View {
 
     @Binding var path: [AppRoute]
-    let navigationGuard: NavigationPopGestureInstaller
+    @ObservedObject var navigationGuard: NavigationPopGestureInstaller
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -239,6 +239,7 @@ struct ProfileView: View {
                         .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
+                .disabled(navigationGuard.isTransitioning)
             }
 
             ToolbarItem(placement: .principal) {
@@ -250,28 +251,12 @@ struct ProfileView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button {
-                    #if DEBUG
-                    print("[NAV] Profile gear BEFORE:", String(describing: path))
-                    #endif
-
-                    guard navigationGuard.canPush(
-                        route: .configuracoes,
-                        onto: path,
-                        expectedTop: .perfil,
-                        source: "Profile gear"
-                    ) else { return }
-
-                    path.append(.configuracoes)
-
-                    #if DEBUG
-                    print("[NAV] Profile gear AFTER:", String(describing: path))
-                    #endif
-                } label: {
+                Button { navigateToSettings() } label: {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
+                .disabled(navigationGuard.isTransitioning)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -334,15 +319,31 @@ struct ProfileView: View {
     // Volta exatamente uma tela, com uma única mutação atômica do `path`.
     private func pop() {
         #if DEBUG
-        print("[NAV] Profile back BEFORE:", String(describing: path))
+        print("[NAV] Profile back BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
         #endif
-        
-        guard navigationGuard.canPop(path: path, expectedTop: .perfil, source: "Profile back") else { return }
 
-        path.removeLast()
+        let didPop = navigationGuard.popIfPossible(path: &path, expectedTop: .perfil, source: "Profile back")
 
         #if DEBUG
-        print("[NAV] Profile back AFTER:", String(describing: path))
+        print("[NAV] Profile back AFTER:", String(describing: path), "didPop:", didPop)
+        #endif
+    }
+
+    // Avança para Configurações, com uma única mutação atômica do `path`.
+    private func navigateToSettings() {
+        #if DEBUG
+        print("[NAV] Profile gear BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
+        #endif
+
+        let didPush = navigationGuard.pushIfPossible(
+            route: .configuracoes,
+            path: &path,
+            expectedTop: .perfil,
+            source: "Profile gear"
+        )
+
+        #if DEBUG
+        print("[NAV] Profile gear AFTER:", String(describing: path), "didPush:", didPush)
         #endif
     }
 

@@ -4,7 +4,7 @@ import SwiftUI
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
-    let navigationGuard: NavigationPopGestureInstaller
+    @ObservedObject var navigationGuard: NavigationPopGestureInstaller
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -86,6 +86,7 @@ struct SettingsView: View {
                         .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
+                .disabled(navigationGuard.isTransitioning)
             }
 
             ToolbarItem(placement: .principal) {
@@ -142,15 +143,13 @@ struct SettingsView: View {
 
     private func pop() {
         #if DEBUG
-        print("[NAV] Settings back BEFORE:", String(describing: path))
+        print("[NAV] Settings back BEFORE:", String(describing: path), "transitioning:", navigationGuard.isTransitioning)
         #endif
-        
-        guard navigationGuard.canPop(path: path, expectedTop: .configuracoes, source: "Settings back") else { return }
-        
-        path.removeLast()
-        
+
+        let didPop = navigationGuard.popIfPossible(path: &path, expectedTop: .configuracoes, source: "Settings back")
+
         #if DEBUG
-        print("[NAV] Settings back AFTER:", String(describing: path))
+        print("[NAV] Settings back AFTER:", String(describing: path), "didPop:", didPop)
         #endif
     }
 
