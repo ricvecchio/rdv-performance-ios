@@ -1,6 +1,7 @@
 // Tela de perfil com informações do usuário e opções
 import SwiftUI
 import UIKit
+import FirebaseFirestore
 
 struct ProfileView: View {
 

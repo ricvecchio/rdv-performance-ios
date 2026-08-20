@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import Combine
 
 /// Mantém o gesto nativo de swipe-back compatível com os botões `<` customizados do app.
 ///
