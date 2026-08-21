@@ -7,6 +7,7 @@ struct TeacherStudentsListView: View {
     @Binding var path: [AppRoute]
     let selectedCategory: TreinoTipo
     let initialFilter: TreinoTipo?
+    let onBack: () -> Void
 
     @EnvironmentObject private var session: AppSession
     @StateObject private var vm: TeacherStudentsListViewModel
@@ -30,11 +31,13 @@ struct TeacherStudentsListView: View {
         path: Binding<[AppRoute]>,
         selectedCategory: TreinoTipo,
         initialFilter: TreinoTipo?,
+        onBack: @escaping () -> Void,
         repository: FirestoreRepository = .shared
     ) {
         self._path = path
         self.selectedCategory = selectedCategory
         self.initialFilter = initialFilter
+        self.onBack = onBack
         _vm = StateObject(wrappedValue: TeacherStudentsListViewModel(repository: repository))
     }
 
@@ -101,7 +104,7 @@ struct TeacherStudentsListView: View {
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
-                Button { pop() } label: {
+                Button(action: onBack) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
                 }
@@ -418,11 +421,6 @@ struct TeacherStudentsListView: View {
 
         studentPendingUnlink = nil
         await loadAllStudents()
-    }
-
-    private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
     }
 
     // MARK: - ✅ Seção de convites pendentes na tela principal
@@ -858,4 +856,3 @@ struct TeacherStudentsListView: View {
         await vm.loadInvites(teacherId: teacherId)
     }
 }
-

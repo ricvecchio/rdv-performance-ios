@@ -4,6 +4,7 @@ import SwiftUI
 struct StudentPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
+    let onBack: () -> Void
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -120,7 +121,7 @@ struct StudentPersonalRecordsView: View {
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
-                Button { pop() } label: {
+                Button(action: onBack) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
                 }
@@ -170,9 +171,4 @@ struct StudentPersonalRecordsView: View {
         .buttonStyle(.plain)
     }
 
-    private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
-    }
 }
-

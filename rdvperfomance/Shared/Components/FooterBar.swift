@@ -65,6 +65,8 @@ struct FooterBar: View {
     let kind: Kind
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.selectStudentMainSection) private var selectStudentMainSection
+    @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     // Constrói o footer com divider superior e botões de navegação
     var body: some View {
@@ -217,103 +219,50 @@ struct FooterBar: View {
         }
     }
 
-    // MARK: - Métodos de navegação do rodapé
-    //
-    // REGRA: cada toque produz exatamente UMA mutação do path.
-    // Rotas intermediárias artificiais foram removidas pois forçavam instanciação
-    // desnecessária de Views e disparavam .task / .onAppear, criando condições de corrida
-    // com o gesto de swipe-back e causando a necessidade de múltiplos toques.
+    // MARK: - Seleção de seção principal
 
-    private enum FooterTarget {
-        case studentRoot
-        case studentPersonalRecords
-        case profile
-        case teacherRoot
-        case teacherStudentsList(category: TreinoTipo)
-    }
-
-    // MARK: Básico (Home, Sobre, Perfil sem contexto específico de aluno/professor)
     private func goHomeBasic() {
-        navigateToRoot(.studentRoot)
+        if session.isTrainer {
+            selectTeacherMainSection(.home)
+        } else {
+            selectStudentMainSection(.agenda)
+        }
     }
 
     private func goPerfilBasic() {
-        navigate(to: .perfil, as: .profile)
+        if session.isTrainer {
+            selectTeacherMainSection(.profile)
+        } else {
+            selectStudentMainSection(.profile)
+        }
     }
 
-    // MARK: Aluno
-    // A tela raiz do aluno é StudentAgendaView; path vazio = Agenda.
     private func goAgenda() {
-        navigateToRoot(.studentRoot)
+        selectStudentMainSection(.agenda)
     }
 
     private func goTreinosAluno() {
-        // Treinos do aluno também parte da agenda (root)
-        navigateToRoot(.studentRoot)
+        selectStudentMainSection(.agenda)
     }
 
     private func goPersonalRecords() {
-        navigate(to: .studentPersonalRecords, as: .studentPersonalRecords)
+        selectStudentMainSection(.records)
     }
 
     private func goPerfilStudent() {
-        navigate(to: .perfil, as: .profile)
+        selectStudentMainSection(.profile)
     }
 
-    // MARK: Professor
-    // A tela raiz do professor é TeacherDashboardView; path vazio = Home.
     private func goTeacherHome(category: TreinoTipo) {
-        navigateToRoot(.teacherRoot)
+        selectTeacherMainSection(.home)
     }
 
     private func goTeacherAlunos(category: TreinoTipo) {
-        let target: AppRoute = .teacherStudentsList(selectedCategory: category, initialFilter: nil)
-        navigate(to: target, as: .teacherStudentsList(category: category))
-    }
-
-    private func goTeacherSobre(category: TreinoTipo) {
-        let target: AppRoute = .sobre
-        guard path.last != target else { return }
-        path = [target]
+        selectTeacherMainSection(.students)
     }
 
     private func goTeacherPerfil(category: TreinoTipo) {
-        navigate(to: .perfil, as: .profile)
-    }
-
-    private func navigateToRoot(_ target: FooterTarget) {
-        guard !matches(target) else { return }
-        path = []
-    }
-
-    private func navigate(to route: AppRoute, as target: FooterTarget) {
-        guard !matches(target) else { return }
-        path = [route]
-    }
-
-    private func matches(_ target: FooterTarget) -> Bool {
-        switch target {
-        case .studentRoot:
-            return path.isEmpty
-        case .studentPersonalRecords:
-            return path.last == .studentPersonalRecords
-        case .profile:
-            return path.last == .perfil
-        case .teacherRoot:
-            if path.isEmpty {
-                return true
-            }
-            if let last = path.last, case .teacherDashboard = last {
-                return true
-            }
-            return false
-        case .teacherStudentsList(let category):
-            guard let last = path.last else { return false }
-            if case .teacherStudentsList(let selectedCategory, _) = last {
-                return selectedCategory == category
-            }
-            return false
-        }
+        selectTeacherMainSection(.profile)
     }
 }
 
