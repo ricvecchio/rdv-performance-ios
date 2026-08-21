@@ -256,7 +256,7 @@ struct ProfileView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button { navigateToSettings() } label: {
+                NavigationLink(value: AppRoute.configuracoes) {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green)
                 }
@@ -333,12 +333,6 @@ struct ProfileView: View {
         }
 
         path.removeLast()
-    }
-
-    // Avança para Configurações com uma única mutação do `path` local da seção.
-    private func navigateToSettings() {
-        guard path.last != .configuracoes else { return }
-        path.append(.configuracoes)
     }
 
     private func loadUserData() async {

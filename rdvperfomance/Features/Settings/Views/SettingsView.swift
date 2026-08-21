@@ -10,6 +10,7 @@ struct SettingsView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.dismiss) private var dismiss
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -145,12 +146,11 @@ struct SettingsView: View {
         }
     }
 
-    // Volta uma tela dentro da pilha local da seção (real pop; Settings
-    // sempre tem ProfileView abaixo dela na pilha, então `path` nunca fica
-    // vazio aqui).
+    // Volta uma tela usando dismiss nativo do SwiftUI. Como Settings é
+    // sempre apresentado por NavigationStack, esse é o pop mais confiável
+    // para evitar toque perdido por mutação manual de `path`.
     private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
+        dismiss()
     }
 
     private func sectionTitle(_ text: String) -> some View {
