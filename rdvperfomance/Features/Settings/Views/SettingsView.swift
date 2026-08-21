@@ -1,7 +1,32 @@
 import SwiftUI
 
 // Tela de configurações do aplicativo
-struct SettingsView: View {
+struct fix(navigation): impedir empilhamento duplicado de Settings no Perfil
+
+Corrige o caso em que, após taps repetidos na engrenagem do cabeçalho,
+o botão `<` parecia não funcionar no primeiro toque por haver múltiplas
+instâncias de Settings empilhadas.
+
+Mudanças:
+- ProfileView
+  - Substitui abertura de Settings por método controlado:
+    `navigateToSettings()`
+  - Adiciona guarda:
+    `guard !path.contains(.configuracoes) else { return }`
+  - Evita push duplicado de `.configuracoes` em taps rápidos/repetidos.
+  - Mantém back `<` com `dismiss()` quando há pilha.
+  - Mantém regra da raiz do Perfil do aluno:
+    `onSelectSection(.agenda)` quando `path` está vazio.
+
+- SettingsView
+  - Mantém back `<` usando `dismiss()` (pop nativo SwiftUI).
+
+Resultado:
+- Fluxo Perfil -> Settings -> < deixa de “ficar preso” em Settings
+  visualmente idênticas por empilhamento duplicado.
+- Navegação de cabeçalho mais consistente em uso repetido.
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>: View {
 
     @Binding var path: [AppRoute]
 
