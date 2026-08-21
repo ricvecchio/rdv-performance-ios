@@ -289,7 +289,8 @@ struct AppRouter: View {
                     }
                 }
             }
-        }
+        } // fecha else (fluxo professor / não-aluno)
+        } // fecha Group (aluno vs. professor)
         .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
             guard !logged else { return }
