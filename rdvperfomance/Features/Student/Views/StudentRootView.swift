@@ -30,10 +30,9 @@ import SwiftUI
 ///   `recordsPath = [.studentPersonalRecordsBarbell]`, nunca
 ///   `[.studentPersonalRecords, .studentPersonalRecordsBarbell]` — a própria
 ///   seção nunca aparece dentro do seu próprio path).
-/// - As 3 seções ficam sempre montadas (via `TabView(selection:)` com a tab
-///   bar nativa oculta), preservando os `@StateObject` (ex.:
-///   `StudentAgendaViewModel`) entre trocas de aba — nada é destruído e
-///   recriado só porque o usuário tocou no rodapé.
+/// - As 3 seções ficam sempre montadas em um `ZStack`, preservando os
+///   `@StateObject` (ex.: `StudentAgendaViewModel`) entre trocas de seção,
+///   sem introduzir uma tab bar nativa ou alterar o rodapé existente.
 /// - O botão `<` da raiz de Recordes e da raiz de Perfil deixou de ser um
 ///   pop (que já não fazia sentido, pois essas telas são a RAIZ da sua
 ///   própria pilha) e passou a significar exatamente o que o produto exige:
@@ -51,29 +50,20 @@ struct StudentRootView: View {
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
 
-    // Um instalador de gesto de swipe-back por pilha: cada NavigationStack é
-    // independente e precisa da sua própria instância (ver NavigationPopGestureFixer.swift).
-    @State private var agendaGestureInstaller = NavigationPopGestureInstaller()
-    @State private var recordsGestureInstaller = NavigationPopGestureInstaller()
-    @State private var profileGestureInstaller = NavigationPopGestureInstaller()
-
     var body: some View {
-        TabView(selection: $selectedSection) {
-
+        ZStack {
             agendaTab
-                .tag(StudentMainSection.agenda)
+                .opacity(selectedSection == .agenda ? 1 : 0)
+                .allowsHitTesting(selectedSection == .agenda)
 
             recordsTab
-                .tag(StudentMainSection.records)
+                .opacity(selectedSection == .records ? 1 : 0)
+                .allowsHitTesting(selectedSection == .records)
 
             profileTab
-                .tag(StudentMainSection.profile)
+                .opacity(selectedSection == .profile ? 1 : 0)
+                .allowsHitTesting(selectedSection == .profile)
         }
-        // Mantém o design atual: a tab bar nativa do iOS nunca aparece, apenas
-        // o FooterBar customizado renderizado por cada tela (inalterado
-        // visualmente). O TabView aqui é usado só como mecanismo de
-        // preservação de estado entre seções — não como UI.
-        .toolbar(.hidden, for: .tabBar)
     }
 
     // MARK: - Seleção de seção (chamada pelo FooterBar de qualquer tela do aluno)
@@ -112,12 +102,6 @@ struct StudentRootView: View {
                 studentId: studentId,
                 studentName: studentName,
                 onSelectSection: selectSection
-            )
-            .background(
-                NavigationPopGestureFixer(
-                    installer: agendaGestureInstaller,
-                    stackDepth: agendaPath.count
-                )
             )
             .navigationDestination(for: AppRoute.self) { route in
                 agendaDestination(for: route)
@@ -162,12 +146,6 @@ struct StudentRootView: View {
             StudentPersonalRecordsView(
                 path: $recordsPath,
                 onSelectSection: selectSection
-            )
-            .background(
-                NavigationPopGestureFixer(
-                    installer: recordsGestureInstaller,
-                    stackDepth: recordsPath.count
-                )
             )
             .navigationDestination(for: AppRoute.self) { route in
                 recordsDestination(for: route)
@@ -218,12 +196,6 @@ struct StudentRootView: View {
             ProfileView(
                 path: $profilePath,
                 onSelectSection: selectSection
-            )
-            .background(
-                NavigationPopGestureFixer(
-                    installer: profileGestureInstaller,
-                    stackDepth: profilePath.count
-                )
             )
             .navigationDestination(for: AppRoute.self) { route in
                 profileDestination(for: route)
