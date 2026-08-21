@@ -55,14 +55,20 @@ struct StudentRootView: View {
             agendaTab
                 .opacity(selectedSection == .agenda ? 1 : 0)
                 .allowsHitTesting(selectedSection == .agenda)
+                .toolbar(selectedSection == .agenda ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .agenda ? 1 : 0)
 
             recordsTab
                 .opacity(selectedSection == .records ? 1 : 0)
                 .allowsHitTesting(selectedSection == .records)
+                .toolbar(selectedSection == .records ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .records ? 1 : 0)
 
             profileTab
                 .opacity(selectedSection == .profile ? 1 : 0)
                 .allowsHitTesting(selectedSection == .profile)
+                .toolbar(selectedSection == .profile ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .profile ? 1 : 0)
         }
     }
 
