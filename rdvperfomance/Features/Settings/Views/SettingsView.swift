@@ -1,4 +1,5 @@
 import SwiftUI
+import QuartzCore
 
 // Tela de configurações do aplicativo
 struct SettingsView: View {
@@ -85,7 +86,11 @@ struct SettingsView: View {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
                 }
+                #if DEBUG
+                .buttonStyle(NavigationDebugButtonStyle(name: "SETTINGS_BACK"))
+                #else
                 .buttonStyle(.plain)
+                #endif
             }
 
             ToolbarItem(placement: .principal) {
@@ -98,10 +103,13 @@ struct SettingsView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        #if DEBUG
+        .background(NavigationTransitionDebugProbe(name: "SETTINGS"))
+        #endif
 
         .onAppear {
             #if DEBUG
-            print("[NAV][SETTINGS] onAppear path:", path)
+            print("[NAV][SETTINGS] onAppear", CACurrentMediaTime(), "path:", path)
             #endif
 
             let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
@@ -111,7 +119,7 @@ struct SettingsView: View {
         }
         .onDisappear {
             #if DEBUG
-            print("[NAV][SETTINGS] onDisappear path:", path)
+            print("[NAV][SETTINGS] onDisappear", CACurrentMediaTime(), "path:", path)
             #endif
         }
         .onChange(of: preferredWeightUnitRawState) { _, newValue in
@@ -151,7 +159,7 @@ struct SettingsView: View {
 
     private func pop() {
         #if DEBUG
-        print("[NAV][SETTINGS] BACK TAP")
+        print("[NAV][SETTINGS] BACK TAP", CACurrentMediaTime())
         print("[NAV][SETTINGS] path BEFORE dismiss:", path)
         #endif
 

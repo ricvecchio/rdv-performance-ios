@@ -1,6 +1,7 @@
 // Tela de perfil com informações do usuário e opções
 import SwiftUI
 import UIKit
+import QuartzCore
 import FirebaseFirestore
 
 struct ProfileView: View {
@@ -252,7 +253,7 @@ struct ProfileView: View {
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     #if DEBUG
-                    print("[NAV][PROFILE] GEAR TAP")
+                    print("[NAV][PROFILE] GEAR TAP", CACurrentMediaTime())
                     print("[NAV][PROFILE] path BEFORE:", path)
                     #endif
 
@@ -265,11 +266,18 @@ struct ProfileView: View {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green)
                 }
+                #if DEBUG
+                .buttonStyle(NavigationDebugButtonStyle(name: "GEAR"))
+                #else
                 .buttonStyle(.plain)
+                #endif
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        #if DEBUG
+        .background(NavigationTransitionDebugProbe(name: "PROFILE"))
+        #endif
         .alert("Trocar unidade", isPresented: $showTrocarUnidadeAlert) {
             TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
 
@@ -300,12 +308,12 @@ struct ProfileView: View {
         }
         .onAppear {
             #if DEBUG
-            print("[NAV][PROFILE] onAppear path:", path)
+            print("[NAV][PROFILE] onAppear", CACurrentMediaTime(), "path:", path)
             #endif
         }
         .onDisappear {
             #if DEBUG
-            print("[NAV][PROFILE] onDisappear path:", path)
+            print("[NAV][PROFILE] onDisappear", CACurrentMediaTime(), "path:", path)
             #endif
         }
     }
