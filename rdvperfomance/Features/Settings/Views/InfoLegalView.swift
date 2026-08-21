@@ -16,6 +16,9 @@ struct InfoLegalView: View {
 
     let kind: InfoLegalKind
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     private let contentMaxWidth: CGFloat = 380
 
     @AppStorage("ultimoTreinoSelecionado")
@@ -103,7 +106,8 @@ struct InfoLegalView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: false
-                )
+                ),
+                onSelectStudentSection: onSelectSection
             )
         } else {
             FooterBar(

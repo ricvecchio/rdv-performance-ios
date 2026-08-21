@@ -8,6 +8,9 @@ struct AboutView: View {
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     private let cardMaxWidth: CGFloat = 360
     private let logoLift: CGFloat = 30
     private let cardLift: CGFloat = 26
@@ -98,7 +101,8 @@ struct AboutView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false, // ✅ Agora "Sobre" não existe no rodapé do aluno (virou "Recordes")
                     isPerfilSelected: false
-                )
+                ),
+                onSelectStudentSection: onSelectSection
             )
         } else {
             FooterBar(

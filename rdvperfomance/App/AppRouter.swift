@@ -11,27 +11,44 @@ struct AppRouter: View {
 
 
     var body: some View {
-        NavigationStack(path: $path) {
+        Group {
 
-            rootView
-                .environmentObject(session)
-                .background(
-                    NavigationPopGestureFixer(
-                        installer: popGestureInstaller,
-                        stackDepth: path.count
-                    )
+            // ✅ ALUNO: navegação totalmente independente do NavigationStack
+            // abaixo. `StudentRootView` é dona da sua própria seleção de
+            // seção principal (Agenda/Recordes/Perfil) e de 3 pilhas de
+            // navegação hierárquica isoladas. Isso evita ter um
+            // NavigationStack dentro de outro sem necessidade e elimina a
+            // causa raiz do bug de navegação relatado (footer competindo com
+            // push/pop no mesmo `path`). A arquitetura do professor abaixo
+            // permanece inalterada.
+            if session.isLoggedIn && session.isStudent {
+                StudentRootView(
+                    studentId: session.uid ?? "",
+                    studentName: session.userName ?? ""
                 )
+                .environmentObject(session)
+            } else {
+                NavigationStack(path: $path) {
 
-                .navigationDestination(for: AppRoute.self) { route in
-                    Group {
-                    switch route {
+                    rootView
+                        .environmentObject(session)
+                        .background(
+                            NavigationPopGestureFixer(
+                                installer: popGestureInstaller,
+                                stackDepth: path.count
+                            )
+                        )
 
-                    case .login:
-                        LoginView(path: $path)
-                            .environmentObject(session)
+                        .navigationDestination(for: AppRoute.self) { route in
+                            Group {
+                            switch route {
 
-                    case .home:
-                        guardedHome()
+                            case .login:
+                                LoginView(path: $path)
+                                    .environmentObject(session)
+
+                            case .home:
+                                guardedHome()
 
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
                         guardedTeacher {
@@ -132,77 +149,23 @@ struct AppRouter: View {
                             )
                         }
 
-                    case .studentMessages(let category):
-                        guardedStudent {
-                            StudentMessagesView(
-                                path: $path,
-                                category: category
-                            )
-                        }
-
-                    case .studentFeedbacks(let category):
-                        guardedStudent {
-                            StudentFeedbacksView(
-                                path: $path,
-                                category: category
-                            )
-                        }
-
-                    case .studentPersonalRecords:
-                        guardedStudent {
-                            StudentPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsBarbell:
-                        guardedStudent {
-                            StudentBarbellPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsGymnastic:
-                        guardedStudent {
-                            StudentGymnasticPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsEndurance:
-                        guardedStudent {
-                            StudentEndurancePersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsNotables:
-                        guardedStudent {
-                            StudentNotablesPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsGirls:
-                        guardedStudent {
-                            StudentGirlsPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsOpen:
-                        guardedStudent {
-                            StudentOpenPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsHeroes:
-                        guardedStudent {
-                            StudentHeroesPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsCampeonatos:
-                        guardedStudent {
-                            StudentCampeonatosPersonalRecordsView(path: $path)
-                        }
-
-                    case .studentPersonalRecordsCrossfitGames:
-                        guardedStudent {
-                            StudentCrossfitGamesPersonalRecordsView(path: $path)
-                        }
+                    case .studentPersonalRecords, .studentPersonalRecordsBarbell, .studentPersonalRecordsGymnastic,
+                         .studentPersonalRecordsEndurance, .studentPersonalRecordsNotables, .studentPersonalRecordsGirls,
+                         .studentPersonalRecordsOpen, .studentPersonalRecordsHeroes, .studentPersonalRecordsCampeonatos,
+                         .studentPersonalRecordsCrossfitGames, .studentMessages, .studentFeedbacks:
+                        // ✅ Rotas exclusivas da seção "Recordes"/"Perfil" do próprio aluno.
+                        // Desde a introdução de `StudentRootView`, o aluno nunca navega
+                        // através deste NavigationStack (ele é interceptado mais acima,
+                        // antes deste `NavigationStack` sequer existir) — por isso essas
+                        // rotas nunca são empurradas aqui. Mantidas apenas como fallback
+                        // seguro (nunca deveriam ser alcançadas nesta pilha).
+                        guardedHome()
 
                     case .sobre:
                         guardedHome { AboutView(path: $path) }
 
                     case .perfil:
-                        guardedHome { ProfileView(path: $path, navigationGuard: popGestureInstaller) }
+                        guardedHome { ProfileView(path: $path) }
 
                     case .treinos(let tipo):
                         guardedHome { TreinosView(path: $path, tipo: tipo) }
@@ -211,7 +174,7 @@ struct AppRouter: View {
                         guardedHome { CrossfitMenuView(path: $path) }
 
                     case .configuracoes:
-                        guardedHome { SettingsView(path: $path, navigationGuard: popGestureInstaller) }
+                        guardedHome { SettingsView(path: $path) }
 
                     case .infoLegal(let kind):
                         guardedHome { InfoLegalView(path: $path, kind: kind) }
@@ -325,7 +288,9 @@ struct AppRouter: View {
                     }
                     }
                 }
-        }
+            }
+        } // fecha else (fluxo professor / não-aluno)
+        } // fecha Group (aluno vs. professor)
         .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
             guard !logged else { return }

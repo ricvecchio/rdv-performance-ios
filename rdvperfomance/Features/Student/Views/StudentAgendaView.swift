@@ -10,6 +10,11 @@ struct StudentAgendaView: View {
     let studentId: String
     let studentName: String
 
+    /// Presente apenas quando esta view é a raiz da seção Agenda dentro de
+    /// `StudentRootView`. Permite ao rodapé trocar de seção principal sem
+    /// tocar em nenhum NavigationStack.
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
 
     @AppStorage("ultimoTreinoSelecionado")
@@ -25,11 +30,13 @@ struct StudentAgendaView: View {
         path: Binding<[AppRoute]>,
         studentId: String,
         studentName: String,
+        onSelectSection: @escaping (StudentMainSection) -> Void = { _ in },
         repository: FirestoreRepository = .shared
     ) {
         self._path = path
         self.studentId = studentId
         self.studentName = studentName
+        self.onSelectSection = onSelectSection
         _vm = StateObject(wrappedValue: StudentAgendaViewModel(studentId: studentId, repository: repository))
     }
 
@@ -135,7 +142,8 @@ struct StudentAgendaView: View {
                         isAgendaSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
-                    )
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
             }
         }

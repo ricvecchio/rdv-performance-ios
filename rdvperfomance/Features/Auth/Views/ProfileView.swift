@@ -6,8 +6,15 @@ import FirebaseFirestore
 struct ProfileView: View {
 
     @Binding var path: [AppRoute]
-    let navigationGuard: NavigationPopGestureInstaller
+
+    /// Presente apenas quando ProfileView é a RAIZ da seção "Perfil" do aluno
+    /// (dentro de `StudentRootView`). Usado pelo botão `<` para trocar de
+    /// seção principal (Perfil → Agenda) quando não há mais nada para
+    /// desempilhar localmente — essa troca NUNCA é um pop, é seleção de seção.
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
+    @Environment(\.dismiss) private var dismiss
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -298,7 +305,8 @@ struct ProfileView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: true
-                )
+                ),
+                onSelectStudentSection: onSelectSection
             )
         } else {
             FooterBar(
@@ -314,35 +322,25 @@ struct ProfileView: View {
         }
     }
 
-    // Volta exatamente uma tela, com uma única mutação atômica do `path`.
+    // Volta uma tela. Na RAIZ da seção Perfil do aluno (path vazio), isso
+    // significa trocar a seção principal para Agenda — NÃO é um pop, pois não
+    // há nada abaixo de ProfileView na pilha local de Perfil.
     private func pop() {
-        #if DEBUG
-        print("[NAV] Profile back BEFORE:", String(describing: path))
-        #endif
-
-        let didPop = navigationGuard.popIfPossible(path: $path, expectedTop: .perfil, source: "Profile back")
-
-        #if DEBUG
-        print("[NAV] Profile back AFTER:", String(describing: path), "didPop:", didPop)
-        #endif
+        guard !path.isEmpty else {
+            if session.userType == .STUDENT {
+                onSelectSection(.agenda)
+            }
+            return
+        }
+        dismiss()
     }
 
-    // Avança para Configurações, com uma única mutação atômica do `path`.
+    // Evita empilhar Settings repetidamente em taps rápidos da engrenagem.
+    // Se `.configuracoes` já existir em qualquer nível da pilha local de Perfil,
+    // não empilha de novo.
     private func navigateToSettings() {
-        #if DEBUG
-        print("[NAV] Profile gear BEFORE:", String(describing: path))
-        #endif
-
-        let didPush = navigationGuard.pushIfPossible(
-            route: .configuracoes,
-            path: $path,
-            expectedTop: .perfil,
-            source: "Profile gear"
-        )
-
-        #if DEBUG
-        print("[NAV] Profile gear AFTER:", String(describing: path), "didPush:", didPush)
-        #endif
+        guard !path.contains(.configuracoes) else { return }
+        path.append(.configuracoes)
     }
 
     private func loadUserData() async {

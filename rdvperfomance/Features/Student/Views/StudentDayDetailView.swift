@@ -11,6 +11,9 @@ struct StudentDayDetailView: View {
     let day: TrainingDayFS
     let weekTitle: String
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -312,7 +315,8 @@ struct StudentDayDetailView: View {
                 isAgendaSelected: true,
                 isSobreSelected: false,
                 isPerfilSelected: false
-            )
+            ),
+            onSelectStudentSection: onSelectSection
         )
         .frame(height: Theme.Layout.footerHeight)
         .frame(maxWidth: .infinity)

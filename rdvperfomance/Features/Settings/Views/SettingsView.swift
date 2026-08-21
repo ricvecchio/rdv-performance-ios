@@ -4,8 +4,13 @@ import SwiftUI
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
-    let navigationGuard: NavigationPopGestureInstaller
+
+    /// Presente apenas quando SettingsView roda dentro da seção "Perfil" do
+    /// aluno (empilhada sobre ProfileView na pilha local dessa seção).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
+    @Environment(\.dismiss) private var dismiss
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -124,7 +129,8 @@ struct SettingsView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: false
-                )
+                ),
+                onSelectStudentSection: onSelectSection
             )
         } else {
             FooterBar(
@@ -140,16 +146,11 @@ struct SettingsView: View {
         }
     }
 
+    // Volta uma tela usando dismiss nativo do SwiftUI. Como Settings é
+    // sempre apresentado por NavigationStack, esse é o pop mais confiável
+    // para evitar toque perdido por mutação manual de `path`.
     private func pop() {
-        #if DEBUG
-        print("[NAV] Settings back BEFORE:", String(describing: path))
-        #endif
-
-        let didPop = navigationGuard.popIfPossible(path: $path, expectedTop: .configuracoes, source: "Settings back")
-
-        #if DEBUG
-        print("[NAV] Settings back AFTER:", String(describing: path), "didPop:", didPop)
-        #endif
+        dismiss()
     }
 
     private func sectionTitle(_ text: String) -> some View {

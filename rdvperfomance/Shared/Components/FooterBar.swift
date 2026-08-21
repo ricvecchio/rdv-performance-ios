@@ -64,6 +64,15 @@ struct FooterBar: View {
     @Binding var path: [AppRoute]
     let kind: Kind
 
+    /// Callback usado EXCLUSIVAMENTE pelas seções principais do aluno
+    /// (Agenda / Recordes / Perfil). Quando presente, os botões do rodapé do
+    /// aluno chamam este closure em vez de mutar `path` — trocar de seção é
+    /// uma seleção de estado (`StudentMainSection`), não push/pop de
+    /// NavigationStack. Kinds não relacionados ao aluno (professor, home,
+    /// treinos etc.) continuam usando `path` normalmente e não precisam
+    /// fornecer este closure.
+    var onSelectStudentSection: ((StudentMainSection) -> Void)? = nil
+
     @EnvironmentObject private var session: AppSession
 
     // Constrói o footer com divider superior e botões de navegação
@@ -219,14 +228,20 @@ struct FooterBar: View {
 
     // MARK: - Métodos de navegação do rodapé
     //
-    // REGRA: cada toque produz exatamente UMA mutação do path.
-    // Rotas intermediárias artificiais foram removidas pois forçavam instanciação
-    // desnecessária de Views e disparavam .task / .onAppear, criando condições de corrida
-    // com o gesto de swipe-back e causando a necessidade de múltiplos toques.
+    // REGRA: cada toque produz exatamente UMA mutação de estado.
+    //
+    // Para o ALUNO, o rodapé NÃO mutila mais o `path` de um NavigationStack:
+    // Agenda / Recordes / Perfil são seções principais selecionadas via
+    // `onSelectStudentSection`, e cada seção possui sua própria pilha de
+    // navegação hierárquica independente (gerenciada por `StudentRootView`).
+    // Isso elimina a causa raiz do "double tap"/atraso: trocar de seção deixa
+    // de competir com push/pop reais dentro do mesmo NavigationStack.
+    //
+    // Para PROFESSOR/HOME (não migrados nesta refatoração), o comportamento
+    // antigo baseado em `path` é mantido inalterado.
 
     private enum FooterTarget {
         case studentRoot
-        case studentPersonalRecords
         case profile
         case teacherRoot
         case teacherStudentsList(category: TreinoTipo)
@@ -242,22 +257,21 @@ struct FooterBar: View {
     }
 
     // MARK: Aluno
-    // A tela raiz do aluno é StudentAgendaView; path vazio = Agenda.
+    // Agenda / Recordes / Perfil são seções principais (não push/pop).
     private func goAgenda() {
-        navigateToRoot(.studentRoot)
+        onSelectStudentSection?(.agenda)
     }
 
     private func goTreinosAluno() {
-        // Treinos do aluno também parte da agenda (root)
-        navigateToRoot(.studentRoot)
+        onSelectStudentSection?(.agenda)
     }
 
     private func goPersonalRecords() {
-        navigate(to: .studentPersonalRecords, as: .studentPersonalRecords)
+        onSelectStudentSection?(.records)
     }
 
     private func goPerfilStudent() {
-        navigate(to: .perfil, as: .profile)
+        onSelectStudentSection?(.profile)
     }
 
     // MARK: Professor
@@ -295,8 +309,6 @@ struct FooterBar: View {
         switch target {
         case .studentRoot:
             return path.isEmpty
-        case .studentPersonalRecords:
-            return path.last == .studentPersonalRecords
         case .profile:
             return path.last == .perfil
         case .teacherRoot:

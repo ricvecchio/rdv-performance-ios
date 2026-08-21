@@ -12,6 +12,9 @@ struct StudentWeekDetailView: View {
     let weekId: String
     let weekTitle: String
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
 
     @AppStorage("ultimoTreinoSelecionado")
@@ -29,12 +32,14 @@ struct StudentWeekDetailView: View {
         studentId: String,
         weekId: String,
         weekTitle: String,
+        onSelectSection: @escaping (StudentMainSection) -> Void = { _ in },
         repository: FirestoreRepository = .shared
     ) {
         self._path = path
         self.studentId = studentId
         self.weekId = weekId
         self.weekTitle = weekTitle
+        self.onSelectSection = onSelectSection
         _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, studentId: studentId, repository: repository))
     }
 
@@ -190,7 +195,8 @@ struct StudentWeekDetailView: View {
                         isAgendaSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
-                    )
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
             }
         }

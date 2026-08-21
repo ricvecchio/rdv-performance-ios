@@ -65,84 +65,21 @@ struct NavigationPopGestureFixer: UIViewControllerRepresentable {
     }
 }
 
+/// ATENÇÃO ARQUITETURAL:
+/// Esta classe teve seu escopo reduzido deliberadamente. Anteriormente ela também
+/// expunha `canPush`/`canPop`/`pushIfPossible`/`popIfPossible`, atuando como uma
+/// espécie de "Router" que decidia se uma navegação de `AppRoute` era válida.
+/// Isso misturava duas responsabilidades muito diferentes (gesto UIKit x regra de
+/// navegação SwiftUI) e tornava fácil, por engano, reintroduzir bugs de "path
+/// como Tab Bar". A partir desta refatoração, `NavigationPopGestureInstaller`
+/// SÓ lida com o gesto nativo de swipe-back. Toda regra de navegação (o que pode
+/// ser empilhado/desempilhado) fica exclusivamente nas Views/containers donos do
+/// `path` (ex.: `StudentRootView`), usando mutações diretas e simples do array.
 @MainActor
 final class NavigationPopGestureInstaller: NSObject, UIGestureRecognizerDelegate {
     private weak var navigationController: UINavigationController?
     private weak var installedGesture: UIGestureRecognizer?
     private var lastKnownStackDepth: Int = 0
-
-    // MARK: - Guardas baseadas exclusivamente no `path` (fonte única de verdade)
-
-    /// Permite um push apenas se ele fizer sentido dado o estado lógico atual do `path`.
-    /// Não depende de nenhum estado de animação/UIKit — por isso é 100% determinístico.
-    func canPush(
-        route: AppRoute,
-        onto path: [AppRoute],
-        expectedTop: AppRoute? = nil,
-        source: StaticString
-    ) -> Bool {
-        if let expectedTop, path.last != expectedTop {
-            #if DEBUG
-            log("push-blocked-unexpected-top expected=\(String(describing: expectedTop)) actual=\(String(describing: path.last))", reason: source, stackDepth: path.count)
-            #endif
-            return false
-        }
-
-        if path.last == route {
-            #if DEBUG
-            log("push-blocked-duplicate route=\(String(describing: route))", reason: source, stackDepth: path.count)
-            #endif
-            return false
-        }
-
-        return true
-    }
-
-    /// Permite um pop apenas se ele fizer sentido dado o estado lógico atual do `path`.
-    func canPop(path: [AppRoute], expectedTop: AppRoute? = nil, source: StaticString) -> Bool {
-        guard !path.isEmpty else {
-            #if DEBUG
-            log("pop-blocked-empty-path", reason: source, stackDepth: path.count)
-            #endif
-            return false
-        }
-
-        if let expectedTop, path.last != expectedTop {
-            #if DEBUG
-            log("pop-blocked-unexpected-top expected=\(String(describing: expectedTop)) actual=\(String(describing: path.last))", reason: source, stackDepth: path.count)
-            #endif
-            return false
-        }
-
-        return true
-    }
-
-    /// Ponto único de push: garante que "um evento de usuário = uma operação de navegação".
-    /// A mutação do `path` é síncrona e imediata — o SwiftUI/NavigationStack é responsável
-    /// por processá-la corretamente mesmo que uma transição anterior ainda esteja concluindo.
-    @discardableResult
-    func pushIfPossible(
-        route: AppRoute,
-        path: Binding<[AppRoute]>,
-        expectedTop: AppRoute? = nil,
-        source: StaticString
-    ) -> Bool {
-        guard canPush(route: route, onto: path.wrappedValue, expectedTop: expectedTop, source: source) else { return false }
-        path.wrappedValue.append(route)
-        return true
-    }
-
-    /// Ponto único de pop: garante que "um evento de usuário = uma operação de navegação".
-    @discardableResult
-    func popIfPossible(
-        path: Binding<[AppRoute]>,
-        expectedTop: AppRoute? = nil,
-        source: StaticString
-    ) -> Bool {
-        guard canPop(path: path.wrappedValue, expectedTop: expectedTop, source: source) else { return false }
-        path.wrappedValue.removeLast()
-        return true
-    }
 
     // MARK: - Instalação do gesto de swipe-back
 
