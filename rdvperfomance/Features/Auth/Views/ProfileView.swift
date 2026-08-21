@@ -14,6 +14,7 @@ struct ProfileView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.dismiss) private var dismiss
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -331,8 +332,7 @@ struct ProfileView: View {
             }
             return
         }
-
-        path.removeLast()
+        dismiss()
     }
 
     private func loadUserData() async {
