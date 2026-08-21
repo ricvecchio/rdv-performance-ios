@@ -250,7 +250,18 @@ struct ProfileView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                NavigationLink(value: AppRoute.configuracoes) {
+                Button {
+                    #if DEBUG
+                    print("[NAV][PROFILE] GEAR TAP")
+                    print("[NAV][PROFILE] path BEFORE:", path)
+                    #endif
+
+                    path.append(.configuracoes)
+
+                    #if DEBUG
+                    print("[NAV][PROFILE] path AFTER:", path)
+                    #endif
+                } label: {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green)
                 }
@@ -286,6 +297,16 @@ struct ProfileView: View {
         }
         .task(id: currentUid) {
             await loadUserData()
+        }
+        .onAppear {
+            #if DEBUG
+            print("[NAV][PROFILE] onAppear path:", path)
+            #endif
+        }
+        .onDisappear {
+            #if DEBUG
+            print("[NAV][PROFILE] onDisappear path:", path)
+            #endif
         }
     }
 

@@ -100,10 +100,19 @@ struct SettingsView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
 
         .onAppear {
+            #if DEBUG
+            print("[NAV][SETTINGS] onAppear path:", path)
+            #endif
+
             let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
             if preferredWeightUnitRawState != raw {
                 preferredWeightUnitRawState = raw
             }
+        }
+        .onDisappear {
+            #if DEBUG
+            print("[NAV][SETTINGS] onDisappear path:", path)
+            #endif
         }
         .onChange(of: preferredWeightUnitRawState) { _, newValue in
             UserDefaults.standard.set(newValue, forKey: preferredWeightUnitKey)
@@ -141,6 +150,11 @@ struct SettingsView: View {
     }
 
     private func pop() {
+        #if DEBUG
+        print("[NAV][SETTINGS] BACK TAP")
+        print("[NAV][SETTINGS] path BEFORE dismiss:", path)
+        #endif
+
         dismiss()
     }
 
