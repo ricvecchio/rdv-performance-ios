@@ -1,7 +1,5 @@
-// TeacherLinkStudentView.swift — Tela para buscar e vincular alunos ao professor por categoria
 import SwiftUI
 import Combine
-import FirebaseFirestore
 
 struct TeacherLinkStudentView: View {
 
@@ -9,17 +7,25 @@ struct TeacherLinkStudentView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
-    @StateObject private var vm = TeacherLinkStudentViewModel()
+    @StateObject private var vm: TeacherLinkStudentViewModel
 
     private let contentMaxWidth: CGFloat = 380
 
-    // Busca e estado de diálogo de categoria
     @State private var searchText: String = ""
     @State private var studentPendingLink: StudentLinkItem? = nil
     @State private var showCategoryDialog: Bool = false
     @State private var selectedLinkCategory: TreinoTipo = .crossfit
 
-    // Corpo principal com busca, lista e confirmação de vínculo
+    init(
+        path: Binding<[AppRoute]>,
+        category: TreinoTipo,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.category = category
+        _vm = StateObject(wrappedValue: TeacherLinkStudentViewModel(repository: repository))
+    }
+
     var body: some View {
         ZStack {
 
@@ -69,7 +75,7 @@ struct TeacherLinkStudentView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -83,9 +89,8 @@ struct TeacherLinkStudentView: View {
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
-                    .background(Color.clear)
+            ToolbarItem(placement: .topBarTrailing) {
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -117,10 +122,9 @@ struct TeacherLinkStudentView: View {
         }
     }
 
-    // Header explicando o fluxo de vínculo
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Vincule alunos ao seu perfil.")
+            Text("Pedidos recebidos de vínculo.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -131,7 +135,6 @@ struct TeacherLinkStudentView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // Card com filtro e busca
     private var controlsCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
@@ -140,7 +143,7 @@ struct TeacherLinkStudentView: View {
                 .foregroundColor(.white.opacity(0.35))
 
             HStack(spacing: 10) {
-                chip(title: "Todos", isSelected: true) { /* fixo */ }
+                chip(title: "Todos", isSelected: true) { }
             }
 
             searchField
@@ -199,7 +202,6 @@ struct TeacherLinkStudentView: View {
         .buttonStyle(.plain)
     }
 
-    // Conteúdo: lista de possíveis alunos a vincular
     private var contentCard: some View {
         VStack(spacing: 0) {
             if vm.isLoading {
@@ -254,7 +256,6 @@ struct TeacherLinkStudentView: View {
         } label: {
             HStack(spacing: 14) {
 
-                // ✅ ALTERADO: agora mostra a foto do perfil (igual TeacherStudentsListView)
                 StudentAvatarView(base64: item.photoBase64, size: 28)
                     .frame(width: 28)
 
@@ -264,9 +265,12 @@ struct TeacherLinkStudentView: View {
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white.opacity(0.92))
 
-                    // ✅ CORREÇÃO: mostra a categoria do cadastro (focusArea), e faz fallback para defaultCategory só se precisar
                     if let text = categoryTextForItem(item) {
                         Text("Categoria: \(text)")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.35))
+                    } else if !item.studentEmail.isEmpty {
+                        Text(item.studentEmail)
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.35))
                     }
@@ -288,13 +292,10 @@ struct TeacherLinkStudentView: View {
         .buttonStyle(.plain)
     }
 
-    // ✅ Converte FocusArea/defaultCategory para texto amigável
     private func categoryTextForItem(_ item: StudentLinkItem) -> String? {
-        // prioridade: focusArea (cadastro real)
         if let focus = item.focusArea, let cat = mapStringToTreinoTipo(focus) {
             return cat.displayName
         }
-        // fallback: defaultCategory (caso dados antigos)
         if let def = item.defaultCategory, let cat = mapStringToTreinoTipo(def) {
             return cat.displayName
         }
@@ -305,17 +306,14 @@ struct TeacherLinkStudentView: View {
         let raw = rawOpt.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard !raw.isEmpty else { return nil }
 
-        // focusArea (CROSSFIT / GYM / HOME)
         if raw == FocusAreaDTO.CROSSFIT.rawValue.lowercased() { return .crossfit }
         if raw == FocusAreaDTO.GYM.rawValue.lowercased() { return .academia }
         if raw == FocusAreaDTO.HOME.rawValue.lowercased() { return .emCasa }
 
-        // defaultCategory (crossfit / academia / emCasa etc.)
         if raw.contains("cross") { return .crossfit }
         if raw.contains("gym") || raw.contains("academ") { return .academia }
         if raw.contains("casa") || raw.contains("home") { return .emCasa }
 
-        // TreinoTipo.rawValue (caso use)
         if raw == TreinoTipo.crossfit.rawValue.lowercased() { return .crossfit }
         if raw == TreinoTipo.academia.rawValue.lowercased() { return .academia }
         if raw == TreinoTipo.emCasa.rawValue.lowercased() { return .emCasa }
@@ -326,7 +324,7 @@ struct TeacherLinkStudentView: View {
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando alunos...")
+            Text("Carregando pedidos...")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -336,11 +334,11 @@ struct TeacherLinkStudentView: View {
 
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text("Nenhum aluno cadastrado")
+            Text("Nenhuma solicitação pendente")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Cadastre alunos no app para aparecerem aqui.")
+            Text("Quando um aluno solicitar vínculo por e-mail, ele aparecerá aqui.")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
@@ -356,7 +354,6 @@ struct TeacherLinkStudentView: View {
             .padding(.leading, leading)
     }
 
-    // Lógica de carregamento e confirmação de vínculo
     private func initialLoadIfNeeded() async {
         guard vm.items.isEmpty && !vm.isLoading else { return }
 
@@ -365,7 +362,7 @@ struct TeacherLinkStudentView: View {
             return
         }
 
-        await vm.loadAllStudents(teacherId: teacherId)
+        await vm.loadPendingRequests(teacherId: teacherId)
     }
 
     private func filteredItems() -> [StudentLinkItem] {
@@ -394,10 +391,11 @@ struct TeacherLinkStudentView: View {
 
         selectedLinkCategory = chosen
 
-        await vm.linkStudent(
+        await vm.approveRequestAndLinkStudent(
             teacherId: teacherId,
-            studentId: item.id,
-            category: chosen.rawValue
+            requestId: item.requestId,
+            studentId: item.studentId,
+            category: chosen.firestoreKey
         )
 
         studentPendingLink = nil
@@ -421,76 +419,73 @@ final class TeacherLinkStudentViewModel: ObservableObject {
     @Published var successMessage: String? = nil
     @Published var showSuccessAlert: Bool = false
 
-    private let db = Firestore.firestore()
+    private let repository: FirestoreRepository
 
-    func loadAllStudents(teacherId: String) async {
+    init(repository: FirestoreRepository = .shared) {
+        self.repository = repository
+    }
+
+    func loadPendingRequests(teacherId: String) async {
         isLoading = true
         defer { isLoading = false }
 
         do {
-            let snap = try await db.collection("users")
-                .whereField("userType", isEqualTo: "STUDENT")
-                .getDocuments()
+            let requests = try await repository.getPendingLinkRequestsForTeacher(teacherId: teacherId)
 
-            self.items = snap.documents.compactMap { doc in
-                let data = doc.data()
-                let name = (data["name"] as? String) ?? "Sem nome"
+            let results: [StudentLinkItem] = requests.compactMap { req in
+                let rid = (req.id ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !rid.isEmpty else { return nil }
 
-                // ✅ Categoria correta do cadastro
-                let focusArea = data["focusArea"] as? String
+                let email = req.studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+                let sid = req.studentId.trimmingCharacters(in: .whitespacesAndNewlines)
 
-                // fallback legado
-                let defaultCategory = data["defaultCategory"] as? String
-
-                // ✅ NOVO: foto do perfil (base64) — mesmo padrão usado na TeacherStudentsListView
-                // Se o seu campo no Firestore tiver outro nome, ajuste aqui.
-                let photoBase64 = data["photoBase64"] as? String
+                let displayName: String = {
+                    if !email.isEmpty { return email }
+                    if !sid.isEmpty { return "Aluno" }
+                    return "Aluno"
+                }()
 
                 return StudentLinkItem(
-                    id: doc.documentID,
-                    name: name,
-                    photoBase64: photoBase64,
-                    focusArea: focusArea,
-                    defaultCategory: defaultCategory
+                    requestId: rid,
+                    studentId: req.studentId,
+                    studentEmail: req.studentEmail,
+                    name: displayName,
+                    photoBase64: nil,
+                    focusArea: nil,
+                    defaultCategory: nil
                 )
             }
+
+            self.items = results
 
         } catch {
             setError((error as NSError).localizedDescription)
         }
     }
 
-    func linkStudent(teacherId: String, studentId: String, category: String) async {
+    func approveRequestAndLinkStudent(
+        teacherId: String,
+        requestId: String,
+        studentId: String,
+        category: String
+    ) async {
         isLoading = true
         defer { isLoading = false }
 
         do {
-            let existing = try await db.collection("teacher_students")
-                .whereField("teacherId", isEqualTo: teacherId)
-                .whereField("studentId", isEqualTo: studentId)
-                .limit(to: 1)
-                .getDocuments()
+            let normalizedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
 
-            if let doc = existing.documents.first {
-                try await db.collection("teacher_students")
-                    .document(doc.documentID)
-                    .updateData([
-                        "categories": FieldValue.arrayUnion([category]),
-                        "updatedAt": FieldValue.serverTimestamp()
-                    ])
-            } else {
-                let relDoc: [String: Any] = [
-                    "teacherId": teacherId,
-                    "studentId": studentId,
-                    "categories": [category],
-                    "createdAt": FieldValue.serverTimestamp(),
-                    "updatedAt": FieldValue.serverTimestamp()
-                ]
-                _ = try await db.collection("teacher_students").addDocument(data: relDoc)
-            }
+            try await repository.approveLinkRequestAndLinkStudent(
+                teacherId: teacherId,
+                requestId: requestId,
+                studentId: studentId,
+                category: normalizedCategory
+            )
 
             successMessage = "Aluno vinculado com sucesso."
             showSuccessAlert = true
+
+            await loadPendingRequests(teacherId: teacherId)
 
         } catch {
             setError((error as NSError).localizedDescription)
@@ -503,18 +498,17 @@ final class TeacherLinkStudentViewModel: ObservableObject {
     }
 }
 
-// Modelo simplificado de aluno para vínculo
 struct StudentLinkItem: Identifiable, Hashable {
-    let id: String
+
+    var id: String { requestId }
+
+    let requestId: String
+    let studentId: String
+    let studentEmail: String
+
     let name: String
-
-    // ✅ NOVO: foto do perfil (base64)
     let photoBase64: String?
-
-    // ✅ novo: categoria do cadastro (RegisterStudentView)
     let focusArea: String?
-
-    // fallback legado
     let defaultCategory: String?
 }
 

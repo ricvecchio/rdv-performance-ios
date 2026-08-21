@@ -318,10 +318,35 @@ struct TeacherSendWorkoutToStudentSheet: View {
         defer { isLoading = false }
 
         do {
-            students = try await FirestoreRepository.shared.getStudentsForTeacher(
-                teacherId: teacherId,
-                category: category.rawValue
-            )
+            let allCats: [TreinoTipo] = [.crossfit, .academia, .emCasa]
+
+            let lists = try await withThrowingTaskGroup(of: [AppUser].self) { group in
+                for cat in allCats {
+                    group.addTask {
+                        try await FirestoreRepository.shared.getStudentsForTeacher(
+                            teacherId: teacherId,
+                            category: cat.rawValue
+                        )
+                    }
+                }
+
+                var collected: [[AppUser]] = []
+                for try await arr in group { collected.append(arr) }
+                return collected
+            }
+
+            var dict: [String: AppUser] = [:]
+            for list in lists {
+                for u in list {
+                    if let id = u.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        dict[id] = u
+                    }
+                }
+            }
+
+            let merged = Array(dict.values)
+            students = merged.sorted { $0.name.lowercased() < $1.name.lowercased() }
+
         } catch {
             errorMessage = error.localizedDescription
             students = []
@@ -393,3 +418,4 @@ struct TeacherSendWorkoutToStudentSheet: View {
         return nil
     }
 }
+

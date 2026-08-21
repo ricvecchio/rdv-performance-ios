@@ -17,6 +17,15 @@ struct TeacherStudentsListView: View {
     @State private var studentPendingUnlink: AppUser? = nil
     @State private var showUnlinkConfirm: Bool = false
 
+    // Modal convite
+    @State private var showInviteSheet: Bool = false
+    @State private var inviteTab: InviteTab = .invite
+    @State private var inviteEmail: String = ""
+
+    // ✅ Cancelamento de convite pendente na lista principal
+    @State private var invitePendingCancel: TeacherStudentInviteFS? = nil
+    @State private var showCancelInviteConfirm: Bool = false
+
     init(
         path: Binding<[AppRoute]>,
         selectedCategory: TreinoTipo,
@@ -48,6 +57,10 @@ struct TeacherStudentsListView: View {
                         header
                         filterRow
                         contentCard
+                        // ✅ Convites pendentes na tela principal (sem precisar abrir o modal)
+                        if !vm.pendingInvites.isEmpty {
+                            pendingInvitesCard
+                        }
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -72,14 +85,22 @@ struct TeacherStudentsListView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // ✅ AJUSTE 1: desfoca a tela de fundo quando o modal "Convidar aluno" estiver aberto
+        .blur(radius: showInviteSheet ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: showInviteSheet)
+
         .onAppear {
             filter = initialFilter
         }
-        .task { await loadAllStudents() }
+        // Carrega alunos e convites pendentes assim que session.uid estiver disponível
+        .task(id: session.uid ?? "") {
+            await loadAllStudents()
+            await loadInvitesIfPossible()
+        }
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -95,8 +116,30 @@ struct TeacherStudentsListView: View {
                     .minimumScaleFactor(0.85)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
-                HeaderAvatarView(size: 38)
+            // ✅ NOVO: botão Convidar + avatar
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 12) {
+
+                    Button {
+                        inviteTab = .invite
+                        inviteEmail = ""
+                        showInviteSheet = true
+                        Task { await loadInvitesIfPossible() }
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "paperplane.fill")
+                            Text("Convidar")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -106,6 +149,28 @@ struct TeacherStudentsListView: View {
             Button("Desvincular", role: .destructive) { Task { await confirmUnlink() } }
         } message: {
             Text(unlinkMessageText())
+        }
+        // ✅ Cancelamento de convite pendente com confirmação
+        .alert("Cancelar convite?", isPresented: $showCancelInviteConfirm) {
+            Button("Cancelar", role: .cancel) { invitePendingCancel = nil }
+            Button("Confirmar cancelamento", role: .destructive) {
+                Task { await confirmCancelInvite() }
+            }
+        } message: {
+            if let inv = invitePendingCancel {
+                Text("O convite enviado para \(inv.studentEmail) será cancelado.")
+            } else {
+                Text("O convite será cancelado.")
+            }
+        }
+        // Sheet Convites — ao fechar, recarrega alunos e convites
+        .sheet(isPresented: $showInviteSheet, onDismiss: {
+            Task {
+                await loadAllStudents()
+                await loadInvitesIfPossible()
+            }
+        }) {
+            inviteSheet
         }
     }
 
@@ -196,7 +261,6 @@ struct TeacherStudentsListView: View {
 
                 HStack(spacing: 14) {
 
-                    // ✅ Corrigido: agora o fallback é avatar_default (e não ícone verde)
                     StudentAvatarView(base64: student.photoBase64, size: 28)
                         .frame(width: 28)
 
@@ -205,7 +269,6 @@ struct TeacherStudentsListView: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
 
-                        // ✅ Categoria combinada (vínculo / cadastro)
                         Text("Categoria: \(combinedCategoryText(student))")
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.white.opacity(0.55))
@@ -243,10 +306,6 @@ struct TeacherStudentsListView: View {
                         return
                     }
 
-                    // ✅ Navegação mantém o comportamento correto:
-                    // - Filtrado: abre detalhe na categoria do vínculo (chip)
-                    // - Todos: abre detalhe na categoria do cadastro
-                    // - Fallback: selectedCategory
                     let resolvedCategory = resolveCategoryForNavigation(student: student)
                     path.append(.teacherStudentDetail(student, resolvedCategory))
                 }
@@ -307,22 +366,6 @@ struct TeacherStudentsListView: View {
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
-
-            Button {
-                path.append(.teacherLinkStudent(category: selectedCategory))
-            } label: {
-                HStack {
-                    Image(systemName: "plus")
-                    Text("Vincular aluno")
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
-            }
-            .buttonStyle(.plain)
-            .padding(.top, 2)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -382,38 +425,120 @@ struct TeacherStudentsListView: View {
         path.removeLast()
     }
 
+    // MARK: - ✅ Seção de convites pendentes na tela principal
+
+    private var pendingInvitesCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+
+            Text("CONVITES PENDENTES")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.35))
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
+
+            let pending = vm.pendingInvites
+            ForEach(Array(pending.enumerated()), id: \.offset) { idx, inv in
+
+                HStack(spacing: 12) {
+
+                    Image(systemName: "clock.fill")
+                        .foregroundColor(.yellow.opacity(0.75))
+                        .font(.system(size: 15))
+                        .frame(width: 26)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(inv.studentEmail)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .lineLimit(1)
+
+                        HStack(spacing: 6) {
+                            Text("Pendente")
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .background(Capsule().fill(Color.yellow.opacity(0.12)))
+
+                            if let cat = inv.category, !cat.isEmpty {
+                                Text(cat)
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.45))
+                            }
+                        }
+                    }
+
+                    Spacer()
+
+                    Menu {
+                        Button(role: .destructive) {
+                            invitePendingCancel = inv
+                            showCancelInviteConfirm = true
+                        } label: {
+                            Label("Cancelar convite", systemImage: "xmark.circle")
+                        }
+                    } label: {
+                        Image(systemName: "ellipsis")
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.55))
+                            .padding(.vertical, 6)
+                            .padding(.horizontal, 8)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isInvitesLoading)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .contentShape(Rectangle())
+
+                if idx < pending.count - 1 {
+                    innerDivider(leading: 54)
+                }
+            }
+
+            Color.clear.frame(height: 8)
+        }
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private func confirmCancelInvite() async {
+        guard let inv = invitePendingCancel,
+              let invId = inv.id, !invId.isEmpty,
+              let teacherId = session.uid, !teacherId.isEmpty
+        else {
+            invitePendingCancel = nil
+            return
+        }
+
+        await vm.cancelInvite(inviteId: invId, teacherId: teacherId)
+        invitePendingCancel = nil
+    }
+
     // MARK: - ✅ Categoria combinada (vínculo / cadastro) + navegação
 
-    /// Texto:
-    /// - Se filtro ativo (vínculo): mostra "Vínculo / Cadastro" quando diferentes.
-    /// - Se "Todos": mostra só cadastro.
     private func combinedCategoryText(_ student: AppUser) -> String {
         let profile = categoryFromStudentProfile(student)
-
-        // Sem filtro: não há vínculo único, então mostra só cadastro
         guard let link = filter else {
             return profile?.displayName ?? "—"
         }
-
-        // Com filtro: link = categoria do vínculo (chip)
         guard let profile else {
             return link.displayName
         }
-
         if link == profile {
             return link.displayName
         }
-
         return "\(link.displayName) / \(profile.displayName)"
     }
 
-    /// Categoria do cadastro do aluno (RegisterStudentView -> users.focusArea).
     private func categoryFromStudentProfile(_ student: AppUser) -> TreinoTipo? {
         if let cat = mapCategoryStringToTreinoTipo(student.focusArea) {
             return cat
         }
 
-        // defaultCategory (se existir no AppUser)
         let defaultRaw: String? = {
             let mirror = Mirror(reflecting: student)
             for child in mirror.children {
@@ -431,10 +556,6 @@ struct TeacherStudentsListView: View {
         return nil
     }
 
-    /// Navegação:
-    /// - Filtrado: abre detalhe na categoria do vínculo (chip)
-    /// - Todos: abre detalhe na categoria do cadastro
-    /// - Fallback: selectedCategory
     private func resolveCategoryForNavigation(student: AppUser) -> TreinoTipo {
         if let filter {
             return filter
@@ -445,7 +566,6 @@ struct TeacherStudentsListView: View {
         return selectedCategory
     }
 
-    /// Mapeia strings para TreinoTipo (robusto).
     private func mapCategoryStringToTreinoTipo(_ rawOpt: String?) -> TreinoTipo? {
         let raw = (rawOpt ?? "")
             .trimmingCharacters(in: .whitespacesAndNewlines)
@@ -453,22 +573,289 @@ struct TeacherStudentsListView: View {
 
         guard !raw.isEmpty else { return nil }
 
-        // FocusAreaDTO do cadastro
         if raw == FocusAreaDTO.CROSSFIT.rawValue.lowercased() { return .crossfit }
         if raw == FocusAreaDTO.GYM.rawValue.lowercased() { return .academia }
         if raw == FocusAreaDTO.HOME.rawValue.lowercased() { return .emCasa }
 
-        // valores “humanos”
         if raw.contains("cross") { return .crossfit }
         if raw.contains("gym") || raw.contains("academ") { return .academia }
         if raw.contains("casa") || raw.contains("home") { return .emCasa }
 
-        // rawValue do TreinoTipo
         if raw == TreinoTipo.crossfit.rawValue.lowercased() { return .crossfit }
         if raw == TreinoTipo.academia.rawValue.lowercased() { return .academia }
         if raw == TreinoTipo.emCasa.rawValue.lowercased() { return .emCasa }
 
         return nil
+    }
+
+    // MARK: - ✅ Invite Sheet
+
+    private enum InviteTab: Int, CaseIterable {
+        case invite = 0
+        case sent = 1
+
+        var title: String {
+            switch self {
+            case .invite: return "Convidar"
+            case .sent: return "Convites"
+            }
+        }
+    }
+
+    private var inviteSheet: some View {
+        ZStack {
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            // ✅ AJUSTE 2: ScrollView para evitar “expansão” que corta conteúdo ao focar no e-mail e ao trocar abas
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+
+                    Capsule()
+                        .fill(Color.white.opacity(0.22))
+                        .frame(width: 48, height: 6)
+                        .padding(.top, 10)
+
+                    Text("Convidar aluno")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.top, 2)
+
+                    Picker("", selection: $inviteTab) {
+                        ForEach(InviteTab.allCases, id: \.rawValue) { tab in
+                            Text(tab.title).tag(tab)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .padding(.horizontal, 16)
+
+                    Group {
+                        switch inviteTab {
+                        case .invite:
+                            inviteByEmailCard
+                        case .sent:
+                            invitesSentCard
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    Spacer(minLength: 10)
+                }
+                .padding(.bottom, 16)
+            }
+            .scrollDismissesKeyboard(.interactively)
+        }
+        .presentationDetents([.medium, .large])
+        // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
+        .presentationContentInteraction(.scrolls)
+        .presentationDragIndicator(.hidden)
+        .onAppear {
+            Task { await loadInvitesIfPossible() }
+        }
+        .alert("Erro", isPresented: $vm.showInviteErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(vm.inviteErrorMessage ?? "Ocorreu um erro.")
+        }
+        .alert("Sucesso", isPresented: $vm.showInviteSuccessAlert) {
+            // ✅ OK fecha o modal e limpa o campo — o onDismiss da sheet recarrega dados
+            Button("OK") {
+                inviteEmail = ""
+                showInviteSheet = false
+            }
+        } message: {
+            Text(vm.inviteSuccessMessage ?? "Convite enviado.")
+        }
+    }
+
+    private var inviteByEmailCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            Text("CONVIDAR POR E-MAIL")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.35))
+
+            HStack(spacing: 10) {
+                Image(systemName: "envelope.fill")
+                    .foregroundColor(.white.opacity(0.35))
+
+                TextField("E-mail do aluno", text: $inviteEmail)
+                    .foregroundColor(.white.opacity(0.92))
+                    .autocorrectionDisabled(true)
+                    .textInputAutocapitalization(.never)
+                    .keyboardType(.emailAddress)
+
+                if !inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Button { inviteEmail = "" } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
+            .background(Color.white.opacity(0.08))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+            )
+
+            Button {
+                Task {
+                    guard let teacherId = session.uid, !teacherId.isEmpty else {
+                        vm.setInviteError("Não foi possível identificar o professor logado.")
+                        return
+                    }
+                    await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
+                    await loadInvitesIfPossible()
+                }
+            } label: {
+                HStack {
+                    Spacer()
+                    if vm.isInvitesLoading {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "paperplane.fill")
+                        Text("Enviar convite")
+                            .font(.system(size: 14, weight: .semibold))
+                    }
+                    Spacer()
+                }
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.vertical, 12)
+                .background(RoundedRectangle(cornerRadius: 12).fill(Color.green.opacity(0.18)))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.green.opacity(0.30), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+            Text("O aluno só aparecerá na sua lista após aceitar o convite no app.")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.35))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private var invitesSentCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            HStack {
+                Text("CONVITES ENVIADOS")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.35))
+
+                Spacer()
+
+                Button {
+                    Task { await loadInvitesIfPossible() }
+                } label: {
+                    Image(systemName: "arrow.clockwise")
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                .buttonStyle(.plain)
+                .disabled(vm.isInvitesLoading)
+            }
+
+            if vm.isInvitesLoading {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("Carregando convites...")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                .padding(.vertical, 6)
+            } else if let msg = vm.invitesErrorMessageInline {
+                Text(msg)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+                    .multilineTextAlignment(.leading)
+            } else if vm.invites.isEmpty {
+                Text("Nenhum convite enviado ainda.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+            } else {
+                VStack(spacing: 0) {
+                    ForEach(Array(vm.invites.enumerated()), id: \.offset) { idx, inv in
+                        inviteRow(inv)
+                        if idx < vm.invites.count - 1 {
+                            Divider()
+                                .background(Theme.Colors.divider)
+                                .padding(.leading, 12)
+                        }
+                    }
+                }
+                .background(Color.white.opacity(0.06))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private func inviteRow(_ inv: TeacherStudentInviteFS) -> some View {
+        let statusText = vm.statusText(inv.status)
+
+        return HStack(spacing: 12) {
+            Image(systemName: "envelope")
+                .foregroundColor(.white.opacity(0.55))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(inv.studentEmail)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+
+                Text(statusText)
+                    .font(.system(size: 12, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+
+            Spacer()
+
+            if inv.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending",
+               let id = inv.id, !id.isEmpty {
+                Button {
+                    Task {
+                        guard let teacherId = session.uid, !teacherId.isEmpty else { return }
+                        await vm.cancelInvite(inviteId: id, teacherId: teacherId)
+                    }
+                } label: {
+                    Text("Cancelar")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.90))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(Color.red.opacity(0.16)))
+                }
+                .buttonStyle(.plain)
+                .disabled(vm.isInvitesLoading)
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+    }
+
+    private func loadInvitesIfPossible() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty else { return }
+        await vm.loadInvites(teacherId: teacherId)
     }
 }
 

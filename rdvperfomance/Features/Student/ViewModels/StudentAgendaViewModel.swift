@@ -4,9 +4,27 @@ import Combine
 @MainActor
 final class StudentAgendaViewModel: ObservableObject {
 
+    enum LinkBannerState: Equatable {
+        case loading
+        case notLinked
+        case invitePending(teacherEmail: String)
+        case linked
+        case error(message: String)
+    }
+
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
+
+    @Published private(set) var linkBannerState: LinkBannerState = .loading
+    @Published private(set) var isProcessingLinkAction: Bool = false
+    @Published var linkActionMessage: String? = nil
+    @Published var linkActionMessageIsError: Bool = false
+
+    @Published private(set) var teacherNameById: [String: String] = [:]
+
+    private var hasLoadedLinkStatus: Bool = false
+    private var hasLoadedWeeksAndMeta: Bool = false
 
     private var weekRangeText: [String: String] = [:]
     private var weekProgressPercent: [String: Int] = [:]
@@ -14,29 +32,237 @@ final class StudentAgendaViewModel: ObservableObject {
     private let studentId: String
     private let repository: FirestoreRepository
 
+    private var pendingInvite: TeacherStudentInviteFS? = nil
+    private var currentStudentUser: AppUser? = nil
+
     init(studentId: String, repository: FirestoreRepository) {
         self.studentId = studentId
         self.repository = repository
     }
 
-    // Carrega semanas de treino e seus metadados
-    func loadWeeksAndMeta() async {
-        isLoading = true
-        errorMessage = nil
-        defer { isLoading = false }
+    // MARK: - Link Status (Banner)
+
+    func loadLinkStatusIfNeeded() async {
+        guard !hasLoadedLinkStatus else { return }
+        await loadLinkStatus(force: false)
+    }
+
+    func loadLinkStatus(force: Bool) async {
+        if force { hasLoadedLinkStatus = false }
+
+        linkBannerState = .loading
+        linkActionMessage = nil
+        linkActionMessageIsError = false
 
         do {
-            let result = try await repository.getWeeksForStudent(studentId: studentId)
-            self.weeks = result
+            currentStudentUser = try await repository.getUser(uid: studentId)
 
-            await loadMetaForWeeks(result)
+            if let _ = try await repository.getActiveTeacherRelationForStudent(studentId: studentId) {
+                linkBannerState = .linked
+                hasLoadedLinkStatus = true
+                return
+            }
+
+            if let studentEmail = currentStudentUser?.email,
+               !studentEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                if let invite = try await repository.getPendingInviteForStudentEmail(studentEmail: studentEmail) {
+                    pendingInvite = invite
+                    linkBannerState = .invitePending(teacherEmail: invite.teacherEmail)
+                    hasLoadedLinkStatus = true
+                    return
+                }
+            }
+
+            linkBannerState = .notLinked
+            hasLoadedLinkStatus = true
 
         } catch {
-            self.errorMessage = (error as NSError).localizedDescription
+            linkBannerState = .error(message: (error as NSError).localizedDescription)
         }
     }
 
-    // Carrega metadados de cada semana em paralelo
+    func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
+        let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        guard email.contains("@"), email.contains(".") else {
+            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        isProcessingLinkAction = true
+        linkActionMessage = nil
+        linkActionMessageIsError = false
+        defer { isProcessingLinkAction = false }
+
+        do {
+            guard let teacher = try await repository.getTeacherByEmail(email: email),
+                  let teacherId = teacher.id else {
+                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            if currentStudentUser == nil {
+                currentStudentUser = try await repository.getUser(uid: studentId)
+            }
+
+            let studentEmail = (currentStudentUser?.email ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+
+            try await repository.createLinkRequest(
+                studentId: studentId,
+                studentEmail: studentEmail,
+                teacherId: teacherId,
+                teacherEmail: email
+            )
+
+            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessageIsError = false
+
+            await loadLinkStatus(force: true)
+            return true
+
+        } catch {
+            linkActionMessage = (error as NSError).localizedDescription
+            linkActionMessageIsError = true
+            return false
+        }
+    }
+
+    func acceptPendingInvite() async {
+        guard let invite = pendingInvite else { return }
+
+        isProcessingLinkAction = true
+        linkActionMessage = nil
+        linkActionMessageIsError = false
+        defer { isProcessingLinkAction = false }
+
+        do {
+            if currentStudentUser == nil {
+                currentStudentUser = try await repository.getUser(uid: studentId)
+            }
+
+            try await repository.acceptInvite(
+                invite: invite,
+                studentId: studentId,
+                studentUser: currentStudentUser
+            )
+
+            pendingInvite = nil
+            await loadLinkStatus(force: true)
+        } catch {
+            linkBannerState = .error(message: (error as NSError).localizedDescription)
+        }
+    }
+
+    func declinePendingInvite() async {
+        guard let invite = pendingInvite else { return }
+
+        isProcessingLinkAction = true
+        linkActionMessage = nil
+        linkActionMessageIsError = false
+        defer { isProcessingLinkAction = false }
+
+        do {
+            try await repository.declineInvite(invite: invite)
+            pendingInvite = nil
+            await loadLinkStatus(force: true)
+        } catch {
+            linkBannerState = .error(message: (error as NSError).localizedDescription)
+        }
+    }
+
+    // MARK: - Semanas / Meta
+
+    func loadWeeksAndMeta(force: Bool = false) async {
+        if force {
+            hasLoadedWeeksAndMeta = false
+        }
+
+        guard !hasLoadedWeeksAndMeta else { return }
+
+        // Evita concorrência: se já carregando, aguarda conclusão
+        guard !isLoading else { return }
+
+        isLoading = true
+        errorMessage = nil
+
+        do {
+            #if DEBUG
+            let t0 = Date()
+            #endif
+
+            let result = try await repository.getWeeksForStudent(studentId: studentId)
+
+            #if DEBUG
+            print("[StudentAgenda] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count) semana(s)")
+            #endif
+
+            // ✅ Publica semanas e encerra o loading principal imediatamente.
+            // Metadados secundários (nomes de professor, datas, progresso) chegam
+            // progressivamente sem bloquear a exibição da lista.
+            self.weeks = result
+            hasLoadedWeeksAndMeta = true
+            isLoading = false
+
+            // Carrega metadados em paralelo (progressivo)
+            await withTaskGroup(of: Void.self) { group in
+                group.addTask { await self.loadTeacherNamesForWeeks(result) }
+                group.addTask { await self.loadMetaForWeeks(result) }
+            }
+
+            #if DEBUG
+            print("[StudentAgenda] metadata completo em \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count * 2) reads auxiliares")
+            #endif
+
+        } catch {
+            hasLoadedWeeksAndMeta = false
+            self.errorMessage = (error as NSError).localizedDescription
+            isLoading = false
+        }
+    }
+
+    private func loadTeacherNamesForWeeks(_ weeks: [TrainingWeekFS]) async {
+
+        teacherNameById.removeAll()
+
+        let ids = Array(
+            Set(
+                weeks.map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+            )
+        )
+
+        guard !ids.isEmpty else { return }
+
+        let repo = repository
+        var result: [String: String] = [:]
+
+        await withTaskGroup(of: (String, String?).self) { group in
+            for teacherId in ids {
+                group.addTask {
+                    do {
+                        let user = try await repo.getUser(uid: teacherId)
+                        let name = user?.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                        return (teacherId, (name?.isEmpty == false) ? name : nil)
+                    } catch {
+                        return (teacherId, nil)
+                    }
+                }
+            }
+
+            for await (teacherId, name) in group {
+                if let name {
+                    result[teacherId] = name
+                }
+            }
+        }
+
+        teacherNameById = result
+    }
+
     private func loadMetaForWeeks(_ weeks: [TrainingWeekFS]) async {
 
         weekRangeText.removeAll()
@@ -56,7 +282,6 @@ final class StudentAgendaViewModel: ObservableObject {
                         let p = try await self.repository.getWeekProgress(weekId: weekId, studentId: studentId)
                         let percent = StudentAgendaViewModel.computePercentStatic(completed: p.completed, total: p.total)
                         await MainActor.run { self.weekProgressPercent[weekId] = percent }
-
                     } catch {
                     }
                 }
@@ -66,7 +291,6 @@ final class StudentAgendaViewModel: ObservableObject {
         objectWillChange.send()
     }
 
-    // Gera subtítulo com range de datas e progresso
     func subtitleForWeek(_ week: TrainingWeekFS) -> String {
         guard let weekId = week.id else { return "Treinos da semana" }
 
@@ -76,14 +300,33 @@ final class StudentAgendaViewModel: ObservableObject {
         return "\(range) • \(percent)%"
     }
 
-    // Calcula percentual de conclusão
+    func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
+        let explicitName = (week.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !explicitName.isEmpty {
+            return "Professor: \(explicitName)"
+        }
+
+        let explicitEmail = (week.teacherEmail ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        if !explicitEmail.isEmpty {
+            return "Professor: \(explicitEmail)"
+        }
+
+        let teacherId = week.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else { return "Professor: —" }
+
+        if let name = teacherNameById[teacherId], !name.isEmpty {
+            return "Professor: \(name)"
+        }
+
+        return "Professor: ..."
+    }
+
     nonisolated static func computePercentStatic(completed: Int, total: Int) -> Int {
         guard total > 0 else { return 0 }
         let v = (Double(completed) / Double(total)) * 100.0
         return Int(v.rounded())
     }
 
-    // Calcula range de datas formatado
     nonisolated static func computeRangeTextStatic(days: [TrainingDayFS]) -> String? {
         let dates = days.compactMap { $0.date }
         guard let minDate = dates.min(), let maxDate = dates.max() else { return nil }

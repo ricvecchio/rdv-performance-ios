@@ -128,7 +128,7 @@ struct StudentWeekDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -143,7 +143,7 @@ struct StudentWeekDetailView: View {
             }
 
             // Avatar no cabeçalho (foto real do usuário)
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -158,7 +158,7 @@ struct StudentWeekDetailView: View {
             }
         }
         // ✅ Dispara animação quando todos os registros forem concluídos
-        .onChange(of: allWeekCompleted) { newValue in
+        .onChange(of: allWeekCompleted) { _, newValue in
             guard newValue else {
                 hasTriggeredWeekCompletedAnimation = false
                 return
@@ -305,7 +305,7 @@ struct StudentWeekDetailView: View {
             if hasAnyNonVideo {
                 daysSectionCard(
                     title: "Treinos",
-                    systemImage: "flame.fill",
+                    systemImage: "dumbbell.fill",
                     items: trainingDays
                 )
             }
@@ -331,7 +331,7 @@ struct StudentWeekDetailView: View {
 
                     HStack(spacing: 14) {
 
-                        Image(systemName: isVideo ? "video.fill" : "flame.fill")
+                        Image(systemName: isVideo ? "video.fill" : "dumbbell.fill")
                             .font(.system(size: 16))
                             .foregroundColor(.green.opacity(0.85))
                             .frame(width: 28)

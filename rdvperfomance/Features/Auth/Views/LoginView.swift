@@ -16,9 +16,6 @@ struct LoginView: View {
     @AppStorage("last_login_email") private var lastLoginEmail: String = ""
     @AppStorage("last_login_password") private var lastLoginPassword: String = ""
 
-    // ✅ chave já usada no app
-    private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
-
     // Interface principal da tela de login
     var body: some View {
         ZStack {
@@ -147,31 +144,14 @@ struct LoginView: View {
         lastLoginEmail = vm.email
         lastLoginPassword = vm.password
 
-        for _ in 0..<20 {
-            if session.userType != nil { break }
-            try? await Task.sleep(nanoseconds: 120_000_000) // 0.12s
-        }
+        // ✅ Ajuste mínimo: força o carregamento do perfil após login
+        await session.refreshProfile()
 
-        guard let type = session.userType else {
+        guard session.userType != nil else {
             vm.errorMessage = "Seu perfil não foi encontrado no Firestore (users/{uid})."
             return
         }
 
         path.removeAll()
-
-        if type == .STUDENT {
-            guard let uid = session.uid else {
-                vm.errorMessage = "Não foi possível identificar o usuário logado."
-                return
-            }
-            let name = session.userName ?? "Aluno"
-            path.append(.studentAgenda(studentId: uid, studentName: name))
-        } else {
-            // ✅ SOLICITADO: professor vai direto para TeacherDashboardView
-            let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
-            let categoria = TreinoTipo(rawValue: raw) ?? .crossfit
-            path.append(.teacherDashboard(category: categoria))
-        }
     }
 }
-

@@ -1,5 +1,6 @@
 // Tela de cadastro para usuários do tipo professor
 import SwiftUI
+import UIKit
 
 struct RegisterTrainerView: View {
 
@@ -57,7 +58,7 @@ struct RegisterTrainerView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -73,6 +74,18 @@ struct RegisterTrainerView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        // ✅ Botão "Concluir" para fechar o teclado .phonePad
+        .toolbar {
+            ToolbarItemGroup(placement: .keyboard) {
+                Spacer()
+                Button("Concluir") {
+                    UIApplication.shared.sendAction(
+                        #selector(UIResponder.resignFirstResponder),
+                        to: nil, from: nil, for: nil
+                    )
+                }
+            }
+        }
         .onChange(of: vm.successMessage) { _, newValue in
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
@@ -82,7 +95,7 @@ struct RegisterTrainerView: View {
         }
     }
 
-    // Formulário de cadastro com campos de professor (nome, email, senha, whatsapp, CREF, academia, bio, área de foco, plano)
+    // Formulário de cadastro com campos de professor (nome, email, senha, whatsapp, CREF, academia, bio, área de foco)
     private func formCardTrainer() -> some View {
         VStack(spacing: 18) {
 
@@ -116,18 +129,17 @@ struct RegisterTrainerView: View {
                 placeholderColor: textSecondary
             )
 
-            UnderlineTextField(
+            // ✅ Campo de telefone com máscara brasileira centralizada
+            PhoneTextField(
                 title: "WhatsApp (opcional)",
-                text: $vm.phone,
-                isSecure: false,
-                showPassword: .constant(false),
+                digits: $vm.phone,
                 lineColor: lineColor,
                 textColor: .white,
                 placeholderColor: textSecondary
             )
 
             UnderlineTextField(
-                title: "CREF",
+                title: "CREF (opcional)",
                 text: $vm.cref,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -152,12 +164,6 @@ struct RegisterTrainerView: View {
                 title: "Área de foco",
                 selection: $vm.focusArea,
                 options: FocusAreaDTO.allCases
-            )
-
-            pickerRow(
-                title: "Plano",
-                selection: $vm.planType,
-                options: PlanTypeDTO.allCases
             )
         }
         .padding(.horizontal, 16)

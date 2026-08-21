@@ -16,6 +16,7 @@ final class AppSession: ObservableObject {
     @Published var userType: UserTypeDTO? = nil
     @Published var userName: String? = nil
 
+
     private var authListener: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
 
@@ -71,6 +72,7 @@ final class AppSession: ObservableObject {
         userType?.rawValue.lowercased() == "trainer"
     }
 
+
     // Observa mudanças no estado de autenticação do Firebase
     private func observeAuthState() {
         if let authListener {
@@ -106,6 +108,7 @@ final class AppSession: ObservableObject {
             guard let data = snap.data() else {
                 self.userType = nil
                 self.userName = nil
+
                 self.storedUserTypeRaw = ""
                 self.storedUserName = ""
                 return
@@ -119,6 +122,7 @@ final class AppSession: ObservableObject {
 
             self.storedUserName = name ?? ""
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
+
 
         } catch {
         }

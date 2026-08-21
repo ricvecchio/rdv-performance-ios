@@ -1,4 +1,3 @@
-// ViewModel para gerenciar estado e validação da tela de login
 import Foundation
 import Combine
 
@@ -43,3 +42,4 @@ final class LoginViewModel: ObservableObject {
         }
     }
 }
+

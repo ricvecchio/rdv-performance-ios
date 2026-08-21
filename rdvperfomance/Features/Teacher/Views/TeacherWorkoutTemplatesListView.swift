@@ -65,7 +65,7 @@ struct TeacherWorkoutTemplatesListView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -79,7 +79,7 @@ struct TeacherWorkoutTemplatesListView: View {
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 Button {
                     newTitle = ""
                     newDesc = ""

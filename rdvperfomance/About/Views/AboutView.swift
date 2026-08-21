@@ -67,7 +67,7 @@ struct AboutView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -80,7 +80,7 @@ struct AboutView: View {
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -96,7 +96,7 @@ struct AboutView: View {
                 path: $path,
                 kind: .agendaSobrePerfil(
                     isAgendaSelected: false,
-                    isSobreSelected: true,
+                    isSobreSelected: false, // ✅ Agora "Sobre" não existe no rodapé do aluno (virou "Recordes")
                     isPerfilSelected: false
                 )
             )
@@ -154,3 +154,4 @@ struct AboutView: View {
         }
     }
 }
+

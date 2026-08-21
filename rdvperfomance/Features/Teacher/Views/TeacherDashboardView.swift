@@ -63,22 +63,6 @@ struct TeacherDashboardView: View {
                                 ) {
                                     path.append(.teacherImportVideos(category: category))
                                 }
-
-                                // 4) Mapa da Academia
-                                actionRow(
-                                    title: "Mapa da Academia",
-                                    icon: "map.fill"
-                                ) {
-                                    path.append(.mapFeature)
-                                }
-
-                                // 5) Visualizar no ambiente
-                                actionRow(
-                                    title: "Visualizar no ambiente",
-                                    icon: "viewfinder"
-                                ) {
-                                    path.append(.arDemo)
-                                }
                             }
                             .padding(.top, 8)
 
@@ -118,7 +102,7 @@ struct TeacherDashboardView: View {
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }

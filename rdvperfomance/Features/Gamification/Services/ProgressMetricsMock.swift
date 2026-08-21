@@ -23,7 +23,7 @@ enum ProgressMetricsMock {
             streakDays: 6,
             badges: [
                 Badge(id: "b1", title: "Primeiro treino", systemImageName: "sparkles"),
-                Badge(id: "b2", title: "3 treinos/semana", systemImageName: "flame.fill")
+                Badge(id: "b2", title: "3 treinos/semana", systemImageName: "dumbbell.fill")
             ],
             displayName: "Aluno consistente",
             weekLabel: "Semana atual"
@@ -37,7 +37,7 @@ enum ProgressMetricsMock {
             streakDays: 14,
             badges: [
                 Badge(id: "b1", title: "Primeiro treino", systemImageName: "sparkles"),
-                Badge(id: "b2", title: "3 treinos/semana", systemImageName: "flame.fill"),
+                Badge(id: "b2", title: "3 treinos/semana", systemImageName: "dumbbell.fill"),
                 Badge(id: "b3", title: "Semana completa", systemImageName: "checkmark.seal.fill")
             ],
             displayName: "Modo monstro",

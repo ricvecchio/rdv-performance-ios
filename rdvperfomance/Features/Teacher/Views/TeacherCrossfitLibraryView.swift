@@ -20,7 +20,6 @@ struct TeacherCrossfitLibraryView: View {
         .init(title: "Girls WODs", sectionKey: "girlsWods"),
         .init(title: "Hero & Tribute Workouts", sectionKey: "heroTributeWorkouts"),
         .init(title: "Open WODs", sectionKey: "openWods"),
-        .init(title: "Benchmark WODs", sectionKey: "benchmarks"),
         .init(title: "WODs Nomeados", sectionKey: "wodsNomeados"),
         .init(title: "Qualifiers / WODs de Competições", sectionKey: "qualifiersCompeticoes"),
         .init(title: "Meus Treinos", sectionKey: "meusTreinos")
@@ -92,7 +91,7 @@ struct TeacherCrossfitLibraryView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -106,7 +105,7 @@ struct TeacherCrossfitLibraryView: View {
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }

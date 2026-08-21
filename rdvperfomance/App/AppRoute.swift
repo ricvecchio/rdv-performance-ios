@@ -10,12 +10,8 @@ enum InfoLegalKind: String, Hashable {
 // Seções de “Meus Treinos” (Crossfit)
 enum CrossfitLibrarySection: String, Hashable, CaseIterable {
 
-    // ✅ Girls WODs (antes: benchmarks)
     case benchmarks
-
-    // ✅ NOVO: logo abaixo de Girls WODs
     case heroTributeWorkouts
-
     case competicoesOficiais
     case formatosWod
     case formatoSocial
@@ -24,27 +20,18 @@ enum CrossfitLibrarySection: String, Hashable, CaseIterable {
 
     var title: String {
         switch self {
-
-        // ✅ ALTERADO: "Benchmarks" -> "Girls WODs"
         case .benchmarks:
             return "Girls WODs"
-
-        // ✅ NOVO
         case .heroTributeWorkouts:
             return "Hero & Tribute Workouts"
-
         case .competicoesOficiais:
             return "Competições Oficiais"
-
         case .formatosWod:
             return "Formatos de WOD"
-
         case .formatoSocial:
             return "Formato Social"
-
         case .opens:
             return "Open’s"
-
         case .meusTreinos:
             return "Meus Treinos"
         }
@@ -75,9 +62,7 @@ enum AppRoute: Hashable {
     case registerStudent
     case registerTrainer
 
-    case mapFeature
     case spriteDemo
-    case arDemo
 
     case progressGame(mode: ProgressGameMode)
     case arExercise(weekId: String, dayId: String)
@@ -95,30 +80,33 @@ enum AppRoute: Hashable {
     case studentMessages(category: TreinoTipo)
     case studentFeedbacks(category: TreinoTipo)
 
+    case studentPersonalRecords
+    case studentPersonalRecordsBarbell
+    case studentPersonalRecordsGymnastic
+    case studentPersonalRecordsEndurance
+    case studentPersonalRecordsNotables
+    case studentPersonalRecordsGirls
+    case studentPersonalRecordsOpen
+    case studentPersonalRecordsHeroes
+    case studentPersonalRecordsCampeonatos
+    case studentPersonalRecordsCrossfitGames
+
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 
-    // ✅ Biblioteca de Treinos (Professor)
     case teacherMyWorkouts(category: TreinoTipo)
-
-    // ✅ Biblioteca Crossfit (seções)
     case teacherCrossfitLibrary(section: CrossfitLibrarySection)
 
-    // ✅ Lista de templates (qualquer categoria, por seção)
-    case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
-    
-    case teacherImportWorkouts(category: TreinoTipo)
+    // ✅ NOVO: bibliotecas/menus para separar blocos por músculo
+    case teacherAcademiaLibrary
+    case teacherEmCasaLibrary
 
-    // ✅ NOVO: Importar Vídeos (YouTube) - Professor
+    case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
+    case teacherImportWorkouts(category: TreinoTipo)
     case teacherImportVideos(category: TreinoTipo)
 
-    // ✅ criar template de WOD (Girls WODs)
     case createCrossfitWOD(category: TreinoTipo, sectionKey: String, sectionTitle: String)
-
-    // ✅ NOVO: criar Treino Academia
     case createTreinoAcademia(category: TreinoTipo, sectionKey: String, sectionTitle: String)
-
-    // ✅ NOVO: criar Treino em Casa
     case createTreinoCasa(category: TreinoTipo, sectionKey: String, sectionTitle: String)
 }
 

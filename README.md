@@ -52,7 +52,6 @@ A navegação do app é centralizada através de um `NavigationStack`, controlad
 - Importar Vídeos — gerenciamento de vídeos do YouTube
 - Enviar Mensagem — comunicação com alunos
 - Feedbacks — visualização de feedbacks dos alunos
-- Mapa da Academia — localização e visualização
 - Templates de Treino — biblioteca organizada por seções
 - Perfil / Configurações
 - Sobre
@@ -99,8 +98,6 @@ Após o login, o professor é direcionado automaticamente para a **Área do Prof
 - **Meus Alunos** — Lista e gerenciamento de alunos vinculados
 - **Importar Treino** — Importação de treinos via planilhas Excel
 - **Importar Vídeos** — Importação de vídeos do YouTube
-- **Mapa da Academia** — Visualização da localização da academia
-- **Visualizar no Ambiente** — Demonstração de exercícios em Realidade Aumentada
 
 > **Nota:** O arquivo `HomeView.swift` contém uma interface legacy com três opções de treino (Crossfit, Academia, Treinos em Casa) que foi usada em versões anteriores, mas atualmente o roteamento inteligente (`AppRouter`) garante que cada tipo de usuário veja sua interface apropriada desde o início.
 
@@ -181,7 +178,7 @@ Interface dedicada para alunos acompanharem seus treinos e progresso:
 Sistema completo para professores gerenciarem vídeos do YouTube:
 
 - Importação de vídeos através de URLs do YouTube
-- Player bloqueado para controle total do conteúdo
+- Player com controle de reprodução inline
 - Suporte para AirPlay (espelhamento de tela)
 - Envio de vídeos específicos para alunos
 - Repository local para armazenamento de vídeos importados
@@ -207,7 +204,6 @@ Sistema de importação de treinos a partir de planilhas Excel:
 - Templates de treinos reutilizáveis
 - Sistema de mensagens para alunos
 - Visualização de feedbacks dos alunos
-- Mapa com localização da academia
 
 ---
 
@@ -370,7 +366,6 @@ rdvperformance-ios
    │  │     ├─ TeacherDashboardView.swift
    │  │     ├─ TeacherFeedbacksView.swift
    │  │     ├─ TeacherLinkStudentView.swift
-   │  │     ├─ TeacherMapView.swift
    │  │     ├─ TeacherMyWorkoutsView.swift
    │  │     ├─ TeacherSendMessageView.swift
    │  │     ├─ TeacherSendWorkoutToStudentSheet.swift
@@ -492,17 +487,7 @@ rdvperformance-ios
 
 ---
 
-#### 4. **MapKit / Core Location**
-**Implementação:** Visualização de mapas e localização
-
-- **`MapView.swift`**: View principal do mapa usando MapKit
-- **`MapViewModel.swift`**: ViewModel que gerencia a lógica de localização e pontos no mapa
-- **`MapDemoView.swift`**: Demonstração das funcionalidades do mapa
-- **Uso:** Exibe localização do usuário, academias ou pontos de interesse para treino
-
----
-
-#### 5. **Sprite Kit**
+#### 4. **Sprite Kit**
 **Implementação:** Sistema de gamificação visual
 
 - **`GameScene.swift`**: Cena principal do SpriteKit com lógica de jogo
@@ -512,7 +497,7 @@ rdvperformance-ios
 
 ---
 
-#### 6. **AR Kit**
+#### 5. **AR Kit**
 **Implementação:** Realidade aumentada para correção de exercícios
 
 - **`ARExerciseView.swift`**: View principal de exercícios em AR
@@ -527,14 +512,13 @@ rdvperformance-ios
 
 ### 📊 Resumo
 
-Todos os **6 requisitos foram completamente implementados** no projeto:
+Todos os **5 requisitos principais foram completamente implementados** no projeto:
 
 1. ✅ **Navegação múltipla** - Sistema robusto com router pattern
 2. ✅ **Core Data** - Persistência local de atividades
 3. ✅ **Cloud/API** - Firebase Auth + Firestore para dados na nuvem
-4. ✅ **MapKit** - Mapas e localização integrados
-5. ✅ **SpriteKit** - Gamificação visual com sprites
-6. ✅ **ARKit** - Correção de postura em exercícios via realidade aumentada
+4. ✅ **SpriteKit** - Gamificação visual com sprites
+5. ✅ **ARKit** - Correção de postura em exercícios via realidade aumentada
 
 ---
 
@@ -544,13 +528,6 @@ Todos os **6 requisitos foram completamente implementados** no projeto:
 - Configure o `GoogleService-Info.plist` caso queira habilitar Firebase (Auth/Firestore) em ambiente de desenvolvimento.
 - Execute o app em um simulador iOS 16+ ou dispositivo físico com as permissões necessárias.
 
-### Permissão de localização (necessária para o Mapa da Academia)
-
-Para que a opção "Mapa da Academia" funcione corretamente você precisa adicionar a chave de privacidade no `Info.plist` do target do app (se ainda não estiver presente). Abra o arquivo `Info.plist` no Xcode e confirme que a chave abaixo existe (valor em português ou conforme sua política de privacidade):
-
-- `NSLocationWhenInUseUsageDescription` = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo)."
-
-> Observação: o recurso de mapa foi movido da tela de Configurações para a `Área do Professor` (Menu do Professor > "Mapa da Academia"). A entrada "Mapa (demo)" nas Configurações foi removida para evitar duplicidade. A rota antiga `.mapFeature` continua mapeada para a nova tela para compatibilidade (acesso restrito a professores).
 
 ---
 
@@ -562,9 +539,8 @@ Para que a opção "Mapa da Academia" funcione corretamente você precisa adicio
 - **Gamificação** com sistema de badges, conquistas e visualização de progressos
 - **SpriteKit** para animações e jogos interativos
 - **CoreData** para persistência local de atividades
-- **MapKit** para visualização de localizações e academias
 - **Integração com Firebase** (Auth/Firestore) preparada
-- **Importação de Vídeos do YouTube** com player bloqueado e suporte AirPlay
+- **Importação de Vídeos do YouTube** com player customizado e suporte AirPlay
 - **Importação de Treinos via Excel** com template pré-definido
 - **Sistema completo para Professores** (dashboard, gerenciamento de alunos, mensagens, feedbacks)
 - **Sistema completo para Alunos** (agenda, treinos, mensagens, feedbacks, progresso)
@@ -578,18 +554,13 @@ Para que a opção "Mapa da Academia" funcione corretamente você precisa adicio
 ## 📌 Próximos Passos 
 
 - Completar integração com backend (Firebase) e testar autenticação real
-- Aprimorar sistema de AR com mais exercícios e detecção de postura
 - Expandir sistema de gamificação com mais badges e desafios
 - Adicionar sincronização de dados CoreData com Firestore
 - Implementar notificações push para lembretes de treino
 - Adicionar testes unitários / UI tests
 - Documentar contratos de rede e modelos Firestore
-- Internacionalização (strings em Localizable)
 - Melhorar cobertura de assets e imagens de alta resolução
 - Expandir lista de exercícios pré-definidos para montagem rápida de treinos
-- Melhorar overlay de debug do AR para facilitar desenvolvimento
-- Adicionar mais modos de jogo no sistema de gamificação
-- Implementar suporte para AirPlay na reprodução de vídeos
 - Adicionar mais templates de importação para diferentes modalidades
 
 ---

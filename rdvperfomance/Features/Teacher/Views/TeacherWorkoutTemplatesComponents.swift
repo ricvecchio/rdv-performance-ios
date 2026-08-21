@@ -98,7 +98,7 @@ struct TeacherWorkoutTemplateRow: View {
     var body: some View {
         HStack(spacing: 12) {
 
-            Image(systemName: "flame.fill")
+            Image(systemName: "dumbbell.fill")
                 .foregroundColor(.green.opacity(0.85))
                 .font(.system(size: 16))
                 .frame(width: 26)

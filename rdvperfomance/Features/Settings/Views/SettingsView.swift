@@ -4,6 +4,7 @@ import SwiftUI
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
+    let navigationGuard: NavigationPopGestureInstaller
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
@@ -68,7 +69,6 @@ struct SettingsView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                // ✅ Ajuste: rodapé no padrão do AboutView (4 ícones)
                 footerForUser()
                     .frame(height: Theme.Layout.footerHeight)
                     .frame(maxWidth: .infinity)
@@ -76,13 +76,16 @@ struct SettingsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: showWeightUnitSheet ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: showWeightUnitSheet)
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
@@ -112,7 +115,6 @@ struct SettingsView: View {
         }
     }
 
-    // ✅ Ajuste: Professor agora usa o MESMO padrão do AboutView (4 ícones)
     @ViewBuilder
     private func footerForUser() -> some View {
         if session.userType == .STUDENT {
@@ -138,13 +140,18 @@ struct SettingsView: View {
         }
     }
 
-    // Remove a última rota da pilha de navegação
     private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
+        #if DEBUG
+        print("[NAV] Settings back BEFORE:", String(describing: path))
+        #endif
+
+        let didPop = navigationGuard.popIfPossible(path: $path, expectedTop: .configuracoes, source: "Settings back")
+
+        #if DEBUG
+        print("[NAV] Settings back AFTER:", String(describing: path), "didPop:", didPop)
+        #endif
     }
 
-    // Retorna o título de uma seção
     private func sectionTitle(_ text: String) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
@@ -152,7 +159,6 @@ struct SettingsView: View {
             .padding(.horizontal, 6)
     }
 
-    // Retorna card com opções de conta
     private func accountCard() -> some View {
         card {
             cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
@@ -169,7 +175,6 @@ struct SettingsView: View {
         }
     }
 
-    // Retorna card com preferências do usuário
     private func preferencesCard() -> some View {
         card {
             cardRow(
@@ -182,9 +187,15 @@ struct SettingsView: View {
         }
     }
 
-    // Retorna card com opções de suporte e informações legais
     private func supportLegalCard() -> some View {
         card {
+
+            cardRow(icon: "info.circle.fill", title: "Sobre") {
+                path.append(.sobre)
+            }
+
+            divider()
+
             cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
                 path.append(.infoLegal(.helpCenter))
             }
@@ -204,7 +215,6 @@ struct SettingsView: View {
         }
     }
 
-    // Retorna container para cards de configurações
     private func card<Content: View>(@ViewBuilder _ content: () -> Content) -> some View {
         VStack(spacing: 0) { content() }
             .padding(.vertical, 8)
@@ -213,14 +223,12 @@ struct SettingsView: View {
             .cornerRadius(14)
     }
 
-    // Retorna linha divisória entre itens
     private func divider() -> some View {
         Divider()
             .background(Theme.Colors.divider)
             .padding(.leading, 54)
     }
 
-    // Retorna linha de card clicável sem texto à direita
     private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -246,7 +254,6 @@ struct SettingsView: View {
         .buttonStyle(.plain)
     }
 
-    // Retorna linha de card clicável com texto à direita
     private func cardRow(icon: String, title: String, trailingText: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
@@ -277,12 +284,10 @@ struct SettingsView: View {
     }
 }
 
-// Define as unidades de peso disponíveis no aplicativo
 private enum WeightUnit: String, CaseIterable {
     case kg
     case lbs
 
-    // Retorna o título completo da unidade
     var title: String {
         switch self {
         case .kg: return "⚖️ kg (quilograma)"
@@ -290,7 +295,6 @@ private enum WeightUnit: String, CaseIterable {
         }
     }
 
-    // Retorna a sigla da unidade
     var shortLabel: String {
         switch self {
         case .kg: return "kg"
@@ -299,18 +303,15 @@ private enum WeightUnit: String, CaseIterable {
     }
 }
 
-// Sheet para seleção de unidade de peso
 private struct WeightUnitSheetView: View {
 
     @Binding var selectedUnitRaw: String
     @Environment(\.dismiss) private var dismiss
 
-    // Retorna a unidade selecionada
     private var selectedUnit: WeightUnit {
         WeightUnit(rawValue: selectedUnitRaw) ?? .kg
     }
 
-    // Constrói a interface do seletor de unidade
     var body: some View {
         ZStack {
 
@@ -400,4 +401,3 @@ private struct WeightUnitSheetView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
 }
-

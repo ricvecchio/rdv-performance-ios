@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import UIKit
+import os.log
 
 extension Notification.Name {
     static let workoutTemplateUpdated = Notification.Name("workoutTemplateUpdated")
@@ -17,6 +18,12 @@ struct TeacherWorkoutTemplatesView: View {
     @State private var templates: [WorkoutTemplateFS] = []
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
+    @State private var isSeedingDefaults: Bool = false
+
+    private static let debugLog = OSLog(subsystem: "com.rdvperformance.app", category: "TeacherWorkoutTemplatesView")
+    #if DEBUG
+    @State private var loadCallCount: Int = 0
+    #endif
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -24,9 +31,18 @@ struct TeacherWorkoutTemplatesView: View {
         category == .crossfit
     }
 
+    private var isAcademiaOrEmCasaCategory: Bool {
+        category == .academia || category == .emCasa
+    }
+
     private var shouldShowAddButton: Bool {
+        // ✅ Crossfit sempre mostra
         if isCrossfitCategory { return true }
-        return sectionKey == "meusTreinos" && (category == .academia || category == .emCasa)
+
+        // ✅ Academia e Em Casa também devem mostrar (independente da seção)
+        if isAcademiaOrEmCasaCategory { return true }
+
+        return false
     }
 
     private var addButtonTitle: String {
@@ -34,7 +50,7 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private var descriptionText: String {
-        if category == .academia || category == .emCasa {
+        if isAcademiaOrEmCasaCategory {
             return "Cadastre e gerencie os treinos desta seção."
         }
         return "Cadastre e gerencie os WODs desta seção."
@@ -78,7 +94,7 @@ struct TeacherWorkoutTemplatesView: View {
 
                             if isCrossfitCategory {
                                 EmptyView()
-                            } else if category == .academia || category == .emCasa {
+                            } else if isAcademiaOrEmCasaCategory {
                                 EmptyView()
                             } else {
                                 Text("\(category.displayName) • \(sectionTitle)")
@@ -144,7 +160,7 @@ struct TeacherWorkoutTemplatesView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -159,7 +175,7 @@ struct TeacherWorkoutTemplatesView: View {
                     .lineLimit(1)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -167,7 +183,6 @@ struct TeacherWorkoutTemplatesView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadTemplates() }
-        .onAppear { Task { await loadTemplates() } }
         .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateUpdated)) { _ in
             Task { await loadTemplates() }
         }
@@ -198,7 +213,15 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private func loadTemplates() async {
+        if isLoading { return }
         errorMessage = nil
+
+        #if DEBUG
+        loadCallCount += 1
+        let callId = loadCallCount
+        let debugStart = Date()
+        os_log("loadTemplates() call #%d START category=%{public}@ section=%{public}@", log: Self.debugLog, type: .debug, callId, category.rawValue, sectionKey)
+        #endif
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
@@ -208,18 +231,79 @@ struct TeacherWorkoutTemplatesView: View {
         }
 
         isLoading = true
-        defer { isLoading = false }
 
         do {
-            templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+            let fetched = try await FirestoreRepository.shared.getWorkoutTemplates(
                 teacherId: teacherId,
                 categoryRaw: category.rawValue,
                 sectionKey: sectionKey
             )
+            templates = fetched
+
+            // ✅ CAUSA RAIZ da demora: antes, `isLoading` só voltava a `false` depois do
+            // seed de defaults terminar (que podia fazer dezenas de writes sequenciais).
+            // Agora liberamos a UI assim que a 1ª consulta termina; o seed roda depois,
+            // em segundo plano, sem manter o spinner cheio na tela.
+            isLoading = false
+
+            #if DEBUG
+            os_log("loadTemplates() call #%d fetched %d docs in %.0fms", log: Self.debugLog, type: .debug, callId, fetched.count, Date().timeIntervalSince(debugStart) * 1000)
+            #endif
+
+            await seedDefaultsIfNeeded(teacherId: teacherId)
+
         } catch {
             errorMessage = error.localizedDescription
             templates = []
+            isLoading = false
         }
+
+        #if DEBUG
+        os_log("loadTemplates() call #%d END totalDurationMs=%.0f", log: Self.debugLog, type: .debug, callId, Date().timeIntervalSince(debugStart) * 1000)
+        #endif
+    }
+
+    /// Semeia os treinos padrão (Hero/Tribute, Girls, Open etc.) quando ainda não existirem,
+    /// sem bloquear a exibição da lista já carregada. Idempotente: só roda de fato uma vez
+    /// por professor/seção (ver `WorkoutTemplateDefaultsSeeder`).
+    private func seedDefaultsIfNeeded(teacherId: String) async {
+        guard (category == .crossfit || category == .academia || category == .emCasa),
+              sectionKey != "meusTreinos",
+              !isSeedingDefaults else { return }
+
+        isSeedingDefaults = true
+        defer { isSeedingDefaults = false }
+
+        #if DEBUG
+        let seedStart = Date()
+        #endif
+
+        do {
+            let didInsert = try await WorkoutTemplateDefaultsSeeder.shared.seedMissingDefaultsIfNeeded(
+                teacherId: teacherId,
+                category: category,
+                sectionKey: sectionKey,
+                sectionTitle: sectionTitle,
+                existingTemplates: templates
+            )
+
+            if didInsert {
+                // Atualização silenciosa (sem reexibir o spinner cheio) assim que os
+                // defaults forem inseridos.
+                templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+                    teacherId: teacherId,
+                    categoryRaw: category.rawValue,
+                    sectionKey: sectionKey
+                )
+            }
+
+        } catch {
+            errorMessage = "Falha ao inserir treinos padrão: \(error.localizedDescription)"
+        }
+
+        #if DEBUG
+        os_log("seedDefaultsIfNeeded durationMs=%.0f", log: Self.debugLog, type: .debug, Date().timeIntervalSince(seedStart) * 1000)
+        #endif
     }
 
     private func deleteTemplate(template: WorkoutTemplateFS) async {
@@ -241,10 +325,8 @@ struct TeacherWorkoutTemplatesView: View {
         defer { isLoading = false }
 
         do {
-            // ✅ Agora usa a função corrigida que aponta para "workout_templates"
             try await FirestoreRepository.shared.deleteWorkoutTemplate(templateId: templateId)
 
-            // Remove localmente e recarrega a lista
             templates.removeAll { $0.id == templateId }
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
 

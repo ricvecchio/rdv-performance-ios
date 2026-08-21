@@ -3,6 +3,7 @@ import SwiftUI
 import RealityKit
 import ARKit
 import Combine
+import AVFoundation
 
 struct ARExerciseView: View {
     @Binding var path: [AppRoute]
@@ -63,7 +64,9 @@ struct ARExerciseView: View {
                     Task { @MainActor in
                         addCorrectionEntity(for: tmp, on: ar)
                     }
-                    Task { await MainActor.run { showAddPointSheet = true } }
+                    Task { @MainActor in
+                        showAddPointSheet = true
+                    }
                 }
             })
             .edgesIgnoringSafeArea(.all)
@@ -140,9 +143,25 @@ struct ARExerciseView: View {
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
 
-                    UnderlineTextField(title: "Título (curto)", text: $newPointTitle, isSecure: false, showPassword: .constant(false), lineColor: Theme.Colors.divider, textColor: .white, placeholderColor: .white.opacity(0.55))
+                    UnderlineTextField(
+                        title: "Título (curto)",
+                        text: $newPointTitle,
+                        isSecure: false,
+                        showPassword: .constant(false),
+                        lineColor: Theme.Colors.divider,
+                        textColor: .white,
+                        placeholderColor: .white.opacity(0.55)
+                    )
 
-                    UnderlineTextField(title: "Observação (opcional)", text: $newPointNote, isSecure: false, showPassword: .constant(false), lineColor: Theme.Colors.divider, textColor: .white, placeholderColor: .white.opacity(0.55))
+                    UnderlineTextField(
+                        title: "Observação (opcional)",
+                        text: $newPointNote,
+                        isSecure: false,
+                        showPassword: .constant(false),
+                        lineColor: Theme.Colors.divider,
+                        textColor: .white,
+                        placeholderColor: .white.opacity(0.55)
+                    )
 
                     HStack {
                         Button("Cancelar") { showAddPointSheet = false }
@@ -187,18 +206,25 @@ struct ARExerciseView: View {
     // Adiciona modelo 3D à cena AR ou placeholder caso falhe
     private func addModelToSceneIfNeeded(ar: ARView) {
         Task { @MainActor in
-            let toRemove = ar.scene.anchors.filter { ($0.name ?? "") == "arModel" }
+            let toRemove = ar.scene.anchors.filter { $0.name == "arModel" }
             for anchor in toRemove { ar.scene.removeAnchor(anchor) }
         }
 
         if let name = vm.modelName {
             Task {
                 await MainActor.run { isModelLoading = true }
-                defer { Task { await MainActor.run { isModelLoading = false } } }
+                defer {
+                    Task { @MainActor in
+                        isModelLoading = false
+                    }
+                }
 
                 do {
                     try Task.checkCancellation()
-                    let entity = try await ModelEntity.load(named: name)
+
+                    // ✅ Evita warning: "Static method 'load' is unavailable from asynchronous contexts"
+                    let entity = try await ModelEntity(named: name)
+
                     try Task.checkCancellation()
                     await MainActor.run {
                         guard let ar = arViewRef else { return }
@@ -236,11 +262,14 @@ struct ARExerciseView: View {
     // Renderiza todos os pontos de correção como esferas vermelhas na cena AR
     private func renderCorrectionPoints(on ar: ARView) {
         Task { @MainActor in
-            let toRemove = ar.scene.anchors.filter { ($0.name ?? "").hasPrefix("arPoint-") }
+            let toRemove = ar.scene.anchors.filter { $0.name.hasPrefix("arPoint-") }
             for anchor in toRemove { ar.scene.removeAnchor(anchor) }
 
             for p in vm.correctionPoints {
-                let sphere = ModelEntity(mesh: MeshResource.generateSphere(radius: 0.03), materials: [SimpleMaterial(color: .red, isMetallic: false)])
+                let sphere = ModelEntity(
+                    mesh: MeshResource.generateSphere(radius: 0.03),
+                    materials: [SimpleMaterial(color: .red, isMetallic: false)]
+                )
                 sphere.name = "point-\(p.id)"
                 let anchor = AnchorEntity(world: p.position.simd)
                 anchor.name = "arPoint-\(p.id)"
@@ -253,7 +282,10 @@ struct ARExerciseView: View {
     // Adiciona uma esfera vermelha representando um ponto de correção na cena AR
     private func addCorrectionEntity(for point: ARCorrectionPoint, on ar: ARView) {
         Task { @MainActor in
-            let sphere = ModelEntity(mesh: MeshResource.generateSphere(radius: 0.03), materials: [SimpleMaterial(color: .red, isMetallic: false)])
+            let sphere = ModelEntity(
+                mesh: MeshResource.generateSphere(radius: 0.03),
+                materials: [SimpleMaterial(color: .red, isMetallic: false)]
+            )
             sphere.name = "point-\(point.id)"
             let anchor = AnchorEntity(world: point.position.simd)
             anchor.name = "arPoint-\(point.id)"
@@ -262,3 +294,4 @@ struct ARExerciseView: View {
         }
     }
 }
+

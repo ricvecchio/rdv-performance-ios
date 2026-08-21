@@ -5,18 +5,25 @@ struct AppRouter: View {
 
     @State private var path: [AppRoute] = []
     @StateObject private var session = AppSession()
+    @State private var popGestureInstaller = NavigationPopGestureInstaller()
 
-    // ✅ chave já usada no app para lembrar a categoria
     private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
-    // Configura a pilha de navegação com todas as rotas do app
+
     var body: some View {
         NavigationStack(path: $path) {
 
             rootView
                 .environmentObject(session)
+                .background(
+                    NavigationPopGestureFixer(
+                        installer: popGestureInstaller,
+                        stackDepth: path.count
+                    )
+                )
 
                 .navigationDestination(for: AppRoute.self) { route in
+                    Group {
                     switch route {
 
                     case .login:
@@ -24,8 +31,6 @@ struct AppRouter: View {
                             .environmentObject(session)
 
                     case .home:
-                        // ✅ Segurança: se por algum motivo um treinador navegar para ".home",
-                        // ele será redirecionado para o dashboard.
                         guardedHome()
 
                     case .teacherStudentsList(let selectedCategory, let initialFilter):
@@ -143,11 +148,61 @@ struct AppRouter: View {
                             )
                         }
 
+                    case .studentPersonalRecords:
+                        guardedStudent {
+                            StudentPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsBarbell:
+                        guardedStudent {
+                            StudentBarbellPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsGymnastic:
+                        guardedStudent {
+                            StudentGymnasticPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsEndurance:
+                        guardedStudent {
+                            StudentEndurancePersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsNotables:
+                        guardedStudent {
+                            StudentNotablesPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsGirls:
+                        guardedStudent {
+                            StudentGirlsPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsOpen:
+                        guardedStudent {
+                            StudentOpenPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsHeroes:
+                        guardedStudent {
+                            StudentHeroesPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsCampeonatos:
+                        guardedStudent {
+                            StudentCampeonatosPersonalRecordsView(path: $path)
+                        }
+
+                    case .studentPersonalRecordsCrossfitGames:
+                        guardedStudent {
+                            StudentCrossfitGamesPersonalRecordsView(path: $path)
+                        }
+
                     case .sobre:
                         guardedHome { AboutView(path: $path) }
 
                     case .perfil:
-                        guardedHome { ProfileView(path: $path) }
+                        guardedHome { ProfileView(path: $path, navigationGuard: popGestureInstaller) }
 
                     case .treinos(let tipo):
                         guardedHome { TreinosView(path: $path, tipo: tipo) }
@@ -156,7 +211,7 @@ struct AppRouter: View {
                         guardedHome { CrossfitMenuView(path: $path) }
 
                     case .configuracoes:
-                        guardedHome { SettingsView(path: $path) }
+                        guardedHome { SettingsView(path: $path, navigationGuard: popGestureInstaller) }
 
                     case .infoLegal(let kind):
                         guardedHome { InfoLegalView(path: $path, kind: kind) }
@@ -170,14 +225,8 @@ struct AppRouter: View {
                     case .excluirConta:
                         guardedHome { DeleteAccountView(path: $path) }
 
-                    case .mapFeature:
-                        guardedHome { MapFeatureView() }
-
                     case .spriteDemo:
                         guardedHome { SpriteDemoView(path: $path) }
-
-                    case .arDemo:
-                        guardedHome { ARDemoView() }
 
                     case .arExercise(let weekId, let dayId):
                         guardedHome { ARExerciseView(path: $path, weekId: weekId, dayId: dayId) }
@@ -194,19 +243,27 @@ struct AppRouter: View {
                         RegisterTrainerView(path: $path)
                             .environmentObject(session)
 
-                    // ✅ Professor: Biblioteca de Treinos
                     case .teacherMyWorkouts(let category):
                         guardedTeacher {
                             TeacherMyWorkoutsView(path: $path, category: category)
                         }
 
-                    // ✅ Professor: Submenu Crossfit (seções)
                     case .teacherCrossfitLibrary(let section):
                         guardedTeacher {
                             TeacherCrossfitLibraryView(path: $path, section: section)
                         }
 
-                    // ✅ Professor: Lista de templates por seção (qualquer categoria)
+                    // ✅ NOVO: menus para Academia e Em Casa (blocos por músculo)
+                    case .teacherAcademiaLibrary:
+                        guardedTeacher {
+                            TeacherAcademiaLibraryView(path: $path)
+                        }
+
+                    case .teacherEmCasaLibrary:
+                        guardedTeacher {
+                            TeacherEmCasaLibraryView(path: $path)
+                        }
+
                     case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             TeacherWorkoutTemplatesView(
@@ -217,7 +274,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Importar Treinos
                     case .teacherImportWorkouts(let category):
                         guardedTeacher {
                             TeacherImportWorkoutsView(
@@ -226,7 +282,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Importar Vídeos (YouTube)
                     case .teacherImportVideos(let category):
                         guardedTeacher {
                             TeacherImportVideosView(
@@ -235,7 +290,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ Professor -> Adicionar WOD (Girls WODs) (NÃO MEXER)
                     case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             CreateCrossfitWODView(
@@ -246,7 +300,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Adicionar Treino (Academia)
                     case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             CreateTreinoAcademiaView(
@@ -257,7 +310,6 @@ struct AppRouter: View {
                             )
                         }
 
-                    // ✅ NOVO: Professor -> Adicionar Treino (Em Casa)
                     case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
                         guardedTeacher {
                             CreateTreinoCasaView(
@@ -268,22 +320,33 @@ struct AppRouter: View {
                             )
                         }
 
-                    @unknown default:
+                    default:
                         guardedHome()
+                    }
                     }
                 }
         }
         .environmentObject(session)
         .onChange(of: session.isLoggedIn) { _, logged in
-            if !logged { path.removeAll() }
+            guard !logged else { return }
+
+            #if DEBUG
+            print("[AppRouter] Session logout. Clearing path:", String(describing: path))
+            #endif
+
+            path.removeAll()
+        }
+        .onChange(of: path) { oldPath, newPath in
+            #if DEBUG
+            print("[AppRouter] Path changed from:", String(describing: oldPath))
+            print("[AppRouter] Path changed to:", String(describing: newPath))
+            #endif
         }
     }
 }
 
-// Métodos auxiliares para decidir a view raiz e aplicar guards de autenticação
 private extension AppRouter {
 
-    // ✅ usado somente para abrir o dashboard com a categoria atual (fallback: crossfit)
     var teacherInitialCategory: TreinoTipo {
         let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
         return TreinoTipo(rawValue: raw) ?? .crossfit
@@ -293,11 +356,9 @@ private extension AppRouter {
     var rootView: some View {
         if session.isLoggedIn {
 
-            // ✅ Professor entra direto no TeacherDashboardView (no lugar de HomeView)
             if session.isTrainer {
                 TeacherDashboardView(path: $path, category: teacherInitialCategory)
             } else {
-                // ✅ ÚNICA ALTERAÇÃO: aluno inicia na Agenda (no lugar da HomeView)
                 StudentAgendaView(
                     path: $path,
                     studentId: session.uid ?? "",
@@ -311,7 +372,6 @@ private extension AppRouter {
     }
 }
 
-// Métodos de proteção para garantir que usuários estejam autenticados e autorizados
 private extension AppRouter {
 
     @ViewBuilder
@@ -322,7 +382,6 @@ private extension AppRouter {
     @ViewBuilder
     func guardedHome() -> some View {
         if session.isLoggedIn {
-            // ✅ Se for treinador, nunca mostramos a HomeView (mesmo que chamem ".home")
             if session.isTrainer {
                 TeacherDashboardView(path: $path, category: teacherInitialCategory)
             } else {
@@ -343,4 +402,3 @@ private extension AppRouter {
         if session.isLoggedIn && session.isStudent { content() } else { LoginView(path: $path) }
     }
 }
-

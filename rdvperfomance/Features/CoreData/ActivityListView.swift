@@ -26,7 +26,7 @@ struct ActivityListView: View {
             }
             .navigationTitle("Atividades")
             .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
+                ToolbarItem(placement: .topBarTrailing) {
                     Button(action: add) {
                         Image(systemName: "plus")
                     }

@@ -69,7 +69,7 @@ struct TeacherStudentDetailView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
@@ -83,7 +83,7 @@ struct TeacherStudentDetailView: View {
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -119,9 +119,6 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.95))
 
-            Text("Plano: \(student.planType ?? "—")")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.70))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
