@@ -7,6 +7,9 @@ struct SpriteDemoView: View {
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     private let contentMaxWidth: CGFloat = 380
     private let cornerRadius: CGFloat = 14
 
@@ -119,7 +122,8 @@ struct SpriteDemoView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: false
-                )
+                ),
+                onSelectStudentSection: onSelectSection
             )
         } else {
             FooterBar(

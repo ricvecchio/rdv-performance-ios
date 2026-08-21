@@ -5,6 +5,9 @@ struct StudentNotablesPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     private let contentMaxWidth: CGFloat = 380
 
     private struct NotableMove: Identifiable, Hashable {
@@ -342,7 +345,8 @@ Descanso: 1 min entre rounds.
                         isAgendaSelected: false,
                         isSobreSelected: true,
                         isPerfilSelected: false
-                    )
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .background(Theme.Colors.footerBackground)

@@ -5,6 +5,9 @@ struct StudentEndurancePersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     private let contentMaxWidth: CGFloat = 380
 
     private struct EnduranceMove: Identifiable, Hashable {
@@ -90,7 +93,8 @@ struct StudentEndurancePersonalRecordsView: View {
                         isAgendaSelected: false,
                         isSobreSelected: true,
                         isPerfilSelected: false
-                    )
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .background(Theme.Colors.footerBackground)

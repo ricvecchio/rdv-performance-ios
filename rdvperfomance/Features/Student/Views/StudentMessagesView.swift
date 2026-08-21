@@ -7,6 +7,9 @@ struct StudentMessagesView: View {
     @Binding var path: [AppRoute]
     let category: TreinoTipo
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
 
     @State private var isLoading: Bool = false
@@ -60,7 +63,8 @@ struct StudentMessagesView: View {
                         isAgendaSelected: false,
                         isSobreSelected: false,
                         isPerfilSelected: false
-                    )
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .frame(maxWidth: .infinity)

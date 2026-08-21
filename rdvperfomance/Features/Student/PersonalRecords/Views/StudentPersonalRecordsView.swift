@@ -5,6 +5,12 @@ struct StudentPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
+    /// Sempre fornecido pelo `StudentRootView`. Usado tanto pelo rodapé
+    /// quanto pelo botão `<` desta tela: como esta view é a RAIZ da seção
+    /// Recordes, `path` está sempre vazio aqui — não existe nada para dar
+    /// pop. "Voltar" nesta tela sempre significa "trocar para a seção Agenda".
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     private let contentMaxWidth: CGFloat = 380
 
     private struct PRMenuItem: Identifiable, Hashable {
@@ -109,7 +115,8 @@ struct StudentPersonalRecordsView: View {
                         isAgendaSelected: false,
                         isSobreSelected: true,
                         isPerfilSelected: false
-                    )
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .background(Theme.Colors.footerBackground)
@@ -170,9 +177,10 @@ struct StudentPersonalRecordsView: View {
         .buttonStyle(.plain)
     }
 
+    // Botão `<` na RAIZ de Recordes: NÃO é pop (path já está vazio aqui).
+    // Funcionalmente troca a seção principal para Agenda.
     private func pop() {
-        guard !path.isEmpty else { return }
-        path.removeLast()
+        onSelectSection(.agenda)
     }
 }
 
