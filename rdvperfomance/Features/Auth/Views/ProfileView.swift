@@ -66,6 +66,10 @@ struct ProfileView: View {
 
     @State private var showRequestLinkModal: Bool = false
 
+    #if DEBUG
+    @StateObject private var gearDebugProbe = NavigationHeaderDebugProbe(name: "GEAR")
+    #endif
+
     private let treinoIcons = [
         "dumbbell",
         "figure.run",
@@ -238,8 +242,6 @@ struct ProfileView: View {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
-                        .frame(width: 44, height: 44, alignment: .leading)
-                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -257,6 +259,7 @@ struct ProfileView: View {
                     #if DEBUG
                     print("[NAV][PROFILE] GEAR TAP", CACurrentMediaTime())
                     print("[NAV][PROFILE] path BEFORE:", path)
+                    gearDebugProbe.recordAction()
                     #endif
 
                     path.append(.configuracoes)
@@ -267,11 +270,12 @@ struct ProfileView: View {
                 } label: {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green)
-                        .frame(width: 44, height: 44, alignment: .trailing)
-                        .contentShape(Rectangle())
+                        #if DEBUG
+                        .background(NavigationHeaderProbeAttachment(probe: gearDebugProbe))
+                        #endif
                 }
                 #if DEBUG
-                .buttonStyle(NavigationDebugButtonStyle(name: "GEAR"))
+                .buttonStyle(NavigationDebugButtonStyle(name: "GEAR", probe: gearDebugProbe))
                 #else
                 .buttonStyle(.plain)
                 #endif
