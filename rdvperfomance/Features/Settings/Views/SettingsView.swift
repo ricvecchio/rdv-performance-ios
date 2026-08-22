@@ -89,12 +89,14 @@ struct SettingsView: View {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
+                        .frame(width: 44, height: 44, alignment: .leading)
+                        .contentShape(Rectangle())
                         #if DEBUG
                         .background(NavigationHeaderProbeAttachment(probe: backDebugProbe))
                         #endif
                 }
                 #if DEBUG
-                .buttonStyle(NavigationDebugButtonStyle(name: "SETTINGS_BACK", probe: backDebugProbe))
+                .buttonStyle(NavigationDebugButtonStyle(name: "SETTINGS_BACK"))
                 #else
                 .buttonStyle(.plain)
                 #endif
@@ -110,6 +112,7 @@ struct SettingsView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
 
         .onAppear {
             #if DEBUG
@@ -165,7 +168,6 @@ struct SettingsView: View {
         #if DEBUG
         print("[NAV][SETTINGS] BACK TAP", CACurrentMediaTime())
         print("[NAV][SETTINGS] path BEFORE dismiss:", path)
-        backDebugProbe.recordAction()
         #endif
 
         dismiss()
