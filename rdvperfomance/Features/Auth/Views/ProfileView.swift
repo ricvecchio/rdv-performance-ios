@@ -238,6 +238,8 @@ struct ProfileView: View {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
+                        .frame(width: 44, height: 44, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -265,6 +267,8 @@ struct ProfileView: View {
                 } label: {
                     Image(systemName: "gearshape.fill")
                         .foregroundColor(.green)
+                        .frame(width: 44, height: 44, alignment: .trailing)
+                        .contentShape(Rectangle())
                 }
                 #if DEBUG
                 .buttonStyle(NavigationDebugButtonStyle(name: "GEAR"))
@@ -275,9 +279,6 @@ struct ProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        #if DEBUG
-        .background(NavigationTransitionDebugProbe(name: "PROFILE"))
-        #endif
         .alert("Trocar unidade", isPresented: $showTrocarUnidadeAlert) {
             TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
 

@@ -124,6 +124,8 @@ struct StudentPersonalRecordsView: View {
                 Button(action: onBack) {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
+                        .frame(width: 44, height: 44, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -140,6 +142,7 @@ struct StudentPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {

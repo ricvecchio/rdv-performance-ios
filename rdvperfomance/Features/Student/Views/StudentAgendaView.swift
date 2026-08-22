@@ -83,6 +83,8 @@ struct StudentAgendaView: View {
                     Button { pop() } label: {
                         Image(systemName: "chevron.left")
                             .foregroundColor(.green)
+                            .frame(width: 44, height: 44, alignment: .leading)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }

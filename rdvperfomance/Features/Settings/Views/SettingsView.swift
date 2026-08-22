@@ -85,6 +85,8 @@ struct SettingsView: View {
                 Button { pop() } label: {
                     Image(systemName: "chevron.left")
                         .foregroundColor(.green)
+                        .frame(width: 44, height: 44, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
                 #if DEBUG
                 .buttonStyle(NavigationDebugButtonStyle(name: "SETTINGS_BACK"))
@@ -103,9 +105,7 @@ struct SettingsView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
-        #if DEBUG
-        .background(NavigationTransitionDebugProbe(name: "SETTINGS"))
-        #endif
+        .navigationBarTitleDisplayMode(.inline)
 
         .onAppear {
             #if DEBUG
