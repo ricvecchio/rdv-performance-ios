@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 import QuartzCore
 import UIKit
 
@@ -17,6 +18,8 @@ struct NavigationDebugButtonStyle: ButtonStyle {
 }
 
 final class NavigationHeaderDebugProbe: ObservableObject {
+    let objectWillChange = ObservableObjectPublisher()
+
     private struct TouchSnapshot {
         let point: CGPoint
         let window: UIWindow?
