@@ -87,10 +87,14 @@ struct SettingsView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
-                        .frame(width: 44, height: 44, alignment: .leading)
-                        .contentShape(Rectangle())
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                         #if DEBUG
                         .background(NavigationHeaderProbeAttachment(probe: backDebugProbe))
                         #endif

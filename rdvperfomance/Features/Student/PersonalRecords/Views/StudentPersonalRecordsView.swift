@@ -122,10 +122,14 @@ struct StudentPersonalRecordsView: View {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
-                        .frame(width: 44, height: 44, alignment: .leading)
-                        .contentShape(Rectangle())
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
