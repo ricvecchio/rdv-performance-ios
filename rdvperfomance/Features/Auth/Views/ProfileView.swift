@@ -1,7 +1,6 @@
 // Tela de perfil com informações do usuário e opções
 import SwiftUI
 import UIKit
-import QuartzCore
 import FirebaseFirestore
 
 struct ProfileView: View {
@@ -65,10 +64,6 @@ struct ProfileView: View {
     @State private var isProcessingLinkAction: Bool = false
 
     @State private var showRequestLinkModal: Bool = false
-
-    #if DEBUG
-    @StateObject private var gearDebugProbe = NavigationHeaderDebugProbe(name: "GEAR")
-    #endif
 
     private let treinoIcons = [
         "dumbbell",
@@ -262,16 +257,7 @@ struct ProfileView: View {
 
             ToolbarItem(placement: .topBarTrailing) {
                 Button {
-                    #if DEBUG
-                    print("[NAV][PROFILE] GEAR TAP", CACurrentMediaTime())
-                    print("[NAV][PROFILE] path BEFORE:", path)
-                    #endif
-
                     path.append(.configuracoes)
-
-                    #if DEBUG
-                    print("[NAV][PROFILE] path AFTER:", path)
-                    #endif
                 } label: {
                     ZStack {
                         Color.clear
@@ -281,15 +267,8 @@ struct ProfileView: View {
                             .foregroundColor(.green)
                     }
                     .contentShape(Rectangle())
-                        #if DEBUG
-                        .background(NavigationHeaderProbeAttachment(probe: gearDebugProbe))
-                        #endif
                 }
-                #if DEBUG
-                .buttonStyle(NavigationDebugButtonStyle(name: "GEAR"))
-                #else
                 .buttonStyle(.plain)
-                #endif
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -322,16 +301,6 @@ struct ProfileView: View {
         }
         .task(id: currentUid) {
             await loadUserData()
-        }
-        .onAppear {
-            #if DEBUG
-            print("[NAV][PROFILE] onAppear", CACurrentMediaTime(), "path:", path)
-            #endif
-        }
-        .onDisappear {
-            #if DEBUG
-            print("[NAV][PROFILE] onDisappear", CACurrentMediaTime(), "path:", path)
-            #endif
         }
     }
 

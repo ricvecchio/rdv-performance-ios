@@ -33,11 +33,6 @@ struct StudentRootView: View {
             }
         }
         .environment(\.selectStudentMainSection, select)
-        .onChange(of: profilePath) { oldValue, newValue in
-            #if DEBUG
-            print("[NAV][ROOT] profilePath:", oldValue, "->", newValue)
-            #endif
-        }
     }
 
     private func select(_ section: StudentMainSection) {

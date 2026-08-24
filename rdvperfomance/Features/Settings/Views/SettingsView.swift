@@ -1,5 +1,4 @@
 import SwiftUI
-import QuartzCore
 
 // Tela de configurações do aplicativo
 struct SettingsView: View {
@@ -12,10 +11,6 @@ struct SettingsView: View {
 
     @State private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
     @State private var showWeightUnitSheet: Bool = false
-
-    #if DEBUG
-    @StateObject private var backDebugProbe = NavigationHeaderDebugProbe(name: "BACK")
-    #endif
 
     private let preferredWeightUnitKey: String = "preferredWeightUnit"
 
@@ -95,15 +90,8 @@ struct SettingsView: View {
                             .foregroundColor(.green)
                     }
                     .contentShape(Rectangle())
-                        #if DEBUG
-                        .background(NavigationHeaderProbeAttachment(probe: backDebugProbe))
-                        #endif
                 }
-                #if DEBUG
-                .buttonStyle(NavigationDebugButtonStyle(name: "SETTINGS_BACK"))
-                #else
                 .buttonStyle(.plain)
-                #endif
             }
 
             ToolbarItem(placement: .principal) {
@@ -119,19 +107,10 @@ struct SettingsView: View {
         .navigationBarTitleDisplayMode(.inline)
 
         .onAppear {
-            #if DEBUG
-            print("[NAV][SETTINGS] onAppear", CACurrentMediaTime(), "path:", path)
-            #endif
-
             let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
             if preferredWeightUnitRawState != raw {
                 preferredWeightUnitRawState = raw
             }
-        }
-        .onDisappear {
-            #if DEBUG
-            print("[NAV][SETTINGS] onDisappear", CACurrentMediaTime(), "path:", path)
-            #endif
         }
         .onChange(of: preferredWeightUnitRawState) { _, newValue in
             UserDefaults.standard.set(newValue, forKey: preferredWeightUnitKey)
@@ -169,11 +148,6 @@ struct SettingsView: View {
     }
 
     private func pop() {
-        #if DEBUG
-        print("[NAV][SETTINGS] BACK TAP", CACurrentMediaTime())
-        print("[NAV][SETTINGS] path BEFORE dismiss:", path)
-        #endif
-
         dismiss()
     }
 
