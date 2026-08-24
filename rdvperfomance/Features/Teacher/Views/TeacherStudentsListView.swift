@@ -105,8 +105,14 @@ struct TeacherStudentsListView: View {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button(action: onBack) {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -147,6 +153,7 @@ struct TeacherStudentsListView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
         .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
             Button("Cancelar", role: .cancel) { studentPendingUnlink = nil }
             Button("Desvincular", role: .destructive) { Task { await confirmUnlink() } }
