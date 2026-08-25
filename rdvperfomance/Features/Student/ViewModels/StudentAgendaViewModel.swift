@@ -5,6 +5,7 @@ import Combine
 final class StudentAgendaViewModel: ObservableObject {
 
     enum LinkBannerState: Equatable {
+        case idle
         case loading
         case notLinked
         case invitePending(teacherEmail: String)
@@ -16,7 +17,7 @@ final class StudentAgendaViewModel: ObservableObject {
     @Published private(set) var isLoading: Bool = false
     @Published var errorMessage: String? = nil
 
-    @Published private(set) var linkBannerState: LinkBannerState = .loading
+    @Published private(set) var linkBannerState: LinkBannerState = .idle
     @Published private(set) var isProcessingLinkAction: Bool = false
     @Published var linkActionMessage: String? = nil
     @Published var linkActionMessageIsError: Bool = false
@@ -25,6 +26,8 @@ final class StudentAgendaViewModel: ObservableObject {
 
     private var hasLoadedLinkStatus: Bool = false
     private var hasLoadedWeeksAndMeta: Bool = false
+
+    var hasLoadedWeeks: Bool { hasLoadedWeeksAndMeta }
 
     private var weekRangeText: [String: String] = [:]
     private var weekProgressPercent: [String: Int] = [:]
@@ -48,9 +51,10 @@ final class StudentAgendaViewModel: ObservableObject {
     }
 
     func loadLinkStatus(force: Bool) async {
-        if force { hasLoadedLinkStatus = false }
-
-        linkBannerState = .loading
+        if force {
+            hasLoadedLinkStatus = false
+            linkBannerState = .loading
+        }
         linkActionMessage = nil
         linkActionMessageIsError = false
 
@@ -177,11 +181,7 @@ final class StudentAgendaViewModel: ObservableObject {
     // MARK: - Semanas / Meta
 
     func loadWeeksAndMeta(force: Bool = false) async {
-        if force {
-            hasLoadedWeeksAndMeta = false
-        }
-
-        guard !hasLoadedWeeksAndMeta else { return }
+        guard force || !hasLoadedWeeksAndMeta else { return }
 
         // Evita concorrência: se já carregando, aguarda conclusão
         guard !isLoading else { return }
@@ -218,7 +218,7 @@ final class StudentAgendaViewModel: ObservableObject {
             #endif
 
         } catch {
-            hasLoadedWeeksAndMeta = false
+            hasLoadedWeeksAndMeta = true
             self.errorMessage = (error as NSError).localizedDescription
             isLoading = false
         }

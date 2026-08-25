@@ -170,6 +170,9 @@ struct StudentAgendaView: View {
         Group {
             switch vm.linkBannerState {
 
+            case .idle:
+                EmptyView()
+
             case .loading:
                 VStack(alignment: .leading, spacing: 8) {
                     HStack(spacing: 10) {
@@ -392,9 +395,9 @@ struct StudentAgendaView: View {
     // Conteúdo principal com estados (loading / error / empty / list)
     private var contentCard: some View {
         VStack(spacing: 0) {
-            if vm.isLoading {
+            if vm.weeks.isEmpty && (!vm.hasLoadedWeeks || vm.isLoading) {
                 loadingView
-            } else if let errorMessage = vm.errorMessage {
+            } else if vm.weeks.isEmpty, let errorMessage = vm.errorMessage {
                 errorView(message: errorMessage)
             } else if vm.weeks.isEmpty {
                 emptyView
@@ -533,10 +536,12 @@ struct StudentAgendaView: View {
     }
 
     private func loadInitialData() async {
-        if !isTeacherViewing {
-            await vm.loadLinkStatusIfNeeded()
+        if isTeacherViewing {
+            await vm.loadWeeksAndMeta()
+        } else {
+            async let linkStatus: Void = vm.loadLinkStatusIfNeeded()
+            async let weeks: Void = vm.loadWeeksAndMeta()
+            await (linkStatus, weeks)
         }
-
-        await vm.loadWeeksAndMeta()
     }
 }
