@@ -66,6 +66,54 @@ O `AppRouter` implementa proteções (guards) para garantir que:
 
 ---
 
+## 👤 Perfil e Foto de Perfil
+
+`EditProfileView` é compartilhada pelos fluxos autenticados de Aluno e Professor. A tela permite atualizar foto, WhatsApp e área de foco, mantendo a sincronização local e remota da foto.
+
+### Fluxo seguro de foto
+
+1. O `PhotosPicker` carrega a imagem selecionada como `Data`.
+2. A imagem é processada fora da thread principal antes do envio.
+3. A renderização normaliza a orientação e preserva a proporção original.
+4. A foto é limitada a 1024 px no maior lado, com fallbacks de 800 px e 640 px.
+5. Cada tamanho tenta JPEG progressivo nas qualidades `0.82`, `0.72`, `0.62`, `0.52` e `0.42`.
+6. Cada JPEG é convertido para Base64 e validado pelo tamanho final da string.
+7. A primeira versão com `base64.utf8.count <= 800_000` é persistida localmente e enviada ao Firestore.
+
+```swift
+private static let maxProfilePhotoBase64Bytes = 800_000
+private static let profilePhotoDimensions: [CGFloat] = [1024, 800, 640]
+private static let compressionQualities: [CGFloat] = [0.82, 0.72, 0.62, 0.52, 0.42]
+```
+
+O campo remoto continua sendo `photoBase64`; não há alteração de modelo, collection, autenticação, `FirestoreRepository` público ou migração para Firebase Storage. A mesma versão Base64 aprovada é armazenada pelo `LocalProfileStore`, evitando manter localmente a foto original em resolução excessiva.
+
+Caso não seja possível gerar uma versão dentro do limite seguro, a tela informa apenas que a foto não pôde ser processada e solicita outra imagem, sem expor detalhes internos do Firestore.
+
+---
+
+## ↩️ Navegação e Botão Voltar
+
+As telas autenticadas usam a navigation bar nativa com título inline. Botões de retorno com `chevron.left` preservam a action original (`pop()`, `dismiss()`, `onBack()` ou equivalente) e usam uma área de toque invisível de 44x44 pt.
+
+```swift
+Button { pop() } label: {
+    ZStack {
+        Color.clear
+            .frame(width: 44, height: 44)
+
+        Image(systemName: "chevron.left")
+            .foregroundColor(.green)
+    }
+    .contentShape(Rectangle())
+}
+.buttonStyle(.plain)
+```
+
+O símbolo mantém seu tamanho visual original, enquanto `contentShape(Rectangle())` torna toda a área de 44x44 pt interativa. As views que usam esse padrão também declaram `.navigationBarTitleDisplayMode(.inline)`, sem alterar rotas, `NavigationStack`, `AppRouter`, RootViews ou `FooterBar`.
+
+---
+
 ## 🔐 Tela de Login
 
 - Tela inicial do aplicativo
