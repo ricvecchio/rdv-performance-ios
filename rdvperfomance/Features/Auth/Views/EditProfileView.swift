@@ -3,6 +3,14 @@ import SwiftUI
 import PhotosUI
 import UIKit
 
+private enum ProfilePhotoProcessingError: LocalizedError {
+    case unableToProcess
+
+    var errorDescription: String? {
+        "Não foi possível processar a foto selecionada. Escolha outra imagem e tente novamente."
+    }
+}
+
 struct EditProfileView: View {
 
     @Binding var path: [AppRoute]
@@ -34,6 +42,10 @@ struct EditProfileView: View {
     private let contentMaxWidth: CGFloat = 380
 
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
+
+    private static let maxProfilePhotoBase64Bytes = 800_000
+    private static let profilePhotoDimensions: [CGFloat] = [1024, 800, 640]
+    private static let compressionQualities: [CGFloat] = [0.82, 0.72, 0.62, 0.52, 0.42]
 
     private var currentUid: String? { session.currentUid }
 
@@ -421,19 +433,22 @@ struct EditProfileView: View {
 
         guard let previewImage else { return }
 
-        // 1) Salvar local (como já fazia)
-        let ok = LocalProfileStore.shared.setPhotoImage(previewImage, userId: currentUid, compressionQuality: 0.82)
-        if !ok {
-            throw FirestoreRepositoryError.writeFailed
+        let processedPhoto = await Task.detached(priority: .userInitiated) {
+            Self.makeProfilePhoto(from: previewImage)
+        }.value
+
+        guard let processedPhoto else {
+            throw ProfilePhotoProcessingError.unableToProcess
         }
 
-        // 2) Salvar no Firestore em base64 (para outras telas/usuários verem)
-        guard let data = previewImage.jpegData(compressionQuality: 0.72) else {
-            throw FirestoreRepositoryError.invalidData
-        }
+        // Persiste exatamente a versão aprovada para o Firestore.
+        LocalProfileStore.shared.setPhotoBase64(processedPhoto.base64, userId: currentUid)
+        self.previewImage = processedPhoto.image
 
-        let base64 = data.base64EncodedString()
-        try await FirestoreRepository.shared.setUserPhotoBase64(uid: uid, photoBase64: base64)
+        try await FirestoreRepository.shared.setUserPhotoBase64(
+            uid: uid,
+            photoBase64: processedPhoto.base64
+        )
     }
 
     // ✅ Remove foto local + remove do Firestore
@@ -485,6 +500,54 @@ struct EditProfileView: View {
         Task { @MainActor in
             self.showError = true
             self.errorMessage = message
+        }
+    }
+
+    private static func makeProfilePhoto(from image: UIImage) -> (image: UIImage, base64: String)? {
+        for dimension in profilePhotoDimensions {
+            guard let resizedImage = normalizedAndResizedImage(image, maximumDimension: dimension) else {
+                return nil
+            }
+
+            for quality in compressionQualities {
+                guard let data = resizedImage.jpegData(compressionQuality: quality) else {
+                    continue
+                }
+
+                let base64 = data.base64EncodedString()
+                if base64.utf8.count <= maxProfilePhotoBase64Bytes {
+                    return (resizedImage, base64)
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private static func normalizedAndResizedImage(
+        _ image: UIImage,
+        maximumDimension: CGFloat
+    ) -> UIImage? {
+        let sourceSize = image.size
+        guard sourceSize.width > 0, sourceSize.height > 0 else {
+            return nil
+        }
+
+        let scale = min(maximumDimension / max(sourceSize.width, sourceSize.height), 1)
+        let targetSize = CGSize(
+            width: (sourceSize.width * scale).rounded(.down),
+            height: (sourceSize.height * scale).rounded(.down)
+        )
+        guard targetSize.width > 0, targetSize.height > 0 else {
+            return nil
+        }
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+
+        return UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
         }
     }
 
