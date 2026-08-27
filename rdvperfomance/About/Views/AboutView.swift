@@ -79,6 +79,7 @@ struct AboutView: View {
                     }
                     .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {

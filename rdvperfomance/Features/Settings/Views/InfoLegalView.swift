@@ -84,6 +84,7 @@ struct InfoLegalView: View {
                     }
                     .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
