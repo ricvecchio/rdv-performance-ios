@@ -509,7 +509,7 @@ struct ProfileView: View {
                 .foregroundColor(.white.opacity(0.55))
 
             VStack(alignment: .leading, spacing: 4) {
-                profileDetail("Nome", userName)
+                Color.clear.frame(height: 34)
                 profileDetail("E-mail", studentEmail)
                 profileDetail("CREF", userCref)
                 profileDetail("WhatsApp", BrazilianPhoneFormatter.format(userPhone))
