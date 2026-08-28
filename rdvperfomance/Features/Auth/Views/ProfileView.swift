@@ -529,10 +529,12 @@ struct ProfileView: View {
     private func profileDetail(_ title: String, _ value: String) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            Text("\(title): ")
-                .font(.system(size: 13, weight: .semibold))
-            + Text(trimmed)
-                .font(.system(size: 13))
+            (
+                Text("\(title): ")
+                    .font(.system(size: 13, weight: .semibold))
+                + Text(trimmed)
+                    .font(.system(size: 13))
+            )
                 .foregroundColor(.white.opacity(0.65))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
