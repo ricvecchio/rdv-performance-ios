@@ -323,7 +323,7 @@ rdvperformance-ios
    │  │     ├─ LoginView.swift
    │  │     ├─ ProfileView.swift
    │  │     ├─ RegisterStudentView.swift
-   │  │     └─ RegisterTrainerView.swift
+   │  │     └─ RegisterTeacherView.swift
    │  ├─ CoreData/
    │  │  ├─ ActivityListView.swift
    │  │  ├─ PersistenceController.swift
@@ -505,7 +505,7 @@ rdvperformance-ios
 - **`AppRoute.swift`**: Define todas as rotas disponíveis no app
 - **Telas implementadas:**
   - Login (`LoginView.swift`)
-  - Registro (estudante e treinador: `RegisterStudentView.swift`, `RegisterTrainerView.swift`)
+  - Registro (estudante e professor: `RegisterStudentView.swift`, `RegisterTeacherView.swift`)
   - Perfil (`ProfileView.swift`, `EditProfileView.swift`)
   - Página Principal/Home (`Home/Views/`)
   - Configurações (`Settings/Views/`)

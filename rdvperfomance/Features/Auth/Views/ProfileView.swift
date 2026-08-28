@@ -33,6 +33,9 @@ struct ProfileView: View {
 
     @State private var studentDefaultCategoryRaw: String = ""
     @State private var studentEmail: String = ""
+    @State private var userPhone: String = ""
+    @State private var userCref: String = ""
+    @State private var userBio: String = ""
 
 
     private var categoriaAtualAluno: TreinoTipo {
@@ -302,6 +305,9 @@ struct ProfileView: View {
         .task(id: currentUid) {
             await loadUserData()
         }
+        .onAppear {
+            Task { await loadUserData() }
+        }
     }
 
     @ViewBuilder
@@ -340,6 +346,9 @@ struct ProfileView: View {
             unitName = ""
             studentDefaultCategoryRaw = ""
             studentEmail = ""
+            userPhone = ""
+            userCref = ""
+            userBio = ""
             linkedTeachers = []
             linkedTeacherIds = []
             return
@@ -350,15 +359,21 @@ struct ProfileView: View {
 
         do {
             if let user = try await repository.getUser(uid: uid) {
-                userName = user.name
+                userName = user.name.trimmingCharacters(in: .whitespacesAndNewlines)
                 unitName = (user.unitName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 studentDefaultCategoryRaw = (user.defaultCategory ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 studentEmail = user.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                userPhone = BrazilianPhoneFormatter.normalize(user.phone ?? "")
+                userCref = (user.cref ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                userBio = (user.bio ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             } else {
                 userName = ""
                 unitName = ""
                 studentDefaultCategoryRaw = ""
                 studentEmail = ""
+                userPhone = ""
+                userCref = ""
+                userBio = ""
             }
 
             if session.userType != .STUDENT {
@@ -371,6 +386,9 @@ struct ProfileView: View {
             unitName = ""
             studentDefaultCategoryRaw = ""
             studentEmail = ""
+            userPhone = ""
+            userCref = ""
+            userBio = ""
             linkedTeachers = []
             linkedTeacherIds = []
 
@@ -489,11 +507,32 @@ struct ProfileView: View {
             Text(unitName.isEmpty ? " " : unitName)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
+
+            VStack(alignment: .leading, spacing: 4) {
+                profileDetail("Nome", userName)
+                profileDetail("E-mail", studentEmail)
+                profileDetail("CREF", userCref)
+                profileDetail("WhatsApp", BrazilianPhoneFormatter.format(userPhone))
+                profileDetail("Biografia", userBio)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.top, 4)
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
+    }
+
+    @ViewBuilder
+    private func profileDetail(_ title: String, _ value: String) -> some View {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            Text("\(title): \(trimmed)")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.65))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private func optionsCard() -> some View {

@@ -24,10 +24,16 @@ struct EditProfileView: View {
     // ✅ Armazena apenas dígitos normalizados (ex.: "11988888888")
     @State private var whatsappDigits: String = ""
     @State private var focusAreaDraft: FocusAreaDTO = .CROSSFIT
+    @State private var userName: String = ""
+    @State private var userEmail: String = ""
+    @State private var crefDraft: String = ""
+    @State private var bioDraft: String = ""
 
     // Referência original para detectar alterações pendentes
     @State private var originalWhatsappDigits: String = ""
     @State private var originalFocusArea: FocusAreaDTO = .CROSSFIT
+    @State private var originalCref: String = ""
+    @State private var originalBio: String = ""
 
     @State private var isSaving: Bool = false
     @State private var showError: Bool = false
@@ -48,6 +54,7 @@ struct EditProfileView: View {
     private static let compressionQualities: [CGFloat] = [0.82, 0.72, 0.62, 0.52, 0.42]
 
     private var currentUid: String? { session.currentUid }
+    private let repository: FirestoreRepository = .shared
 
     private var storedImageForUser: UIImage? {
         LocalProfileStore.shared.getPhotoImage(userId: currentUid)
@@ -64,6 +71,8 @@ struct EditProfileView: View {
     private var hasChanges: Bool {
         whatsappDigits != originalWhatsappDigits ||
         focusAreaDraft != originalFocusArea ||
+        crefDraft != originalCref ||
+        bioDraft != originalBio ||
         hasNewPhoto
     }
 
@@ -162,7 +171,7 @@ struct EditProfileView: View {
             }
         }
         .onAppear {
-            loadFromStore()
+            Task { await loadProfile() }
         }
         .onChange(of: selectedItem) { _, newItem in
             guard let newItem else { return }
@@ -190,11 +199,6 @@ struct EditProfileView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("A foto escolhida será exibida no seu perfil e no cabeçalho quando logado.")
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(.white.opacity(0.60))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
@@ -205,6 +209,8 @@ struct EditProfileView: View {
     // Retorna card com campos do formulário
     private func formCard() -> some View {
         VStack(spacing: 18) {
+            readOnlyRow(title: "Nome", value: userName)
+            readOnlyRow(title: "E-mail", value: userEmail)
 
             // ✅ Campo de telefone com máscara brasileira e FocusState
             VStack(alignment: .leading, spacing: 6) {
@@ -241,6 +247,20 @@ struct EditProfileView: View {
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
             )
+
+            if session.userType == .TRAINER {
+                UnderlineTextField(
+                    title: "CREF (opcional)",
+                    text: $crefDraft,
+                    isSecure: false,
+                    showPassword: .constant(false),
+                    lineColor: lineColor,
+                    textColor: .white,
+                    placeholderColor: textSecondary
+                )
+
+                multilineBioField()
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
@@ -354,28 +374,94 @@ struct EditProfileView: View {
         }
     }
 
-    // Carrega dados salvos do usuário atual do armazenamento local
-    private func loadFromStore() {
-        guard let _ = currentUid else {
+    private func readOnlyRow(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            Text(value)
+                .font(.system(size: 16))
+                .foregroundColor(.white.opacity(0.45))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Rectangle()
+                .fill(lineColor)
+                .frame(height: 1)
+        }
+    }
+
+    private func multilineBioField() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Bio (opcional)")
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            TextEditor(text: $bioDraft)
+                .frame(height: 88)
+                .foregroundColor(.white)
+                .font(.system(size: 16))
+                .background(Color.clear)
+                .scrollContentBackground(.hidden)
+                .overlay(
+                    Rectangle()
+                        .fill(lineColor)
+                        .frame(height: 1),
+                    alignment: .bottom
+                )
+        }
+    }
+
+    // Carrega o perfil remoto e usa o armazenamento local apenas para dados legados.
+    private func loadProfile() async {
+        guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
             whatsappDigits = ""
             originalWhatsappDigits = ""
             focusAreaDraft = .CROSSFIT
             originalFocusArea = .CROSSFIT
+            userName = ""
+            userEmail = ""
+            crefDraft = ""
+            originalCref = ""
+            bioDraft = ""
+            originalBio = ""
             previewImage = nil
             hasNewPhoto = false
             return
         }
 
-        // ✅ Normaliza sempre para dígitos (compatível com valores antigos já formatados)
-        let rawPhone = LocalProfileStore.shared.getWhatsapp(userId: currentUid)
-        let normalized = BrazilianPhoneFormatter.normalize(rawPhone)
-        whatsappDigits = normalized
-        originalWhatsappDigits = normalized
+        let localPhone = LocalProfileStore.shared.getWhatsapp(userId: uid)
+        let localFocusArea = LocalProfileStore.shared.getFocusAreaRaw(userId: uid)
 
-        let raw = LocalProfileStore.shared.getFocusAreaRaw(userId: currentUid)
-        let area = FocusAreaDTO(rawValue: raw.isEmpty ? FocusAreaDTO.CROSSFIT.rawValue : raw) ?? .CROSSFIT
-        focusAreaDraft = area
-        originalFocusArea = area
+        var didLoadRemoteProfile = false
+        do {
+            let user = try await repository.getUser(uid: uid)
+            let remotePhone = (user?.phone ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let remoteFocusArea = (user?.focusArea ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let phone = remotePhone.isEmpty ? localPhone : remotePhone
+            let focusArea = remoteFocusArea.isEmpty ? localFocusArea : remoteFocusArea
+            let area = FocusAreaDTO(rawValue: focusArea) ?? .CROSSFIT
+
+            userName = user?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            userEmail = user?.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+            whatsappDigits = BrazilianPhoneFormatter.normalize(phone)
+            originalWhatsappDigits = whatsappDigits
+            focusAreaDraft = area
+            originalFocusArea = area
+            crefDraft = (user?.cref ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            originalCref = crefDraft
+            bioDraft = (user?.bio ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            originalBio = bioDraft
+            didLoadRemoteProfile = true
+        } catch {
+            presentError((error as NSError).localizedDescription)
+            let normalized = BrazilianPhoneFormatter.normalize(localPhone)
+            whatsappDigits = normalized
+            originalWhatsappDigits = normalized
+            let area = FocusAreaDTO(rawValue: localFocusArea) ?? .CROSSFIT
+            focusAreaDraft = area
+            originalFocusArea = area
+        }
 
         hasNewPhoto = false
 
@@ -383,8 +469,10 @@ struct EditProfileView: View {
             previewImage = img
         }
 
-        showError = false
-        errorMessage = ""
+        if didLoadRemoteProfile {
+            showError = false
+            errorMessage = ""
+        }
     }
 
     // ✅ Salva local + sincroniza foto no Firestore (para o professor enxergar na lista)
@@ -394,17 +482,28 @@ struct EditProfileView: View {
         phoneFieldFocused = false  // Fecha teclado antes de salvar
         defer { isSaving = false }
 
-        saveWhatsapp()
-        saveFocusArea()
-
         do {
+            guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
+                throw FirestoreRepositoryError.missingUserId
+            }
+            try await repository.updateUserProfile(
+                uid: uid,
+                phone: whatsappDigits.isEmpty ? nil : whatsappDigits,
+                cref: session.userType == .TRAINER ? crefDraft : nil,
+                bio: session.userType == .TRAINER ? bioDraft : nil,
+                focusArea: focusAreaDraft.rawValue
+            )
             try await savePhotoIfNeededAndSync()
             await MainActor.run {
+                saveWhatsapp()
+                saveFocusArea()
                 showError = false
                 errorMessage = ""
                 // Atualiza referência original para refletir dados salvos
                 originalWhatsappDigits = whatsappDigits
                 originalFocusArea = focusAreaDraft
+                originalCref = crefDraft
+                originalBio = bioDraft
                 hasNewPhoto = false
             }
             pop()

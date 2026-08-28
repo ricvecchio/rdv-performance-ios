@@ -43,6 +43,22 @@ final class FirestoreRepository {
         try await userRepository.upsertUserProfile(uid: uid, form: form)
     }
 
+    func updateUserProfile(
+        uid: String,
+        phone: String?,
+        cref: String?,
+        bio: String?,
+        focusArea: String
+    ) async throws {
+        try await userRepository.updateUserProfile(
+            uid: uid,
+            phone: phone,
+            cref: cref,
+            bio: bio,
+            focusArea: focusArea
+        )
+    }
+
     func setUserPhotoBase64(uid: String, photoBase64: String) async throws {
         try await userRepository.setUserPhotoBase64(uid: uid, photoBase64: photoBase64)
     }
@@ -431,4 +447,3 @@ final class FirestoreRepository {
         try await workoutTemplateRepository.deleteWorkoutTemplate(templateId: templateId)
     }
 }
-

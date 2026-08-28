@@ -2,7 +2,7 @@
 import SwiftUI
 import UIKit
 
-struct RegisterTrainerView: View {
+struct RegisterTeacherView: View {
 
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()

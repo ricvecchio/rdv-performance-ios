@@ -22,7 +22,7 @@ struct AppRouter: View {
                             case .registerStudent:
                                 RegisterStudentView(path: $authenticationPath)
                             case .registerTrainer:
-                                RegisterTrainerView(path: $authenticationPath)
+                                RegisterTeacherView(path: $authenticationPath)
                             default:
                                 EmptyView()
                             }

@@ -742,6 +742,41 @@ final class UserRepository: FirestoreBaseRepository {
             .setData(payload, merge: true)
     }
 
+    func updateUserProfile(
+        uid: String,
+        phone: String?,
+        cref: String?,
+        bio: String?,
+        focusArea: String
+    ) async throws {
+        let cleanUid = clean(uid)
+        let cleanPhone = clean(phone ?? "")
+        let cleanFocusArea = clean(focusArea)
+
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard !cleanFocusArea.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        var payload: [String: Any] = [
+            "phone": cleanPhone.isEmpty ? FieldValue.delete() : cleanPhone,
+            "focusArea": cleanFocusArea,
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        if let cref {
+            let cleanCref = clean(cref)
+            payload["cref"] = cleanCref.isEmpty ? FieldValue.delete() : cleanCref
+        }
+
+        if let bio {
+            let cleanBio = clean(bio)
+            payload["bio"] = cleanBio.isEmpty ? FieldValue.delete() : cleanBio
+        }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .setData(payload, merge: true)
+    }
+
     func setUserPhotoBase64(uid: String, photoBase64: String) async throws {
         let u = clean(uid)
         let b64 = clean(photoBase64)
@@ -795,4 +830,3 @@ final class UserRepository: FirestoreBaseRepository {
             .setData(payload, merge: true)
     }
 }
-
