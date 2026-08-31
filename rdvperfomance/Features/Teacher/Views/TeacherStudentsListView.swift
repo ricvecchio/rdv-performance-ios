@@ -62,7 +62,6 @@ struct TeacherStudentsListView: View {
                     VStack(spacing: 16) {
                         header
                         filterRow
-                        sectionTitle("ALUNOS VINCULADOS")
                         contentCard
                         if !vm.pendingInvites.isEmpty {
                             pendingInvitesCard
@@ -266,16 +265,22 @@ struct TeacherStudentsListView: View {
 
     private var contentCard: some View {
         VStack(spacing: 0) {
-            if vm.isLoading {
-                loadingView
-            } else if let msg = vm.errorMessage {
-                errorView(message: msg)
-            } else {
-                let list = vm.filteredStudents(filter: filter)
-                if list.isEmpty { emptyView } else { studentsList(list) }
+            sectionTitle("ALUNOS VINCULADOS")
+                .padding(.top, 14)
+                .padding(.bottom, 10)
+
+            VStack(spacing: 0) {
+                if vm.isLoading {
+                    loadingView
+                } else if let msg = vm.errorMessage {
+                    errorView(message: msg)
+                } else {
+                    let list = vm.filteredStudents(filter: filter)
+                    if list.isEmpty { emptyView } else { studentsList(list) }
+                }
             }
+            .padding(.vertical, 8)
         }
-        .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
