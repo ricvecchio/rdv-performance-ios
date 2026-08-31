@@ -175,10 +175,26 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
-    /// Convites com status `pending` que devem aparecer na tela principal.
+    /// Convites pendentes de alunos que ainda não possuem vínculo efetivo.
     var pendingInvites: [TeacherStudentInviteFS] {
+        let linkedEmails = Set(
+            students.map {
+                $0.email
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased()
+            }
+            .filter { !$0.isEmpty }
+        )
+
         invites.filter {
-            $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending"
+            let isPending = $0.status
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased() == "pending"
+            let inviteEmail = $0.studentEmail
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+
+            return isPending && !linkedEmails.contains(inviteEmail)
         }
     }
 
