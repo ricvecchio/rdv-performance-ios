@@ -27,6 +27,9 @@ struct TeacherStudentsListView: View {
     @State private var invitePendingCancel: TeacherStudentInviteFS? = nil
     @State private var showCancelInviteConfirm: Bool = false
 
+    @State private var studentPendingLink: StudentLinkItem? = nil
+    @State private var showCategoryDialog: Bool = false
+
     init(
         path: Binding<[AppRoute]>,
         selectedCategory: TreinoTipo,
@@ -59,11 +62,12 @@ struct TeacherStudentsListView: View {
                     VStack(spacing: 16) {
                         header
                         filterRow
+                        sectionTitle("ALUNOS VINCULADOS")
                         contentCard
-                        // ✅ Convites pendentes na tela principal (sem precisar abrir o modal)
                         if !vm.pendingInvites.isEmpty {
                             pendingInvitesCard
                         }
+                        pendingLinkRequestsCard
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -97,8 +101,7 @@ struct TeacherStudentsListView: View {
         }
         // Carrega alunos e convites pendentes assim que session.uid estiver disponível
         .task(id: session.uid ?? "") {
-            await loadAllStudents()
-            await loadInvitesIfPossible()
+            await loadInitialData()
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
@@ -173,10 +176,31 @@ struct TeacherStudentsListView: View {
                 Text("O convite será cancelado.")
             }
         }
+        .alert("Erro", isPresented: $vm.showLinkErrorAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(vm.linkErrorMessage ?? "Ocorreu um erro.")
+        }
+        .alert("Sucesso", isPresented: $vm.showLinkSuccessAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(vm.linkSuccessMessage ?? "Aluno vinculado.")
+        }
+        .confirmationDialog(
+            "Selecione a categoria do vínculo",
+            isPresented: $showCategoryDialog,
+            titleVisibility: .visible
+        ) {
+            Button(TreinoTipo.crossfit.displayName) { Task { await confirmLink(.crossfit) } }
+            Button(TreinoTipo.academia.displayName) { Task { await confirmLink(.academia) } }
+            Button(TreinoTipo.emCasa.displayName) { Task { await confirmLink(.emCasa) } }
+            Button("Cancelar", role: .cancel) { studentPendingLink = nil }
+        } message: {
+            Text(linkDialogMessageText())
+        }
         // Sheet Convites — ao fechar, recarrega alunos e convites
         .sheet(isPresented: $showInviteSheet, onDismiss: {
             Task {
-                await loadAllStudents()
                 await loadInvitesIfPossible()
             }
         }) {
@@ -186,27 +210,19 @@ struct TeacherStudentsListView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-
             Text("Selecione um aluno para ver detalhes e criar treinos.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
-
-            Button {
-                path.append(.teacherLinkStudent(category: selectedCategory))
-            } label: {
-                HStack {
-                    Image(systemName: "plus")
-                    Text("Vincular aluno")
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
-            }
-            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func sectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(.white.opacity(0.35))
+            .padding(.horizontal, 16)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var filterRow: some View {
@@ -396,6 +412,19 @@ struct TeacherStudentsListView: View {
         await vm.loadStudents(teacherId: teacherId)
     }
 
+    private func loadInitialData() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty else {
+            vm.errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+
+        async let students: Void = vm.loadStudents(teacherId: teacherId)
+        async let invites: Void = vm.loadInvites(teacherId: teacherId)
+        async let requests: Void = vm.loadPendingLinkRequests(teacherId: teacherId)
+        _ = await (students, invites, requests)
+        UserDefaults.standard.set(Date(), forKey: studentActivitiesLastSeenKey(teacherId: teacherId))
+    }
+
     private func unlinkMessageText() -> String {
         guard let student = studentPendingUnlink else {
             return "Tem certeza que deseja desvincular este aluno?"
@@ -425,20 +454,13 @@ struct TeacherStudentsListView: View {
             studentId: studentId,
             categoryToRemove: filter
         )
-
         studentPendingUnlink = nil
-        await loadAllStudents()
     }
-
-    // MARK: - ✅ Seção de convites pendentes na tela principal
 
     private var pendingInvitesCard: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            Text("CONVITES PENDENTES")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
-                .padding(.horizontal, 16)
+            sectionTitle("CONVITES ENVIADOS")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -510,6 +532,82 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
     }
 
+    private var pendingLinkRequestsCard: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionTitle("CONVITES RECEBIDOS")
+                .padding(.top, 14)
+                .padding(.bottom, 10)
+
+            if vm.isLinkRequestsLoading {
+                HStack(spacing: 10) {
+                    ProgressView()
+                    Text("Carregando solicitações...")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 14)
+            } else if vm.pendingLinkRequests.isEmpty {
+                Text("Nenhuma solicitação pendente")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 14)
+            } else {
+                ForEach(Array(vm.pendingLinkRequests.enumerated()), id: \.offset) { index, item in
+                    linkRequestRow(item)
+
+                    if index < vm.pendingLinkRequests.count - 1 {
+                        innerDivider(leading: 54)
+                    }
+                }
+
+                Color.clear.frame(height: 8)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private func linkRequestRow(_ item: StudentLinkItem) -> some View {
+        Button {
+            studentPendingLink = item
+            showCategoryDialog = true
+        } label: {
+            HStack(spacing: 14) {
+                StudentAvatarView(base64: item.photoBase64, size: 28)
+                    .frame(width: 28)
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.name)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+
+                    if !item.studentEmail.isEmpty {
+                        Text(item.studentEmail)
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+                }
+
+                Spacer()
+
+                Text("Vincular")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.90))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(Capsule().fill(Color.green.opacity(0.16)))
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(vm.isLinkRequestsLoading)
+    }
+
     private func confirmCancelInvite() async {
         guard let inv = invitePendingCancel,
               let invId = inv.id, !invId.isEmpty,
@@ -521,6 +619,32 @@ struct TeacherStudentsListView: View {
 
         await vm.cancelInvite(inviteId: invId, teacherId: teacherId)
         invitePendingCancel = nil
+    }
+
+    private func linkDialogMessageText() -> String {
+        guard let item = studentPendingLink else { return "Selecione uma categoria." }
+        return "Aluno: \(item.name)\nEscolha a categoria para vincular."
+    }
+
+    private func confirmLink(_ category: TreinoTipo) async {
+        guard let teacherId = session.uid, !teacherId.isEmpty else {
+            vm.setLinkError("Não foi possível identificar o professor logado.")
+            studentPendingLink = nil
+            return
+        }
+        guard let item = studentPendingLink else { return }
+
+        await vm.approveRequestAndLinkStudent(
+            teacherId: teacherId,
+            requestId: item.requestId,
+            studentId: item.studentId,
+            category: category.firestoreKey
+        )
+        studentPendingLink = nil
+    }
+
+    private func studentActivitiesLastSeenKey(teacherId: String) -> String {
+        "teacherStudentActivitiesLastSeen.\(teacherId)"
     }
 
     // MARK: - ✅ Categoria combinada (vínculo / cadastro) + navegação
@@ -716,7 +840,6 @@ struct TeacherStudentsListView: View {
                         return
                     }
                     await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
-                    await loadInvitesIfPossible()
                 }
             } label: {
                 HStack {

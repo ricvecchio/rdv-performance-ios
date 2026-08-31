@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 // Barra de navegação inferior com diferentes configurações para cada tipo de usuário
 struct FooterBar: View {
@@ -67,6 +68,7 @@ struct FooterBar: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.selectStudentMainSection) private var selectStudentMainSection
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
+    @State private var teacherStudentActivityCount = 0
 
     // Constrói o footer com divider superior e botões de navegação
     var body: some View {
@@ -83,6 +85,9 @@ struct FooterBar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.Colors.footerBackground)
+        .task(id: session.uid ?? "") {
+            await loadTeacherStudentActivityCount()
+        }
     }
 
     // Retorna a configuração de botões apropriada baseado no Kind selecionado
@@ -188,7 +193,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goTeacherAlunos(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person.3"), title: "Alunos", isSelected: isAlunosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    teacherStudentsFooterItem(isSelected: isAlunosSelected)
                 }
                 .buttonStyle(.plain)
 
@@ -263,6 +268,66 @@ struct FooterBar: View {
 
     private func goTeacherPerfil(category: TreinoTipo) {
         selectTeacherMainSection(.profile)
+    }
+
+    private func teacherStudentsFooterItem(isSelected: Bool) -> some View {
+        ZStack(alignment: .topTrailing) {
+            FooterItem(
+                icon: .system("person.3"),
+                title: "Alunos",
+                isSelected: isSelected,
+                width: Theme.Layout.footerItemWidthTreinosComPerfil
+            )
+
+            if teacherStudentActivityCount > 0 && !isSelected {
+                Text("\(teacherStudentActivityCount)")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 2)
+                    .background(Capsule().fill(Color.red))
+                    .offset(x: 7, y: -6)
+            }
+        }
+    }
+
+    private func loadTeacherStudentActivityCount() async {
+        guard session.isTrainer, let teacherId = session.uid, !teacherId.isEmpty else {
+            teacherStudentActivityCount = 0
+            return
+        }
+
+        let key = "teacherStudentActivitiesLastSeen.\(teacherId)"
+        let lastSeen = UserDefaults.standard.object(forKey: key) as? Date
+
+        do {
+            async let invites = FirestoreRepository.shared.getInvitesSentByTeacher(
+                teacherId: teacherId,
+                status: nil,
+                limit: 200
+            )
+            async let requests = FirestoreRepository.shared.getPendingLinkRequestsForTeacher(teacherId: teacherId)
+            let (sentInvites, pendingRequests) = try await (invites, requests)
+
+            let newRequests = pendingRequests.filter {
+                guard let lastSeen else { return true }
+                return ($0.createdAt?.dateValue() ?? .distantPast) > lastSeen
+            }.count
+            let updatedInvites: Int
+            if let lastSeen {
+                updatedInvites = sentInvites.filter {
+                    let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    return (status == "accepted" || status == "declined")
+                        && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen
+                }.count
+            } else {
+                updatedInvites = 0
+            }
+
+            teacherStudentActivityCount = newRequests + updatedInvites
+        } catch {
+            teacherStudentActivityCount = 0
+        }
     }
 }
 

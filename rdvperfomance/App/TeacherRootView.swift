@@ -53,8 +53,6 @@ struct TeacherRootView: View {
         switch route {
         case .teacherStudentDetail(let student, let category):
             TeacherStudentDetailView(path: destinationPath, student: student, category: category)
-        case .teacherLinkStudent(let category):
-            TeacherLinkStudentView(path: destinationPath, category: category)
         case .teacherSendMessage(let student, let category):
             TeacherSendMessageView(path: destinationPath, student: student, category: category)
         case .teacherFeedbacks(let student, let category):

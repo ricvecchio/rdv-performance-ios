@@ -14,6 +14,13 @@ final class TeacherStudentsListViewModel: ObservableObject {
     @Published private(set) var isInvitesLoading: Bool = false
     @Published private(set) var invitesErrorMessageInline: String? = nil
 
+    @Published private(set) var pendingLinkRequests: [StudentLinkItem] = []
+    @Published private(set) var isLinkRequestsLoading: Bool = false
+    @Published var linkErrorMessage: String? = nil
+    @Published var showLinkErrorAlert: Bool = false
+    @Published var linkSuccessMessage: String? = nil
+    @Published var showLinkSuccessAlert: Bool = false
+
     @Published var inviteErrorMessage: String? = nil
     @Published var showInviteErrorAlert: Bool = false
 
@@ -200,6 +207,79 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
+    func loadPendingLinkRequests(teacherId: String) async {
+        isLinkRequestsLoading = true
+        defer { isLinkRequestsLoading = false }
+
+        do {
+            let requests = try await repository.getPendingLinkRequestsForTeacher(teacherId: teacherId)
+                .filter {
+                    $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending"
+                }
+            let usersById = try await repository.getUsers(byIds: requests.map(\.studentId))
+
+            pendingLinkRequests = requests.compactMap { request in
+                let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let studentId = request.studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !requestId.isEmpty, !studentId.isEmpty else { return nil }
+
+                let user = usersById[studentId]
+                let email = (user?.email ?? request.studentEmail)
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                let name = user?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let displayName = name.isEmpty ? (email.isEmpty ? "Aluno" : email) : name
+
+                return StudentLinkItem(
+                    requestId: requestId,
+                    studentId: studentId,
+                    studentEmail: email,
+                    name: displayName,
+                    photoBase64: user?.photoBase64,
+                    focusArea: user?.focusArea,
+                    defaultCategory: user?.defaultCategory
+                )
+            }
+        } catch {
+            pendingLinkRequests = []
+            setLinkError((error as NSError).localizedDescription)
+        }
+    }
+
+    func approveRequestAndLinkStudent(
+        teacherId: String,
+        requestId: String,
+        studentId: String,
+        category: String
+    ) async {
+        let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let normalizedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !id.isEmpty, !sid.isEmpty, !normalizedCategory.isEmpty else {
+            setLinkError("Não foi possível identificar a solicitação de vínculo.")
+            return
+        }
+
+        isLinkRequestsLoading = true
+        defer { isLinkRequestsLoading = false }
+
+        do {
+            try await repository.approveLinkRequestAndLinkStudent(
+                teacherId: teacherId,
+                requestId: id,
+                studentId: sid,
+                category: normalizedCategory
+            )
+
+            pendingLinkRequests.removeAll { $0.requestId == id }
+            await loadStudents(teacherId: teacherId)
+            await loadPendingLinkRequests(teacherId: teacherId)
+            linkSuccessMessage = "Aluno vinculado com sucesso."
+            showLinkSuccessAlert = true
+        } catch {
+            setLinkError((error as NSError).localizedDescription)
+        }
+    }
+
     func statusText(_ raw: String) -> String {
         let v = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if v == "pending" { return "Pendente" }
@@ -212,6 +292,11 @@ final class TeacherStudentsListViewModel: ObservableObject {
     func setInviteError(_ msg: String) {
         inviteErrorMessage = msg
         showInviteErrorAlert = true
+    }
+
+    func setLinkError(_ msg: String) {
+        linkErrorMessage = msg
+        showLinkErrorAlert = true
     }
 
     private func categoryVariants(_ cat: TreinoTipo) -> [String] {
@@ -257,3 +342,14 @@ final class TeacherStudentsListViewModel: ObservableObject {
     }
 }
 
+struct StudentLinkItem: Identifiable, Hashable {
+    var id: String { requestId }
+
+    let requestId: String
+    let studentId: String
+    let studentEmail: String
+    let name: String
+    let photoBase64: String?
+    let focusArea: String?
+    let defaultCategory: String?
+}

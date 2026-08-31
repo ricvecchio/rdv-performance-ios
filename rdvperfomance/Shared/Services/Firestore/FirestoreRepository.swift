@@ -21,6 +21,10 @@ final class FirestoreRepository {
         try await userRepository.getUser(uid: uid)
     }
 
+    func getUsers(byIds ids: [String]) async throws -> [String: AppUser] {
+        try await userRepository.getUsers(byIds: ids)
+    }
+
     func getStudentsForTeacher(teacherId: String, category: String) async throws -> [AppUser] {
         try await userRepository.getStudentsForTeacher(teacherId: teacherId, category: category)
     }

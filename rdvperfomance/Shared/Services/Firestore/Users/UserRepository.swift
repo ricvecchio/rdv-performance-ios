@@ -24,6 +24,12 @@ final class UserRepository: FirestoreBaseRepository {
         return try snap.data(as: AppUser.self)
     }
 
+    func getUsers(byIds ids: [String]) async throws -> [String: AppUser] {
+        let cleanIds = Array(Set(ids.map(clean).filter { !$0.isEmpty }))
+        guard !cleanIds.isEmpty else { return [:] }
+        return try await fetchUsers(byIds: cleanIds)
+    }
+
     // MARK: - Professor por e-mail
 
     func getTeacherByEmail(email: String) async throws -> AppUser? {
@@ -485,47 +491,46 @@ final class UserRepository: FirestoreBaseRepository {
         guard !sid.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
         guard !cat.isEmpty else { throw FirestoreRepositoryError.invalidData }
 
-        let existing = try await db.collection(Collections.teacherStudents)
-            .whereField("teacherId", isEqualTo: tid)
-            .whereField("studentId", isEqualTo: sid)
-            .limit(to: 1)
-            .getDocuments()
+        let (teacherStudentRef, teacherStudentIsNew) = try await resolveOrCreateRef(
+            in: Collections.teacherStudents,
+            teacherId: tid,
+            studentId: sid
+        )
+        let (relationRef, relationIsNew) = try await resolveOrCreateRef(
+            in: Collections.relations,
+            teacherId: tid,
+            studentId: sid
+        )
 
-        if let doc = existing.documents.first {
-            try await db.collection(Collections.teacherStudents)
-                .document(doc.documentID)
-                .updateData([
-                    "categories": FieldValue.arrayUnion([cat]),
-                    "updatedAt": FieldValue.serverTimestamp()
-                ])
-        } else {
-            try await db.collection(Collections.teacherStudents).addDocument(data: [
-                "teacherId": tid,
-                "studentId": sid,
-                "categories": [cat],
-                "createdAt": FieldValue.serverTimestamp(),
-                "updatedAt": FieldValue.serverTimestamp()
-            ])
-        }
+        let batch = db.batch()
+        var teacherStudentPayload: [String: Any] = [
+            "teacherId": tid,
+            "studentId": sid,
+            "categories": FieldValue.arrayUnion([cat]),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        if teacherStudentIsNew { teacherStudentPayload["createdAt"] = FieldValue.serverTimestamp() }
+        batch.setData(teacherStudentPayload, forDocument: teacherStudentRef, merge: true)
 
-        let relRef = try await ensureRelationDoc(teacherId: tid, studentId: sid)
-        try await relRef.setData(
+        var relationPayload: [String: Any] = [
+            "teacherId": tid,
+            "studentId": sid,
+            "categories": FieldValue.arrayUnion([cat]),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        if relationIsNew { relationPayload["createdAt"] = FieldValue.serverTimestamp() }
+        batch.setData(relationPayload, forDocument: relationRef, merge: true)
+
+        batch.setData(
             [
-                "categories": FieldValue.arrayUnion([cat]),
+                "status": "accepted",
                 "updatedAt": FieldValue.serverTimestamp()
             ],
+            forDocument: db.collection(Collections.requests).document(rid),
             merge: true
         )
 
-        try await db.collection(Collections.requests)
-            .document(rid)
-            .setData(
-                [
-                    "status": "accepted",
-                    "updatedAt": FieldValue.serverTimestamp()
-                ],
-                merge: true
-            )
+        try await batch.commit()
     }
 
     // MARK: - TeacherStudents (vínculo por categoria)
