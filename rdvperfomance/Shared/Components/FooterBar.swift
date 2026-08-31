@@ -1,5 +1,6 @@
 import SwiftUI
 import Foundation
+import FirebaseFirestore
 
 // Barra de navegação inferior com diferentes configurações para cada tipo de usuário
 struct FooterBar: View {
