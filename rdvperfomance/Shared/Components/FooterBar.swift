@@ -272,24 +272,28 @@ struct FooterBar: View {
     }
 
     private func teacherStudentsFooterItem(isSelected: Bool) -> some View {
-        ZStack(alignment: .topTrailing) {
-            FooterItem(
-                icon: .system("person.3"),
-                title: "Alunos",
-                isSelected: isSelected,
-                width: Theme.Layout.footerItemWidthTreinosComPerfil
-            )
+        VStack(spacing: 6) {
+            Image(systemName: "person.3")
+                .font(Theme.Fonts.footerIcon())
+                .overlay(alignment: .topTrailing) {
+                    if teacherStudentActivityCount > 0 && !isSelected {
+                        Text("\(teacherStudentActivityCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.red))
+                            .offset(x: 4, y: -5)
+                    }
+                }
 
-            if teacherStudentActivityCount > 0 && !isSelected {
-                Text("\(teacherStudentActivityCount)")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white)
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(Capsule().fill(Color.red))
-                    .offset(x: 7, y: -6)
-            }
+            Text("Alunos")
+                .font(Theme.Fonts.footerTitle())
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
         }
+        .foregroundColor(isSelected ? Theme.Colors.selected : Theme.Colors.unselected)
+        .frame(width: Theme.Layout.footerItemWidthTreinosComPerfil)
     }
 
     private func loadTeacherStudentActivityCount() async {
