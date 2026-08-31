@@ -186,7 +186,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             .filter { !$0.isEmpty }
         )
 
-        invites.filter {
+        return invites.filter {
             let isPending = $0.status
                 .trimmingCharacters(in: .whitespacesAndNewlines)
                 .lowercased() == "pending"
