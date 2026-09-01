@@ -143,7 +143,13 @@ struct DeleteAccountView: View {
 
             secureUnderlineField(title: "Senha atual", text: $currentPassword)
 
-            underlineField(title: "Digite EXCLUIR para confirmar", text: $confirmText)
+            underlineField(
+                title:
+                    Text("Digite ").font(.system(size: 14)) +
+                    Text("EXCLUIR").font(.system(size: 14, weight: .bold)) +
+                    Text(" para confirmar").font(.system(size: 14)),
+                text: $confirmText
+            )
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled(true)
 
@@ -253,11 +259,10 @@ struct DeleteAccountView: View {
     }
 
     // Retorna campo de texto com linha inferior
-    private func underlineField(title: String, text: Binding<String>) -> some View {
+    private func underlineField(title: Text, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text(title)
-                .font(.system(size: 14))
+            title
                 .foregroundColor(textSecondary)
 
             TextField("", text: text)
