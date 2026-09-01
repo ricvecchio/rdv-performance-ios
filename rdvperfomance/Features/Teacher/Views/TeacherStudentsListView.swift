@@ -178,13 +178,13 @@ struct TeacherStudentsListView: View {
                 Text("O convite será cancelado.")
             }
         }
-        .alert("Recusar solicitação?", isPresented: $showDeclineLinkRequestConfirm) {
+        .alert("Recusar convite?", isPresented: $showDeclineLinkRequestConfirm) {
             Button("Cancelar", role: .cancel) { linkRequestPendingDecline = nil }
             Button("Recusar", role: .destructive) {
                 Task { await confirmDeclineLinkRequest() }
             }
         } message: {
-            Text("Deseja recusar a solicitação de vínculo deste aluno?")
+            Text("Deseja recusar esta solicitação de vínculo?")
         }
         .alert("Erro", isPresented: $vm.showLinkErrorAlert) {
             Button("OK", role: .cancel) {}
@@ -605,36 +605,33 @@ struct TeacherStudentsListView: View {
 
             Spacer()
 
-            HStack(spacing: 8) {
-                Button {
-                    linkRequestPendingDecline = item
-                    showDeclineLinkRequestConfirm = true
-                } label: {
-                    Text("Recusar")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.red.opacity(0.85))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                }
-                .buttonStyle(.plain)
-
+            Menu {
                 Button {
                     studentPendingLink = item
                     showCategoryDialog = true
                 } label: {
-                    Text("Vincular")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.90))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    Label("Aceitar vínculo", systemImage: "checkmark")
                 }
-                .buttonStyle(.plain)
+
+                Button(role: .destructive) {
+                    linkRequestPendingDecline = item
+                    showDeclineLinkRequestConfirm = true
+                } label: {
+                    Label("Recusar convite", systemImage: "xmark.circle")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.55))
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
+            .disabled(vm.isLinkRequestsLoading)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .disabled(vm.isLinkRequestsLoading)
     }
 
     private func confirmCancelInvite() async {
