@@ -30,6 +30,9 @@ struct TeacherStudentsListView: View {
     @State private var studentPendingLink: StudentLinkItem? = nil
     @State private var showCategoryDialog: Bool = false
 
+    @State private var linkRequestPendingDecline: StudentLinkItem? = nil
+    @State private var showDeclineLinkRequestConfirm: Bool = false
+
     init(
         path: Binding<[AppRoute]>,
         selectedCategory: TreinoTipo,
@@ -174,6 +177,14 @@ struct TeacherStudentsListView: View {
             } else {
                 Text("O convite será cancelado.")
             }
+        }
+        .alert("Recusar solicitação?", isPresented: $showDeclineLinkRequestConfirm) {
+            Button("Cancelar", role: .cancel) { linkRequestPendingDecline = nil }
+            Button("Recusar", role: .destructive) {
+                Task { await confirmDeclineLinkRequest() }
+            }
+        } message: {
+            Text("Deseja recusar a solicitação de vínculo deste aluno?")
         }
         .alert("Erro", isPresented: $vm.showLinkErrorAlert) {
             Button("OK", role: .cancel) {}
@@ -576,40 +587,53 @@ struct TeacherStudentsListView: View {
     }
 
     private func linkRequestRow(_ item: StudentLinkItem) -> some View {
-        Button {
-            studentPendingLink = item
-            showCategoryDialog = true
-        } label: {
-            HStack(spacing: 14) {
-                StudentAvatarView(base64: item.photoBase64, size: 28)
-                    .frame(width: 28)
+        HStack(spacing: 14) {
+            StudentAvatarView(base64: item.photoBase64, size: 28)
+                .frame(width: 28)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(item.name)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
+            VStack(alignment: .leading, spacing: 3) {
+                Text(item.name)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
 
-                    if !item.studentEmail.isEmpty {
-                        Text(item.studentEmail)
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.35))
-                    }
+                if !item.studentEmail.isEmpty {
+                    Text(item.studentEmail)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.35))
                 }
-
-                Spacer()
-
-                Text("Vincular")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.90))
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 7)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .contentShape(Rectangle())
+
+            Spacer()
+
+            HStack(spacing: 8) {
+                Button {
+                    linkRequestPendingDecline = item
+                    showDeclineLinkRequestConfirm = true
+                } label: {
+                    Text("Recusar")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.red.opacity(0.85))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                }
+                .buttonStyle(.plain)
+
+                Button {
+                    studentPendingLink = item
+                    showCategoryDialog = true
+                } label: {
+                    Text("Vincular")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.90))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 7)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                }
+                .buttonStyle(.plain)
+            }
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
         .disabled(vm.isLinkRequestsLoading)
     }
 
@@ -624,6 +648,18 @@ struct TeacherStudentsListView: View {
 
         await vm.cancelInvite(inviteId: invId, teacherId: teacherId)
         invitePendingCancel = nil
+    }
+
+    private func confirmDeclineLinkRequest() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty,
+              let request = linkRequestPendingDecline
+        else {
+            linkRequestPendingDecline = nil
+            return
+        }
+
+        await vm.declineLinkRequest(teacherId: teacherId, requestId: request.requestId)
+        linkRequestPendingDecline = nil
     }
 
     private func linkDialogMessageText() -> String {

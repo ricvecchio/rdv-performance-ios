@@ -299,6 +299,28 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
+    func declineLinkRequest(teacherId: String, requestId: String) async {
+        let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !id.isEmpty else {
+            setLinkError("Não foi possível identificar a solicitação de vínculo.")
+            return
+        }
+
+        isLinkRequestsLoading = true
+
+        do {
+            try await repository.declineLinkRequest(requestId: id)
+            pendingLinkRequests.removeAll { $0.requestId == id }
+        } catch {
+            isLinkRequestsLoading = false
+            setLinkError((error as NSError).localizedDescription)
+            return
+        }
+
+        isLinkRequestsLoading = false
+        await loadPendingLinkRequests(teacherId: teacherId)
+    }
+
     func statusText(_ raw: String) -> String {
         let v = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if v == "pending" { return "Pendente" }

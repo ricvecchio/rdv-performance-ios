@@ -533,6 +533,21 @@ final class UserRepository: FirestoreBaseRepository {
         try await batch.commit()
     }
 
+    func declineLinkRequest(requestId: String) async throws {
+        let rid = clean(requestId)
+        guard !rid.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        try await db.collection(Collections.requests)
+            .document(rid)
+            .setData(
+                [
+                    "status": "declined",
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
+    }
+
     // MARK: - TeacherStudents (vínculo por categoria)
 
     /// Formato canônico das categorias daqui pra frente: `TreinoTipo.firestoreKey`

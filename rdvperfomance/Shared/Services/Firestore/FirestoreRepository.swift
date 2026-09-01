@@ -168,6 +168,10 @@ final class FirestoreRepository {
         )
     }
 
+    func declineLinkRequest(requestId: String) async throws {
+        try await userRepository.declineLinkRequest(requestId: requestId)
+    }
+
     // MARK: - APIs usadas por StudentLinksViewModel (aliases)
 
     func getTeacherLinksForStudent(studentId: String) async throws -> [TeacherStudentRelation] {
