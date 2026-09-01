@@ -17,6 +17,7 @@ struct TeacherWorkoutTemplatesView: View {
 
     @State private var templates: [WorkoutTemplateFS] = []
     @State private var isLoading: Bool = false
+    @State private var hasLoadedInitialData: Bool = false
     @State private var errorMessage: String? = nil
     @State private var isSeedingDefaults: Bool = false
 
@@ -115,6 +116,7 @@ struct TeacherWorkoutTemplatesView: View {
 
                             TeacherWorkoutTemplatesContentCard(
                                 isLoading: isLoading,
+                                hasLoadedInitialData: hasLoadedInitialData,
                                 templates: templates,
                                 isCrossfitCategory: isCrossfitCategory,
                                 onTapTemplate: { t in
@@ -234,6 +236,7 @@ struct TeacherWorkoutTemplatesView: View {
         guard !teacherId.isEmpty else {
             errorMessage = "Não foi possível identificar o professor logado."
             templates = []
+            hasLoadedInitialData = true
             return
         }
 
@@ -252,6 +255,7 @@ struct TeacherWorkoutTemplatesView: View {
             // Agora liberamos a UI assim que a 1ª consulta termina; o seed roda depois,
             // em segundo plano, sem manter o spinner cheio na tela.
             isLoading = false
+            hasLoadedInitialData = true
 
             #if DEBUG
             os_log("loadTemplates() call #%d fetched %d docs in %.0fms", log: Self.debugLog, type: .debug, callId, fetched.count, Date().timeIntervalSince(debugStart) * 1000)
@@ -263,6 +267,7 @@ struct TeacherWorkoutTemplatesView: View {
             errorMessage = error.localizedDescription
             templates = []
             isLoading = false
+            hasLoadedInitialData = true
         }
 
         #if DEBUG

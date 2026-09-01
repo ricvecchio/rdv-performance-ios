@@ -67,6 +67,9 @@ struct ProfileView: View {
     @State private var isProcessingLinkAction: Bool = false
 
     @State private var showRequestLinkModal: Bool = false
+    @State private var unreadMessagesCount: Int = 0
+    @State private var unreadFeedbacksCount: Int = 0
+    @State private var teacherActivitiesCount: Int = 0
 
     private let treinoIcons = [
         "dumbbell",
@@ -304,9 +307,13 @@ struct ProfileView: View {
         }
         .task(id: currentUid) {
             await loadUserData()
+            await loadProfileActivityCounts()
         }
         .onAppear {
-            Task { await loadUserData() }
+            Task {
+                await loadUserData()
+                await loadProfileActivityCounts()
+            }
         }
     }
 
@@ -395,6 +402,116 @@ struct ProfileView: View {
             errorMessage = error.localizedDescription
             showErrorAlert = true
         }
+    }
+
+    private func loadProfileActivityCounts() async {
+        let uid = currentUid
+        guard session.userType == .STUDENT, !uid.isEmpty else {
+            unreadMessagesCount = 0
+            unreadFeedbacksCount = 0
+            teacherActivitiesCount = 0
+            return
+        }
+
+        let category = categoriaAtualAluno.rawValue
+        async let messages = unreadMessages(for: uid, category: category)
+        async let feedbacks = unreadFeedbacks(for: uid, category: category)
+        async let teacherActivities = unreadTeacherActivities(for: uid, email: studentEmail)
+
+        unreadMessagesCount = await messages
+        unreadFeedbacksCount = await feedbacks
+        teacherActivitiesCount = await teacherActivities
+    }
+
+    private func unreadMessages(for uid: String, category: String) async -> Int {
+        let lastSeen = UserDefaults.standard.object(
+            forKey: "profileMessagesLastSeen.\(uid).\(category)"
+        ) as? Date
+
+        do {
+            let messages = try await repository.getMessagesForStudent(
+                studentId: uid,
+                categoryRaw: category,
+                limit: 100
+            )
+            return messages.filter {
+                guard let lastSeen else { return true }
+                return ($0.createdAt ?? .distantPast) > lastSeen
+            }.count
+        } catch {
+            return 0
+        }
+    }
+
+    private func unreadFeedbacks(for uid: String, category: String) async -> Int {
+        let lastSeen = UserDefaults.standard.object(
+            forKey: "profileFeedbacksLastSeen.\(uid).\(category)"
+        ) as? Date
+
+        do {
+            let feedbacks = try await repository.getFeedbacksForStudent(
+                studentId: uid,
+                categoryRaw: category,
+                limit: 100
+            )
+            return feedbacks.filter {
+                guard let lastSeen else { return true }
+                return ($0.createdAt ?? .distantPast) > lastSeen
+            }.count
+        } catch {
+            return 0
+        }
+    }
+
+    private func unreadTeacherActivities(for uid: String, email: String) async -> Int {
+        let lastSeen = UserDefaults.standard.object(
+            forKey: "profileTeachersLastSeen.\(uid)"
+        ) as? Date
+
+        do {
+            async let invites = repository.getInvitesForStudent(studentEmail: email)
+            async let requests = repository.getRequestsForStudent(studentId: uid)
+            let (receivedInvites, sentRequests) = try await (invites, requests)
+
+            let inviteCount = receivedInvites.filter {
+                let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                guard let lastSeen else { return status == "pending" }
+                return (status == "pending" && ($0.createdAt?.dateValue() ?? .distantPast) > lastSeen)
+                    || ((status == "accepted" || status == "declined")
+                        && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen)
+            }.count
+            let requestCount = sentRequests.filter {
+                guard let lastSeen else { return false }
+                let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                return (status == "accepted" || status == "declined")
+                    && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen
+            }.count
+
+            return inviteCount + requestCount
+        } catch {
+            return 0
+        }
+    }
+
+    private func markMessagesAsSeen() {
+        UserDefaults.standard.set(
+            Date(),
+            forKey: "profileMessagesLastSeen.\(currentUid).\(categoriaAtualAluno.rawValue)"
+        )
+        unreadMessagesCount = 0
+    }
+
+    private func markFeedbacksAsSeen() {
+        UserDefaults.standard.set(
+            Date(),
+            forKey: "profileFeedbacksLastSeen.\(currentUid).\(categoriaAtualAluno.rawValue)"
+        )
+        unreadFeedbacksCount = 0
+    }
+
+    private func markTeacherActivitiesAsSeen() {
+        UserDefaults.standard.set(Date(), forKey: "profileTeachersLastSeen.\(currentUid)")
+        teacherActivitiesCount = 0
     }
 
     private func loadLinkedTeachers(forceFallbackFromWeeks: Bool) async {
@@ -549,17 +666,32 @@ struct ProfileView: View {
 
             if session.userType == .STUDENT {
                 divider()
-                optionRow(icon: "envelope.fill", title: "Mensagens", trailing: .chevron) {
+                optionRow(
+                    icon: "envelope.fill",
+                    title: "Mensagens",
+                    trailing: unreadMessagesCount > 0 ? .activityBadgeWithChevron(unreadMessagesCount) : .chevron
+                ) {
+                    markMessagesAsSeen()
                     path.append(.studentMessages(category: categoriaAtualAluno))
                 }
 
                 divider()
-                optionRow(icon: "text.bubble.fill", title: "Feedbacks", trailing: .chevron) {
+                optionRow(
+                    icon: "text.bubble.fill",
+                    title: "Feedbacks",
+                    trailing: unreadFeedbacksCount > 0 ? .activityBadgeWithChevron(unreadFeedbacksCount) : .chevron
+                ) {
+                    markFeedbacksAsSeen()
                     path.append(.studentFeedbacks(category: categoriaAtualAluno))
                 }
 
                 divider()
-                optionRow(icon: "person.2.fill", title: "Meus professores", trailing: .chevron) {
+                optionRow(
+                    icon: "person.2.fill",
+                    title: "Meus professores",
+                    trailing: teacherActivitiesCount > 0 ? .activityBadgeWithChevron(teacherActivitiesCount) : .chevron
+                ) {
+                    markTeacherActivitiesAsSeen()
                     teacherEmailInput = ""
                     linkActionMessage = nil
                     linkActionMessageIsError = false
@@ -932,6 +1064,7 @@ struct ProfileView: View {
         case badge(String)
         case coloredBadge(String, fg: Color, bg: Color)
         case coloredBadgeWithChevron(String, fg: Color, bg: Color)
+        case activityBadgeWithChevron(Int)
         case settings
     }
 
@@ -1000,6 +1133,19 @@ struct ProfileView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(bg))
+
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.35))
+                }
+
+            case .activityBadgeWithChevron(let value):
+                HStack(spacing: 10) {
+                    Text("\(value)")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.horizontal, 5)
+                        .padding(.vertical, 2)
+                        .background(Capsule().fill(Color.red))
 
                     Image(systemName: "chevron.right")
                         .foregroundColor(.white.opacity(0.35))

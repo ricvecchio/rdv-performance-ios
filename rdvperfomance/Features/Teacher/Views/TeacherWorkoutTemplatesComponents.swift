@@ -24,6 +24,7 @@ struct TeacherWorkoutTemplatesAddButton: View {
 struct TeacherWorkoutTemplatesContentCard: View {
 
     let isLoading: Bool
+    let hasLoadedInitialData: Bool
     let templates: [WorkoutTemplateFS]
     let isCrossfitCategory: Bool
 
@@ -33,7 +34,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            if isLoading {
+            if isLoading || !hasLoadedInitialData {
                 TeacherWorkoutTemplatesLoadingView()
             } else if templates.isEmpty {
                 TeacherWorkoutTemplatesEmptyView(isCrossfitCategory: isCrossfitCategory)
