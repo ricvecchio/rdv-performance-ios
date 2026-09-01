@@ -116,6 +116,12 @@ final class AppSession: ObservableObject {
 
             let name = data["name"] as? String
             let typeRaw = data["userType"] as? String
+            let remotePhotoBase64 = (data["photoBase64"] as? String ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+
+            if LocalProfileStore.shared.getPhotoBase64(userId: uid) != remotePhotoBase64 {
+                LocalProfileStore.shared.setPhotoBase64(remotePhotoBase64, userId: uid)
+            }
 
             self.userName = name
             self.userType = typeRaw.flatMap { UserTypeDTO(rawValue: $0) }
