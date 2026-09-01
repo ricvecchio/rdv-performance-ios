@@ -63,7 +63,7 @@ struct TeacherStudentsListView: View {
                         header
                         filterRow
                         contentCard
-                        if !vm.pendingInvites.isEmpty {
+                        if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
                             pendingInvitesCard
                         }
                         pendingLinkRequestsCard

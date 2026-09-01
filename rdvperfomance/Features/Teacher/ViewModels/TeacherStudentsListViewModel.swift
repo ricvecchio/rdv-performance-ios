@@ -6,6 +6,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     @Published private(set) var students: [AppUser] = []
     @Published private(set) var isLoading: Bool = false
+    @Published private(set) var hasLoadedStudents: Bool = false
     @Published var errorMessage: String? = nil
 
     @Published private(set) var isUnlinking: Bool = false
@@ -38,6 +39,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     func loadStudents(teacherId: String) async {
         isLoading = true
+        hasLoadedStudents = false
         errorMessage = nil
         defer { isLoading = false }
 
@@ -47,6 +49,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             let grouped = try await repository.getStudentsGroupedByTeacher(teacherId: teacherId)
             self.studentsByCategory = grouped
             self.students = mergeUniqueStudents(from: supportedCategories.compactMap { grouped[$0] })
+            hasLoadedStudents = true
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
             self.studentsByCategory = [:]
