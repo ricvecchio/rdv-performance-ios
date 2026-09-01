@@ -20,7 +20,6 @@ struct EditProfileView: View {
     @State private var previewImage: UIImage? = nil
     @State private var isLoadingImage: Bool = false
     @State private var hasNewPhoto: Bool = false
-    @State private var showPhotoSourceOptions: Bool = false
     @State private var showPhotoPicker: Bool = false
     @State private var showAvatarPicker: Bool = false
 
@@ -180,19 +179,6 @@ struct EditProfileView: View {
             guard let newItem else { return }
             Task { await loadImage(from: newItem) }
         }
-        .confirmationDialog(
-            "Adicionar foto ou Avatar",
-            isPresented: $showPhotoSourceOptions,
-            titleVisibility: .visible
-        ) {
-            Button("Escolher foto da biblioteca") {
-                showPhotoPicker = true
-            }
-            Button("Escolher Avatar") {
-                showAvatarPicker = true
-            }
-            Button("Cancelar", role: .cancel) {}
-        }
         .photosPicker(
             isPresented: $showPhotoPicker,
             selection: $selectedItem,
@@ -301,8 +287,14 @@ struct EditProfileView: View {
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
-            Button {
-                showPhotoSourceOptions = true
+            Menu {
+                Button("Escolher foto da biblioteca") {
+                    showPhotoPicker = true
+                }
+                Button("Escolher Avatar") {
+                    showAvatarPicker = true
+                }
+                Button("Cancelar", role: .cancel) {}
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "photo.on.rectangle.angled")
