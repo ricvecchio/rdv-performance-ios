@@ -20,6 +20,9 @@ struct EditProfileView: View {
     @State private var previewImage: UIImage? = nil
     @State private var isLoadingImage: Bool = false
     @State private var hasNewPhoto: Bool = false
+    @State private var showPhotoSourceOptions: Bool = false
+    @State private var showPhotoPicker: Bool = false
+    @State private var showAvatarPicker: Bool = false
 
     // ✅ Armazena apenas dígitos normalizados (ex.: "11988888888")
     @State private var whatsappDigits: String = ""
@@ -177,6 +180,31 @@ struct EditProfileView: View {
             guard let newItem else { return }
             Task { await loadImage(from: newItem) }
         }
+        .confirmationDialog(
+            "Adicionar foto ou Avatar",
+            isPresented: $showPhotoSourceOptions,
+            titleVisibility: .visible
+        ) {
+            Button("Escolher foto da biblioteca") {
+                showPhotoPicker = true
+            }
+            Button("Escolher Avatar") {
+                showAvatarPicker = true
+            }
+            Button("Cancelar", role: .cancel) {}
+        }
+        .photosPicker(
+            isPresented: $showPhotoPicker,
+            selection: $selectedItem,
+            matching: .images,
+            photoLibrary: .shared()
+        )
+        .sheet(isPresented: $showAvatarPicker) {
+            AvatarPickerView { image in
+                previewImage = image
+                hasNewPhoto = true
+            }
+        }
     }
 
     // Retorna card com avatar e descrição
@@ -273,16 +301,14 @@ struct EditProfileView: View {
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
-            PhotosPicker(
-                selection: $selectedItem,
-                matching: .images,
-                photoLibrary: .shared()
-            ) {
+            Button {
+                showPhotoSourceOptions = true
+            } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "photo.on.rectangle.angled")
                         .foregroundColor(.white.opacity(0.9))
 
-                    Text(isLoadingImage ? "Carregando..." : "Importar foto do celular")
+                    Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
 
@@ -662,6 +688,87 @@ struct EditProfileView: View {
         case .CROSSFIT: return "Crossfit"
         case .GYM: return "Academia"
         case .HOME: return "Treinos em Casa"
+        }
+    }
+
+    private struct AvatarPickerView: View {
+        private struct AvatarOption: Identifiable {
+            let symbolName: String
+            let color: UIColor
+
+            var id: String { symbolName }
+
+            func image() -> UIImage {
+                let size = CGSize(width: 512, height: 512)
+                let format = UIGraphicsImageRendererFormat()
+                format.scale = 1
+                format.opaque = true
+
+                return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+                    color.setFill()
+                    UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
+
+                    let configuration = UIImage.SymbolConfiguration(pointSize: 260, weight: .medium)
+                    let symbol = UIImage(systemName: symbolName, withConfiguration: configuration)?
+                        .withTintColor(.white, renderingMode: .alwaysOriginal)
+                    symbol?.draw(in: CGRect(x: 126, y: 126, width: 260, height: 260))
+                }
+            }
+        }
+
+        private let options: [AvatarOption] = [
+            AvatarOption(symbolName: "person.fill", color: .systemBlue),
+            AvatarOption(symbolName: "figure.run", color: .systemGreen),
+            AvatarOption(symbolName: "figure.walk", color: .systemOrange),
+            AvatarOption(symbolName: "heart.fill", color: .systemPink),
+            AvatarOption(symbolName: "bolt.fill", color: .systemIndigo),
+            AvatarOption(symbolName: "star.fill", color: .systemPurple)
+        ]
+
+        let onSelect: (UIImage) -> Void
+        @Environment(\.dismiss) private var dismiss
+
+        var body: some View {
+            NavigationStack {
+                ZStack {
+                    Theme.Colors.headerBackground
+                        .ignoresSafeArea()
+
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 3),
+                        spacing: 16
+                    ) {
+                        ForEach(options) { option in
+                            Button {
+                                onSelect(option.image())
+                                dismiss()
+                            } label: {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(uiColor: option.color))
+                                    Image(systemName: option.symbolName)
+                                        .font(.system(size: 38, weight: .medium))
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 88, height: 88)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(24)
+                }
+                .navigationTitle("Escolher Avatar")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Fechar") {
+                            dismiss()
+                        }
+                    }
+                }
+                .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+            }
         }
     }
 
