@@ -57,9 +57,9 @@ struct TeacherDashboardView: View {
                                     path.append(.teacherImportWorkouts(category: category))
                                 }
 
-                                // 3.1) Importar Vídeos
+                                // 3.1) Meus Vídeos
                                 actionRow(
-                                    title: "Importar Vídeos",
+                                    title: "Meus Vídeos",
                                     icon: "video.fill"
                                 ) {
                                     path.append(.teacherImportVideos(category: category))
