@@ -54,6 +54,28 @@ struct BrazilianPhoneFormatter {
         }
     }
 
+    /// Formata um celular brasileiro, preservando cinco dígitos antes do hífen.
+    static func formatMobile(_ input: String) -> String {
+        let digits = normalize(input)
+        let count = digits.count
+
+        switch count {
+        case 0:
+            return ""
+        case 1...2:
+            return "(\(digits)"
+        case 3...7:
+            let area = String(digits.prefix(2))
+            let rest = String(digits.dropFirst(2))
+            return "(\(area)) \(rest)"
+        default:
+            let area = String(digits.prefix(2))
+            let p1 = String(digits.dropFirst(2).prefix(5))
+            let p2 = String(digits.dropFirst(7))
+            return "(\(area)) \(p1)-\(p2)"
+        }
+    }
+
     // MARK: - Validação
 
     /// Retorna `true` quando o número (após normalização) é válido.
@@ -61,5 +83,11 @@ struct BrazilianPhoneFormatter {
     static func isValid(_ input: String) -> Bool {
         let count = normalize(input).count
         return count == 0 || count == 10 || count == 11
+    }
+
+    /// Retorna `true` para vazio ou um número de celular completo (11 dígitos).
+    static func isValidMobile(_ input: String) -> Bool {
+        let count = normalize(input).count
+        return count == 0 || count == 11
     }
 }

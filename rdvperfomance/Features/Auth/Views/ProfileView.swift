@@ -70,6 +70,9 @@ struct ProfileView: View {
     @State private var unreadMessagesCount: Int = 0
     @State private var unreadFeedbacksCount: Int = 0
     @State private var teacherActivitiesCount: Int = 0
+    @State private var hasAppeared: Bool = false
+
+    private let studentActivityCategories: [TreinoTipo] = [.crossfit, .academia, .emCasa]
 
     private let treinoIcons = [
         "dumbbell",
@@ -310,6 +313,10 @@ struct ProfileView: View {
             await loadProfileActivityCounts()
         }
         .onAppear {
+            guard hasAppeared else {
+                hasAppeared = true
+                return
+            }
             Task {
                 await loadUserData()
                 await loadProfileActivityCounts()
@@ -413,14 +420,29 @@ struct ProfileView: View {
             return
         }
 
-        let category = categoriaAtualAluno.rawValue
-        async let messages = unreadMessages(for: uid, category: category)
-        async let feedbacks = unreadFeedbacks(for: uid, category: category)
+        async let messages = unreadMessages(for: uid, categories: studentActivityCategories)
+        async let feedbacks = unreadFeedbacks(for: uid, categories: studentActivityCategories)
         async let teacherActivities = unreadTeacherActivities(for: uid, email: studentEmail)
 
         unreadMessagesCount = await messages
         unreadFeedbacksCount = await feedbacks
         teacherActivitiesCount = await teacherActivities
+    }
+
+    private func unreadMessages(for uid: String, categories: [TreinoTipo]) async -> Int {
+        await withTaskGroup(of: Int.self, returning: Int.self) { group in
+            for category in categories {
+                group.addTask {
+                    await unreadMessages(for: uid, category: category.rawValue)
+                }
+            }
+
+            var count = 0
+            for await value in group {
+                count += value
+            }
+            return count
+        }
     }
 
     private func unreadMessages(for uid: String, category: String) async -> Int {
@@ -434,12 +456,34 @@ struct ProfileView: View {
                 categoryRaw: category,
                 limit: 100
             )
+            guard let lastSeen else {
+                UserDefaults.standard.set(
+                    messages.compactMap(\.createdAt).max() ?? .distantPast,
+                    forKey: "profileMessagesLastSeen.\(uid).\(category)"
+                )
+                return 0
+            }
             return messages.filter {
-                guard let lastSeen else { return true }
                 return ($0.createdAt ?? .distantPast) > lastSeen
             }.count
         } catch {
             return 0
+        }
+    }
+
+    private func unreadFeedbacks(for uid: String, categories: [TreinoTipo]) async -> Int {
+        await withTaskGroup(of: Int.self, returning: Int.self) { group in
+            for category in categories {
+                group.addTask {
+                    await unreadFeedbacks(for: uid, category: category.rawValue)
+                }
+            }
+
+            var count = 0
+            for await value in group {
+                count += value
+            }
+            return count
         }
     }
 
@@ -454,8 +498,14 @@ struct ProfileView: View {
                 categoryRaw: category,
                 limit: 100
             )
+            guard let lastSeen else {
+                UserDefaults.standard.set(
+                    feedbacks.compactMap(\.createdAt).max() ?? .distantPast,
+                    forKey: "profileFeedbacksLastSeen.\(uid).\(category)"
+                )
+                return 0
+            }
             return feedbacks.filter {
-                guard let lastSeen else { return true }
                 return ($0.createdAt ?? .distantPast) > lastSeen
             }.count
         } catch {
@@ -494,18 +544,22 @@ struct ProfileView: View {
     }
 
     private func markMessagesAsSeen() {
-        UserDefaults.standard.set(
-            Date(),
-            forKey: "profileMessagesLastSeen.\(currentUid).\(categoriaAtualAluno.rawValue)"
-        )
+        for category in studentActivityCategories {
+            UserDefaults.standard.set(
+                Date(),
+                forKey: "profileMessagesLastSeen.\(currentUid).\(category.rawValue)"
+            )
+        }
         unreadMessagesCount = 0
     }
 
     private func markFeedbacksAsSeen() {
-        UserDefaults.standard.set(
-            Date(),
-            forKey: "profileFeedbacksLastSeen.\(currentUid).\(categoriaAtualAluno.rawValue)"
-        )
+        for category in studentActivityCategories {
+            UserDefaults.standard.set(
+                Date(),
+                forKey: "profileFeedbacksLastSeen.\(currentUid).\(category.rawValue)"
+            )
+        }
         unreadFeedbacksCount = 0
     }
 
@@ -669,7 +723,8 @@ struct ProfileView: View {
                 optionRow(
                     icon: "envelope.fill",
                     title: "Mensagens",
-                    trailing: unreadMessagesCount > 0 ? .activityBadgeWithChevron(unreadMessagesCount) : .chevron
+                    trailing: .chevron,
+                    activityBadgeCount: unreadMessagesCount
                 ) {
                     markMessagesAsSeen()
                     path.append(.studentMessages(category: categoriaAtualAluno))
@@ -679,7 +734,8 @@ struct ProfileView: View {
                 optionRow(
                     icon: "text.bubble.fill",
                     title: "Feedbacks",
-                    trailing: unreadFeedbacksCount > 0 ? .activityBadgeWithChevron(unreadFeedbacksCount) : .chevron
+                    trailing: .chevron,
+                    activityBadgeCount: unreadFeedbacksCount
                 ) {
                     markFeedbacksAsSeen()
                     path.append(.studentFeedbacks(category: categoriaAtualAluno))
@@ -689,7 +745,8 @@ struct ProfileView: View {
                 optionRow(
                     icon: "person.2.fill",
                     title: "Meus professores",
-                    trailing: teacherActivitiesCount > 0 ? .activityBadgeWithChevron(teacherActivitiesCount) : .chevron
+                    trailing: .chevron,
+                    activityBadgeCount: teacherActivitiesCount
                 ) {
                     markTeacherActivitiesAsSeen()
                     teacherEmailInput = ""
@@ -1064,7 +1121,6 @@ struct ProfileView: View {
         case badge(String)
         case coloredBadge(String, fg: Color, bg: Color)
         case coloredBadgeWithChevron(String, fg: Color, bg: Color)
-        case activityBadgeWithChevron(Int)
         case settings
     }
 
@@ -1072,27 +1128,39 @@ struct ProfileView: View {
         icon: String,
         title: String,
         trailing: Trailing,
+        activityBadgeCount: Int = 0,
         onTap: (() -> Void)? = nil
     ) -> some View {
         Group {
             if let onTap {
                 Button(action: onTap) {
-                    optionRowContent(icon: icon, title: title, trailing: trailing)
+                    optionRowContent(icon: icon, title: title, trailing: trailing, activityBadgeCount: activityBadgeCount)
                 }
                 .buttonStyle(.plain)
             } else {
-                optionRowContent(icon: icon, title: title, trailing: trailing)
+                optionRowContent(icon: icon, title: title, trailing: trailing, activityBadgeCount: activityBadgeCount)
             }
         }
     }
 
-    private func optionRowContent(icon: String, title: String, trailing: Trailing) -> some View {
+    private func optionRowContent(icon: String, title: String, trailing: Trailing, activityBadgeCount: Int) -> some View {
         HStack(spacing: 14) {
 
             Image(systemName: icon)
                 .font(.system(size: 18))
                 .foregroundColor(.green.opacity(0.85))
                 .frame(width: 28)
+                .overlay(alignment: .topTrailing) {
+                    if activityBadgeCount > 0 {
+                        Text("\(activityBadgeCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.red))
+                            .offset(x: 4, y: -5)
+                    }
+                }
 
             Text(title)
                 .font(.system(size: 18, weight: .medium))
@@ -1133,19 +1201,6 @@ struct ProfileView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(bg))
-
-                    Image(systemName: "chevron.right")
-                        .foregroundColor(.white.opacity(0.35))
-                }
-
-            case .activityBadgeWithChevron(let value):
-                HStack(spacing: 10) {
-                    Text("\(value)")
-                        .font(.system(size: 10, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.horizontal, 5)
-                        .padding(.vertical, 2)
-                        .background(Capsule().fill(Color.red))
 
                     Image(systemName: "chevron.right")
                         .foregroundColor(.white.opacity(0.35))

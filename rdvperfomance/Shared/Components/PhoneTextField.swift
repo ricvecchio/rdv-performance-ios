@@ -25,6 +25,7 @@ struct PhoneTextField: View {
     var lineColor: Color       = Color.white.opacity(0.35)
     var textColor: Color       = .white
     var placeholderColor: Color = Color.white.opacity(0.60)
+    var isMobileNumber: Bool = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -34,7 +35,11 @@ struct PhoneTextField: View {
                 .foregroundColor(placeholderColor)
 
             TextField("", text: Binding(
-                get: { BrazilianPhoneFormatter.format(digits) },
+                get: {
+                    isMobileNumber
+                        ? BrazilianPhoneFormatter.formatMobile(digits)
+                        : BrazilianPhoneFormatter.format(digits)
+                },
                 set: { newValue in
                     digits = BrazilianPhoneFormatter.normalize(newValue)
                 }
