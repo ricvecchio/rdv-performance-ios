@@ -93,4 +93,22 @@ final class StudentTeachersListViewModel: ObservableObject {
             errorMessage = (error as NSError).localizedDescription
         }
     }
+
+    func cancel(request: TeacherStudentLinkRequestFS, studentId: String, studentEmail: String) async {
+        guard let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !requestId.isEmpty else {
+            errorMessage = "Não foi possível identificar o convite."
+            return
+        }
+
+        sentRequests.removeAll { $0.id == requestId }
+        do {
+            try await repository.cancelLinkRequest(requestId: requestId)
+            await load(studentId: studentId, studentEmail: studentEmail)
+        } catch {
+            let message = (error as NSError).localizedDescription
+            await load(studentId: studentId, studentEmail: studentEmail)
+            errorMessage = message
+        }
+    }
 }

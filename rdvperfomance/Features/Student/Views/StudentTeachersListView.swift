@@ -11,6 +11,9 @@ struct StudentTeachersListView: View {
     @State private var teacherEmail = ""
     @State private var inviteToDecline: TeacherStudentInviteFS?
     @State private var showDeclineConfirmation = false
+    @State private var requestToCancel: TeacherStudentLinkRequestFS?
+    @State private var showCancelConfirmation = false
+    @State private var selectedTeacher: AppUser?
     @State private var inviteError: String?
 
     private let contentMaxWidth: CGFloat = 380
@@ -119,6 +122,19 @@ struct StudentTeachersListView: View {
         } message: {
             Text("Deseja recusar este convite de vínculo?")
         }
+        .alert("Cancelar convite?", isPresented: $showCancelConfirmation) {
+            Button("Cancelar", role: .cancel) { requestToCancel = nil }
+            Button("Confirmar cancelamento", role: .destructive) {
+                Task { await cancelRequest() }
+            }
+        } message: {
+            Text("Deseja cancelar este convite enviado ao professor?")
+        }
+        .sheet(item: $selectedTeacher) { teacher in
+            teacherDetail(teacher)
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+        }
         .alert("Erro", isPresented: Binding(
             get: { vm.errorMessage != nil },
             set: { if !$0 { vm.errorMessage = nil } }
@@ -178,6 +194,21 @@ struct StudentTeachersListView: View {
                                 .background(Capsule().fill(Color.yellow.opacity(0.12)))
                         }
                         Spacer()
+                        Menu {
+                            Button(role: .destructive) {
+                                requestToCancel = request
+                                showCancelConfirmation = true
+                            } label: {
+                                Label("Cancelar convite", systemImage: "xmark.circle")
+                            }
+                        } label: {
+                            Image(systemName: "ellipsis")
+                                .font(.system(size: 18, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.55))
+                                .padding(.vertical, 6)
+                                .padding(.horizontal, 8)
+                        }
+                        .buttonStyle(.plain)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 12)
@@ -223,23 +254,30 @@ struct StudentTeachersListView: View {
     }
 
     private func teacherRow(_ teacher: AppUser) -> some View {
-        HStack(spacing: 14) {
-            StudentAvatarView(base64: teacher.photoBase64, size: 28)
-                .frame(width: 28)
-            VStack(alignment: .leading, spacing: 3) {
-                Text(teacher.name)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
-                Text(teacher.email)
-                    .font(.system(size: 13))
+        Button {
+            selectedTeacher = teacher
+        } label: {
+            HStack(spacing: 14) {
+                StudentAvatarView(base64: teacher.photoBase64, size: 28)
+                    .frame(width: 28)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(teacher.name)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+                    Text(teacher.email)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.35))
+                }
+                Spacer()
+                Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .buttonStyle(.plain)
     }
 
     private func inviteRow(_ invite: TeacherStudentInviteFS) -> some View {
@@ -253,8 +291,11 @@ struct StudentTeachersListView: View {
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
                 Text("Pendente")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.35))
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(.yellow.opacity(0.85))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(Capsule().fill(Color.yellow.opacity(0.12)))
             }
             Spacer()
             Menu {
@@ -415,6 +456,59 @@ struct StudentTeachersListView: View {
               !studentId.isEmpty else { return }
         await vm.decline(invite: invite, studentId: studentId, studentEmail: studentEmail)
         inviteToDecline = nil
+    }
+
+    private func cancelRequest() async {
+        guard let request = requestToCancel,
+              let studentId = session.uid,
+              !studentId.isEmpty else { return }
+        await vm.cancel(request: request, studentId: studentId, studentEmail: studentEmail)
+        requestToCancel = nil
+    }
+
+    private func teacherDetail(_ teacher: AppUser) -> some View {
+        ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+            VStack(spacing: 14) {
+                Text("Professor")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+
+                StudentAvatarView(base64: teacher.photoBase64, size: 72)
+                Text(teacher.name)
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                VStack(alignment: .leading, spacing: 8) {
+                    teacherDetailRow("WhatsApp", BrazilianPhoneFormatter.format(teacher.phone ?? ""))
+                    teacherDetailRow("CREF", teacher.cref ?? "")
+                    teacherDetailRow("Biografia", teacher.bio ?? "")
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+
+                Button("Fechar") { selectedTeacher = nil }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Color.green.opacity(0.20)))
+                Spacer()
+            }
+            .padding(16)
+        }
+    }
+
+    @ViewBuilder
+    private func teacherDetailRow(_ title: String, _ value: String) -> some View {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            Text("\(title): \(trimmed)")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.65))
+        }
     }
 
     private func pop() {

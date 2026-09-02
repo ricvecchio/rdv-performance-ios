@@ -12,6 +12,7 @@ struct StudentFeedbacksView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
     @State private var feedbacks: [StudentFeedbackFS] = []
+    @State private var teachersById: [String: AppUser] = [:]
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -110,10 +111,6 @@ struct StudentFeedbacksView: View {
     // Header de contexto com categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
             Text("Aqui você vê os feedbacks enviados pelo seu treinador.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
@@ -145,15 +142,21 @@ struct StudentFeedbacksView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(feedbacks.enumerated()), id: \.offset) { idx, fb in
                         VStack(alignment: .leading, spacing: 6) {
+                            Text(teachersById[fb.teacherId]?.name ?? "Professor")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
 
                             Text(fb.text)
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.75))
 
                             if let date = fb.createdAt {
-                                Text(formatDate(date))
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.45))
+                                HStack(spacing: 6) {
+                                    Image(systemName: "calendar")
+                                    Text(formatDate(date))
+                                }
+                                .font(.system(size: 12, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.45))
                             }
                         }
                         .padding(.vertical, 12)
@@ -219,11 +222,14 @@ struct StudentFeedbacksView: View {
         defer { isLoading = false }
 
         do {
-            feedbacks = try await FirestoreRepository.shared.getFeedbacksForStudent(
+            let loadedFeedbacks = try await FirestoreRepository.shared.getFeedbacksForStudent(
                 studentId: sid,
                 categoryRaw: category.rawValue,
                 limit: 50
             )
+            let teacherIds = Array(Set(loadedFeedbacks.map(\.teacherId).filter { !$0.isEmpty }))
+            teachersById = try await FirestoreRepository.shared.getUsers(byIds: teacherIds)
+            feedbacks = loadedFeedbacks
         } catch {
             errorMessage = (error as NSError).localizedDescription
         }

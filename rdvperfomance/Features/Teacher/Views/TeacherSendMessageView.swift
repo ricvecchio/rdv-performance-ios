@@ -137,10 +137,6 @@ struct TeacherSendMessageView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
             Text("Envie orientações, avisos e recados para o aluno.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
@@ -197,6 +193,9 @@ struct TeacherSendMessageView: View {
                     .frame(width: 20)
 
                 VStack(alignment: .leading, spacing: 4) {
+                    Text(session.userName ?? "Professor")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
 
                     Text(msg.body)
                         .font(.system(size: 13))
@@ -204,9 +203,12 @@ struct TeacherSendMessageView: View {
                         .lineLimit(3)
 
                     if let date = msg.createdAt {
-                        Text(formatDate(date))
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.45))
+                        HStack(spacing: 6) {
+                            Image(systemName: "calendar")
+                            Text(formatDate(date))
+                        }
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.45))
                     }
                 }
 

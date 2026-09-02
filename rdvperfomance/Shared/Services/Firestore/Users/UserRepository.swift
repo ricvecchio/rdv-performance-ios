@@ -552,6 +552,21 @@ final class UserRepository: FirestoreBaseRepository {
             )
     }
 
+    func cancelLinkRequest(requestId: String) async throws {
+        let rid = clean(requestId)
+        guard !rid.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        try await db.collection(Collections.requests)
+            .document(rid)
+            .setData(
+                [
+                    "status": "cancelled",
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
+    }
+
     // MARK: - TeacherStudents (vínculo por categoria)
 
     /// Formato canônico das categorias daqui pra frente: `TreinoTipo.firestoreKey`

@@ -186,6 +186,10 @@ final class FirestoreRepository {
         try await userRepository.getRequestsForStudent(studentId: studentId)
     }
 
+    func cancelLinkRequest(requestId: String) async throws {
+        try await userRepository.cancelLinkRequest(requestId: requestId)
+    }
+
     func createStudentLinkRequest(
         studentId: String,
         studentEmail: String,
