@@ -701,7 +701,7 @@ struct ProfileView: View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             (
-                Text("\(title): ")
+                Text(verbatim: title + ": ")
                     .font(.system(size: 13, weight: .semibold))
                 + Text(trimmed)
                     .font(.system(size: 13))
@@ -1152,7 +1152,7 @@ struct ProfileView: View {
                 .frame(width: 28)
                 .overlay(alignment: .topTrailing) {
                     if activityBadgeCount > 0 {
-                        Text("\(activityBadgeCount)")
+                        Text(verbatim: String(activityBadgeCount))
                             .font(.system(size: 10, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.horizontal, 5)
@@ -1305,7 +1305,7 @@ struct ProfileView: View {
                 if let copied = copiedIconName {
                     VStack {
                         Spacer()
-                        Text("Copiado: \(copied)")
+                        Text("Copiado: ") + Text(verbatim: copied)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)

@@ -541,7 +541,7 @@ struct StudentAgendaView: View {
         } else {
             async let linkStatus: Void = vm.loadLinkStatusIfNeeded()
             async let weeks: Void = vm.loadWeeksAndMeta()
-            await (linkStatus, weeks)
+            _ = await (linkStatus, weeks)
         }
     }
 }

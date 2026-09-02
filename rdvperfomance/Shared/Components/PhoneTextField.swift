@@ -27,6 +27,22 @@ struct PhoneTextField: View {
     var placeholderColor: Color = Color.white.opacity(0.60)
     var isMobileNumber: Bool = false
 
+    init(
+        title: String,
+        digits: Binding<String>,
+        lineColor: Color = Color.white.opacity(0.35),
+        textColor: Color = .white,
+        placeholderColor: Color = Color.white.opacity(0.60),
+        isMobileNumber: Bool = false
+    ) {
+        self.title = title
+        self._digits = digits
+        self.lineColor = lineColor
+        self.textColor = textColor
+        self.placeholderColor = placeholderColor
+        self.isMobileNumber = isMobileNumber
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
 

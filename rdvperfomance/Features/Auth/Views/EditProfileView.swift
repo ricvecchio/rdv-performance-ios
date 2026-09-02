@@ -550,9 +550,7 @@ struct EditProfileView: View {
 
         guard let previewImage else { return }
 
-        let processedPhoto = await Task.detached(priority: .userInitiated) {
-            Self.makeProfilePhoto(from: previewImage)
-        }.value
+        let processedPhoto = Self.makeProfilePhoto(from: previewImage)
 
         guard let processedPhoto else {
             throw ProfilePhotoProcessingError.unableToProcess
