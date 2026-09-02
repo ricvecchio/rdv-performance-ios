@@ -114,8 +114,7 @@ struct RegisterStudentView: View {
                 showPassword: .constant(false),
                 lineColor: lineColor,
                 textColor: .white,
-                placeholderColor: textSecondary,
-                isMobileNumber: true
+                placeholderColor: textSecondary
             )
 
             UnderlineTextField(

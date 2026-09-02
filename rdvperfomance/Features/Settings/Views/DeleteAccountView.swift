@@ -144,10 +144,8 @@ struct DeleteAccountView: View {
             secureUnderlineField(title: "Senha atual", text: $currentPassword)
 
             underlineField(
-                title:
-                    Text("Digite ").font(.system(size: 14)) +
-                    Text("EXCLUIR").font(.system(size: 14, weight: .bold)) +
-                    Text(" para confirmar").font(.system(size: 14)),
+                title: Text("Digite \(Text("EXCLUIR").bold()) para confirmar")
+                    .font(.system(size: 14)),
                 text: $confirmText
             )
                 .textInputAutocapitalization(.characters)

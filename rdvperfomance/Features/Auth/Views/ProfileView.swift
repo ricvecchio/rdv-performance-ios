@@ -700,12 +700,8 @@ struct ProfileView: View {
     private func profileDetail(_ title: String, _ value: String) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            (
-                Text(verbatim: title + ": ")
-                    .font(.system(size: 13, weight: .semibold))
-                + Text(trimmed)
-                    .font(.system(size: 13))
-            )
+            Text("\(title): \(trimmed)")
+                .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.65))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -1305,7 +1301,7 @@ struct ProfileView: View {
                 if let copied = copiedIconName {
                     VStack {
                         Spacer()
-                        Text("Copiado: ") + Text(verbatim: copied)
+                        Text("Copiado: \(copied)")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)
