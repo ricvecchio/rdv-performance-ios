@@ -146,11 +146,6 @@ struct StudentMessagesView: View {
                     ForEach(Array(messages.enumerated()), id: \.offset) { idx, msg in
                         VStack(alignment: .leading, spacing: 6) {
 
-                            let subj = (msg.subject ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                            Text(subj.isEmpty ? "Sem assunto" : subj)
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-
                             Text(msg.body)
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.75))

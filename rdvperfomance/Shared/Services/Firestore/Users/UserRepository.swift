@@ -167,11 +167,13 @@ final class UserRepository: FirestoreBaseRepository {
 
         let snap = try await db.collection(Collections.invites)
             .whereField("studentEmail", isEqualTo: email)
-            .order(by: "createdAt", descending: true)
             .getDocuments()
 
-        return try snap.documents.compactMap { doc in
+        let invites = try snap.documents.compactMap { doc in
             try doc.data(as: TeacherStudentInviteFS.self)
+        }
+        return invites.sorted {
+            ($0.createdAt?.dateValue() ?? .distantPast) > ($1.createdAt?.dateValue() ?? .distantPast)
         }
     }
 
@@ -452,11 +454,13 @@ final class UserRepository: FirestoreBaseRepository {
 
         let snap = try await db.collection(Collections.requests)
             .whereField("studentId", isEqualTo: sid)
-            .order(by: "createdAt", descending: true)
             .getDocuments()
 
-        return try snap.documents.compactMap { doc in
+        let requests = try snap.documents.compactMap { doc in
             try doc.data(as: TeacherStudentLinkRequestFS.self)
+        }
+        return requests.sorted {
+            ($0.createdAt?.dateValue() ?? .distantPast) > ($1.createdAt?.dateValue() ?? .distantPast)
         }
     }
 

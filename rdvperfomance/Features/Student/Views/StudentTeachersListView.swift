@@ -55,6 +55,8 @@ struct StudentTeachersListView: View {
             }
             .ignoresSafeArea(.container, edges: .bottom)
         }
+        .blur(radius: showInviteSheet ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: showInviteSheet)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -105,8 +107,9 @@ struct StudentTeachersListView: View {
         }
         .sheet(isPresented: $showInviteSheet) {
             inviteSheet
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+                .presentationDetents([.medium, .large])
+                .presentationContentInteraction(.scrolls)
+                .presentationDragIndicator(.hidden)
         }
         .alert("Recusar convite?", isPresented: $showDeclineConfirmation) {
             Button("Cancelar", role: .cancel) { inviteToDecline = nil }
@@ -303,43 +306,81 @@ struct StudentTeachersListView: View {
     private var inviteSheet: some View {
         ZStack {
             Image("rdv_fundo").resizable().scaledToFill().ignoresSafeArea()
-            VStack(alignment: .leading, spacing: 14) {
-                Text("Convidar professor")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-                Text("Digite o e-mail do professor para enviar o convite.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
-                TextField("E-mail do professor", text: $teacherEmail)
-                    .foregroundColor(.white.opacity(0.92))
-                    .autocorrectionDisabled(true)
-                    .textInputAutocapitalization(.never)
-                    .keyboardType(.emailAddress)
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 10)
-                    .background(Color.white.opacity(0.08))
-                    .cornerRadius(12)
-                if let inviteError {
-                    Text(inviteError).font(.system(size: 13)).foregroundColor(.yellow.opacity(0.95))
-                }
-                Button {
-                    Task { await sendInvite() }
-                } label: {
-                    HStack {
-                        Spacer()
-                        Image(systemName: "paperplane.fill")
-                        Text("Enviar convite").font(.system(size: 14, weight: .semibold))
-                        Spacer()
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.22))
+                        .frame(width: 48, height: 6)
+                        .padding(.top, 10)
+
+                    Text("Convidar professor")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.top, 2)
+
+                    VStack(alignment: .leading, spacing: 12) {
+                        Text("CONVIDAR POR E-MAIL")
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.35))
+
+                        Text("Digite o e-mail do professor para enviar o convite.")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.55))
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "envelope.fill")
+                                .foregroundColor(.white.opacity(0.35))
+                            TextField("E-mail do professor", text: $teacherEmail)
+                                .foregroundColor(.white.opacity(0.92))
+                                .autocorrectionDisabled(true)
+                                .textInputAutocapitalization(.never)
+                                .keyboardType(.emailAddress)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 10)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        )
+
+                        if let inviteError {
+                            Text(inviteError).font(.system(size: 13)).foregroundColor(.yellow.opacity(0.95))
+                        }
+
+                        Button {
+                            Task { await sendInvite() }
+                        } label: {
+                            HStack {
+                                Spacer()
+                                Image(systemName: "paperplane.fill")
+                                Text("Enviar convite").font(.system(size: 14, weight: .semibold))
+                                Spacer()
+                            }
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.green.opacity(0.18)))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.green.opacity(0.30), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                     }
-                    .foregroundColor(.white.opacity(0.92))
-                    .padding(.vertical, 12)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.green.opacity(0.18)))
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+                    .padding(.horizontal, 16)
+
+                    Spacer(minLength: 10)
                 }
-                .buttonStyle(.plain)
-                .disabled(teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                Spacer()
+                .padding(.bottom, 16)
             }
-            .padding(16)
+            .scrollDismissesKeyboard(.interactively)
         }
     }
 
