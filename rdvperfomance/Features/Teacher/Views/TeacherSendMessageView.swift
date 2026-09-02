@@ -10,9 +10,7 @@ struct TeacherSendMessageView: View {
 
     @EnvironmentObject private var session: AppSession
 
-    @State private var subject: String = ""
     @State private var message: String = ""
-    @State private var showPasswordDummy: Bool = false
 
     @State private var isLoading: Bool = false
     @State private var isSending: Bool = false
@@ -200,11 +198,6 @@ struct TeacherSendMessageView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
 
-                    let subj = (msg.subject ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                    Text(subj.isEmpty ? "Sem assunto" : subj)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(subj.isEmpty ? .white.opacity(0.70) : .white.opacity(0.92))
-
                     Text(msg.body)
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.75))
@@ -229,18 +222,6 @@ struct TeacherSendMessageView: View {
             Text("NOVA MENSAGEM")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.35))
-
-            UnderlineTextField(
-                title: "Assunto (opcional)",
-                text: $subject,
-                isSecure: false,
-                showPassword: $showPasswordDummy,
-                lineColor: Theme.Colors.divider,
-                textColor: .white.opacity(0.92),
-                placeholderColor: .white.opacity(0.55)
-            )
-
-            Divider().background(Theme.Colors.divider)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text("Mensagem")
@@ -392,8 +373,6 @@ struct TeacherSendMessageView: View {
             return
         }
 
-        let subjectTrim = subject.trimmingCharacters(in: .whitespacesAndNewlines)
-
         guard !isSending else { return }
         isSending = true
         defer { isSending = false }
@@ -403,7 +382,7 @@ struct TeacherSendMessageView: View {
                 teacherId: teacherId,
                 studentId: sid,
                 categoryRaw: category.rawValue,
-                subject: subjectTrim.isEmpty ? nil : subjectTrim,
+                subject: nil,
                 body: bodyTrim
             )
 
@@ -412,14 +391,13 @@ struct TeacherSendMessageView: View {
                 teacherId: teacherId,
                 studentId: sid,
                 categoryRaw: category.rawValue,
-                subject: subjectTrim.isEmpty ? nil : subjectTrim,
+                subject: nil,
                 body: bodyTrim,
                 createdAt: Date(),
                 updatedAt: Date()
             )
             messages.insert(local, at: 0)
 
-            subject = ""
             message = ""
             successMessage = "Mensagem enviada com sucesso."
 

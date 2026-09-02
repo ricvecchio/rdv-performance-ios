@@ -457,11 +457,7 @@ struct ProfileView: View {
                 limit: 100
             )
             guard let lastSeen else {
-                UserDefaults.standard.set(
-                    messages.compactMap(\.createdAt).max() ?? .distantPast,
-                    forKey: "profileMessagesLastSeen.\(uid).\(category)"
-                )
-                return 0
+                return messages.count
             }
             return messages.filter {
                 return ($0.createdAt ?? .distantPast) > lastSeen
@@ -499,11 +495,7 @@ struct ProfileView: View {
                 limit: 100
             )
             guard let lastSeen else {
-                UserDefaults.standard.set(
-                    feedbacks.compactMap(\.createdAt).max() ?? .distantPast,
-                    forKey: "profileFeedbacksLastSeen.\(uid).\(category)"
-                )
-                return 0
+                return feedbacks.count
             }
             return feedbacks.filter {
                 return ($0.createdAt ?? .distantPast) > lastSeen
@@ -531,8 +523,10 @@ struct ProfileView: View {
                         && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen)
             }.count
             let requestCount = sentRequests.filter {
-                guard let lastSeen else { return false }
                 let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                guard let lastSeen else {
+                    return status == "accepted" || status == "declined"
+                }
                 return (status == "accepted" || status == "declined")
                     && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen
             }.count
