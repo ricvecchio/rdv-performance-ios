@@ -231,9 +231,17 @@ final class TeacherStudentsListViewModel: ObservableObject {
         defer { isLinkRequestsLoading = false }
 
         do {
+            let linkedStudentIds = Set(
+                students.compactMap { student -> String? in
+                    let id = student.id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    return id.isEmpty ? nil : id
+                }
+            )
             let requests = try await repository.getPendingLinkRequestsForTeacher(teacherId: teacherId)
                 .filter {
-                    $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending"
+                    let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    let studentId = $0.studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return status == "pending" && !studentId.isEmpty && !linkedStudentIds.contains(studentId)
                 }
             let usersById = try await repository.getUsers(byIds: requests.map(\.studentId))
 

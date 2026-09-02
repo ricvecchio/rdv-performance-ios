@@ -118,6 +118,8 @@ struct StudentRootView: View {
             StudentMessagesView(path: $profilePath, category: category)
         case .studentFeedbacks(let category):
             StudentFeedbacksView(path: $profilePath, category: category)
+        case .studentTeachers(let studentEmail):
+            StudentTeachersListView(path: $profilePath, studentEmail: studentEmail)
         default:
             EmptyView()
         }

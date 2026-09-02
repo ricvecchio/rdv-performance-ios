@@ -739,10 +739,7 @@ struct ProfileView: View {
                     activityBadgeCount: teacherActivitiesCount
                 ) {
                     markTeacherActivitiesAsSeen()
-                    teacherEmailInput = ""
-                    linkActionMessage = nil
-                    linkActionMessageIsError = false
-                    showMeusProfessoresModal = true
+                    path.append(.studentTeachers(studentEmail: studentEmail))
                 }
 
                 divider()
@@ -775,7 +772,7 @@ struct ProfileView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Aqui você vê seus professores vinculados e pode solicitar vínculo com outro professor.")
+                                Text("Aqui você vê seus professores vinculados e pode convidar outro professor.")
                                     .font(.system(size: 13))
                                     .foregroundColor(.white.opacity(0.55))
                                     .padding(.top, 12)
@@ -792,7 +789,7 @@ struct ProfileView: View {
                                             .font(.system(size: 16, weight: .semibold))
                                             .foregroundColor(.green.opacity(0.9))
 
-                                        Text("Solicitar vínculo")
+                                        Text("Convidar professor")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundColor(.white.opacity(0.92))
 
@@ -985,7 +982,7 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Solicitar vínculo")
+                    Text("Convidar professor")
                         .font(Theme.Fonts.headerTitle())
                         .foregroundColor(.white)
                         .lineLimit(1)
