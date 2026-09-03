@@ -412,7 +412,7 @@ struct TeacherSendMessageView: View {
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy • HH:mm"
+        f.dateFormat = "dd/MM/yyyy HH:mm"
         return f.string(from: date)
     }
 
