@@ -687,7 +687,7 @@ struct StudentHeroesPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
         .onAppear {
             // ✅ Garante carregar o PR sempre que abrir pela primeira vez
             inputValue = loadValue(for: wod.storageKey) ?? ""

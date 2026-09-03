@@ -826,7 +826,7 @@ Bar-Facing Burpees
                 Spacer()
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
         .onAppear {
             inputValue = loadValue(for: item.storageKey) ?? ""
         }

@@ -339,7 +339,7 @@ struct StudentGirlsPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
         .onAppear {
             // ✅ Garante carregar o score sempre que abrir pela primeira vez (igual ao Heroes)
             if let stored = loadValue(for: wod.storageKey) {

@@ -576,7 +576,7 @@ Descanso: 1 min entre rounds.
                 Spacer()
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
     }
 
     /// Card visual do WOD dentro do modal
