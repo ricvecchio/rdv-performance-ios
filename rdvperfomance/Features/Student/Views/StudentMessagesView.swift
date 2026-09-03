@@ -100,7 +100,7 @@ struct StudentMessagesView: View {
                 }
                 .buttonStyle(.plain)
 
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
