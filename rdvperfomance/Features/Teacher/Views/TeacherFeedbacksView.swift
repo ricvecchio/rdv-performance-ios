@@ -138,10 +138,6 @@ struct TeacherFeedbacksView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
             Text("Registre feedbacks e acompanhe o histórico.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
