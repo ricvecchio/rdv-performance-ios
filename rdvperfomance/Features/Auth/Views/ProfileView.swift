@@ -675,9 +675,12 @@ struct ProfileView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Color.clear.frame(height: 16)
-                profileDetail("E-mail", studentEmail)
+                profileIconDetail(icon: "envelope.fill", value: studentEmail)
                 profileDetail("CREF", userCref)
-                whatsappProfileDetail(BrazilianPhoneFormatter.format(userPhone))
+                profileIconDetail(
+                    icon: "phone.circle.fill",
+                    value: BrazilianPhoneFormatter.format(userPhone)
+                )
                 profileDetail("Biografia", userBio)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -702,11 +705,11 @@ struct ProfileView: View {
     }
 
     @ViewBuilder
-    private func whatsappProfileDetail(_ value: String) -> some View {
+    private func profileIconDetail(icon: String, value: String) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             HStack(spacing: 6) {
-                Image(systemName: "phone.fill")
+                Image(systemName: icon)
                     .foregroundColor(.green)
 
                 Text(trimmed)
