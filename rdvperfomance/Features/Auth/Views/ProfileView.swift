@@ -677,7 +677,7 @@ struct ProfileView: View {
                 Color.clear.frame(height: 16)
                 profileDetail("E-mail", studentEmail)
                 profileDetail("CREF", userCref)
-                profileDetail("WhatsApp", BrazilianPhoneFormatter.format(userPhone))
+                whatsappProfileDetail(BrazilianPhoneFormatter.format(userPhone))
                 profileDetail("Biografia", userBio)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -698,6 +698,22 @@ struct ProfileView: View {
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.65))
                 .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
+    private func whatsappProfileDetail(_ value: String) -> some View {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            HStack(spacing: 6) {
+                Image(systemName: "phone.fill")
+                    .foregroundColor(.green)
+
+                Text(trimmed)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.65))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
 

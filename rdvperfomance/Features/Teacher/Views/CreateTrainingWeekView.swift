@@ -173,10 +173,6 @@ struct CreateTrainingWeekView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
             Text("Você pode ver semanas já cadastradas, editar o título e adicionar dias.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
