@@ -141,25 +141,7 @@ struct StudentFeedbacksView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(feedbacks.enumerated()), id: \.offset) { idx, fb in
-                        VStack(alignment: .leading, spacing: 6) {
-                            Text(teachersById[fb.teacherId]?.name ?? "Professor")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-
-                            Text(fb.text)
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.75))
-
-                            if let date = fb.createdAt {
-                                HStack(spacing: 6) {
-                                    Image(systemName: "calendar")
-                                    Text(formatDate(date))
-                                }
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.45))
-                            }
-                        }
-                        .padding(.vertical, 12)
+                        feedbackRow(fb)
 
                         if idx < feedbacks.count - 1 {
                             Divider()
@@ -179,6 +161,36 @@ struct StudentFeedbacksView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private func feedbackRow(_ fb: StudentFeedbackFS) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            if let date = fb.createdAt {
+                VStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 14))
+
+                    Text(formatDate(date))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(width: 76)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(teachersById[fb.teacherId]?.name ?? "Professor")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(fb.text)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.75))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 12)
     }
 
     // Mensagem de erro/aviso estilizada
@@ -239,7 +251,7 @@ struct StudentFeedbacksView: View {
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy • HH:mm"
+        f.dateFormat = "dd/MM/yyyy HH:mm"
         return f.string(from: date)
     }
 
