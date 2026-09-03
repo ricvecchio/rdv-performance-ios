@@ -402,7 +402,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.fraction(0.66)])
+        .presentationDetents([.fraction(0.75)])
         .onAppear {
             inputValue = loadValue(for: wod.storageKey) ?? ""
         }
