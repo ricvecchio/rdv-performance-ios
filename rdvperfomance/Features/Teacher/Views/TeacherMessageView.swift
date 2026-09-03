@@ -1,8 +1,8 @@
-// TeacherSendMessageView.swift — Tela para professor enviar e listar mensagens para um aluno
+// TeacherMessageView.swift — Tela de mensagens entre professor e aluno
 import SwiftUI
 import FirebaseAuth
 
-struct TeacherSendMessageView: View {
+struct TeacherMessageView: View {
 
     @Binding var path: [AppRoute]
     let student: AppUser
@@ -100,7 +100,7 @@ struct TeacherSendMessageView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Enviar mensagem")
+                Text("Mensagens")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)

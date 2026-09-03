@@ -179,8 +179,8 @@ struct TeacherStudentDetailView: View {
                 openAgenda()
             }
 
-            actionButton(title: "Enviar Mensagem", icon: "paperplane.fill") {
-                path.append(.teacherSendMessage(student: student, category: category))
+            actionButton(title: "Mensagens", icon: "paperplane.fill") {
+                path.append(.teacherMessage(student: student, category: category))
             }
 
             actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
