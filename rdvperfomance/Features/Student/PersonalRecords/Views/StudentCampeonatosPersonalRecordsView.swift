@@ -184,6 +184,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: selectedWod == nil ? 0 : 4)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -401,7 +402,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.fraction(0.66)])
         .onAppear {
             inputValue = loadValue(for: wod.storageKey) ?? ""
         }
