@@ -14,6 +14,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		0C6483143048CF7000B84769 /* rdvperfomance.xcodeproj */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.pb-project"; path = rdvperfomance.xcodeproj; sourceTree = SOURCE_ROOT; };
 		0C9DDCB32EFAE51300E9988D /* rdvperfomance.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = rdvperfomance.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		0CAD96BE2EFEC7AD00CB4DA9 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -41,9 +42,15 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		0C226EF43048FA9F009B1F30 /* Products */ = {
+			isa = PBXGroup;
+			name = Products;
+			sourceTree = "<group>";
+		};
 		0C9DDCAA2EFAE51300E9988D = {
 			isa = PBXGroup;
 			children = (
+				0C6483143048CF7000B84769 /* rdvperfomance.xcodeproj */,
 				0CAD96BE2EFEC7AD00CB4DA9 /* README.md */,
 				0C9DDCB52EFAE51300E9988D /* rdvperfomance */,
 				0C9DDCB42EFAE51300E9988D /* Products */,
@@ -118,6 +125,12 @@
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 0C9DDCB42EFAE51300E9988D /* Products */;
 			projectDirPath = "";
+			projectReferences = (
+				{
+					ProductGroup = 0C226EF43048FA9F009B1F30 /* Products */;
+					ProjectRef = 0C6483143048CF7000B84769 /* rdvperfomance.xcodeproj */;
+				},
+			);
 			projectRoot = "";
 			targets = (
 				0C9DDCB22EFAE51300E9988D /* rdvperfomance */,

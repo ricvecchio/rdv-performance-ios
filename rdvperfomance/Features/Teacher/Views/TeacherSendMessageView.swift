@@ -184,36 +184,32 @@ struct TeacherSendMessageView: View {
     }
 
     private func messageRow(_ msg: TeacherMessageFS) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .top, spacing: 12) {
+            if let date = msg.createdAt {
+                VStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 14))
 
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "paperplane.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 14))
-                    .frame(width: 20)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(session.userName ?? "Professor")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-
-                    Text(msg.body)
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.75))
-                        .lineLimit(3)
-
-                    if let date = msg.createdAt {
-                        HStack(spacing: 6) {
-                            Image(systemName: "calendar")
-                            Text(formatDate(date))
-                        }
-                        .font(.system(size: 12, weight: .semibold))
+                    Text(formatDate(date))
+                        .font(.system(size: 11, weight: .semibold))
                         .foregroundColor(.white.opacity(0.45))
-                    }
+                        .multilineTextAlignment(.center)
                 }
-
-                Spacer()
+                .frame(width: 76)
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(session.userName ?? "Professor")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(msg.body)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.75))
+                    .lineLimit(3)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 12)
     }
