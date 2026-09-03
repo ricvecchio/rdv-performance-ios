@@ -349,6 +349,7 @@ Descanso: 1 min entre rounds.
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: selectedMove == nil ? 0 : 4)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -575,7 +576,7 @@ Descanso: 1 min entre rounds.
                 Spacer()
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.medium])
     }
 
     /// Card visual do WOD dentro do modal

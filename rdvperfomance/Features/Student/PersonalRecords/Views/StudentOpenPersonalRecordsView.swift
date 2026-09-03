@@ -600,6 +600,7 @@ Bar-Facing Burpees
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: selectedItem == nil ? 0 : 4)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -825,7 +826,7 @@ Bar-Facing Burpees
                 Spacer()
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.medium])
         .onAppear {
             inputValue = loadValue(for: item.storageKey) ?? ""
         }

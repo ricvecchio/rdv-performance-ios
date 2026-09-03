@@ -171,6 +171,7 @@ struct StudentBarbellPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: (selectedMove != nil || showAddMoveSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

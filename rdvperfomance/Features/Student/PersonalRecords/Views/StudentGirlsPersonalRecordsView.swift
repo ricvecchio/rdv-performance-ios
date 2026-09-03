@@ -109,6 +109,7 @@ struct StudentGirlsPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: selectedWod == nil ? 0 : 4)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -338,7 +339,7 @@ struct StudentGirlsPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.medium])
         .onAppear {
             // ✅ Garante carregar o score sempre que abrir pela primeira vez (igual ao Heroes)
             if let stored = loadValue(for: wod.storageKey) {

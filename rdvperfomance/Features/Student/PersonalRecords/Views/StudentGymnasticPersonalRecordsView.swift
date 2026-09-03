@@ -148,6 +148,7 @@ struct StudentGymnasticPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: (selectedItem != nil || showAddItemSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

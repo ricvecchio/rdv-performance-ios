@@ -468,6 +468,7 @@ struct StudentHeroesPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: selectedWod == nil ? 0 : 4)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -686,7 +687,7 @@ struct StudentHeroesPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.large])
+        .presentationDetents([.medium])
         .onAppear {
             // ✅ Garante carregar o PR sempre que abrir pela primeira vez
             inputValue = loadValue(for: wod.storageKey) ?? ""
