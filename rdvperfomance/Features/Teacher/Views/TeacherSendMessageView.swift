@@ -44,8 +44,8 @@ struct TeacherSendMessageView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             header
-                            messagesCard
                             formCard
+                            messagesCard
 
                             if let err = errorMessage {
                                 messageCard(text: err, isError: true)
@@ -217,15 +217,17 @@ struct TeacherSendMessageView: View {
     private var formCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("NOVA MENSAGEM")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
+            HStack(spacing: 8) {
+                Image(systemName: "text.bubble.fill")
+                    .foregroundColor(.green.opacity(0.85))
+                    .font(.system(size: 14))
+
+                Text("MENSAGEM")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.35))
+            }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Mensagem")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-
                 TextEditor(text: $message)
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white.opacity(0.92))
