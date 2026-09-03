@@ -154,10 +154,6 @@ struct StudentAgendaView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
 
-            Text("Aluno: \(studentName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.55))
-
             Text("Selecione uma semana para ver os dias.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))

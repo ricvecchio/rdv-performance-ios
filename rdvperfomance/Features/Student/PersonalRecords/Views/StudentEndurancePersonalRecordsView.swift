@@ -97,6 +97,7 @@ struct StudentEndurancePersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: selectedMove == nil ? 0 : 4)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
