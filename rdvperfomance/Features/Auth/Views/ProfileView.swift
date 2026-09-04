@@ -675,16 +675,11 @@ struct ProfileView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Color.clear.frame(height: 16)
-                profileIconDetail(
-                    icon: "envelope.fill",
-                    value: studentEmail,
-                    iconColor: .orange.opacity(0.9)
-                )
+                profileIconDetail(icon: "envelope.fill", value: studentEmail)
                 profileDetail("CREF", userCref)
                 profileIconDetail(
                     icon: "phone.circle.fill",
-                    value: BrazilianPhoneFormatter.format(userPhone),
-                    iconColor: .orange.opacity(0.9)
+                    value: BrazilianPhoneFormatter.format(userPhone)
                 )
                 profileDetail("Biografia", userBio)
             }
@@ -710,16 +705,12 @@ struct ProfileView: View {
     }
 
     @ViewBuilder
-    private func profileIconDetail(
-        icon: String,
-        value: String,
-        iconColor: Color = .green
-    ) -> some View {
+    private func profileIconDetail(icon: String, value: String) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
             HStack(spacing: 6) {
                 Image(systemName: icon)
-                    .foregroundColor(iconColor)
+                    .foregroundColor(.green)
 
                 Text(trimmed)
                     .font(.system(size: 13))
