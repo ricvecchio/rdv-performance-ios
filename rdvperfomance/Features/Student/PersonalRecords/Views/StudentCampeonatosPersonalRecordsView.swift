@@ -125,6 +125,38 @@ struct StudentCampeonatosPersonalRecordsView: View {
                 "Parte I e Parte II combinadas para eliminação progressiva",
                 "Time caps específicos por parte"
             ]
+        ),
+        .init(
+            name: "MURALHA GAMES 2026 - PROVA 1",
+            storageKey: "champ_muralha_games_2026_prova_1",
+            descriptionLines: [
+                "AMRAP 7'",
+                "• 15 THRUSTERS (115/85) (95/65) (75/45)",
+                "• 15 BJO / BJO / STEP UP",
+                "• 15 PULL UP"
+            ]
+        ),
+        .init(
+            name: "MURALHA GAMES 2026 - PROVA 2",
+            storageKey: "champ_muralha_games_2026_prova_2",
+            descriptionLines: [
+                "FOR TIME - 12'",
+                "21/15/9",
+                "• CLEAN AND JERK (135/95) (115/85) (95/65)",
+                "• BMU/C2B // C2B/PULL UP // PULL UP // RING ROW"
+            ]
+        ),
+        .init(
+            name: "MURALHA GAMES 2026 - PROVA 3",
+            storageKey: "champ_muralha_games_2026_prova_3",
+            descriptionLines: [
+                "5 ROUNDS FOR TIME",
+                "TIME CAP: 20'",
+                "• 12 SNATCH (115/85)",
+                "• 15 HSPU",
+                "• 20 BOB SINCRO",
+                "• 60 DOUBLE UNDER"
+            ]
         )
     ]
 
