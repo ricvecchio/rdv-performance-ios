@@ -95,6 +95,8 @@ struct StudentBarbellPersonalRecordsView: View {
     @State private var selectedMove: BarbellMove?
     @State private var inputValue: String = ""
     @State private var historyMove: BarbellMove?
+    @State private var selectedPRDate: Date = Date()
+    @State private var showPRDatePicker: Bool = false
 
     // ✅ NOVO: adicionar movimento
     @State private var showAddMoveSheet: Bool = false
@@ -285,6 +287,7 @@ struct StudentBarbellPersonalRecordsView: View {
 
         return Button {
             inputValue = displayValue.map { formatNumber($0) } ?? ""
+            selectedPRDate = Date()
             selectedMove = move
         } label: {
             HStack(spacing: 10) {
@@ -343,22 +346,9 @@ struct StudentBarbellPersonalRecordsView: View {
                     .padding(.top, 4)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
-
-                        Spacer()
-
-                        Button {
-                            historyMove = move
-                        } label: {
-                            Label("Histórico", systemImage: "chart.line.uptrend.xyaxis")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.green.opacity(0.90))
-                        }
-                        .buttonStyle(.plain)
-                    }
+                    Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.75))
 
                     HStack(spacing: 10) {
                         TextField("Ex: 90,50", text: $inputValue)
@@ -384,8 +374,68 @@ struct StudentBarbellPersonalRecordsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
 
-                historyChart(for: move)
-                    .padding(.horizontal, 16)
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Data")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.75))
+
+                    Button {
+                        showPRDatePicker = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "calendar")
+                                .foregroundColor(.green.opacity(0.85))
+
+                            Text(formatPRDate(selectedPRDate))
+                                .font(.system(size: 15, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+
+                            Spacer()
+
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.25))
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        HStack(spacing: 6) {
+                            Image(systemName: "chart.line.uptrend.xyaxis")
+                                .foregroundColor(.green.opacity(0.90))
+
+                            Text("Evolução")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+                        }
+
+                        Spacer()
+
+                        Button {
+                            historyMove = move
+                        } label: {
+                            Label("Histórico", systemImage: "clock.arrow.circlepath")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.green.opacity(0.90))
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    historyChart(for: move)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
 
                 if canDeleteSelectedMove {
                     Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
@@ -461,6 +511,38 @@ struct StudentBarbellPersonalRecordsView: View {
         }
         .sheet(item: $historyMove) { move in
             historySheet(move: move)
+        }
+        .sheet(isPresented: $showPRDatePicker) {
+            ZStack {
+                Theme.Colors.headerBackground
+                    .ignoresSafeArea()
+
+                VStack(spacing: 16) {
+                    DatePicker(
+                        "Data do PR",
+                        selection: $selectedPRDate,
+                        in: ...Date(),
+                        displayedComponents: .date
+                    )
+                    .datePickerStyle(.graphical)
+                    .environment(\.locale, Locale(identifier: "pt_BR"))
+
+                    Button {
+                        showPRDatePicker = false
+                    } label: {
+                        Text("Confirmar")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.black.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.green.opacity(0.90))
+                            .cornerRadius(14)
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(16)
+            }
+            .presentationDetents([.medium])
         }
     }
 
@@ -752,7 +834,7 @@ struct StudentBarbellPersonalRecordsView: View {
         if !trimmedValue.isEmpty, let value = WeightParser.parse(trimmedValue), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
             saveValue(storageKg, for: key)
-            saveHistoryValue(storageKg, for: key)
+            saveHistoryValue(storageKg, for: key, date: Date())
         }
 
         showAddMoveSheet = false
@@ -772,7 +854,7 @@ struct StudentBarbellPersonalRecordsView: View {
         if let value = WeightParser.parse(trimmed), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
             saveValue(storageKg, for: move.storageKey)
-            saveHistoryValue(storageKg, for: move.storageKey)
+            saveHistoryValue(storageKg, for: move.storageKey, date: selectedPRDate)
         }
     }
 
@@ -799,6 +881,13 @@ struct StudentBarbellPersonalRecordsView: View {
     /// Formata um `Double` para exibição com convenção brasileira (vírgula decimal, 2 casas).
     private func formatNumber(_ value: Double) -> String {
         WeightParser.brazilianFormat(value)
+    }
+
+    private func formatPRDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "dd 'de' MMMM, yyyy"
+        return formatter.string(from: date)
     }
 
     private func convertFromStorageKgToPreferredUnit(_ kg: Double) -> Double {
@@ -866,11 +955,15 @@ private extension StudentBarbellPersonalRecordsView {
         loadHistoryMap()[key, default: []].sorted { $0.createdAt < $1.createdAt }
     }
 
-    private func saveHistoryValue(_ valueKg: Double, for key: String) {
+    private func saveHistoryValue(_ valueKg: Double, for key: String, date: Date) {
         var map = loadHistoryMap()
         var entries = map[key, default: []].sorted { $0.createdAt < $1.createdAt }
+        let normalizedDate = Calendar.current.startOfDay(for: date)
 
-        if let lastEntry = entries.last, abs(lastEntry.valueKg - valueKg) < 0.000_001 {
+        if entries.contains(where: {
+            abs($0.valueKg - valueKg) < 0.000_001 &&
+            Calendar.current.isDate($0.createdAt, inSameDayAs: normalizedDate)
+        }) {
             return
         }
 
@@ -878,7 +971,7 @@ private extension StudentBarbellPersonalRecordsView {
             BarbellPRHistoryEntry(
                 id: UUID().uuidString,
                 valueKg: valueKg,
-                createdAt: Date()
+                createdAt: normalizedDate
             )
         )
         map[key] = entries
