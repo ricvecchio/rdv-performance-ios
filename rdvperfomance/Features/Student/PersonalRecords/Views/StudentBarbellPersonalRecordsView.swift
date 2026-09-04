@@ -282,7 +282,7 @@ struct StudentBarbellPersonalRecordsView: View {
     }
 
     private func tableRow(move: BarbellMove) -> some View {
-        let storedKgValue = loadValue(for: move.storageKey)
+        let storedKgValue = bestPRValueKg(for: move.storageKey)
         let displayValue = storedKgValue.map { convertFromStorageKgToPreferredUnit($0) }
 
         return Button {
@@ -853,7 +853,13 @@ struct StudentBarbellPersonalRecordsView: View {
         // ✅ Usa WeightParser que aceita vírgula e ponto, valida casas decimais
         if let value = WeightParser.parse(trimmed), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
-            saveValue(storageKg, for: move.storageKey)
+            if let currentBest = bestPRValueKg(for: move.storageKey) {
+                if storageKg > currentBest {
+                    saveValue(storageKg, for: move.storageKey)
+                }
+            } else {
+                saveValue(storageKg, for: move.storageKey)
+            }
             saveHistoryValue(storageKg, for: move.storageKey, date: selectedPRDate)
         }
     }
@@ -888,6 +894,24 @@ struct StudentBarbellPersonalRecordsView: View {
         formatter.locale = Locale(identifier: "pt_BR")
         formatter.dateFormat = "dd 'de' MMMM, yyyy"
         return formatter.string(from: date)
+    }
+
+    private func bestPRValueKg(for key: String) -> Double? {
+        let historyBest = historyEntries(for: key)
+            .map(\.valueKg)
+            .max()
+        let legacyValue = loadValue(for: key)
+
+        switch (historyBest, legacyValue) {
+        case let (history?, legacy?):
+            return max(history, legacy)
+        case let (history?, nil):
+            return history
+        case let (nil, legacy?):
+            return legacy
+        case (nil, nil):
+            return nil
+        }
     }
 
     private func convertFromStorageKgToPreferredUnit(_ kg: Double) -> Double {
