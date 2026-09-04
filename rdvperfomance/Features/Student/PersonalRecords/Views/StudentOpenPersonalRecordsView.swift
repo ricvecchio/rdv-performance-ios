@@ -766,7 +766,7 @@ Bar-Facing Burpees
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 0) {
 
                 Capsule()
                     .fill(Color.white.opacity(0.18))
@@ -778,69 +778,75 @@ Bar-Facing Burpees
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                Text("Informe seu melhor resultado. Para remover, deixe vazio.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.60))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-
-                if let wod {
-                    wodCard(wod)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                    Text("Informe seu melhor resultado. Para remover, deixe vazio.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
-                        .padding(.top, 2)
-                }
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Resultado:")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
-
-                    TextField("Ex: 7:32 ou 210 reps ou 450 pts", text: $inputValue)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 14)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-
-                dateAndHistorySection(key: item.storageKey, metadata: "\(wodsByKey[item.storageKey]?.titleLine ?? "") \(wodsByKey[item.storageKey]?.description ?? "")", historyAction: {
-                    historyItem = item
-                })
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .sheet(item: $historyItem) { selected in
-                    historySheet(title: selected.name, key: selected.storageKey)
-                }
-                .sheet(isPresented: $showPRDatePicker) {
-                    ZStack {
-                        Theme.Colors.headerBackground.ignoresSafeArea()
-                        VStack(spacing: 16) {
-                            DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
-                                .datePickerStyle(.graphical)
-                                .environment(\.locale, Locale(identifier: "pt_BR"))
-                            Button { showPRDatePicker = false } label: {
-                                Text("Confirmar")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.black.opacity(0.85))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.green.opacity(0.90))
-                                    .cornerRadius(14)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(16)
+                    if let wod {
+                        wodCard(wod)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
+                            .layoutPriority(1)
                     }
-                    .presentationDetents([.medium])
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Resultado:")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        TextField("Ex: 7:32 ou 210 reps ou 450 pts", text: $inputValue)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 14)
+                            .background(Theme.Colors.cardBackground)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+
+                    dateAndHistorySection(key: item.storageKey, metadata: "\(wodsByKey[item.storageKey]?.titleLine ?? "") \(wodsByKey[item.storageKey]?.description ?? "")", historyAction: {
+                        historyItem = item
+                    })
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .sheet(item: $historyItem) { selected in
+                        historySheet(title: selected.name, key: selected.storageKey)
+                    }
+                    .sheet(isPresented: $showPRDatePicker) {
+                        ZStack {
+                            Theme.Colors.headerBackground.ignoresSafeArea()
+                            VStack(spacing: 16) {
+                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                    .datePickerStyle(.graphical)
+                                    .environment(\.locale, Locale(identifier: "pt_BR"))
+                                Button { showPRDatePicker = false } label: {
+                                    Text("Confirmar")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.black.opacity(0.85))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                        .background(Color.green.opacity(0.90))
+                                        .cornerRadius(14)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(16)
+                        }
+                        .presentationDetents([.medium])
+                    }
+
+                    }
                 }
 
                 HStack(spacing: 12) {
@@ -878,11 +884,10 @@ Bar-Facing Burpees
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-
-                Spacer()
+                .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.fraction(0.75)])
+        .presentationDetents([.fraction(0.80)])
         .onAppear {
             inputValue = bestDisplayValue(for: item.storageKey, metadata: "\(wodsByKey[item.storageKey]?.titleLine ?? "") \(wodsByKey[item.storageKey]?.description ?? "")") ?? ""
             selectedPRDate = Date()
@@ -919,7 +924,7 @@ Bar-Facing Burpees
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
             }
-            .frame(maxHeight: 140)
+            .frame(height: 140)
         }
         .padding(14)
         .background(Theme.Colors.cardBackground)
@@ -949,10 +954,6 @@ Bar-Facing Burpees
     @ViewBuilder
     private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Data")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             Button {
                 showPRDatePicker = true
             } label: {

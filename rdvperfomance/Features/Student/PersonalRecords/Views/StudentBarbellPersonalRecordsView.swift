@@ -333,7 +333,7 @@ struct StudentBarbellPersonalRecordsView: View {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 0) {
 
                 Capsule()
                     .fill(Color.white.opacity(0.18))
@@ -345,18 +345,55 @@ struct StudentBarbellPersonalRecordsView: View {
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
 
-                    HStack(spacing: 10) {
-                        TextField("Ex: 90,50", text: $inputValue)
-                            .keyboardType(.decimalPad)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                        HStack(spacing: 10) {
+                            TextField("Ex: 90,50", text: $inputValue)
+                                .keyboardType(.decimalPad)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 14)
+                                .background(Theme.Colors.cardBackground)
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                )
+
+                            Text(preferredWeightUnit.shortLabel)
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.70))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Button {
+                            showPRDatePicker = true
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "calendar")
+                                    .foregroundColor(.green.opacity(0.85))
+
+                                Text(formatPRDate(selectedPRDate))
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+
+                                Spacer()
+
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.25))
+                            }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
                             .background(Theme.Colors.cardBackground)
@@ -365,85 +402,49 @@ struct StudentBarbellPersonalRecordsView: View {
                                 RoundedRectangle(cornerRadius: 14)
                                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
                             )
-
-                        Text(preferredWeightUnit.shortLabel)
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(.white.opacity(0.70))
-                    }
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Data")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
-
-                    Button {
-                        showPRDatePicker = true
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "calendar")
-                                .foregroundColor(.green.opacity(0.85))
-
-                            Text(formatPRDate(selectedPRDate))
-                                .font(.system(size: 15, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-
-                            Spacer()
-
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.25))
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 14)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-                .padding(.horizontal, 16)
-
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        HStack(spacing: 6) {
-                            Image(systemName: "chart.line.uptrend.xyaxis")
-                                .foregroundColor(.green.opacity(0.90))
-
-                            Text("Evolução")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
-                        }
-
-                        Spacer()
-
-                        Button {
-                            historyMove = move
-                        } label: {
-                            Label("Histórico", systemImage: "clock.arrow.circlepath")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.green.opacity(0.90))
                         }
                         .buttonStyle(.plain)
                     }
+                    .padding(.horizontal, 16)
 
-                    historyChart(for: move)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            HStack(spacing: 6) {
+                                Image(systemName: "chart.line.uptrend.xyaxis")
+                                    .foregroundColor(.green.opacity(0.90))
 
-                if canDeleteSelectedMove {
-                    Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.50))
-                        .multilineTextAlignment(.leading)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 4)
+                                Text("Evolução")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.75))
+                            }
+
+                            Spacer()
+
+                            Button {
+                                historyMove = move
+                            } label: {
+                                Label("Histórico", systemImage: "clock.arrow.circlepath")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.green.opacity(0.90))
+                            }
+                            .buttonStyle(.plain)
+                        }
+
+                        historyChart(for: move)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+
+                    if canDeleteSelectedMove {
+                        Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.50))
+                            .multilineTextAlignment(.leading)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 4)
+                    }
+
+                    }
                 }
 
                 HStack(spacing: 12) {
@@ -496,11 +497,10 @@ struct StudentBarbellPersonalRecordsView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-
-                Spacer()
+                .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.fraction(0.75)])
+        .presentationDetents([.fraction(0.80)])
         .alert("Excluir registro", isPresented: $showDeleteAlert) {
             Button("Cancelar", role: .cancel) { }
             Button("Excluir", role: .destructive) {

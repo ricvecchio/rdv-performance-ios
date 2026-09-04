@@ -631,7 +631,7 @@ struct StudentHeroesPersonalRecordsView: View {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 0) {
 
                 Capsule()
                     .fill(Color.white.opacity(0.18))
@@ -643,65 +643,71 @@ struct StudentHeroesPersonalRecordsView: View {
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                // ✅ Bloco do WOD no mesmo padrão do Notables (card + ícone)
-                if !wod.descriptionLines.isEmpty {
-                    wodCard(wod)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 2)
-                }
-
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Resultado:")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
-
-                    TextField("Ex: 12:34", text: $inputValue)
-                        .keyboardType(.numbersAndPunctuation)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled(true)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 14)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-
-                dateAndHistorySection(key: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "), historyAction: {
-                    historyWod = wod
-                })
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .sheet(item: $historyWod) { selected in
-                    historySheet(title: selected.name, key: selected.storageKey)
-                }
-                .sheet(isPresented: $showPRDatePicker) {
-                    ZStack {
-                        Theme.Colors.headerBackground.ignoresSafeArea()
-                        VStack(spacing: 16) {
-                            DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
-                                .datePickerStyle(.graphical)
-                                .environment(\.locale, Locale(identifier: "pt_BR"))
-                            Button { showPRDatePicker = false } label: {
-                                Text("Confirmar")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.black.opacity(0.85))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.green.opacity(0.90))
-                                    .cornerRadius(14)
-                            }
-                            .buttonStyle(.plain)
-                        }
-                        .padding(16)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                    // ✅ Bloco do WOD no mesmo padrão do Notables (card + ícone)
+                    if !wod.descriptionLines.isEmpty {
+                        wodCard(wod)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
+                            .layoutPriority(1)
                     }
-                    .presentationDetents([.medium])
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("Resultado:")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        TextField("Ex: 12:34", text: $inputValue)
+                            .keyboardType(.numbersAndPunctuation)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 14)
+                            .background(Theme.Colors.cardBackground)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+
+                    dateAndHistorySection(key: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "), historyAction: {
+                        historyWod = wod
+                    })
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .sheet(item: $historyWod) { selected in
+                        historySheet(title: selected.name, key: selected.storageKey)
+                    }
+                    .sheet(isPresented: $showPRDatePicker) {
+                        ZStack {
+                            Theme.Colors.headerBackground.ignoresSafeArea()
+                            VStack(spacing: 16) {
+                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                    .datePickerStyle(.graphical)
+                                    .environment(\.locale, Locale(identifier: "pt_BR"))
+                                Button { showPRDatePicker = false } label: {
+                                    Text("Confirmar")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.black.opacity(0.85))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                        .background(Color.green.opacity(0.90))
+                                        .cornerRadius(14)
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(16)
+                        }
+                        .presentationDetents([.medium])
+                    }
+
+                    }
                 }
 
                 HStack(spacing: 12) {
@@ -739,11 +745,10 @@ struct StudentHeroesPersonalRecordsView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-
-                Spacer()
+                .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.fraction(0.75)])
+        .presentationDetents([.fraction(0.80)])
         .onAppear {
             // ✅ Garante carregar o PR sempre que abrir pela primeira vez
             inputValue = bestDisplayValue(for: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " ")) ?? ""
@@ -783,7 +788,7 @@ struct StudentHeroesPersonalRecordsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 2)
             }
-            .frame(maxHeight: 140)
+            .frame(height: 140)
         }
         .padding(14)
         .background(Theme.Colors.cardBackground)
@@ -813,10 +818,6 @@ struct StudentHeroesPersonalRecordsView: View {
     @ViewBuilder
     private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Data")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             Button {
                 showPRDatePicker = true
             } label: {
