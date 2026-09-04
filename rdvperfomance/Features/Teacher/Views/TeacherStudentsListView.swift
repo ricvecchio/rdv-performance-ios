@@ -425,19 +425,21 @@ struct TeacherStudentsListView: View {
             vm.errorMessage = "Não foi possível identificar o professor logado."
             return
         }
-        await vm.loadStudents(teacherId: teacherId)
+        await vm.loadStudents(teacherId: teacherId, force: true)
     }
 
     private func loadInitialData() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
+            vm.clearActiveTeacherData()
             vm.errorMessage = "Não foi possível identificar o professor logado."
             return
         }
 
-        await vm.loadStudents(teacherId: teacherId)
+        async let students: Void = vm.loadStudents(teacherId: teacherId)
         async let invites: Void = vm.loadInvites(teacherId: teacherId)
         async let requests: Void = vm.loadPendingLinkRequests(teacherId: teacherId)
-        _ = await (invites, requests)
+        _ = await (students, invites, requests)
+        vm.removeLinkedStudentsFromPendingLinkRequests(teacherId: teacherId)
         UserDefaults.standard.set(Date(), forKey: studentActivitiesLastSeenKey(teacherId: teacherId))
     }
 
@@ -924,7 +926,7 @@ struct TeacherStudentsListView: View {
                 Spacer()
 
                 Button {
-                    Task { await loadInvitesIfPossible() }
+                    Task { await loadInvitesIfPossible(force: true) }
                 } label: {
                     Image(systemName: "arrow.clockwise")
                         .foregroundColor(.white.opacity(0.55))
@@ -1019,8 +1021,8 @@ struct TeacherStudentsListView: View {
         .padding(.vertical, 12)
     }
 
-    private func loadInvitesIfPossible() async {
+    private func loadInvitesIfPossible(force: Bool = false) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else { return }
-        await vm.loadInvites(teacherId: teacherId)
+        await vm.loadInvites(teacherId: teacherId, force: force)
     }
 }

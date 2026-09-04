@@ -32,43 +32,92 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     private var studentsByCategory: [TreinoTipo: [AppUser]] = [:]
     private let supportedCategories: [TreinoTipo] = [.crossfit, .academia, .emCasa]
+    private var activeTeacherId: String?
+    private var teacherGeneration: Int = 0
+    private var hasLoadedInvites: Bool = false
+    private var hasLoadedLinkRequests: Bool = false
+    private var studentsLoadTask: Task<Void, Never>?
+    private var studentsLoadTeacherId: String?
+    private var studentsRefreshRequested = false
+    private var invitesLoadTask: Task<Void, Never>?
+    private var invitesLoadTeacherId: String?
+    private var invitesRefreshRequested = false
+    private var linkRequestsLoadTask: Task<Void, Never>?
+    private var linkRequestsLoadTeacherId: String?
+    private var linkRequestsRefreshRequested = false
 
     init(repository: FirestoreRepository) {
         self.repository = repository
     }
 
-    func loadStudents(teacherId: String) async {
-        isLoading = true
-        hasLoadedStudents = false
-        errorMessage = nil
-        defer { isLoading = false }
+    func clearActiveTeacherData() {
+        guard activeTeacherId != nil else { return }
+        activeTeacherId = nil
+        invalidateTeacherData()
+    }
 
+    func loadStudents(teacherId: String, force: Bool = false) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else { return }
+        activateTeacher(teacherId)
+
+        if let task = studentsLoadTask, studentsLoadTeacherId == teacherId {
+            if force {
+                studentsRefreshRequested = true
+            }
+            await task.value
+            return
+        }
+
+        guard force || !hasLoadedStudents else { return }
+
+        let generation = teacherGeneration
+        isLoading = true
+        errorMessage = nil
+
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performStudentsLoads(teacherId: teacherId, generation: generation)
+        }
+        studentsLoadTask = task
+        studentsLoadTeacherId = teacherId
+        await task.value
+    }
+
+    private func performStudentsLoads(teacherId: String, generation: Int) async {
+        guard isActiveTeacher(teacherId, generation: generation) else { return }
+        repeat {
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            studentsRefreshRequested = false
+            await performStudentsLoad(teacherId: teacherId, generation: generation)
+        } while isActiveTeacher(teacherId, generation: generation) && studentsRefreshRequested
+
+        guard isActiveTeacher(teacherId, generation: generation) else { return }
+        studentsLoadTask = nil
+        studentsLoadTeacherId = nil
+        isLoading = false
+    }
+
+    private func performStudentsLoad(teacherId: String, generation: Int) async {
         do {
             // ✅ 1 única query em teacher_students (agrupada por categoria) em vez de
             // até 3 categorias x várias variantes de grafia = dezenas de queries.
             let grouped = try await repository.getStudentsGroupedByTeacher(teacherId: teacherId)
-            self.studentsByCategory = grouped
-            self.students = mergeUniqueStudents(from: supportedCategories.compactMap { grouped[$0] })
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            studentsByCategory = grouped
+            students = mergeUniqueStudents(from: supportedCategories.compactMap { grouped[$0] })
             hasLoadedStudents = true
         } catch {
-            self.errorMessage = (error as NSError).localizedDescription
-            self.studentsByCategory = [:]
-            self.students = []
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            if students.isEmpty {
+                errorMessage = (error as NSError).localizedDescription
+            }
         }
     }
 
     func loadStudentsOnlyOneCategory(teacherId: String, category: TreinoTipo) async {
-        isLoading = true
-        errorMessage = nil
-        defer { isLoading = false }
-
-        do {
-            let grouped = try await repository.getStudentsGroupedByTeacher(teacherId: teacherId)
-            studentsByCategory[category] = grouped[category] ?? []
-            self.students = mergeUniqueStudents(from: supportedCategories.compactMap { studentsByCategory[$0] })
-        } catch {
-            self.errorMessage = (error as NSError).localizedDescription
-        }
+        _ = category
+        await loadStudents(teacherId: teacherId)
     }
 
     func filteredStudents(filter: TreinoTipo?) -> [AppUser] {
@@ -81,8 +130,17 @@ final class TeacherStudentsListViewModel: ObservableObject {
         studentId: String,
         categoryToRemove: TreinoTipo?
     ) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard activeTeacherId == teacherId else { return }
+        let generation = teacherGeneration
         isUnlinking = true
         errorMessage = nil
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isUnlinking = false
+            }
+        }
+        var didUnlink = false
 
         if let cat = categoryToRemove {
             let variants = categoryVariants(cat)
@@ -93,6 +151,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
                         studentId: studentId,
                         category: v
                     )
+                    didUnlink = true
                 } catch {
                     continue
                 }
@@ -110,6 +169,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
                             studentId: studentId,
                             category: v
                         )
+                        didUnlink = true
                     } catch {
                         continue
                     }
@@ -117,27 +177,72 @@ final class TeacherStudentsListViewModel: ObservableObject {
             }
         }
 
-        await loadStudents(teacherId: teacherId)
-
-        isUnlinking = false
+        if didUnlink, isActiveTeacher(teacherId, generation: generation) {
+            await loadStudents(teacherId: teacherId, force: true)
+        }
     }
 
 
-    func loadInvites(teacherId: String) async {
+    func loadInvites(teacherId: String, force: Bool = false) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else { return }
+        activateTeacher(teacherId)
+
+        if let task = invitesLoadTask, invitesLoadTeacherId == teacherId {
+            if force {
+                invitesRefreshRequested = true
+            }
+            await task.value
+            return
+        }
+
+        guard force || !hasLoadedInvites else { return }
+
         isInvitesLoading = true
         invitesErrorMessageInline = nil
-        defer { isInvitesLoading = false }
 
+        let generation = teacherGeneration
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performInvitesLoads(teacherId: teacherId, generation: generation)
+        }
+        invitesLoadTask = task
+        invitesLoadTeacherId = teacherId
+        await task.value
+    }
+
+    private func performInvitesLoads(teacherId: String, generation: Int) async {
+        guard isActiveTeacher(teacherId, generation: generation) else { return }
+        repeat {
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            invitesRefreshRequested = false
+            await performInvitesLoad(teacherId: teacherId, generation: generation)
+        } while isActiveTeacher(teacherId, generation: generation) && invitesRefreshRequested
+
+        guard isActiveTeacher(teacherId, generation: generation) else { return }
+        invitesLoadTask = nil
+        invitesLoadTeacherId = nil
+        isInvitesLoading = false
+    }
+
+    private func performInvitesLoad(teacherId: String, generation: Int) async {
         do {
             let list = try await repository.getInvitesSentByTeacher(teacherId: teacherId, status: nil, limit: 50)
-            self.invites = list
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            invites = list
+            hasLoadedInvites = true
         } catch {
-            self.invites = []
-            self.invitesErrorMessageInline = (error as NSError).localizedDescription
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            if invites.isEmpty {
+                invitesErrorMessageInline = (error as NSError).localizedDescription
+            }
         }
     }
 
     func sendInviteByEmail(teacherId: String, studentEmail: String, category: TreinoTipo) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard activeTeacherId == teacherId else { return }
+        let generation = teacherGeneration
         let email = studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !email.isEmpty else {
             setInviteError("Informe o e-mail do aluno.")
@@ -146,10 +251,15 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
         isInvitesLoading = true
         invitesErrorMessageInline = nil
-        defer { isInvitesLoading = false }
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isInvitesLoading = false
+            }
+        }
 
         do {
             let teacher = try await repository.getUser(uid: teacherId)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
             let teacherEmail = teacher?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
             if teacherEmail.isEmpty {
@@ -167,14 +277,16 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 categoryRaw: category.firestoreKey
             )
 
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
             inviteSuccessMessage = "Convite enviado para \(email)."
             showInviteSuccessAlert = true
 
-            let list = try await repository.getInvitesSentByTeacher(teacherId: teacherId, status: nil, limit: 50)
-            self.invites = list
+            await loadInvites(teacherId: teacherId, force: true)
 
         } catch {
-            setInviteError((error as NSError).localizedDescription)
+            if isActiveTeacher(teacherId, generation: generation) {
+                setInviteError((error as NSError).localizedDescription)
+            }
         }
     }
 
@@ -203,33 +315,76 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     func cancelInvite(inviteId: String, teacherId: String) async {
         let id  = inviteId.trimmingCharacters(in: .whitespacesAndNewlines)
-        let tid = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !id.isEmpty else { return }
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !id.isEmpty, activeTeacherId == teacherId else { return }
+        let generation = teacherGeneration
 
         // Remoção otimista: retira da lista imediatamente para resposta visual instantânea
         invites.removeAll { ($0.id ?? "") == id }
 
         isInvitesLoading = true
         invitesErrorMessageInline = nil
-        defer { isInvitesLoading = false }
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isInvitesLoading = false
+            }
+        }
 
         do {
             try await repository.cancelTeacherInvite(inviteId: id)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
 
             // Resync com Firestore após cancelamento
-            if !tid.isEmpty {
-                let list = try await repository.getInvitesSentByTeacher(teacherId: tid, status: nil, limit: 50)
-                self.invites = list
-            }
+            await loadInvites(teacherId: teacherId, force: true)
         } catch {
-            setInviteError((error as NSError).localizedDescription)
+            if isActiveTeacher(teacherId, generation: generation) {
+                setInviteError((error as NSError).localizedDescription)
+            }
         }
     }
 
-    func loadPendingLinkRequests(teacherId: String) async {
-        isLinkRequestsLoading = true
-        defer { isLinkRequestsLoading = false }
+    func loadPendingLinkRequests(teacherId: String, force: Bool = false) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else { return }
+        activateTeacher(teacherId)
 
+        if let task = linkRequestsLoadTask, linkRequestsLoadTeacherId == teacherId {
+            if force {
+                linkRequestsRefreshRequested = true
+            }
+            await task.value
+            return
+        }
+
+        guard force || !hasLoadedLinkRequests else { return }
+
+        isLinkRequestsLoading = true
+
+        let generation = teacherGeneration
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performLinkRequestsLoads(teacherId: teacherId, generation: generation)
+        }
+        linkRequestsLoadTask = task
+        linkRequestsLoadTeacherId = teacherId
+        await task.value
+    }
+
+    private func performLinkRequestsLoads(teacherId: String, generation: Int) async {
+        guard isActiveTeacher(teacherId, generation: generation) else { return }
+        repeat {
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            linkRequestsRefreshRequested = false
+            await performLinkRequestsLoad(teacherId: teacherId, generation: generation)
+        } while isActiveTeacher(teacherId, generation: generation) && linkRequestsRefreshRequested
+
+        guard isActiveTeacher(teacherId, generation: generation) else { return }
+        linkRequestsLoadTask = nil
+        linkRequestsLoadTeacherId = nil
+        isLinkRequestsLoading = false
+    }
+
+    private func performLinkRequestsLoad(teacherId: String, generation: Int) async {
         do {
             let linkedStudentIds = Set(
                 students.compactMap { student -> String? in
@@ -245,6 +400,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 }
             let usersById = try await repository.getUsers(byIds: requests.map(\.studentId))
 
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
             pendingLinkRequests = requests.compactMap { request in
                 let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 let studentId = request.studentId.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -266,10 +422,25 @@ final class TeacherStudentsListViewModel: ObservableObject {
                     defaultCategory: user?.defaultCategory
                 )
             }
+            hasLoadedLinkRequests = true
         } catch {
-            pendingLinkRequests = []
-            setLinkError((error as NSError).localizedDescription)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            if pendingLinkRequests.isEmpty {
+                setLinkError((error as NSError).localizedDescription)
+            }
         }
+    }
+
+    func removeLinkedStudentsFromPendingLinkRequests(teacherId: String) {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard activeTeacherId == teacherId else { return }
+        let linkedStudentIds = Set(
+            students.compactMap { student -> String? in
+                let id = student.id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                return id.isEmpty ? nil : id
+            }
+        )
+        pendingLinkRequests.removeAll { linkedStudentIds.contains($0.studentId) }
     }
 
     func approveRequestAndLinkStudent(
@@ -278,6 +449,9 @@ final class TeacherStudentsListViewModel: ObservableObject {
         studentId: String,
         category: String
     ) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard activeTeacherId == teacherId else { return }
+        let generation = teacherGeneration
         let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
         let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         let normalizedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -287,7 +461,11 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
 
         isLinkRequestsLoading = true
-        defer { isLinkRequestsLoading = false }
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isLinkRequestsLoading = false
+            }
+        }
 
         do {
             try await repository.approveLinkRequestAndLinkStudent(
@@ -297,17 +475,24 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 category: normalizedCategory
             )
 
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
             pendingLinkRequests.removeAll { $0.requestId == id }
-            await loadStudents(teacherId: teacherId)
-            await loadPendingLinkRequests(teacherId: teacherId)
+            await loadStudents(teacherId: teacherId, force: true)
+            await loadPendingLinkRequests(teacherId: teacherId, force: true)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
             linkSuccessMessage = "Aluno vinculado com sucesso."
             showLinkSuccessAlert = true
         } catch {
-            setLinkError((error as NSError).localizedDescription)
+            if isActiveTeacher(teacherId, generation: generation) {
+                setLinkError((error as NSError).localizedDescription)
+            }
         }
     }
 
     func declineLinkRequest(teacherId: String, requestId: String) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard activeTeacherId == teacherId else { return }
+        let generation = teacherGeneration
         let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !id.isEmpty else {
             setLinkError("Não foi possível identificar a solicitação de vínculo.")
@@ -318,15 +503,19 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
         do {
             try await repository.declineLinkRequest(requestId: id)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
             pendingLinkRequests.removeAll { $0.requestId == id }
         } catch {
-            isLinkRequestsLoading = false
-            setLinkError((error as NSError).localizedDescription)
+            if isActiveTeacher(teacherId, generation: generation) {
+                isLinkRequestsLoading = false
+                setLinkError((error as NSError).localizedDescription)
+            }
             return
         }
 
+        guard isActiveTeacher(teacherId, generation: generation) else { return }
         isLinkRequestsLoading = false
-        await loadPendingLinkRequests(teacherId: teacherId)
+        await loadPendingLinkRequests(teacherId: teacherId, force: true)
     }
 
     func statusText(_ raw: String) -> String {
@@ -346,6 +535,56 @@ final class TeacherStudentsListViewModel: ObservableObject {
     func setLinkError(_ msg: String) {
         linkErrorMessage = msg
         showLinkErrorAlert = true
+    }
+
+    private func activateTeacher(_ teacherId: String) {
+        guard activeTeacherId != teacherId else { return }
+        activeTeacherId = teacherId
+        invalidateTeacherData()
+    }
+
+    private func invalidateTeacherData() {
+        teacherGeneration &+= 1
+
+        studentsLoadTask?.cancel()
+        invitesLoadTask?.cancel()
+        linkRequestsLoadTask?.cancel()
+        studentsLoadTask = nil
+        invitesLoadTask = nil
+        linkRequestsLoadTask = nil
+        studentsLoadTeacherId = nil
+        invitesLoadTeacherId = nil
+        linkRequestsLoadTeacherId = nil
+        studentsRefreshRequested = false
+        invitesRefreshRequested = false
+        linkRequestsRefreshRequested = false
+
+        students = []
+        studentsByCategory = [:]
+        hasLoadedStudents = false
+        invites = []
+        hasLoadedInvites = false
+        pendingLinkRequests = []
+        hasLoadedLinkRequests = false
+
+        isLoading = false
+        isInvitesLoading = false
+        isLinkRequestsLoading = false
+        isUnlinking = false
+        errorMessage = nil
+        invitesErrorMessageInline = nil
+        linkErrorMessage = nil
+        showLinkErrorAlert = false
+        linkSuccessMessage = nil
+        showLinkSuccessAlert = false
+        inviteErrorMessage = nil
+        showInviteErrorAlert = false
+        inviteSuccessMessage = nil
+        showInviteSuccessAlert = false
+    }
+
+    private func isActiveTeacher(_ teacherId: String, generation: Int) -> Bool {
+        activeTeacherId == teacherId && teacherGeneration == generation
     }
 
     private func categoryVariants(_ cat: TreinoTipo) -> [String] {

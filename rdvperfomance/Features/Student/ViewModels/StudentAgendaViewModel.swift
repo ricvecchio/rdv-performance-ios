@@ -26,6 +26,9 @@ final class StudentAgendaViewModel: ObservableObject {
 
     private var hasLoadedLinkStatus: Bool = false
     private var hasLoadedWeeksAndMeta: Bool = false
+    private var linkStatusLoadTask: Task<Void, Never>?
+    private var weeksLoadTask: Task<Void, Never>?
+    private var metadataGeneration = UUID()
 
     var hasLoadedWeeks: Bool { hasLoadedWeeksAndMeta }
 
@@ -46,22 +49,38 @@ final class StudentAgendaViewModel: ObservableObject {
     // MARK: - Link Status (Banner)
 
     func loadLinkStatusIfNeeded() async {
-        guard !hasLoadedLinkStatus else { return }
         await loadLinkStatus(force: false)
     }
 
     func loadLinkStatus(force: Bool) async {
+        if let task = linkStatusLoadTask {
+            await task.value
+            return
+        }
+
+        guard force || !hasLoadedLinkStatus else { return }
+
         if force {
-            hasLoadedLinkStatus = false
             linkBannerState = .loading
         }
         linkActionMessage = nil
         linkActionMessageIsError = false
 
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performLinkStatusLoad()
+        }
+        linkStatusLoadTask = task
+        await task.value
+        linkStatusLoadTask = nil
+    }
+
+    private func performLinkStatusLoad() async {
         do {
             currentStudentUser = try await repository.getUser(uid: studentId)
 
             if let _ = try await repository.getActiveTeacherRelationForStudent(studentId: studentId) {
+                pendingInvite = nil
                 linkBannerState = .linked
                 hasLoadedLinkStatus = true
                 return
@@ -77,6 +96,7 @@ final class StudentAgendaViewModel: ObservableObject {
                 }
             }
 
+            pendingInvite = nil
             linkBannerState = .notLinked
             hasLoadedLinkStatus = true
 
@@ -181,14 +201,26 @@ final class StudentAgendaViewModel: ObservableObject {
     // MARK: - Semanas / Meta
 
     func loadWeeksAndMeta(force: Bool = false) async {
-        guard force || !hasLoadedWeeksAndMeta else { return }
+        if let task = weeksLoadTask {
+            await task.value
+            return
+        }
 
-        // Evita concorrência: se já carregando, aguarda conclusão
-        guard !isLoading else { return }
+        guard force || !hasLoadedWeeksAndMeta else { return }
 
         isLoading = true
         errorMessage = nil
 
+        let task = Task { [weak self] in
+            guard let self else { return }
+            await self.performWeeksLoad()
+        }
+        weeksLoadTask = task
+        await task.value
+        weeksLoadTask = nil
+    }
+
+    private func performWeeksLoad() async {
         do {
             #if DEBUG
             let t0 = Date()
@@ -207,26 +239,35 @@ final class StudentAgendaViewModel: ObservableObject {
             hasLoadedWeeksAndMeta = true
             isLoading = false
 
-            // Carrega metadados em paralelo (progressivo)
-            await withTaskGroup(of: Void.self) { group in
-                group.addTask { await self.loadTeacherNamesForWeeks(result) }
-                group.addTask { await self.loadMetaForWeeks(result) }
+            // Os metadados não atrasam a lista principal de semanas.
+            let generation = UUID()
+            metadataGeneration = generation
+            Task { [weak self] in
+                guard let self else { return }
+                await self.loadSecondaryMetadata(for: result, generation: generation)
             }
-
-            #if DEBUG
-            print("[StudentAgenda] metadata completo em \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count * 2) reads auxiliares")
-            #endif
-
         } catch {
-            hasLoadedWeeksAndMeta = true
             self.errorMessage = (error as NSError).localizedDescription
             isLoading = false
         }
     }
 
-    private func loadTeacherNamesForWeeks(_ weeks: [TrainingWeekFS]) async {
+    private func loadSecondaryMetadata(for weeks: [TrainingWeekFS], generation: UUID) async {
+        #if DEBUG
+        let t0 = Date()
+        #endif
 
-        teacherNameById.removeAll()
+        await withTaskGroup(of: Void.self) { group in
+            group.addTask { await self.loadTeacherNamesForWeeks(weeks, generation: generation) }
+            group.addTask { await self.loadMetaForWeeks(weeks, generation: generation) }
+        }
+
+        #if DEBUG
+        print("[StudentAgenda] metadata completo em \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(weeks.count * 2) reads auxiliares")
+        #endif
+    }
+
+    private func loadTeacherNamesForWeeks(_ weeks: [TrainingWeekFS], generation: UUID) async {
 
         let ids = Array(
             Set(
@@ -260,13 +301,11 @@ final class StudentAgendaViewModel: ObservableObject {
             }
         }
 
-        teacherNameById = result
+        guard metadataGeneration == generation else { return }
+        teacherNameById.merge(result, uniquingKeysWith: { _, new in new })
     }
 
-    private func loadMetaForWeeks(_ weeks: [TrainingWeekFS]) async {
-
-        weekRangeText.removeAll()
-        weekProgressPercent.removeAll()
+    private func loadMetaForWeeks(_ weeks: [TrainingWeekFS], generation: UUID) async {
 
         await withTaskGroup(of: Void.self) { group in
             for week in weeks {
@@ -276,19 +315,27 @@ final class StudentAgendaViewModel: ObservableObject {
                     do {
                         let days = try await self.repository.getDaysForWeek(weekId: weekId)
                         if let range = StudentAgendaViewModel.computeRangeTextStatic(days: days) {
-                            await MainActor.run { self.weekRangeText[weekId] = range }
+                            await MainActor.run {
+                                guard self.metadataGeneration == generation else { return }
+                                self.weekRangeText[weekId] = range
+                            }
                         }
 
                         let p = try await self.repository.getWeekProgress(weekId: weekId, studentId: studentId)
                         let percent = StudentAgendaViewModel.computePercentStatic(completed: p.completed, total: p.total)
-                        await MainActor.run { self.weekProgressPercent[weekId] = percent }
+                        await MainActor.run {
+                            guard self.metadataGeneration == generation else { return }
+                            self.weekProgressPercent[weekId] = percent
+                        }
                     } catch {
                     }
                 }
             }
         }
 
-        objectWillChange.send()
+        if metadataGeneration == generation {
+            objectWillChange.send()
+        }
     }
 
     func subtitleForWeek(_ week: TrainingWeekFS) -> String {

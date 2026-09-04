@@ -420,146 +420,316 @@ struct ProfileView: View {
             return
         }
 
-        async let messages = unreadMessages(for: uid, categories: studentActivityCategories)
-        async let feedbacks = unreadFeedbacks(for: uid, categories: studentActivityCategories)
-        async let teacherActivities = unreadTeacherActivities(for: uid, email: studentEmail)
+        async let remoteState = fetchProfileNotificationState(for: uid)
+        async let messages = messagesByCategory(for: uid, categories: studentActivityCategories)
+        async let feedbacks = feedbacksByCategory(for: uid, categories: studentActivityCategories)
+        async let teacherActivities = teacherActivityData(for: uid, email: studentEmail)
 
-        unreadMessagesCount = await messages
-        unreadFeedbacksCount = await feedbacks
-        teacherActivitiesCount = await teacherActivities
+        let (state, messagesByCategory, feedbacksByCategory, activityData) = await (
+            remoteState,
+            messages,
+            feedbacks,
+            teacherActivities
+        )
+        guard currentUid == uid, session.userType == .STUDENT else { return }
+
+        let notificationState = state ?? ProfileNotificationState(
+            messagesLastSeenByCategory: [:],
+            feedbacksLastSeenByCategory: [:],
+            teacherActivitiesLastSeen: nil
+        )
+
+        unreadMessagesCount = unreadMessages(
+            messagesByCategory,
+            for: uid,
+            remoteState: notificationState
+        )
+        unreadFeedbacksCount = unreadFeedbacks(
+            feedbacksByCategory,
+            for: uid,
+            remoteState: notificationState
+        )
+        teacherActivitiesCount = unreadTeacherActivities(
+            activityData,
+            for: uid,
+            remoteState: notificationState
+        )
+
+        if let state {
+            persistLocalNotificationStateIfNewer(for: uid, than: state)
+        }
     }
 
-    private func unreadMessages(for uid: String, categories: [TreinoTipo]) async -> Int {
-        await withTaskGroup(of: Int.self, returning: Int.self) { group in
+    private func fetchProfileNotificationState(for uid: String) async -> ProfileNotificationState? {
+        do {
+            return try await repository.getProfileNotificationState(uid: uid)
+        } catch {
+            return nil
+        }
+    }
+
+    private func messagesByCategory(
+        for uid: String,
+        categories: [TreinoTipo]
+    ) async -> [String: [TeacherMessageFS]] {
+        let repo = repository
+        return await withTaskGroup(of: (String, [TeacherMessageFS]).self, returning: [String: [TeacherMessageFS]].self) { group in
             for category in categories {
+                let categoryRaw = category.rawValue
                 group.addTask {
-                    await unreadMessages(for: uid, category: category.rawValue)
+                    do {
+                        return (
+                            categoryRaw,
+                            try await repo.getMessagesForStudent(
+                                studentId: uid,
+                                categoryRaw: categoryRaw,
+                                limit: 100
+                            )
+                        )
+                    } catch {
+                        return (categoryRaw, [])
+                    }
                 }
             }
 
-            var count = 0
-            for await value in group {
-                count += value
+            var messagesByCategory: [String: [TeacherMessageFS]] = [:]
+            for await (category, messages) in group {
+                messagesByCategory[category] = messages
             }
-            return count
+            return messagesByCategory
         }
     }
 
-    private func unreadMessages(for uid: String, category: String) async -> Int {
-        let lastSeen = UserDefaults.standard.object(
-            forKey: "profileMessagesLastSeen.\(uid).\(category)"
-        ) as? Date
-
-        do {
-            let messages = try await repository.getMessagesForStudent(
-                studentId: uid,
-                categoryRaw: category,
-                limit: 100
-            )
-            guard let lastSeen else {
-                return messages.count
-            }
-            return messages.filter {
-                return ($0.createdAt ?? .distantPast) > lastSeen
-            }.count
-        } catch {
-            return 0
-        }
-    }
-
-    private func unreadFeedbacks(for uid: String, categories: [TreinoTipo]) async -> Int {
-        await withTaskGroup(of: Int.self, returning: Int.self) { group in
+    private func feedbacksByCategory(
+        for uid: String,
+        categories: [TreinoTipo]
+    ) async -> [String: [StudentFeedbackFS]] {
+        let repo = repository
+        return await withTaskGroup(of: (String, [StudentFeedbackFS]).self, returning: [String: [StudentFeedbackFS]].self) { group in
             for category in categories {
+                let categoryRaw = category.rawValue
                 group.addTask {
-                    await unreadFeedbacks(for: uid, category: category.rawValue)
+                    do {
+                        return (
+                            categoryRaw,
+                            try await repo.getFeedbacksForStudent(
+                                studentId: uid,
+                                categoryRaw: categoryRaw,
+                                limit: 100
+                            )
+                        )
+                    } catch {
+                        return (categoryRaw, [])
+                    }
                 }
             }
 
-            var count = 0
-            for await value in group {
-                count += value
+            var feedbacksByCategory: [String: [StudentFeedbackFS]] = [:]
+            for await (category, feedbacks) in group {
+                feedbacksByCategory[category] = feedbacks
             }
-            return count
+            return feedbacksByCategory
         }
     }
 
-    private func unreadFeedbacks(for uid: String, category: String) async -> Int {
-        let lastSeen = UserDefaults.standard.object(
-            forKey: "profileFeedbacksLastSeen.\(uid).\(category)"
-        ) as? Date
-
-        do {
-            let feedbacks = try await repository.getFeedbacksForStudent(
-                studentId: uid,
-                categoryRaw: category,
-                limit: 100
-            )
-            guard let lastSeen else {
-                return feedbacks.count
-            }
-            return feedbacks.filter {
-                return ($0.createdAt ?? .distantPast) > lastSeen
-            }.count
-        } catch {
-            return 0
-        }
-    }
-
-    private func unreadTeacherActivities(for uid: String, email: String) async -> Int {
-        let lastSeen = UserDefaults.standard.object(
-            forKey: "profileTeachersLastSeen.\(uid)"
-        ) as? Date
-
+    private func teacherActivityData(
+        for uid: String,
+        email: String
+    ) async -> (invites: [TeacherStudentInviteFS], requests: [TeacherStudentLinkRequestFS]) {
         do {
             async let invites = repository.getInvitesForStudent(studentEmail: email)
             async let requests = repository.getRequestsForStudent(studentId: uid)
-            let (receivedInvites, sentRequests) = try await (invites, requests)
-
-            let inviteCount = receivedInvites.filter {
-                let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                guard let lastSeen else { return status == "pending" }
-                return (status == "pending" && ($0.createdAt?.dateValue() ?? .distantPast) > lastSeen)
-                    || ((status == "accepted" || status == "declined")
-                        && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen)
-            }.count
-            let requestCount = sentRequests.filter {
-                let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-                guard let lastSeen else {
-                    return status == "accepted" || status == "declined"
-                }
-                return (status == "accepted" || status == "declined")
-                    && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen
-            }.count
-
-            return inviteCount + requestCount
+            return try await (invites, requests)
         } catch {
-            return 0
+            return ([], [])
         }
+    }
+
+    private func unreadMessages(
+        _ messagesByCategory: [String: [TeacherMessageFS]],
+        for uid: String,
+        remoteState: ProfileNotificationState
+    ) -> Int {
+        studentActivityCategories.reduce(into: 0) { count, category in
+            let categoryRaw = category.rawValue
+            let lastSeen = effectiveLastSeen(
+                local: UserDefaults.standard.object(
+                    forKey: "profileMessagesLastSeen.\(uid).\(categoryRaw)"
+                ) as? Date,
+                remote: remoteState.messagesLastSeenByCategory[categoryRaw]
+            )
+            let messages = messagesByCategory[categoryRaw] ?? []
+            if let lastSeen {
+                count += messages.filter { ($0.createdAt ?? .distantPast) > lastSeen }.count
+            } else {
+                count += messages.count
+            }
+        }
+    }
+
+    private func unreadFeedbacks(
+        _ feedbacksByCategory: [String: [StudentFeedbackFS]],
+        for uid: String,
+        remoteState: ProfileNotificationState
+    ) -> Int {
+        studentActivityCategories.reduce(into: 0) { count, category in
+            let categoryRaw = category.rawValue
+            let lastSeen = effectiveLastSeen(
+                local: UserDefaults.standard.object(
+                    forKey: "profileFeedbacksLastSeen.\(uid).\(categoryRaw)"
+                ) as? Date,
+                remote: remoteState.feedbacksLastSeenByCategory[categoryRaw]
+            )
+            let feedbacks = feedbacksByCategory[categoryRaw] ?? []
+            if let lastSeen {
+                count += feedbacks.filter { ($0.createdAt ?? .distantPast) > lastSeen }.count
+            } else {
+                count += feedbacks.count
+            }
+        }
+    }
+
+    private func unreadTeacherActivities(
+        _ activityData: (invites: [TeacherStudentInviteFS], requests: [TeacherStudentLinkRequestFS]),
+        for uid: String,
+        remoteState: ProfileNotificationState
+    ) -> Int {
+        let lastSeen = effectiveLastSeen(
+            local: UserDefaults.standard.object(forKey: "profileTeachersLastSeen.\(uid)") as? Date,
+            remote: remoteState.teacherActivitiesLastSeen
+        )
+        let inviteCount = activityData.invites.filter {
+            let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard let lastSeen else { return status == "pending" }
+            return (status == "pending" && ($0.createdAt?.dateValue() ?? .distantPast) > lastSeen)
+                || ((status == "accepted" || status == "declined")
+                    && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen)
+        }.count
+        let requestCount = activityData.requests.filter {
+            let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard let lastSeen else {
+                return status == "accepted" || status == "declined"
+            }
+            return (status == "accepted" || status == "declined")
+                && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen
+        }.count
+
+        return inviteCount + requestCount
+    }
+
+    private func effectiveLastSeen(local: Date?, remote: Date?) -> Date? {
+        switch (local, remote) {
+        case let (local?, remote?):
+            return max(local, remote)
+        case let (local?, nil):
+            return local
+        case let (nil, remote?):
+            return remote
+        case (nil, nil):
+            return nil
+        }
+    }
+
+    private func persistLocalNotificationStateIfNewer(
+        for uid: String,
+        than remoteState: ProfileNotificationState
+    ) {
+        var messages: [String: Date] = [:]
+        var feedbacks: [String: Date] = [:]
+
+        for category in studentActivityCategories {
+            let categoryRaw = category.rawValue
+            if let local = UserDefaults.standard.object(
+                forKey: "profileMessagesLastSeen.\(uid).\(categoryRaw)"
+            ) as? Date,
+               local > (remoteState.messagesLastSeenByCategory[categoryRaw] ?? .distantPast) {
+                messages[categoryRaw] = local
+            }
+            if let local = UserDefaults.standard.object(
+                forKey: "profileFeedbacksLastSeen.\(uid).\(categoryRaw)"
+            ) as? Date,
+               local > (remoteState.feedbacksLastSeenByCategory[categoryRaw] ?? .distantPast) {
+                feedbacks[categoryRaw] = local
+            }
+        }
+
+        let teacherActivities = UserDefaults.standard.object(
+            forKey: "profileTeachersLastSeen.\(uid)"
+        ) as? Date
+        let newerTeacherActivities = teacherActivities.flatMap {
+            $0 > (remoteState.teacherActivitiesLastSeen ?? .distantPast) ? $0 : nil
+        }
+
+        persistNotificationState(
+            for: uid,
+            messages: messages,
+            feedbacks: feedbacks,
+            teacherActivities: newerTeacherActivities
+        )
     }
 
     private func markMessagesAsSeen() {
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
+        let seenAt = Date()
         for category in studentActivityCategories {
             UserDefaults.standard.set(
-                Date(),
-                forKey: "profileMessagesLastSeen.\(currentUid).\(category.rawValue)"
+                seenAt,
+                forKey: "profileMessagesLastSeen.\(uid).\(category.rawValue)"
             )
         }
         unreadMessagesCount = 0
+        persistNotificationState(
+            for: uid,
+            messages: Dictionary(uniqueKeysWithValues: studentActivityCategories.map { ($0.rawValue, seenAt) })
+        )
     }
 
     private func markFeedbacksAsSeen() {
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
+        let seenAt = Date()
         for category in studentActivityCategories {
             UserDefaults.standard.set(
-                Date(),
-                forKey: "profileFeedbacksLastSeen.\(currentUid).\(category.rawValue)"
+                seenAt,
+                forKey: "profileFeedbacksLastSeen.\(uid).\(category.rawValue)"
             )
         }
         unreadFeedbacksCount = 0
+        persistNotificationState(
+            for: uid,
+            feedbacks: Dictionary(uniqueKeysWithValues: studentActivityCategories.map { ($0.rawValue, seenAt) })
+        )
     }
 
     private func markTeacherActivitiesAsSeen() {
-        UserDefaults.standard.set(Date(), forKey: "profileTeachersLastSeen.\(currentUid)")
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
+        let seenAt = Date()
+        UserDefaults.standard.set(seenAt, forKey: "profileTeachersLastSeen.\(uid)")
         teacherActivitiesCount = 0
+        persistNotificationState(for: uid, teacherActivities: seenAt)
+    }
+
+    private func persistNotificationState(
+        for uid: String,
+        messages: [String: Date] = [:],
+        feedbacks: [String: Date] = [:],
+        teacherActivities: Date? = nil
+    ) {
+        guard !uid.isEmpty else { return }
+        let repo = repository
+        Task {
+            do {
+                try await repo.mergeProfileNotificationState(
+                    uid: uid,
+                    messagesLastSeenByCategory: messages,
+                    feedbacksLastSeenByCategory: feedbacks,
+                    teacherActivitiesLastSeen: teacherActivities
+                )
+            } catch {
+            }
+        }
     }
 
     private func loadLinkedTeachers(forceFallbackFromWeeks: Bool) async {
