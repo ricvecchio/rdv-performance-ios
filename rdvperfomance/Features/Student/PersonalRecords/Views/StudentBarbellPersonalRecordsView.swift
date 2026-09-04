@@ -1,4 +1,5 @@
 import SwiftUI
+import Charts
 
 // Tela do Aluno: Recorde Pessoal > Barbell (lista fixa de movimentos + carga máxima)
 struct StudentBarbellPersonalRecordsView: View {
@@ -17,6 +18,12 @@ struct StudentBarbellPersonalRecordsView: View {
         let id: String
         let name: String
         let storageKey: String
+    }
+
+    private struct BarbellPRHistoryEntry: Identifiable, Codable, Hashable {
+        let id: String
+        let valueKg: Double
+        let createdAt: Date
     }
 
     private enum WeightUnit: String {
@@ -78,12 +85,16 @@ struct StudentBarbellPersonalRecordsView: View {
     @AppStorage("student_pr_barbell_values_v1")
     private var barbellValuesData: Data = Data()
 
+    @AppStorage("student_pr_barbell_history_v1")
+    private var barbellHistoryData: Data = Data()
+
     // ✅ NOVO: persistência dos movimentos criados pelo aluno
     @AppStorage("student_pr_barbell_custom_moves_v1")
     private var customMovesData: Data = Data()
 
     @State private var selectedMove: BarbellMove?
     @State private var inputValue: String = ""
+    @State private var historyMove: BarbellMove?
 
     // ✅ NOVO: adicionar movimento
     @State private var showAddMoveSheet: Bool = false
@@ -171,7 +182,7 @@ struct StudentBarbellPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: (selectedMove != nil || showAddMoveSheet) ? 4 : 0)
+        .blur(radius: (selectedMove != nil || historyMove != nil || showAddMoveSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -366,6 +377,15 @@ struct StudentBarbellPersonalRecordsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
 
+                Button {
+                    historyMove = move
+                } label: {
+                    Label("Histórico", systemImage: "chart.line.uptrend.xyaxis")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.green.opacity(0.90))
+                }
+                .buttonStyle(.plain)
+
                 if canDeleteSelectedMove {
                     Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
                         .font(.system(size: 12, weight: .semibold))
@@ -438,6 +458,138 @@ struct StudentBarbellPersonalRecordsView: View {
         } message: {
             Text("Deseja excluir o registro de \"\(selectedMove?.name ?? "este movimento")\"?")
         }
+        .sheet(item: $historyMove) { move in
+            historySheet(move: move)
+        }
+    }
+
+    private func historySheet(move: BarbellMove) -> some View {
+        let entries = historyEntries(for: move.storageKey)
+        let recordID = entries.max(by: { $0.valueKg < $1.valueKg })?.id
+
+        return ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 10)
+
+                    Text(move.name)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    Text("Histórico")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+
+                    if entries.isEmpty {
+                        Text("Nenhum histórico de evolução registrado ainda.")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.60))
+
+                        Text("Salve novos PRs para acompanhar sua evolução.")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.45))
+                    } else {
+                        Chart(entries) { entry in
+                            LineMark(
+                                x: .value("Data", entry.createdAt),
+                                y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
+                            )
+                            .foregroundStyle(.green)
+                            .interpolationMethod(.linear)
+
+                            PointMark(
+                                x: .value("Data", entry.createdAt),
+                                y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
+                            )
+                            .foregroundStyle(.green)
+                        }
+                        .chartXAxis {
+                            AxisMarks(values: .automatic(desiredCount: 4)) {
+                                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                                    .foregroundStyle(Color.white.opacity(0.12))
+                                AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year())
+                                    .foregroundStyle(Color.white.opacity(0.55))
+                            }
+                        }
+                        .chartYAxis {
+                            AxisMarks(position: .leading) {
+                                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                                    .foregroundStyle(Color.white.opacity(0.12))
+                                AxisValueLabel()
+                                    .foregroundStyle(Color.white.opacity(0.55))
+                            }
+                        }
+                        .frame(height: 220)
+                        .padding(14)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+
+                        VStack(spacing: 0) {
+                            ForEach(entries.reversed()) { entry in
+                                HStack(spacing: 10) {
+                                    Image(systemName: entry.id == recordID ? "trophy.fill" : "medal.fill")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .frame(width: 22)
+
+                                    Text("\(formatNumber(convertFromStorageKgToPreferredUnit(entry.valueKg))) \(preferredWeightUnit.shortLabel)")
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+
+                                    if entry.id == recordID {
+                                        Text("RECORDE")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.green)
+                                            .padding(.horizontal, 8)
+                                            .padding(.vertical, 4)
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 6)
+                                                    .stroke(Color.green.opacity(0.70), lineWidth: 1)
+                                            )
+                                    }
+
+                                    Spacer()
+
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.white.opacity(0.45))
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+
+                                if entry.id != entries.first?.id {
+                                    Rectangle()
+                                        .fill(Color.white.opacity(0.08))
+                                        .frame(height: 1)
+                                        .padding(.leading, 14)
+                                }
+                            }
+                        }
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                    }
+                }
+                .frame(maxWidth: contentMaxWidth)
+                .padding(.horizontal, 16)
+                .padding(.bottom, 24)
+            }
+        }
+        .presentationDetents([.large])
     }
 
     // MARK: - Sheet (adicionar movimento)
@@ -592,6 +744,7 @@ struct StudentBarbellPersonalRecordsView: View {
         if !trimmedValue.isEmpty, let value = WeightParser.parse(trimmedValue), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
             saveValue(storageKg, for: key)
+            saveHistoryValue(storageKg, for: key)
         }
 
         showAddMoveSheet = false
@@ -611,6 +764,7 @@ struct StudentBarbellPersonalRecordsView: View {
         if let value = WeightParser.parse(trimmed), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
             saveValue(storageKg, for: move.storageKey)
+            saveHistoryValue(storageKg, for: move.storageKey)
         }
     }
 
@@ -625,6 +779,7 @@ struct StudentBarbellPersonalRecordsView: View {
         }
 
         removeValue(for: key)
+        removeHistory(for: key)
 
         var list = loadCustomMoves()
         list.removeAll { $0.storageKey == key }
@@ -680,6 +835,52 @@ private extension StudentBarbellPersonalRecordsView {
         } catch {
             barbellValuesData = Data()
         }
+    }
+
+    private func loadHistoryMap() -> [String: [BarbellPRHistoryEntry]] {
+        guard !barbellHistoryData.isEmpty else { return [:] }
+        do {
+            return try JSONDecoder().decode([String: [BarbellPRHistoryEntry]].self, from: barbellHistoryData)
+        } catch {
+            return [:]
+        }
+    }
+
+    private func saveHistoryMap(_ map: [String: [BarbellPRHistoryEntry]]) {
+        do {
+            barbellHistoryData = try JSONEncoder().encode(map)
+        } catch {
+            barbellHistoryData = Data()
+        }
+    }
+
+    private func historyEntries(for key: String) -> [BarbellPRHistoryEntry] {
+        loadHistoryMap()[key, default: []].sorted { $0.createdAt < $1.createdAt }
+    }
+
+    private func saveHistoryValue(_ valueKg: Double, for key: String) {
+        var map = loadHistoryMap()
+        var entries = map[key, default: []].sorted { $0.createdAt < $1.createdAt }
+
+        if let lastEntry = entries.last, abs(lastEntry.valueKg - valueKg) < 0.000_001 {
+            return
+        }
+
+        entries.append(
+            BarbellPRHistoryEntry(
+                id: UUID().uuidString,
+                valueKg: valueKg,
+                createdAt: Date()
+            )
+        )
+        map[key] = entries
+        saveHistoryMap(map)
+    }
+
+    private func removeHistory(for key: String) {
+        var map = loadHistoryMap()
+        map.removeValue(forKey: key)
+        saveHistoryMap(map)
     }
 
     func loadValue(for key: String) -> Double? {
