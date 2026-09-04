@@ -22,6 +22,8 @@ final class AppSession: ObservableObject {
 
     /// Inicializa a sessão e restaura estado persistido ou limpa em modo DEBUG
     init() {
+        PersonalRecordsSyncService.shared.prepareForAppLaunch()
+
         #if DEBUG
         self.storedUid = ""
         self.storedUserTypeRaw = ""
@@ -84,10 +86,13 @@ final class AppSession: ObservableObject {
 
             Task { @MainActor in
                 if let user {
+                    PersonalRecordsSyncService.shared.prepareForAuthenticatedUser(uid: user.uid)
                     self.uid = user.uid
                     self.storedUid = user.uid
                     await self.loadUserProfile(uid: user.uid)
+                    await PersonalRecordsSyncService.shared.synchronizeForAuthenticatedUser(uid: user.uid)
                 } else {
+                    PersonalRecordsSyncService.shared.handleLogout()
                     self.clearSession()
                 }
             }
@@ -136,6 +141,7 @@ final class AppSession: ObservableObject {
 
     // Desconecta o usuário do Firebase e limpa a sessão
     func logout() {
+        PersonalRecordsSyncService.shared.handleLogout()
         do {
             try Auth.auth().signOut()
             clearSession()

@@ -956,6 +956,7 @@ private extension StudentBarbellPersonalRecordsView {
         } catch {
             barbellValuesData = Data()
         }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
     private func loadHistoryMap() -> [String: [BarbellPRHistoryEntry]] {
@@ -973,6 +974,7 @@ private extension StudentBarbellPersonalRecordsView {
         } catch {
             barbellHistoryData = Data()
         }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
     private func historyEntries(for key: String) -> [BarbellPRHistoryEntry] {
@@ -1040,6 +1042,7 @@ private extension StudentBarbellPersonalRecordsView {
         } catch {
             customMovesData = Data()
         }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
 }

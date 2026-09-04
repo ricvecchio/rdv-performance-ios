@@ -1161,6 +1161,7 @@ private extension StudentOpenPersonalRecordsView {
         } catch {
             openValuesData = Data()
         }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
 
@@ -1172,6 +1173,7 @@ private extension StudentOpenPersonalRecordsView {
 
     private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
         do { openHistoryData = try JSONEncoder().encode(map) } catch { openHistoryData = Data() }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
     private func historyEntries(for key: String) -> [PRHistoryEntry] {

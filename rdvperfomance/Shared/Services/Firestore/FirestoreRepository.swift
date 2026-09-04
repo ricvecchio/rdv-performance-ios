@@ -12,6 +12,7 @@ final class FirestoreRepository {
     private let messageRepository = MessageRepository()
     private let feedbackRepository = FeedbackRepository()
     private let workoutTemplateRepository = WorkoutTemplateRepository()
+    private let studentPersonalRecordsRepository = StudentPersonalRecordsRepository()
 
     private init() {}
 
@@ -309,6 +310,24 @@ final class FirestoreRepository {
 
     func getStudentOverallProgress(studentId: String) async throws -> (percent: Int, completed: Int, total: Int) {
         try await progressRepository.getStudentOverallProgress(studentId: studentId)
+    }
+
+    // MARK: - Student Personal Records
+
+    func getStudentPersonalRecords(uid: String) async throws -> StudentPersonalRecordsCloudDocument? {
+        try await studentPersonalRecordsRepository.getStudentPersonalRecords(uid: uid)
+    }
+
+    func saveStudentPersonalRecords(
+        uid: String,
+        payloads: [String: Data],
+        customTombstones: [String: [String]]
+    ) async throws -> StudentPersonalRecordsCloudDocument {
+        try await studentPersonalRecordsRepository.saveStudentPersonalRecords(
+            uid: uid,
+            payloads: payloads,
+            customTombstones: customTombstones
+        )
     }
 
     // MARK: - Message Operations
