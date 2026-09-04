@@ -342,16 +342,23 @@ struct StudentBarbellPersonalRecordsView: View {
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                Text("Informe sua carga máxima em \(preferredWeightUnit.shortLabel). Para remover, deixe vazio.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.60))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
+                    HStack {
+                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        Spacer()
+
+                        Button {
+                            historyMove = move
+                        } label: {
+                            Label("Histórico", systemImage: "chart.line.uptrend.xyaxis")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.green.opacity(0.90))
+                        }
+                        .buttonStyle(.plain)
+                    }
 
                     HStack(spacing: 10) {
                         TextField("Ex: 90,50", text: $inputValue)
@@ -377,14 +384,8 @@ struct StudentBarbellPersonalRecordsView: View {
                 .padding(.horizontal, 16)
                 .padding(.top, 4)
 
-                Button {
-                    historyMove = move
-                } label: {
-                    Label("Histórico", systemImage: "chart.line.uptrend.xyaxis")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.green.opacity(0.90))
-                }
-                .buttonStyle(.plain)
+                historyChart(for: move)
+                    .padding(.horizontal, 16)
 
                 if canDeleteSelectedMove {
                     Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
@@ -449,7 +450,7 @@ struct StudentBarbellPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
         .alert("Excluir registro", isPresented: $showDeleteAlert) {
             Button("Cancelar", role: .cancel) { }
             Button("Excluir", role: .destructive) {
@@ -497,45 +498,6 @@ struct StudentBarbellPersonalRecordsView: View {
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.45))
                     } else {
-                        Chart(entries) { entry in
-                            LineMark(
-                                x: .value("Data", entry.createdAt),
-                                y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
-                            )
-                            .foregroundStyle(.green)
-                            .interpolationMethod(.linear)
-
-                            PointMark(
-                                x: .value("Data", entry.createdAt),
-                                y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
-                            )
-                            .foregroundStyle(.green)
-                        }
-                        .chartXAxis {
-                            AxisMarks(values: .automatic(desiredCount: 4)) {
-                                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                                    .foregroundStyle(Color.white.opacity(0.12))
-                                AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year())
-                                    .foregroundStyle(Color.white.opacity(0.55))
-                            }
-                        }
-                        .chartYAxis {
-                            AxisMarks(position: .leading) {
-                                AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                                    .foregroundStyle(Color.white.opacity(0.12))
-                                AxisValueLabel()
-                                    .foregroundStyle(Color.white.opacity(0.55))
-                            }
-                        }
-                        .frame(height: 220)
-                        .padding(14)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
                                 HStack(spacing: 10) {
@@ -590,6 +552,52 @@ struct StudentBarbellPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
+    }
+
+    @ViewBuilder
+    private func historyChart(for move: BarbellMove) -> some View {
+        let entries = historyEntries(for: move.storageKey)
+
+        if !entries.isEmpty {
+            Chart(entries) { entry in
+                LineMark(
+                    x: .value("Data", entry.createdAt),
+                    y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
+                )
+                .foregroundStyle(.green)
+                .interpolationMethod(.linear)
+
+                PointMark(
+                    x: .value("Data", entry.createdAt),
+                    y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
+                )
+                .foregroundStyle(.green)
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 4)) {
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.white.opacity(0.12))
+                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year())
+                        .foregroundStyle(Color.white.opacity(0.55))
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) {
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
+                        .foregroundStyle(Color.white.opacity(0.12))
+                    AxisValueLabel()
+                        .foregroundStyle(Color.white.opacity(0.55))
+                }
+            }
+            .frame(height: 170)
+            .padding(14)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+        }
     }
 
     // MARK: - Sheet (adicionar movimento)
