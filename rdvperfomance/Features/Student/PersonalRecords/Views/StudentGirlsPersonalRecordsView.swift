@@ -275,7 +275,7 @@ struct StudentGirlsPersonalRecordsView: View {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 0) {
 
                 Capsule()
                     .fill(Color.white.opacity(0.18))
@@ -287,73 +287,78 @@ struct StudentGirlsPersonalRecordsView: View {
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                Text("Informe seu tempo/score. Para remover, deixe vazio.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.60))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-
-                VStack(alignment: .leading, spacing: 10) {
-
-                    // ✅ Ajuste solicitado: bloco WOD igual ao Notables (com ícone)
-                    if !wodText.isEmpty {
-                        wodCard(title: wod.name, description: wodText)
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Text("Informe seu tempo/score. Para remover, deixe vazio.")
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.60))
+                            .multilineTextAlignment(.center)
                             .padding(.horizontal, 16)
-                    }
 
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("Tempo / Score:")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                        VStack(alignment: .leading, spacing: 10) {
 
-                        TextField("Ex: 12.34", text: $inputValue)
-                            .keyboardType(metricComparison(for: wodDetailText(for: wod.storageKey)) == .time ? .numbersAndPunctuation : .decimalPad)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 2)
-                }
-
-                dateAndHistorySection(key: wod.storageKey, metadata: wodDetailText(for: wod.storageKey), historyAction: {
-                    historyWod = wod
-                })
-                .padding(.horizontal, 16)
-                .padding(.top, 8)
-                .sheet(item: $historyWod) { selected in
-                    historySheet(title: selected.name, key: selected.storageKey)
-                }
-                .sheet(isPresented: $showPRDatePicker) {
-                    ZStack {
-                        Theme.Colors.headerBackground.ignoresSafeArea()
-                        VStack(spacing: 16) {
-                            DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
-                                .datePickerStyle(.graphical)
-                                .environment(\.locale, Locale(identifier: "pt_BR"))
-                            Button { showPRDatePicker = false } label: {
-                                Text("Confirmar")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.black.opacity(0.85))
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.green.opacity(0.90))
-                                    .cornerRadius(14)
+                            // ✅ Ajuste solicitado: bloco WOD igual ao Notables (com ícone)
+                            if !wodText.isEmpty {
+                                wodCard(title: wod.name, description: wodText)
+                                    .padding(.horizontal, 16)
+                                    .layoutPriority(1)
                             }
-                            .buttonStyle(.plain)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Tempo / Score:")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.75))
+
+                                TextField("Ex: 12.34", text: $inputValue)
+                                    .keyboardType(metricComparison(for: wodDetailText(for: wod.storageKey)) == .time ? .numbersAndPunctuation : .decimalPad)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(Theme.Colors.cardBackground)
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    )
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
                         }
-                        .padding(16)
+
+                        dateAndHistorySection(key: wod.storageKey, metadata: wodDetailText(for: wod.storageKey), historyAction: {
+                            historyWod = wod
+                        })
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .sheet(item: $historyWod) { selected in
+                            historySheet(title: selected.name, key: selected.storageKey)
+                        }
+                        .sheet(isPresented: $showPRDatePicker) {
+                            ZStack {
+                                Theme.Colors.headerBackground.ignoresSafeArea()
+                                VStack(spacing: 16) {
+                                    DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                        .datePickerStyle(.graphical)
+                                        .environment(\.locale, Locale(identifier: "pt_BR"))
+                                    Button { showPRDatePicker = false } label: {
+                                        Text("Confirmar")
+                                            .font(.system(size: 15, weight: .bold))
+                                            .foregroundColor(.black.opacity(0.85))
+                                            .frame(maxWidth: .infinity)
+                                            .padding(.vertical, 14)
+                                            .background(Color.green.opacity(0.90))
+                                            .cornerRadius(14)
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(16)
+                            }
+                            .presentationDetents([.medium])
+                        }
                     }
-                    .presentationDetents([.medium])
                 }
 
                 HStack(spacing: 12) {
@@ -391,8 +396,7 @@ struct StudentGirlsPersonalRecordsView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-
-                Spacer()
+                .padding(.bottom, 16)
             }
         }
         .presentationDetents([.fraction(0.80)])
@@ -437,7 +441,7 @@ struct StudentGirlsPersonalRecordsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 2)
             }
-            .frame(maxHeight: 140)
+            .frame(height: 140)
         }
         .padding(14)
         .background(Theme.Colors.cardBackground)
