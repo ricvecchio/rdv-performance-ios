@@ -395,7 +395,7 @@ struct StudentGirlsPersonalRecordsView: View {
                 Spacer()
             }
         }
-        .presentationDetents([.fraction(0.75)])
+        .presentationDetents([.fraction(0.80)])
         .onAppear {
             // ✅ Garante carregar o score sempre que abrir pela primeira vez (igual ao Heroes)
             if let stored = loadValue(for: wod.storageKey) {
@@ -476,10 +476,6 @@ struct StudentGirlsPersonalRecordsView: View {
     @ViewBuilder
     private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Data")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             Button {
                 showPRDatePicker = true
             } label: {
