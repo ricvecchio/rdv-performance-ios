@@ -151,6 +151,7 @@ struct StudentDayDetailView: View {
     @State private var selectedMovementKey: String? = nil
     @State private var selectedMovementName: String? = nil
     @State private var percentText: String = ""
+    @FocusState private var isPercentFieldFocused: Bool
 
     // Corpo principal com header, conteúdo do dia, blocos e footer
     var body: some View {
@@ -255,6 +256,16 @@ struct StudentDayDetailView: View {
                 }
 
                 HeaderAvatarView(size: 38)
+            }
+
+            ToolbarItemGroup(placement: .keyboard) {
+                if isPercentFieldFocused {
+                    Spacer()
+                    Button("Salvar") {
+                        autoSaveCalcState()
+                        isPercentFieldFocused = false
+                    }
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -442,6 +453,7 @@ struct StudentDayDetailView: View {
 
                             TextField("Ex: 50", text: $percentText)
                                 .keyboardType(.decimalPad)
+                                .focused($isPercentFieldFocused)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .font(.system(size: 14, weight: .semibold))
