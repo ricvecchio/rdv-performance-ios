@@ -97,6 +97,8 @@ struct StudentBarbellPersonalRecordsView: View {
     @State private var historyMove: BarbellMove?
     @State private var selectedPRDate: Date = Date()
     @State private var showPRDatePicker: Bool = false
+    @State private var isEditingExistingPR: Bool = false
+    @State private var editingHistoryEntryID: String? = nil
 
     // ✅ NOVO: adicionar movimento
     @State private var showAddMoveSheet: Bool = false
@@ -215,7 +217,9 @@ struct StudentBarbellPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(item: $selectedMove) { move in
+        .sheet(item: $selectedMove, onDismiss: {
+            resetExistingPREditing()
+        }) { move in
             editSheet(move: move)
         }
         .sheet(isPresented: $showAddMoveSheet) {
@@ -288,6 +292,7 @@ struct StudentBarbellPersonalRecordsView: View {
         return Button {
             inputValue = displayValue.map { formatNumber($0) } ?? ""
             selectedPRDate = Date()
+            resetExistingPREditing()
             selectedMove = move
         } label: {
             HStack(spacing: 10) {
@@ -348,9 +353,24 @@ struct StudentBarbellPersonalRecordsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                        HStack {
+                            Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+
+                            Spacer()
+
+                            if bestPRValueKg(for: move.storageKey) != nil {
+                                Button {
+                                    beginEditingExistingPR(for: move)
+                                } label: {
+                                    Label("Editar valor", systemImage: "pencil")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.green.opacity(0.90))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
 
                         HStack(spacing: 10) {
                             TextField("Ex: 90,50", text: $inputValue)
@@ -450,6 +470,7 @@ struct StudentBarbellPersonalRecordsView: View {
                 HStack(spacing: 12) {
 
                     Button {
+                        resetExistingPREditing()
                         selectedMove = nil
                     } label: {
                         Text("Cancelar")
@@ -467,10 +488,15 @@ struct StudentBarbellPersonalRecordsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        saveCurrentInput()
+                        if isEditingExistingPR {
+                            saveExistingPREdit()
+                        } else {
+                            saveCurrentInput()
+                        }
+                        resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text("Salvar")
+                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -864,6 +890,58 @@ struct StudentBarbellPersonalRecordsView: View {
         }
     }
 
+    private func beginEditingExistingPR(for move: BarbellMove) {
+        guard let valueKg = bestPRValueKg(for: move.storageKey) else { return }
+
+        inputValue = formatNumber(convertFromStorageKgToPreferredUnit(valueKg))
+        if let entry = currentPRHistoryEntry(for: move.storageKey, valueKg: valueKg) {
+            editingHistoryEntryID = entry.id
+            selectedPRDate = entry.createdAt
+        } else {
+            editingHistoryEntryID = nil
+        }
+        isEditingExistingPR = true
+    }
+
+    private func saveExistingPREdit() {
+        guard let move = selectedMove else { return }
+
+        let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let value = WeightParser.parse(trimmed), value > 0 else { return }
+
+        let valueKg = convertFromPreferredUnitToStorageKg(value)
+        let key = move.storageKey
+        var history = loadHistoryMap()
+
+        if let entryID = editingHistoryEntryID {
+            var entries = history[key, default: []]
+            guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
+                saveValue(max(valueKg, entries.map(\.valueKg).max() ?? 0), for: key)
+                return
+            }
+
+            let entry = entries[index]
+            entries[index] = BarbellPRHistoryEntry(
+                id: entry.id,
+                valueKg: valueKg,
+                createdAt: Calendar.current.startOfDay(for: selectedPRDate)
+            )
+            history[key] = entries
+            saveHistoryMap(history)
+            if let highestValue = entries.map(\.valueKg).max() {
+                saveValue(highestValue, for: key)
+            }
+        } else {
+            let highestHistoryValue = history[key]?.map(\.valueKg).max() ?? 0
+            saveValue(max(valueKg, highestHistoryValue), for: key)
+        }
+    }
+
+    private func resetExistingPREditing() {
+        isEditingExistingPR = false
+        editingHistoryEntryID = nil
+    }
+
     private func deleteSelectedMove() {
         guard let move = selectedMove else { return }
 
@@ -912,6 +990,12 @@ struct StudentBarbellPersonalRecordsView: View {
         case (nil, nil):
             return nil
         }
+    }
+
+    private func currentPRHistoryEntry(for key: String, valueKg: Double) -> BarbellPRHistoryEntry? {
+        historyEntries(for: key)
+            .filter { abs($0.valueKg - valueKg) < 0.000_001 }
+            .max { $0.createdAt < $1.createdAt }
     }
 
     private func convertFromStorageKgToPreferredUnit(_ kg: Double) -> Double {
