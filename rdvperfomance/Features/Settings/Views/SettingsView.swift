@@ -4,11 +4,6 @@ import SwiftUI
 struct SettingsView: View {
 
     @Binding var path: [AppRoute]
-
-    /// Presente apenas quando SettingsView roda dentro da seção "Perfil" do
-    /// aluno (empilhada sobre ProfileView na pilha local dessa seção).
-    var onSelectSection: (StudentMainSection) -> Void = { _ in }
-
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
 
@@ -87,8 +82,14 @@ struct SettingsView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -103,6 +104,7 @@ struct SettingsView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
 
         .onAppear {
             let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue

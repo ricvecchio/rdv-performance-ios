@@ -70,8 +70,7 @@ enum AppRoute: Hashable {
     case teacherStudentsList(selectedCategory: TreinoTipo, initialFilter: TreinoTipo?)
     case teacherStudentDetail(AppUser, TreinoTipo)
     case teacherDashboard(category: TreinoTipo)
-    case teacherLinkStudent(category: TreinoTipo)
-    case teacherSendMessage(student: AppUser, category: TreinoTipo)
+    case teacherMessage(student: AppUser, category: TreinoTipo)
     case teacherFeedbacks(student: AppUser, category: TreinoTipo)
 
     case studentAgenda(studentId: String, studentName: String)
@@ -79,6 +78,7 @@ enum AppRoute: Hashable {
     case studentDayDetail(weekId: String, day: TrainingDayFS, weekTitle: String)
     case studentMessages(category: TreinoTipo)
     case studentFeedbacks(category: TreinoTipo)
+    case studentTeachers(studentEmail: String)
 
     case studentPersonalRecords
     case studentPersonalRecordsBarbell
@@ -109,4 +109,3 @@ enum AppRoute: Hashable {
     case createTreinoAcademia(category: TreinoTipo, sectionKey: String, sectionTitle: String)
     case createTreinoCasa(category: TreinoTipo, sectionKey: String, sectionTitle: String)
 }
-

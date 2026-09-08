@@ -15,6 +15,7 @@ struct StudentFeedbacksView: View {
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
     @State private var feedbacks: [StudentFeedbackFS] = []
+    @State private var teachersById: [String: AppUser] = [:]
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -73,12 +74,19 @@ struct StudentFeedbacksView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -96,7 +104,7 @@ struct StudentFeedbacksView: View {
                 }
                 .buttonStyle(.plain)
 
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -107,10 +115,6 @@ struct StudentFeedbacksView: View {
     // Header de contexto com categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
             Text("Aqui você vê os feedbacks enviados pelo seu treinador.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
@@ -141,19 +145,7 @@ struct StudentFeedbacksView: View {
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(feedbacks.enumerated()), id: \.offset) { idx, fb in
-                        VStack(alignment: .leading, spacing: 6) {
-
-                            Text(fb.text)
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.75))
-
-                            if let date = fb.createdAt {
-                                Text(formatDate(date))
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.45))
-                            }
-                        }
-                        .padding(.vertical, 12)
+                        feedbackRow(fb)
 
                         if idx < feedbacks.count - 1 {
                             Divider()
@@ -173,6 +165,36 @@ struct StudentFeedbacksView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private func feedbackRow(_ fb: StudentFeedbackFS) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            if let date = fb.createdAt {
+                VStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 14))
+
+                    Text(formatDate(date))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(width: 76)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(teachersById[fb.teacherId]?.name ?? "Professor")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(fb.text)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.75))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 12)
     }
 
     // Mensagem de erro/aviso estilizada
@@ -216,11 +238,14 @@ struct StudentFeedbacksView: View {
         defer { isLoading = false }
 
         do {
-            feedbacks = try await FirestoreRepository.shared.getFeedbacksForStudent(
+            let loadedFeedbacks = try await FirestoreRepository.shared.getFeedbacksForStudent(
                 studentId: sid,
                 categoryRaw: category.rawValue,
                 limit: 50
             )
+            let teacherIds = Array(Set(loadedFeedbacks.map(\.teacherId).filter { !$0.isEmpty }))
+            teachersById = try await FirestoreRepository.shared.getUsers(byIds: teacherIds)
+            feedbacks = loadedFeedbacks
         } catch {
             errorMessage = (error as NSError).localizedDescription
         }
@@ -230,7 +255,7 @@ struct StudentFeedbacksView: View {
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy • HH:mm"
+        f.dateFormat = "dd/MM/yyyy HH:mm"
         return f.string(from: date)
     }
 

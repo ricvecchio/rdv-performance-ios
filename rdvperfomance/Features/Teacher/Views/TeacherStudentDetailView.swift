@@ -67,12 +67,19 @@ struct TeacherStudentDetailView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -172,8 +179,8 @@ struct TeacherStudentDetailView: View {
                 openAgenda()
             }
 
-            actionButton(title: "Enviar Mensagem", icon: "paperplane.fill") {
-                path.append(.teacherSendMessage(student: student, category: category))
+            actionButton(title: "Mensagens", icon: "paperplane.fill") {
+                path.append(.teacherMessage(student: student, category: category))
             }
 
             actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
@@ -237,4 +244,3 @@ struct TeacherStudentDetailView: View {
         }
     }
 }
-

@@ -16,9 +16,11 @@ struct TeacherWorkoutTemplatesView: View {
     let sectionTitle: String
 
     @State private var templates: [WorkoutTemplateFS] = []
-    @State private var isLoading: Bool = false
+    @State private var isLoading: Bool = true
+    @State private var hasLoadedInitialData: Bool = false
     @State private var errorMessage: String? = nil
     @State private var isSeedingDefaults: Bool = false
+    @State private var isFetchingTemplates: Bool = false
 
     private static let debugLog = OSLog(subsystem: "com.rdvperformance.app", category: "TeacherWorkoutTemplatesView")
     #if DEBUG
@@ -115,6 +117,7 @@ struct TeacherWorkoutTemplatesView: View {
 
                             TeacherWorkoutTemplatesContentCard(
                                 isLoading: isLoading,
+                                hasLoadedInitialData: hasLoadedInitialData,
                                 templates: templates,
                                 isCrossfitCategory: isCrossfitCategory,
                                 onTapTemplate: { t in
@@ -158,12 +161,19 @@ struct TeacherWorkoutTemplatesView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -213,7 +223,9 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private func loadTemplates() async {
-        if isLoading { return }
+        guard !isFetchingTemplates else { return }
+        isFetchingTemplates = true
+        defer { isFetchingTemplates = false }
         errorMessage = nil
 
         #if DEBUG
@@ -227,6 +239,8 @@ struct TeacherWorkoutTemplatesView: View {
         guard !teacherId.isEmpty else {
             errorMessage = "Não foi possível identificar o professor logado."
             templates = []
+            isLoading = false
+            hasLoadedInitialData = true
             return
         }
 
@@ -240,22 +254,27 @@ struct TeacherWorkoutTemplatesView: View {
             )
             templates = fetched
 
-            // ✅ CAUSA RAIZ da demora: antes, `isLoading` só voltava a `false` depois do
-            // seed de defaults terminar (que podia fazer dezenas de writes sequenciais).
-            // Agora liberamos a UI assim que a 1ª consulta termina; o seed roda depois,
-            // em segundo plano, sem manter o spinner cheio na tela.
-            isLoading = false
-
             #if DEBUG
             os_log("loadTemplates() call #%d fetched %d docs in %.0fms", log: Self.debugLog, type: .debug, callId, fetched.count, Date().timeIntervalSince(debugStart) * 1000)
             #endif
 
+            if fetched.isEmpty {
+                await seedDefaultsIfNeeded(teacherId: teacherId)
+                hasLoadedInitialData = true
+                isLoading = false
+                return
+            }
+
+            // Exibe os templates encontrados enquanto o seed verifica defaults ausentes.
+            isLoading = false
+            hasLoadedInitialData = true
             await seedDefaultsIfNeeded(teacherId: teacherId)
 
         } catch {
             errorMessage = error.localizedDescription
             templates = []
             isLoading = false
+            hasLoadedInitialData = true
         }
 
         #if DEBUG
@@ -340,4 +359,3 @@ struct TeacherWorkoutTemplatesView: View {
         path.removeLast()
     }
 }
-

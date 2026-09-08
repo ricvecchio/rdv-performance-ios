@@ -3,6 +3,14 @@ import SwiftUI
 import PhotosUI
 import UIKit
 
+private enum ProfilePhotoProcessingError: LocalizedError {
+    case unableToProcess
+
+    var errorDescription: String? {
+        "Não foi possível processar a foto selecionada. Escolha outra imagem e tente novamente."
+    }
+}
+
 struct EditProfileView: View {
 
     @Binding var path: [AppRoute]
@@ -12,14 +20,22 @@ struct EditProfileView: View {
     @State private var previewImage: UIImage? = nil
     @State private var isLoadingImage: Bool = false
     @State private var hasNewPhoto: Bool = false
+    @State private var showPhotoPicker: Bool = false
+    @State private var showAvatarPicker: Bool = false
 
     // ✅ Armazena apenas dígitos normalizados (ex.: "11988888888")
     @State private var whatsappDigits: String = ""
     @State private var focusAreaDraft: FocusAreaDTO = .CROSSFIT
+    @State private var userName: String = ""
+    @State private var userEmail: String = ""
+    @State private var crefDraft: String = ""
+    @State private var bioDraft: String = ""
 
     // Referência original para detectar alterações pendentes
     @State private var originalWhatsappDigits: String = ""
     @State private var originalFocusArea: FocusAreaDTO = .CROSSFIT
+    @State private var originalCref: String = ""
+    @State private var originalBio: String = ""
 
     @State private var isSaving: Bool = false
     @State private var showError: Bool = false
@@ -35,7 +51,12 @@ struct EditProfileView: View {
 
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
+    private static let maxProfilePhotoBase64Bytes = 800_000
+    private static let profilePhotoDimensions: [CGFloat] = [1024, 800, 640]
+    private static let compressionQualities: [CGFloat] = [0.82, 0.72, 0.62, 0.52, 0.42]
+
     private var currentUid: String? { session.currentUid }
+    private let repository: FirestoreRepository = .shared
 
     private var storedImageForUser: UIImage? {
         LocalProfileStore.shared.getPhotoImage(userId: currentUid)
@@ -52,6 +73,8 @@ struct EditProfileView: View {
     private var hasChanges: Bool {
         whatsappDigits != originalWhatsappDigits ||
         focusAreaDraft != originalFocusArea ||
+        crefDraft != originalCref ||
+        bioDraft != originalBio ||
         hasNewPhoto
     }
 
@@ -113,12 +136,19 @@ struct EditProfileView: View {
         }
         .id(session.currentUid ?? "anonymous")
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -143,11 +173,23 @@ struct EditProfileView: View {
             }
         }
         .onAppear {
-            loadFromStore()
+            Task { await loadProfile() }
         }
         .onChange(of: selectedItem) { _, newItem in
             guard let newItem else { return }
             Task { await loadImage(from: newItem) }
+        }
+        .photosPicker(
+            isPresented: $showPhotoPicker,
+            selection: $selectedItem,
+            matching: .images,
+            photoLibrary: .shared()
+        )
+        .sheet(isPresented: $showAvatarPicker) {
+            AvatarPickerView { image in
+                previewImage = image
+                hasNewPhoto = true
+            }
         }
     }
 
@@ -171,11 +213,6 @@ struct EditProfileView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("A foto escolhida será exibida no seu perfil e no cabeçalho quando logado.")
-                .font(.system(size: 13, weight: .regular))
-                .foregroundColor(.white.opacity(0.60))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
@@ -186,6 +223,8 @@ struct EditProfileView: View {
     // Retorna card com campos do formulário
     private func formCard() -> some View {
         VStack(spacing: 18) {
+            readOnlyRow(title: "Nome", value: userName)
+            readOnlyRow(title: "E-mail", value: userEmail)
 
             // ✅ Campo de telefone com máscara brasileira e FocusState
             VStack(alignment: .leading, spacing: 6) {
@@ -222,6 +261,20 @@ struct EditProfileView: View {
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
             )
+
+            if session.userType == .TRAINER {
+                UnderlineTextField(
+                    title: "CREF (opcional)",
+                    text: $crefDraft,
+                    isSecure: false,
+                    showPassword: .constant(false),
+                    lineColor: lineColor,
+                    textColor: .white,
+                    placeholderColor: textSecondary
+                )
+
+                multilineBioField()
+            }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
@@ -234,16 +287,20 @@ struct EditProfileView: View {
     private func actionCard() -> some View {
         VStack(spacing: 10) {
 
-            PhotosPicker(
-                selection: $selectedItem,
-                matching: .images,
-                photoLibrary: .shared()
-            ) {
+            Menu {
+                Button("Escolher foto da biblioteca") {
+                    showPhotoPicker = true
+                }
+                Button("Escolher Avatar") {
+                    showAvatarPicker = true
+                }
+                Button("Cancelar", role: .cancel) {}
+            } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "photo.on.rectangle.angled")
                         .foregroundColor(.white.opacity(0.9))
 
-                    Text(isLoadingImage ? "Carregando..." : "Importar foto do celular")
+                    Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.9))
 
@@ -335,28 +392,94 @@ struct EditProfileView: View {
         }
     }
 
-    // Carrega dados salvos do usuário atual do armazenamento local
-    private func loadFromStore() {
-        guard let _ = currentUid else {
+    private func readOnlyRow(title: String, value: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            Text(value)
+                .font(.system(size: 16))
+                .foregroundColor(.white.opacity(0.45))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Rectangle()
+                .fill(lineColor)
+                .frame(height: 1)
+        }
+    }
+
+    private func multilineBioField() -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Bio (opcional)")
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            TextEditor(text: $bioDraft)
+                .frame(height: 88)
+                .foregroundColor(.white)
+                .font(.system(size: 16))
+                .background(Color.clear)
+                .scrollContentBackground(.hidden)
+                .overlay(
+                    Rectangle()
+                        .fill(lineColor)
+                        .frame(height: 1),
+                    alignment: .bottom
+                )
+        }
+    }
+
+    // Carrega o perfil remoto e usa o armazenamento local apenas para dados legados.
+    private func loadProfile() async {
+        guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
             whatsappDigits = ""
             originalWhatsappDigits = ""
             focusAreaDraft = .CROSSFIT
             originalFocusArea = .CROSSFIT
+            userName = ""
+            userEmail = ""
+            crefDraft = ""
+            originalCref = ""
+            bioDraft = ""
+            originalBio = ""
             previewImage = nil
             hasNewPhoto = false
             return
         }
 
-        // ✅ Normaliza sempre para dígitos (compatível com valores antigos já formatados)
-        let rawPhone = LocalProfileStore.shared.getWhatsapp(userId: currentUid)
-        let normalized = BrazilianPhoneFormatter.normalize(rawPhone)
-        whatsappDigits = normalized
-        originalWhatsappDigits = normalized
+        let localPhone = LocalProfileStore.shared.getWhatsapp(userId: uid)
+        let localFocusArea = LocalProfileStore.shared.getFocusAreaRaw(userId: uid)
 
-        let raw = LocalProfileStore.shared.getFocusAreaRaw(userId: currentUid)
-        let area = FocusAreaDTO(rawValue: raw.isEmpty ? FocusAreaDTO.CROSSFIT.rawValue : raw) ?? .CROSSFIT
-        focusAreaDraft = area
-        originalFocusArea = area
+        var didLoadRemoteProfile = false
+        do {
+            let user = try await repository.getUser(uid: uid)
+            let remotePhone = (user?.phone ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let remoteFocusArea = (user?.focusArea ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            let phone = remotePhone.isEmpty ? localPhone : remotePhone
+            let focusArea = remoteFocusArea.isEmpty ? localFocusArea : remoteFocusArea
+            let area = FocusAreaDTO(rawValue: focusArea) ?? .CROSSFIT
+
+            userName = user?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            userEmail = user?.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
+            whatsappDigits = BrazilianPhoneFormatter.normalize(phone)
+            originalWhatsappDigits = whatsappDigits
+            focusAreaDraft = area
+            originalFocusArea = area
+            crefDraft = (user?.cref ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            originalCref = crefDraft
+            bioDraft = (user?.bio ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            originalBio = bioDraft
+            didLoadRemoteProfile = true
+        } catch {
+            presentError((error as NSError).localizedDescription)
+            let normalized = BrazilianPhoneFormatter.normalize(localPhone)
+            whatsappDigits = normalized
+            originalWhatsappDigits = normalized
+            let area = FocusAreaDTO(rawValue: localFocusArea) ?? .CROSSFIT
+            focusAreaDraft = area
+            originalFocusArea = area
+        }
 
         hasNewPhoto = false
 
@@ -364,8 +487,10 @@ struct EditProfileView: View {
             previewImage = img
         }
 
-        showError = false
-        errorMessage = ""
+        if didLoadRemoteProfile {
+            showError = false
+            errorMessage = ""
+        }
     }
 
     // ✅ Salva local + sincroniza foto no Firestore (para o professor enxergar na lista)
@@ -375,17 +500,28 @@ struct EditProfileView: View {
         phoneFieldFocused = false  // Fecha teclado antes de salvar
         defer { isSaving = false }
 
-        saveWhatsapp()
-        saveFocusArea()
-
         do {
+            guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
+                throw FirestoreRepositoryError.missingUserId
+            }
+            try await repository.updateUserProfile(
+                uid: uid,
+                phone: whatsappDigits.isEmpty ? nil : whatsappDigits,
+                cref: session.userType == .TRAINER ? crefDraft : nil,
+                bio: session.userType == .TRAINER ? bioDraft : nil,
+                focusArea: focusAreaDraft.rawValue
+            )
             try await savePhotoIfNeededAndSync()
             await MainActor.run {
+                saveWhatsapp()
+                saveFocusArea()
                 showError = false
                 errorMessage = ""
                 // Atualiza referência original para refletir dados salvos
                 originalWhatsappDigits = whatsappDigits
                 originalFocusArea = focusAreaDraft
+                originalCref = crefDraft
+                originalBio = bioDraft
                 hasNewPhoto = false
             }
             pop()
@@ -414,19 +550,20 @@ struct EditProfileView: View {
 
         guard let previewImage else { return }
 
-        // 1) Salvar local (como já fazia)
-        let ok = LocalProfileStore.shared.setPhotoImage(previewImage, userId: currentUid, compressionQuality: 0.82)
-        if !ok {
-            throw FirestoreRepositoryError.writeFailed
+        let processedPhoto = Self.makeProfilePhoto(from: previewImage)
+
+        guard let processedPhoto else {
+            throw ProfilePhotoProcessingError.unableToProcess
         }
 
-        // 2) Salvar no Firestore em base64 (para outras telas/usuários verem)
-        guard let data = previewImage.jpegData(compressionQuality: 0.72) else {
-            throw FirestoreRepositoryError.invalidData
-        }
+        // Persiste exatamente a versão aprovada para o Firestore.
+        LocalProfileStore.shared.setPhotoBase64(processedPhoto.base64, userId: currentUid)
+        self.previewImage = processedPhoto.image
 
-        let base64 = data.base64EncodedString()
-        try await FirestoreRepository.shared.setUserPhotoBase64(uid: uid, photoBase64: base64)
+        try await FirestoreRepository.shared.setUserPhotoBase64(
+            uid: uid,
+            photoBase64: processedPhoto.base64
+        )
     }
 
     // ✅ Remove foto local + remove do Firestore
@@ -481,6 +618,54 @@ struct EditProfileView: View {
         }
     }
 
+    private static func makeProfilePhoto(from image: UIImage) -> (image: UIImage, base64: String)? {
+        for dimension in profilePhotoDimensions {
+            guard let resizedImage = normalizedAndResizedImage(image, maximumDimension: dimension) else {
+                return nil
+            }
+
+            for quality in compressionQualities {
+                guard let data = resizedImage.jpegData(compressionQuality: quality) else {
+                    continue
+                }
+
+                let base64 = data.base64EncodedString()
+                if base64.utf8.count <= maxProfilePhotoBase64Bytes {
+                    return (resizedImage, base64)
+                }
+            }
+        }
+
+        return nil
+    }
+
+    private static func normalizedAndResizedImage(
+        _ image: UIImage,
+        maximumDimension: CGFloat
+    ) -> UIImage? {
+        let sourceSize = image.size
+        guard sourceSize.width > 0, sourceSize.height > 0 else {
+            return nil
+        }
+
+        let scale = min(maximumDimension / max(sourceSize.width, sourceSize.height), 1)
+        let targetSize = CGSize(
+            width: (sourceSize.width * scale).rounded(.down),
+            height: (sourceSize.height * scale).rounded(.down)
+        )
+        guard targetSize.width > 0, targetSize.height > 0 else {
+            return nil
+        }
+
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        format.opaque = true
+
+        return UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: targetSize))
+        }
+    }
+
     // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
@@ -493,6 +678,87 @@ struct EditProfileView: View {
         case .CROSSFIT: return "Crossfit"
         case .GYM: return "Academia"
         case .HOME: return "Treinos em Casa"
+        }
+    }
+
+    private struct AvatarPickerView: View {
+        private struct AvatarOption: Identifiable {
+            let symbolName: String
+            let color: UIColor
+
+            var id: String { symbolName }
+
+            func image() -> UIImage {
+                let size = CGSize(width: 512, height: 512)
+                let format = UIGraphicsImageRendererFormat()
+                format.scale = 1
+                format.opaque = true
+
+                return UIGraphicsImageRenderer(size: size, format: format).image { _ in
+                    color.setFill()
+                    UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
+
+                    let configuration = UIImage.SymbolConfiguration(pointSize: 260, weight: .medium)
+                    let symbol = UIImage(systemName: symbolName, withConfiguration: configuration)?
+                        .withTintColor(.white, renderingMode: .alwaysOriginal)
+                    symbol?.draw(in: CGRect(x: 126, y: 126, width: 260, height: 260))
+                }
+            }
+        }
+
+        private let options: [AvatarOption] = [
+            AvatarOption(symbolName: "person.fill", color: .systemBlue),
+            AvatarOption(symbolName: "figure.run", color: .systemGreen),
+            AvatarOption(symbolName: "figure.walk", color: .systemOrange),
+            AvatarOption(symbolName: "heart.fill", color: .systemPink),
+            AvatarOption(symbolName: "bolt.fill", color: .systemIndigo),
+            AvatarOption(symbolName: "star.fill", color: .systemPurple)
+        ]
+
+        let onSelect: (UIImage) -> Void
+        @Environment(\.dismiss) private var dismiss
+
+        var body: some View {
+            NavigationStack {
+                ZStack {
+                    Theme.Colors.headerBackground
+                        .ignoresSafeArea()
+
+                    LazyVGrid(
+                        columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 3),
+                        spacing: 16
+                    ) {
+                        ForEach(options) { option in
+                            Button {
+                                onSelect(option.image())
+                                dismiss()
+                            } label: {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color(uiColor: option.color))
+                                    Image(systemName: option.symbolName)
+                                        .font(.system(size: 38, weight: .medium))
+                                        .foregroundColor(.white)
+                                }
+                                .frame(width: 88, height: 88)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    .padding(24)
+                }
+                .navigationTitle("Escolher Avatar")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .topBarTrailing) {
+                        Button("Fechar") {
+                            dismiss()
+                        }
+                    }
+                }
+                .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+                .toolbarBackground(.visible, for: .navigationBar)
+            }
         }
     }
 

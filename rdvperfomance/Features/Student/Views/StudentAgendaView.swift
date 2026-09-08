@@ -88,8 +88,14 @@ struct StudentAgendaView: View {
             if isTeacherViewing {
                 ToolbarItem(placement: .topBarLeading) {
                     Button { pop() } label: {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                        ZStack {
+                            Color.clear
+                                .frame(width: 44, height: 44)
+
+                            Image(systemName: "chevron.left")
+                                .foregroundColor(.green)
+                        }
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }
@@ -156,10 +162,6 @@ struct StudentAgendaView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
 
-            Text("Aluno: \(studentName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.55))
-
             Text("Selecione uma semana para ver os dias.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
@@ -171,6 +173,9 @@ struct StudentAgendaView: View {
     private var linkBannerCard: some View {
         Group {
             switch vm.linkBannerState {
+
+            case .idle:
+                EmptyView()
 
             case .loading:
                 VStack(alignment: .leading, spacing: 8) {
@@ -394,9 +399,9 @@ struct StudentAgendaView: View {
     // Conteúdo principal com estados (loading / error / empty / list)
     private var contentCard: some View {
         VStack(spacing: 0) {
-            if vm.isLoading {
+            if vm.weeks.isEmpty && (!vm.hasLoadedWeeks || vm.isLoading) {
                 loadingView
-            } else if let errorMessage = vm.errorMessage {
+            } else if vm.weeks.isEmpty, let errorMessage = vm.errorMessage {
                 errorView(message: errorMessage)
             } else if vm.weeks.isEmpty {
                 emptyView
@@ -535,10 +540,11 @@ struct StudentAgendaView: View {
     }
 
     private func loadInitialData() async {
-        if !isTeacherViewing {
+        if isTeacherViewing {
+            await vm.loadWeeksAndMeta()
+        } else {
+            await vm.loadWeeksAndMeta()
             await vm.loadLinkStatusIfNeeded()
         }
-
-        await vm.loadWeeksAndMeta()
     }
 }

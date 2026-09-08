@@ -106,11 +106,18 @@ struct CreateTrainingWeekView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -128,8 +135,14 @@ struct CreateTrainingWeekView: View {
                 Button {
                     Task { await loadWeeks() }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -159,10 +172,6 @@ struct CreateTrainingWeekView: View {
             Text("Aluno: \(student.name)")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
-
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
 
             Text("Você pode ver semanas já cadastradas, editar o título e adicionar dias.")
                 .font(.system(size: 14))
@@ -606,4 +615,3 @@ struct CreateTrainingWeekView: View {
         path.removeLast()
     }
 }
-

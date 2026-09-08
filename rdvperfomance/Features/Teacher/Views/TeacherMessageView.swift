@@ -1,8 +1,8 @@
-// TeacherSendMessageView.swift — Tela para professor enviar e listar mensagens para um aluno
+// TeacherMessageView.swift — Tela de mensagens entre professor e aluno
 import SwiftUI
 import FirebaseAuth
 
-struct TeacherSendMessageView: View {
+struct TeacherMessageView: View {
 
     @Binding var path: [AppRoute]
     let student: AppUser
@@ -10,9 +10,7 @@ struct TeacherSendMessageView: View {
 
     @EnvironmentObject private var session: AppSession
 
-    @State private var subject: String = ""
     @State private var message: String = ""
-    @State private var showPasswordDummy: Bool = false
 
     @State private var isLoading: Bool = false
     @State private var isSending: Bool = false
@@ -46,8 +44,8 @@ struct TeacherSendMessageView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             header
-                            messagesCard
                             formCard
+                            messagesCard
 
                             if let err = errorMessage {
                                 messageCard(text: err, isError: true)
@@ -84,18 +82,25 @@ struct TeacherSendMessageView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Enviar mensagem")
+                Text("Mensagens")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -107,8 +112,14 @@ struct TeacherSendMessageView: View {
                 Button {
                     Task { await loadMessages() }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -125,10 +136,6 @@ struct TeacherSendMessageView: View {
             Text("Aluno: \(student.name)")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
-
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
 
             Text("Envie orientações, avisos e recados para o aluno.")
                 .font(.system(size: 14))
@@ -177,35 +184,32 @@ struct TeacherSendMessageView: View {
     }
 
     private func messageRow(_ msg: TeacherMessageFS) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .top, spacing: 12) {
+            if let date = msg.createdAt {
+                VStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 14))
 
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "paperplane.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 14))
-                    .frame(width: 20)
-
-                VStack(alignment: .leading, spacing: 4) {
-
-                    let subj = (msg.subject ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                    Text(subj.isEmpty ? "Sem assunto" : subj)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(subj.isEmpty ? .white.opacity(0.70) : .white.opacity(0.92))
-
-                    Text(msg.body)
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.75))
-                        .lineLimit(3)
-
-                    if let date = msg.createdAt {
-                        Text(formatDate(date))
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.45))
-                    }
+                    Text(formatDate(date))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
                 }
-
-                Spacer()
+                .frame(width: 76)
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(session.userName ?? "Professor")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(msg.body)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.75))
+                    .lineLimit(3)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 12)
     }
@@ -213,27 +217,17 @@ struct TeacherSendMessageView: View {
     private var formCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("NOVA MENSAGEM")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
+            HStack(spacing: 8) {
+                Image(systemName: "text.bubble.fill")
+                    .foregroundColor(.green.opacity(0.85))
+                    .font(.system(size: 14))
 
-            UnderlineTextField(
-                title: "Assunto (opcional)",
-                text: $subject,
-                isSecure: false,
-                showPassword: $showPasswordDummy,
-                lineColor: Theme.Colors.divider,
-                textColor: .white.opacity(0.92),
-                placeholderColor: .white.opacity(0.55)
-            )
-
-            Divider().background(Theme.Colors.divider)
+                Text("MENSAGEM")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.35))
+            }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Mensagem")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-
                 TextEditor(text: $message)
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white.opacity(0.92))
@@ -379,8 +373,6 @@ struct TeacherSendMessageView: View {
             return
         }
 
-        let subjectTrim = subject.trimmingCharacters(in: .whitespacesAndNewlines)
-
         guard !isSending else { return }
         isSending = true
         defer { isSending = false }
@@ -390,7 +382,7 @@ struct TeacherSendMessageView: View {
                 teacherId: teacherId,
                 studentId: sid,
                 categoryRaw: category.rawValue,
-                subject: subjectTrim.isEmpty ? nil : subjectTrim,
+                subject: nil,
                 body: bodyTrim
             )
 
@@ -399,14 +391,13 @@ struct TeacherSendMessageView: View {
                 teacherId: teacherId,
                 studentId: sid,
                 categoryRaw: category.rawValue,
-                subject: subjectTrim.isEmpty ? nil : subjectTrim,
+                subject: nil,
                 body: bodyTrim,
                 createdAt: Date(),
                 updatedAt: Date()
             )
             messages.insert(local, at: 0)
 
-            subject = ""
             message = ""
             successMessage = "Mensagem enviada com sucesso."
 
@@ -421,7 +412,7 @@ struct TeacherSendMessageView: View {
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy • HH:mm"
+        f.dateFormat = "dd/MM/yyyy HH:mm"
         return f.string(from: date)
     }
 
@@ -430,4 +421,3 @@ struct TeacherSendMessageView: View {
         path.removeLast()
     }
 }
-

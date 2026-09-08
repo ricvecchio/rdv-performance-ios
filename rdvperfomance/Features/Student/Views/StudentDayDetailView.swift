@@ -154,6 +154,7 @@ struct StudentDayDetailView: View {
     @State private var selectedMovementKey: String? = nil
     @State private var selectedMovementName: String? = nil
     @State private var percentText: String = ""
+    @FocusState private var isPercentFieldFocused: Bool
 
     // Corpo principal com header, conteúdo do dia, blocos e footer
     var body: some View {
@@ -210,12 +211,19 @@ struct StudentDayDetailView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -251,6 +259,16 @@ struct StudentDayDetailView: View {
                 }
 
                 HeaderAvatarView(size: 38)
+            }
+
+            ToolbarItemGroup(placement: .keyboard) {
+                if isPercentFieldFocused {
+                    Spacer()
+                    Button("Salvar") {
+                        autoSaveCalcState()
+                        isPercentFieldFocused = false
+                    }
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -439,6 +457,7 @@ struct StudentDayDetailView: View {
 
                             TextField("Ex: 50", text: $percentText)
                                 .keyboardType(.decimalPad)
+                                .focused($isPercentFieldFocused)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .font(.system(size: 14, weight: .semibold))
@@ -1154,4 +1173,3 @@ struct StudentDayDetailView: View {
         path.removeLast()
     }
 }
-

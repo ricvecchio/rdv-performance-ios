@@ -77,12 +77,19 @@ struct DeleteAccountView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(isLoading)
@@ -136,7 +143,11 @@ struct DeleteAccountView: View {
 
             secureUnderlineField(title: "Senha atual", text: $currentPassword)
 
-            underlineField(title: "Digite EXCLUIR para confirmar", text: $confirmText)
+            underlineField(
+                title: Text("Digite \(Text("EXCLUIR").bold()) para confirmar")
+                    .font(.system(size: 14)),
+                text: $confirmText
+            )
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled(true)
 
@@ -246,11 +257,10 @@ struct DeleteAccountView: View {
     }
 
     // Retorna campo de texto com linha inferior
-    private func underlineField(title: String, text: Binding<String>) -> some View {
+    private func underlineField(title: Text, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text(title)
-                .font(.system(size: 14))
+            title
                 .foregroundColor(textSecondary)
 
             TextField("", text: text)

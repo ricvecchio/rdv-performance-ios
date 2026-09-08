@@ -24,6 +24,12 @@ final class UserRepository: FirestoreBaseRepository {
         return try snap.data(as: AppUser.self)
     }
 
+    func getUsers(byIds ids: [String]) async throws -> [String: AppUser] {
+        let cleanIds = Array(Set(ids.map(clean).filter { !$0.isEmpty }))
+        guard !cleanIds.isEmpty else { return [:] }
+        return try await fetchUsers(byIds: cleanIds)
+    }
+
     // MARK: - Professor por e-mail
 
     func getTeacherByEmail(email: String) async throws -> AppUser? {
@@ -161,11 +167,13 @@ final class UserRepository: FirestoreBaseRepository {
 
         let snap = try await db.collection(Collections.invites)
             .whereField("studentEmail", isEqualTo: email)
-            .order(by: "createdAt", descending: true)
             .getDocuments()
 
-        return try snap.documents.compactMap { doc in
+        let invites = try snap.documents.compactMap { doc in
             try doc.data(as: TeacherStudentInviteFS.self)
+        }
+        return invites.sorted {
+            ($0.createdAt?.dateValue() ?? .distantPast) > ($1.createdAt?.dateValue() ?? .distantPast)
         }
     }
 
@@ -446,11 +454,13 @@ final class UserRepository: FirestoreBaseRepository {
 
         let snap = try await db.collection(Collections.requests)
             .whereField("studentId", isEqualTo: sid)
-            .order(by: "createdAt", descending: true)
             .getDocuments()
 
-        return try snap.documents.compactMap { doc in
+        let requests = try snap.documents.compactMap { doc in
             try doc.data(as: TeacherStudentLinkRequestFS.self)
+        }
+        return requests.sorted {
+            ($0.createdAt?.dateValue() ?? .distantPast) > ($1.createdAt?.dateValue() ?? .distantPast)
         }
     }
 
@@ -485,43 +495,72 @@ final class UserRepository: FirestoreBaseRepository {
         guard !sid.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
         guard !cat.isEmpty else { throw FirestoreRepositoryError.invalidData }
 
-        let existing = try await db.collection(Collections.teacherStudents)
-            .whereField("teacherId", isEqualTo: tid)
-            .whereField("studentId", isEqualTo: sid)
-            .limit(to: 1)
-            .getDocuments()
+        let (teacherStudentRef, teacherStudentIsNew) = try await resolveOrCreateRef(
+            in: Collections.teacherStudents,
+            teacherId: tid,
+            studentId: sid
+        )
+        let (relationRef, relationIsNew) = try await resolveOrCreateRef(
+            in: Collections.relations,
+            teacherId: tid,
+            studentId: sid
+        )
 
-        if let doc = existing.documents.first {
-            try await db.collection(Collections.teacherStudents)
-                .document(doc.documentID)
-                .updateData([
-                    "categories": FieldValue.arrayUnion([cat]),
-                    "updatedAt": FieldValue.serverTimestamp()
-                ])
-        } else {
-            try await db.collection(Collections.teacherStudents).addDocument(data: [
-                "teacherId": tid,
-                "studentId": sid,
-                "categories": [cat],
-                "createdAt": FieldValue.serverTimestamp(),
-                "updatedAt": FieldValue.serverTimestamp()
-            ])
-        }
+        let batch = db.batch()
+        var teacherStudentPayload: [String: Any] = [
+            "teacherId": tid,
+            "studentId": sid,
+            "categories": FieldValue.arrayUnion([cat]),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        if teacherStudentIsNew { teacherStudentPayload["createdAt"] = FieldValue.serverTimestamp() }
+        batch.setData(teacherStudentPayload, forDocument: teacherStudentRef, merge: true)
 
-        let relRef = try await ensureRelationDoc(teacherId: tid, studentId: sid)
-        try await relRef.setData(
+        var relationPayload: [String: Any] = [
+            "teacherId": tid,
+            "studentId": sid,
+            "categories": FieldValue.arrayUnion([cat]),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        if relationIsNew { relationPayload["createdAt"] = FieldValue.serverTimestamp() }
+        batch.setData(relationPayload, forDocument: relationRef, merge: true)
+
+        batch.setData(
             [
-                "categories": FieldValue.arrayUnion([cat]),
+                "status": "accepted",
                 "updatedAt": FieldValue.serverTimestamp()
             ],
+            forDocument: db.collection(Collections.requests).document(rid),
             merge: true
         )
+
+        try await batch.commit()
+    }
+
+    func declineLinkRequest(requestId: String) async throws {
+        let rid = clean(requestId)
+        guard !rid.isEmpty else { throw FirestoreRepositoryError.invalidData }
 
         try await db.collection(Collections.requests)
             .document(rid)
             .setData(
                 [
-                    "status": "accepted",
+                    "status": "declined",
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
+    }
+
+    func cancelLinkRequest(requestId: String) async throws {
+        let rid = clean(requestId)
+        guard !rid.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        try await db.collection(Collections.requests)
+            .document(rid)
+            .setData(
+                [
+                    "status": "cancelled",
                     "updatedAt": FieldValue.serverTimestamp()
                 ],
                 merge: true
@@ -742,6 +781,41 @@ final class UserRepository: FirestoreBaseRepository {
             .setData(payload, merge: true)
     }
 
+    func updateUserProfile(
+        uid: String,
+        phone: String?,
+        cref: String?,
+        bio: String?,
+        focusArea: String
+    ) async throws {
+        let cleanUid = clean(uid)
+        let cleanPhone = clean(phone ?? "")
+        let cleanFocusArea = clean(focusArea)
+
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard !cleanFocusArea.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        var payload: [String: Any] = [
+            "phone": cleanPhone.isEmpty ? FieldValue.delete() : cleanPhone,
+            "focusArea": cleanFocusArea,
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+
+        if let cref {
+            let cleanCref = clean(cref)
+            payload["cref"] = cleanCref.isEmpty ? FieldValue.delete() : cleanCref
+        }
+
+        if let bio {
+            let cleanBio = clean(bio)
+            payload["bio"] = cleanBio.isEmpty ? FieldValue.delete() : cleanBio
+        }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .setData(payload, merge: true)
+    }
+
     func setUserPhotoBase64(uid: String, photoBase64: String) async throws {
         let u = clean(uid)
         let b64 = clean(photoBase64)
@@ -795,4 +869,3 @@ final class UserRepository: FirestoreBaseRepository {
             .setData(payload, merge: true)
     }
 }
-

@@ -6,13 +6,7 @@ import FirebaseFirestore
 struct ProfileView: View {
 
     @Binding var path: [AppRoute]
-
-    /// Presente apenas quando ProfileView é a RAIZ da seção "Perfil" do aluno
-    /// (dentro de `StudentRootView`). Usado pelo botão `<` para trocar de
-    /// seção principal (Perfil → Agenda) quando não há mais nada para
-    /// desempilhar localmente — essa troca NUNCA é um pop, é seleção de seção.
-    var onSelectSection: (StudentMainSection) -> Void = { _ in }
-
+    let onBack: () -> Void
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
 
@@ -40,6 +34,9 @@ struct ProfileView: View {
 
     @State private var studentDefaultCategoryRaw: String = ""
     @State private var studentEmail: String = ""
+    @State private var userPhone: String = ""
+    @State private var userCref: String = ""
+    @State private var userBio: String = ""
 
 
     private var categoriaAtualAluno: TreinoTipo {
@@ -71,6 +68,12 @@ struct ProfileView: View {
     @State private var isProcessingLinkAction: Bool = false
 
     @State private var showRequestLinkModal: Bool = false
+    @State private var unreadMessagesCount: Int = 0
+    @State private var unreadFeedbacksCount: Int = 0
+    @State private var teacherActivitiesCount: Int = 0
+    @State private var hasAppeared: Bool = false
+
+    private let studentActivityCategories: [TreinoTipo] = [.crossfit, .academia, .emCasa]
 
     private let treinoIcons = [
         "dumbbell",
@@ -242,8 +245,14 @@ struct ProfileView: View {
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -257,15 +266,24 @@ struct ProfileView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                Button { navigateToSettings() } label: {
-                    Image(systemName: "gearshape.fill")
-                        .foregroundColor(.green)
+                Button {
+                    path.append(.configuracoes)
+                } label: {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "gearshape.fill")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
         .alert("Trocar unidade", isPresented: $showTrocarUnidadeAlert) {
             TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
 
@@ -293,6 +311,17 @@ struct ProfileView: View {
         }
         .task(id: currentUid) {
             await loadUserData()
+            await loadProfileActivityCounts()
+        }
+        .onAppear {
+            guard hasAppeared else {
+                hasAppeared = true
+                return
+            }
+            Task {
+                await loadUserData()
+                await loadProfileActivityCounts()
+            }
         }
     }
 
@@ -322,25 +351,8 @@ struct ProfileView: View {
         }
     }
 
-    // Volta uma tela. Na RAIZ da seção Perfil do aluno (path vazio), isso
-    // significa trocar a seção principal para Agenda — NÃO é um pop, pois não
-    // há nada abaixo de ProfileView na pilha local de Perfil.
     private func pop() {
-        guard !path.isEmpty else {
-            if session.userType == .STUDENT {
-                onSelectSection(.agenda)
-            }
-            return
-        }
-        dismiss()
-    }
-
-    // Evita empilhar Settings repetidamente em taps rápidos da engrenagem.
-    // Se `.configuracoes` já existir em qualquer nível da pilha local de Perfil,
-    // não empilha de novo.
-    private func navigateToSettings() {
-        guard !path.contains(.configuracoes) else { return }
-        path.append(.configuracoes)
+        onBack()
     }
 
     private func loadUserData() async {
@@ -350,6 +362,9 @@ struct ProfileView: View {
             unitName = ""
             studentDefaultCategoryRaw = ""
             studentEmail = ""
+            userPhone = ""
+            userCref = ""
+            userBio = ""
             linkedTeachers = []
             linkedTeacherIds = []
             return
@@ -360,15 +375,21 @@ struct ProfileView: View {
 
         do {
             if let user = try await repository.getUser(uid: uid) {
-                userName = user.name
+                userName = user.name.trimmingCharacters(in: .whitespacesAndNewlines)
                 unitName = (user.unitName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 studentDefaultCategoryRaw = (user.defaultCategory ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
                 studentEmail = user.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                userPhone = BrazilianPhoneFormatter.normalize(user.phone ?? "")
+                userCref = (user.cref ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                userBio = (user.bio ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             } else {
                 userName = ""
                 unitName = ""
                 studentDefaultCategoryRaw = ""
                 studentEmail = ""
+                userPhone = ""
+                userCref = ""
+                userBio = ""
             }
 
             if session.userType != .STUDENT {
@@ -381,11 +402,335 @@ struct ProfileView: View {
             unitName = ""
             studentDefaultCategoryRaw = ""
             studentEmail = ""
+            userPhone = ""
+            userCref = ""
+            userBio = ""
             linkedTeachers = []
             linkedTeacherIds = []
 
             errorMessage = error.localizedDescription
             showErrorAlert = true
+        }
+    }
+
+    private func loadProfileActivityCounts() async {
+        let uid = currentUid
+        guard session.userType == .STUDENT, !uid.isEmpty else {
+            unreadMessagesCount = 0
+            unreadFeedbacksCount = 0
+            teacherActivitiesCount = 0
+            return
+        }
+
+        async let remoteState = fetchProfileNotificationState(for: uid)
+        async let messages = messagesByCategory(for: uid, categories: studentActivityCategories)
+        async let feedbacks = feedbacksByCategory(for: uid, categories: studentActivityCategories)
+        async let teacherActivities = teacherActivityData(for: uid, email: studentEmail)
+
+        let (state, messagesByCategory, feedbacksByCategory, activityData) = await (
+            remoteState,
+            messages,
+            feedbacks,
+            teacherActivities
+        )
+        guard currentUid == uid, session.userType == .STUDENT else { return }
+
+        let notificationState = state ?? ProfileNotificationState(
+            messagesLastSeenByCategory: [:],
+            feedbacksLastSeenByCategory: [:],
+            teacherActivitiesLastSeen: nil
+        )
+
+        unreadMessagesCount = unreadMessages(
+            messagesByCategory,
+            for: uid,
+            remoteState: notificationState
+        )
+        unreadFeedbacksCount = unreadFeedbacks(
+            feedbacksByCategory,
+            for: uid,
+            remoteState: notificationState
+        )
+        teacherActivitiesCount = unreadTeacherActivities(
+            activityData,
+            for: uid,
+            remoteState: notificationState
+        )
+
+        if let state {
+            persistLocalNotificationStateIfNewer(for: uid, than: state)
+        }
+    }
+
+    private func fetchProfileNotificationState(for uid: String) async -> ProfileNotificationState? {
+        do {
+            return try await repository.getProfileNotificationState(uid: uid)
+        } catch {
+            return nil
+        }
+    }
+
+    private func messagesByCategory(
+        for uid: String,
+        categories: [TreinoTipo]
+    ) async -> [String: [TeacherMessageFS]] {
+        let repo = repository
+        return await withTaskGroup(of: (String, [TeacherMessageFS]).self, returning: [String: [TeacherMessageFS]].self) { group in
+            for category in categories {
+                let categoryRaw = category.rawValue
+                group.addTask {
+                    do {
+                        return (
+                            categoryRaw,
+                            try await repo.getMessagesForStudent(
+                                studentId: uid,
+                                categoryRaw: categoryRaw,
+                                limit: 100
+                            )
+                        )
+                    } catch {
+                        return (categoryRaw, [])
+                    }
+                }
+            }
+
+            var messagesByCategory: [String: [TeacherMessageFS]] = [:]
+            for await (category, messages) in group {
+                messagesByCategory[category] = messages
+            }
+            return messagesByCategory
+        }
+    }
+
+    private func feedbacksByCategory(
+        for uid: String,
+        categories: [TreinoTipo]
+    ) async -> [String: [StudentFeedbackFS]] {
+        let repo = repository
+        return await withTaskGroup(of: (String, [StudentFeedbackFS]).self, returning: [String: [StudentFeedbackFS]].self) { group in
+            for category in categories {
+                let categoryRaw = category.rawValue
+                group.addTask {
+                    do {
+                        return (
+                            categoryRaw,
+                            try await repo.getFeedbacksForStudent(
+                                studentId: uid,
+                                categoryRaw: categoryRaw,
+                                limit: 100
+                            )
+                        )
+                    } catch {
+                        return (categoryRaw, [])
+                    }
+                }
+            }
+
+            var feedbacksByCategory: [String: [StudentFeedbackFS]] = [:]
+            for await (category, feedbacks) in group {
+                feedbacksByCategory[category] = feedbacks
+            }
+            return feedbacksByCategory
+        }
+    }
+
+    private func teacherActivityData(
+        for uid: String,
+        email: String
+    ) async -> (invites: [TeacherStudentInviteFS], requests: [TeacherStudentLinkRequestFS]) {
+        do {
+            async let invites = repository.getInvitesForStudent(studentEmail: email)
+            async let requests = repository.getRequestsForStudent(studentId: uid)
+            return try await (invites, requests)
+        } catch {
+            return ([], [])
+        }
+    }
+
+    private func unreadMessages(
+        _ messagesByCategory: [String: [TeacherMessageFS]],
+        for uid: String,
+        remoteState: ProfileNotificationState
+    ) -> Int {
+        studentActivityCategories.reduce(into: 0) { count, category in
+            let categoryRaw = category.rawValue
+            let lastSeen = effectiveLastSeen(
+                local: UserDefaults.standard.object(
+                    forKey: "profileMessagesLastSeen.\(uid).\(categoryRaw)"
+                ) as? Date,
+                remote: remoteState.messagesLastSeenByCategory[categoryRaw]
+            )
+            let messages = messagesByCategory[categoryRaw] ?? []
+            if let lastSeen {
+                count += messages.filter { ($0.createdAt ?? .distantPast) > lastSeen }.count
+            } else {
+                count += messages.count
+            }
+        }
+    }
+
+    private func unreadFeedbacks(
+        _ feedbacksByCategory: [String: [StudentFeedbackFS]],
+        for uid: String,
+        remoteState: ProfileNotificationState
+    ) -> Int {
+        studentActivityCategories.reduce(into: 0) { count, category in
+            let categoryRaw = category.rawValue
+            let lastSeen = effectiveLastSeen(
+                local: UserDefaults.standard.object(
+                    forKey: "profileFeedbacksLastSeen.\(uid).\(categoryRaw)"
+                ) as? Date,
+                remote: remoteState.feedbacksLastSeenByCategory[categoryRaw]
+            )
+            let feedbacks = feedbacksByCategory[categoryRaw] ?? []
+            if let lastSeen {
+                count += feedbacks.filter { ($0.createdAt ?? .distantPast) > lastSeen }.count
+            } else {
+                count += feedbacks.count
+            }
+        }
+    }
+
+    private func unreadTeacherActivities(
+        _ activityData: (invites: [TeacherStudentInviteFS], requests: [TeacherStudentLinkRequestFS]),
+        for uid: String,
+        remoteState: ProfileNotificationState
+    ) -> Int {
+        let lastSeen = effectiveLastSeen(
+            local: UserDefaults.standard.object(forKey: "profileTeachersLastSeen.\(uid)") as? Date,
+            remote: remoteState.teacherActivitiesLastSeen
+        )
+        let inviteCount = activityData.invites.filter {
+            let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard let lastSeen else { return status == "pending" }
+            return (status == "pending" && ($0.createdAt?.dateValue() ?? .distantPast) > lastSeen)
+                || ((status == "accepted" || status == "declined")
+                    && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen)
+        }.count
+        let requestCount = activityData.requests.filter {
+            let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+            guard let lastSeen else {
+                return status == "accepted" || status == "declined"
+            }
+            return (status == "accepted" || status == "declined")
+                && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen
+        }.count
+
+        return inviteCount + requestCount
+    }
+
+    private func effectiveLastSeen(local: Date?, remote: Date?) -> Date? {
+        switch (local, remote) {
+        case let (local?, remote?):
+            return max(local, remote)
+        case let (local?, nil):
+            return local
+        case let (nil, remote?):
+            return remote
+        case (nil, nil):
+            return nil
+        }
+    }
+
+    private func persistLocalNotificationStateIfNewer(
+        for uid: String,
+        than remoteState: ProfileNotificationState
+    ) {
+        var messages: [String: Date] = [:]
+        var feedbacks: [String: Date] = [:]
+
+        for category in studentActivityCategories {
+            let categoryRaw = category.rawValue
+            if let local = UserDefaults.standard.object(
+                forKey: "profileMessagesLastSeen.\(uid).\(categoryRaw)"
+            ) as? Date,
+               local > (remoteState.messagesLastSeenByCategory[categoryRaw] ?? .distantPast) {
+                messages[categoryRaw] = local
+            }
+            if let local = UserDefaults.standard.object(
+                forKey: "profileFeedbacksLastSeen.\(uid).\(categoryRaw)"
+            ) as? Date,
+               local > (remoteState.feedbacksLastSeenByCategory[categoryRaw] ?? .distantPast) {
+                feedbacks[categoryRaw] = local
+            }
+        }
+
+        let teacherActivities = UserDefaults.standard.object(
+            forKey: "profileTeachersLastSeen.\(uid)"
+        ) as? Date
+        let newerTeacherActivities = teacherActivities.flatMap {
+            $0 > (remoteState.teacherActivitiesLastSeen ?? .distantPast) ? $0 : nil
+        }
+
+        persistNotificationState(
+            for: uid,
+            messages: messages,
+            feedbacks: feedbacks,
+            teacherActivities: newerTeacherActivities
+        )
+    }
+
+    private func markMessagesAsSeen() {
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
+        let seenAt = Date()
+        for category in studentActivityCategories {
+            UserDefaults.standard.set(
+                seenAt,
+                forKey: "profileMessagesLastSeen.\(uid).\(category.rawValue)"
+            )
+        }
+        unreadMessagesCount = 0
+        persistNotificationState(
+            for: uid,
+            messages: Dictionary(uniqueKeysWithValues: studentActivityCategories.map { ($0.rawValue, seenAt) })
+        )
+    }
+
+    private func markFeedbacksAsSeen() {
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
+        let seenAt = Date()
+        for category in studentActivityCategories {
+            UserDefaults.standard.set(
+                seenAt,
+                forKey: "profileFeedbacksLastSeen.\(uid).\(category.rawValue)"
+            )
+        }
+        unreadFeedbacksCount = 0
+        persistNotificationState(
+            for: uid,
+            feedbacks: Dictionary(uniqueKeysWithValues: studentActivityCategories.map { ($0.rawValue, seenAt) })
+        )
+    }
+
+    private func markTeacherActivitiesAsSeen() {
+        let uid = currentUid
+        guard !uid.isEmpty else { return }
+        let seenAt = Date()
+        UserDefaults.standard.set(seenAt, forKey: "profileTeachersLastSeen.\(uid)")
+        teacherActivitiesCount = 0
+        persistNotificationState(for: uid, teacherActivities: seenAt)
+    }
+
+    private func persistNotificationState(
+        for uid: String,
+        messages: [String: Date] = [:],
+        feedbacks: [String: Date] = [:],
+        teacherActivities: Date? = nil
+    ) {
+        guard !uid.isEmpty else { return }
+        let repo = repository
+        Task {
+            do {
+                try await repo.mergeProfileNotificationState(
+                    uid: uid,
+                    messagesLastSeenByCategory: messages,
+                    feedbacksLastSeenByCategory: feedbacks,
+                    teacherActivitiesLastSeen: teacherActivities
+                )
+            } catch {
+            }
         }
     }
 
@@ -499,11 +844,64 @@ struct ProfileView: View {
             Text(unitName.isEmpty ? " " : unitName)
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Color.clear.frame(height: 16)
+                profileIconDetail(icon: "envelope.fill", value: studentEmail)
+                profileIconDetail(
+                    icon: "phone.circle.fill",
+                    value: BrazilianPhoneFormatter.format(userPhone)
+                )
+                let trimmedCref = userCref.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmedCref.isEmpty,
+                   trimmedCref.caseInsensitiveCompare("N/A") != .orderedSame {
+                    profileIconDetail(
+                        icon: "person.text.rectangle.fill",
+                        value: trimmedCref
+                    )
+                }
+                let trimmedBio = userBio.trimmingCharacters(in: .whitespacesAndNewlines)
+                profileIconDetail(icon: "text.quote", value: trimmedBio, alignment: .top)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.top, 4)
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
+    }
+
+    @ViewBuilder
+    private func profileDetail(_ title: String, _ value: String) -> some View {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            Text("\(title): \(trimmed)")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.65))
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+
+    @ViewBuilder
+    private func profileIconDetail(
+        icon: String,
+        value: String,
+        alignment: VerticalAlignment = .center
+    ) -> some View {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmed.isEmpty {
+            HStack(alignment: alignment, spacing: 6) {
+                Image(systemName: icon)
+                    .foregroundColor(.green)
+
+                Text(trimmed)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.65))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
     }
 
     private func optionsCard() -> some View {
@@ -515,26 +913,36 @@ struct ProfileView: View {
 
             if session.userType == .STUDENT {
                 divider()
-                optionRow(icon: "envelope.fill", title: "Mensagens", trailing: .chevron) {
+                optionRow(
+                    icon: "envelope.fill",
+                    title: "Mensagens",
+                    trailing: .chevron,
+                    activityBadgeCount: unreadMessagesCount
+                ) {
+                    markMessagesAsSeen()
                     path.append(.studentMessages(category: categoriaAtualAluno))
                 }
 
                 divider()
-                optionRow(icon: "text.bubble.fill", title: "Feedbacks", trailing: .chevron) {
+                optionRow(
+                    icon: "text.bubble.fill",
+                    title: "Feedbacks",
+                    trailing: .chevron,
+                    activityBadgeCount: unreadFeedbacksCount
+                ) {
+                    markFeedbacksAsSeen()
                     path.append(.studentFeedbacks(category: categoriaAtualAluno))
                 }
 
                 divider()
-                optionRow(icon: "person.2.fill", title: "Meus professores", trailing: .chevron) {
-                    teacherEmailInput = ""
-                    linkActionMessage = nil
-                    linkActionMessageIsError = false
-                    showMeusProfessoresModal = true
-                }
-
-                divider()
-                optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
-                    showMeusIconesModal = true
+                optionRow(
+                    icon: "person.2.fill",
+                    title: "Meus professores",
+                    trailing: .chevron,
+                    activityBadgeCount: teacherActivitiesCount
+                ) {
+                    markTeacherActivitiesAsSeen()
+                    path.append(.studentTeachers(studentEmail: studentEmail))
                 }
 
             } else {
@@ -562,7 +970,7 @@ struct ProfileView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             VStack(alignment: .leading, spacing: 10) {
-                                Text("Aqui você vê seus professores vinculados e pode solicitar vínculo com outro professor.")
+                                Text("Aqui você vê seus professores vinculados e pode convidar outro professor.")
                                     .font(.system(size: 13))
                                     .foregroundColor(.white.opacity(0.55))
                                     .padding(.top, 12)
@@ -579,7 +987,7 @@ struct ProfileView: View {
                                             .font(.system(size: 16, weight: .semibold))
                                             .foregroundColor(.green.opacity(0.9))
 
-                                        Text("Solicitar vínculo")
+                                        Text("Convidar professor")
                                             .font(.system(size: 14, weight: .semibold))
                                             .foregroundColor(.white.opacity(0.92))
 
@@ -772,7 +1180,7 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Solicitar vínculo")
+                    Text("Convidar professor")
                         .font(Theme.Fonts.headerTitle())
                         .foregroundColor(.white)
                         .lineLimit(1)
@@ -905,27 +1313,39 @@ struct ProfileView: View {
         icon: String,
         title: String,
         trailing: Trailing,
+        activityBadgeCount: Int = 0,
         onTap: (() -> Void)? = nil
     ) -> some View {
         Group {
             if let onTap {
                 Button(action: onTap) {
-                    optionRowContent(icon: icon, title: title, trailing: trailing)
+                    optionRowContent(icon: icon, title: title, trailing: trailing, activityBadgeCount: activityBadgeCount)
                 }
                 .buttonStyle(.plain)
             } else {
-                optionRowContent(icon: icon, title: title, trailing: trailing)
+                optionRowContent(icon: icon, title: title, trailing: trailing, activityBadgeCount: activityBadgeCount)
             }
         }
     }
 
-    private func optionRowContent(icon: String, title: String, trailing: Trailing) -> some View {
+    private func optionRowContent(icon: String, title: String, trailing: Trailing, activityBadgeCount: Int) -> some View {
         HStack(spacing: 14) {
 
             Image(systemName: icon)
                 .font(.system(size: 18))
                 .foregroundColor(.green.opacity(0.85))
                 .frame(width: 28)
+                .overlay(alignment: .topTrailing) {
+                    if activityBadgeCount > 0 {
+                        Text(verbatim: String(activityBadgeCount))
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.red))
+                            .offset(x: 4, y: -5)
+                    }
+                }
 
             Text(title)
                 .font(.system(size: 18, weight: .medium))
@@ -978,6 +1398,8 @@ struct ProfileView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     private func logoutButton() -> some View {

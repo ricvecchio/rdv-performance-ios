@@ -37,7 +37,7 @@ final class RegisterViewModel: ObservableObject {
         let nameTrim = name.trimmingCharacters(in: .whitespacesAndNewlines)
         let emailTrim = email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         let passTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
-        let phoneTrim = phone.trimmingCharacters(in: .whitespacesAndNewlines)
+        let phoneTrim = BrazilianPhoneFormatter.normalize(phone)
 
         let crefTrim = cref.trimmingCharacters(in: .whitespacesAndNewlines)
         let bioTrim = bio.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -46,6 +46,10 @@ final class RegisterViewModel: ObservableObject {
         guard !nameTrim.isEmpty else { errorMessage = "Informe seu nome."; return }
         guard !emailTrim.isEmpty else { errorMessage = "Informe seu e-mail."; return }
         guard !passTrim.isEmpty else { errorMessage = "Informe sua senha."; return }
+        guard BrazilianPhoneFormatter.isValidMobile(phoneTrim) else {
+            errorMessage = "Informe um WhatsApp com 11 dígitos."
+            return
+        }
 
         // ✅ Ajuste solicitado: CREF não é obrigatório para professor.
         // Se estiver vazio, será salvo como nil (não grava string vazia).
@@ -101,4 +105,3 @@ final class RegisterViewModel: ObservableObject {
         successMessage = nil
     }
 }
-

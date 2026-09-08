@@ -4,6 +4,7 @@ struct TeacherDashboardView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -45,7 +46,7 @@ struct TeacherDashboardView: View {
                                     title: "Meus alunos",
                                     icon: "person.3.fill"
                                 ) {
-                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
+                                    selectTeacherMainSection(.students)
                                 }
 
                                 // 3) Importar Treino -> ✅ AGORA ABRE NOVA TELA (igual Importar Vídeos)
@@ -56,9 +57,9 @@ struct TeacherDashboardView: View {
                                     path.append(.teacherImportWorkouts(category: category))
                                 }
 
-                                // 3.1) Importar Vídeos
+                                // 3.1) Meus Vídeos
                                 actionRow(
-                                    title: "Importar Vídeos",
+                                    title: "Meus Vídeos",
                                     icon: "video.fill"
                                 ) {
                                     path.append(.teacherImportVideos(category: category))
@@ -149,4 +150,3 @@ struct TeacherDashboardView: View {
         .buttonStyle(.plain)
     }
 }
-

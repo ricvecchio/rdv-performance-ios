@@ -74,11 +74,17 @@ struct ARExerciseView: View {
             VStack {
                 HStack {
                     Button(action: { pop() }) {
-                        Image(systemName: "chevron.left")
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.black.opacity(0.35))
-                            .cornerRadius(8)
+                        ZStack {
+                            Color.clear
+                                .frame(width: 44, height: 44)
+
+                            Image(systemName: "chevron.left")
+                                .foregroundColor(.white)
+                                .padding(8)
+                                .background(Color.black.opacity(0.35))
+                                .cornerRadius(8)
+                        }
+                        .contentShape(Rectangle())
                     }
                     Spacer()
                     Button(action: { placingPoint.toggle() }) {

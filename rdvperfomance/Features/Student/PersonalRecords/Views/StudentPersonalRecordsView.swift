@@ -4,6 +4,7 @@ import SwiftUI
 struct StudentPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
+    let onBack: () -> Void
 
     /// Sempre fornecido pelo `StudentRootView`. Usado tanto pelo rodapé
     /// quanto pelo botão `<` desta tela: como esta view é a RAIZ da seção
@@ -127,9 +128,15 @@ struct StudentPersonalRecordsView: View {
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
-                Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                Button(action: onBack) {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -146,6 +153,7 @@ struct StudentPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .navigationBarTitleDisplayMode(.inline)
     }
 
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
@@ -177,10 +185,4 @@ struct StudentPersonalRecordsView: View {
         .buttonStyle(.plain)
     }
 
-    // Botão `<` na RAIZ de Recordes: NÃO é pop (path já está vazio aqui).
-    // Funcionalmente troca a seção principal para Agenda.
-    private func pop() {
-        onSelectSection(.agenda)
-    }
 }
-

@@ -45,8 +45,8 @@ struct TeacherFeedbacksView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             header
-                            listCard
                             formCard
+                            listCard
 
                             if let err = errorMessage {
                                 messageCard(text: err, isError: true)
@@ -83,12 +83,19 @@ struct TeacherFeedbacksView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -106,8 +113,14 @@ struct TeacherFeedbacksView: View {
                 Button {
                     Task { await loadFeedbacks() }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -124,10 +137,6 @@ struct TeacherFeedbacksView: View {
             Text("Aluno: \(student.name)")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
-
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
 
             Text("Registre feedbacks e acompanhe o histórico.")
                 .font(.system(size: 14))
@@ -176,28 +185,31 @@ struct TeacherFeedbacksView: View {
     }
 
     private func feedbackRow(_ fb: StudentFeedbackFS) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .top, spacing: 12) {
+            if let date = fb.createdAt {
+                VStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 14))
 
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "text.bubble.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 14))
-                    .frame(width: 20)
-
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(fb.text)
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.80))
-
-                    if let date = fb.createdAt {
-                        Text(formatDate(date))
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.45))
-                    }
+                    Text(formatDate(date))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
                 }
-
-                Spacer()
+                .frame(width: 76)
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(session.userName ?? "Professor")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(fb.text)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.75))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 12)
     }
@@ -205,15 +217,17 @@ struct TeacherFeedbacksView: View {
     private var formCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("NOVO FEEDBACK")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
+            HStack(spacing: 8) {
+                Image(systemName: "text.bubble.fill")
+                    .foregroundColor(.green.opacity(0.85))
+                    .font(.system(size: 14))
+
+                Text("FEEDBACK")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.35))
+            }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Texto")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-
                 TextEditor(text: $newFeedbackText)
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white.opacity(0.92))
@@ -383,7 +397,7 @@ struct TeacherFeedbacksView: View {
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy • HH:mm"
+        f.dateFormat = "dd/MM/yyyy HH:mm"
         return f.string(from: date)
     }
 
@@ -392,4 +406,3 @@ struct TeacherFeedbacksView: View {
         path.removeLast()
     }
 }
-

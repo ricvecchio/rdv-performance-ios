@@ -1,4 +1,6 @@
 import SwiftUI
+import Foundation
+import FirebaseFirestore
 
 // Barra de navegação inferior com diferentes configurações para cada tipo de usuário
 struct FooterBar: View {
@@ -74,6 +76,9 @@ struct FooterBar: View {
     var onSelectStudentSection: ((StudentMainSection) -> Void)? = nil
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.selectStudentMainSection) private var selectStudentMainSection
+    @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
+    @State private var teacherStudentActivityCount = 0
 
     // Constrói o footer com divider superior e botões de navegação
     var body: some View {
@@ -90,6 +95,9 @@ struct FooterBar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.Colors.footerBackground)
+        .task(id: session.uid ?? "") {
+            await loadTeacherStudentActivityCount()
+        }
     }
 
     // Retorna a configuração de botões apropriada baseado no Kind selecionado
@@ -195,7 +203,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goTeacherAlunos(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person.3"), title: "Alunos", isSelected: isAlunosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    teacherStudentsFooterItem(isSelected: isAlunosSelected)
                 }
                 .buttonStyle(.plain)
 
@@ -226,105 +234,113 @@ struct FooterBar: View {
         }
     }
 
-    // MARK: - Métodos de navegação do rodapé
-    //
-    // REGRA: cada toque produz exatamente UMA mutação de estado.
-    //
-    // Para o ALUNO, o rodapé NÃO mutila mais o `path` de um NavigationStack:
-    // Agenda / Recordes / Perfil são seções principais selecionadas via
-    // `onSelectStudentSection`, e cada seção possui sua própria pilha de
-    // navegação hierárquica independente (gerenciada por `StudentRootView`).
-    // Isso elimina a causa raiz do "double tap"/atraso: trocar de seção deixa
-    // de competir com push/pop reais dentro do mesmo NavigationStack.
-    //
-    // Para PROFESSOR/HOME (não migrados nesta refatoração), o comportamento
-    // antigo baseado em `path` é mantido inalterado.
+    // MARK: - Seleção de seção principal
 
-    private enum FooterTarget {
-        case studentRoot
-        case profile
-        case teacherRoot
-        case teacherStudentsList(category: TreinoTipo)
-    }
-
-    // MARK: Básico (Home, Sobre, Perfil sem contexto específico de aluno/professor)
     private func goHomeBasic() {
-        navigateToRoot(.studentRoot)
+        if session.isTrainer {
+            selectTeacherMainSection(.home)
+        } else {
+            selectStudentMainSection(.agenda)
+        }
     }
 
     private func goPerfilBasic() {
-        navigate(to: .perfil, as: .profile)
+        if session.isTrainer {
+            selectTeacherMainSection(.profile)
+        } else {
+            selectStudentMainSection(.profile)
+        }
     }
 
-    // MARK: Aluno
-    // Agenda / Recordes / Perfil são seções principais (não push/pop).
     private func goAgenda() {
-        onSelectStudentSection?(.agenda)
+        selectStudentMainSection(.agenda)
     }
 
     private func goTreinosAluno() {
-        onSelectStudentSection?(.agenda)
+        selectStudentMainSection(.agenda)
     }
 
     private func goPersonalRecords() {
-        onSelectStudentSection?(.records)
+        selectStudentMainSection(.records)
     }
 
     private func goPerfilStudent() {
-        onSelectStudentSection?(.profile)
+        selectStudentMainSection(.profile)
     }
 
-    // MARK: Professor
-    // A tela raiz do professor é TeacherDashboardView; path vazio = Home.
     private func goTeacherHome(category: TreinoTipo) {
-        navigateToRoot(.teacherRoot)
+        selectTeacherMainSection(.home)
     }
 
     private func goTeacherAlunos(category: TreinoTipo) {
-        let target: AppRoute = .teacherStudentsList(selectedCategory: category, initialFilter: nil)
-        navigate(to: target, as: .teacherStudentsList(category: category))
-    }
-
-    private func goTeacherSobre(category: TreinoTipo) {
-        let target: AppRoute = .sobre
-        guard path.last != target else { return }
-        path = [target]
+        selectTeacherMainSection(.students)
     }
 
     private func goTeacherPerfil(category: TreinoTipo) {
-        navigate(to: .perfil, as: .profile)
+        selectTeacherMainSection(.profile)
     }
 
-    private func navigateToRoot(_ target: FooterTarget) {
-        guard !matches(target) else { return }
-        path = []
+    private func teacherStudentsFooterItem(isSelected: Bool) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: "person.3")
+                .font(Theme.Fonts.footerIcon())
+                .overlay(alignment: .topTrailing) {
+                    if teacherStudentActivityCount > 0 && !isSelected {
+                        Text("\(teacherStudentActivityCount)")
+                            .font(.system(size: 10, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 5)
+                            .padding(.vertical, 2)
+                            .background(Capsule().fill(Color.red))
+                            .offset(x: 4, y: -5)
+                    }
+                }
+
+            Text("Alunos")
+                .font(Theme.Fonts.footerTitle())
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
+        }
+        .foregroundColor(isSelected ? Theme.Colors.selected : Theme.Colors.unselected)
+        .frame(width: Theme.Layout.footerItemWidthTreinosComPerfil)
     }
 
-    private func navigate(to route: AppRoute, as target: FooterTarget) {
-        guard !matches(target) else { return }
-        path = [route]
-    }
+    private func loadTeacherStudentActivityCount() async {
+        guard session.isTrainer, let teacherId = session.uid, !teacherId.isEmpty else {
+            teacherStudentActivityCount = 0
+            return
+        }
 
-    private func matches(_ target: FooterTarget) -> Bool {
-        switch target {
-        case .studentRoot:
-            return path.isEmpty
-        case .profile:
-            return path.last == .perfil
-        case .teacherRoot:
-            if path.isEmpty {
-                return true
+        let key = "teacherStudentActivitiesLastSeen.\(teacherId)"
+        let lastSeen = UserDefaults.standard.object(forKey: key) as? Date
+
+        do {
+            async let invites = FirestoreRepository.shared.getInvitesSentByTeacher(
+                teacherId: teacherId,
+                status: nil,
+                limit: 200
+            )
+            async let requests = FirestoreRepository.shared.getPendingLinkRequestsForTeacher(teacherId: teacherId)
+            let (sentInvites, pendingRequests) = try await (invites, requests)
+
+            let newRequests = pendingRequests.filter {
+                guard let lastSeen else { return true }
+                return ($0.createdAt?.dateValue() ?? .distantPast) > lastSeen
+            }.count
+            let updatedInvites: Int
+            if let lastSeen {
+                updatedInvites = sentInvites.filter {
+                    let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    return (status == "accepted" || status == "declined")
+                        && ($0.updatedAt?.dateValue() ?? .distantPast) > lastSeen
+                }.count
+            } else {
+                updatedInvites = 0
             }
-            if let last = path.last, case .teacherDashboard = last {
-                return true
-            }
-            return false
-        case .teacherStudentsList(let category):
-            guard let last = path.last else { return false }
-            if case .teacherStudentsList(let selectedCategory, _) = last {
-                return selectedCategory == category
-            }
-            return false
+
+            teacherStudentActivityCount = newRequests + updatedInvites
+        } catch {
+            teacherStudentActivityCount = 0
         }
     }
 }
