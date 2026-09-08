@@ -337,6 +337,8 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
     @State private var historyWod: GamesWOD?
     @State private var selectedPRDate: Date = Date()
     @State private var showPRDatePicker: Bool = false
+    @State private var isEditingExistingPR: Bool = false
+    @State private var editingHistoryEntryID: String? = nil
 
     var body: some View {
         ZStack {
@@ -418,7 +420,9 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(item: $selectedWod) { wod in
+        .sheet(item: $selectedWod, onDismiss: {
+            resetExistingPREditing()
+        }) { wod in
             editSheet(for: wod)
         }
     }
@@ -571,9 +575,24 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Resultado:")
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                        HStack {
+                            Text("Resultado:")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+
+                            Spacer()
+
+                            if let value = bestDisplayValue(for: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " ")), !value.isEmpty {
+                                Button {
+                                    beginEditingExistingPR(for: wod)
+                                } label: {
+                                    Label("Editar valor", systemImage: "pencil")
+                                        .font(.system(size: 13, weight: .semibold))
+                                        .foregroundColor(.green.opacity(0.90))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
 
                         TextField("Ex: 12:34", text: $inputValue)
                             .keyboardType(.numbersAndPunctuation)
@@ -630,6 +649,7 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                 HStack(spacing: 12) {
 
                     Button {
+                        resetExistingPREditing()
                         selectedWod = nil
                     } label: {
                         Text("Cancelar")
@@ -647,10 +667,15 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        saveCurrentInput(for: wod)
+                        if isEditingExistingPR {
+                            saveExistingPREdit()
+                        } else {
+                            saveCurrentInput(for: wod)
+                        }
+                        resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("Salvar")
+                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -757,6 +782,90 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         }
 
         return outLines.joined(separator: "\n")
+    }
+
+    private func beginEditingExistingPR(for wod: GamesWOD) {
+        let metadata = wod.descriptionLines.joined(separator: " ")
+        guard let value = bestDisplayValue(for: wod.storageKey, metadata: metadata) else { return }
+
+        inputValue = value
+        if let entry = currentPRHistoryEntry(for: wod.storageKey, metadata: metadata),
+           let entryValue = numericValue(entry.value, metadata: metadata),
+           let bestValue = numericValue(value, metadata: metadata),
+           abs(entryValue - bestValue) < 0.000_001 {
+            editingHistoryEntryID = entry.id
+            selectedPRDate = entry.createdAt
+        } else {
+            editingHistoryEntryID = nil
+        }
+        isEditingExistingPR = true
+    }
+
+    private func saveExistingPREdit() {
+        guard let wod = selectedWod else { return }
+
+        let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let key = wod.storageKey
+        let metadata = wod.descriptionLines.joined(separator: " ")
+        var history = loadHistoryMap()
+        var primaryCandidates: [String]
+
+        if let entryID = editingHistoryEntryID {
+            var entries = history[key, default: []]
+            guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
+                primaryCandidates = entries.map(\.value) + [trimmed]
+                if let primaryValue = bestValue(from: primaryCandidates, metadata: metadata) {
+                    saveValue(primaryValue, for: key)
+                }
+                return
+            }
+
+            let entry = entries[index]
+            entries[index] = PRHistoryEntry(
+                id: entry.id,
+                value: trimmed,
+                createdAt: Calendar.current.startOfDay(for: selectedPRDate)
+            )
+            history[key] = entries
+            saveHistoryMap(history)
+            primaryCandidates = entries.map(\.value)
+        } else {
+            primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+        }
+
+        saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
+    }
+
+    private func resetExistingPREditing() {
+        isEditingExistingPR = false
+        editingHistoryEntryID = nil
+    }
+
+    private func currentPRHistoryEntry(for key: String, metadata: String) -> PRHistoryEntry? {
+        guard let comparison = metricComparison(for: metadata) else { return nil }
+        let candidates = historyEntries(for: key).compactMap { entry -> (PRHistoryEntry, Double)? in
+            numericValue(entry.value, metadata: metadata).map { (entry, $0) }
+        }
+        return candidates.sorted { lhs, rhs in
+            if lhs.1 == rhs.1 { return lhs.0.createdAt > rhs.0.createdAt }
+            return comparison == .time ? lhs.1 < rhs.1 : lhs.1 > rhs.1
+        }.first?.0
+    }
+
+    private func bestValue(from values: [String], metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else { return values.last }
+        let candidates = values.compactMap { value -> (String, Double)? in
+            numericValue(value, metadata: metadata).map { (value, $0) }
+        }
+        guard var best = candidates.first else { return values.last }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 {
+                best = candidate
+            }
+        }
+        return best.0
     }
 
     private func saveCurrentInput(for wod: GamesWOD) {

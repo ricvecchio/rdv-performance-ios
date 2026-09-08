@@ -72,6 +72,8 @@ struct StudentEndurancePersonalRecordsView: View {
     @State private var historyMove: EnduranceMove?
     @State private var selectedPRDate: Date = Date()
     @State private var showPRDatePicker: Bool = false
+    @State private var isEditingExistingPR: Bool = false
+    @State private var editingHistoryEntryID: String? = nil
 
     var body: some View {
         ZStack {
@@ -153,7 +155,9 @@ struct StudentEndurancePersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(item: $selectedMove) { move in
+        .sheet(item: $selectedMove, onDismiss: {
+            resetExistingPREditing()
+        }) { move in
             editSheet(move: move)
         }
     }
@@ -282,9 +286,24 @@ struct StudentEndurancePersonalRecordsView: View {
                     .padding(.horizontal, 16)
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Resultado:")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
+                    HStack {
+                        Text("Resultado:")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        Spacer()
+
+                        if let value = bestDisplayValue(for: move.storageKey, metadata: move.name), !value.isEmpty {
+                            Button {
+                                beginEditingExistingPR(for: move)
+                            } label: {
+                                Label("Editar valor", systemImage: "pencil")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.green.opacity(0.90))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
 
                     TextField("Ex: 3:45 ou 120 ou 10:32", text: $inputValue)
                         .textInputAutocapitalization(.never)
@@ -337,6 +356,7 @@ struct StudentEndurancePersonalRecordsView: View {
                 HStack(spacing: 12) {
 
                     Button {
+                        resetExistingPREditing()
                         selectedMove = nil
                     } label: {
                         Text("Cancelar")
@@ -354,10 +374,15 @@ struct StudentEndurancePersonalRecordsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        saveCurrentInput()
+                        if isEditingExistingPR {
+                            saveExistingPREdit()
+                        } else {
+                            saveCurrentInput()
+                        }
+                        resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text("Salvar")
+                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -378,6 +403,90 @@ struct StudentEndurancePersonalRecordsView: View {
             inputValue = bestDisplayValue(for: move.storageKey, metadata: move.name) ?? ""
             selectedPRDate = Date()
         }
+    }
+
+    private func beginEditingExistingPR(for move: EnduranceMove) {
+        let metadata = move.name
+        guard let value = bestDisplayValue(for: move.storageKey, metadata: metadata) else { return }
+
+        inputValue = value
+        if let entry = currentPRHistoryEntry(for: move.storageKey, metadata: metadata),
+           let entryValue = numericValue(entry.value, metadata: metadata),
+           let bestValue = numericValue(value, metadata: metadata),
+           abs(entryValue - bestValue) < 0.000_001 {
+            editingHistoryEntryID = entry.id
+            selectedPRDate = entry.createdAt
+        } else {
+            editingHistoryEntryID = nil
+        }
+        isEditingExistingPR = true
+    }
+
+    private func saveExistingPREdit() {
+        guard let move = selectedMove else { return }
+
+        let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let key = move.storageKey
+        let metadata = move.name
+        var history = loadHistoryMap()
+        var primaryCandidates: [String]
+
+        if let entryID = editingHistoryEntryID {
+            var entries = history[key, default: []]
+            guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
+                primaryCandidates = entries.map(\.value) + [trimmed]
+                if let primaryValue = bestValue(from: primaryCandidates, metadata: metadata) {
+                    saveValue(primaryValue, for: key)
+                }
+                return
+            }
+
+            let entry = entries[index]
+            entries[index] = PRHistoryEntry(
+                id: entry.id,
+                value: trimmed,
+                createdAt: Calendar.current.startOfDay(for: selectedPRDate)
+            )
+            history[key] = entries
+            saveHistoryMap(history)
+            primaryCandidates = entries.map(\.value)
+        } else {
+            primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+        }
+
+        saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
+    }
+
+    private func resetExistingPREditing() {
+        isEditingExistingPR = false
+        editingHistoryEntryID = nil
+    }
+
+    private func currentPRHistoryEntry(for key: String, metadata: String) -> PRHistoryEntry? {
+        guard let comparison = metricComparison(for: metadata) else { return nil }
+        let candidates = historyEntries(for: key).compactMap { entry -> (PRHistoryEntry, Double)? in
+            numericValue(entry.value, metadata: metadata).map { (entry, $0) }
+        }
+        return candidates.sorted { lhs, rhs in
+            if lhs.1 == rhs.1 { return lhs.0.createdAt > rhs.0.createdAt }
+            return comparison == .time ? lhs.1 < rhs.1 : lhs.1 > rhs.1
+        }.first?.0
+    }
+
+    private func bestValue(from values: [String], metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else { return values.last }
+        let candidates = values.compactMap { value -> (String, Double)? in
+            numericValue(value, metadata: metadata).map { (value, $0) }
+        }
+        guard var best = candidates.first else { return values.last }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 {
+                best = candidate
+            }
+        }
+        return best.0
     }
 
     private func saveCurrentInput() {
