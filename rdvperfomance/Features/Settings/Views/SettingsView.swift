@@ -131,7 +131,8 @@ struct SettingsView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: false
-                )
+                ),
+                onSelectStudentSection: onSelectSection
             )
         } else {
             FooterBar(
@@ -147,6 +148,9 @@ struct SettingsView: View {
         }
     }
 
+    // Volta uma tela usando dismiss nativo do SwiftUI. Como Settings é
+    // sempre apresentado por NavigationStack, esse é o pop mais confiável
+    // para evitar toque perdido por mutação manual de `path`.
     private func pop() {
         dismiss()
     }

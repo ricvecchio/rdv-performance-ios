@@ -66,6 +66,15 @@ struct FooterBar: View {
     @Binding var path: [AppRoute]
     let kind: Kind
 
+    /// Callback usado EXCLUSIVAMENTE pelas seções principais do aluno
+    /// (Agenda / Recordes / Perfil). Quando presente, os botões do rodapé do
+    /// aluno chamam este closure em vez de mutar `path` — trocar de seção é
+    /// uma seleção de estado (`StudentMainSection`), não push/pop de
+    /// NavigationStack. Kinds não relacionados ao aluno (professor, home,
+    /// treinos etc.) continuam usando `path` normalmente e não precisam
+    /// fornecer este closure.
+    var onSelectStudentSection: ((StudentMainSection) -> Void)? = nil
+
     @EnvironmentObject private var session: AppSession
     @Environment(\.selectStudentMainSection) private var selectStudentMainSection
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection

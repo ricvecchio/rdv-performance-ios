@@ -8,6 +8,7 @@ struct ProfileView: View {
     @Binding var path: [AppRoute]
     let onBack: () -> Void
     @EnvironmentObject private var session: AppSession
+    @Environment(\.dismiss) private var dismiss
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -333,7 +334,8 @@ struct ProfileView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: true
-                )
+                ),
+                onSelectStudentSection: onSelectSection
             )
         } else {
             FooterBar(
