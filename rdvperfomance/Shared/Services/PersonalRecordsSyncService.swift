@@ -80,6 +80,7 @@ final class PersonalRecordsSyncService {
         }
 
         activeUID = cleanUID
+        restorePendingSnapshotIfAvailable(for: cleanUID)
         synchronizedUIDs.remove(cleanUID)
         resetRetryState(for: cleanUID)
     }
@@ -188,6 +189,19 @@ final class PersonalRecordsSyncService {
             pendingSnapshots()[uid] ?? [:],
             tombstones: pendingTombstones()[uid] ?? [:]
         )
+    }
+
+    private func restorePendingSnapshotIfAvailable(for uid: String) {
+        guard let pendingSnapshot = pendingSnapshots()[uid], !pendingSnapshot.isEmpty else { return }
+
+        let restoredSnapshot = PersonalRecordsPayloadMerger.mergeSnapshots(
+            pendingSnapshot,
+            [:],
+            tombstones: pendingTombstones()[uid] ?? [:]
+        )
+        writeSnapshot(restoredSnapshot)
+        defaults.set(uid, forKey: StorageKeys.ownerUID)
+        establishCustomBaselineIfNeeded(from: restoredSnapshot, for: uid)
     }
 
     private func scheduleUpload(for uid: String) {
