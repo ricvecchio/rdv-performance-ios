@@ -242,8 +242,8 @@ final class PersonalRecordsSyncService {
                 guard isCurrentAuthenticatedUser(uid), !Task.isCancelled else { return }
                 let committedDocument = try await firestoreRepository.saveStudentPersonalRecords(
                     uid: uid,
-                    payloads: localSnapshot,
-                    customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(localTombstones)
+                    payloads: mergedSnapshot,
+                    customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(allTombstones)
                 )
                 guard isCurrentAuthenticatedUser(uid), !Task.isCancelled else { return }
                 committedSnapshot = committedDocument.payloads

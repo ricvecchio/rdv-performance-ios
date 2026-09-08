@@ -535,9 +535,8 @@ struct StudentAgendaView: View {
         if isTeacherViewing {
             await vm.loadWeeksAndMeta()
         } else {
-            async let linkStatus: Void = vm.loadLinkStatusIfNeeded()
-            async let weeks: Void = vm.loadWeeksAndMeta()
-            _ = await (linkStatus, weeks)
+            await vm.loadWeeksAndMeta()
+            await vm.loadLinkStatusIfNeeded()
         }
     }
 }

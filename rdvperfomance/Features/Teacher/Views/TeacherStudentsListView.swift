@@ -435,12 +435,13 @@ struct TeacherStudentsListView: View {
             return
         }
 
-        async let students: Void = vm.loadStudents(teacherId: teacherId)
+        await vm.loadStudents(teacherId: teacherId)
+        UserDefaults.standard.set(Date(), forKey: studentActivitiesLastSeenKey(teacherId: teacherId))
+
         async let invites: Void = vm.loadInvites(teacherId: teacherId)
         async let requests: Void = vm.loadPendingLinkRequests(teacherId: teacherId)
-        _ = await (students, invites, requests)
+        _ = await (invites, requests)
         vm.removeLinkedStudentsFromPendingLinkRequests(teacherId: teacherId)
-        UserDefaults.standard.set(Date(), forKey: studentActivitiesLastSeenKey(teacherId: teacherId))
     }
 
     private func unlinkMessageText() -> String {

@@ -931,11 +931,6 @@ struct ProfileView: View {
                     path.append(.studentTeachers(studentEmail: studentEmail))
                 }
 
-                divider()
-                optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
-                    showMeusIconesModal = true
-                }
-
             } else {
                 divider()
                 optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
