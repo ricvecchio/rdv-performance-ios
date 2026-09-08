@@ -846,12 +846,20 @@ struct ProfileView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Color.clear.frame(height: 16)
                 profileIconDetail(icon: "envelope.fill", value: studentEmail)
-                profileDetail("CREF", userCref)
                 profileIconDetail(
                     icon: "phone.circle.fill",
                     value: BrazilianPhoneFormatter.format(userPhone)
                 )
-                profileDetail("Biografia", userBio)
+                let trimmedCref = userCref.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !trimmedCref.isEmpty,
+                   trimmedCref.caseInsensitiveCompare("N/A") != .orderedSame {
+                    profileIconDetail(
+                        icon: "person.text.rectangle.fill",
+                        value: "CREF: \(trimmedCref)"
+                    )
+                }
+                let trimmedBio = userBio.trimmingCharacters(in: .whitespacesAndNewlines)
+                profileIconDetail(icon: "text.quote", value: trimmedBio.isEmpty ? "" : "Biografia: \(trimmedBio)")
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
