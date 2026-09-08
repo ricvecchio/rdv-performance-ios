@@ -855,11 +855,11 @@ struct ProfileView: View {
                    trimmedCref.caseInsensitiveCompare("N/A") != .orderedSame {
                     profileIconDetail(
                         icon: "person.text.rectangle.fill",
-                        value: "CREF: \(trimmedCref)"
+                        value: trimmedCref
                     )
                 }
                 let trimmedBio = userBio.trimmingCharacters(in: .whitespacesAndNewlines)
-                profileIconDetail(icon: "text.quote", value: trimmedBio.isEmpty ? "" : "Biografia: \(trimmedBio)")
+                profileIconDetail(icon: "text.quote", value: trimmedBio, alignment: .top)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
@@ -883,10 +883,14 @@ struct ProfileView: View {
     }
 
     @ViewBuilder
-    private func profileIconDetail(icon: String, value: String) -> some View {
+    private func profileIconDetail(
+        icon: String,
+        value: String,
+        alignment: VerticalAlignment = .center
+    ) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            HStack(spacing: 6) {
+            HStack(alignment: alignment, spacing: 6) {
                 Image(systemName: icon)
                     .foregroundColor(.green)
 
