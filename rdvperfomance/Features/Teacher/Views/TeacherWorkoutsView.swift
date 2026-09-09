@@ -7,6 +7,7 @@ struct TeacherWorkoutsView: View {
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     private let contentMaxWidth: CGFloat = 380
+    private let quickAccessColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
 
     var body: some View {
         ZStack {
@@ -31,36 +32,52 @@ struct TeacherWorkoutsView: View {
 
                             header
 
-                            VStack(spacing: 12) {
-                                actionRow(
-                                    title: "Criar treino",
-                                    icon: "plus.circle.fill"
-                                ) {
-                                    path.append(.teacherMyWorkouts(category: category, mode: .create))
-                                }
+                            VStack(alignment: .leading, spacing: 14) {
+                                Text("Acesso rápido")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.92))
 
-                                actionRow(
-                                    title: "Biblioteca de Treinos",
-                                    icon: "square.grid.2x2.fill"
-                                ) {
-                                    path.append(.teacherMyWorkouts(category: category))
-                                }
+                                LazyVGrid(columns: quickAccessColumns, spacing: 12) {
+                                    quickAccessCard(
+                                        title: "Criar treino",
+                                        subtitle: "Monte um novo treino",
+                                        icon: "plus.circle.fill"
+                                    ) {
+                                        path.append(.teacherMyWorkouts(category: category, mode: .create))
+                                    }
 
-                                actionRow(
-                                    title: "Importar",
-                                    icon: "tablecells.fill"
-                                ) {
-                                    path.append(.teacherImportWorkouts(category: category))
-                                }
+                                    quickAccessCard(
+                                        title: "Biblioteca de Treinos",
+                                        subtitle: "Use modelos prontos",
+                                        icon: "square.grid.2x2.fill"
+                                    ) {
+                                        path.append(.teacherMyWorkouts(category: category, mode: .library))
+                                    }
 
-                                actionRow(
-                                    title: "Meus Vídeos",
-                                    icon: "video.fill"
-                                ) {
-                                    path.append(.teacherImportVideos(category: category))
+                                    quickAccessCard(
+                                        title: "Importar",
+                                        subtitle: "Importe treinos por planilha",
+                                        icon: "tablecells.fill"
+                                    ) {
+                                        path.append(.teacherImportWorkouts(category: category))
+                                    }
+
+                                    quickAccessCard(
+                                        title: "Meus Vídeos",
+                                        subtitle: "Organize seus vídeos",
+                                        icon: "video.fill"
+                                    ) {
+                                        path.append(.teacherImportVideos(category: category))
+                                    }
                                 }
                             }
-                            .padding(.top, 8)
+                            .padding(14)
+                            .background(Theme.Colors.cardBackground)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
@@ -130,29 +147,48 @@ struct TeacherWorkoutsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func quickAccessCard(
+        title: String,
+        subtitle: String,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
+            HStack(alignment: .top, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
 
-                Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    Image(systemName: icon)
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
 
-                Spacer()
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(2)
+
+                    Text(subtitle)
+                        .font(.system(size: 11))
+                        .foregroundColor(.white.opacity(0.55))
+                        .lineLimit(2)
+                }
+
+                Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
+                    .font(.system(size: 12, weight: .semibold))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
+            .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
+            .padding(12)
+            .background(Theme.Colors.cardBackground.opacity(0.72))
+            .cornerRadius(12)
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
         }
