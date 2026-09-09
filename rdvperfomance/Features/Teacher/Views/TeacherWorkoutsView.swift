@@ -151,7 +151,7 @@ struct TeacherWorkoutsView: View {
                         .font(.system(size: 16, weight: .semibold))
                 }
 
-                VStack(alignment: .leading, spacing: 4) {
+                VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
@@ -169,9 +169,9 @@ struct TeacherWorkoutsView: View {
                     .foregroundColor(.white.opacity(0.35))
                     .font(.system(size: 12, weight: .semibold))
             }
-            .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
             .padding(.horizontal, 12)
-            .padding(.vertical, 10)
+            .padding(.vertical, 8)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
             .overlay(
