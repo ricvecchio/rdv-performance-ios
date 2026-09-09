@@ -51,7 +51,7 @@ struct TeacherWorkoutsView: View {
                                 quickAccessCard(
                                     title: "Importar",
                                     subtitle: "Importe treinos por planilha",
-                                    icon: "tablecells.fill"
+                                    icon: "doc.text.fill"
                                 ) {
                                     path.append(.teacherImportWorkouts(category: category))
                                 }
@@ -169,8 +169,9 @@ struct TeacherWorkoutsView: View {
                     .foregroundColor(.white.opacity(0.35))
                     .font(.system(size: 12, weight: .semibold))
             }
-            .frame(maxWidth: .infinity, minHeight: 96, alignment: .leading)
-            .padding(12)
+            .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 10)
             .background(Theme.Colors.cardBackground.opacity(0.72))
             .cornerRadius(12)
             .overlay(
