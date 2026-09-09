@@ -151,6 +151,7 @@ struct StudentRootView: View {
         NavigationStack(path: $recordsPath) {
             StudentPersonalRecordsView(
                 path: $recordsPath,
+                onBack: { selectSection(.agenda) },
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in
@@ -201,7 +202,7 @@ struct StudentRootView: View {
         NavigationStack(path: $profilePath) {
             ProfileView(
                 path: $profilePath,
-                onSelectSection: selectSection
+                onBack: { selectSection(.agenda) }
             )
             .navigationDestination(for: AppRoute.self) { route in
                 profileDestination(for: route)
@@ -214,7 +215,7 @@ struct StudentRootView: View {
         switch route {
 
         case .configuracoes:
-            SettingsView(path: $profilePath, onSelectSection: selectSection)
+            SettingsView(path: $profilePath)
 
         case .editarPerfil:
             EditProfileView(path: $profilePath)

@@ -1,11 +1,5 @@
 import SwiftUI
 
-enum StudentMainSection: Hashable {
-    case agenda
-    case records
-    case profile
-}
-
 enum TeacherMainSection: Hashable {
     case home
     case students
