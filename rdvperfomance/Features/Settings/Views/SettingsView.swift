@@ -131,8 +131,7 @@ struct SettingsView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: false
-                ),
-                onSelectStudentSection: onSelectSection
+                )
             )
         } else {
             FooterBar(

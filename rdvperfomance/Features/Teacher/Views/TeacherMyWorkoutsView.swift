@@ -4,7 +4,6 @@ struct TeacherMyWorkoutsView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
-    let isMainSection: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -76,24 +75,22 @@ struct TeacherMyWorkoutsView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            if !isMainSection {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { pop() } label: {
-                        ZStack {
-                            Color.clear
-                                .frame(width: 44, height: 44)
+            ToolbarItem(placement: .topBarLeading) {
+                Button { pop() } label: {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
 
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(.green)
-                        }
-                        .contentShape(Rectangle())
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
                     }
-                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text(isMainSection ? "Treinos" : "Biblioteca de Treinos")
+                Text("Biblioteca de Treinos")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }

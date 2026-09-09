@@ -334,8 +334,7 @@ struct ProfileView: View {
                     isAgendaSelected: false,
                     isSobreSelected: false,
                     isPerfilSelected: true
-                ),
-                onSelectStudentSection: onSelectSection
+                )
             )
         } else {
             FooterBar(
