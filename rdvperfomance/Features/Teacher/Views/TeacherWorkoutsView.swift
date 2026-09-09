@@ -172,13 +172,14 @@ struct TeacherWorkoutsView: View {
             .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(Theme.Colors.cardBackground.opacity(0.72))
-            .cornerRadius(12)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
     }
 }
