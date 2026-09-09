@@ -3,7 +3,7 @@ import SwiftUI
 struct TeacherAcademiaLibraryView: View {
 
     @Binding var path: [AppRoute]
-    let mode: TeacherWorkoutsMode = .library
+    let mode: TeacherWorkoutsMode
 
     private let contentMaxWidth: CGFloat = 380
 

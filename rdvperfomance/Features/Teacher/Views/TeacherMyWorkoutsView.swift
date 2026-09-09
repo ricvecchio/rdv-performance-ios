@@ -4,7 +4,7 @@ struct TeacherMyWorkoutsView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
-    let mode: TeacherWorkoutsMode = .library
+    let mode: TeacherWorkoutsMode
 
     private let contentMaxWidth: CGFloat = 380
 
