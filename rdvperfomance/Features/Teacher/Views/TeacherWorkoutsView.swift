@@ -7,7 +7,6 @@ struct TeacherWorkoutsView: View {
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     private let contentMaxWidth: CGFloat = 380
-    private let quickAccessColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
 
     var body: some View {
         ZStack {
@@ -32,52 +31,39 @@ struct TeacherWorkoutsView: View {
 
                             header
 
-                            VStack(alignment: .leading, spacing: 14) {
-                                Text("Acesso rápido")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.white.opacity(0.92))
+                            VStack(spacing: 14) {
+                                quickAccessCard(
+                                    title: "Criar treino",
+                                    subtitle: "Monte um novo treino",
+                                    icon: "plus.circle.fill"
+                                ) {
+                                    path.append(.teacherMyWorkouts(category: category, mode: .create))
+                                }
 
-                                LazyVGrid(columns: quickAccessColumns, spacing: 12) {
-                                    quickAccessCard(
-                                        title: "Criar treino",
-                                        subtitle: "Monte um novo treino",
-                                        icon: "plus.circle.fill"
-                                    ) {
-                                        path.append(.teacherMyWorkouts(category: category, mode: .create))
-                                    }
+                                quickAccessCard(
+                                    title: "Biblioteca de Treinos",
+                                    subtitle: "Use modelos prontos",
+                                    icon: "square.grid.2x2.fill"
+                                ) {
+                                    path.append(.teacherMyWorkouts(category: category, mode: .library))
+                                }
 
-                                    quickAccessCard(
-                                        title: "Biblioteca de Treinos",
-                                        subtitle: "Use modelos prontos",
-                                        icon: "square.grid.2x2.fill"
-                                    ) {
-                                        path.append(.teacherMyWorkouts(category: category, mode: .library))
-                                    }
+                                quickAccessCard(
+                                    title: "Importar",
+                                    subtitle: "Importe treinos por planilha",
+                                    icon: "tablecells.fill"
+                                ) {
+                                    path.append(.teacherImportWorkouts(category: category))
+                                }
 
-                                    quickAccessCard(
-                                        title: "Importar",
-                                        subtitle: "Importe treinos por planilha",
-                                        icon: "tablecells.fill"
-                                    ) {
-                                        path.append(.teacherImportWorkouts(category: category))
-                                    }
-
-                                    quickAccessCard(
-                                        title: "Meus Vídeos",
-                                        subtitle: "Organize seus vídeos",
-                                        icon: "video.fill"
-                                    ) {
-                                        path.append(.teacherImportVideos(category: category))
-                                    }
+                                quickAccessCard(
+                                    title: "Meus Vídeos",
+                                    subtitle: "Organize seus vídeos",
+                                    icon: "video.fill"
+                                ) {
+                                    path.append(.teacherImportVideos(category: category))
                                 }
                             }
-                            .padding(14)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
