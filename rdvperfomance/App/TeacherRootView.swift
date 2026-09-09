@@ -29,7 +29,7 @@ struct TeacherRootView: View {
                 }
             case .workouts:
                 NavigationStack(path: $workoutsPath) {
-                    TeacherMyWorkoutsView(path: $workoutsPath, category: category)
+                    TeacherWorkoutsView(path: $workoutsPath, category: category)
                         .navigationDestination(for: AppRoute.self, destination: teacherDestination)
                 }
             case .profile:
