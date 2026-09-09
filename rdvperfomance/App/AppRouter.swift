@@ -10,7 +10,10 @@ struct AppRouter: View {
                 if session.isTrainer {
                     TeacherRootView()
                 } else {
-                    StudentRootView()
+                    StudentRootView(
+                        studentId: session.uid ?? "",
+                        studentName: session.userName ?? ""
+                    )
                 }
             } else {
                 NavigationStack(path: $authenticationPath) {
