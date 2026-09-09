@@ -4,6 +4,7 @@ struct TeacherCrossfitLibraryView: View {
 
     @Binding var path: [AppRoute]
     let section: CrossfitLibrarySection
+    let mode: TeacherWorkoutsMode = .library
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -54,11 +55,20 @@ struct TeacherCrossfitLibraryView: View {
                             VStack(spacing: 12) {
                                 ForEach(menuItems) { item in
                                     actionRow(title: item.title, icon: "folder.fill") {
-                                        path.append(.teacherWorkoutTemplates(
-                                            category: .crossfit,
-                                            sectionKey: item.sectionKey,
-                                            sectionTitle: item.title
-                                        ))
+                                        switch mode {
+                                        case .library:
+                                            path.append(.teacherWorkoutTemplates(
+                                                category: .crossfit,
+                                                sectionKey: item.sectionKey,
+                                                sectionTitle: item.title
+                                            ))
+                                        case .create:
+                                            path.append(.createCrossfitWOD(
+                                                category: .crossfit,
+                                                sectionKey: item.sectionKey,
+                                                sectionTitle: item.title
+                                            ))
+                                        }
                                     }
                                 }
                             }

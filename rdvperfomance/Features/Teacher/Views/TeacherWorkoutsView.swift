@@ -4,6 +4,7 @@ struct TeacherWorkoutsView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -32,6 +33,13 @@ struct TeacherWorkoutsView: View {
 
                             VStack(spacing: 12) {
                                 actionRow(
+                                    title: "Criar treino",
+                                    icon: "plus.circle.fill"
+                                ) {
+                                    path.append(.teacherMyWorkouts(category: category, mode: .create))
+                                }
+
+                                actionRow(
                                     title: "Biblioteca de Treinos",
                                     icon: "square.grid.2x2.fill"
                                 ) {
@@ -39,7 +47,7 @@ struct TeacherWorkoutsView: View {
                                 }
 
                                 actionRow(
-                                    title: "Importar Treino",
+                                    title: "Importar",
                                     icon: "tablecells.fill"
                                 ) {
                                     path.append(.teacherImportWorkouts(category: category))
@@ -83,6 +91,20 @@ struct TeacherWorkoutsView: View {
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
+
+            ToolbarItem(placement: .topBarLeading) {
+                Button { selectTeacherMainSection(.home) } label: {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
 
             ToolbarItem(placement: .principal) {
                 Text("Treinos")

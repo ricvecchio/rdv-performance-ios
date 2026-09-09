@@ -40,6 +40,11 @@ enum CrossfitLibrarySection: String, Hashable, CaseIterable {
     var firestoreKey: String { rawValue }
 }
 
+enum TeacherWorkoutsMode: Hashable {
+    case library
+    case create
+}
+
 // Representa todas as rotas de navegação disponíveis no aplicativo
 enum AppRoute: Hashable {
 
@@ -94,12 +99,12 @@ enum AppRoute: Hashable {
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
 
-    case teacherMyWorkouts(category: TreinoTipo)
-    case teacherCrossfitLibrary(section: CrossfitLibrarySection)
+    case teacherMyWorkouts(category: TreinoTipo, mode: TeacherWorkoutsMode = .library)
+    case teacherCrossfitLibrary(section: CrossfitLibrarySection, mode: TeacherWorkoutsMode = .library)
 
     // ✅ NOVO: bibliotecas/menus para separar blocos por músculo
-    case teacherAcademiaLibrary
-    case teacherEmCasaLibrary
+    case teacherAcademiaLibrary(mode: TeacherWorkoutsMode = .library)
+    case teacherEmCasaLibrary(mode: TeacherWorkoutsMode = .library)
 
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
     case teacherImportWorkouts(category: TreinoTipo)

@@ -4,6 +4,7 @@ struct TeacherMyWorkoutsView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    let mode: TeacherWorkoutsMode = .library
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -33,7 +34,7 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos Crossfit",
                             badgeIcon: "figure.strengthtraining.traditional"
                         ) {
-                            path.append(.teacherCrossfitLibrary(section: .benchmarks))
+                            path.append(.teacherCrossfitLibrary(section: .benchmarks, mode: mode))
                         }
 
                         programaTile(
@@ -42,7 +43,7 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos Academia",
                             badgeIcon: "dumbbell"
                         ) {
-                            path.append(.teacherAcademiaLibrary)
+                            path.append(.teacherAcademiaLibrary(mode: mode))
                         }
 
                         programaTile(
@@ -51,7 +52,7 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos em Casa",
                             badgeIcon: "house.fill"
                         ) {
-                            path.append(.teacherEmCasaLibrary)
+                            path.append(.teacherEmCasaLibrary(mode: mode))
                         }
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)

@@ -69,14 +69,14 @@ struct TeacherRootView: View {
             CreateTrainingWeekView(path: destinationPath, student: student, category: category)
         case .createTrainingDay(let weekId, let category):
             CreateTrainingDayView(path: destinationPath, weekId: weekId, category: category)
-        case .teacherMyWorkouts(let category):
-            TeacherMyWorkoutsView(path: destinationPath, category: category)
-        case .teacherCrossfitLibrary(let section):
-            TeacherCrossfitLibraryView(path: destinationPath, section: section)
-        case .teacherAcademiaLibrary:
-            TeacherAcademiaLibraryView(path: destinationPath)
-        case .teacherEmCasaLibrary:
-            TeacherEmCasaLibraryView(path: destinationPath)
+        case .teacherMyWorkouts(let category, let mode):
+            TeacherMyWorkoutsView(path: destinationPath, category: category, mode: mode)
+        case .teacherCrossfitLibrary(let section, let mode):
+            TeacherCrossfitLibraryView(path: destinationPath, section: section, mode: mode)
+        case .teacherAcademiaLibrary(let mode):
+            TeacherAcademiaLibraryView(path: destinationPath, mode: mode)
+        case .teacherEmCasaLibrary(let mode):
+            TeacherEmCasaLibraryView(path: destinationPath, mode: mode)
         case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle):
             TeacherWorkoutTemplatesView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
         case .teacherImportWorkouts(let category):
