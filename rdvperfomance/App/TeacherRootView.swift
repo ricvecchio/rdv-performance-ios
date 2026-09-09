@@ -7,6 +7,7 @@ struct TeacherRootView: View {
     @State private var selectedSection: TeacherMainSection = .home
     @State private var homePath: [AppRoute] = []
     @State private var studentsPath: [AppRoute] = []
+    @State private var workoutsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
 
     private var category: TreinoTipo {
@@ -26,6 +27,11 @@ struct TeacherRootView: View {
                     TeacherStudentsListView(path: $studentsPath, selectedCategory: category, initialFilter: nil, onBack: { select(.home) })
                         .navigationDestination(for: AppRoute.self, destination: teacherDestination)
                 }
+            case .workouts:
+                NavigationStack(path: $workoutsPath) {
+                    TeacherMyWorkoutsView(path: $workoutsPath, category: category, isMainSection: true)
+                        .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
             case .profile:
                 NavigationStack(path: $profilePath) {
                     ProfileView(path: $profilePath, onBack: { select(.home) })
@@ -34,6 +40,7 @@ struct TeacherRootView: View {
             }
         }
         .environment(\.selectTeacherMainSection, select)
+        .environment(\.teacherMainSection, selectedSection)
     }
 
     private func select(_ section: TeacherMainSection) {
@@ -42,6 +49,7 @@ struct TeacherRootView: View {
         switch section {
         case .home: homePath.removeAll()
         case .students: studentsPath.removeAll()
+        case .workouts: workoutsPath.removeAll()
         case .profile: profilePath.removeAll()
         }
 
@@ -110,6 +118,7 @@ struct TeacherRootView: View {
         switch selectedSection {
         case .home: $homePath
         case .students: $studentsPath
+        case .workouts: $workoutsPath
         case .profile: $profilePath
         }
     }

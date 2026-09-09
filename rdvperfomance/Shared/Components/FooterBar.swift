@@ -78,6 +78,7 @@ struct FooterBar: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.selectStudentMainSection) private var selectStudentMainSection
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
+    @Environment(\.teacherMainSection) private var teacherMainSection
     @State private var teacherStudentActivityCount = 0
 
     // Constrói o footer com divider superior e botões de navegação
@@ -194,9 +195,9 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        // ✅ PROFESSOR (3 ícones) — espaçamento igual ao ALUNO
+        // ✅ PROFESSOR (4 ícones) — espaçamento igual ao ALUNO
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
-            HStack(spacing: 28) {
+            HStack(spacing: 16) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
@@ -204,6 +205,11 @@ struct FooterBar: View {
 
                 Button { goTeacherAlunos(category: selectedCategory) } label: {
                     teacherStudentsFooterItem(isSelected: isAlunosSelected)
+                }
+                .buttonStyle(.plain)
+
+                Button { goTeacherWorkouts(category: selectedCategory) } label: {
+                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: teacherMainSection == .workouts, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
 
@@ -278,6 +284,10 @@ struct FooterBar: View {
 
     private func goTeacherPerfil(category: TreinoTipo) {
         selectTeacherMainSection(.profile)
+    }
+
+    private func goTeacherWorkouts(category: TreinoTipo) {
+        selectTeacherMainSection(.workouts)
     }
 
     private func teacherStudentsFooterItem(isSelected: Bool) -> some View {
