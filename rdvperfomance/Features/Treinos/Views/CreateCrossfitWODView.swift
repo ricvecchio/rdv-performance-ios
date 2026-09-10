@@ -21,7 +21,6 @@ struct CreateCrossfitWODView: View {
         BlockDraft(name: "WOD", details: ""),
         BlockDraft(name: "Cargas / Movimentos", details: "")
     ]
-    @State private var defaultBlockIDs: Set<String> = []
 
     @State private var showPasswordDummy: Bool = false
 
@@ -94,11 +93,6 @@ struct CreateCrossfitWODView: View {
         }
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
-        .onAppear {
-            if defaultBlockIDs.isEmpty {
-                defaultBlockIDs = Set(blocks.prefix(4).map(\.id))
-            }
-        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
@@ -208,24 +202,18 @@ struct CreateCrossfitWODView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        if defaultBlockIDs.isEmpty || defaultBlockIDs.contains(b.id) {
-                            Text(b.name.isEmpty ? "Sem nome" : b.name)
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.70))
-                        } else {
-                            VStack(alignment: .leading, spacing: 6) {
-                                TextField("Novo bloco", text: $b.name)
-                                    .foregroundColor(.white.opacity(0.92))
-                                    .font(.system(size: 16))
-                                    .textInputAutocapitalization(.never)
-                                    .autocorrectionDisabled(true)
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Novo bloco", text: $b.name)
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
 
-                                Rectangle()
-                                    .fill(Theme.Colors.divider)
-                                    .frame(height: 1)
-                            }
-                            .frame(maxWidth: .infinity)
+                            Rectangle()
+                                .fill(Theme.Colors.divider)
+                                .frame(height: 1)
                         }
+                        .frame(maxWidth: .infinity)
 
                         Spacer()
 
