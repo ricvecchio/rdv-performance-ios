@@ -56,7 +56,8 @@ final class TrainingRepository: FirestoreBaseRepository {
         categoryRaw: String,
         startDate: Date,
         endDate: Date,
-        isPublished: Bool = true
+        isPublished: Bool = true,
+        documentId: String? = nil
     ) async throws -> String {
         
         let cleanStudentId = clean(studentId)
@@ -81,10 +82,88 @@ final class TrainingRepository: FirestoreBaseRepository {
             "updatedAt": FieldValue.serverTimestamp()
         ]
         
-        let ref = db.collection(TrainingFS.weeksCollection).document()
+        let cleanDocumentId = documentId.map(clean(_:)) ?? ""
+        let ref = cleanDocumentId.isEmpty
+            ? db.collection(TrainingFS.weeksCollection).document()
+            : db.collection(TrainingFS.weeksCollection).document(cleanDocumentId)
         try await ref.setData(payload, merge: true)
         
         return ref.documentID
+    }
+
+    func resolveOrCreateWeekForStudent(
+        studentId: String,
+        teacherId: String,
+        categoryRaw: String,
+        date: Date
+    ) async throws -> (weekId: String, startDate: Date) {
+        let cleanStudentId = clean(studentId)
+        let cleanTeacherId = clean(teacherId)
+        guard !cleanStudentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard !cleanTeacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+
+        let calendar = Calendar.current
+        let selectedDate = calendar.startOfDay(for: date)
+        let existingWeeks = try await getWeeksForStudent(
+            studentId: cleanStudentId,
+            onlyPublished: false
+        )
+
+        let matchingWeeks = existingWeeks.compactMap { week -> (weekId: String, startDate: Date)? in
+            guard let weekId = week.id.map(clean(_:)),
+                  !weekId.isEmpty,
+                  let startDate = week.startDate else {
+                return nil
+            }
+
+            let start = calendar.startOfDay(for: startDate)
+            let end = calendar.startOfDay(
+                for: week.endDate ?? calendar.date(byAdding: .day, value: 6, to: start) ?? start
+            )
+            guard selectedDate >= start, selectedDate <= end else { return nil }
+            return (weekId, start)
+        }
+        .sorted { $0.startDate > $1.startDate }
+
+        if let matchingWeek = matchingWeeks.first {
+            return matchingWeek
+        }
+
+        let weekday = calendar.component(.weekday, from: selectedDate)
+        let daysFromMonday = (weekday + 5) % 7
+        guard let weekStartDate = calendar.date(
+            byAdding: .day,
+            value: -daysFromMonday,
+            to: selectedDate
+        ),
+        let weekEndDate = calendar.date(byAdding: .day, value: 6, to: weekStartDate) else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        let normalizedStartDate = calendar.startOfDay(for: weekStartDate)
+        let normalizedEndDate = calendar.startOfDay(for: weekEndDate)
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "dd/MM"
+        let title = "Semana \(formatter.string(from: normalizedStartDate)) - \(formatter.string(from: normalizedEndDate))"
+
+        let identifierFormatter = DateFormatter()
+        identifierFormatter.locale = Locale(identifier: "en_US_POSIX")
+        identifierFormatter.calendar = calendar
+        identifierFormatter.dateFormat = "yyyyMMdd"
+        let automaticWeekId = "automatic-\(cleanStudentId)-\(identifierFormatter.string(from: normalizedStartDate))"
+        _ = try await createWeekForStudent(
+            studentId: cleanStudentId,
+            teacherId: cleanTeacherId,
+            title: title,
+            categoryRaw: categoryRaw,
+            startDate: normalizedStartDate,
+            endDate: normalizedEndDate,
+            isPublished: true,
+            documentId: automaticWeekId
+        )
+
+        return (automaticWeekId, normalizedStartDate)
     }
     
     func upsertDay(

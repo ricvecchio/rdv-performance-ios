@@ -369,7 +369,8 @@ final class FirestoreRepository {
         categoryRaw: String,
         startDate: Date,
         endDate: Date,
-        isPublished: Bool = true
+        isPublished: Bool = true,
+        documentId: String? = nil
     ) async throws -> String {
         try await trainingRepository.createWeekForStudent(
             studentId: studentId,
@@ -378,7 +379,22 @@ final class FirestoreRepository {
             categoryRaw: categoryRaw,
             startDate: startDate,
             endDate: endDate,
-            isPublished: isPublished
+            isPublished: isPublished,
+            documentId: documentId
+        )
+    }
+
+    func resolveOrCreateWeekForStudent(
+        studentId: String,
+        teacherId: String,
+        categoryRaw: String,
+        date: Date
+    ) async throws -> (weekId: String, startDate: Date) {
+        try await trainingRepository.resolveOrCreateWeekForStudent(
+            studentId: studentId,
+            teacherId: teacherId,
+            categoryRaw: categoryRaw,
+            date: date
         )
     }
 

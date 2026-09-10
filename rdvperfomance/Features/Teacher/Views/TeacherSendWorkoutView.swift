@@ -15,18 +15,12 @@ struct TeacherSendWorkoutView: View {
         var id: Date { date }
     }
 
-    private struct DeliveryTarget {
-        let weekId: String
-        let dayIndex: Int
-    }
-
     @Binding var path: [AppRoute]
     let category: TreinoTipo
 
     @State private var students: [AppUser] = []
     @State private var studentCategories: [String: [TreinoTipo]] = [:]
     @State private var templates: [WorkoutTemplateFS] = []
-    @State private var weeksByStudentID: [String: [TrainingWeekFS]] = [:]
     @State private var searchText: String = ""
 
     @State private var selectedStudentIDs: Set<String> = []
@@ -35,7 +29,6 @@ struct TeacherSendWorkoutView: View {
     @State private var step: Step = .student
 
     @State private var isLoadingInitialData = false
-    @State private var isLoadingWeeks = false
     @State private var isSending = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
@@ -81,15 +74,14 @@ struct TeacherSendWorkoutView: View {
     }
 
     private var canAdvanceFromWorkout: Bool {
-        !selectedStudentIDs.isEmpty && !selectedTemplates.isEmpty && !isLoadingWeeks
+        !selectedStudentIDs.isEmpty && !selectedTemplates.isEmpty
     }
 
     private var canSend: Bool {
-        guard let selectedDay else { return false }
-        return !selectedStudentIDs.isEmpty
+        selectedDay != nil
+            && !selectedStudentIDs.isEmpty
             && !selectedTemplates.isEmpty
             && !isSending
-            && deliveryTargets(for: selectedDay.date)?.count == selectedStudentIDs.count
     }
 
     var body: some View {
@@ -396,47 +388,43 @@ struct TeacherSendWorkoutView: View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Selecionar dia")
 
-            if isLoadingWeeks {
-                loadingRow("Carregando semanas dos alunos...")
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(currentWeekDays.enumerated()), id: \.element.id) { index, day in
-                        Button {
-                            selectedDay = day
-                            showMissingWeekMessage(for: day.date)
-                        } label: {
-                            HStack(spacing: 12) {
-                                Image(systemName: selectedDay?.id == day.id ? "checkmark.circle.fill" : "circle")
-                                    .font(.system(size: 20))
-                                    .foregroundColor(selectedDay?.id == day.id ? .green : .white.opacity(0.35))
-                                Text(weekdayTitle(for: day.date))
-                                    .font(.system(size: 16, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.92))
-                                Spacer()
-                                Text(dateTitle(for: day.date))
-                                    .font(.system(size: 14, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.55))
-                            }
-                            .padding(.horizontal, 16)
-                            .padding(.vertical, 14)
+            VStack(spacing: 0) {
+                ForEach(Array(currentWeekDays.enumerated()), id: \.element.id) { index, day in
+                    Button {
+                        selectedDay = day
+                        clearMessages()
+                    } label: {
+                        HStack(spacing: 12) {
+                            Image(systemName: selectedDay?.id == day.id ? "checkmark.circle.fill" : "circle")
+                                .font(.system(size: 20))
+                                .foregroundColor(selectedDay?.id == day.id ? .green : .white.opacity(0.35))
+                            Text(weekdayTitle(for: day.date))
+                                .font(.system(size: 16, weight: .medium))
+                                .foregroundColor(.white.opacity(0.92))
+                            Spacer()
+                            Text(dateTitle(for: day.date))
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundColor(.white.opacity(0.55))
                         }
-                        .buttonStyle(.plain)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 14)
+                    }
+                    .buttonStyle(.plain)
 
-                        if index < currentWeekDays.count - 1 {
-                            Divider()
-                                .background(Theme.Colors.divider)
-                                .padding(.leading, 48)
-                        }
+                    if index < currentWeekDays.count - 1 {
+                        Divider()
+                            .background(Theme.Colors.divider)
+                            .padding(.leading, 48)
                     }
                 }
-                .background(Color.white.opacity(0.10))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                )
-                .disabled(isSending)
             }
+            .background(Color.white.opacity(0.10))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+            )
+            .disabled(isSending)
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -595,7 +583,6 @@ struct TeacherSendWorkoutView: View {
         } else {
             selectedStudentIDs.insert(studentId)
         }
-        weeksByStudentID.removeValue(forKey: studentId)
         selectedDay = nil
         clearMessages()
     }
@@ -604,7 +591,6 @@ struct TeacherSendWorkoutView: View {
         guard canAdvanceFromWorkout else { return }
         step = .day
         selectedDay = nil
-        await loadWeeksForSelectedStudents()
     }
 
     private func bootstrap() async {
@@ -653,134 +639,48 @@ struct TeacherSendWorkoutView: View {
         }
     }
 
-    private func loadWeeksForSelectedStudents() async {
-        let studentIDs = selectedStudentIDs
-        guard !studentIDs.isEmpty else { return }
-
-        isLoadingWeeks = true
-        defer { isLoadingWeeks = false }
-
-        do {
-            let weeksByStudent = try await withThrowingTaskGroup(
-                of: (String, [TrainingWeekFS]).self
-            ) { group in
-                for studentId in studentIDs {
-                    group.addTask {
-                        let weeks = try await FirestoreRepository.shared.getWeeksForStudent(
-                            studentId: studentId,
-                            onlyPublished: false
-                        )
-                        return (studentId, weeks)
-                    }
-                }
-
-                var result: [String: [TrainingWeekFS]] = [:]
-                for try await (studentId, weeks) in group {
-                    result[studentId] = weeks
-                }
-                return result
-            }
-
-            guard studentIDs == selectedStudentIDs else { return }
-            weeksByStudentID = weeksByStudent
-        } catch {
-            errorMessage = error.localizedDescription
-            weeksByStudentID = [:]
-        }
-    }
-
-    private func deliveryTargets(for date: Date) -> [String: DeliveryTarget]? {
-        let calendar = Calendar.current
-        let normalizedDate = calendar.startOfDay(for: date)
-        var targets: [String: DeliveryTarget] = [:]
-
-        for studentId in selectedStudentIDs {
-            guard let target = deliveryTarget(
-                for: studentId,
-                date: normalizedDate,
-                calendar: calendar
-            ) else {
-                return nil
-            }
-            targets[studentId] = target
-        }
-
-        return targets
-    }
-
-    private func deliveryTarget(
-        for studentId: String,
-        date: Date,
-        calendar: Calendar
-    ) -> DeliveryTarget? {
-        let matchingWeeks = (weeksByStudentID[studentId] ?? []).compactMap { week -> (TrainingWeekFS, Date, Date)? in
-            guard let weekId = week.id?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !weekId.isEmpty,
-                  let startDate = week.startDate else {
-                return nil
-            }
-            let start = calendar.startOfDay(for: startDate)
-            let end = calendar.startOfDay(
-                for: week.endDate ?? calendar.date(byAdding: .day, value: 6, to: startDate) ?? startDate
-            )
-            guard date >= start, date <= end else { return nil }
-            return (week, start, end)
-        }
-        .sorted { $0.1 > $1.1 }
-
-        guard let (week, startDate, _) = matchingWeeks.first,
-              let weekId = week.id else {
-            return nil
-        }
-        let dayIndex = calendar.dateComponents([.day], from: startDate, to: date).day
-        guard let dayIndex, (0...6).contains(dayIndex) else { return nil }
-        return DeliveryTarget(weekId: weekId, dayIndex: dayIndex)
-    }
-
-    private func missingStudentNames(for date: Date) -> [String] {
-        let calendar = Calendar.current
-        let normalizedDate = calendar.startOfDay(for: date)
-        return selectedStudents.compactMap { student in
-            guard let studentId = student.id,
-                  deliveryTarget(for: studentId, date: normalizedDate, calendar: calendar) == nil else {
-                return nil
-            }
-            return student.name
-        }
-    }
-
-    private func showMissingWeekMessage(for date: Date) {
-        clearMessages()
-        let missingNames = missingStudentNames(for: date)
-        guard !missingNames.isEmpty else { return }
-        errorMessage = "\(missingNames.joined(separator: ", ")) não possuem uma semana cadastrada para \(dateTitle(for: date))."
-    }
-
     private func sendTemplatesToSelectedDay() async {
         clearMessages()
 
-        guard let selectedDay,
-              let targets = deliveryTargets(for: selectedDay.date) else {
-            showMissingWeekMessage(for: selectedDay?.date ?? Date())
-            return
-        }
+        guard let selectedDay else { return }
 
         isSending = true
         defer { isSending = false }
 
         do {
+            let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            guard !teacherId.isEmpty else {
+                errorMessage = "Não foi possível identificar o professor logado."
+                return
+            }
+
+            let calendar = Calendar.current
+            let selectedDate = calendar.startOfDay(for: selectedDay.date)
             for studentId in selectedStudentIDs {
-                guard let target = targets[studentId] else { continue }
-                let dayName = "Dia \(target.dayIndex + 1)"
+                let week = try await FirestoreRepository.shared.resolveOrCreateWeekForStudent(
+                    studentId: studentId,
+                    teacherId: teacherId,
+                    categoryRaw: category.rawValue,
+                    date: selectedDate
+                )
+                guard let dayIndex = calendar.dateComponents(
+                    [.day],
+                    from: week.startDate,
+                    to: selectedDate
+                ).day,
+                (0...6).contains(dayIndex) else {
+                    throw FirestoreRepositoryError.invalidData
+                }
+                let dayName = weekdayTitle(for: selectedDate)
 
                 for (_, template) in selectedTemplatesInOrder {
                     let blocks = template.blocks ?? []
                     _ = try await FirestoreRepository.shared.upsertDay(
-                        weekId: target.weekId,
+                        weekId: week.weekId,
                         dayId: nil,
-                        dayIndex: target.dayIndex,
+                        dayIndex: dayIndex,
                         dayName: dayName,
-                        date: selectedDay.date,
+                        date: selectedDate,
                         title: template.title,
                         description: template.description,
                         blocks: blocks
