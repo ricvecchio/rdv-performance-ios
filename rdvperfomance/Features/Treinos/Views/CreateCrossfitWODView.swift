@@ -21,6 +21,7 @@ struct CreateCrossfitWODView: View {
         BlockDraft(name: "WOD", details: ""),
         BlockDraft(name: "Cargas / Movimentos", details: "")
     ]
+    @State private var defaultBlockIDs: Set<String> = []
 
     @State private var showPasswordDummy: Bool = false
 
@@ -93,6 +94,11 @@ struct CreateCrossfitWODView: View {
         }
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            if defaultBlockIDs.isEmpty {
+                defaultBlockIDs = Set(blocks.prefix(4).map(\.id))
+            }
+        }
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
@@ -220,15 +226,17 @@ struct CreateCrossfitWODView: View {
                         .buttonStyle(.plain)
                     }
 
-                    UnderlineTextField(
-                        title: "",
-                        text: $b.name,
-                        isSecure: false,
-                        showPassword: $showPasswordDummy,
-                        lineColor: Theme.Colors.divider,
-                        textColor: .white.opacity(0.92),
-                        placeholderColor: .white.opacity(0.55)
-                    )
+                    if !defaultBlockIDs.isEmpty && !defaultBlockIDs.contains(b.id) {
+                        UnderlineTextField(
+                            title: "",
+                            text: $b.name,
+                            isSecure: false,
+                            showPassword: $showPasswordDummy,
+                            lineColor: Theme.Colors.divider,
+                            textColor: .white.opacity(0.92),
+                            placeholderColor: .white.opacity(0.55)
+                        )
+                    }
 
                     VStack(alignment: .leading, spacing: 6) {
                         Text("Detalhes")
