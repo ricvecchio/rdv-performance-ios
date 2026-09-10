@@ -10,13 +10,14 @@ struct TeacherSendWorkoutView: View {
     }
 
     private struct AvailableDay: Identifiable {
-        let weekId: String
-        let dayIndex: Int
         let date: Date
 
-        var id: String {
-            "\(weekId)-\(dayIndex)"
-        }
+        var id: Date { date }
+    }
+
+    private struct DeliveryTarget {
+        let weekId: String
+        let dayIndex: Int
     }
 
     @Binding var path: [AppRoute]
@@ -25,11 +26,11 @@ struct TeacherSendWorkoutView: View {
     @State private var students: [AppUser] = []
     @State private var studentCategories: [String: [TreinoTipo]] = [:]
     @State private var templates: [WorkoutTemplateFS] = []
-    @State private var weeks: [TrainingWeekFS] = []
+    @State private var weeksByStudentID: [String: [TrainingWeekFS]] = [:]
     @State private var searchText: String = ""
 
-    @State private var selectedStudent: AppUser?
-    @State private var selectedTemplate: WorkoutTemplateFS?
+    @State private var selectedStudentIDs: Set<String> = []
+    @State private var selectedTemplates: [TreinoTipo: WorkoutTemplateFS] = [:]
     @State private var selectedDay: AvailableDay?
     @State private var step: Step = .student
 
@@ -40,7 +41,6 @@ struct TeacherSendWorkoutView: View {
     @State private var successMessage: String?
 
     private let contentMaxWidth: CGFloat = 380
-    private let dayOptions = Array(0...6)
 
     private var filteredStudents: [AppUser] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -50,47 +50,46 @@ struct TeacherSendWorkoutView: View {
         }
     }
 
+    private var selectedStudents: [AppUser] {
+        students.filter {
+            guard let studentId = $0.id else { return false }
+            return selectedStudentIDs.contains(studentId)
+        }
+    }
+
+    private var selectedTemplatesInOrder: [(category: TreinoTipo, template: WorkoutTemplateFS)] {
+        [.crossfit, .academia, .emCasa].compactMap { category in
+            selectedTemplates[category].map { (category, $0) }
+        }
+    }
+
+    private var currentWeekDays: [AvailableDay] {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+        let daysUntilSunday = (8 - calendar.component(.weekday, from: today)) % 7
+
+        return (0...daysUntilSunday).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: today) else {
+                return nil
+            }
+            return AvailableDay(date: date)
+        }
+    }
+
     private var canAdvanceFromStudent: Bool {
-        selectedStudent != nil && !isLoadingWeeks
+        !selectedStudentIDs.isEmpty
     }
 
     private var canAdvanceFromWorkout: Bool {
-        selectedStudent != nil && selectedTemplate != nil
+        !selectedStudentIDs.isEmpty && !selectedTemplates.isEmpty && !isLoadingWeeks
     }
 
     private var canSend: Bool {
-        selectedStudent != nil && selectedTemplate != nil && selectedDay != nil && !isSending
-    }
-
-    private var availableDays: [AvailableDay] {
-        let calendar = Calendar.current
-        let today = calendar.startOfDay(for: Date())
-        var daysByDate: [Date: AvailableDay] = [:]
-
-        for week in weeks {
-            guard let weekId = week.id?.trimmingCharacters(in: .whitespacesAndNewlines),
-                  !weekId.isEmpty,
-                  let startDate = week.startDate else {
-                continue
-            }
-
-            for dayIndex in dayOptions {
-                guard let date = calendar.date(byAdding: .day, value: dayIndex, to: startDate) else {
-                    continue
-                }
-                let normalizedDate = calendar.startOfDay(for: date)
-                guard normalizedDate >= today, daysByDate[normalizedDate] == nil else {
-                    continue
-                }
-                daysByDate[normalizedDate] = AvailableDay(
-                    weekId: weekId,
-                    dayIndex: dayIndex,
-                    date: normalizedDate
-                )
-            }
-        }
-
-        return daysByDate.values.sorted { $0.date < $1.date }
+        guard let selectedDay else { return false }
+        return !selectedStudentIDs.isEmpty
+            && !selectedTemplates.isEmpty
+            && !isSending
+            && deliveryTargets(for: selectedDay.date)?.count == selectedStudentIDs.count
     }
 
     var body: some View {
@@ -120,13 +119,13 @@ struct TeacherSendWorkoutView: View {
                                     step = .workout
                                 }
                             case .workout:
-                                selectedStudentSummary
+                                selectedStudentsSummary
                                 templateSection
                                 nextButton(enabled: canAdvanceFromWorkout) {
-                                    step = .day
+                                    Task { await advanceToDaySelection() }
                                 }
                             case .day:
-                                selectedWorkoutSummary
+                                selectedWorkoutsSummary
                                 daySection
                                 sendButton
                             }
@@ -225,7 +224,7 @@ struct TeacherSendWorkoutView: View {
 
     private var studentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Selecionar aluno")
+            sectionTitle("Selecionar alunos")
 
             HStack(spacing: 8) {
                 Image(systemName: "magnifyingglass")
@@ -257,7 +256,7 @@ struct TeacherSendWorkoutView: View {
         VStack(spacing: 0) {
             ForEach(Array(filteredStudents.enumerated()), id: \.element.id) { index, student in
                 Button {
-                    select(student)
+                    toggleSelection(for: student)
                 } label: {
                     HStack(spacing: 14) {
                         StudentAvatarView(base64: student.photoBase64, size: 28)
@@ -274,9 +273,9 @@ struct TeacherSendWorkoutView: View {
 
                         Spacer()
 
-                        Image(systemName: selectedStudent?.id == student.id ? "checkmark.circle.fill" : "circle")
+                        Image(systemName: isSelected(student) ? "checkmark.circle.fill" : "circle")
                             .font(.system(size: 20))
-                            .foregroundColor(selectedStudent?.id == student.id ? .green : .white.opacity(0.35))
+                            .foregroundColor(isSelected(student) ? .green : .white.opacity(0.35))
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
@@ -296,24 +295,16 @@ struct TeacherSendWorkoutView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+        .disabled(isSending)
     }
 
-    private var selectedStudentSummary: some View {
+    private var selectedStudentsSummary: some View {
         VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Aluno selecionado")
-            if let selectedStudent {
-                HStack(spacing: 12) {
-                    StudentAvatarView(base64: selectedStudent.photoBase64, size: 28)
-                        .frame(width: 28)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(selectedStudent.name)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                        Text("Categoria: \(studentCategoryText(selectedStudent))")
-                            .font(.system(size: 13))
-                            .foregroundColor(.white.opacity(0.55))
-                    }
-                }
+            sectionTitle("Alunos selecionados")
+            ForEach(selectedStudents) { student in
+                Text(student.name)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
             }
         }
         .padding(16)
@@ -324,6 +315,7 @@ struct TeacherSendWorkoutView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+        .disabled(isSending)
     }
 
     private var templateSection: some View {
@@ -348,9 +340,7 @@ struct TeacherSendWorkoutView: View {
         let categoryTemplates = templates.filter {
             TreinoTipo.normalized(from: $0.categoryRaw) == category
         }
-        let selection = selectedTemplate.flatMap {
-            TreinoTipo.normalized(from: $0.categoryRaw) == category ? $0 : nil
-        }
+        let selection = selectedTemplates[category]
 
         return VStack(alignment: .leading, spacing: 6) {
             Text(title)
@@ -365,28 +355,31 @@ struct TeacherSendWorkoutView: View {
                 Menu {
                     ForEach(categoryTemplates) { template in
                         Button(templateMenuTitle(template)) {
-                            selectedTemplate = template
+                            selectedTemplates[category] = template
                             clearMessages()
                         }
                     }
                 } label: {
-                    pickerLabel(selection?.title ?? "Selecionar treino")
+                    pickerLabel(selection?.title ?? "Selecionar treino", isSelected: selection != nil)
                 }
                 .buttonStyle(.plain)
             }
         }
     }
 
-    private var selectedWorkoutSummary: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Treino selecionado")
-            if let selectedTemplate {
-                Text(selectedTemplate.title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
-                Text(TreinoTipo.normalized(from: selectedTemplate.categoryRaw)?.displayName ?? selectedTemplate.categoryRaw)
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+    private var selectedWorkoutsSummary: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            sectionTitle("Treinos selecionados")
+
+            ForEach(selectedTemplatesInOrder, id: \.category) { item in
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(item.category.displayName)
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+                    Text(item.template.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                }
             }
         }
         .padding(16)
@@ -404,15 +397,13 @@ struct TeacherSendWorkoutView: View {
             sectionTitle("Selecionar dia")
 
             if isLoadingWeeks {
-                loadingRow("Carregando dias disponíveis...")
-            } else if availableDays.isEmpty {
-                emptyRow("Este aluno não possui dias disponíveis a partir de hoje.")
+                loadingRow("Carregando semanas dos alunos...")
             } else {
                 VStack(spacing: 0) {
-                    ForEach(Array(availableDays.enumerated()), id: \.element.id) { index, day in
+                    ForEach(Array(currentWeekDays.enumerated()), id: \.element.id) { index, day in
                         Button {
                             selectedDay = day
-                            clearMessages()
+                            showMissingWeekMessage(for: day.date)
                         } label: {
                             HStack(spacing: 12) {
                                 Image(systemName: selectedDay?.id == day.id ? "checkmark.circle.fill" : "circle")
@@ -431,7 +422,7 @@ struct TeacherSendWorkoutView: View {
                         }
                         .buttonStyle(.plain)
 
-                        if index < availableDays.count - 1 {
+                        if index < currentWeekDays.count - 1 {
                             Divider()
                                 .background(Theme.Colors.divider)
                                 .padding(.leading, 48)
@@ -444,6 +435,7 @@ struct TeacherSendWorkoutView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
+                .disabled(isSending)
             }
         }
         .padding(16)
@@ -476,7 +468,7 @@ struct TeacherSendWorkoutView: View {
 
     private var sendButton: some View {
         Button {
-            Task { await sendTemplateToSelectedDay() }
+            Task { await sendTemplatesToSelectedDay() }
         } label: {
             HStack {
                 Spacer()
@@ -507,7 +499,7 @@ struct TeacherSendWorkoutView: View {
             .foregroundColor(.white.opacity(0.92))
     }
 
-    private func pickerLabel(_ title: String) -> some View {
+    private func pickerLabel(_ title: String, isSelected: Bool) -> some View {
         HStack {
             Text(title)
                 .foregroundColor(.white.opacity(0.92))
@@ -518,11 +510,11 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
-        .background(Color.white.opacity(0.10))
+        .background(isSelected ? Color.green.opacity(0.14) : Color.white.opacity(0.10))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .stroke(isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.12), lineWidth: 1)
         )
     }
 
@@ -554,14 +546,6 @@ struct TeacherSendWorkoutView: View {
         .padding(.vertical, 10)
     }
 
-    private func emptyRow(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 14))
-            .foregroundColor(.white.opacity(0.55))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 10)
-    }
-
     private func studentCategoryText(_ student: AppUser) -> String {
         guard let studentId = student.id else { return "" }
         return (studentCategories[studentId] ?? [])
@@ -585,6 +569,34 @@ struct TeacherSendWorkoutView: View {
         formatter.locale = Locale(identifier: "pt_BR")
         formatter.dateFormat = "dd/MM"
         return formatter.string(from: date)
+    }
+
+    private func isSelected(_ student: AppUser) -> Bool {
+        guard let studentId = student.id else { return false }
+        return selectedStudentIDs.contains(studentId)
+    }
+
+    private func toggleSelection(for student: AppUser) {
+        guard let studentId = student.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !studentId.isEmpty else {
+            return
+        }
+
+        if selectedStudentIDs.contains(studentId) {
+            selectedStudentIDs.remove(studentId)
+        } else {
+            selectedStudentIDs.insert(studentId)
+        }
+        weeksByStudentID.removeValue(forKey: studentId)
+        selectedDay = nil
+        clearMessages()
+    }
+
+    private func advanceToDaySelection() async {
+        guard canAdvanceFromWorkout else { return }
+        step = .day
+        selectedDay = nil
+        await loadWeeksForSelectedStudents()
     }
 
     private func bootstrap() async {
@@ -633,70 +645,140 @@ struct TeacherSendWorkoutView: View {
         }
     }
 
-    private func select(_ student: AppUser) {
-        guard selectedStudent?.id != student.id else { return }
-        selectedStudent = student
-        selectedDay = nil
-        weeks = []
-        clearMessages()
-        Task { await loadWeeksForSelectedStudent() }
-    }
-
-    private func loadWeeksForSelectedStudent() async {
-        guard let studentId = selectedStudent?.id?.trimmingCharacters(in: .whitespacesAndNewlines),
-              !studentId.isEmpty else {
-            return
-        }
+    private func loadWeeksForSelectedStudents() async {
+        let studentIDs = selectedStudentIDs
+        guard !studentIDs.isEmpty else { return }
 
         isLoadingWeeks = true
-        defer {
-            if selectedStudent?.id == studentId {
-                isLoadingWeeks = false
-            }
-        }
+        defer { isLoadingWeeks = false }
 
         do {
-            let loadedWeeks = try await FirestoreRepository.shared.getWeeksForStudent(
-                studentId: studentId,
-                onlyPublished: false
-            )
-            guard selectedStudent?.id == studentId else { return }
-            weeks = loadedWeeks
+            let weeksByStudent = try await withThrowingTaskGroup(
+                of: (String, [TrainingWeekFS]).self
+            ) { group in
+                for studentId in studentIDs {
+                    group.addTask {
+                        let weeks = try await FirestoreRepository.shared.getWeeksForStudent(
+                            studentId: studentId,
+                            onlyPublished: false
+                        )
+                        return (studentId, weeks)
+                    }
+                }
+
+                var result: [String: [TrainingWeekFS]] = [:]
+                for try await (studentId, weeks) in group {
+                    result[studentId] = weeks
+                }
+                return result
+            }
+
+            guard studentIDs == selectedStudentIDs else { return }
+            weeksByStudentID = weeksByStudent
         } catch {
-            guard selectedStudent?.id == studentId else { return }
             errorMessage = error.localizedDescription
-            weeks = []
+            weeksByStudentID = [:]
         }
     }
 
-    private func sendTemplateToSelectedDay() async {
+    private func deliveryTargets(for date: Date) -> [String: DeliveryTarget]? {
+        let calendar = Calendar.current
+        let normalizedDate = calendar.startOfDay(for: date)
+        var targets: [String: DeliveryTarget] = [:]
+
+        for studentId in selectedStudentIDs {
+            guard let target = deliveryTarget(
+                for: studentId,
+                date: normalizedDate,
+                calendar: calendar
+            ) else {
+                return nil
+            }
+            targets[studentId] = target
+        }
+
+        return targets
+    }
+
+    private func deliveryTarget(
+        for studentId: String,
+        date: Date,
+        calendar: Calendar
+    ) -> DeliveryTarget? {
+        let matchingWeeks = (weeksByStudentID[studentId] ?? []).compactMap { week -> (TrainingWeekFS, Date, Date)? in
+            guard let weekId = week.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  !weekId.isEmpty,
+                  let startDate = week.startDate else {
+                return nil
+            }
+            let start = calendar.startOfDay(for: startDate)
+            let end = calendar.startOfDay(
+                for: week.endDate ?? calendar.date(byAdding: .day, value: 6, to: startDate) ?? startDate
+            )
+            guard date >= start, date <= end else { return nil }
+            return (week, start, end)
+        }
+        .sorted { $0.1 > $1.1 }
+
+        guard let (week, startDate, _) = matchingWeeks.first,
+              let weekId = week.id else {
+            return nil
+        }
+        let dayIndex = calendar.dateComponents([.day], from: startDate, to: date).day
+        guard let dayIndex, (0...6).contains(dayIndex) else { return nil }
+        return DeliveryTarget(weekId: weekId, dayIndex: dayIndex)
+    }
+
+    private func missingStudentNames(for date: Date) -> [String] {
+        let calendar = Calendar.current
+        let normalizedDate = calendar.startOfDay(for: date)
+        return selectedStudents.compactMap { student in
+            guard let studentId = student.id,
+                  deliveryTarget(for: studentId, date: normalizedDate, calendar: calendar) == nil else {
+                return nil
+            }
+            return student.name
+        }
+    }
+
+    private func showMissingWeekMessage(for date: Date) {
+        clearMessages()
+        let missingNames = missingStudentNames(for: date)
+        guard !missingNames.isEmpty else { return }
+        errorMessage = "\(missingNames.joined(separator: ", ")) não possuem uma semana cadastrada para \(dateTitle(for: date))."
+    }
+
+    private func sendTemplatesToSelectedDay() async {
         clearMessages()
 
-        guard let template = selectedTemplate else {
-            errorMessage = "Selecione um treino válido."
-            return
-        }
-        guard let selectedDay else {
-            errorMessage = "Selecione um dia válido."
+        guard let selectedDay,
+              let targets = deliveryTargets(for: selectedDay.date) else {
+            showMissingWeekMessage(for: selectedDay?.date ?? Date())
             return
         }
 
-        let dayName = "Dia \(selectedDay.dayIndex + 1)"
         isSending = true
         defer { isSending = false }
 
         do {
-            let blocks = template.blocks ?? []
-            _ = try await FirestoreRepository.shared.upsertDay(
-                weekId: selectedDay.weekId,
-                dayId: nil,
-                dayIndex: selectedDay.dayIndex,
-                dayName: dayName,
-                date: selectedDay.date,
-                title: template.title,
-                description: template.description,
-                blocks: blocks
-            )
+            for studentId in selectedStudentIDs {
+                guard let target = targets[studentId] else { continue }
+                let dayName = "Dia \(target.dayIndex + 1)"
+
+                for (_, template) in selectedTemplatesInOrder {
+                    let blocks = template.blocks ?? []
+                    _ = try await FirestoreRepository.shared.upsertDay(
+                        weekId: target.weekId,
+                        dayId: nil,
+                        dayIndex: target.dayIndex,
+                        dayName: dayName,
+                        date: selectedDay.date,
+                        title: template.title,
+                        description: template.description,
+                        blocks: blocks
+                    )
+                }
+            }
             successMessage = "Treino enviado com sucesso!"
         } catch {
             errorMessage = error.localizedDescription
