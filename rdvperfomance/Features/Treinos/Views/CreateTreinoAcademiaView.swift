@@ -127,7 +127,7 @@ struct CreateTreinoAcademiaView: View {
             (
                 Text("Crie um novo ")
                     .foregroundColor(.white.opacity(0.55))
-                + Text("treino para academia")
+                + Text("treino de academia")
                     .foregroundColor(.green.opacity(0.85))
                 + Text(" para esta seção.")
                     .foregroundColor(.white.opacity(0.55))
