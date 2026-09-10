@@ -546,6 +546,14 @@ struct TeacherSendWorkoutView: View {
         .padding(.vertical, 10)
     }
 
+    private func emptyRow(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 14))
+            .foregroundColor(.white.opacity(0.55))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.vertical, 10)
+    }
+
     private func studentCategoryText(_ student: AppUser) -> String {
         guard let studentId = student.id else { return "" }
         return (studentCategories[studentId] ?? [])
