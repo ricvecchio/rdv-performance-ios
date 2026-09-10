@@ -124,11 +124,11 @@ struct CreateTreinoCasaView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             (
-                Text("Crie um ")
+                Text("Crie um novo ")
                     .foregroundColor(.white.opacity(0.55))
                 + Text("treino em casa")
                     .foregroundColor(.green.opacity(0.85))
-                + Text(" para aparecer na lista desta seção.")
+                + Text(" para esta seção.")
                     .foregroundColor(.white.opacity(0.55))
             )
                 .font(.system(size: 14))
