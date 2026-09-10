@@ -237,11 +237,6 @@ struct TeacherStudentsListView: View {
 
     private var filterRow: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("FILTRO")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
-                .padding(.horizontal, 6)
-
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 10) {
 
