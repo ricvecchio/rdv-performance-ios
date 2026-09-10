@@ -140,7 +140,7 @@ struct TeacherWorkoutsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(alignment: .top, spacing: 10) {
+            HStack(alignment: .center, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
                         .fill(Color.green.opacity(0.14))
@@ -153,12 +153,12 @@ struct TeacherWorkoutsView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(2)
 
                     Text(subtitle)
-                        .font(.system(size: 11))
+                        .font(.system(size: 12))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(2)
                 }
@@ -167,7 +167,6 @@ struct TeacherWorkoutsView: View {
 
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
-                    .font(.system(size: 12, weight: .semibold))
             }
             .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
             .padding(.horizontal, 12)
