@@ -208,9 +208,24 @@ struct CreateCrossfitWODView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text(b.name.isEmpty ? "Sem nome" : b.name)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.70))
+                        if defaultBlockIDs.isEmpty || defaultBlockIDs.contains(b.id) {
+                            Text(b.name.isEmpty ? "Sem nome" : b.name)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.70))
+                        } else {
+                            VStack(alignment: .leading, spacing: 6) {
+                                TextField("Novo bloco", text: $b.name)
+                                    .foregroundColor(.white.opacity(0.92))
+                                    .font(.system(size: 16))
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled(true)
+
+                                Rectangle()
+                                    .fill(Theme.Colors.divider)
+                                    .frame(height: 1)
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
 
                         Spacer()
 
@@ -224,18 +239,6 @@ struct CreateCrossfitWODView: View {
                                 .foregroundColor(.yellow.opacity(0.85))
                         }
                         .buttonStyle(.plain)
-                    }
-
-                    if !defaultBlockIDs.isEmpty && !defaultBlockIDs.contains(b.id) {
-                        UnderlineTextField(
-                            title: "",
-                            text: $b.name,
-                            isSecure: false,
-                            showPassword: $showPasswordDummy,
-                            lineColor: Theme.Colors.divider,
-                            textColor: .white.opacity(0.92),
-                            placeholderColor: .white.opacity(0.55)
-                        )
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
