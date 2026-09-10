@@ -146,6 +146,24 @@ final class WorkoutTemplateRepository: FirestoreBaseRepository {
             return a > b
         }
     }
+
+    func getWorkoutTemplatesForTeacher(
+        teacherId: String
+    ) async throws -> [WorkoutTemplateFS] {
+        let t = clean(teacherId)
+        guard !t.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+
+        let snap = try await db.collection(Collections.workoutTemplates)
+            .whereField("teacherId", isEqualTo: t)
+            .getDocuments()
+
+        let list = try snap.documents.compactMap { try $0.data(as: WorkoutTemplateFS.self) }
+        return list.sorted {
+            let a = $0.createdAt?.dateValue() ?? Date.distantPast
+            let b = $1.createdAt?.dateValue() ?? Date.distantPast
+            return a > b
+        }
+    }
     
     func updateWorkoutTemplateBlocks(
         templateId: String,

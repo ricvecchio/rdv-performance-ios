@@ -107,6 +107,7 @@ enum AppRoute: Hashable {
     case teacherEmCasaLibrary(mode: TeacherWorkoutsMode = .library)
 
     case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
+    case teacherSendWorkout
     case teacherImportWorkouts(category: TreinoTipo)
     case teacherImportVideos(category: TreinoTipo)
 

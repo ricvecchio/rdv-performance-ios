@@ -603,6 +603,14 @@ final class FirestoreRepository {
         )
     }
 
+    func getWorkoutTemplatesForTeacher(
+        teacherId: String
+    ) async throws -> [WorkoutTemplateFS] {
+        try await workoutTemplateRepository.getWorkoutTemplatesForTeacher(
+            teacherId: teacherId
+        )
+    }
+
     func updateWorkoutTemplateBlocks(
         templateId: String,
         blocks: [BlockFS]

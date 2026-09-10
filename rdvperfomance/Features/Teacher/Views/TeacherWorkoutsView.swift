@@ -33,6 +33,14 @@ struct TeacherWorkoutsView: View {
 
                             VStack(spacing: 14) {
                                 quickAccessCard(
+                                    title: "Enviar treino",
+                                    subtitle: "Envie um treino para seus alunos",
+                                    icon: "paperplane.fill"
+                                ) {
+                                    path.append(.teacherSendWorkout)
+                                }
+
+                                quickAccessCard(
                                     title: "Criar treino",
                                     subtitle: "Monte um novo treino",
                                     icon: "plus.circle.fill"
