@@ -688,6 +688,9 @@ struct TeacherSendWorkoutView: View {
                 }
             }
             successMessage = "Treino enviado com sucesso!"
+            try? await Task.sleep(for: .seconds(1))
+            guard !Task.isCancelled else { return }
+            path.removeAll()
         } catch {
             errorMessage = error.localizedDescription
         }
