@@ -123,13 +123,15 @@ struct CreateTreinoCasaView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(category.displayName) • \(sectionTitle)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Text("Crie um treino para aparecer na lista desta seção.")
+            (
+                Text("Crie um ")
+                    .foregroundColor(.white.opacity(0.55))
+                + Text("treino em casa")
+                    .foregroundColor(.green.opacity(0.85))
+                + Text(" para aparecer na lista desta seção.")
+                    .foregroundColor(.white.opacity(0.55))
+            )
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
