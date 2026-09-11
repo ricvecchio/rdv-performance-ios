@@ -27,6 +27,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
     let hasLoadedInitialData: Bool
     let templates: [WorkoutTemplateFS]
     let isCrossfitCategory: Bool
+    let showsTemplateActions: Bool
 
     let onTapTemplate: (WorkoutTemplateFS) -> Void
     let onSendTemplate: (WorkoutTemplateFS) -> Void
@@ -41,6 +42,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
             } else {
                 TeacherWorkoutTemplatesList(
                     templates: templates,
+                    showsTemplateActions: showsTemplateActions,
                     onTapTemplate: onTapTemplate,
                     onSendTemplate: onSendTemplate,
                     onDeleteTemplate: onDeleteTemplate
@@ -61,6 +63,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
 struct TeacherWorkoutTemplatesList: View {
 
     let templates: [WorkoutTemplateFS]
+    let showsTemplateActions: Bool
     let onTapTemplate: (WorkoutTemplateFS) -> Void
     let onSendTemplate: (WorkoutTemplateFS) -> Void
     let onDeleteTemplate: (WorkoutTemplateFS) -> Void
@@ -75,6 +78,7 @@ struct TeacherWorkoutTemplatesList: View {
                 } label: {
                     TeacherWorkoutTemplateRow(
                         template: t,
+                        showsTemplateActions: showsTemplateActions,
                         onSend: { onSendTemplate(t) },
                         onDelete: { onDeleteTemplate(t) }
                     )
@@ -93,6 +97,7 @@ struct TeacherWorkoutTemplatesList: View {
 struct TeacherWorkoutTemplateRow: View {
 
     let template: WorkoutTemplateFS
+    let showsTemplateActions: Bool
     let onSend: () -> Void
     let onDelete: () -> Void
 
@@ -120,27 +125,29 @@ struct TeacherWorkoutTemplateRow: View {
 
             Spacer()
 
-            Menu {
-                Button {
-                    onSend()
-                } label: {
-                    Label("Enviar para aluno", systemImage: "paperplane.fill")
-                }
+            if showsTemplateActions {
+                Menu {
+                    Button {
+                        onSend()
+                    } label: {
+                        Label("Enviar para aluno", systemImage: "paperplane.fill")
+                    }
 
-                Button(role: .destructive) {
-                    onDelete()
+                    Button(role: .destructive) {
+                        onDelete()
+                    } label: {
+                        Label("Remover", systemImage: "trash.fill")
+                    }
                 } label: {
-                    Label("Remover", systemImage: "trash.fill")
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 8)
+                        .contentShape(Rectangle())
                 }
-            } label: {
-                Image(systemName: "ellipsis")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
-                    .padding(.vertical, 6)
-                    .padding(.horizontal, 8)
-                    .contentShape(Rectangle())
+                .buttonStyle(.plain)
             }
-            .buttonStyle(.plain)
 
             Image(systemName: "chevron.right")
                 .foregroundColor(.white.opacity(0.35))

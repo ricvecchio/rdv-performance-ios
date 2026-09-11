@@ -45,6 +45,11 @@ enum TeacherWorkoutsMode: Hashable {
     case create
 }
 
+enum TeacherWorkoutTemplatesMode: Hashable {
+    case manage
+    case attach
+}
+
 // Representa todas as rotas de navegação disponíveis no aplicativo
 enum AppRoute: Hashable {
 
@@ -100,13 +105,22 @@ enum AppRoute: Hashable {
     case createTrainingDay(weekId: String, category: TreinoTipo)
 
     case teacherMyWorkouts(category: TreinoTipo, mode: TeacherWorkoutsMode = .library)
-    case teacherCrossfitLibrary(section: CrossfitLibrarySection, mode: TeacherWorkoutsMode = .library)
+    case teacherCrossfitLibrary(
+        section: CrossfitLibrarySection,
+        mode: TeacherWorkoutsMode = .library,
+        templateMode: TeacherWorkoutTemplatesMode = .manage
+    )
 
     // ✅ NOVO: bibliotecas/menus para separar blocos por músculo
     case teacherAcademiaLibrary(mode: TeacherWorkoutsMode = .library)
     case teacherEmCasaLibrary(mode: TeacherWorkoutsMode = .library)
 
-    case teacherWorkoutTemplates(category: TreinoTipo, sectionKey: String, sectionTitle: String)
+    case teacherWorkoutTemplates(
+        category: TreinoTipo,
+        sectionKey: String,
+        sectionTitle: String,
+        mode: TeacherWorkoutTemplatesMode = .manage
+    )
     case teacherSendWorkout(preselectedStudentID: String? = nil, startsAtWorkout: Bool = false)
     case teacherImportWorkouts(category: TreinoTipo)
     case teacherImportVideos(category: TreinoTipo)
