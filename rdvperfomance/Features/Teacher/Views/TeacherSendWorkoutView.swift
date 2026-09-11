@@ -329,7 +329,7 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedStudentsSummary: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("Alunos selecionados")
+            cardSectionTitle("ALUNOS SELECIONADOS")
 
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(selectedStudents) { student in
@@ -354,7 +354,7 @@ struct TeacherSendWorkoutView: View {
 
     private var templateSection: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("Selecionar treino")
+            cardSectionTitle("SELECIONAR TREINO")
 
             VStack(alignment: .leading, spacing: 12) {
                 templatePicker(category: .crossfit, title: "Crossfit")
@@ -431,7 +431,7 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedWorkoutsSummary: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("Treinos selecionados")
+            cardSectionTitle("TREINOS SELECIONADOS")
 
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(selectedTemplatesInOrder, id: \.category) { item in
@@ -456,9 +456,16 @@ struct TeacherSendWorkoutView: View {
         template: WorkoutTemplateFS
     ) -> some View {
         VStack(alignment: .leading, spacing: 3) {
-            Text(category.displayName)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+            HStack(spacing: 8) {
+                Image(systemName: categoryIcon(for: category))
+                    .font(.system(size: 13))
+                    .foregroundColor(.green.opacity(0.85))
+
+                Text(category.displayName)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+
             Text(template.title)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
@@ -467,7 +474,7 @@ struct TeacherSendWorkoutView: View {
 
     private var daySection: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("Selecionar dia")
+            cardSectionTitle("SELECIONAR dia")
 
             VStack(spacing: 0) {
                 ForEach(Array(currentWeekDays.enumerated()), id: \.element.id) { index, day in
@@ -620,7 +627,7 @@ struct TeacherSendWorkoutView: View {
             .foregroundColor(.white.opacity(0.35))
             .padding(.horizontal, 16)
             .padding(.top, 14)
-            .padding(.bottom, 10)
+            .padding(.bottom, 18)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
