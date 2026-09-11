@@ -235,30 +235,41 @@ struct TeacherSendWorkoutView: View {
     private var studentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Selecionar alunos")
+            studentSearchField
+            studentListContent
+        }
+    }
 
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.white.opacity(0.55))
-                TextField("Buscar aluno...", text: $searchText)
-                    .foregroundColor(.white.opacity(0.92))
-                    .tint(.green)
-            }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 12)
-            .background(Color.white.opacity(0.10))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+    private var studentSearchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.white.opacity(0.55))
+            TextField("Buscar aluno...", text: $searchText)
+                .foregroundColor(.white.opacity(0.92))
+                .tint(.green)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(Color.white.opacity(0.10))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var studentListContent: some View {
+        if isLoadingInitialData {
+            loadingRow("Carregando alunos...")
+        } else if filteredStudents.isEmpty {
+            emptyRow(
+                searchText.isEmpty
+                    ? "Nenhum aluno vinculado."
+                    : "Nenhum aluno encontrado."
             )
-
-            if isLoadingInitialData {
-                loadingRow("Carregando alunos...")
-            } else if filteredStudents.isEmpty {
-                emptyRow(searchText.isEmpty ? "Nenhum aluno vinculado." : "Nenhum aluno encontrado.")
-            } else {
-                studentsList
-            }
+        } else {
+            studentsList
         }
     }
 
@@ -268,27 +279,7 @@ struct TeacherSendWorkoutView: View {
                 Button {
                     toggleSelection(for: student)
                 } label: {
-                    HStack(spacing: 14) {
-                        StudentAvatarView(base64: student.photoBase64, size: 28)
-                            .frame(width: 28)
-
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(student.name)
-                                .font(.system(size: 18, weight: .medium))
-                                .foregroundColor(.white.opacity(0.92))
-                            Text("Categoria: \(studentCategoryText(student))")
-                                .font(.system(size: 13, weight: .medium))
-                                .foregroundColor(.white.opacity(0.55))
-                        }
-
-                        Spacer()
-
-                        Image(systemName: isSelected(student) ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 20))
-                            .foregroundColor(isSelected(student) ? .green : .white.opacity(0.35))
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 14)
+                    studentRow(student)
                 }
                 .buttonStyle(.plain)
 
@@ -306,6 +297,34 @@ struct TeacherSendWorkoutView: View {
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
         .disabled(isSending)
+    }
+
+    private func studentRow(_ student: AppUser) -> some View {
+        let selected = isSelected(student)
+        let selectionIcon = selected ? "checkmark.circle.fill" : "circle"
+        let selectionColor: Color = selected ? .green : .white.opacity(0.35)
+
+        return HStack(spacing: 14) {
+            StudentAvatarView(base64: student.photoBase64, size: 28)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(student.name)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
+                Text("Categoria: \(studentCategoryText(student))")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+
+            Spacer()
+
+            Image(systemName: selectionIcon)
+                .font(.system(size: 20))
+                .foregroundColor(selectionColor)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
     private var selectedStudentsSummary: some View {
@@ -361,33 +380,52 @@ struct TeacherSendWorkoutView: View {
         let selection = selectedTemplates[category]
 
         return VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: categoryIcon(for: category))
-                    .font(.system(size: 14))
-                    .foregroundColor(.green.opacity(0.85))
+            categoryHeader(category: category, title: title)
+            templatePickerContent(
+                category: category,
+                templates: categoryTemplates,
+                selection: selection
+            )
+        }
+    }
 
-                Text(title)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-            }
+    private func categoryHeader(category: TreinoTipo, title: String) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: categoryIcon(for: category))
+                .font(.system(size: 14))
+                .foregroundColor(.green.opacity(0.85))
 
-            if isLoadingInitialData {
-                pickerPlaceholder("Carregando treinos...")
-            } else if categoryTemplates.isEmpty {
-                pickerPlaceholder("Nenhum treino cadastrado.")
-            } else {
-                Menu {
-                    ForEach(categoryTemplates) { template in
-                        Button(templateMenuTitle(template)) {
-                            selectedTemplates[category] = template
-                            clearMessages()
-                        }
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        }
+    }
+
+    @ViewBuilder
+    private func templatePickerContent(
+        category: TreinoTipo,
+        templates: [WorkoutTemplateFS],
+        selection: WorkoutTemplateFS?
+    ) -> some View {
+        if isLoadingInitialData {
+            pickerPlaceholder("Carregando treinos...")
+        } else if templates.isEmpty {
+            pickerPlaceholder("Nenhum treino cadastrado.")
+        } else {
+            Menu {
+                ForEach(templates) { template in
+                    Button(templateMenuTitle(template)) {
+                        selectedTemplates[category] = template
+                        clearMessages()
                     }
-                } label: {
-                    pickerLabel(selection?.title ?? "Selecionar treino", isSelected: selection != nil)
                 }
-                .buttonStyle(.plain)
+            } label: {
+                pickerLabel(
+                    selection?.title ?? "Selecionar treino",
+                    isSelected: selection != nil
+                )
             }
+            .buttonStyle(.plain)
         }
     }
 
@@ -397,14 +435,7 @@ struct TeacherSendWorkoutView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 ForEach(selectedTemplatesInOrder, id: \.category) { item in
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text(item.category.displayName)
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.55))
-                        Text(item.template.title)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                    }
+                    selectedWorkoutRow(category: item.category, template: item.template)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -420,6 +451,20 @@ struct TeacherSendWorkoutView: View {
         )
     }
 
+    private func selectedWorkoutRow(
+        category: TreinoTipo,
+        template: WorkoutTemplateFS
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(category.displayName)
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+            Text(template.title)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+        }
+    }
+
     private var daySection: some View {
         VStack(spacing: 0) {
             cardSectionTitle("Selecionar dia")
@@ -430,20 +475,7 @@ struct TeacherSendWorkoutView: View {
                         selectedDay = day
                         clearMessages()
                     } label: {
-                        HStack(spacing: 12) {
-                            Image(systemName: selectedDay?.id == day.id ? "checkmark.circle.fill" : "circle")
-                                .font(.system(size: 20))
-                                .foregroundColor(selectedDay?.id == day.id ? .green : .white.opacity(0.35))
-                            Text(weekdayTitle(for: day.date))
-                                .font(.system(size: 16, weight: .medium))
-                                .foregroundColor(.white.opacity(0.92))
-                            Spacer()
-                            Text(dateTitle(for: day.date))
-                                .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.55))
-                        }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 14)
+                        dayRow(day: day, isSelected: selectedDay?.id == day.id)
                     }
                     .buttonStyle(.plain)
 
@@ -473,11 +505,29 @@ struct TeacherSendWorkoutView: View {
         )
     }
 
+    private func dayRow(day: AvailableDay, isSelected: Bool) -> some View {
+        let selectionIcon = isSelected ? "checkmark.circle.fill" : "circle"
+        let selectionColor: Color = isSelected ? .green : .white.opacity(0.35)
+
+        return HStack(spacing: 12) {
+            Image(systemName: selectionIcon)
+                .font(.system(size: 20))
+                .foregroundColor(selectionColor)
+            Text(weekdayTitle(for: day.date))
+                .font(.system(size: 16, weight: .medium))
+                .foregroundColor(.white.opacity(0.92))
+            Spacer()
+            Text(dateTitle(for: day.date))
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
     private func nextButton(enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            primaryActionContent {
-                Text("Próximo")
-            }
+            nextButtonContent
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
@@ -487,34 +537,74 @@ struct TeacherSendWorkoutView: View {
         Button {
             Task { await sendTemplatesToSelectedDay() }
         } label: {
-            primaryActionContent {
-                if isSending {
-                    ProgressView().tint(.white)
-                } else {
-                    Text("Enviar treino")
-                }
-            }
+            sendButtonContent
         }
         .buttonStyle(.plain)
         .disabled(!canSend)
     }
 
-    private func primaryActionContent<Content: View>(
-        @ViewBuilder content: () -> Content
-    ) -> some View {
+    private var nextButtonContent: some View {
         HStack {
             Spacer()
-            content()
+            Text("Próximo")
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
             Spacer()
         }
-        .padding(.vertical, 14)
-        .background(Color.green.opacity(0.16))
+        .modifier(PrimaryActionButtonStyle())
+    }
+
+    private var sendButtonContent: some View {
+        HStack {
+            Spacer()
+            if isSending {
+                ProgressView().tint(.white)
+            } else {
+                Text("Enviar treino")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+            }
+            Spacer()
+        }
+        .modifier(PrimaryActionButtonStyle())
+    }
+
+    private struct PrimaryActionButtonStyle: ViewModifier {
+        func body(content: Content) -> some View {
+            content
+                .padding(.vertical, 14)
+                .background(Color.green.opacity(0.16))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.green.opacity(0.35), lineWidth: 1)
+                )
+        }
+    }
+
+    private func pickerLabel(_ title: String, isSelected: Bool) -> some View {
+        let backgroundColor: Color = isSelected
+            ? Color.green.opacity(0.14)
+            : Color.white.opacity(0.10)
+        let borderColor: Color = isSelected
+            ? Color.green.opacity(0.35)
+            : Color.white.opacity(0.12)
+
+        return HStack {
+            Text(title)
+                .foregroundColor(.white.opacity(0.92))
+                .lineLimit(1)
+            Spacer()
+            Image(systemName: "chevron.down")
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(backgroundColor)
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.green.opacity(0.35), lineWidth: 1)
+                .stroke(borderColor, lineWidth: 1)
         )
     }
 
@@ -543,25 +633,6 @@ struct TeacherSendWorkoutView: View {
         case .emCasa:
             return "house.fill"
         }
-    }
-
-    private func pickerLabel(_ title: String, isSelected: Bool) -> some View {
-        HStack {
-            Text(title)
-                .foregroundColor(.white.opacity(0.92))
-                .lineLimit(1)
-            Spacer()
-            Image(systemName: "chevron.down")
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
-        .background(isSelected ? Color.green.opacity(0.14) : Color.white.opacity(0.10))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.12), lineWidth: 1)
-        )
     }
 
     private func pickerPlaceholder(_ title: String) -> some View {
