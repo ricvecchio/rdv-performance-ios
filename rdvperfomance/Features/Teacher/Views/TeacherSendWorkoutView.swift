@@ -17,6 +17,8 @@ struct TeacherSendWorkoutView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    let preselectedStudentID: String?
+    let startsAtWorkout: Bool
 
     @State private var students: [AppUser] = []
     @State private var studentCategories: [String: [TreinoTipo]] = [:]
@@ -34,6 +36,22 @@ struct TeacherSendWorkoutView: View {
     @State private var successMessage: String?
 
     private let contentMaxWidth: CGFloat = 380
+
+    init(
+        path: Binding<[AppRoute]>,
+        category: TreinoTipo,
+        preselectedStudentID: String? = nil,
+        startsAtWorkout: Bool = false
+    ) {
+        self._path = path
+        self.category = category
+        let studentID = preselectedStudentID?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        self.preselectedStudentID = studentID?.isEmpty == false ? studentID : nil
+        self.startsAtWorkout = startsAtWorkout && self.preselectedStudentID != nil
+        _selectedStudentIDs = State(initialValue: self.preselectedStudentID.map { [$0] } ?? [])
+        _step = State(initialValue: self.startsAtWorkout ? .workout : .student)
+    }
 
     private var filteredStudents: [AppUser] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -707,7 +725,12 @@ struct TeacherSendWorkoutView: View {
             guard !path.isEmpty else { return }
             path.removeLast()
         case .workout:
-            step = .student
+            if startsAtWorkout {
+                guard !path.isEmpty else { return }
+                path.removeLast()
+            } else {
+                step = .student
+            }
         case .day:
             step = .workout
         }

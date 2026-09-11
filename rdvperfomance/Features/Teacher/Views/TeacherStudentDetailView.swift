@@ -52,10 +52,10 @@ struct TeacherStudentDetailView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunoSobrePerfil(
+                    kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
                         isHomeSelected: false,
-                        isAlunoSelected: true,
+                        isAlunosSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -171,11 +171,7 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            actionButton(title: "Publicar Semana", icon: "square.and.pencil") {
-                path.append(.createTrainingWeek(student: student, category: category))
-            }
-
-            actionButton(title: "Ver Agenda do Aluno", icon: "calendar") {
+            actionButton(title: "Agenda de Treinos", icon: "calendar") {
                 openAgenda()
             }
 

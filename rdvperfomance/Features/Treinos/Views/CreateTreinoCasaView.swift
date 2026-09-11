@@ -26,6 +26,9 @@ struct CreateTreinoCasaView: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
+    @State private var showTemplatesSheet: Bool = false
+    @State private var templates: [WorkoutTemplateFS] = []
+    @State private var isLoadingTemplates: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -119,6 +122,14 @@ struct CreateTreinoCasaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .sheet(isPresented: $showTemplatesSheet) {
+            WorkoutTemplateAttachmentSheet(
+                templates: templates,
+                isLoading: isLoadingTemplates,
+                onSelect: applyTemplate,
+                onClose: { showTemplatesSheet = false }
+            )
+        }
     }
 
     private var header: some View {
@@ -139,9 +150,15 @@ struct CreateTreinoCasaView: View {
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("Treino")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+            HStack {
+                Text("Treino")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                Spacer()
+                WorkoutTemplateAttachmentButton(isLoading: isLoadingTemplates) {
+                    Task { await openTemplates() }
+                }
+            }
 
             UnderlineTextField(
                 title: "Título do Treino",
@@ -230,10 +247,6 @@ struct CreateTreinoCasaView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Detalhes")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
-
                         TextEditor(text: $b.details)
                             .foregroundColor(.white.opacity(0.92))
                             .scrollContentBackground(.hidden)
@@ -307,6 +320,7 @@ struct CreateTreinoCasaView: View {
 
             Spacer()
         }
+
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(Color.black.opacity(0.35))
@@ -315,6 +329,35 @@ struct CreateTreinoCasaView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.10), lineWidth: 1)
         )
+    }
+
+    private func openTemplates() async {
+        errorMessage = nil
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
+
+        isLoadingTemplates = true
+        defer { isLoadingTemplates = false }
+
+        do {
+            templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+                teacherId: teacherId,
+                categoryRaw: category.rawValue,
+                sectionKey: "meusTreinos"
+            )
+            showTemplatesSheet = true
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    private func applyTemplate(_ template: WorkoutTemplateFS) {
+        title = template.title
+        description = template.description
+        showTemplatesSheet = false
     }
 
     private func saveTemplate() async {

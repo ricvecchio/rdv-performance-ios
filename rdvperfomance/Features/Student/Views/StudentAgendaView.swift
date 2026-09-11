@@ -69,6 +69,9 @@ struct StudentAgendaView: View {
                         }
 
                         header
+                        if isTeacherViewing {
+                            publishWorkoutButton
+                        }
                         contentCard
                     }
                     .frame(maxWidth: contentMaxWidth)
@@ -167,6 +170,33 @@ struct StudentAgendaView: View {
                 .foregroundColor(.white.opacity(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var publishWorkoutButton: some View {
+        Button {
+            path.append(
+                .teacherSendWorkout(
+                    preselectedStudentID: studentId,
+                    startsAtWorkout: true
+                )
+            )
+        } label: {
+            HStack {
+                Spacer()
+                Text("Publicar Treino")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                Spacer()
+            }
+            .padding(.vertical, 14)
+            .background(Color.green.opacity(0.16))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
     }
 
     // ✅ Card/banner de vínculo do aluno

@@ -79,8 +79,13 @@ struct TeacherRootView: View {
             TeacherEmCasaLibraryView(path: destinationPath, mode: mode)
         case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle):
             TeacherWorkoutTemplatesView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
-        case .teacherSendWorkout:
-            TeacherSendWorkoutView(path: destinationPath, category: category)
+        case .teacherSendWorkout(let preselectedStudentID, let startsAtWorkout):
+            TeacherSendWorkoutView(
+                path: destinationPath,
+                category: category,
+                preselectedStudentID: preselectedStudentID,
+                startsAtWorkout: startsAtWorkout
+            )
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)
         case .teacherImportVideos(let category):
