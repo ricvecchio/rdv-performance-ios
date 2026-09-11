@@ -384,8 +384,7 @@ struct CreateCrossfitWODView: View {
                 blocks: payloadBlocks
             )
 
-            // ✅ volta para lista (que recarrega no onAppear)
-            pop()
+            path.removeAll()
 
         } catch {
             errorMessage = error.localizedDescription
