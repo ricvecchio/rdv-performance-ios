@@ -175,13 +175,22 @@ struct TeacherStudentDetailView: View {
                 openAgenda()
             }
 
+            Divider()
+                .background(Theme.Colors.divider)
+
             actionButton(title: "Mensagens", icon: "paperplane.fill") {
                 path.append(.teacherMessage(student: student, category: category))
             }
 
+            Divider()
+                .background(Theme.Colors.divider)
+
             actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
+
+            Divider()
+                .background(Theme.Colors.divider)
 
             actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
