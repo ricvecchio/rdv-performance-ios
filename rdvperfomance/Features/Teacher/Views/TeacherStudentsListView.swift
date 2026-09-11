@@ -350,6 +350,7 @@ struct TeacherStudentsListView: View {
                 if idx < list.count - 1 {
                     Divider()
                         .background(Theme.Colors.divider)
+                        .padding(.horizontal, 16)
                 }
             }
         }
