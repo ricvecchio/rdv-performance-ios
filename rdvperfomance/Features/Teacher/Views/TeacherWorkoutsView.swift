@@ -37,7 +37,12 @@ struct TeacherWorkoutsView: View {
                                     subtitle: "Envie um treino para seus alunos",
                                     icon: "paperplane.fill"
                                 ) {
-                                    path.append(.teacherSendWorkout)
+                                    path.append(
+                                        .teacherSendWorkout(
+                                            preselectedStudentID: nil,
+                                            startsAtWorkout: false
+                                        )
+                                    )
                                 }
 
                                 quickAccessCard(
