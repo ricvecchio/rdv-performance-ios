@@ -309,15 +309,20 @@ struct TeacherSendWorkoutView: View {
     }
 
     private var selectedStudentsSummary: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            sectionTitle("Alunos selecionados")
-            ForEach(selectedStudents) { student in
-                Text(student.name)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+        VStack(spacing: 0) {
+            cardSectionTitle("Alunos selecionados")
+
+            VStack(alignment: .leading, spacing: 8) {
+                ForEach(selectedStudents) { student in
+                    Text(student.name)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.55))
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
@@ -329,14 +334,17 @@ struct TeacherSendWorkoutView: View {
     }
 
     private var templateSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Selecionar treino")
+        VStack(spacing: 0) {
+            cardSectionTitle("Selecionar treino")
 
-            templatePicker(category: .crossfit, title: "Crossfit")
-            templatePicker(category: .academia, title: "Academia")
-            templatePicker(category: .emCasa, title: "Treinos em Casa")
+            VStack(alignment: .leading, spacing: 12) {
+                templatePicker(category: .crossfit, title: "Crossfit")
+                templatePicker(category: .academia, title: "Academia")
+                templatePicker(category: .emCasa, title: "Treinos em Casa")
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
@@ -353,9 +361,15 @@ struct TeacherSendWorkoutView: View {
         let selection = selectedTemplates[category]
 
         return VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+            HStack(spacing: 8) {
+                Image(systemName: categoryIcon(for: category))
+                    .font(.system(size: 14))
+                    .foregroundColor(.green.opacity(0.85))
+
+                Text(title)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+            }
 
             if isLoadingInitialData {
                 pickerPlaceholder("Carregando treinos...")
@@ -378,21 +392,25 @@ struct TeacherSendWorkoutView: View {
     }
 
     private var selectedWorkoutsSummary: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Treinos selecionados")
+        VStack(spacing: 0) {
+            cardSectionTitle("Treinos selecionados")
 
-            ForEach(selectedTemplatesInOrder, id: \.category) { item in
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(item.category.displayName)
-                        .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.55))
-                    Text(item.template.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+            VStack(alignment: .leading, spacing: 12) {
+                ForEach(selectedTemplatesInOrder, id: \.category) { item in
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(item.category.displayName)
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.55))
+                        Text(item.template.title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                    }
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
@@ -403,8 +421,8 @@ struct TeacherSendWorkoutView: View {
     }
 
     private var daySection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("Selecionar dia")
+        VStack(spacing: 0) {
+            cardSectionTitle("Selecionar dia")
 
             VStack(spacing: 0) {
                 ForEach(Array(currentWeekDays.enumerated()), id: \.element.id) { index, day in
@@ -443,8 +461,9 @@ struct TeacherSendWorkoutView: View {
                     .stroke(Color.white.opacity(0.12), lineWidth: 1)
             )
             .disabled(isSending)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
         }
-        .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
@@ -456,17 +475,9 @@ struct TeacherSendWorkoutView: View {
 
     private func nextButton(enabled: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text("Próximo")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 14)
-                .background(Color.green.opacity(enabled ? 0.16 : 0.08))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(enabled ? 0.35 : 0.15), lineWidth: 1)
-                )
+            primaryActionContent {
+                Text("Próximo")
+            }
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
@@ -476,33 +487,62 @@ struct TeacherSendWorkoutView: View {
         Button {
             Task { await sendTemplatesToSelectedDay() }
         } label: {
-            HStack {
-                Spacer()
+            primaryActionContent {
                 if isSending {
                     ProgressView().tint(.white)
                 } else {
                     Text("Enviar treino")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                 }
-                Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(canSend ? 0.16 : 0.08))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(canSend ? 0.35 : 0.15), lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
         .disabled(!canSend)
+    }
+
+    private func primaryActionContent<Content: View>(
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        HStack {
+            Spacer()
+            content()
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+            Spacer()
+        }
+        .padding(.vertical, 14)
+        .background(Color.green.opacity(0.16))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.green.opacity(0.35), lineWidth: 1)
+        )
     }
 
     private func sectionTitle(_ title: String) -> some View {
         Text(title)
             .font(.system(size: 16, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
+    }
+
+    private func cardSectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(.white.opacity(0.35))
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func categoryIcon(for category: TreinoTipo) -> String {
+        switch category {
+        case .crossfit:
+            return "figure.strengthtraining.traditional"
+        case .academia:
+            return "dumbbell"
+        case .emCasa:
+            return "house.fill"
+        }
     }
 
     private func pickerLabel(_ title: String, isSelected: Bool) -> some View {
