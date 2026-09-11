@@ -348,7 +348,8 @@ struct TeacherStudentsListView: View {
                 }
 
                 if idx < list.count - 1 {
-                    innerDivider(leading: 54)
+                    Divider()
+                        .background(Theme.Colors.divider)
                 }
             }
         }
