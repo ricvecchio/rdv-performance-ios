@@ -537,7 +537,9 @@ struct TeacherStudentsListView: View {
                 .contentShape(Rectangle())
 
                 if idx < pending.count - 1 {
-                    innerDivider(leading: 54)
+                    Divider()
+                        .background(Theme.Colors.divider)
+                        .padding(.horizontal, 16)
                 }
             }
 
@@ -574,7 +576,9 @@ struct TeacherStudentsListView: View {
                     linkRequestRow(item)
 
                     if index < vm.pendingLinkRequests.count - 1 {
-                        innerDivider(leading: 54)
+                        Divider()
+                            .background(Theme.Colors.divider)
+                            .padding(.horizontal, 16)
                     }
                 }
 
