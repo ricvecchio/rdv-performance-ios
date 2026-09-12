@@ -246,7 +246,7 @@ struct FooterBar: View {
         if session.isTrainer {
             selectTeacherMainSection(.home)
         } else {
-            selectStudentMainSection(.agenda)
+            selectStudentSection(.agenda)
         }
     }
 
@@ -254,24 +254,32 @@ struct FooterBar: View {
         if session.isTrainer {
             selectTeacherMainSection(.profile)
         } else {
-            selectStudentMainSection(.profile)
+            selectStudentSection(.profile)
         }
     }
 
     private func goAgenda() {
-        selectStudentMainSection(.agenda)
+        selectStudentSection(.agenda)
     }
 
     private func goTreinosAluno() {
-        selectStudentMainSection(.agenda)
+        selectStudentSection(.agenda)
     }
 
     private func goPersonalRecords() {
-        selectStudentMainSection(.records)
+        selectStudentSection(.records)
     }
 
     private func goPerfilStudent() {
-        selectStudentMainSection(.profile)
+        selectStudentSection(.profile)
+    }
+
+    private func selectStudentSection(_ section: StudentMainSection) {
+        if let onSelectStudentSection {
+            onSelectStudentSection(section)
+        } else {
+            selectStudentMainSection(section)
+        }
     }
 
     private func goTeacherHome(category: TreinoTipo) {
