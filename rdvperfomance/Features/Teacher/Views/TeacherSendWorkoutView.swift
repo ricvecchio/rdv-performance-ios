@@ -1,6 +1,13 @@
 import SwiftUI
 import FirebaseAuth
 
+private struct WorkoutSectionOption: Identifiable, Hashable {
+    let title: String
+    let sectionKey: String
+
+    var id: String { sectionKey }
+}
+
 struct TeacherSendWorkoutView: View {
 
     private enum Step: Equatable {
@@ -30,6 +37,10 @@ struct TeacherSendWorkoutView: View {
     @State private var selectedTemplates: [TreinoTipo: WorkoutTemplateFS] = [:]
     @State private var selectedDay: AvailableDay?
     @State private var step: Step = .student
+    @State private var selectingWorkoutCategory: TreinoTipo?
+    @State private var selectedWorkoutSectionKey: String?
+    @State private var selectedWorkoutSectionTitle: String?
+    @State private var isWorkoutSelectorPresented = false
 
     @State private var isLoadingInitialData = false
     @State private var isSending = false
@@ -229,6 +240,22 @@ struct TeacherSendWorkoutView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await bootstrap() }
+        .sheet(isPresented: $isWorkoutSelectorPresented, onDismiss: closeWorkoutSelector) {
+            if let selectingWorkoutCategory {
+                WorkoutTemplateSelectionSheet(
+                    category: selectingWorkoutCategory,
+                    sectionOptions: sectionOptions(for: selectingWorkoutCategory),
+                    templates: templates,
+                    selectedSectionKey: $selectedWorkoutSectionKey,
+                    selectedSectionTitle: $selectedWorkoutSectionTitle,
+                    selectedTemplateID: selectedTemplates[selectingWorkoutCategory]?.id,
+                    isLoading: isLoadingInitialData,
+                    onSelectTemplate: selectTemplate
+                )
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
+            }
+        }
     }
 
     private var stepIndicator: some View {
@@ -514,16 +541,12 @@ struct TeacherSendWorkoutView: View {
     }
 
     private func templatePicker(category: TreinoTipo, title: String) -> some View {
-        let categoryTemplates = templates.filter {
-            TreinoTipo.normalized(from: $0.categoryRaw) == category
-        }
         let selection = selectedTemplates[category]
 
         return VStack(alignment: .leading, spacing: 6) {
             categoryHeader(category: category, title: title)
             templatePickerContent(
                 category: category,
-                templates: categoryTemplates,
                 selection: selection
             )
         }
@@ -544,21 +567,13 @@ struct TeacherSendWorkoutView: View {
     @ViewBuilder
     private func templatePickerContent(
         category: TreinoTipo,
-        templates: [WorkoutTemplateFS],
         selection: WorkoutTemplateFS?
     ) -> some View {
         if isLoadingInitialData {
             pickerPlaceholder("Carregando treinos...")
-        } else if templates.isEmpty {
-            pickerPlaceholder("Nenhum treino cadastrado.")
         } else {
-            Menu {
-                ForEach(templates) { template in
-                    Button(templateMenuTitle(template)) {
-                        selectedTemplates[category] = template
-                        clearMessages()
-                    }
-                }
+            Button {
+                openWorkoutSelector(for: category)
             } label: {
                 pickerLabel(
                     selection?.title ?? "Selecionar treino",
@@ -567,6 +582,54 @@ struct TeacherSendWorkoutView: View {
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private func sectionOptions(for category: TreinoTipo) -> [WorkoutSectionOption] {
+        switch category {
+        case .crossfit:
+            return [
+                .init(title: "Girls WODs", sectionKey: "girlsWods"),
+                .init(title: "Hero & Tribute Workouts", sectionKey: "heroTributeWorkouts"),
+                .init(title: "Open WODs", sectionKey: "openWods"),
+                .init(title: "WODs Nomeados", sectionKey: "wodsNomeados"),
+                .init(title: "Qualifiers / WODs de Competições", sectionKey: "qualifiersCompeticoes"),
+                .init(title: "Meus Treinos", sectionKey: "meusTreinos")
+            ]
+        case .academia, .emCasa:
+            return [
+                .init(title: "Peito", sectionKey: "peito"),
+                .init(title: "Costas", sectionKey: "costas"),
+                .init(title: "Pernas", sectionKey: "pernas"),
+                .init(title: "Ombros", sectionKey: "ombros"),
+                .init(title: "Braços", sectionKey: "bracos"),
+                .init(title: "Core / Abdômen", sectionKey: "core"),
+                .init(title: "Full Body", sectionKey: "fullBody"),
+                .init(title: "Meus Treinos", sectionKey: "meusTreinos")
+            ]
+        }
+    }
+
+    private func openWorkoutSelector(for category: TreinoTipo) {
+        selectingWorkoutCategory = category
+        selectedWorkoutSectionKey = selectedTemplates[category]?.sectionKey
+        selectedWorkoutSectionTitle = sectionOptions(for: category)
+            .first { $0.sectionKey == selectedWorkoutSectionKey }?
+            .title
+        isWorkoutSelectorPresented = true
+    }
+
+    private func selectTemplate(_ template: WorkoutTemplateFS) {
+        guard let selectingWorkoutCategory else { return }
+        selectedTemplates[selectingWorkoutCategory] = template
+        clearMessages()
+        closeWorkoutSelector()
+    }
+
+    private func closeWorkoutSelector() {
+        isWorkoutSelectorPresented = false
+        selectingWorkoutCategory = nil
+        selectedWorkoutSectionKey = nil
+        selectedWorkoutSectionTitle = nil
     }
 
     private var selectedWorkoutsSummary: some View {
@@ -1004,5 +1067,176 @@ struct TeacherSendWorkoutView: View {
         case .day:
             step = .workout
         }
+    }
+}
+
+private struct WorkoutTemplateSelectionSheet: View {
+
+    let category: TreinoTipo
+    let sectionOptions: [WorkoutSectionOption]
+    let templates: [WorkoutTemplateFS]
+    @Binding var selectedSectionKey: String?
+    @Binding var selectedSectionTitle: String?
+    let selectedTemplateID: String?
+    let isLoading: Bool
+    let onSelectTemplate: (WorkoutTemplateFS) -> Void
+
+    @Environment(\.dismiss) private var dismiss
+
+    private var sectionTemplates: [WorkoutTemplateFS] {
+        guard let selectedSectionKey else { return [] }
+
+        return templates.filter {
+            TreinoTipo.normalized(from: $0.categoryRaw) == category
+                && $0.sectionKey == selectedSectionKey
+        }
+    }
+
+    var body: some View {
+        ZStack {
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                HStack {
+                    Text("Selecionar treino — \(category.displayName)")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+
+                    Spacer()
+
+                    Button("Fechar") {
+                        dismiss()
+                    }
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 18)
+                .padding(.bottom, 14)
+
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+                    .frame(maxWidth: .infinity)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        selectionTitle("SEÇÃO")
+                        sectionSelectionList
+
+                        selectionTitle("TREINO")
+                        templateSelectionContent
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 16)
+                }
+            }
+        }
+        .toolbarColorScheme(.dark, for: .navigationBar)
+    }
+
+    private var sectionSelectionList: some View {
+        VStack(spacing: 0) {
+            ForEach(Array(sectionOptions.enumerated()), id: \.element.id) { index, option in
+                Button {
+                    selectedSectionKey = option.sectionKey
+                    selectedSectionTitle = option.title
+                } label: {
+                    selectionRow(
+                        title: option.title,
+                        isSelected: option.sectionKey == selectedSectionKey
+                    )
+                }
+                .buttonStyle(.plain)
+
+                if index < sectionOptions.count - 1 {
+                    selectionDivider
+                }
+            }
+        }
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    @ViewBuilder
+    private var templateSelectionContent: some View {
+        if selectedSectionKey == nil {
+            Text("Selecione uma seção primeiro")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.35))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 14)
+        } else if isLoading {
+            HStack(spacing: 10) {
+                ProgressView()
+                Text("Carregando treinos...")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+            .padding(.vertical, 14)
+        } else if sectionTemplates.isEmpty {
+            Text("Nenhum treino cadastrado.")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+                .padding(.vertical, 14)
+        } else {
+            VStack(spacing: 0) {
+                ForEach(Array(sectionTemplates.enumerated()), id: \.element.id) { index, template in
+                    Button {
+                        onSelectTemplate(template)
+                    } label: {
+                        selectionRow(
+                            title: template.title,
+                            isSelected: template.id == selectedTemplateID
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    if index < sectionTemplates.count - 1 {
+                        selectionDivider
+                    }
+                }
+            }
+            .padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
+        }
+    }
+
+    private func selectionTitle(_ title: String) -> some View {
+        Text(title)
+            .font(.system(size: 14, weight: .medium))
+            .foregroundColor(.white.opacity(0.35))
+            .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func selectionRow(title: String, isSelected: Bool) -> some View {
+        HStack(spacing: 12) {
+            Text(title)
+                .font(.system(size: 17, weight: .medium))
+                .foregroundColor(.white.opacity(0.92))
+
+            Spacer()
+
+            Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.25))
+                .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+    }
+
+    private var selectionDivider: some View {
+        Divider()
+            .background(Theme.Colors.divider)
+            .padding(.leading, 16)
     }
 }
