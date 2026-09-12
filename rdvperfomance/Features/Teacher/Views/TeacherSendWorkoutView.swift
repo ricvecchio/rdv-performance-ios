@@ -24,6 +24,7 @@ struct TeacherSendWorkoutView: View {
     @State private var studentCategories: [String: [TreinoTipo]] = [:]
     @State private var templates: [WorkoutTemplateFS] = []
     @State private var searchText: String = ""
+    @State private var studentFilter: TreinoTipo?
 
     @State private var selectedStudentIDs: Set<String> = []
     @State private var selectedTemplates: [TreinoTipo: WorkoutTemplateFS] = [:]
@@ -55,10 +56,33 @@ struct TeacherSendWorkoutView: View {
 
     private var filteredStudents: [AppUser] {
         let query = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !query.isEmpty else { return students }
-        return students.filter {
-            $0.name.range(of: query, options: [.caseInsensitive, .diacriticInsensitive]) != nil
+        return students.filter { student in
+            let matchesCategory: Bool
+            if let studentFilter {
+                matchesCategory = student.id.flatMap { studentCategories[$0] }?.contains(studentFilter) == true
+            } else {
+                matchesCategory = true
+            }
+
+            let matchesSearch = query.isEmpty
+                || student.name.range(
+                    of: query,
+                    options: [.caseInsensitive, .diacriticInsensitive]
+                ) != nil
+
+            return matchesCategory && matchesSearch
         }
+    }
+
+    private var visibleStudentIDs: Set<String> {
+        Set(filteredStudents.compactMap {
+            let studentId = $0.id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            return studentId.isEmpty ? nil : studentId
+        })
+    }
+
+    private var areAllVisibleStudentsSelected: Bool {
+        !visibleStudentIDs.isEmpty && visibleStudentIDs.isSubset(of: selectedStudentIDs)
     }
 
     private var selectedStudents: [AppUser] {
@@ -115,46 +139,47 @@ struct TeacherSendWorkoutView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                if step == .student {
+                    studentStepLayout
+                } else {
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
-                            stepIndicator
+                            VStack(alignment: .leading, spacing: 14) {
+                                stepIndicator
 
-                            switch step {
-                            case .student:
-                                studentSection
-                                nextButton(enabled: canAdvanceFromStudent) {
-                                    step = .workout
+                                switch step {
+                                case .student:
+                                    EmptyView()
+                                case .workout:
+                                    selectedStudentsSummary
+                                    templateSection
+                                    nextButton(enabled: canAdvanceFromWorkout) {
+                                        Task { await advanceToDaySelection() }
+                                    }
+                                case .day:
+                                    selectedWorkoutsSummary
+                                    daySection
+                                    sendButton
                                 }
-                            case .workout:
-                                selectedStudentsSummary
-                                templateSection
-                                nextButton(enabled: canAdvanceFromWorkout) {
-                                    Task { await advanceToDaySelection() }
+
+                                if let errorMessage {
+                                    TeacherWorkoutTemplatesMessageCard(text: errorMessage, isError: true)
                                 }
-                            case .day:
-                                selectedWorkoutsSummary
-                                daySection
-                                sendButton
-                            }
 
-                            if let errorMessage {
-                                TeacherWorkoutTemplatesMessageCard(text: errorMessage, isError: true)
-                            }
+                                if let successMessage {
+                                    TeacherWorkoutTemplatesMessageCard(text: successMessage, isError: false)
+                                }
 
-                            if let successMessage {
-                                TeacherWorkoutTemplatesMessageCard(text: successMessage, isError: false)
+                                Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                             }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
 
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
                     }
                 }
 
@@ -232,12 +257,127 @@ struct TeacherSendWorkoutView: View {
         }
     }
 
+    private var studentStepLayout: some View {
+        VStack(spacing: 0) {
+            HStack {
+                Spacer(minLength: 0)
+
+                VStack(alignment: .leading, spacing: 14) {
+                    stepIndicator
+                    studentSection
+                }
+                .frame(maxWidth: contentMaxWidth)
+                .padding(.horizontal, 16)
+                .padding(.top, 16)
+
+                Spacer(minLength: 0)
+            }
+
+            ScrollView(showsIndicators: false) {
+                HStack {
+                    Spacer(minLength: 0)
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        studentListContent
+
+                        if let errorMessage {
+                            TeacherWorkoutTemplatesMessageCard(text: errorMessage, isError: true)
+                        }
+                    }
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 14)
+
+                    Spacer(minLength: 0)
+                }
+            }
+
+            HStack {
+                Spacer(minLength: 0)
+
+                nextButton(enabled: canAdvanceFromStudent) {
+                    step = .workout
+                }
+                .frame(maxWidth: contentMaxWidth)
+
+                Spacer(minLength: 0)
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 12)
+        }
+    }
+
     private var studentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Selecionar alunos")
+            studentFilterRow
             studentSearchField
-            studentListContent
+            selectAllVisibleStudentsButton
         }
+    }
+
+    private var studentFilterRow: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 10) {
+                    studentFilterChip(title: "Todos", isSelected: studentFilter == nil) {
+                        studentFilter = nil
+                    }
+                    studentFilterChip(title: TreinoTipo.crossfit.displayName, isSelected: studentFilter == .crossfit) {
+                        studentFilter = .crossfit
+                    }
+                    studentFilterChip(title: TreinoTipo.academia.displayName, isSelected: studentFilter == .academia) {
+                        studentFilter = .academia
+                    }
+                    studentFilterChip(title: TreinoTipo.emCasa.displayName, isSelected: studentFilter == .emCasa) {
+                        studentFilter = .emCasa
+                    }
+                }
+                .padding(.vertical, 2)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func studentFilterChip(
+        title: String,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(isSelected ? Color.green.opacity(0.16) : Color.white.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 999)
+                        .stroke(isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.12), lineWidth: 1)
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 999))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var selectAllVisibleStudentsButton: some View {
+        Button(action: toggleAllVisibleStudents) {
+            HStack(spacing: 10) {
+                Image(systemName: areAllVisibleStudentsSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 18))
+                    .foregroundColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55))
+
+                Text(areAllVisibleStudentsSelected ? "Desmarcar todos" : "Selecionar todos")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.75))
+
+                Spacer()
+            }
+        }
+        .buttonStyle(.plain)
+        .disabled(visibleStudentIDs.isEmpty || isSending)
+        .opacity(visibleStudentIDs.isEmpty ? 0.45 : 1)
     }
 
     private var studentSearchField: some View {
@@ -718,6 +858,18 @@ struct TeacherSendWorkoutView: View {
             selectedStudentIDs.remove(studentId)
         } else {
             selectedStudentIDs.insert(studentId)
+        }
+        selectedDay = nil
+        clearMessages()
+    }
+
+    private func toggleAllVisibleStudents() {
+        guard !visibleStudentIDs.isEmpty else { return }
+
+        if areAllVisibleStudentsSelected {
+            selectedStudentIDs.subtract(visibleStudentIDs)
+        } else {
+            selectedStudentIDs.formUnion(visibleStudentIDs)
         }
         selectedDay = nil
         clearMessages()
