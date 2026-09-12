@@ -210,6 +210,8 @@ struct TeacherSendWorkoutView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: isWorkoutSelectorPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: isWorkoutSelectorPresented)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
