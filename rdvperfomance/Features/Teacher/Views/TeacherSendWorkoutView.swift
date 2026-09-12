@@ -8,6 +8,37 @@ private struct WorkoutSectionOption: Identifiable, Hashable {
     var id: String { sectionKey }
 }
 
+private struct WorkoutPickerLabel: View {
+    let title: String
+    let isSelected: Bool
+
+    var body: some View {
+        let backgroundColor: Color = isSelected
+            ? Color.green.opacity(0.14)
+            : Color.white.opacity(0.10)
+        let borderColor: Color = isSelected
+            ? Color.green.opacity(0.35)
+            : Color.white.opacity(0.12)
+
+        HStack {
+            Text(title)
+                .foregroundColor(.white.opacity(0.92))
+                .lineLimit(1)
+            Spacer()
+            Image(systemName: "chevron.down")
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(backgroundColor)
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(borderColor, lineWidth: 1)
+        )
+    }
+}
+
 struct TeacherSendWorkoutView: View {
 
     private enum Step: Equatable {
@@ -577,8 +608,8 @@ struct TeacherSendWorkoutView: View {
             Button {
                 openWorkoutSelector(for: category)
             } label: {
-                pickerLabel(
-                    selection?.title ?? "Selecionar treino",
+                WorkoutPickerLabel(
+                    title: selection?.title ?? "Selecionar treino",
                     isSelected: selection != nil
                 )
             }
@@ -792,32 +823,6 @@ struct TeacherSendWorkoutView: View {
                         .stroke(Color.green.opacity(0.35), lineWidth: 1)
                 )
         }
-    }
-
-    private func pickerLabel(_ title: String, isSelected: Bool) -> some View {
-        let backgroundColor: Color = isSelected
-            ? Color.green.opacity(0.14)
-            : Color.white.opacity(0.10)
-        let borderColor: Color = isSelected
-            ? Color.green.opacity(0.35)
-            : Color.white.opacity(0.12)
-
-        return HStack {
-            Text(title)
-                .foregroundColor(.white.opacity(0.92))
-                .lineLimit(1)
-            Spacer()
-            Image(systemName: "chevron.down")
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
-        .background(backgroundColor)
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(borderColor, lineWidth: 1)
-        )
     }
 
     private func sectionTitle(_ title: String) -> some View {
@@ -1084,6 +1089,12 @@ private struct WorkoutTemplateSelectionSheet: View {
     let onSelectTemplate: (WorkoutTemplateFS) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @State private var expandedPicker: ExpandedPicker?
+
+    private enum ExpandedPicker: Equatable {
+        case section
+        case template
+    }
 
     private var sectionTemplates: [WorkoutTemplateFS] {
         guard let selectedSectionKey else { return [] }
@@ -1092,6 +1103,20 @@ private struct WorkoutTemplateSelectionSheet: View {
             TreinoTipo.normalized(from: $0.categoryRaw) == category
                 && $0.sectionKey == selectedSectionKey
         }
+    }
+
+    private var selectedTemplate: WorkoutTemplateFS? {
+        sectionTemplates.first { $0.id == selectedTemplateID }
+    }
+
+    private var templatePickerTitle: String {
+        guard selectedSectionKey != nil else {
+            return "Selecione uma seção primeiro"
+        }
+        if isLoading {
+            return "Carregando treinos..."
+        }
+        return selectedTemplate?.title ?? "Selecionar treino"
     }
 
     var body: some View {
@@ -1128,10 +1153,18 @@ private struct WorkoutTemplateSelectionSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 16) {
                         selectionTitle("SEÇÃO")
-                        sectionSelectionList
+                        sectionPickerField
+
+                        if expandedPicker == .section {
+                            sectionOptionsList
+                        }
 
                         selectionTitle("TREINO")
-                        templateSelectionContent
+                        templatePickerField
+
+                        if expandedPicker == .template {
+                            templateOptionsList
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
@@ -1141,12 +1174,39 @@ private struct WorkoutTemplateSelectionSheet: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
     }
 
-    private var sectionSelectionList: some View {
+    private var sectionPickerField: some View {
+        Button {
+            togglePicker(.section)
+        } label: {
+            WorkoutPickerLabel(
+                title: selectedSectionTitle ?? "Selecionar seção",
+                isSelected: selectedSectionKey != nil
+            )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var templatePickerField: some View {
+        let isEnabled = selectedSectionKey != nil && !isLoading
+
+        return Button {
+            togglePicker(.template)
+        } label: {
+            WorkoutPickerLabel(
+                title: templatePickerTitle,
+                isSelected: selectedTemplate != nil
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(!isEnabled)
+        .opacity(isEnabled ? 1 : 0.45)
+    }
+
+    private var sectionOptionsList: some View {
         VStack(spacing: 0) {
             ForEach(Array(sectionOptions.enumerated()), id: \.element.id) { index, option in
                 Button {
-                    selectedSectionKey = option.sectionKey
-                    selectedSectionTitle = option.title
+                    selectSection(option)
                 } label: {
                     selectionRow(
                         title: option.title,
@@ -1167,14 +1227,8 @@ private struct WorkoutTemplateSelectionSheet: View {
     }
 
     @ViewBuilder
-    private var templateSelectionContent: some View {
-        if selectedSectionKey == nil {
-            Text("Selecione uma seção primeiro")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.35))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 14)
-        } else if isLoading {
+    private var templateOptionsList: some View {
+        if isLoading {
             HStack(spacing: 10) {
                 ProgressView()
                 Text("Carregando treinos...")
@@ -1210,6 +1264,16 @@ private struct WorkoutTemplateSelectionSheet: View {
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
         }
+    }
+
+    private func togglePicker(_ picker: ExpandedPicker) {
+        expandedPicker = expandedPicker == picker ? nil : picker
+    }
+
+    private func selectSection(_ option: WorkoutSectionOption) {
+        selectedSectionKey = option.sectionKey
+        selectedSectionTitle = option.title
+        expandedPicker = nil
     }
 
     private func selectionTitle(_ title: String) -> some View {
