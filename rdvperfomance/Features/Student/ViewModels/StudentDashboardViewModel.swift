@@ -40,7 +40,7 @@ final class StudentDashboardViewModel: ObservableObject {
             let today = calendar.startOfDay(for: Date())
             let data = try await loadDays(for: weeks)
             let currentWeek = weeks
-                .filter { contains(today: today, in: $0, calendar: calendar) }
+                .filter { contains(today, in: $0, calendar: calendar) }
                 .sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
                 .first
 
