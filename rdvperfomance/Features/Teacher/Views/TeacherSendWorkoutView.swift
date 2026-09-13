@@ -140,12 +140,11 @@ struct TeacherSendWorkoutView: View {
         }
     }
 
-    private var currentWeekDays: [AvailableDay] {
+    private var availableDays: [AvailableDay] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
-        let daysUntilSunday = (8 - calendar.component(.weekday, from: today)) % 7
 
-        return (0...daysUntilSunday).compactMap { offset in
+        return (0..<5).compactMap { offset in
             guard let date = calendar.date(byAdding: .day, value: offset, to: today) else {
                 return nil
             }
@@ -181,49 +180,8 @@ struct TeacherSendWorkoutView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                if step == .student {
-                    studentStepLayout
-                } else {
-                    ScrollView(showsIndicators: false) {
-                        HStack {
-                            Spacer(minLength: 0)
-
-                            VStack(alignment: .leading, spacing: 14) {
-                                stepIndicator
-
-                                switch step {
-                                case .student:
-                                    EmptyView()
-                                case .workout:
-                                    selectedStudentsSummary
-                                    templateSection
-                                    nextButton(enabled: canAdvanceFromWorkout) {
-                                        Task { await advanceToDaySelection() }
-                                    }
-                                case .day:
-                                    selectedWorkoutsSummary
-                                    daySection
-                                    sendButton
-                                }
-
-                                if let errorMessage {
-                                    TeacherWorkoutTemplatesMessageCard(text: errorMessage, isError: true)
-                                }
-
-                                if let successMessage {
-                                    TeacherWorkoutTemplatesMessageCard(text: successMessage, isError: false)
-                                }
-
-                                Color.clear.frame(height: Theme.Layout.footerHeight + 20)
-                            }
-                            .frame(maxWidth: contentMaxWidth)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)
-
-                            Spacer(minLength: 0)
-                        }
-                    }
-                }
+                stepScrollableContent
+                fixedStepAction
 
                 FooterBar(
                     path: $path,
@@ -351,28 +309,87 @@ struct TeacherSendWorkoutView: View {
                     Spacer(minLength: 0)
                 }
             }
+        }
+    }
 
+    @ViewBuilder
+    private var stepScrollableContent: some View {
+        switch step {
+        case .student:
+            studentStepLayout
+        case .workout, .day:
+            nonStudentStepLayout
+        }
+    }
+
+    private var nonStudentStepLayout: some View {
+        ScrollView(showsIndicators: false) {
             HStack {
                 Spacer(minLength: 0)
 
-                nextButton(enabled: canAdvanceFromStudent) {
-                    step = .workout
+                VStack(alignment: .leading, spacing: 14) {
+                    stepIndicator
+
+                    if step == .workout {
+                        selectedStudentsSummary
+                        templateSection
+                    } else {
+                        selectedWorkoutsSummary
+                        daySection
+                    }
+
+                    if let errorMessage {
+                        TeacherWorkoutTemplatesMessageCard(text: errorMessage, isError: true)
+                    }
+
+                    if let successMessage {
+                        TeacherWorkoutTemplatesMessageCard(text: successMessage, isError: false)
+                    }
                 }
                 .frame(maxWidth: contentMaxWidth)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 16)
 
                 Spacer(minLength: 0)
             }
-            .padding(.horizontal, 16)
-            .padding(.top, 14)
-            .padding(.bottom, 12)
+        }
+    }
+
+    private var fixedStepAction: some View {
+        HStack {
+            Spacer(minLength: 0)
+
+            stepAction
+                .frame(maxWidth: contentMaxWidth)
+
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 14)
+        .padding(.bottom, 12)
+    }
+
+    @ViewBuilder
+    private var stepAction: some View {
+        switch step {
+        case .student:
+            nextButton(enabled: canAdvanceFromStudent) {
+                step = .workout
+            }
+        case .workout:
+            nextButton(enabled: canAdvanceFromWorkout) {
+                Task { await advanceToDaySelection() }
+            }
+        case .day:
+            sendButton
         }
     }
 
     private var studentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
             sectionTitle("Selecionar alunos")
-            studentFilterRow
             studentSearchField
+            studentFilterRow
             selectAllVisibleStudentsButton
         }
     }
@@ -424,16 +441,17 @@ struct TeacherSendWorkoutView: View {
     private var selectAllVisibleStudentsButton: some View {
         Button(action: toggleAllVisibleStudents) {
             HStack(spacing: 10) {
-                Image(systemName: areAllVisibleStudentsSelected ? "checkmark.circle.fill" : "circle")
-                    .font(.system(size: 18))
-                    .foregroundColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55))
+                Spacer()
 
                 Text(areAllVisibleStudentsSelected ? "Desmarcar todos" : "Selecionar todos")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.75))
 
-                Spacer()
+                Image(systemName: areAllVisibleStudentsSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 18))
+                    .foregroundColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55))
             }
+            .frame(maxWidth: .infinity, alignment: .trailing)
         }
         .buttonStyle(.plain)
         .disabled(visibleStudentIDs.isEmpty || isSending)
@@ -480,6 +498,8 @@ struct TeacherSendWorkoutView: View {
                     toggleSelection(for: student)
                 } label: {
                     studentRow(student)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -525,6 +545,8 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .contentShape(Rectangle())
     }
 
     private var selectedStudentsSummary: some View {
@@ -554,15 +576,17 @@ struct TeacherSendWorkoutView: View {
 
     private var templateSection: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("SELECIONAR TREINO")
+            templateSectionTitle
 
-            VStack(alignment: .leading, spacing: 12) {
-                templatePicker(category: .crossfit, title: "Crossfit")
-                templatePicker(category: .academia, title: "Academia")
-                templatePicker(category: .emCasa, title: "Treinos em Casa")
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
+
+            templatePicker(category: .crossfit, title: "Crossfit")
+            templatePickerDivider
+            templatePicker(category: .academia, title: "Academia")
+            templatePickerDivider
+            templatePicker(category: .emCasa, title: "Treinos em Casa")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
@@ -571,6 +595,15 @@ struct TeacherSendWorkoutView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private var templateSectionTitle: some View {
+        Text("SELECIONAR TREINO")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundColor(.white.opacity(0.55))
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func templatePicker(category: TreinoTipo, title: String) -> some View {
@@ -583,6 +616,15 @@ struct TeacherSendWorkoutView: View {
                 selection: selection
             )
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    private var templatePickerDivider: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.08))
+            .frame(height: 1)
+            .padding(.leading, 14)
     }
 
     private func categoryHeader(category: TreinoTipo, title: String) -> some View {
@@ -603,18 +645,42 @@ struct TeacherSendWorkoutView: View {
         selection: WorkoutTemplateFS?
     ) -> some View {
         if isLoadingInitialData {
-            pickerPlaceholder("Carregando treinos...")
+            templatePickerLabel(title: "Carregando treinos...", isSelected: false)
         } else {
             Button {
                 openWorkoutSelector(for: category)
             } label: {
-                WorkoutPickerLabel(
+                templatePickerLabel(
                     title: selection?.title ?? "Selecionar treino",
                     isSelected: selection != nil
                 )
             }
             .buttonStyle(.plain)
         }
+    }
+
+    private func templatePickerLabel(title: String, isSelected: Bool) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .lineLimit(1)
+            Spacer()
+            Image(systemName: "chevron.down")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.25))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(isSelected ? Color.green.opacity(0.14) : Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.08),
+                    lineWidth: 1
+                )
+        )
     }
 
     private func sectionOptions(for category: TreinoTipo) -> [WorkoutSectionOption] {
@@ -713,7 +779,7 @@ struct TeacherSendWorkoutView: View {
             cardSectionTitle("SELECIONAR dia")
 
             VStack(spacing: 0) {
-                ForEach(Array(currentWeekDays.enumerated()), id: \.element.id) { index, day in
+                ForEach(Array(availableDays.enumerated()), id: \.element.id) { index, day in
                     Button {
                         selectedDay = day
                         clearMessages()
@@ -722,7 +788,7 @@ struct TeacherSendWorkoutView: View {
                     }
                     .buttonStyle(.plain)
 
-                    if index < currentWeekDays.count - 1 {
+                    if index < availableDays.count - 1 {
                         Divider()
                             .background(Theme.Colors.divider)
                             .padding(.leading, 48)
@@ -850,24 +916,6 @@ struct TeacherSendWorkoutView: View {
         case .emCasa:
             return "house.fill"
         }
-    }
-
-    private func pickerPlaceholder(_ title: String) -> some View {
-        HStack {
-            Text(title)
-                .foregroundColor(.white.opacity(0.35))
-            Spacer()
-            Image(systemName: "chevron.down")
-                .foregroundColor(.white.opacity(0.25))
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
-        .background(Color.white.opacity(0.10))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-        )
     }
 
     private func loadingRow(_ title: String) -> some View {
