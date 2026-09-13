@@ -13,27 +13,26 @@ private struct WorkoutPickerLabel: View {
     let isSelected: Bool
 
     var body: some View {
-        let backgroundColor: Color = isSelected
-            ? Color.green.opacity(0.14)
-            : Color.white.opacity(0.10)
         let borderColor: Color = isSelected
-            ? Color.green.opacity(0.35)
-            : Color.white.opacity(0.12)
+            ? Theme.Colors.primaryGreen.opacity(0.35)
+            : Color.white.opacity(0.08)
 
         HStack {
             Text(title)
+                .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
                 .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
-                .foregroundColor(.white.opacity(0.55))
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25))
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
-        .background(backgroundColor)
-        .cornerRadius(12)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
+            RoundedRectangle(cornerRadius: 14)
                 .stroke(borderColor, lineWidth: 1)
         )
     }
@@ -243,8 +242,7 @@ struct TeacherSendWorkoutView: View {
                     isLoading: isLoadingInitialData,
                     onSelectTemplate: selectTemplate
                 )
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+                .presentationDetents([.fraction(0.80)])
             }
         }
     }
@@ -1138,6 +1136,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @State private var expandedPicker: ExpandedPicker?
+    @State private var pendingSelectedTemplate: WorkoutTemplateFS?
 
     private enum ExpandedPicker: Equatable {
         case section
@@ -1154,7 +1153,7 @@ private struct WorkoutTemplateSelectionSheet: View {
     }
 
     private var selectedTemplate: WorkoutTemplateFS? {
-        sectionTemplates.first { $0.id == selectedTemplateID }
+        pendingSelectedTemplate
     }
 
     private var templatePickerTitle: String {
@@ -1167,59 +1166,70 @@ private struct WorkoutTemplateSelectionSheet: View {
         return selectedTemplate?.title ?? "Selecionar treino"
     }
 
+    private var canConfirmSelection: Bool {
+        selectedSectionKey != nil && pendingSelectedTemplate != nil
+    }
+
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
+            Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                HStack {
-                    Text("Selecionar treino — \(category.displayName)")
-                        .font(Theme.Fonts.headerTitle())
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    Button("Fechar") {
-                        dismiss()
-                    }
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 18)
-                .padding(.bottom, 14)
-
-                Rectangle()
-                    .fill(Theme.Colors.divider)
-                    .frame(height: 1)
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 44, height: 5)
                     .frame(maxWidth: .infinity)
+                    .padding(.top, 10)
+
+                Text("Selecionar treino - \(category.displayName)")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .padding(.top, 4)
 
                 ScrollView(showsIndicators: false) {
-                    VStack(alignment: .leading, spacing: 16) {
-                        selectionTitle("SEÇÃO")
-                        sectionPickerField
+                    VStack(alignment: .leading, spacing: 14) {
+                        selectionField(title: "SEÇÃO") {
+                            sectionPickerField
+                        }
 
                         if expandedPicker == .section {
                             sectionOptionsList
                         }
 
-                        selectionTitle("TREINO")
-                        templatePickerField
+                        selectionField(title: "TREINO") {
+                            templatePickerField
+                        }
 
                         if expandedPicker == .template {
                             templateOptionsList
                         }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.vertical, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 12)
                 }
+
+                bottomActions
             }
         }
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear {
+            pendingSelectedTemplate = templates.first { $0.id == selectedTemplateID }
+        }
+    }
+
+    private func selectionField<Content: View>(
+        title: String,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+            content()
+        }
     }
 
     private var sectionPickerField: some View {
@@ -1272,6 +1282,10 @@ private struct WorkoutTemplateSelectionSheet: View {
         .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
@@ -1293,11 +1307,12 @@ private struct WorkoutTemplateSelectionSheet: View {
             VStack(spacing: 0) {
                 ForEach(Array(sectionTemplates.enumerated()), id: \.element.id) { index, template in
                     Button {
-                        onSelectTemplate(template)
+                        pendingSelectedTemplate = template
+                        expandedPicker = nil
                     } label: {
                         selectionRow(
                             title: template.title,
-                            isSelected: template.id == selectedTemplateID
+                            isSelected: template.id == pendingSelectedTemplate?.id
                         )
                     }
                     .buttonStyle(.plain)
@@ -1311,6 +1326,10 @@ private struct WorkoutTemplateSelectionSheet: View {
             .frame(maxWidth: .infinity)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
         }
     }
 
@@ -1319,22 +1338,18 @@ private struct WorkoutTemplateSelectionSheet: View {
     }
 
     private func selectSection(_ option: WorkoutSectionOption) {
+        if selectedSectionKey != option.sectionKey {
+            pendingSelectedTemplate = nil
+        }
         selectedSectionKey = option.sectionKey
         selectedSectionTitle = option.title
         expandedPicker = nil
     }
 
-    private func selectionTitle(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 14, weight: .medium))
-            .foregroundColor(.white.opacity(0.35))
-            .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     private func selectionRow(title: String, isSelected: Bool) -> some View {
         HStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 17, weight: .medium))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Spacer()
@@ -1343,14 +1358,56 @@ private struct WorkoutTemplateSelectionSheet: View {
                 .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.25))
                 .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 14)
         .padding(.vertical, 14)
         .contentShape(Rectangle())
     }
 
     private var selectionDivider: some View {
-        Divider()
-            .background(Theme.Colors.divider)
-            .padding(.leading, 16)
+        Rectangle()
+            .fill(Color.white.opacity(0.08))
+            .frame(height: 1)
+            .padding(.leading, 14)
+    }
+
+    private var bottomActions: some View {
+        HStack(spacing: 12) {
+            Button {
+                dismiss()
+            } label: {
+                Text("Cancelar")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.10))
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+
+            Button {
+                guard let pendingSelectedTemplate else { return }
+                onSelectTemplate(pendingSelectedTemplate)
+                dismiss()
+            } label: {
+                Text("Selecionar")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.black.opacity(0.85))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.green.opacity(0.90))
+                    .cornerRadius(14)
+            }
+            .buttonStyle(.plain)
+            .disabled(!canConfirmSelection)
+            .opacity(canConfirmSelection ? 1 : 0.45)
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 6)
+        .padding(.bottom, 16)
     }
 }
