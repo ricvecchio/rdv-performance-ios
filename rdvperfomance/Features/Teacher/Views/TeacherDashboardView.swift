@@ -2,10 +2,21 @@ import SwiftUI
 
 struct TeacherDashboardView: View {
 
+    private struct TodaySummary {
+        let studentsWithWorkout: Int
+        let completedWorkouts: Int
+        let inProgressWorkouts: Int
+        let studentsWithoutWorkout: Int
+    }
+
     @Binding var path: [AppRoute]
     let category: TreinoTipo
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
     @EnvironmentObject private var session: AppSession
+
+    @State private var todaySummary: TodaySummary?
+    @State private var isLoadingSummary = true
+    @State private var isSummaryLoadInProgress = false
 
     private let contentMaxWidth: CGFloat = 380
     private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
@@ -81,6 +92,9 @@ struct TeacherDashboardView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear {
+            Task { await loadTodaySummary() }
+        }
     }
 
     private var header: some View {
@@ -111,10 +125,26 @@ struct TeacherDashboardView: View {
             }
 
             LazyVGrid(columns: summaryColumns, spacing: 8) {
-                summaryItem(value: 0, title: "Alunos com treino", icon: "person.3.fill")
-                summaryItem(value: 0, title: "Treinos concluídos", icon: "checkmark.circle.fill")
-                summaryItem(value: 0, title: "Em andamento", icon: "clock.fill")
-                summaryItem(value: 0, title: "Sem treino", icon: "exclamationmark.triangle.fill")
+                summaryItem(
+                    value: todaySummary?.studentsWithWorkout,
+                    title: "Alunos com treino",
+                    icon: "person.3.fill"
+                )
+                summaryItem(
+                    value: todaySummary?.completedWorkouts,
+                    title: "Treinos concluídos",
+                    icon: "checkmark.circle.fill"
+                )
+                summaryItem(
+                    value: todaySummary?.inProgressWorkouts,
+                    title: "Em andamento",
+                    icon: "clock.fill"
+                )
+                summaryItem(
+                    value: todaySummary?.studentsWithoutWorkout,
+                    title: "Sem treino",
+                    icon: "exclamationmark.triangle.fill"
+                )
             }
         }
         .padding(14)
@@ -189,15 +219,21 @@ struct TeacherDashboardView: View {
         return first.uppercased() + String(date.dropFirst())
     }
 
-    private func summaryItem(value: Int, title: String, icon: String) -> some View {
+    private func summaryItem(value: Int?, title: String, icon: String) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
 
-            Text("\(value)")
-                .font(.system(size: 20, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
+            if isLoadingSummary {
+                ProgressView()
+                    .tint(.white.opacity(0.92))
+                    .frame(height: 24)
+            } else {
+                Text(value.map(String.init) ?? "—")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
+            }
 
             Text(title)
                 .font(.system(size: 10, weight: .medium))
@@ -213,6 +249,124 @@ struct TeacherDashboardView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private func loadTodaySummary() async {
+        guard !isSummaryLoadInProgress else { return }
+        isSummaryLoadInProgress = true
+        defer { isSummaryLoadInProgress = false }
+
+        guard let teacherId = session.uid?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !teacherId.isEmpty else {
+            isLoadingSummary = false
+            todaySummary = nil
+            return
+        }
+
+        isLoadingSummary = true
+        defer { isLoadingSummary = false }
+
+        do {
+            let studentsByCategory = try await FirestoreRepository.shared.getStudentsGroupedByTeacher(
+                teacherId: teacherId
+            )
+
+            let linkedStudentIDs = Set(
+                studentsByCategory.values
+                    .flatMap { $0 }
+                    .compactMap { $0.id?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+            )
+            guard !linkedStudentIDs.isEmpty else {
+                todaySummary = TodaySummary(
+                    studentsWithWorkout: 0,
+                    completedWorkouts: 0,
+                    inProgressWorkouts: 0,
+                    studentsWithoutWorkout: 0
+                )
+                return
+            }
+
+            let publishedWeeks = try await FirestoreRepository.shared.getPublishedWeeksForTeacher(
+                teacherId: teacherId
+            )
+            let calendar = Calendar.current
+            let today = calendar.startOfDay(for: Date())
+            let weeksForToday = publishedWeeks.filter {
+                linkedStudentIDs.contains($0.studentId) && weekCanContainToday($0, today: today, calendar: calendar)
+            }
+
+            let repository = FirestoreRepository.shared
+            let dayData = try await withThrowingTaskGroup(
+                of: (String, [TrainingDayFS], [String: Bool]).self
+            ) { group in
+                for week in weeksForToday {
+                    guard let weekId = week.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+                          !weekId.isEmpty else {
+                        continue
+                    }
+                    let studentId = week.studentId
+                    group.addTask {
+                        async let days = repository.getDaysForWeek(weekId: weekId)
+                        async let completionMap = repository.getDayStatusMap(
+                            weekId: weekId,
+                            studentId: studentId
+                        )
+                        let (loadedDays, loadedCompletionMap) = try await (days, completionMap)
+                        return (studentId, loadedDays, loadedCompletionMap)
+                    }
+                }
+
+                var results: [(String, [TrainingDayFS], [String: Bool])] = []
+                for try await result in group {
+                    results.append(result)
+                }
+                return results
+            }
+
+            var studentsWithWorkout = Set<String>()
+            var completedWorkouts = 0
+
+            for (studentId, days, completionMap) in dayData {
+                let todayDays = days.filter {
+                    guard let date = $0.date else { return false }
+                    return calendar.isDate(date, inSameDayAs: today)
+                }
+                guard !todayDays.isEmpty else { continue }
+
+                studentsWithWorkout.insert(studentId)
+                completedWorkouts += todayDays.filter {
+                    guard let dayId = $0.id else { return false }
+                    return completionMap[dayId] == true
+                }.count
+            }
+
+            todaySummary = TodaySummary(
+                studentsWithWorkout: studentsWithWorkout.count,
+                completedWorkouts: completedWorkouts,
+                // The persisted progress model only records completion, not a started state.
+                inProgressWorkouts: 0,
+                studentsWithoutWorkout: max(0, linkedStudentIDs.count - studentsWithWorkout.count)
+            )
+        } catch {
+            #if DEBUG
+            print("[TeacherDashboard] Não foi possível carregar o resumo de hoje: \(error.localizedDescription)")
+            #endif
+            todaySummary = nil
+        }
+    }
+
+    private func weekCanContainToday(
+        _ week: TrainingWeekFS,
+        today: Date,
+        calendar: Calendar
+    ) -> Bool {
+        guard let startDate = week.startDate else { return true }
+        let start = calendar.startOfDay(for: startDate)
+        let end = calendar.startOfDay(
+            for: week.endDate ?? calendar.date(byAdding: .day, value: 6, to: start) ?? start
+        )
+        return today >= start && today <= end
     }
 
     private func quickAccessItem(

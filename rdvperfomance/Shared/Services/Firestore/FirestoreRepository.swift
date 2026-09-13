@@ -354,6 +354,10 @@ final class FirestoreRepository {
         try await trainingRepository.getWeeksForStudent(studentId: studentId, onlyPublished: onlyPublished)
     }
 
+    func getPublishedWeeksForTeacher(teacherId: String) async throws -> [TrainingWeekFS] {
+        try await trainingRepository.getPublishedWeeksForTeacher(teacherId: teacherId)
+    }
+
     func getDaysForWeek(weekId: String) async throws -> [TrainingDayFS] {
         try await trainingRepository.getDaysForWeek(weekId: weekId)
     }

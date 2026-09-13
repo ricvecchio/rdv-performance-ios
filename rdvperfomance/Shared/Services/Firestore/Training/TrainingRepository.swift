@@ -28,6 +28,19 @@ final class TrainingRepository: FirestoreBaseRepository {
             a.weekTitle.localizedCaseInsensitiveCompare(b.weekTitle) == .orderedAscending
         }
     }
+
+    func getPublishedWeeksForTeacher(teacherId: String) async throws -> [TrainingWeekFS] {
+        let cleanTeacherId = clean(teacherId)
+        guard !cleanTeacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+
+        let snap = try await db.collection(TrainingFS.weeksCollection)
+            .whereField("teacherId", isEqualTo: cleanTeacherId)
+            .getDocuments()
+
+        return try snap.documents
+            .compactMap { try $0.data(as: TrainingWeekFS.self) }
+            .filter(\.isPublished)
+    }
     
     func getDaysForWeek(weekId: String) async throws -> [TrainingDayFS] {
         let cleanWeekId = clean(weekId)
