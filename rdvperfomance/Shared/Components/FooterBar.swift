@@ -46,6 +46,13 @@ struct FooterBar: View {
             isPerfilSelected: Bool
         )
 
+        case studentHomeTreinosRecordsProfile(
+            isHomeSelected: Bool,
+            isTreinosSelected: Bool,
+            isRecordsSelected: Bool,
+            isPerfilSelected: Bool
+        )
+
         case teacherHomeAlunosSobrePerfil(
             selectedCategory: TreinoTipo,
             isHomeSelected: Bool,
@@ -195,6 +202,34 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
+        case .studentHomeTreinosRecordsProfile(
+            let isHomeSelected,
+            let isTreinosSelected,
+            let isRecordsSelected,
+            let isPerfilSelected
+        ):
+            HStack(spacing: 16) {
+                Button { goStudentHome() } label: {
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+
+                Button { goTreinosAluno() } label: {
+                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: isTreinosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+
+                Button { goPersonalRecords() } label: {
+                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+
+                Button { goPerfilStudent() } label: {
+                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+            }
+
         // ✅ PROFESSOR (4 ícones) — espaçamento igual ao ALUNO
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
             HStack(spacing: 16) {
@@ -260,6 +295,10 @@ struct FooterBar: View {
 
     private func goAgenda() {
         selectStudentSection(.agenda)
+    }
+
+    private func goStudentHome() {
+        selectStudentSection(.home)
     }
 
     private func goTreinosAluno() {

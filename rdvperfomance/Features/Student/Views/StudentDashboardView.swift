@@ -1,0 +1,242 @@
+import SwiftUI
+
+struct StudentDashboardView: View {
+    @Binding var path: [AppRoute]
+    let studentId: String
+    let onSelectSection: (StudentMainSection) -> Void
+
+    @EnvironmentObject private var session: AppSession
+    @StateObject private var viewModel: StudentDashboardViewModel
+
+    private let contentMaxWidth: CGFloat = 380
+
+    init(
+        path: Binding<[AppRoute]>,
+        studentId: String,
+        onSelectSection: @escaping (StudentMainSection) -> Void,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.studentId = studentId
+        self.onSelectSection = onSelectSection
+        _viewModel = StateObject(wrappedValue: StudentDashboardViewModel(studentId: studentId, repository: repository))
+    }
+
+    var body: some View {
+        ZStack {
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+                    .frame(maxWidth: .infinity)
+
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(alignment: .leading, spacing: 14) {
+                            header
+                            progressCard
+                            upcomingWorkoutsCard
+                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                FooterBar(
+                    path: $path,
+                    kind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: true,
+                        isTreinosSelected: false,
+                        isRecordsSelected: false,
+                        isPerfilSelected: false
+                    ),
+                    onSelectStudentSection: onSelectSection
+                )
+                .frame(height: Theme.Layout.footerHeight)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.footerBackground)
+            }
+            .ignoresSafeArea(.container, edges: [.bottom])
+        }
+        .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Text("Área do Aluno")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+            }
+            ToolbarItem(placement: .topBarTrailing) {
+                HeaderAvatarView(size: 38)
+            }
+        }
+        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear {
+            Task { await viewModel.load() }
+        }
+    }
+
+    private var header: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(greeting)
+                .font(.system(size: 26, weight: .bold))
+                .foregroundColor(.white)
+            Text("Disciplina hoje, resultado amanhã! 💪")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private var progressCard: some View {
+        let completed = viewModel.currentWeekDays.filter(\.isCompleted).count
+        let total = viewModel.currentWeekDays.count
+        let progress = total == 0 ? 0 : Double(completed) / Double(total)
+
+        return VStack(alignment: .leading, spacing: 14) {
+            Text("Progresso da semana")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white.opacity(0.92))
+            if viewModel.isLoading {
+                ProgressView()
+                    .tint(.white)
+            } else {
+                Text("\(completed) de \(total) treinos concluídos")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+                HStack(spacing: 10) {
+                    ProgressView(value: progress)
+                        .tint(Theme.Colors.primaryGreen)
+                    Text("\(Int((progress * 100).rounded()))%")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                }
+                if total == 0 {
+                    Text("Você não possui treinos programados para esta semana.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                } else {
+                    HStack {
+                        ForEach(viewModel.currentWeekDays) { item in
+                            VStack(spacing: 6) {
+                                Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                                    .foregroundColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                                Text(weekdayAbbreviation(for: item.day.date))
+                                    .font(.system(size: 12, weight: .medium))
+                                    .foregroundColor(.white.opacity(0.75))
+                            }
+                            .frame(maxWidth: .infinity)
+                        }
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+    }
+
+    private var upcomingWorkoutsCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("Próximos treinos")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
+                Spacer()
+                Button("Ver todos") {
+                    onSelectSection(.agenda)
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(Theme.Colors.primaryGreen)
+                .buttonStyle(.plain)
+            }
+
+            if viewModel.isLoading {
+                ProgressView().tint(.white)
+            } else if viewModel.upcomingDays.isEmpty {
+                Text("Nenhum treino programado.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+            } else {
+                ForEach(Array(viewModel.upcomingDays.enumerated()), id: \.element.id) { index, item in
+                    Button {
+                        path.append(.studentWeekDetail(
+                            studentId: studentId,
+                            weekId: item.weekId,
+                            weekTitle: item.weekTitle
+                        ))
+                    } label: {
+                        upcomingWorkoutRow(item)
+                    }
+                    .buttonStyle(.plain)
+                    if index < viewModel.upcomingDays.count - 1 {
+                        Divider().background(Theme.Colors.divider).padding(.leading, 42)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+    }
+
+    private func upcomingWorkoutRow(_ item: StudentDashboardDay) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: "calendar")
+                .font(.system(size: 18))
+                .foregroundColor(.green.opacity(0.85))
+                .frame(width: 28)
+            VStack(alignment: .leading, spacing: 3) {
+                Text(dateTitle(for: item.day.date))
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
+                Text(item.day.title)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+            Spacer()
+            Image(systemName: "chevron.right")
+                .foregroundColor(.white.opacity(0.35))
+        }
+        .padding(.vertical, 8)
+        .contentShape(Rectangle())
+    }
+
+    private var greeting: String {
+        let name = session.userName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return name.isEmpty ? "Olá, Aluno!" : "Olá, \(name)!"
+    }
+
+    private func weekdayAbbreviation(for date: Date?) -> String {
+        guard let date else { return "" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: date).replacingOccurrences(of: ".", with: "").capitalized
+    }
+
+    private func dateTitle(for date: Date?) -> String {
+        guard let date else { return "" }
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "EEEE dd/MM"
+        return formatter.string(from: date).capitalized(with: formatter.locale)
+    }
+}

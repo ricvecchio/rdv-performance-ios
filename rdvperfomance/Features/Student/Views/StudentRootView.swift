@@ -44,14 +44,21 @@ struct StudentRootView: View {
     let studentId: String
     let studentName: String
 
-    @State private var selectedSection: StudentMainSection = .agenda
+    @State private var selectedSection: StudentMainSection = .home
 
+    @State private var homePath: [AppRoute] = []
     @State private var agendaPath: [AppRoute] = []
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
 
     var body: some View {
         ZStack {
+            homeTab
+                .opacity(selectedSection == .home ? 1 : 0)
+                .allowsHitTesting(selectedSection == .home)
+                .toolbar(selectedSection == .home ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .home ? 1 : 0)
+
             agendaTab
                 .opacity(selectedSection == .agenda ? 1 : 0)
                 .allowsHitTesting(selectedSection == .agenda)
@@ -70,6 +77,7 @@ struct StudentRootView: View {
                 .toolbar(selectedSection == .profile ? .visible : .hidden, for: .navigationBar)
                 .zIndex(selectedSection == .profile ? 1 : 0)
         }
+        .environment(\.selectStudentMainSection, selectSection)
     }
 
     // MARK: - Seleção de seção (chamada pelo FooterBar de qualquer tela do aluno)
@@ -83,6 +91,7 @@ struct StudentRootView: View {
     private func selectSection(_ target: StudentMainSection) {
         let alreadyAtRoot: Bool
         switch target {
+        case .home: alreadyAtRoot = homePath.isEmpty
         case .agenda: alreadyAtRoot = agendaPath.isEmpty
         case .records: alreadyAtRoot = recordsPath.isEmpty
         case .profile: alreadyAtRoot = profilePath.isEmpty
@@ -91,6 +100,7 @@ struct StudentRootView: View {
         if selectedSection == target && alreadyAtRoot { return }
 
         switch target {
+        case .home: homePath = []
         case .agenda: agendaPath = []
         case .records: recordsPath = []
         case .profile: profilePath = []
@@ -101,6 +111,19 @@ struct StudentRootView: View {
 
     // MARK: - Agenda
 
+    private var homeTab: some View {
+        NavigationStack(path: $homePath) {
+            StudentDashboardView(
+                path: $homePath,
+                studentId: studentId,
+                onSelectSection: selectSection
+            )
+            .navigationDestination(for: AppRoute.self) { route in
+                agendaDestination(for: route, path: $homePath)
+            }
+        }
+    }
+
     private var agendaTab: some View {
         NavigationStack(path: $agendaPath) {
             StudentAgendaView(
@@ -110,18 +133,18 @@ struct StudentRootView: View {
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in
-                agendaDestination(for: route)
+                agendaDestination(for: route, path: $agendaPath)
             }
         }
     }
 
     @ViewBuilder
-    private func agendaDestination(for route: AppRoute) -> some View {
+    private func agendaDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
         switch route {
 
         case .studentWeekDetail(let studentId, let weekId, let weekTitle):
             StudentWeekDetailView(
-                path: $agendaPath,
+                path: path,
                 studentId: studentId,
                 weekId: weekId,
                 weekTitle: weekTitle,
@@ -130,7 +153,7 @@ struct StudentRootView: View {
 
         case .studentDayDetail(let weekId, let day, let weekTitle):
             StudentDayDetailView(
-                path: $agendaPath,
+                path: path,
                 weekId: weekId,
                 day: day,
                 weekTitle: weekTitle,
@@ -138,7 +161,7 @@ struct StudentRootView: View {
             )
 
         case .arExercise(let weekId, let dayId):
-            ARExerciseView(path: $agendaPath, weekId: weekId, dayId: dayId)
+            ARExerciseView(path: path, weekId: weekId, dayId: dayId)
 
         default:
             EmptyView()

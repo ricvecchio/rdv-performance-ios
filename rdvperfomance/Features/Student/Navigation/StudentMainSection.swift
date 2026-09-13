@@ -7,6 +7,7 @@ import Foundation
 /// momento. Cada seção possui sua própria pilha de navegação hierárquica
 /// independente (ver `StudentRootView`).
 enum StudentMainSection: Hashable {
+    case home
     case agenda
     case records
     case profile

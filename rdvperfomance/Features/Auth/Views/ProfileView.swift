@@ -330,9 +330,10 @@ struct ProfileView: View {
         if session.userType == .STUDENT {
             FooterBar(
                 path: $path,
-                kind: .agendaSobrePerfil(
-                    isAgendaSelected: false,
-                    isSobreSelected: false,
+                kind: .studentHomeTreinosRecordsProfile(
+                    isHomeSelected: false,
+                    isTreinosSelected: false,
+                    isRecordsSelected: false,
                     isPerfilSelected: true
                 )
             )
