@@ -143,7 +143,8 @@ struct TeacherDashboardView: View {
                 summaryItem(
                     value: todaySummary?.studentsWithoutWorkout,
                     title: "Sem treino",
-                    icon: "exclamationmark.triangle.fill"
+                    icon: "exclamationmark.triangle.fill",
+                    iconColor: .red.opacity(0.9)
                 )
             }
         }
@@ -219,11 +220,16 @@ struct TeacherDashboardView: View {
         return first.uppercased() + String(date.dropFirst())
     }
 
-    private func summaryItem(value: Int?, title: String, icon: String) -> some View {
+    private func summaryItem(
+        value: Int?,
+        title: String,
+        icon: String,
+        iconColor: Color = .green.opacity(0.85)
+    ) -> some View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundColor(iconColor)
 
             if isLoadingSummary {
                 ProgressView()
