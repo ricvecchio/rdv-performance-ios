@@ -26,7 +26,6 @@ struct TeacherWorkoutTemplatesContentCard: View {
     let isLoading: Bool
     let hasLoadedInitialData: Bool
     let templates: [WorkoutTemplateFS]
-    let category: TreinoTipo
     let isCrossfitCategory: Bool
     let showsTemplateActions: Bool
 
@@ -43,7 +42,6 @@ struct TeacherWorkoutTemplatesContentCard: View {
             } else {
                 TeacherWorkoutTemplatesList(
                     templates: templates,
-                    category: category,
                     showsTemplateActions: showsTemplateActions,
                     onTapTemplate: onTapTemplate,
                     onSendTemplate: onSendTemplate,
@@ -65,7 +63,6 @@ struct TeacherWorkoutTemplatesContentCard: View {
 struct TeacherWorkoutTemplatesList: View {
 
     let templates: [WorkoutTemplateFS]
-    let category: TreinoTipo
     let showsTemplateActions: Bool
     let onTapTemplate: (WorkoutTemplateFS) -> Void
     let onSendTemplate: (WorkoutTemplateFS) -> Void
@@ -81,7 +78,6 @@ struct TeacherWorkoutTemplatesList: View {
                 } label: {
                     TeacherWorkoutTemplateRow(
                         template: t,
-                        category: category,
                         showsTemplateActions: showsTemplateActions,
                         onSend: { onSendTemplate(t) },
                         onDelete: { onDeleteTemplate(t) }
@@ -101,7 +97,6 @@ struct TeacherWorkoutTemplatesList: View {
 struct TeacherWorkoutTemplateRow: View {
 
     let template: WorkoutTemplateFS
-    let category: TreinoTipo
     let showsTemplateActions: Bool
     let onSend: () -> Void
     let onDelete: () -> Void
@@ -115,10 +110,17 @@ struct TeacherWorkoutTemplateRow: View {
                 .frame(width: 26)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(template.primaryDisplayText(for: category))
+                Text(template.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
-                    .lineLimit(2)
+
+                let sub = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
+                if !sub.isEmpty {
+                    Text(sub)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                        .lineLimit(2)
+                }
             }
 
             Spacer()

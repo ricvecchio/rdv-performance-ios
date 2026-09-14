@@ -11,6 +11,9 @@ struct CreateTreinoAcademiaView: View {
 
     @EnvironmentObject private var session: AppSession
 
+    @State private var title: String = ""
+    @State private var description: String = ""
+
     // ✅ mesmos blocos do "Criar WOD"
     @State private var blocks: [BlockDraft] = [
         BlockDraft(name: "Aquecimento", details: ""),
@@ -18,6 +21,8 @@ struct CreateTreinoAcademiaView: View {
         BlockDraft(name: "Treino", details: ""),
         BlockDraft(name: "Cargas / Movimentos", details: "")
     ]
+
+    @State private var showPasswordDummy: Bool = false
 
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
@@ -51,6 +56,7 @@ struct CreateTreinoAcademiaView: View {
 
                             header
 
+                            trainingCard
                             blocksCard
                             saveButtonCard
 
@@ -120,7 +126,6 @@ struct CreateTreinoAcademiaView: View {
         .sheet(isPresented: $showTemplatesSheet) {
             WorkoutTemplateAttachmentSheet(
                 templates: templates,
-                category: category,
                 isLoading: isLoadingTemplates,
                 onSelect: applyTemplate,
                 onClose: { showTemplatesSheet = false }
@@ -143,13 +148,64 @@ struct CreateTreinoAcademiaView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private var trainingCard: some View {
+        VStack(alignment: .leading, spacing: 12) {
+
+            HStack {
+                Text("Treino")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                Spacer()
+                WorkoutTemplateAttachmentButton(isLoading: isLoadingTemplates) {
+                    Task { await openTemplates() }
+                }
+            }
+
+            UnderlineTextField(
+                title: "Título do Treino",
+                text: $title,
+                isSecure: false,
+                showPassword: $showPasswordDummy,
+                lineColor: Theme.Colors.divider,
+                textColor: .white.opacity(0.92),
+                placeholderColor: .white.opacity(0.55)
+            )
+
+            Divider().background(Theme.Colors.divider)
+
+            VStack(alignment: .leading, spacing: 6) {
+                Text("Descrição")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                TextEditor(text: $description)
+                    .foregroundColor(.white.opacity(0.92))
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 90)
+                    .padding(10)
+                    .background(Color.black.opacity(0.22))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    )
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                WorkoutTemplateAttachmentButton(isLoading: isLoadingTemplates) {
-                    Task { await openTemplates() }
-                }
                 Spacer()
                 Button {
                     blocks.append(BlockDraft(name: "Novo bloco", details: ""))
@@ -300,9 +356,8 @@ struct CreateTreinoAcademiaView: View {
     }
 
     private func applyTemplate(_ template: WorkoutTemplateFS) {
-        blocks = (template.blocks ?? []).map {
-            BlockDraft(name: $0.name, details: $0.details)
-        }
+        title = template.title
+        description = template.description
         showTemplatesSheet = false
     }
 
@@ -321,35 +376,26 @@ struct CreateTreinoAcademiaView: View {
             return
         }
 
-        let payloadBlocks: [BlockFS] = blocks
-            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-            .map { BlockFS(id: $0.id, name: $0.name, details: $0.details) }
-
-        guard let primaryBlock = WorkoutTemplateFS.primaryBlock(
-            from: payloadBlocks,
-            for: category,
-            includingContentFallback: false
-        ),
-        !primaryBlock.details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Informe o conteúdo do treino."
+        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanTitle.isEmpty else {
+            errorMessage = "Informe o título do treino."
             return
         }
-
-        let technicalTitle = WorkoutTemplateFS.technicalTitle(
-            from: payloadBlocks,
-            for: category
-        )
 
         isSaving = true
         defer { isSaving = false }
 
         do {
+            let payloadBlocks: [BlockFS] = blocks
+                .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+                .map { BlockFS(id: $0.id, name: $0.name, details: $0.details) }
+
             _ = try await FirestoreRepository.shared.createWorkoutTemplate(
                 teacherId: teacherId,
                 categoryRaw: category.rawValue,
                 sectionKey: sectionKey,
-                title: technicalTitle,
-                description: "",
+                title: cleanTitle,
+                description: description,
                 blocks: payloadBlocks
             )
 

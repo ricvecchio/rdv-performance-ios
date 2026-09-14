@@ -123,7 +123,6 @@ struct TeacherWorkoutTemplatesView: View {
                                 isLoading: isLoading,
                                 hasLoadedInitialData: hasLoadedInitialData,
                                 templates: templates,
-                                category: category,
                                 isCrossfitCategory: isCrossfitCategory,
                                 showsTemplateActions: mode == .manage,
                                 onTapTemplate: { t in
@@ -209,7 +208,7 @@ struct TeacherWorkoutTemplatesView: View {
         .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .detail(let t):
-                TeacherWorkoutTemplateDetailSheet(template: t, category: category)
+                TeacherWorkoutTemplateDetailSheet(template: t)
 
             case .send(let t):
                 TeacherSendWorkoutToStudentSheet(
