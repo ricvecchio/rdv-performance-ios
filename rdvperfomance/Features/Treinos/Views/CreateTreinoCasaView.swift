@@ -26,9 +26,7 @@ struct CreateTreinoCasaView: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
-    @State private var showTemplatesSheet: Bool = false
-    @State private var templates: [WorkoutTemplateFS] = []
-    @State private var isLoadingTemplates: Bool = false
+    @State private var isSelectingTemplateAttachment: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -122,13 +120,13 @@ struct CreateTreinoCasaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(isPresented: $showTemplatesSheet) {
-            WorkoutTemplateAttachmentSheet(
-                templates: templates,
-                isLoading: isLoadingTemplates,
-                onSelect: applyTemplate,
-                onClose: { showTemplatesSheet = false }
-            )
+        .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateSelectedForAttachment)) { notification in
+            guard isSelectingTemplateAttachment,
+                  let template = notification.object as? WorkoutTemplateFS else {
+                return
+            }
+            isSelectingTemplateAttachment = false
+            applyTemplate(template)
         }
     }
 
@@ -195,8 +193,9 @@ struct CreateTreinoCasaView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                WorkoutTemplateAttachmentButton(isLoading: isLoadingTemplates) {
-                    Task { await openTemplates() }
+                WorkoutTemplateAttachmentButton(isLoading: false) {
+                    isSelectingTemplateAttachment = true
+                    path.append(.teacherEmCasaLibrary(mode: .library, templateMode: .attach))
                 }
 
                 Spacer()
@@ -325,33 +324,12 @@ struct CreateTreinoCasaView: View {
         )
     }
 
-    private func openTemplates() async {
-        errorMessage = nil
-        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
-            return
-        }
-
-        isLoadingTemplates = true
-        defer { isLoadingTemplates = false }
-
-        do {
-            templates = try await FirestoreRepository.shared.getWorkoutTemplates(
-                teacherId: teacherId,
-                categoryRaw: category.rawValue,
-                sectionKey: "meusTreinos"
-            )
-            showTemplatesSheet = true
-        } catch {
-            errorMessage = error.localizedDescription
-        }
-    }
-
     private func applyTemplate(_ template: WorkoutTemplateFS) {
         title = template.title
         description = template.description
-        showTemplatesSheet = false
+        blocks = (template.blocks ?? []).map {
+            BlockDraft(name: $0.name, details: $0.details)
+        }
     }
 
     private func saveTemplate() async {

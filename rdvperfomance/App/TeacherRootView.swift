@@ -78,10 +78,10 @@ struct TeacherRootView: View {
                 mode: mode,
                 templateMode: templateMode
             )
-        case .teacherAcademiaLibrary(let mode):
-            TeacherAcademiaLibraryView(path: destinationPath, mode: mode)
-        case .teacherEmCasaLibrary(let mode):
-            TeacherEmCasaLibraryView(path: destinationPath, mode: mode)
+        case .teacherAcademiaLibrary(let mode, let templateMode):
+            TeacherAcademiaLibraryView(path: destinationPath, mode: mode, templateMode: templateMode)
+        case .teacherEmCasaLibrary(let mode, let templateMode):
+            TeacherEmCasaLibraryView(path: destinationPath, mode: mode, templateMode: templateMode)
         case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle, let mode):
             TeacherWorkoutTemplatesView(
                 path: destinationPath,

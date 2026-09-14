@@ -4,6 +4,7 @@ struct TeacherAcademiaLibraryView: View {
 
     @Binding var path: [AppRoute]
     let mode: TeacherWorkoutsMode
+    let templateMode: TeacherWorkoutTemplatesMode
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -51,19 +52,28 @@ struct TeacherAcademiaLibraryView: View {
                             VStack(spacing: 12) {
                                 ForEach(menuItems) { item in
                                     actionRow(title: item.title, icon: "folder.fill") {
-                                        switch mode {
-                                        case .library:
+                                        if templateMode == .attach {
                                             path.append(.teacherWorkoutTemplates(
                                                 category: .academia,
                                                 sectionKey: item.sectionKey,
-                                                sectionTitle: item.title
+                                                sectionTitle: item.title,
+                                                mode: .attach
                                             ))
-                                        case .create:
-                                            path.append(.createTreinoAcademia(
-                                                category: .academia,
-                                                sectionKey: item.sectionKey,
-                                                sectionTitle: item.title
-                                            ))
+                                        } else {
+                                            switch mode {
+                                            case .library:
+                                                path.append(.teacherWorkoutTemplates(
+                                                    category: .academia,
+                                                    sectionKey: item.sectionKey,
+                                                    sectionTitle: item.title
+                                                ))
+                                            case .create:
+                                                path.append(.createTreinoAcademia(
+                                                    category: .academia,
+                                                    sectionKey: item.sectionKey,
+                                                    sectionTitle: item.title
+                                                ))
+                                            }
                                         }
                                     }
                                 }

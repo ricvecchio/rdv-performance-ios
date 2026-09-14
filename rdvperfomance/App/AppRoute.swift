@@ -112,8 +112,14 @@ enum AppRoute: Hashable {
     )
 
     // ✅ NOVO: bibliotecas/menus para separar blocos por músculo
-    case teacherAcademiaLibrary(mode: TeacherWorkoutsMode = .library)
-    case teacherEmCasaLibrary(mode: TeacherWorkoutsMode = .library)
+    case teacherAcademiaLibrary(
+        mode: TeacherWorkoutsMode = .library,
+        templateMode: TeacherWorkoutTemplatesMode = .manage
+    )
+    case teacherEmCasaLibrary(
+        mode: TeacherWorkoutsMode = .library,
+        templateMode: TeacherWorkoutTemplatesMode = .manage
+    )
 
     case teacherWorkoutTemplates(
         category: TreinoTipo,
