@@ -149,23 +149,6 @@ struct CreateCrossfitWODView: View {
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            HStack {
-                Text("Treino")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
-                Spacer()
-                WorkoutTemplateAttachmentButton(isLoading: false) {
-                    isSelectingTemplateAttachment = true
-                    path.append(
-                        .teacherCrossfitLibrary(
-                            section: .benchmarks,
-                            mode: .library,
-                            templateMode: .attach
-                        )
-                    )
-                }
-            }
-
             UnderlineTextField(
                 title: "Título do WOD",
                 text: $title,
@@ -211,6 +194,17 @@ struct CreateCrossfitWODView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
+                WorkoutTemplateAttachmentButton(isLoading: false) {
+                    isSelectingTemplateAttachment = true
+                    path.append(
+                        .teacherCrossfitLibrary(
+                            section: .benchmarks,
+                            mode: .library,
+                            templateMode: .attach
+                        )
+                    )
+                }
+
                 Spacer()
                 Button {
                     blocks.append(BlockDraft(name: "Novo bloco", details: ""))

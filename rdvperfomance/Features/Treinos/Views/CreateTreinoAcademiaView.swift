@@ -151,16 +151,6 @@ struct CreateTreinoAcademiaView: View {
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            HStack {
-                Text("Treino")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
-                Spacer()
-                WorkoutTemplateAttachmentButton(isLoading: isLoadingTemplates) {
-                    Task { await openTemplates() }
-                }
-            }
-
             UnderlineTextField(
                 title: "Título do Treino",
                 text: $title,
@@ -206,6 +196,10 @@ struct CreateTreinoAcademiaView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
+                WorkoutTemplateAttachmentButton(isLoading: isLoadingTemplates) {
+                    Task { await openTemplates() }
+                }
+
                 Spacer()
                 Button {
                     blocks.append(BlockDraft(name: "Novo bloco", details: ""))
