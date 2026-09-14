@@ -970,19 +970,20 @@ struct ProfileView: View {
         Button {
             session.logout()
         } label: {
-            Text("Sair")
-                .font(.system(size: 16, weight: .medium))
-                .foregroundColor(.white.opacity(0.9))
-                .frame(width: 260, height: 44)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+            HStack {
+                Spacer()
+                Text("Sair")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                Spacer()
+            }
+            .padding(.vertical, 14)
+            .background(Color.green.opacity(0.16))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }
