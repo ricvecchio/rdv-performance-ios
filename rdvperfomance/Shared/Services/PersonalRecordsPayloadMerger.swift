@@ -19,18 +19,25 @@ enum PersonalRecordsPayloadMerger {
         "student_pr_gymnastic_custom_items_v1",
         "student_pr_endurance_values_v1",
         "student_pr_endurance_history_v1",
+        "student_pr_endurance_custom_items_v1",
         "student_pr_notables_values_v1",
         "student_pr_notables_history_v1",
+        "student_pr_notables_custom_items_v1",
         "student_pr_girls_values_v1",
         "student_pr_girls_history_v1",
+        "student_pr_girls_custom_items_v1",
         "student_pr_open_values_v1",
         "student_pr_open_history_v1",
+        "student_pr_open_custom_items_v1",
         "student_pr_heroes_values_v1",
         "student_pr_heroes_history_v1",
+        "student_pr_heroes_custom_items_v1",
         "student_pr_campeonatos_values_v1",
         "student_pr_campeonatos_history_v1",
+        "student_pr_campeonatos_custom_items_v1",
         "student_pr_crossfit_games_values_v1",
-        "student_pr_crossfit_games_history_v1"
+        "student_pr_crossfit_games_history_v1",
+        "student_pr_crossfit_games_custom_items_v1"
     ]
 
     private static let numericValuesKeys: Set<String> = [
@@ -48,6 +55,41 @@ enum PersonalRecordsPayloadMerger {
             customKey: "student_pr_gymnastic_custom_items_v1",
             valuesKey: "student_pr_gymnastic_values_v1",
             historyKey: "student_pr_gymnastic_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_endurance_custom_items_v1",
+            valuesKey: "student_pr_endurance_values_v1",
+            historyKey: "student_pr_endurance_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_notables_custom_items_v1",
+            valuesKey: "student_pr_notables_values_v1",
+            historyKey: "student_pr_notables_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_girls_custom_items_v1",
+            valuesKey: "student_pr_girls_values_v1",
+            historyKey: "student_pr_girls_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_open_custom_items_v1",
+            valuesKey: "student_pr_open_values_v1",
+            historyKey: "student_pr_open_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_heroes_custom_items_v1",
+            valuesKey: "student_pr_heroes_values_v1",
+            historyKey: "student_pr_heroes_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_campeonatos_custom_items_v1",
+            valuesKey: "student_pr_campeonatos_values_v1",
+            historyKey: "student_pr_campeonatos_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_crossfit_games_custom_items_v1",
+            valuesKey: "student_pr_crossfit_games_values_v1",
+            historyKey: "student_pr_crossfit_games_history_v1"
         )
     ]
 

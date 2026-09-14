@@ -25,6 +25,14 @@ struct StudentNotablesPersonalRecordsView: View {
     }
 
 
+    private struct CustomNotableMove: Identifiable, Hashable, Codable {
+        let id: String
+        let name: String
+        let storageKey: String
+        let subtitle: String
+        let description: String
+    }
+
     private struct PRHistoryEntry: Identifiable, Codable, Hashable {
         let id: String
         let value: String
@@ -322,6 +330,9 @@ Descanso: 1 min entre rounds.
     @AppStorage("student_pr_notables_history_v1")
     private var notablesHistoryData: Data = Data()
 
+    @AppStorage("student_pr_notables_custom_items_v1")
+    private var customNotablesItemsData: Data = Data()
+
     @State private var selectedMove: NotableMove?
     @State private var inputValue: String = ""
     @State private var historyMove: NotableMove?
@@ -329,6 +340,22 @@ Descanso: 1 min entre rounds.
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+
+    @State private var showAddItemSheet: Bool = false
+    @State private var newItemName: String = ""
+    @State private var newItemSubtitle: String = ""
+    @State private var newItemDescription: String = ""
+    @State private var newItemValue: String = ""
+    @State private var addItemErrorMessage: String? = nil
+    @State private var showDeleteAlert: Bool = false
+
+    private var allMoves: [NotableMove] {
+        moves + loadCustomItems().map { NotableMove(name: $0.name, storageKey: $0.storageKey) }
+    }
+
+    private var canDeleteSelectedItem: Bool {
+        selectedMove?.storageKey.hasPrefix("custom_notables_") == true
+    }
 
     var body: some View {
         ZStack {
@@ -350,9 +377,28 @@ Descanso: 1 min entre rounds.
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Adicione seu melhor resultado por item.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
+                            HStack(alignment: .center, spacing: 10) {
+                                Text("Adicione seu melhor resultado por item.")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.55))
+
+                                Spacer()
+
+                                Button {
+                                    addItemErrorMessage = nil
+                                    newItemName = ""
+                                    newItemSubtitle = ""
+                                    newItemDescription = ""
+                                    newItemValue = ""
+                                    showAddItemSheet = true
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Adicionar novo benchmark")
+                            }
 
                             tableContainer()
 
@@ -380,7 +426,7 @@ Descanso: 1 min entre rounds.
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: (selectedMove != nil || historyMove != nil || showPRDatePicker) ? 4 : 0)
+        .blur(radius: (selectedMove != nil || historyMove != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -416,6 +462,9 @@ Descanso: 1 min entre rounds.
         }) { move in
             editSheet(move: move)
         }
+        .sheet(isPresented: $showAddItemSheet) {
+            addItemSheet()
+        }
     }
 
     // MARK: - Tabela
@@ -428,7 +477,7 @@ Descanso: 1 min entre rounds.
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
 
-            let list = moves
+            let list = allMoves
 
             ForEach(Array(list.enumerated()), id: \.element.id) { index, move in
 
@@ -471,10 +520,10 @@ Descanso: 1 min entre rounds.
     }
 
     private func tableRow(move: NotableMove) -> some View {
-        let displayValue = bestDisplayValue(for: move.storageKey, metadata: wodsByKey[move.storageKey]?.subtitle ?? "")
+        let displayValue = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move))
 
         return Button {
-            inputValue = bestDisplayValue(for: move.storageKey, metadata: wodsByKey[move.storageKey]?.subtitle ?? "") ?? ""
+            inputValue = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move)) ?? ""
             selectedPRDate = Date()
             selectedMove = move
         } label: {
@@ -519,7 +568,7 @@ Descanso: 1 min entre rounds.
 
     // MARK: - Sheet (editar PR)
     private func editSheet(move: NotableMove) -> some View {
-        let wod: NotableWod? = wodsByKey[move.storageKey]
+        let wod: NotableWod? = wod(for: move.storageKey)
 
         return ZStack {
             Theme.Colors.headerBackground
@@ -560,7 +609,7 @@ Descanso: 1 min entre rounds.
 
                             Spacer()
 
-                            if let value = bestDisplayValue(for: move.storageKey, metadata: wodsByKey[move.storageKey]?.subtitle ?? ""), !value.isEmpty {
+                            if let value = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move)), !value.isEmpty {
                                 Button {
                                     beginEditingExistingPR(for: move)
                                 } label: {
@@ -589,7 +638,7 @@ Descanso: 1 min entre rounds.
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
 
-                    dateAndHistorySection(key: move.storageKey, metadata: wodsByKey[move.storageKey]?.subtitle ?? "", historyAction: {
+                    dateAndHistorySection(key: move.storageKey, metadata: metadata(for: move), historyAction: {
                         historyMove = move
                     })
                     .padding(.horizontal, 16)
@@ -661,6 +710,21 @@ Descanso: 1 min entre rounds.
                             .cornerRadius(14)
                     }
                     .buttonStyle(.plain)
+
+                    if canDeleteSelectedItem {
+                        Button {
+                            showDeleteAlert = true
+                        } label: {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16, weight: .bold))
+                                .frame(width: 50, height: 50)
+                                .background(Color.red.opacity(0.85))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Excluir benchmark")
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
@@ -668,8 +732,16 @@ Descanso: 1 min entre rounds.
             }
         }
         .presentationDetents([.fraction(0.80)])
+        .alert("Excluir registro", isPresented: $showDeleteAlert) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Excluir", role: .destructive) {
+                deleteSelectedItem()
+            }
+        } message: {
+            Text("Deseja excluir o registro de \(selectedMove?.name ?? "este benchmark")?")
+        }
         .onAppear {
-            inputValue = bestDisplayValue(for: move.storageKey, metadata: wodsByKey[move.storageKey]?.subtitle ?? "") ?? ""
+            inputValue = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move)) ?? ""
             selectedPRDate = Date()
         }
     }
@@ -715,8 +787,24 @@ Descanso: 1 min entre rounds.
         )
     }
 
+    private func wod(for key: String) -> NotableWod? {
+        if let wod = wodsByKey[key] { return wod }
+        guard let custom = loadCustomItems().first(where: { $0.storageKey == key }) else { return nil }
+        return NotableWod(title: custom.name, subtitle: custom.subtitle, description: custom.description)
+    }
+
+    private func metadata(for move: NotableMove) -> String {
+        if let wod = wodsByKey[move.storageKey] {
+            return wod.subtitle
+        }
+        guard let custom = loadCustomItems().first(where: { $0.storageKey == move.storageKey }) else {
+            return ""
+        }
+        return "\(custom.subtitle) \(custom.description)"
+    }
+
     private func beginEditingExistingPR(for move: NotableMove) {
-        let metadata = wodsByKey[move.storageKey]?.subtitle ?? ""
+        let metadata = metadata(for: move)
         guard let value = bestDisplayValue(for: move.storageKey, metadata: metadata) else { return }
 
         inputValue = value
@@ -739,7 +827,7 @@ Descanso: 1 min entre rounds.
         guard !trimmed.isEmpty else { return }
 
         let key = move.storageKey
-        let metadata = wodsByKey[move.storageKey]?.subtitle ?? ""
+        let metadata = metadata(for: move)
         var history = loadHistoryMap()
         var primaryCandidates: [String]
 
@@ -806,7 +894,7 @@ Descanso: 1 min entre rounds.
             removeValue(for: move.storageKey)
             return
         }
-        let metadata = wodsByKey[move.storageKey]?.subtitle ?? ""
+        let metadata = metadata(for: move)
         let shouldSave = shouldUpdatePrimary(trimmed, key: move.storageKey, metadata: metadata)
         saveHistoryValue(trimmed, for: move.storageKey, date: selectedPRDate)
         if shouldSave {
@@ -1005,6 +1093,155 @@ Descanso: 1 min entre rounds.
         guard !path.isEmpty else { return }
         path.removeLast()
     }
+    private func addItemSheet() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .padding(.top, 10)
+
+                    Text("Novo benchmark")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+
+                    Text("Crie um benchmark e, se quiser, já informe seu resultado inicial.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                    addItemField("Nome do benchmark", placeholder: "Ex: Meu benchmark", text: $newItemName)
+
+                    addItemField("Formato (opcional)", placeholder: "Ex: For Time", text: $newItemSubtitle)
+
+                    addItemField("Descrição (opcional)", placeholder: "Ex: 3 rounds", text: $newItemDescription)
+
+                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 150 pts", text: $newItemValue)
+
+                        if let message = addItemErrorMessage {
+                            Text(message)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            showAddItemSheet = false
+                        } label: {
+                            Text("Cancelar")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            addNewItem()
+                        } label: {
+                            Text("Adicionar")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.black.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.green.opacity(0.90))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 24)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
+            TextField(placeholder, text: text)
+                .textInputAutocapitalization(.sentences)
+                .autocorrectionDisabled(true)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+    }
+
+    private func addNewItem() {
+        addItemErrorMessage = nil
+        let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else {
+            addItemErrorMessage = "Informe o nome do benchmark."
+            return
+        }
+
+        let existingNames = allMoves.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        guard !existingNames.contains(cleanName.lowercased()) else {
+            addItemErrorMessage = "Este benchmark já existe na sua lista."
+            return
+        }
+
+        let id = UUID().uuidString
+        let key = "custom_notables_\(id)"
+        let customItem = CustomNotableMove(id: id, name: cleanName, storageKey: key, subtitle: newItemSubtitle.trimmingCharacters(in: .whitespacesAndNewlines), description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        var list = loadCustomItems()
+        list.append(customItem)
+        saveCustomItems(list)
+
+        let item = NotableMove(name: customItem.name, storageKey: customItem.storageKey)
+        let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedValue.isEmpty {
+            inputValue = trimmedValue
+            saveCurrentInput(move: item)
+        }
+        showAddItemSheet = false
+    }
+
+    private func deleteSelectedItem() {
+        guard let item = selectedMove, item.storageKey.hasPrefix("custom_notables_") else { return }
+        removeValue(for: item.storageKey)
+        removeHistory(for: item.storageKey)
+        var list = loadCustomItems()
+        list.removeAll { $0.storageKey == item.storageKey }
+        saveCustomItems(list)
+        selectedMove = nil
+    }
+
+    private func loadCustomItems() -> [CustomNotableMove] {
+        guard !customNotablesItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomNotableMove].self, from: customNotablesItemsData)) ?? []
+    }
+
+    private func saveCustomItems(_ list: [CustomNotableMove]) {
+        customNotablesItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
 }
 
 // MARK: - Persistência (JSON em Data)
