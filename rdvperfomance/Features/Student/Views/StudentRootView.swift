@@ -264,6 +264,13 @@ struct StudentRootView: View {
         case .studentFeedbacks(let category):
             StudentFeedbacksView(path: $profilePath, category: category, onSelectSection: selectSection)
 
+        case .studentTeachers(let studentEmail):
+            StudentTeachersView(
+                path: $profilePath,
+                studentEmail: studentEmail,
+                onSelectSection: selectSection
+            )
+
         default:
             EmptyView()
         }

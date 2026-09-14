@@ -1,0 +1,507 @@
+import SwiftUI
+import FirebaseFirestore
+
+struct StudentTeachersView: View {
+
+    @Binding var path: [AppRoute]
+    let studentEmail: String
+    let onSelectSection: (StudentMainSection) -> Void
+
+    @EnvironmentObject private var session: AppSession
+
+    private let contentMaxWidth: CGFloat = 380
+    private let repository: FirestoreRepository
+
+    @State private var linkedTeachers: [AppUser] = []
+    @State private var linkedTeacherIds: Set<String> = []
+    @State private var isLoadingLinkedTeachers: Bool = false
+
+    @State private var teacherEmailInput: String = ""
+    @State private var linkActionMessage: String? = nil
+    @State private var linkActionMessageIsError: Bool = false
+    @State private var isProcessingLinkAction: Bool = false
+    @State private var showRequestLinkModal: Bool = false
+    @State private var resolvedStudentEmail: String = ""
+
+    init(
+        path: Binding<[AppRoute]>,
+        studentEmail: String,
+        onSelectSection: @escaping (StudentMainSection) -> Void,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.studentEmail = studentEmail
+        self.onSelectSection = onSelectSection
+        self.repository = repository
+        _resolvedStudentEmail = State(
+            initialValue: studentEmail
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+        )
+    }
+
+    private var currentUid: String {
+        (session.currentUid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var normalizedRouteStudentEmail: String {
+        studentEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+    }
+
+    private var effectiveStudentEmail: String {
+        normalizedRouteStudentEmail.isEmpty ? resolvedStudentEmail : normalizedRouteStudentEmail
+    }
+
+    var body: some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Aqui você vê seus professores vinculados e pode convidar outro professor.")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.55))
+                                    .padding(.top, 12)
+
+                                Button {
+                                    teacherEmailInput = ""
+                                    linkActionMessage = nil
+                                    linkActionMessageIsError = false
+                                    showRequestLinkModal = true
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "person.badge.plus")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.green.opacity(0.9))
+
+                                        Text("Convidar professor")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.white.opacity(0.92))
+
+                                        Spacer(minLength: 0)
+
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.white.opacity(0.35))
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color.green.opacity(0.16))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 14)
+                                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                            )
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(isProcessingLinkAction)
+                            }
+
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Vinculados")
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+
+                                if isLoadingLinkedTeachers {
+                                    HStack(spacing: 10) {
+                                        ProgressView()
+                                        Text("Carregando professores...")
+                                            .font(.system(size: 13))
+                                            .foregroundColor(.white.opacity(0.55))
+                                    }
+                                    .padding(.vertical, 6)
+                                } else if linkedTeachers.isEmpty {
+                                    Text("Nenhum professor vinculado no momento.")
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.white.opacity(0.55))
+                                        .padding(.vertical, 6)
+                                } else {
+                                    VStack(spacing: 10) {
+                                        ForEach(linkedTeachers, id: \.id) { teacher in
+                                            VStack(alignment: .leading, spacing: 4) {
+                                                Text(teacher.name.trimmingCharacters(in: .whitespacesAndNewlines))
+                                                    .font(.system(size: 15, weight: .semibold))
+                                                    .foregroundColor(.white.opacity(0.92))
+
+                                                Text(teacher.email.trimmingCharacters(in: .whitespacesAndNewlines))
+                                                    .font(.system(size: 13, weight: .medium))
+                                                    .foregroundColor(.white.opacity(0.55))
+                                            }
+                                            .padding(14)
+                                            .frame(maxWidth: .infinity, alignment: .leading)
+                                            .background(Theme.Colors.cardBackground)
+                                            .cornerRadius(14)
+                                        }
+                                    }
+                                }
+                            }
+
+                            Color.clear.frame(height: 18)
+                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                FooterBar(
+                    path: $path,
+                    kind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: false,
+                        isPerfilSelected: true
+                    ),
+                    onSelectStudentSection: onSelectSection
+                )
+                .frame(height: Theme.Layout.footerHeight)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.footerBackground)
+            }
+
+            if showRequestLinkModal {
+                Color.black.opacity(0.25)
+                    .ignoresSafeArea()
+                    .transition(.opacity)
+                    .allowsHitTesting(false)
+            }
+        }
+        .blur(radius: showRequestLinkModal ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: showRequestLinkModal)
+        .ignoresSafeArea(.container, edges: [.bottom])
+        .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarLeading) {
+                Button {
+                    path.removeLast()
+                } label: {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("Meus professores")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+            }
+        }
+        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .toolbarColorScheme(.dark, for: .navigationBar)
+        .sheet(isPresented: $showRequestLinkModal) {
+            requestLinkModalView()
+                .presentationDetents([.height(360)])
+                .presentationDragIndicator(.visible)
+        }
+        .task(id: "\(currentUid)|\(normalizedRouteStudentEmail)") {
+            await loadStudentEmailIfNeeded()
+            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+        }
+    }
+
+    private func requestLinkModalView() -> some View {
+        NavigationStack {
+            ZStack {
+                Theme.Colors.headerBackground.ignoresSafeArea()
+
+                VStack(alignment: .leading, spacing: 14) {
+                    Text("Digite o e-mail do professor para enviar a solicitação.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("E-mail do professor")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        TextField("professor@email.com", text: $teacherEmailInput)
+                            .textInputAutocapitalization(.never)
+                            .keyboardType(.emailAddress)
+                            .autocorrectionDisabled(true)
+                            .padding(12)
+                            .background(Color.white.opacity(0.08))
+                            .cornerRadius(12)
+                            .foregroundColor(.white.opacity(0.92))
+                    }
+
+                    if let message = linkActionMessage {
+                        Text(message)
+                            .font(.system(size: 13))
+                            .foregroundColor(linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
+                    }
+
+                    HStack(spacing: 10) {
+                        Button {
+                            showRequestLinkModal = false
+                        } label: {
+                            Text("Voltar")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 10)
+                                .background(Capsule().fill(Color.white.opacity(0.08)))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isProcessingLinkAction)
+
+                        Button {
+                            Task {
+                                let didSend = await requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                                if didSend {
+                                    showRequestLinkModal = false
+                                }
+                            }
+                        } label: {
+                            HStack(spacing: 10) {
+                                Text("Enviar solicitação")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+
+                                if isProcessingLinkAction {
+                                    ProgressView()
+                                }
+                            }
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.green.opacity(0.20)))
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isProcessingLinkAction)
+                    }
+
+                    Spacer(minLength: 0)
+                }
+                .padding(16)
+            }
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Convidar professor")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Fechar") {
+                        showRequestLinkModal = false
+                    }
+                    .foregroundColor(.white)
+                }
+            }
+            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+            .toolbarBackground(.visible, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+        }
+    }
+
+    private func loadStudentEmailIfNeeded() async {
+        guard normalizedRouteStudentEmail.isEmpty else {
+            resolvedStudentEmail = normalizedRouteStudentEmail
+            return
+        }
+
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            resolvedStudentEmail = ""
+            return
+        }
+
+        do {
+            let user = try await repository.getUser(uid: uid)
+            resolvedStudentEmail = user?.email
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased() ?? ""
+        } catch {
+            resolvedStudentEmail = ""
+        }
+    }
+
+    private func loadLinkedTeachers(forceFallbackFromWeeks: Bool) async {
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            linkedTeachers = []
+            linkedTeacherIds = []
+            return
+        }
+
+        isLoadingLinkedTeachers = true
+        defer { isLoadingLinkedTeachers = false }
+
+        var teacherIds: [String] = []
+
+        do {
+            let relations = try await repository.getTeacherLinksForStudent(studentId: uid)
+            teacherIds = Array(
+                Set(
+                    relations
+                        .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                )
+            )
+        } catch {
+            teacherIds = []
+        }
+
+        if teacherIds.isEmpty, forceFallbackFromWeeks {
+            do {
+                let weeks = try await repository.getWeeksForStudent(studentId: uid, onlyPublished: false)
+                teacherIds = Array(
+                    Set(
+                        weeks
+                            .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                            .filter { !$0.isEmpty }
+                    )
+                )
+            } catch {
+                teacherIds = []
+            }
+        }
+
+        linkedTeacherIds = Set(teacherIds)
+
+        guard !teacherIds.isEmpty else {
+            linkedTeachers = []
+            return
+        }
+
+        let repo = repository
+        var result: [AppUser] = []
+
+        await withTaskGroup(of: AppUser?.self) { group in
+            for teacherId in teacherIds {
+                group.addTask {
+                    do {
+                        return try await repo.getUser(uid: teacherId)
+                    } catch {
+                        return nil
+                    }
+                }
+            }
+
+            for await user in group {
+                if let user {
+                    result.append(user)
+                }
+            }
+        }
+
+        result.sort { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+        linkedTeachers = result
+    }
+
+    private func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
+        let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        guard email.contains("@"), email.contains(".") else {
+            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            linkActionMessage = "Não foi possível identificar o aluno."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        await loadStudentEmailIfNeeded()
+        let currentStudentEmail = effectiveStudentEmail
+        if currentStudentEmail.isEmpty {
+            linkActionMessage = "Não foi possível identificar o e-mail do aluno."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        isProcessingLinkAction = true
+        linkActionMessage = nil
+        linkActionMessageIsError = false
+        defer { isProcessingLinkAction = false }
+
+        do {
+            guard let teacher = try await repository.getTeacherByEmail(email: email),
+                  let teacherIdRaw = teacher.id else {
+                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            let teacherId = teacherIdRaw.trimmingCharacters(in: .whitespacesAndNewlines)
+            if teacherId.isEmpty {
+                linkActionMessage = "Não foi possível identificar o professor."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+
+            if linkedTeacherIds.contains(teacherId) {
+                linkActionMessage = "Esse professor já está vinculado."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            do {
+                let requests = try await repository.getRequestsForStudent(studentId: uid)
+                let hasPendingSameTeacher = requests.contains { request in
+                    let requestTeacherId = request.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let status = request.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    return requestTeacherId == teacherId && status == "pending"
+                }
+                if hasPendingSameTeacher {
+                    linkActionMessage = "Já existe uma solicitação pendente para esse professor."
+                    linkActionMessageIsError = true
+                    return false
+                }
+            } catch {
+            }
+
+            try await repository.createLinkRequest(
+                studentId: uid,
+                studentEmail: currentStudentEmail,
+                teacherId: teacherId,
+                teacherEmail: email
+            )
+
+            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessageIsError = false
+
+            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+            return true
+        } catch {
+            let nsError = error as NSError
+            if nsError.domain == FirestoreErrorDomain,
+               nsError.code == FirestoreErrorCode.permissionDenied.rawValue {
+                linkActionMessage = "Sem permissão para solicitar vínculo. Ajuste as regras do Firestore para permitir localizar professores."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            linkActionMessage = nsError.localizedDescription
+            linkActionMessageIsError = true
+            return false
+        }
+    }
+}
