@@ -10,9 +10,16 @@ struct StudentDashboardDay: Identifiable {
     var id: String { "\(weekId)-\(day.id ?? day.dayIndex.description)" }
 }
 
+struct StudentDashboardDaySummary: Identifiable {
+    let date: Date
+    let isCompleted: Bool
+
+    var id: Date { date }
+}
+
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
-    @Published private(set) var currentWeekDays: [StudentDashboardDay] = []
+    @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
     @Published private(set) var upcomingDays: [StudentDashboardDay] = []
     @Published private(set) var isLoading = true
 
@@ -39,14 +46,11 @@ final class StudentDashboardViewModel: ObservableObject {
             let calendar = Calendar.current
             let today = calendar.startOfDay(for: Date())
             let data = try await loadDays(for: weeks)
-            let currentWeek = weeks
-                .filter { contains(today, in: $0, calendar: calendar) }
-                .sorted { ($0.startDate ?? .distantPast) > ($1.startDate ?? .distantPast) }
-                .first
-
-            currentWeekDays = data
-                .filter { $0.weekId == currentWeek?.id }
-                .sorted { ($0.day.date ?? .distantFuture) < ($1.day.date ?? .distantFuture) }
+            currentWeekDaySummaries = makeCurrentWeekDaySummaries(
+                from: data,
+                today: today,
+                calendar: calendar
+            )
             upcomingDays = data
                 .filter {
                     guard let date = $0.day.date else { return false }
@@ -59,7 +63,7 @@ final class StudentDashboardViewModel: ObservableObject {
             #if DEBUG
             print("[StudentDashboard] Não foi possível carregar a Home: \(error.localizedDescription)")
             #endif
-            currentWeekDays = []
+            currentWeekDaySummaries = []
             upcomingDays = []
         }
     }
@@ -94,12 +98,27 @@ final class StudentDashboardViewModel: ObservableObject {
         }
     }
 
-    private func contains(_ date: Date, in week: TrainingWeekFS, calendar: Calendar) -> Bool {
-        guard let startDate = week.startDate else { return false }
-        let start = calendar.startOfDay(for: startDate)
-        let end = calendar.startOfDay(
-            for: week.endDate ?? calendar.date(byAdding: .day, value: 6, to: start) ?? start
-        )
-        return date >= start && date <= end
+    private func makeCurrentWeekDaySummaries(
+        from days: [StudentDashboardDay],
+        today: Date,
+        calendar: Calendar
+    ) -> [StudentDashboardDaySummary] {
+        guard let currentWeek = calendar.dateInterval(of: .weekOfYear, for: today) else {
+            return []
+        }
+
+        let daysByDate = Dictionary(grouping: days) { item in
+            calendar.startOfDay(for: item.day.date ?? .distantPast)
+        }
+
+        return daysByDate
+            .filter { date, _ in currentWeek.contains(date) }
+            .map { date, days in
+                StudentDashboardDaySummary(
+                    date: date,
+                    isCompleted: days.allSatisfy(\.isCompleted)
+                )
+            }
+            .sorted { $0.date < $1.date }
     }
 }

@@ -102,8 +102,8 @@ struct StudentDashboardView: View {
     }
 
     private var progressCard: some View {
-        let completed = viewModel.currentWeekDays.filter(\.isCompleted).count
-        let total = viewModel.currentWeekDays.count
+        let completed = viewModel.currentWeekDaySummaries.filter(\.isCompleted).count
+        let total = viewModel.currentWeekDaySummaries.count
         let progress = total == 0 ? 0 : Double(completed) / Double(total)
 
         return VStack(alignment: .leading, spacing: 14) {
@@ -114,7 +114,7 @@ struct StudentDashboardView: View {
                 ProgressView()
                     .tint(.white)
             } else {
-                Text("\(completed) de \(total) treinos concluídos")
+                Text("\(completed) de \(total) dias concluídos")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
                 HStack(spacing: 10) {
@@ -129,18 +129,19 @@ struct StudentDashboardView: View {
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                 } else {
-                    HStack {
-                        ForEach(viewModel.currentWeekDays) { item in
+                    HStack(spacing: 10) {
+                        ForEach(viewModel.currentWeekDaySummaries) { item in
                             VStack(spacing: 6) {
                                 Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
                                     .foregroundColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35))
-                                Text(weekdayAbbreviation(for: item.day.date))
+                                Text(weekdayAbbreviation(for: item.date))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundColor(.white.opacity(0.75))
                             }
                             .frame(maxWidth: .infinity)
                         }
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
         }
