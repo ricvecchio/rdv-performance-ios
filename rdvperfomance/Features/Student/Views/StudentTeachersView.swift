@@ -96,6 +96,7 @@ struct StudentTeachersView: View {
                                     Image(systemName: "chevron.right")
                                         .foregroundColor(.white.opacity(0.35))
                                 }
+                                .frame(maxWidth: .infinity)
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
                                 .background(
@@ -115,10 +116,10 @@ struct StudentTeachersView: View {
                         sentRequestsCard
                         receivedInvitesCard
                     }
-                    .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     .padding(.bottom, 28)
+                    .frame(maxWidth: contentMaxWidth)
                     .frame(maxWidth: .infinity)
                 }
 
@@ -293,9 +294,13 @@ struct StudentTeachersView: View {
                 Text(teacher.name)
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Text(teacher.email)
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.35))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
             Spacer()
         }
@@ -347,9 +352,13 @@ struct StudentTeachersView: View {
                 Text(teacher?.name ?? invite.teacherEmail)
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
                 Text(invite.teacherEmail)
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.35))
+                    .lineLimit(1)
+                    .truncationMode(.tail)
             }
 
             Spacer()
