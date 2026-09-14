@@ -11,9 +11,6 @@ struct CreateCrossfitWODView: View {
 
     @EnvironmentObject private var session: AppSession
 
-    @State private var title: String = ""
-    @State private var description: String = ""
-
     // ✅ mesmos blocos do "Criar dia" (inclui Cargas / Movimentos)
     @State private var blocks: [BlockDraft] = [
         BlockDraft(name: "Aquecimento", details: ""),
@@ -21,8 +18,6 @@ struct CreateCrossfitWODView: View {
         BlockDraft(name: "WOD", details: ""),
         BlockDraft(name: "Cargas / Movimentos", details: "")
     ]
-
-    @State private var showPasswordDummy: Bool = false
 
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
@@ -54,7 +49,6 @@ struct CreateCrossfitWODView: View {
 
                             header
 
-                            trainingCard
                             blocksCard
                             saveButtonCard
 
@@ -146,14 +140,10 @@ struct CreateCrossfitWODView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var trainingCard: some View {
+    private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("Treino")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
-                Spacer()
                 WorkoutTemplateAttachmentButton(isLoading: false) {
                     isSelectingTemplateAttachment = true
                     path.append(
@@ -164,53 +154,6 @@ struct CreateCrossfitWODView: View {
                         )
                     )
                 }
-            }
-
-            UnderlineTextField(
-                title: "Título do WOD",
-                text: $title,
-                isSecure: false,
-                showPassword: $showPasswordDummy,
-                lineColor: Theme.Colors.divider,
-                textColor: .white.opacity(0.92),
-                placeholderColor: .white.opacity(0.55)
-            )
-
-            Divider().background(Theme.Colors.divider)
-
-            VStack(alignment: .leading, spacing: 6) {
-                Text("Descrição")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-
-                TextEditor(text: $description)
-                    .foregroundColor(.white.opacity(0.92))
-                    .scrollContentBackground(.hidden)
-                    .frame(minHeight: 90)
-                    .padding(10)
-                    .background(Color.black.opacity(0.22))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                    )
-            }
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
-
-    private var blocksCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-
-            HStack {
                 Spacer()
                 Button {
                     blocks.append(BlockDraft(name: "Novo bloco", details: ""))
@@ -339,8 +282,6 @@ struct CreateCrossfitWODView: View {
     }
 
     private func applyTemplate(_ template: WorkoutTemplateFS) {
-        title = template.title
-        description = template.description
         blocks = (template.blocks ?? []).map {
             BlockDraft(name: $0.name, details: $0.details)
         }
@@ -361,26 +302,35 @@ struct CreateCrossfitWODView: View {
             return
         }
 
-        let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanTitle.isEmpty else {
-            errorMessage = "Informe o título do WOD."
+        let payloadBlocks: [BlockFS] = blocks
+            .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
+            .map { BlockFS(id: $0.id, name: $0.name, details: $0.details) }
+
+        guard let primaryBlock = WorkoutTemplateFS.primaryBlock(
+            from: payloadBlocks,
+            for: category,
+            includingContentFallback: false
+        ),
+        !primaryBlock.details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
+            errorMessage = "Informe o conteúdo do WOD."
             return
         }
+
+        let technicalTitle = WorkoutTemplateFS.technicalTitle(
+            from: payloadBlocks,
+            for: category
+        )
 
         isSaving = true
         defer { isSaving = false }
 
         do {
-            let payloadBlocks: [BlockFS] = blocks
-                .filter { !$0.name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
-                .map { BlockFS(id: $0.id, name: $0.name, details: $0.details) }
-
             _ = try await FirestoreRepository.shared.createWorkoutTemplate(
                 teacherId: teacherId,
                 categoryRaw: category.rawValue,
                 sectionKey: sectionKey,
-                title: cleanTitle,
-                description: description,
+                title: technicalTitle,
+                description: "",
                 blocks: payloadBlocks
             )
 

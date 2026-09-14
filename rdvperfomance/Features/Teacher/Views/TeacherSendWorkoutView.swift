@@ -649,7 +649,7 @@ struct TeacherSendWorkoutView: View {
                 openWorkoutSelector(for: category)
             } label: {
                 templatePickerLabel(
-                    title: selection?.title ?? "Selecionar treino",
+                    title: selection.map { $0.primaryDisplayText(for: category) } ?? "Selecionar treino",
                     isSelected: selection != nil
                 )
             }
@@ -766,7 +766,7 @@ struct TeacherSendWorkoutView: View {
                     .foregroundColor(.white.opacity(0.55))
             }
 
-            Text(template.title)
+            Text(template.primaryDisplayText(for: category))
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
         }
@@ -942,7 +942,8 @@ struct TeacherSendWorkoutView: View {
     }
 
     private func templateMenuTitle(_ template: WorkoutTemplateFS) -> String {
-        "\(template.title) • \(template.sectionKey)"
+        let templateCategory = TreinoTipo.normalized(from: template.categoryRaw) ?? category
+        return "\(template.primaryDisplayText(for: templateCategory)) • \(template.sectionKey)"
     }
 
     private func weekdayTitle(for date: Date) -> String {
@@ -1077,7 +1078,7 @@ struct TeacherSendWorkoutView: View {
                 }
                 let dayName = weekdayTitle(for: selectedDate)
 
-                for (_, template) in selectedTemplatesInOrder {
+                for (templateCategory, template) in selectedTemplatesInOrder {
                     let blocks = template.blocks ?? []
                     _ = try await FirestoreRepository.shared.upsertDay(
                         weekId: week.weekId,
@@ -1085,7 +1086,7 @@ struct TeacherSendWorkoutView: View {
                         dayIndex: dayIndex,
                         dayName: dayName,
                         date: selectedDate,
-                        title: template.title,
+                        title: template.technicalTitle(for: templateCategory),
                         description: template.description,
                         blocks: blocks
                     )
@@ -1163,7 +1164,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         if isLoading {
             return "Carregando treinos..."
         }
-        return selectedTemplate?.title ?? "Selecionar treino"
+        return selectedTemplate?.primaryDisplayText(for: category) ?? "Selecionar treino"
     }
 
     private var canConfirmSelection: Bool {
@@ -1311,7 +1312,7 @@ private struct WorkoutTemplateSelectionSheet: View {
                         expandedPicker = nil
                     } label: {
                         selectionRow(
-                            title: template.title,
+                            title: template.primaryDisplayText(for: category),
                             isSelected: template.id == pendingSelectedTemplate?.id
                         )
                     }

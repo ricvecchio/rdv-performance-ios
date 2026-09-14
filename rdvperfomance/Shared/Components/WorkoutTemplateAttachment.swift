@@ -23,6 +23,7 @@ struct WorkoutTemplateAttachmentButton: View {
 
 struct WorkoutTemplateAttachmentSheet: View {
     let templates: [WorkoutTemplateFS]
+    let category: TreinoTipo
     let isLoading: Bool
     let onSelect: (WorkoutTemplateFS) -> Void
     let onClose: () -> Void
@@ -42,16 +43,9 @@ struct WorkoutTemplateAttachmentSheet: View {
                         Button {
                             onSelect(template)
                         } label: {
-                            VStack(alignment: .leading, spacing: 6) {
-                                Text(template.title)
-                                    .font(.system(size: 16, weight: .semibold))
-                                if !template.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                    Text(template.description)
-                                        .font(.system(size: 13))
-                                        .foregroundColor(.secondary)
-                                        .lineLimit(2)
-                                }
-                            }
+                            Text(template.primaryDisplayText(for: category))
+                                .font(.system(size: 16, weight: .semibold))
+                                .lineLimit(2)
                         }
                     }
                     .scrollContentBackground(.hidden)

@@ -5,6 +5,7 @@ import UIKit
 struct TeacherWorkoutTemplateDetailSheet: View {
 
     let template: WorkoutTemplateFS
+    let category: TreinoTipo
     @Environment(\.dismiss) private var dismiss
 
     private let contentMaxWidth: CGFloat = 380
@@ -129,13 +130,13 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(template.title)
+            Text(category.displayName)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            let desc = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
-            if !desc.isEmpty {
-                Text(desc)
+            let section = template.sectionKey.trimmingCharacters(in: .whitespacesAndNewlines)
+            if !section.isEmpty {
+                Text(section)
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.70))
             }

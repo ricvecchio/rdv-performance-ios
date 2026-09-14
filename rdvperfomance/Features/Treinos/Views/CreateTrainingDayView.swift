@@ -465,14 +465,9 @@ struct CreateTrainingDayView: View {
                                     showTemplatesSheet = false
                                 } label: {
                                     VStack(alignment: .leading, spacing: 6) {
-                                        Text(t.title)
+                                        Text(t.primaryDisplayText(for: category))
                                             .font(.system(size: 16, weight: .semibold))
-                                        if !t.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                                            Text(t.description)
-                                                .font(.system(size: 13))
-                                                .foregroundColor(.secondary)
-                                                .lineLimit(2)
-                                        }
+                                            .lineLimit(2)
                                     }
                                 }
                             }

@@ -166,16 +166,10 @@ struct TeacherWorkoutTemplatesListView: View {
                         .frame(width: 26)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(item.title)
+                        Text(item.primaryDisplayText(for: category))
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
-
-                        if !item.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            Text(item.description)
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.55))
-                                .lineLimit(2)
-                        }
+                            .lineLimit(2)
                     }
 
                     Spacer()

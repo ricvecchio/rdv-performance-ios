@@ -63,9 +63,10 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(template.title)
+            Text(template.primaryDisplayText(for: category))
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
+                .lineLimit(2)
 
             Text("Escolha o aluno, a semana e o dia onde este treino será aplicado.")
                 .font(.system(size: 13))
@@ -394,7 +395,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 dayIndex: selectedDayIndex,
                 dayName: dayName,
                 date: date,
-                title: template.title,
+                title: template.technicalTitle(for: category),
                 description: template.description,
                 blocks: blocks
             )
@@ -418,4 +419,3 @@ struct TeacherSendWorkoutToStudentSheet: View {
         return nil
     }
 }
-
