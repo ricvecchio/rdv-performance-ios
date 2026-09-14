@@ -354,7 +354,11 @@ struct StudentWeekDetailView: View {
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(.white.opacity(0.92))
 
-                            Text(day.subtitleText)
+                            Text(
+                                isVideo
+                                    ? day.subtitleText
+                                    : trainingDateSubtitle(for: day.date, fallback: day.subtitleText)
+                            )
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
                         }
@@ -465,6 +469,15 @@ struct StudentWeekDetailView: View {
         Divider()
             .background(Theme.Colors.divider)
             .padding(.leading, leading)
+    }
+
+    private func trainingDateSubtitle(for date: Date?, fallback: String) -> String {
+        guard let date else { return fallback }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "EEEE dd/MM"
+        return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
     private func pop() {
