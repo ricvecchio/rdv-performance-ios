@@ -118,10 +118,10 @@ struct StudentTeachersView: View {
                         receivedInvitesCard
                     }
                     .frame(maxWidth: contentMaxWidth)
-                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     .padding(.bottom, 28)
+                    .frame(maxWidth: .infinity)
                 }
 
                 FooterBar(
