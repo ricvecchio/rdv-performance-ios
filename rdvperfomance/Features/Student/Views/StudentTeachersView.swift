@@ -10,6 +10,7 @@ struct StudentTeachersView: View {
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
+    private let horizontalPadding: CGFloat = 16
     private let repository: FirestoreRepository
 
     @State private var linkedTeachers: [AppUser] = []
@@ -116,10 +117,10 @@ struct StudentTeachersView: View {
                         sentRequestsCard
                         receivedInvitesCard
                     }
-                    .frame(maxWidth: contentMaxWidth)
-                    .padding(.horizontal, 16)
+                    .padding(.horizontal, horizontalPadding)
                     .padding(.top, 16)
                     .padding(.bottom, 28)
+                    .frame(maxWidth: contentMaxWidth + (horizontalPadding * 2))
                     .frame(maxWidth: .infinity)
                 }
 
@@ -302,6 +303,7 @@ struct StudentTeachersView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
             Spacer()
         }
         .padding(.horizontal, 16)
@@ -320,8 +322,10 @@ struct StudentTeachersView: View {
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
+                    .truncationMode(.tail)
                 pendingStatus
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer()
 
@@ -360,6 +364,7 @@ struct StudentTeachersView: View {
                     .lineLimit(1)
                     .truncationMode(.tail)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer()
 
