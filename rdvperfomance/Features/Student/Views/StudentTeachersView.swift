@@ -73,7 +73,7 @@ struct StudentTeachersView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Veja seus professores vinculados e convide novos professores.")
+                            Text("Gerencie seus professores e vínculos.")
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.55))
 
