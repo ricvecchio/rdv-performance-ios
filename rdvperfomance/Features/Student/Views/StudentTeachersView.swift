@@ -117,13 +117,12 @@ struct StudentTeachersView: View {
                         sentRequestsCard
                         receivedInvitesCard
                     }
-                    .containerRelativeFrame(.horizontal) { length, _ in
-                        min(contentMaxWidth, max(0, length - 32))
-                    }
+                    .frame(maxWidth: contentMaxWidth)
+                    .frame(maxWidth: .infinity)
                     .padding(.top, 16)
                     .padding(.bottom, 28)
-                    .frame(maxWidth: .infinity, alignment: .center)
                 }
+                .contentMargins(.horizontal, 16, for: .scrollContent)
 
                 FooterBar(
                     path: $path,

@@ -52,39 +52,32 @@ struct StudentRootView: View {
     @State private var profilePath: [AppRoute] = []
 
     var body: some View {
-        Color.clear
-            .overlay {
-                homeTab
-                    .opacity(selectedSection == .home ? 1 : 0)
-                    .allowsHitTesting(selectedSection == .home)
-                    .toolbar(selectedSection == .home ? .visible : .hidden, for: .navigationBar)
-                    .zIndex(selectedSection == .home ? 1 : 0)
-            }
+        ZStack {
+            homeTab
+                .opacity(selectedSection == .home ? 1 : 0)
+                .allowsHitTesting(selectedSection == .home)
+                .toolbar(selectedSection == .home ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .home ? 1 : 0)
 
-            .overlay {
-                agendaTab
-                    .opacity(selectedSection == .agenda ? 1 : 0)
-                    .allowsHitTesting(selectedSection == .agenda)
-                    .toolbar(selectedSection == .agenda ? .visible : .hidden, for: .navigationBar)
-                    .zIndex(selectedSection == .agenda ? 1 : 0)
-            }
+            agendaTab
+                .opacity(selectedSection == .agenda ? 1 : 0)
+                .allowsHitTesting(selectedSection == .agenda)
+                .toolbar(selectedSection == .agenda ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .agenda ? 1 : 0)
 
-            .overlay {
-                recordsTab
-                    .opacity(selectedSection == .records ? 1 : 0)
-                    .allowsHitTesting(selectedSection == .records)
-                    .toolbar(selectedSection == .records ? .visible : .hidden, for: .navigationBar)
-                    .zIndex(selectedSection == .records ? 1 : 0)
-            }
+            recordsTab
+                .opacity(selectedSection == .records ? 1 : 0)
+                .allowsHitTesting(selectedSection == .records)
+                .toolbar(selectedSection == .records ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .records ? 1 : 0)
 
-            .overlay {
-                profileTab
-                    .opacity(selectedSection == .profile ? 1 : 0)
-                    .allowsHitTesting(selectedSection == .profile)
-                    .toolbar(selectedSection == .profile ? .visible : .hidden, for: .navigationBar)
-                    .zIndex(selectedSection == .profile ? 1 : 0)
-            }
-            .environment(\.selectStudentMainSection, selectSection)
+            profileTab
+                .opacity(selectedSection == .profile ? 1 : 0)
+                .allowsHitTesting(selectedSection == .profile)
+                .toolbar(selectedSection == .profile ? .visible : .hidden, for: .navigationBar)
+                .zIndex(selectedSection == .profile ? 1 : 0)
+        }
+        .environment(\.selectStudentMainSection, selectSection)
     }
 
     // MARK: - Seleção de seção (chamada pelo FooterBar de qualquer tela do aluno)
