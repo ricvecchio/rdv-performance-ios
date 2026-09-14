@@ -14,7 +14,16 @@ struct StudentTeachersView: View {
 
     @State private var linkedTeachers: [AppUser] = []
     @State private var linkedTeacherIds: Set<String> = []
+    @State private var sentRequests: [TeacherStudentLinkRequestFS] = []
+    @State private var receivedInvites: [TeacherStudentInviteFS] = []
+    @State private var inviteTeachers: [String: AppUser] = [:]
     @State private var isLoadingLinkedTeachers: Bool = false
+    @State private var isLoadingData: Bool = false
+    @State private var requestPendingCancellation: TeacherStudentLinkRequestFS? = nil
+    @State private var invitePendingDecline: TeacherStudentInviteFS? = nil
+    @State private var showRequestCancellationConfirmation: Bool = false
+    @State private var showInviteDeclineConfirmation: Bool = false
+    @State private var actionErrorMessage: String? = nil
 
     @State private var teacherEmailInput: String = ""
     @State private var linkActionMessage: String? = nil
@@ -54,103 +63,63 @@ struct StudentTeachersView: View {
 
     var body: some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                    VStack(spacing: 16) {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Text("Aqui você vê seus professores vinculados e pode convidar outro professor.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.55))
 
-                        VStack(alignment: .leading, spacing: 14) {
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Aqui você vê seus professores vinculados e pode convidar outro professor.")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.white.opacity(0.55))
-                                    .padding(.top, 12)
+                            Button {
+                                teacherEmailInput = ""
+                                linkActionMessage = nil
+                                linkActionMessageIsError = false
+                                showRequestLinkModal = true
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "person.badge.plus")
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.green.opacity(0.9))
 
-                                Button {
-                                    teacherEmailInput = ""
-                                    linkActionMessage = nil
-                                    linkActionMessageIsError = false
-                                    showRequestLinkModal = true
-                                } label: {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "person.badge.plus")
-                                            .font(.system(size: 16, weight: .semibold))
-                                            .foregroundColor(.green.opacity(0.9))
+                                    Text("Convidar professor")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
 
-                                        Text("Convidar professor")
-                                            .font(.system(size: 14, weight: .semibold))
-                                            .foregroundColor(.white.opacity(0.92))
+                                    Spacer(minLength: 0)
 
-                                        Spacer(minLength: 0)
-
-                                        Image(systemName: "chevron.right")
-                                            .foregroundColor(.white.opacity(0.35))
-                                    }
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 12)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .fill(Color.green.opacity(0.16))
-                                            .overlay(
-                                                RoundedRectangle(cornerRadius: 14)
-                                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                            )
-                                    )
+                                    Image(systemName: "chevron.right")
+                                        .foregroundColor(.white.opacity(0.35))
                                 }
-                                .buttonStyle(.plain)
-                                .disabled(isProcessingLinkAction)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .fill(Color.green.opacity(0.16))
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        )
+                                )
                             }
-
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Vinculados")
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
-
-                                if isLoadingLinkedTeachers {
-                                    HStack(spacing: 10) {
-                                        ProgressView()
-                                        Text("Carregando professores...")
-                                            .font(.system(size: 13))
-                                            .foregroundColor(.white.opacity(0.55))
-                                    }
-                                    .padding(.vertical, 6)
-                                } else if linkedTeachers.isEmpty {
-                                    Text("Nenhum professor vinculado no momento.")
-                                        .font(.system(size: 13))
-                                        .foregroundColor(.white.opacity(0.55))
-                                        .padding(.vertical, 6)
-                                } else {
-                                    VStack(spacing: 10) {
-                                        ForEach(linkedTeachers, id: \.id) { teacher in
-                                            VStack(alignment: .leading, spacing: 4) {
-                                                Text(teacher.name.trimmingCharacters(in: .whitespacesAndNewlines))
-                                                    .font(.system(size: 15, weight: .semibold))
-                                                    .foregroundColor(.white.opacity(0.92))
-
-                                                Text(teacher.email.trimmingCharacters(in: .whitespacesAndNewlines))
-                                                    .font(.system(size: 13, weight: .medium))
-                                                    .foregroundColor(.white.opacity(0.55))
-                                            }
-                                            .padding(14)
-                                            .frame(maxWidth: .infinity, alignment: .leading)
-                                            .background(Theme.Colors.cardBackground)
-                                            .cornerRadius(14)
-                                        }
-                                    }
-                                }
-                            }
-
-                            Color.clear.frame(height: 18)
+                            .buttonStyle(.plain)
+                            .disabled(isProcessingLinkAction)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
 
-                        Spacer(minLength: 0)
+                        linkedTeachersCard
+                        sentRequestsCard
+                        receivedInvitesCard
                     }
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 28)
+                    .frame(maxWidth: .infinity)
                 }
 
                 FooterBar(
@@ -215,8 +184,245 @@ struct StudentTeachersView: View {
         }
         .task(id: "\(currentUid)|\(normalizedRouteStudentEmail)") {
             await loadStudentEmailIfNeeded()
-            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+            await refreshData()
         }
+        .alert("Cancelar convite?", isPresented: $showRequestCancellationConfirmation) {
+            Button("Cancelar", role: .cancel) { requestPendingCancellation = nil }
+            Button("Confirmar cancelamento", role: .destructive) {
+                Task { await cancelRequest() }
+            }
+        } message: {
+            Text("Deseja cancelar este convite enviado ao professor?")
+        }
+        .alert("Recusar convite?", isPresented: $showInviteDeclineConfirmation) {
+            Button("Cancelar", role: .cancel) { invitePendingDecline = nil }
+            Button("Recusar", role: .destructive) {
+                Task { await declineInvite() }
+            }
+        } message: {
+            Text("Deseja recusar este convite de vínculo?")
+        }
+        .alert("Erro", isPresented: Binding(
+            get: { actionErrorMessage != nil },
+            set: { if !$0 { actionErrorMessage = nil } }
+        )) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            Text(actionErrorMessage ?? "Ocorreu um erro.")
+        }
+    }
+
+    private var linkedTeachersCard: some View {
+        card(title: "PROFESSORES VINCULADOS") {
+            if isLoadingData {
+                loadingView("Carregando professores...")
+            } else if linkedTeachers.isEmpty {
+                emptyView(
+                    title: "Nenhum professor vinculado",
+                    message: "Convide ou aceite um professor para aparecer aqui."
+                )
+            } else {
+                ForEach(linkedTeachers, id: \.id) { teacher in
+                    teacherRow(teacher)
+                    if teacher.id != linkedTeachers.last?.id {
+                        cardDivider
+                    }
+                }
+            }
+        }
+    }
+
+    private var sentRequestsCard: some View {
+        card(title: "CONVITES ENVIADOS") {
+            if isLoadingData {
+                loadingView("Carregando convites...")
+            } else if sentRequests.isEmpty {
+                emptyView(title: "Nenhum convite enviado", message: "Convide um professor para iniciar um vínculo.")
+            } else {
+                ForEach(sentRequests, id: \.id) { request in
+                    sentRequestRow(request)
+                    if request.id != sentRequests.last?.id {
+                        cardDivider
+                    }
+                }
+            }
+        }
+    }
+
+    private var receivedInvitesCard: some View {
+        card(title: "CONVITES RECEBIDOS") {
+            if isLoadingData {
+                loadingView("Carregando convites...")
+            } else if receivedInvites.isEmpty {
+                emptyView(title: "Nenhum convite pendente", message: "Convites de professores aparecerão aqui.")
+            } else {
+                ForEach(receivedInvites, id: \.id) { invite in
+                    receivedInviteRow(invite)
+                    if invite.id != receivedInvites.last?.id {
+                        cardDivider
+                    }
+                }
+            }
+        }
+    }
+
+    private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.35))
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            content()
+            Color.clear.frame(height: 8)
+        }
+        .frame(maxWidth: .infinity)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+    }
+
+    private func teacherRow(_ teacher: AppUser) -> some View {
+        HStack(spacing: 14) {
+            StudentAvatarView(base64: teacher.photoBase64, size: 28)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(teacher.name)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
+                Text(teacher.email)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
+    private func sentRequestRow(_ request: TeacherStudentLinkRequestFS) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: "clock.fill")
+                .foregroundColor(.yellow.opacity(0.75))
+                .font(.system(size: 15))
+                .frame(width: 26)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(request.teacherEmail)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+                pendingStatus
+            }
+
+            Spacer()
+
+            Menu {
+                Button(role: .destructive) {
+                    requestPendingCancellation = request
+                    showRequestCancellationConfirmation = true
+                } label: {
+                    Label("Cancelar convite", systemImage: "xmark.circle")
+                }
+            } label: {
+                menuIcon
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
+    private func receivedInviteRow(_ invite: TeacherStudentInviteFS) -> some View {
+        let teacher = inviteTeachers[invite.teacherId]
+
+        return HStack(spacing: 14) {
+            StudentAvatarView(base64: teacher?.photoBase64, size: 28)
+                .frame(width: 28)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(teacher?.name ?? invite.teacherEmail)
+                    .font(.system(size: 18, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
+                Text(invite.teacherEmail)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.35))
+            }
+
+            Spacer()
+
+            Menu {
+                Button {
+                    Task { await acceptInvite(invite) }
+                } label: {
+                    Label("Aceitar vínculo", systemImage: "checkmark")
+                }
+                Button(role: .destructive) {
+                    invitePendingDecline = invite
+                    showInviteDeclineConfirmation = true
+                } label: {
+                    Label("Recusar convite", systemImage: "xmark.circle")
+                }
+            } label: {
+                menuIcon
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
+    private var pendingStatus: some View {
+        Text("Pendente")
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.yellow.opacity(0.85))
+            .padding(.horizontal, 8)
+            .padding(.vertical, 3)
+            .background(Capsule().fill(Color.yellow.opacity(0.12)))
+    }
+
+    private var menuIcon: some View {
+        Image(systemName: "ellipsis")
+            .font(.system(size: 18, weight: .semibold))
+            .foregroundColor(.white.opacity(0.55))
+            .padding(.vertical, 6)
+            .padding(.horizontal, 8)
+            .contentShape(Rectangle())
+    }
+
+    private var cardDivider: some View {
+        Divider()
+            .background(Theme.Colors.divider)
+            .padding(.horizontal, 16)
+    }
+
+    private func loadingView(_ text: String) -> some View {
+        VStack(spacing: 10) {
+            ProgressView()
+            Text(text)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+    }
+
+    private func emptyView(title: String, message: String) -> some View {
+        VStack(spacing: 12) {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+            Text(message)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 10)
     }
 
     private func requestLinkModalView() -> some View {
@@ -411,6 +617,107 @@ struct StudentTeachersView: View {
         linkedTeachers = result
     }
 
+    private func refreshData() async {
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            linkedTeachers = []
+            linkedTeacherIds = []
+            sentRequests = []
+            receivedInvites = []
+            inviteTeachers = [:]
+            return
+        }
+
+        isLoadingData = true
+        defer { isLoadingData = false }
+        await loadLinkedTeachers(forceFallbackFromWeeks: true)
+
+        do {
+            async let requests = repository.getRequestsForStudent(studentId: uid)
+            let allInvites: [TeacherStudentInviteFS]
+            if effectiveStudentEmail.isEmpty {
+                allInvites = []
+            } else {
+                allInvites = try await repository.getInvitesForStudent(studentEmail: effectiveStudentEmail)
+            }
+            let allRequests = try await requests
+
+            sentRequests = allRequests.filter {
+                let teacherId = $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+                let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                return status == "pending" && !linkedTeacherIds.contains(teacherId)
+            }
+            receivedInvites = allInvites.filter {
+                let teacherId = $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+                let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                return status == "pending" && !linkedTeacherIds.contains(teacherId)
+            }
+
+            let teacherIds = Array(
+                Set(
+                    receivedInvites
+                        .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                )
+            )
+            inviteTeachers = try await repository.getUsers(byIds: teacherIds)
+        } catch {
+            sentRequests = []
+            receivedInvites = []
+            inviteTeachers = [:]
+            actionErrorMessage = (error as NSError).localizedDescription
+        }
+    }
+
+    private func cancelRequest() async {
+        guard let request = requestPendingCancellation,
+              let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !requestId.isEmpty else {
+            requestPendingCancellation = nil
+            actionErrorMessage = "Não foi possível identificar o convite."
+            return
+        }
+
+        do {
+            try await repository.cancelLinkRequest(requestId: requestId)
+            requestPendingCancellation = nil
+            await refreshData()
+        } catch {
+            requestPendingCancellation = nil
+            actionErrorMessage = (error as NSError).localizedDescription
+        }
+    }
+
+    private func acceptInvite(_ invite: TeacherStudentInviteFS) async {
+        let uid = currentUid
+        guard !uid.isEmpty else {
+            actionErrorMessage = "Não foi possível identificar o aluno."
+            return
+        }
+
+        do {
+            try await repository.acceptInvite(invite: invite, studentId: uid)
+            await refreshData()
+        } catch {
+            actionErrorMessage = (error as NSError).localizedDescription
+        }
+    }
+
+    private func declineInvite() async {
+        guard let invite = invitePendingDecline else {
+            return
+        }
+
+        do {
+            try await repository.declineInvite(invite: invite)
+            invitePendingDecline = nil
+            await refreshData()
+        } catch {
+            invitePendingDecline = nil
+            actionErrorMessage = (error as NSError).localizedDescription
+        }
+    }
+
     private func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
@@ -488,7 +795,7 @@ struct StudentTeachersView: View {
             linkActionMessage = "Solicitação enviada com sucesso."
             linkActionMessageIsError = false
 
-            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+            await refreshData()
             return true
         } catch {
             let nsError = error as NSError
