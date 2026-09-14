@@ -10,7 +10,6 @@ struct StudentTeachersView: View {
     @EnvironmentObject private var session: AppSession
 
     private let contentMaxWidth: CGFloat = 380
-    private let horizontalPadding: CGFloat = 16
     private let repository: FirestoreRepository
 
     @State private var linkedTeachers: [AppUser] = []
@@ -117,13 +116,12 @@ struct StudentTeachersView: View {
                         sentRequestsCard
                         receivedInvitesCard
                     }
-                    .padding(.horizontal, horizontalPadding)
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
                     .padding(.top, 16)
                     .padding(.bottom, 28)
-                    .frame(maxWidth: contentMaxWidth + (horizontalPadding * 2))
                     .frame(maxWidth: .infinity)
                 }
-                .frame(maxWidth: .infinity)
 
                 FooterBar(
                     path: $path,
@@ -139,7 +137,6 @@ struct StudentTeachersView: View {
                 .frame(maxWidth: .infinity)
                 .background(Theme.Colors.footerBackground)
             }
-            .frame(maxWidth: .infinity)
 
             if showRequestLinkModal {
                 Color.black.opacity(0.25)
