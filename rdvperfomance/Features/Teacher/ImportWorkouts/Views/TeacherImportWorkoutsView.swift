@@ -177,26 +177,6 @@ struct TeacherImportWorkoutsView: View {
             if let url = templateFileURL {
                 ActivityView(activityItems: [url])
                     .ignoresSafeArea()
-            } else {
-                ZStack {
-                    Color.black.opacity(0.95).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        Text("Falha ao localizar a planilha no Bundle")
-                            .foregroundColor(.white.opacity(0.90))
-                            .font(.system(size: 16, weight: .semibold))
-                            .multilineTextAlignment(.center)
-                        
-                        Text(errorMessage ?? "Sem detalhes.")
-                            .foregroundColor(.white.opacity(0.70))
-                            .font(.system(size: 13))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 18)
-                        
-                        Button("Fechar") { isTemplateSharePresented = false }
-                            .foregroundColor(.green)
-                    }
-                    .padding()
-                }
             }
         }
         .sheet(isPresented: $isImportPickerPresented) {
@@ -534,49 +514,42 @@ struct TeacherImportWorkoutsView: View {
     
     private func prepareTemplateShare() {
         errorMessage = nil
-        
-        let expectedFileName = "\(templateResourceName).\(templateResourceExtension)"
-        
-        guard let bundleURL = Bundle.main.resourceURL else {
+
+        guard let sourceURL = resolveTemplateURL() else {
             templateFileURL = nil
-            errorMessage = "DEBUG: Bundle.main.resourceURL é nil."
-            isTemplateSharePresented = true
+            errorMessage = "Não foi possível localizar o modelo da planilha no aplicativo."
             return
         }
-        
-        var foundURL: URL? = nil
-        if let en = FileManager.default.enumerator(at: bundleURL, includingPropertiesForKeys: nil) {
-            for case let u as URL in en {
-                if u.lastPathComponent == expectedFileName {
-                    foundURL = u
-                    break
-                }
+
+        do {
+            let destinationURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(sourceURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
             }
+            try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+
+            templateFileURL = destinationURL
+            isTemplateSharePresented = true
+        } catch {
+            templateFileURL = nil
+            errorMessage = "Não foi possível preparar a planilha para download: \(error.localizedDescription)"
         }
-        
-        if let foundURL {
-            do {
-                let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(expectedFileName)
-                if FileManager.default.fileExists(atPath: tmp.path) {
-                    try FileManager.default.removeItem(at: tmp)
-                }
-                try FileManager.default.copyItem(at: foundURL, to: tmp)
-                
-                templateFileURL = tmp
-                errorMessage = nil
-                isTemplateSharePresented = true
-                return
-            } catch {
-                templateFileURL = nil
-                errorMessage = "DEBUG: encontrei o arquivo, mas falhei ao copiar para /tmp: \(error.localizedDescription)"
-                isTemplateSharePresented = true
-                return
-            }
+    }
+
+    private func resolveTemplateURL() -> URL? {
+        if let url = Bundle.main.url(
+            forResource: templateResourceName,
+            withExtension: templateResourceExtension
+        ) {
+            return url
         }
-        
-        templateFileURL = nil
-        errorMessage = "Arquivo da planilha não encontrado no bundle."
-        isTemplateSharePresented = true
+
+        return Bundle.main.url(
+            forResource: templateResourceName,
+            withExtension: templateResourceExtension,
+            subdirectory: "Templates"
+        )
     }
     
     private func handlePickedExcel(url: URL) async {
