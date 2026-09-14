@@ -88,20 +88,18 @@ struct StudentAgendaView: View {
         .navigationBarBackButtonHidden(true)
         .toolbar {
 
-            if isTeacherViewing {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button { pop() } label: {
-                        ZStack {
-                            Color.clear
-                                .frame(width: 44, height: 44)
+            ToolbarItem(placement: .topBarLeading) {
+                Button(action: handleBack) {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
 
-                            Image(systemName: "chevron.left")
-                                .foregroundColor(.green)
-                        }
-                        .contentShape(Rectangle())
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
                     }
-                    .buttonStyle(.plain)
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
@@ -568,6 +566,14 @@ struct StudentAgendaView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
+    }
+
+    private func handleBack() {
+        if isTeacherViewing {
+            pop()
+        } else {
+            onSelectSection(.home)
+        }
     }
 
     private func loadInitialData() async {
