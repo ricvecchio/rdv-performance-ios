@@ -815,7 +815,7 @@ Bar-Facing Burpees
     }
 
     private func editSheet(for item: OpenItem) -> some View {
-        let wod: OpenWod? = {
+        let wodDetails: OpenWod? = {
             return wod(for: item.storageKey)
         }()
 
@@ -843,8 +843,8 @@ Bar-Facing Burpees
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
-                    if let wod {
-                        wodCard(wod)
+                    if let wodDetails {
+                        wodCard(wodDetails)
                             .padding(.horizontal, 16)
                             .padding(.top, 2)
                             .layoutPriority(1)

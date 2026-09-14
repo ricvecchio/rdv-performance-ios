@@ -1305,7 +1305,7 @@ struct StudentHeroesPersonalRecordsView: View {
         list.append(customItem)
         saveCustomItems(list)
 
-        let item = HeroWOD(name: customItem.name, storageKey: customItem.storageKey, descriptionLines: customItem.description.components(separatedBy: .newlines).filter { !customItem.isEmpty })
+        let item = HeroWOD(name: customItem.name, storageKey: customItem.storageKey, descriptionLines: customItem.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
         let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedValue.isEmpty {
             inputValue = trimmedValue
