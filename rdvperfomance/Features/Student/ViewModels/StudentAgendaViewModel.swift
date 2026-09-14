@@ -15,6 +15,7 @@ final class StudentAgendaViewModel: ObservableObject {
 
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
+    @Published private(set) var hasLoadedWeekMetadata: Bool = false
     @Published var errorMessage: String? = nil
 
     @Published private(set) var linkBannerState: LinkBannerState = .idle
@@ -34,6 +35,7 @@ final class StudentAgendaViewModel: ObservableObject {
 
     private var weekRangeText: [String: String] = [:]
     private var weekProgressPercent: [String: Int] = [:]
+    private var weekEndDate: [String: Date] = [:]
 
     private let studentId: String
     private let repository: FirestoreRepository
@@ -237,7 +239,11 @@ final class StudentAgendaViewModel: ObservableObject {
             // progressivamente sem bloquear a exibição da lista.
             self.weeks = result
             hasLoadedWeeksAndMeta = true
+            hasLoadedWeekMetadata = result.isEmpty
             isLoading = false
+            weekRangeText = [:]
+            weekProgressPercent = [:]
+            weekEndDate = [:]
 
             // Os metadados não atrasam a lista principal de semanas.
             let generation = UUID()
@@ -320,6 +326,12 @@ final class StudentAgendaViewModel: ObservableObject {
                                 self.weekRangeText[weekId] = range
                             }
                         }
+                        if let endDate = days.compactMap(\.date).max() {
+                            await MainActor.run {
+                                guard self.metadataGeneration == generation else { return }
+                                self.weekEndDate[weekId] = endDate
+                            }
+                        }
 
                         let p = try await self.repository.getWeekProgress(weekId: weekId, studentId: studentId)
                         let percent = StudentAgendaViewModel.computePercentStatic(completed: p.completed, total: p.total)
@@ -334,6 +346,7 @@ final class StudentAgendaViewModel: ObservableObject {
         }
 
         if metadataGeneration == generation {
+            hasLoadedWeekMetadata = true
             objectWillChange.send()
         }
     }
@@ -366,6 +379,26 @@ final class StudentAgendaViewModel: ObservableObject {
         }
 
         return "Professor: ..."
+    }
+
+    func progressPercent(for week: TrainingWeekFS) -> Int {
+        guard let weekId = week.id else { return 0 }
+        return weekProgressPercent[weekId] ?? 0
+    }
+
+    func endDate(for week: TrainingWeekFS) -> Date? {
+        guard let weekId = week.id else { return nil }
+        return weekEndDate[weekId]
+    }
+
+    func isCompleted(_ week: TrainingWeekFS) -> Bool {
+        progressPercent(for: week) >= 100
+    }
+
+    func isExpired(_ week: TrainingWeekFS, now: Date = Date()) -> Bool {
+        guard let endDate = endDate(for: week) else { return false }
+        let calendar = Calendar.current
+        return calendar.startOfDay(for: endDate) < calendar.startOfDay(for: now)
     }
 
     nonisolated static func computePercentStatic(completed: Int, total: Int) -> Int {

@@ -23,8 +23,15 @@ struct StudentAgendaView: View {
     @StateObject private var vm: StudentAgendaViewModel
     private let contentMaxWidth: CGFloat = 380
 
+    private enum AgendaFilter: Equatable {
+        case active
+        case completed
+        case all
+    }
+
     @State private var isRequestLinkSheetPresented: Bool = false
     @State private var teacherEmailInput: String = ""
+    @State private var selectedFilter: AgendaFilter = .active
 
     init(
         path: Binding<[AppRoute]>,
@@ -69,6 +76,7 @@ struct StudentAgendaView: View {
                         }
 
                         header
+                        filterRow
                         if isTeacherViewing {
                             publishWorkoutButton
                         }
@@ -120,6 +128,10 @@ struct StudentAgendaView: View {
 
         .task(id: studentId) {
             await loadInitialData()
+        }
+        .onAppear {
+            guard vm.hasLoadedWeeks else { return }
+            Task { await vm.loadWeeksAndMeta(force: true) }
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -194,6 +206,37 @@ struct StudentAgendaView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(Color.green.opacity(0.35), lineWidth: 1)
             )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var filterRow: some View {
+        HStack(spacing: 10) {
+            filterChip(title: "Ativos", filter: .active)
+            filterChip(title: "Concluídos", filter: .completed)
+            filterChip(title: "Todos", filter: .all)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func filterChip(title: String, filter: AgendaFilter) -> some View {
+        Button {
+            selectedFilter = filter
+        } label: {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(selectedFilter == filter ? Color.green.opacity(0.16) : Color.white.opacity(0.10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 999)
+                        .stroke(
+                            selectedFilter == filter ? Color.green.opacity(0.35) : Color.white.opacity(0.12),
+                            lineWidth: 1
+                        )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 999))
         }
         .buttonStyle(.plain)
     }
@@ -434,8 +477,12 @@ struct StudentAgendaView: View {
                 errorView(message: errorMessage)
             } else if vm.weeks.isEmpty {
                 emptyView
+            } else if selectedFilter != .all && !vm.hasLoadedWeekMetadata {
+                loadingView
+            } else if filteredWeeks.isEmpty {
+                filteredEmptyView
             } else {
-                weeksList
+                weeksList(filteredWeeks)
             }
         }
         .padding(.vertical, 8)
@@ -445,9 +492,20 @@ struct StudentAgendaView: View {
     }
 
     // Lista de semanas como botões navegáveis
-    private var weeksList: some View {
+    private var filteredWeeks: [TrainingWeekFS] {
+        switch selectedFilter {
+        case .active:
+            return vm.weeks.filter { !vm.isCompleted($0) && !vm.isExpired($0) }
+        case .completed:
+            return vm.weeks.filter { vm.isCompleted($0) || vm.isExpired($0) }
+        case .all:
+            return vm.weeks
+        }
+    }
+
+    private func weeksList(_ weeks: [TrainingWeekFS]) -> some View {
         VStack(spacing: 0) {
-            ForEach(Array(vm.weeks.enumerated()), id: \.offset) { item in
+            ForEach(Array(weeks.enumerated()), id: \.offset) { item in
                 let idx = item.offset
                 let week = item.element
 
@@ -496,7 +554,7 @@ struct StudentAgendaView: View {
                 }
                 .buttonStyle(.plain)
 
-                if idx < vm.weeks.count - 1 {
+                if idx < weeks.count - 1 {
                     innerDivider(leading: 54)
                 }
             }
@@ -547,6 +605,31 @@ struct StudentAgendaView: View {
                 .foregroundColor(.white.opacity(0.92))
 
             Text("O professor ainda não publicou treinos para este aluno.")
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.55))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity)
+        .padding(.vertical, 18)
+        .padding(.horizontal, 10)
+    }
+
+    private var filteredEmptyView: some View {
+        let content: (title: String, message: String) = switch selectedFilter {
+        case .active:
+            ("Nenhum treino ativo", "Você não possui treinos pendentes a partir de hoje.")
+        case .completed:
+            ("Nenhum treino concluído", "Treinos concluídos ou com período encerrado aparecerão aqui.")
+        case .all:
+            ("Nenhuma semana cadastrada", "O professor ainda não publicou treinos para este aluno.")
+        }
+
+        return VStack(spacing: 10) {
+            Text(content.title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+
+            Text(content.message)
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
