@@ -123,6 +123,7 @@ struct StudentTeachersView: View {
                     .frame(maxWidth: contentMaxWidth + (horizontalPadding * 2))
                     .frame(maxWidth: .infinity)
                 }
+                .frame(maxWidth: .infinity)
 
                 FooterBar(
                     path: $path,
@@ -138,6 +139,7 @@ struct StudentTeachersView: View {
                 .frame(maxWidth: .infinity)
                 .background(Theme.Colors.footerBackground)
             }
+            .frame(maxWidth: .infinity)
 
             if showRequestLinkModal {
                 Color.black.opacity(0.25)
