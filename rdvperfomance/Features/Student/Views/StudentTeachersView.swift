@@ -116,10 +116,10 @@ struct StudentTeachersView: View {
                         sentRequestsCard
                         receivedInvitesCard
                     }
+                    .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
                     .padding(.top, 16)
                     .padding(.bottom, 28)
-                    .frame(maxWidth: contentMaxWidth)
                     .frame(maxWidth: .infinity)
                 }
 
