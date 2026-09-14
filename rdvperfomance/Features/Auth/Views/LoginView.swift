@@ -89,20 +89,28 @@ struct LoginView: View {
                     Task { await doLogin() }
                 } label: {
                     HStack(spacing: 10) {
+                        Spacer()
+
                         if vm.isLoading {
-                            ProgressView().tint(.white.opacity(0.9))
+                            ProgressView()
+                                .tint(.white.opacity(0.92))
                         }
+
                         Text(vm.isLoading ? "Entrando..." : "Acessar")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.9))
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+
+                        Spacer()
                     }
-                    .frame(width: 260, height: 44)
-                    .background(
-                        Capsule()
-                            .fill(Color.green.opacity(0.28))
-                            .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.green.opacity(0.16))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.green.opacity(0.35), lineWidth: 1)
                     )
-                    .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                    .frame(width: 260)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 22)
