@@ -278,9 +278,10 @@ struct StudentCampeonatosPersonalRecordsView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
-                        isSobreSelected: true,
+                    kind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
