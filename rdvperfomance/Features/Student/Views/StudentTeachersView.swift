@@ -69,60 +69,63 @@ struct StudentTeachersView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("Gerencie seus professores e vínculos.")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.55))
+                GeometryReader { proxy in
+                    let contentWidth = min(contentMaxWidth, max(0, proxy.size.width - 32))
 
-                            Button {
-                                teacherEmailInput = ""
-                                linkActionMessage = nil
-                                linkActionMessageIsError = false
-                                showRequestLinkModal = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "person.badge.plus")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.green.opacity(0.9))
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 16) {
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Gerencie seus professores e vínculos.")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.55))
 
-                                    Text("Convidar professor")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                Button {
+                                    teacherEmailInput = ""
+                                    linkActionMessage = nil
+                                    linkActionMessageIsError = false
+                                    showRequestLinkModal = true
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "person.badge.plus")
+                                            .font(.system(size: 16, weight: .semibold))
+                                            .foregroundColor(.green.opacity(0.9))
 
-                                    Spacer(minLength: 0)
+                                        Text("Convidar professor")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.white.opacity(0.92))
 
-                                    Image(systemName: "chevron.right")
-                                        .foregroundColor(.white.opacity(0.35))
+                                        Spacer(minLength: 0)
+
+                                        Image(systemName: "chevron.right")
+                                            .foregroundColor(.white.opacity(0.35))
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 12)
+                                    .frame(maxWidth: .infinity)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color.green.opacity(0.16))
+                                            .overlay(
+                                                RoundedRectangle(cornerRadius: 14)
+                                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                            )
+                                    )
                                 }
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 12)
-                                .frame(maxWidth: .infinity)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .fill(Color.green.opacity(0.16))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                        )
-                                )
+                                .buttonStyle(.plain)
+                                .disabled(isProcessingLinkAction)
                             }
-                            .buttonStyle(.plain)
-                            .disabled(isProcessingLinkAction)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                        linkedTeachersCard
-                        sentRequestsCard
-                        receivedInvitesCard
+                            linkedTeachersCard
+                            sentRequestsCard
+                            receivedInvitesCard
+                        }
+                        .frame(width: contentWidth)
+                        .padding(.top, 16)
+                        .padding(.bottom, 28)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
-                    .frame(maxWidth: contentMaxWidth)
-                    .frame(maxWidth: .infinity)
-                    .padding(.top, 16)
-                    .padding(.bottom, 28)
                 }
-                .contentMargins(.horizontal, 16, for: .scrollContent)
 
                 FooterBar(
                     path: $path,
