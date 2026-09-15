@@ -49,7 +49,7 @@ struct DeleteAccountView: View {
 
                             warningCard()
                             formCard()
-                            actionCard()
+                            deleteAccountButton()
 
                             if showError {
                                 Text(errorMessage)
@@ -125,10 +125,6 @@ struct DeleteAccountView: View {
                 .foregroundColor(.white.opacity(0.60))
                 .multilineTextAlignment(.leading)
 
-            Text("Para confirmar, digite EXCLUIR e informe sua senha atual.")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.85))
-                .multilineTextAlignment(.leading)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
@@ -144,8 +140,12 @@ struct DeleteAccountView: View {
             secureUnderlineField(title: "Senha atual", text: $currentPassword)
 
             underlineField(
-                title: Text("Digite \(Text("EXCLUIR").bold()) para confirmar")
-                    .font(.system(size: 14)),
+                title: (
+                    Text("Digite ").foregroundColor(textSecondary)
+                    + Text("EXCLUIR").bold().foregroundColor(.white.opacity(0.92))
+                    + Text(" para confirmar").foregroundColor(textSecondary)
+                )
+                .font(.system(size: 14)),
                 text: $confirmText
             )
                 .textInputAutocapitalization(.characters)
@@ -159,54 +159,27 @@ struct DeleteAccountView: View {
         .cornerRadius(14)
     }
 
-    // Retorna card com botões de excluir e cancelar
-    private func actionCard() -> some View {
-        VStack(spacing: 10) {
-
-            Button {
-                Task { await submitDelete() }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "trash.fill")
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Text(isLoading ? "Excluindo..." : "Excluir minha conta")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule()
-                        .fill(Color.red.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.red.opacity(0.10), radius: 10, x: 0, y: 6)
+    private func deleteAccountButton() -> some View {
+        Button {
+            Task { await submitDelete() }
+        } label: {
+            HStack {
+                Spacer()
+                Text(isLoading ? "Excluindo..." : "Excluir minha conta")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                Spacer()
             }
-            .buttonStyle(.plain)
-            .disabled(!canDelete)
-
-            Button { pop() } label: {
-                Text("Cancelar")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .underline()
-                    .padding(.top, 2)
-            }
-            .buttonStyle(.plain)
-            .disabled(isLoading)
+            .padding(.vertical, 14)
+            .background(Color.red.opacity(0.16))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.red.opacity(0.35), lineWidth: 1)
+            )
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        .buttonStyle(.plain)
+        .disabled(!canDelete)
     }
 
     // Valida e submete a exclusão da conta
@@ -261,7 +234,6 @@ struct DeleteAccountView: View {
         VStack(alignment: .leading, spacing: 8) {
 
             title
-                .foregroundColor(textSecondary)
 
             TextField("", text: text)
                 .foregroundColor(.white.opacity(0.92))
