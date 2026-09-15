@@ -129,7 +129,7 @@ struct SettingsView: View {
                     showWeightUnitSheet = false
                 }
             )
-            .presentationDetents([.fraction(0.80)])
+            .presentationDetents([.fraction(0.50)])
         }
     }
 
@@ -138,9 +138,10 @@ struct SettingsView: View {
         if session.userType == .STUDENT {
             FooterBar(
                 path: $path,
-                kind: .agendaSobrePerfil(
-                    isAgendaSelected: false,
-                    isSobreSelected: false,
+                kind: .studentHomeTreinosRecordsProfile(
+                    isHomeSelected: false,
+                    isTreinosSelected: false,
+                    isRecordsSelected: false,
                     isPerfilSelected: false
                 )
             )
