@@ -62,7 +62,8 @@ struct StudentTeachersView: View {
     }
 
     var body: some View {
-        ZStack {
+        GeometryReader { viewport in
+            ZStack {
             Image("rdv_fundo")
                 .resizable()
                 .scaledToFill()
@@ -121,11 +122,10 @@ struct StudentTeachersView: View {
                         sentRequestsCard
                         receivedInvitesCard
                     }
-                    .frame(maxWidth: contentMaxWidth)
-                    .padding(.horizontal, 16)
+                    .frame(width: min(contentMaxWidth, max(0, viewport.size.width - 32)))
                     .padding(.top, 16)
                     .padding(.bottom, 28)
-                    .frame(maxWidth: .infinity)
+                    .frame(width: viewport.size.width, alignment: .center)
                 }
 
                 FooterBar(
@@ -149,8 +149,9 @@ struct StudentTeachersView: View {
                     .transition(.opacity)
                     .allowsHitTesting(false)
             }
+            }
+            .frame(width: viewport.size.width, height: viewport.size.height)
         }
-        .frame(maxWidth: .infinity)
         .blur(radius: showRequestLinkModal ? 8 : 0)
         .animation(.easeInOut(duration: 0.20), value: showRequestLinkModal)
         .ignoresSafeArea(.container, edges: [.bottom])
