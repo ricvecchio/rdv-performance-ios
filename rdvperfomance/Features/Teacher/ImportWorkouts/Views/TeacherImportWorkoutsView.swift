@@ -15,8 +15,7 @@ struct TeacherImportWorkoutsView: View {
     @State private var errorMessage: String? = nil
     
     @State private var isAddSheetPresented: Bool = false
-    @State private var isTemplateSharePresented: Bool = false
-    @State private var templateFileURL: URL? = nil
+    @State private var templateShareItem: TemplateShareItem? = nil
     @State private var isImportPickerPresented: Bool = false
     @State private var isImporting: Bool = false
     @State private var activeSheet: ActiveSheet? = nil
@@ -36,6 +35,11 @@ struct TeacherImportWorkoutsView: View {
                 return "detail-\(w.id)"
             }
         }
+    }
+
+    private struct TemplateShareItem: Identifiable {
+        let id = UUID()
+        let url: URL
     }
     
     private enum SendDestination: CaseIterable {
@@ -173,11 +177,9 @@ struct TeacherImportWorkoutsView: View {
                 Task { await addWorkout(title: title) }
             }
         }
-        .sheet(isPresented: $isTemplateSharePresented) {
-            if let url = templateFileURL {
-                ActivityView(activityItems: [url])
-                    .ignoresSafeArea()
-            }
+        .sheet(item: $templateShareItem) { item in
+            ActivityView(activityItems: [item.url])
+                .ignoresSafeArea()
         }
         .sheet(isPresented: $isImportPickerPresented) {
             DocumentPicker(
@@ -514,9 +516,14 @@ struct TeacherImportWorkoutsView: View {
     
     private func prepareTemplateShare() {
         errorMessage = nil
+        templateShareItem = nil
 
         guard let sourceURL = resolveTemplateURL() else {
-            templateFileURL = nil
+            errorMessage = "Não foi possível localizar o modelo da planilha no aplicativo."
+            return
+        }
+
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
             errorMessage = "Não foi possível localizar o modelo da planilha no aplicativo."
             return
         }
@@ -529,10 +536,13 @@ struct TeacherImportWorkoutsView: View {
             }
             try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
 
-            templateFileURL = destinationURL
-            isTemplateSharePresented = true
+            guard FileManager.default.fileExists(atPath: destinationURL.path) else {
+                errorMessage = "Não foi possível preparar a planilha para download: a cópia temporária não foi encontrada."
+                return
+            }
+
+            templateShareItem = TemplateShareItem(url: destinationURL)
         } catch {
-            templateFileURL = nil
             errorMessage = "Não foi possível preparar a planilha para download: \(error.localizedDescription)"
         }
     }
