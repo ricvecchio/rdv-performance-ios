@@ -126,6 +126,9 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         let cleanUid = clean(uid)
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
 
+        #if DEBUG
+        print("[PersonalRecords] Loading remote records for user \(cleanUid) at users/\(cleanUid)/student_personal_records")
+        #endif
         try await retryPendingChunkCleanup(uid: cleanUid)
         return try await loadCloudState(uid: cleanUid).document
     }
@@ -197,6 +200,9 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
                 )
                 try await retryPendingChunkCleanup(uid: cleanUid)
 
+                #if DEBUG
+                print("[PersonalRecords] Remote write completed for user \(cleanUid) at users/\(cleanUid)/student_personal_records")
+                #endif
                 return StudentPersonalRecordsCloudDocument(
                     payloads: mergedPayloads,
                     customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(allTombstones)
@@ -254,7 +260,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
             try Task.checkCancellation()
             let snapshot = try await personalRecordsCollection(for: uid)
                 .document(documentID)
-                .getDocument()
+                .getDocument(source: .server)
             snapshots[documentID] = snapshot
         }
 
@@ -287,7 +293,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
             try Task.checkCancellation()
             let snapshot = try await personalRecordsCollection(for: uid)
                 .document(documentID)
-                .getDocument()
+                .getDocument(source: .server)
             if snapshot.exists {
                 snapshots.append(snapshot)
             }

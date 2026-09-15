@@ -272,7 +272,7 @@ final class PersonalRecordsSyncService {
             )
         } catch {
             #if DEBUG
-            print("[PersonalRecordsSync] Initial synchronization failed for user \(uid): \(error)")
+            print("[PersonalRecordsSync] Remote synchronization failed for users/\(uid)/student_personal_records: \(error)")
             #endif
             scheduleRetry(for: uid)
         }
@@ -310,7 +310,7 @@ final class PersonalRecordsSyncService {
             )
         } catch {
             #if DEBUG
-            print("[PersonalRecordsSync] Pending upload failed for user \(uid): \(error)")
+            print("[PersonalRecordsSync] Remote upload failed for users/\(uid)/student_personal_records: \(error)")
             #endif
             scheduleRetry(for: uid)
         }
