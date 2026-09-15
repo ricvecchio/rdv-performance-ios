@@ -118,9 +118,12 @@ struct ChangePasswordView: View {
         } label: {
             HStack {
                 Spacer()
-                Text(isLoading ? "Salvando..." : "Salvar nova senha")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                HStack(spacing: 10) {
+                    Image(systemName: "key.fill")
+                    Text(isLoading ? "Salvando..." : "Salvar nova senha")
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
             .padding(.vertical, 14)
