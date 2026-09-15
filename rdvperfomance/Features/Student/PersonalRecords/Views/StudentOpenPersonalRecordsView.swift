@@ -1080,6 +1080,7 @@ Bar-Facing Burpees
             var entries = history[key, default: []]
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
                 primaryCandidates = entries.map(\.value) + [trimmed]
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
                 if let primaryValue = bestValue(from: primaryCandidates, metadata: metadata) {
                     saveValue(primaryValue, for: key)
                 }
@@ -1097,6 +1098,7 @@ Bar-Facing Burpees
             primaryCandidates = entries.map(\.value)
         } else {
             primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
         }
 
         saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
@@ -1133,7 +1135,6 @@ Bar-Facing Burpees
     }
 
     private func saveCurrentInput(for item: OpenItem) {
-        guard let item = selectedItem else { return }
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             removeValue(for: item.storageKey)

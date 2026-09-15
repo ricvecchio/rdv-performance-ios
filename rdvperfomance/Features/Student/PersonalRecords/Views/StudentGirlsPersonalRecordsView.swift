@@ -583,6 +583,7 @@ struct StudentGirlsPersonalRecordsView: View {
             var entries = history[key, default: []]
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
                 primaryCandidates = entries.map(\.value) + [trimmed]
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
                 saveValue(bestNumericValue(from: primaryCandidates, metadata: metadata) ?? correctedValue, for: key)
                 return
             }
@@ -598,6 +599,7 @@ struct StudentGirlsPersonalRecordsView: View {
             primaryCandidates = entries.map(\.value)
         } else {
             primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
         }
 
         saveValue(bestNumericValue(from: primaryCandidates, metadata: metadata) ?? correctedValue, for: key)

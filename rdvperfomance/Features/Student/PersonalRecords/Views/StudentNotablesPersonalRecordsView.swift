@@ -836,6 +836,7 @@ Descanso: 1 min entre rounds.
             var entries = history[key, default: []]
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
                 primaryCandidates = entries.map(\.value) + [trimmed]
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
                 if let primaryValue = bestValue(from: primaryCandidates, metadata: metadata) {
                     saveValue(primaryValue, for: key)
                 }
@@ -853,6 +854,7 @@ Descanso: 1 min entre rounds.
             primaryCandidates = entries.map(\.value)
         } else {
             primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
         }
 
         saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
@@ -889,7 +891,6 @@ Descanso: 1 min entre rounds.
     }
 
     private func saveCurrentInput(move: NotableMove) {
-        guard let move = selectedMove else { return }
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             removeValue(for: move.storageKey)
