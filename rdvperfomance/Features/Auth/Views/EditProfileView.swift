@@ -106,6 +106,7 @@ struct EditProfileView: View {
                         VStack(spacing: 16) {
 
                             avatarCard()
+                            photoAvatarButton()
                             formCard()
                             actionCard()
 
@@ -283,44 +284,38 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
-    // Retorna card com botões de ação (importar, salvar, remover)
+    private func photoAvatarButton() -> some View {
+        Menu {
+            Button("Escolher foto da biblioteca") {
+                showPhotoPicker = true
+            }
+            Button("Escolher Avatar") {
+                showAvatarPicker = true
+            }
+            Button("Cancelar", role: .cancel) {}
+        } label: {
+            HStack {
+                Spacer()
+                Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                Spacer()
+            }
+            .padding(.vertical, 14)
+            .background(Color.green.opacity(0.16))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoadingImage)
+    }
+
+    // Retorna card com botões de ação (salvar, remover)
     private func actionCard() -> some View {
         VStack(spacing: 10) {
-
-            Menu {
-                Button("Escolher foto da biblioteca") {
-                    showPhotoPicker = true
-                }
-                Button("Escolher Avatar") {
-                    showAvatarPicker = true
-                }
-                Button("Cancelar", role: .cancel) {}
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "photo.on.rectangle.angled")
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
-            }
-            .buttonStyle(.plain)
-            .disabled(isLoadingImage)
 
             Button {
                 Task { await saveAllAndSync() }
