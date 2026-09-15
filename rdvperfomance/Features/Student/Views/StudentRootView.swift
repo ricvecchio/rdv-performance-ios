@@ -30,9 +30,8 @@ import SwiftUI
 ///   `recordsPath = [.studentPersonalRecordsBarbell]`, nunca
 ///   `[.studentPersonalRecords, .studentPersonalRecordsBarbell]` — a própria
 ///   seção nunca aparece dentro do seu próprio path).
-/// - As 3 seções ficam sempre montadas em um `ZStack`, preservando os
-///   `@StateObject` (ex.: `StudentAgendaViewModel`) entre trocas de seção,
-///   sem introduzir uma tab bar nativa ou alterar o rodapé existente.
+/// - Somente a seção selecionada é montada. Assim, a largura intrínseca de
+///   uma aba inativa não pode alterar o viewport da tela visível.
 /// - O botão `<` da raiz de Recordes e da raiz de Perfil deixou de ser um
 ///   pop (que já não fazia sentido, pois essas telas são a RAIZ da sua
 ///   própria pilha) e passou a significar exatamente o que o produto exige:
@@ -52,32 +51,22 @@ struct StudentRootView: View {
     @State private var profilePath: [AppRoute] = []
 
     var body: some View {
-        ZStack {
+        selectedTab
+            .environment(\.selectStudentMainSection, selectSection)
+    }
+
+    @ViewBuilder
+    private var selectedTab: some View {
+        switch selectedSection {
+        case .home:
             homeTab
-                .opacity(selectedSection == .home ? 1 : 0)
-                .allowsHitTesting(selectedSection == .home)
-                .toolbar(selectedSection == .home ? .visible : .hidden, for: .navigationBar)
-                .zIndex(selectedSection == .home ? 1 : 0)
-
+        case .agenda:
             agendaTab
-                .opacity(selectedSection == .agenda ? 1 : 0)
-                .allowsHitTesting(selectedSection == .agenda)
-                .toolbar(selectedSection == .agenda ? .visible : .hidden, for: .navigationBar)
-                .zIndex(selectedSection == .agenda ? 1 : 0)
-
+        case .records:
             recordsTab
-                .opacity(selectedSection == .records ? 1 : 0)
-                .allowsHitTesting(selectedSection == .records)
-                .toolbar(selectedSection == .records ? .visible : .hidden, for: .navigationBar)
-                .zIndex(selectedSection == .records ? 1 : 0)
-
+        case .profile:
             profileTab
-                .opacity(selectedSection == .profile ? 1 : 0)
-                .allowsHitTesting(selectedSection == .profile)
-                .toolbar(selectedSection == .profile ? .visible : .hidden, for: .navigationBar)
-                .zIndex(selectedSection == .profile ? 1 : 0)
         }
-        .environment(\.selectStudentMainSection, selectSection)
     }
 
     // MARK: - Seleção de seção (chamada pelo FooterBar de qualquer tela do aluno)
