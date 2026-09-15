@@ -150,6 +150,7 @@ struct StudentTeachersView: View {
                     .allowsHitTesting(false)
             }
         }
+        .frame(maxWidth: .infinity)
         .blur(radius: showRequestLinkModal ? 8 : 0)
         .animation(.easeInOut(duration: 0.20), value: showRequestLinkModal)
         .ignoresSafeArea(.container, edges: [.bottom])
