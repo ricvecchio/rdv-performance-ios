@@ -115,7 +115,9 @@ enum PersonalRecordsPayloadMerger {
             }
         }
 
-        return applying(tombstones: tombstones, to: merged)
+        return reconcilingBarbellCurrentValues(
+            in: applying(tombstones: tombstones, to: merged)
+        )
     }
 
     static func mergePayload(key: String, local: Data, remote: Data) -> Data {
@@ -282,6 +284,40 @@ enum PersonalRecordsPayloadMerger {
             }
         }
         return result
+    }
+
+    private static func reconcilingBarbellCurrentValues(in snapshot: Snapshot) -> Snapshot {
+        let valuesKey = "student_pr_barbell_values_v1"
+        let historyKey = "student_pr_barbell_history_v1"
+
+        guard var values = snapshot[valuesKey].flatMap(jsonObject) as? [String: Any],
+              let history = snapshot[historyKey].flatMap(historyMap)
+        else {
+            return snapshot
+        }
+
+        var didUpdateValues = false
+        for (key, entries) in history {
+            guard let latestEntry = entries.sorted(by: historyEntryComesBefore).last,
+                  let entry = latestEntry as? [String: Any],
+                  let valueKg = entry["valueKg"].flatMap(finiteNumber)
+            else {
+                continue
+            }
+
+            if finiteNumber(values[key]) != valueKg {
+                values[key] = valueKg
+                didUpdateValues = true
+            }
+        }
+
+        guard didUpdateValues, let data = jsonData(from: values) else {
+            return snapshot
+        }
+
+        var reconciled = snapshot
+        reconciled[valuesKey] = data
+        return reconciled
     }
 
     private static func customStorageKeys(from data: Data) -> Set<String> {

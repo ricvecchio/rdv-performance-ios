@@ -358,11 +358,13 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
             ? StudentPersonalRecordsCloudDocument(
                 payloads: mergedPayloads,
                 customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(tombstones),
-                requiresMigration: legacy != nil && (
-                    decodedMetadata?.legacyV1Migrated != true
-                        || mergedPayloads != partitionedMergedPayloads
-                        || tombstones != partitionedTombstones.mapValues { Set($0) }
-                )
+                requiresMigration: (
+                    legacy != nil && (
+                        decodedMetadata?.legacyV1Migrated != true
+                            || mergedPayloads != partitionedMergedPayloads
+                            || tombstones != partitionedTombstones.mapValues { Set($0) }
+                    )
+                ) || partitionedPayloads != partitionedMergedPayloads
             )
             : nil
 
