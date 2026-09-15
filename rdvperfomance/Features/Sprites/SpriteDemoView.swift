@@ -5,21 +5,17 @@ import SpriteKit
 struct SpriteDemoView: View {
 
     @Binding var path: [AppRoute]
-    @EnvironmentObject private var session: AppSession
 
-    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
-    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    init(
+        path: Binding<[AppRoute]>,
+        onSelectSection: @escaping (StudentMainSection) -> Void = { _ in }
+    ) {
+        _path = path
+        _ = onSelectSection
+    }
 
     private let contentMaxWidth: CGFloat = 380
     private let cornerRadius: CGFloat = 14
-
-    @AppStorage("ultimoTreinoSelecionado")
-    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
-
-    // Retorna a categoria atual do professor
-    private var categoriaAtualProfessor: TreinoTipo {
-        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
-    }
 
     @StateObject private var vm = ProgressGameViewModel(mode: .preview)
 
@@ -79,10 +75,6 @@ struct SpriteDemoView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                footerForUser()
-                    .frame(height: Theme.Layout.footerHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -117,33 +109,6 @@ struct SpriteDemoView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await vm.load() }
-    }
-
-    // Retorna o footer apropriado conforme tipo de usuário
-    @ViewBuilder
-    private func footerForUser() -> some View {
-        if session.userType == .STUDENT {
-            FooterBar(
-                path: $path,
-                kind: .agendaSobrePerfil(
-                    isAgendaSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                ),
-                onSelectStudentSection: onSelectSection
-            )
-        } else {
-            FooterBar(
-                path: $path,
-                kind: .teacherHomeAlunosSobrePerfil(
-                    selectedCategory: categoriaAtualProfessor,
-                    isHomeSelected: false,
-                    isAlunosSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                )
-            )
-        }
     }
 
     // Retorna card com preview da cena SpriteKit
