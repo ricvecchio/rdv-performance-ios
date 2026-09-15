@@ -62,6 +62,10 @@ struct StudentTeachersView: View {
         normalizedRouteStudentEmail.isEmpty ? resolvedStudentEmail : normalizedRouteStudentEmail
     }
 
+    private var isModalPresented: Bool {
+        showRequestLinkModal || selectedTeacher != nil
+    }
+
     var body: some View {
         GeometryReader { viewport in
             ZStack {
@@ -153,8 +157,8 @@ struct StudentTeachersView: View {
             }
             .frame(width: viewport.size.width, height: viewport.size.height)
         }
-        .blur(radius: showRequestLinkModal ? 8 : 0)
-        .animation(.easeInOut(duration: 0.20), value: showRequestLinkModal)
+        .blur(radius: isModalPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: isModalPresented)
         .ignoresSafeArea(.container, edges: [.bottom])
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
