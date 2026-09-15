@@ -165,9 +165,12 @@ struct DeleteAccountView: View {
         } label: {
             HStack {
                 Spacer()
-                Text(isLoading ? "Excluindo..." : "Excluir minha conta")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                HStack(spacing: 10) {
+                    Image(systemName: "trash.fill")
+                    Text(isLoading ? "Excluindo..." : "Excluir minha conta")
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
             .padding(.vertical, 14)
