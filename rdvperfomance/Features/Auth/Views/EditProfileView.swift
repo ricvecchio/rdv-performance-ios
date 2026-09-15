@@ -106,9 +106,9 @@ struct EditProfileView: View {
                         VStack(spacing: 16) {
 
                             avatarCard()
-                            photoAvatarButton()
                             formCard()
-                            actionCard()
+                            photoAvatarButton()
+                            actionButtons()
 
                             if showError {
                                 Text(errorMessage)
@@ -313,8 +313,7 @@ struct EditProfileView: View {
         .disabled(isLoadingImage)
     }
 
-    // Retorna card com botões de ação (salvar, remover)
-    private func actionCard() -> some View {
+    private func actionButtons() -> some View {
         VStack(spacing: 10) {
 
             Button {
@@ -362,11 +361,7 @@ struct EditProfileView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
     // Escolhe imagem correta para exibir (preview > armazenada > padrão)
