@@ -296,9 +296,12 @@ struct EditProfileView: View {
         } label: {
             HStack {
                 Spacer()
-                Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                HStack(spacing: 10) {
+                    Image(systemName: "photo.on.rectangle.angled")
+                    Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
             .padding(.vertical, 14)
