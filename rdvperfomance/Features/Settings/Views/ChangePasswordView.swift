@@ -42,9 +42,8 @@ struct ChangePasswordView: View {
 
                         VStack(spacing: 16) {
 
-                            headerCard()
                             formCard()
-                            actionCard()
+                            savePasswordButton()
 
                             if showError {
                                 feedbackCard(text: errorMessage, isError: true)
@@ -98,25 +97,6 @@ struct ChangePasswordView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Retorna card com texto informativo sobre segurança
-    private func headerCard() -> some View {
-        VStack(spacing: 10) {
-            Text("Segurança")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-
-            Text("Para alterar sua senha, confirme a senha atual e defina uma nova senha.")
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.60))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
-        }
-        .padding(.vertical, 18)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-    }
-
     // Retorna card com campos de senha
     private func formCard() -> some View {
         VStack(spacing: 18) {
@@ -132,54 +112,27 @@ struct ChangePasswordView: View {
         .cornerRadius(14)
     }
 
-    // Retorna card com botões de salvar e cancelar
-    private func actionCard() -> some View {
-        VStack(spacing: 10) {
-
-            Button {
-                Task { await submit() }
-            } label: {
-                HStack(spacing: 10) {
-                    Image(systemName: "key.fill")
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Text(isLoading ? "Salvando..." : "Salvar nova senha")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Spacer()
-                }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+    private func savePasswordButton() -> some View {
+        Button {
+            Task { await submit() }
+        } label: {
+            HStack {
+                Spacer()
+                Text(isLoading ? "Salvando..." : "Salvar nova senha")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                Spacer()
             }
-            .buttonStyle(.plain)
-            .disabled(isLoading)
-
-            Button { pop() } label: {
-                Text("Cancelar")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .underline()
-                    .padding(.top, 2)
-            }
-            .buttonStyle(.plain)
-            .disabled(isLoading)
+            .padding(.vertical, 14)
+            .background(Color.green.opacity(0.16))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
+            )
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        .buttonStyle(.plain)
+        .disabled(isLoading)
     }
 
     // Retorna card de feedback de sucesso ou erro
