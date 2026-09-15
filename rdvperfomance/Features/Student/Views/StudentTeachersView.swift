@@ -24,6 +24,7 @@ struct StudentTeachersView: View {
     @State private var showRequestCancellationConfirmation: Bool = false
     @State private var showInviteDeclineConfirmation: Bool = false
     @State private var actionErrorMessage: String? = nil
+    @State private var selectedTeacher: AppUser? = nil
 
     @State private var teacherEmailInput: String = ""
     @State private var linkActionMessage: String? = nil
@@ -190,6 +191,12 @@ struct StudentTeachersView: View {
                 .presentationDetents([.height(360)])
                 .presentationDragIndicator(.visible)
         }
+        .sheet(item: $selectedTeacher) { teacher in
+            teacherDetailsSheet(teacher)
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationContentInteraction(.scrolls)
+        }
         .task(id: "\(currentUid)|\(normalizedRouteStudentEmail)") {
             await loadStudentEmailIfNeeded()
             await refreshData()
@@ -293,27 +300,33 @@ struct StudentTeachersView: View {
     }
 
     private func teacherRow(_ teacher: AppUser) -> some View {
-        HStack(spacing: 14) {
-            StudentAvatarView(base64: teacher.photoBase64, size: 28)
-                .frame(width: 28)
+        Button {
+            selectedTeacher = teacher
+        } label: {
+            HStack(spacing: 14) {
+                StudentAvatarView(base64: teacher.photoBase64, size: 28)
+                    .frame(width: 28)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(teacher.name)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Text(teacher.email)
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.35))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(teacher.name)
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                    Text(teacher.email)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.35))
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                }
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
             }
-            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity)
+        .buttonStyle(.plain)
     }
 
     private func sentRequestRow(_ request: TeacherStudentLinkRequestFS) -> some View {
@@ -354,23 +367,33 @@ struct StudentTeachersView: View {
     private func receivedInviteRow(_ invite: TeacherStudentInviteFS) -> some View {
         let teacher = inviteTeachers[invite.teacherId]
 
-        return HStack(spacing: 14) {
-            StudentAvatarView(base64: teacher?.photoBase64, size: 28)
-                .frame(width: 28)
+        return HStack(spacing: 0) {
+            Button {
+                openTeacherDetails(teacher)
+            } label: {
+                HStack(spacing: 14) {
+                    StudentAvatarView(base64: teacher?.photoBase64, size: 28)
+                        .frame(width: 28)
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(teacher?.name ?? invite.teacherEmail)
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
-                Text(invite.teacherEmail)
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.35))
-                    .lineLimit(1)
-                    .truncationMode(.tail)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(teacher?.name ?? invite.teacherEmail)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Text(invite.teacherEmail)
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.35))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                }
+                .contentShape(Rectangle())
             }
-            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+            .buttonStyle(.plain)
+            .padding(.trailing, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Menu {
                 Button {
@@ -393,6 +416,84 @@ struct StudentTeachersView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity)
+    }
+
+    private func openTeacherDetails(_ teacher: AppUser?) {
+        guard let teacher else {
+            actionErrorMessage = "Não foi possível carregar os dados do professor."
+            return
+        }
+        selectedTeacher = teacher
+    }
+
+    private func teacherDetailsSheet(_ teacher: AppUser) -> some View {
+        ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 16) {
+                    VStack(spacing: 10) {
+                        Text("Professor")
+                            .font(Theme.Fonts.headerTitle())
+                            .foregroundColor(.white)
+
+                        StudentAvatarView(base64: teacher.photoBase64, size: 72)
+
+                        Text(teacher.name)
+                            .font(.system(size: 18, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+
+                    if teacherHasDetails(teacher) {
+                        VStack(alignment: .leading, spacing: 14) {
+                            teacherDetailsField(title: "CREF", value: teacher.cref)
+                            teacherDetailsField(title: "Biografia", value: teacher.bio)
+                        }
+                        .padding(16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                    }
+
+                    Button("Fechar") {
+                        selectedTeacher = nil
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 10)
+                    .background(Capsule().fill(Color.green.opacity(0.20)))
+                    .frame(maxWidth: .infinity)
+                }
+                .padding(16)
+            }
+        }
+    }
+
+    private func teacherHasDetails(_ teacher: AppUser) -> Bool {
+        [teacher.cref, teacher.bio].contains {
+            !($0?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+        }
+    }
+
+    @ViewBuilder
+    private func teacherDetailsField(title: String, value: String?) -> some View {
+        let trimmedValue = value?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !trimmedValue.isEmpty {
+            VStack(alignment: .leading, spacing: 6) {
+                Text(title)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Text(trimmedValue)
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.92))
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
     }
 
     private var pendingStatus: some View {
