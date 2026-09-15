@@ -868,4 +868,24 @@ final class UserRepository: FirestoreBaseRepository {
             .document(cleanUid)
             .setData(payload, merge: true)
     }
+
+    func setMeasurementUnit(uid: String, measurementUnit: String) async throws {
+        let cleanUid = clean(uid)
+        let cleanMeasurementUnit = clean(measurementUnit).lowercased()
+
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard cleanMeasurementUnit == "kg" || cleanMeasurementUnit == "lbs" else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .setData(
+                [
+                    "measurementUnit": cleanMeasurementUnit,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
+    }
 }

@@ -13,6 +13,7 @@ struct SettingsView: View {
     @State private var showWeightUnitSheet: Bool = false
 
     private let preferredWeightUnitKey: String = "preferredWeightUnit"
+    private let repository = FirestoreRepository.shared
 
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
@@ -114,6 +115,7 @@ struct SettingsView: View {
         }
         .onChange(of: preferredWeightUnitRawState) { _, newValue in
             UserDefaults.standard.set(newValue, forKey: preferredWeightUnitKey)
+            saveMeasurementUnit(newValue)
         }
         .sheet(isPresented: $showWeightUnitSheet) {
             WeightUnitSheetView(selectedUnitRaw: $preferredWeightUnitRawState)
@@ -152,6 +154,29 @@ struct SettingsView: View {
     // para evitar toque perdido por mutação manual de `path`.
     private func pop() {
         dismiss()
+    }
+
+    private func saveMeasurementUnit(_ rawValue: String) {
+        guard let uid = session.currentUid?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !uid.isEmpty else {
+            #if DEBUG
+            print("[Settings] Não foi possível salvar a unidade de medida sem usuário autenticado.")
+            #endif
+            return
+        }
+
+        Task {
+            do {
+                try await repository.setMeasurementUnit(uid: uid, measurementUnit: rawValue)
+                #if DEBUG
+                print("[Settings] Unidade de medida salva remotamente.")
+                #endif
+            } catch {
+                #if DEBUG
+                print("[Settings] Falha ao salvar unidade de medida: \(error.localizedDescription)")
+                #endif
+            }
+        }
     }
 
     private func sectionTitle(_ text: String) -> some View {

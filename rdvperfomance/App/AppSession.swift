@@ -11,14 +11,24 @@ final class AppSession: ObservableObject {
     @AppStorage("auth_uid") private var storedUid: String = ""
     @AppStorage("auth_userType") private var storedUserTypeRaw: String = ""
     @AppStorage("auth_userName") private var storedUserName: String = ""
+    @AppStorage("preferredWeightUnit") private var preferredWeightUnit: String = "kg"
 
     @Published var uid: String? = nil
     @Published var userType: UserTypeDTO? = nil
     @Published var userName: String? = nil
+    @Published private(set) var measurementUnitLoadState: MeasurementUnitLoadState = .idle
 
 
     private var authListener: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
+
+    enum MeasurementUnitLoadState {
+        case idle
+        case loading
+        case loaded
+        case missing
+        case failed
+    }
 
     /// Inicializa a sessão e restaura estado persistido ou limpa em modo DEBUG
     init() {
@@ -87,6 +97,8 @@ final class AppSession: ObservableObject {
             Task { @MainActor in
                 if let user {
                     PersonalRecordsSyncService.shared.prepareForAuthenticatedUser(uid: user.uid)
+                    self.preferredWeightUnit = "kg"
+                    self.measurementUnitLoadState = .loading
                     self.uid = user.uid
                     self.storedUid = user.uid
                     await self.loadUserProfile(uid: user.uid)
@@ -108,11 +120,12 @@ final class AppSession: ObservableObject {
     // Carrega nome e tipo de usuário do documento Firestore
     func loadUserProfile(uid: String) async {
         do {
-            let snap = try await db.collection("users").document(uid).getDocument()
+            let snap = try await db.collection("users").document(uid).getDocument(source: .server)
 
             guard let data = snap.data() else {
                 self.userType = nil
                 self.userName = nil
+                self.measurementUnitLoadState = .failed
 
                 self.storedUserTypeRaw = ""
                 self.storedUserName = ""
@@ -123,6 +136,9 @@ final class AppSession: ObservableObject {
             let typeRaw = data["userType"] as? String
             let remotePhotoBase64 = (data["photoBase64"] as? String ?? "")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
+            let remoteMeasurementUnit = (data["measurementUnit"] as? String ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
 
             if LocalProfileStore.shared.getPhotoBase64(userId: uid) != remotePhotoBase64 {
                 LocalProfileStore.shared.setPhotoBase64(remotePhotoBase64, userId: uid)
@@ -134,8 +150,24 @@ final class AppSession: ObservableObject {
             self.storedUserName = name ?? ""
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
 
+            switch remoteMeasurementUnit {
+            case "kg", "lbs":
+                self.preferredWeightUnit = remoteMeasurementUnit
+                self.measurementUnitLoadState = .loaded
+            case "":
+                self.measurementUnitLoadState = .missing
+            default:
+                self.measurementUnitLoadState = .failed
+                #if DEBUG
+                print("[Settings] Unidade de medida remota inválida.")
+                #endif
+            }
 
         } catch {
+            self.measurementUnitLoadState = .failed
+            #if DEBUG
+            print("[Settings] Falha ao carregar unidade de medida: \(error.localizedDescription)")
+            #endif
         }
     }
 
@@ -155,6 +187,7 @@ final class AppSession: ObservableObject {
         uid = nil
         userType = nil
         userName = nil
+        measurementUnitLoadState = .idle
 
         storedUid = ""
         storedUserTypeRaw = ""

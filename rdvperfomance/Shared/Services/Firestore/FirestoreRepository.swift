@@ -76,6 +76,10 @@ final class FirestoreRepository {
         try await userRepository.setStudentUnitName(uid: uid, unitName: unitName)
     }
 
+    func setMeasurementUnit(uid: String, measurementUnit: String) async throws {
+        try await userRepository.setMeasurementUnit(uid: uid, measurementUnit: measurementUnit)
+    }
+
     // MARK: - Profile Notification State
 
     func getProfileNotificationState(uid: String) async throws -> ProfileNotificationState {

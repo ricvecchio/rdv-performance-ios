@@ -18,6 +18,7 @@ struct AppUser: Identifiable, Codable, Hashable {
     var active: Bool?
 
     var unitName: String?
+    var measurementUnit: String?
 
     // ✅ foto persistida no Firestore (Base64)
     var photoBase64: String?
