@@ -74,7 +74,6 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         // Keeps each document well under Firestore's 1 MiB limit after field overhead.
         static let payloadChunkByteCount = 512 * 1024
         static let chunksPerBatch = 16
-        static let documentIDsPerQuery = 30
         static let maximumChunkCount = 10_000
         static let saveAttempts = 3
     }
@@ -251,14 +250,12 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
             + PersonalRecordsPayloadMerger.managedPayloadKeys
         var snapshots = [String: DocumentSnapshot]()
 
-        for chunk in documentIDs.chunked(into: Limits.documentIDsPerQuery) {
+        for documentID in documentIDs {
             try Task.checkCancellation()
-            let result = try await personalRecordsCollection(for: uid)
-                .whereField(FieldPath.documentID(), in: chunk)
-                .getDocuments()
-            for snapshot in result.documents {
-                snapshots[snapshot.documentID] = snapshot
-            }
+            let snapshot = try await personalRecordsCollection(for: uid)
+                .document(documentID)
+                .getDocument()
+            snapshots[documentID] = snapshot
         }
 
         return snapshots
@@ -286,12 +283,14 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         guard !documentIDs.isEmpty else { return [] }
 
         var snapshots = [DocumentSnapshot]()
-        for chunk in documentIDs.chunked(into: Limits.documentIDsPerQuery) {
+        for documentID in documentIDs {
             try Task.checkCancellation()
-            let result = try await personalRecordsCollection(for: uid)
-                .whereField(FieldPath.documentID(), in: chunk)
-                .getDocuments()
-            snapshots.append(contentsOf: result.documents)
+            let snapshot = try await personalRecordsCollection(for: uid)
+                .document(documentID)
+                .getDocument()
+            if snapshot.exists {
+                snapshots.append(snapshot)
+            }
         }
 
         return snapshots

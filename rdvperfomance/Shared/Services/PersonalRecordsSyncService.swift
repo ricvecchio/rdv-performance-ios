@@ -271,6 +271,9 @@ final class PersonalRecordsSyncService {
                 revision: revision
             )
         } catch {
+            #if DEBUG
+            print("[PersonalRecordsSync] Initial synchronization failed for user \(uid): \(error)")
+            #endif
             scheduleRetry(for: uid)
         }
     }
@@ -306,6 +309,9 @@ final class PersonalRecordsSyncService {
                 revision: revision
             )
         } catch {
+            #if DEBUG
+            print("[PersonalRecordsSync] Pending upload failed for user \(uid): \(error)")
+            #endif
             scheduleRetry(for: uid)
         }
     }
