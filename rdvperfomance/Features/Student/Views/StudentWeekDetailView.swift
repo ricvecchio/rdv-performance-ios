@@ -198,9 +198,10 @@ struct StudentWeekDetailView: View {
             } else {
                 FooterBar(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: true,
-                        isSobreSelected: false,
+                    kind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: true,
+                        isRecordsSelected: false,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
