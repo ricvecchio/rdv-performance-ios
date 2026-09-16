@@ -32,7 +32,7 @@ struct TeacherStudentRelation: Identifiable, Codable, Hashable {
     var categories: [String]
 }
 
-/// Convite do professor -> aluno (para aparecer como "Convite pendente" na Agenda)
+/// Convite do professor -> aluno (para aparecer como "Convite pendente" em Treinos)
 struct TeacherStudentInviteFS: Identifiable, Codable, Hashable {
     @DocumentID var id: String?
     var teacherId: String
@@ -60,4 +60,3 @@ struct TeacherStudentLinkRequestFS: Identifiable, Codable, Hashable {
     var createdAt: Timestamp?
     var updatedAt: Timestamp?
 }
-

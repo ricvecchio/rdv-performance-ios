@@ -43,7 +43,7 @@ struct StudentPersonalRecordsView: View {
     /// Sempre fornecido pelo `StudentRootView`. Usado tanto pelo rodapé
     /// quanto pelo botão `<` desta tela: como esta view é a RAIZ da seção
     /// Recordes, `path` está sempre vazio aqui — não existe nada para dar
-    /// pop. "Voltar" nesta tela sempre significa "trocar para a seção Agenda".
+    /// pop. "Voltar" nesta tela sempre significa "trocar para a seção Treinos".
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
     var navigationContext: PersonalRecordsNavigationContext = .student
 

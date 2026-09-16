@@ -171,8 +171,8 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            actionButton(title: "Agenda de Treinos", icon: "calendar") {
-                openAgenda()
+            actionButton(title: "Treinos", icon: "calendar") {
+                openWorkouts()
             }
 
             Divider()
@@ -223,9 +223,9 @@ struct TeacherStudentDetailView: View {
         .buttonStyle(.plain)
     }
 
-    private func openAgenda() {
+    private func openWorkouts() {
         guard let sid = student.id, !sid.isEmpty else { return }
-        path.append(.studentAgenda(studentId: sid, studentName: student.name))
+        path.append(.studentWorkouts(studentId: sid, studentName: student.name))
     }
 
     private func pop() {

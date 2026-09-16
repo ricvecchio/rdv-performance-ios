@@ -2,7 +2,7 @@ import Foundation
 import Combine
 
 @MainActor
-final class StudentAgendaViewModel: ObservableObject {
+final class StudentWorkoutsViewModel: ObservableObject {
 
     enum LinkBannerState: Equatable {
         case idle
@@ -236,7 +236,7 @@ final class StudentAgendaViewModel: ObservableObject {
             let result = try await repository.getWeeksForStudent(studentId: studentId)
 
             #if DEBUG
-            print("[StudentAgenda] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count) semana(s)")
+            print("[StudentWorkouts] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count) semana(s)")
             #endif
 
             // ✅ Publica semanas e encerra o loading principal imediatamente.
@@ -274,7 +274,7 @@ final class StudentAgendaViewModel: ObservableObject {
         }
 
         #if DEBUG
-        print("[StudentAgenda] metadata completo em \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(weeks.count * 2) reads auxiliares")
+        print("[StudentWorkouts] metadata completo em \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(weeks.count * 2) reads auxiliares")
         #endif
     }
 

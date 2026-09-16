@@ -158,8 +158,8 @@ struct TeacherRootView: View {
             CreateTreinoAcademiaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
         case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
             CreateTreinoCasaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
-        case .studentAgenda(let studentId, let studentName):
-            StudentAgendaView(path: destinationPath, studentId: studentId, studentName: studentName)
+        case .studentWorkouts(let studentId, let studentName):
+            StudentWorkoutsView(path: destinationPath, studentId: studentId, studentName: studentName)
         case .studentWeekDetail(let studentId, let weekId, let weekTitle, let selectedDayId):
             StudentWeekDetailView(
                 path: destinationPath,

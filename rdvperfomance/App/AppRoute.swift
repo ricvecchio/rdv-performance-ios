@@ -83,7 +83,7 @@ enum AppRoute: Hashable {
     case teacherMessage(student: AppUser, category: TreinoTipo)
     case teacherFeedbacks(student: AppUser, category: TreinoTipo)
 
-    case studentAgenda(studentId: String, studentName: String)
+    case studentWorkouts(studentId: String, studentName: String)
     case studentWeekDetail(
         studentId: String,
         weekId: String,

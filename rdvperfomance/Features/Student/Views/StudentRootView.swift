@@ -3,7 +3,7 @@ import SwiftUI
 /// Raiz de navegação do ALUNO.
 ///
 /// Esta view é o coração da correção arquitetural: ela é a ÚNICA dona da
-/// "seção principal" selecionada (Agenda / Recordes / Perfil) e de TRÊS
+/// "seção principal" selecionada (Treinos / Recordes / Perfil) e de TRÊS
 /// pilhas de navegação hierárquica totalmente independentes — uma por seção.
 ///
 /// Por quê:
@@ -19,12 +19,12 @@ import SwiftUI
 /// nada (porque `path.removeLast()` era um no-op quando `path` já estava
 /// vazio — Recordes SEMPRE chegava com `path = [.studentPersonalRecords]`,
 /// ou seja, `path.count == 1`; ao dar pop, o "topo" virava a raiz do
-/// NavigationStack, mas nada de fato pedia para trocar para a Agenda).
+/// NavigationStack, mas nada de fato pedia para trocar para Treinos).
 ///
 /// Como ficou:
 /// - `selectedSection` é só um enum (`StudentMainSection`), trocado por uma
 ///   simples atribuição de estado — nunca um push/pop.
-/// - `agendaPath` / `recordsPath` / `profilePath` são 3 arrays de `AppRoute`
+/// - `workoutsPath` / `recordsPath` / `profilePath` são 3 arrays de `AppRoute`
 ///   independentes, cada um dono de um `NavigationStack` próprio. Cada um
 ///   representa SOMENTE os filhos hierárquicos daquela seção (ex.:
 ///   `recordsPath = [.studentPersonalRecordsBarbell]`, nunca
@@ -35,7 +35,7 @@ import SwiftUI
 /// - O botão `<` da raiz de Recordes e da raiz de Perfil deixou de ser um
 ///   pop (que já não fazia sentido, pois essas telas são a RAIZ da sua
 ///   própria pilha) e passou a significar exatamente o que o produto exige:
-///   "voltar para a Agenda" == `selectedSection = .agenda`.
+///   "voltar para Treinos" == `selectedSection = .agenda`.
 struct StudentRootView: View {
 
     @EnvironmentObject private var session: AppSession
@@ -46,11 +46,11 @@ struct StudentRootView: View {
     @State private var selectedSection: StudentMainSection = .home
 
     @State private var homePath: [AppRoute] = []
-    @State private var agendaPath: [AppRoute] = []
+    @State private var workoutsPath: [AppRoute] = []
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
-    @State private var agendaInitialWeekId: String?
-    @State private var agendaInitialDayId: String?
+    @State private var workoutsInitialWeekId: String?
+    @State private var workoutsInitialDayId: String?
 
     var body: some View {
         selectedTab
@@ -63,7 +63,7 @@ struct StudentRootView: View {
         case .home:
             homeTab
         case .agenda:
-            agendaTab
+            workoutsTab
         case .records:
             recordsTab
         case .profile:
@@ -83,7 +83,7 @@ struct StudentRootView: View {
         let alreadyAtRoot: Bool
         switch target {
         case .home: alreadyAtRoot = homePath.isEmpty
-        case .agenda: alreadyAtRoot = agendaPath.isEmpty
+        case .agenda: alreadyAtRoot = workoutsPath.isEmpty
         case .records: alreadyAtRoot = recordsPath.isEmpty
         case .profile: alreadyAtRoot = profilePath.isEmpty
         }
@@ -92,7 +92,7 @@ struct StudentRootView: View {
 
         switch target {
         case .home: homePath = []
-        case .agenda: agendaPath = []
+        case .agenda: workoutsPath = []
         case .records: recordsPath = []
         case .profile: profilePath = []
         }
@@ -100,14 +100,14 @@ struct StudentRootView: View {
         selectedSection = target
     }
 
-    private func openAgenda(weekId: String, dayId: String) {
-        agendaPath = []
-        agendaInitialWeekId = weekId
-        agendaInitialDayId = dayId
+    private func openWorkouts(weekId: String, dayId: String) {
+        workoutsPath = []
+        workoutsInitialWeekId = weekId
+        workoutsInitialDayId = dayId
         selectedSection = .agenda
     }
 
-    // MARK: - Agenda
+    // MARK: - Treinos
 
     private var homeTab: some View {
         NavigationStack(path: $homePath) {
@@ -115,36 +115,36 @@ struct StudentRootView: View {
                 path: $homePath,
                 studentId: studentId,
                 onSelectSection: selectSection,
-                onSelectWorkout: openAgenda
+                onSelectWorkout: openWorkouts
             )
             .navigationDestination(for: AppRoute.self) { route in
-                agendaDestination(for: route, path: $homePath)
+                workoutsDestination(for: route, path: $homePath)
             }
         }
     }
 
-    private var agendaTab: some View {
-        NavigationStack(path: $agendaPath) {
-            StudentAgendaView(
-                path: $agendaPath,
+    private var workoutsTab: some View {
+        NavigationStack(path: $workoutsPath) {
+            StudentWorkoutsView(
+                path: $workoutsPath,
                 studentId: studentId,
                 studentName: studentName,
-                initialExpandedWeekId: agendaInitialWeekId,
-                initialExpandedDayId: agendaInitialDayId,
+                initialExpandedWeekId: workoutsInitialWeekId,
+                initialExpandedDayId: workoutsInitialDayId,
                 onInitialExpansionHandled: {
-                    agendaInitialWeekId = nil
-                    agendaInitialDayId = nil
+                    workoutsInitialWeekId = nil
+                    workoutsInitialDayId = nil
                 },
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in
-                agendaDestination(for: route, path: $agendaPath)
+                workoutsDestination(for: route, path: $workoutsPath)
             }
         }
     }
 
     @ViewBuilder
-    private func agendaDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
+    private func workoutsDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
         switch route {
 
         case .studentWeekDetail(let studentId, let weekId, let weekTitle, let selectedDayId):

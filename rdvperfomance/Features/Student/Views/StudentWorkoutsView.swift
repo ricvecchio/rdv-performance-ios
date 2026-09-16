@@ -1,9 +1,9 @@
-// StudentAgendaView.swift — Lista de semanas do aluno com metadados e navegação
+// StudentWorkoutsView.swift — Treinos do aluno organizados por semanas e dias
 import SwiftUI
 import Combine
 import UIKit
 
-struct StudentAgendaView: View {
+struct StudentWorkoutsView: View {
 
     // Bindings, parâmetros e ViewModel
     @Binding var path: [AppRoute]
@@ -13,7 +13,7 @@ struct StudentAgendaView: View {
     let initialExpandedDayId: String?
     let onInitialExpansionHandled: () -> Void
 
-    /// Presente apenas quando esta view é a raiz da seção Agenda dentro de
+    /// Presente apenas quando esta view é a raiz da seção Treinos dentro de
     /// `StudentRootView`. Permite ao rodapé trocar de seção principal sem
     /// tocar em nenhum NavigationStack.
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
@@ -23,10 +23,10 @@ struct StudentAgendaView: View {
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
 
-    @StateObject private var vm: StudentAgendaViewModel
+    @StateObject private var vm: StudentWorkoutsViewModel
     private let contentMaxWidth: CGFloat = 380
 
-    private enum AgendaFilter: Equatable {
+    private enum WorkoutsFilter: Equatable {
         case active
         case completed
         case all
@@ -40,7 +40,7 @@ struct StudentAgendaView: View {
 
     @State private var isRequestLinkSheetPresented: Bool = false
     @State private var teacherEmailInput: String = ""
-    @State private var selectedFilter: AgendaFilter = .active
+    @State private var selectedFilter: WorkoutsFilter = .active
     @State private var expandedWeekIds = Set<String>()
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
@@ -62,7 +62,7 @@ struct StudentAgendaView: View {
         self.initialExpandedDayId = initialExpandedDayId
         self.onInitialExpansionHandled = onInitialExpansionHandled
         self.onSelectSection = onSelectSection
-        _vm = StateObject(wrappedValue: StudentAgendaViewModel(studentId: studentId, repository: repository))
+        _vm = StateObject(wrappedValue: StudentWorkoutsViewModel(studentId: studentId, repository: repository))
     }
 
     private var isTeacherViewing: Bool { session.userType == .TRAINER }
@@ -129,7 +129,7 @@ struct StudentAgendaView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Agenda")
+                Text("Treinos")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -240,7 +240,7 @@ struct StudentAgendaView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func filterChip(title: String, filter: AgendaFilter) -> some View {
+    private func filterChip(title: String, filter: WorkoutsFilter) -> some View {
         Button {
             selectedFilter = filter
         } label: {

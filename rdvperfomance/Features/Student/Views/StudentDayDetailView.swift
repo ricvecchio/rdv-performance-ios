@@ -325,7 +325,7 @@ struct StudentDayDetailView: View {
         }
     }
 
-    // Footer padrão da Agenda
+    // Footer padrão de Treinos
     private var footer: some View {
         FooterBar(
             path: $path,
