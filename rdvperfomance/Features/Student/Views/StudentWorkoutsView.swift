@@ -508,8 +508,6 @@ struct StudentWorkoutsView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
     private var filteredWeeks: [TrainingWeekFS] {
