@@ -62,6 +62,14 @@ struct TeacherWorkoutsView: View {
                                 }
 
                                 quickAccessCard(
+                                    title: "Meus Recordes",
+                                    subtitle: "Acompanhe e registre seus resultados",
+                                    icon: "trophy.fill"
+                                ) {
+                                    path.append(.teacherPersonalRecords(category: category))
+                                }
+
+                                quickAccessCard(
                                     title: "Importar",
                                     subtitle: "Importe treinos por planilha",
                                     icon: "doc.text.fill"

@@ -8,6 +8,7 @@ struct StudentHeroesPersonalRecordsView: View {
 
     /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -528,9 +529,10 @@ struct StudentHeroesPersonalRecordsView: View {
                     }
                 }
 
-                FooterBar(
+                PersonalRecordsFooter(
                     path: $path,
-                    kind: .studentHomeTreinosRecordsProfile(
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
                         isHomeSelected: false,
                         isTreinosSelected: false,
                         isRecordsSelected: true,

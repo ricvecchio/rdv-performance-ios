@@ -1,5 +1,39 @@
 import SwiftUI
 
+enum PersonalRecordsNavigationContext {
+    case student
+    case teacher(category: TreinoTipo)
+}
+
+struct PersonalRecordsFooter: View {
+    @Binding var path: [AppRoute]
+    let navigationContext: PersonalRecordsNavigationContext
+    let studentFooterKind: FooterBar.Kind
+    let onSelectStudentSection: (StudentMainSection) -> Void
+
+    var body: some View {
+        switch navigationContext {
+        case .student:
+            FooterBar(
+                path: $path,
+                kind: studentFooterKind,
+                onSelectStudentSection: onSelectStudentSection
+            )
+        case .teacher(let category):
+            FooterBar(
+                path: $path,
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: category,
+                    isHomeSelected: false,
+                    isAlunosSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: false
+                )
+            )
+        }
+    }
+}
+
 // Tela do Aluno: Recorde Pessoal (menu de seções)
 struct StudentPersonalRecordsView: View {
 
@@ -11,6 +45,7 @@ struct StudentPersonalRecordsView: View {
     /// Recordes, `path` está sempre vazio aqui — não existe nada para dar
     /// pop. "Voltar" nesta tela sempre significa "trocar para a seção Agenda".
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -110,9 +145,10 @@ struct StudentPersonalRecordsView: View {
                     }
                 }
 
-                FooterBar(
+                PersonalRecordsFooter(
                     path: $path,
-                    kind: .studentHomeTreinosRecordsProfile(
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
                         isHomeSelected: false,
                         isTreinosSelected: false,
                         isRecordsSelected: true,

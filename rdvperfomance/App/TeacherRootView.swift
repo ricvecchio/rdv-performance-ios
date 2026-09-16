@@ -59,6 +59,57 @@ struct TeacherRootView: View {
     @ViewBuilder
     private func teacherDestination(_ route: AppRoute) -> some View {
         switch route {
+        case .teacherPersonalRecords(let category):
+            StudentPersonalRecordsView(
+                path: destinationPath,
+                onBack: { destinationPath.wrappedValue.removeLast() },
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsBarbell:
+            StudentBarbellPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsGymnastic:
+            StudentGymnasticPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsEndurance:
+            StudentEndurancePersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsNotables:
+            StudentNotablesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsGirls:
+            StudentGirlsPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsOpen:
+            StudentOpenPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsHeroes:
+            StudentHeroesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsCampeonatos:
+            StudentCampeonatosPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsCrossfitGames:
+            StudentCrossfitGamesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
         case .teacherStudentDetail(let student, let category):
             TeacherStudentDetailView(path: destinationPath, student: student, category: category)
         case .teacherMessage(let student, let category):

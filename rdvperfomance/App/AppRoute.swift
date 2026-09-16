@@ -100,6 +100,7 @@ enum AppRoute: Hashable {
     case studentPersonalRecordsHeroes
     case studentPersonalRecordsCampeonatos
     case studentPersonalRecordsCrossfitGames
+    case teacherPersonalRecords(category: TreinoTipo)
 
     case createTrainingWeek(student: AppUser, category: TreinoTipo)
     case createTrainingDay(weekId: String, category: TreinoTipo)
