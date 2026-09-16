@@ -17,11 +17,19 @@ struct StudentDashboardDaySummary: Identifiable {
     var id: Date { date }
 }
 
+enum StudentDashboardTeacherLinkState: Equatable {
+    case loading
+    case linked
+    case unlinked
+    case failed
+}
+
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
     @Published private(set) var upcomingDays: [StudentDashboardDay] = []
     @Published private(set) var isLoading = true
+    @Published private(set) var teacherLinkState: StudentDashboardTeacherLinkState = .loading
 
     private let studentId: String
     private let repository: FirestoreRepository
@@ -36,9 +44,26 @@ final class StudentDashboardViewModel: ObservableObject {
         guard !isLoadingData else { return }
         isLoadingData = true
         isLoading = true
+        teacherLinkState = .loading
         defer {
             isLoadingData = false
             isLoading = false
+        }
+
+        do {
+            let teacherLinks = try await repository.getTeacherLinksForStudent(studentId: studentId)
+            teacherLinkState = teacherLinks.isEmpty ? .unlinked : .linked
+        } catch {
+            #if DEBUG
+            print("[StudentDashboard] Não foi possível carregar os vínculos: \(error.localizedDescription)")
+            #endif
+            teacherLinkState = .failed
+        }
+
+        guard teacherLinkState != .unlinked else {
+            currentWeekDaySummaries = []
+            upcomingDays = []
+            return
         }
 
         do {

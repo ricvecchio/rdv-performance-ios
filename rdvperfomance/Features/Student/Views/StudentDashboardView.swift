@@ -7,6 +7,7 @@ struct StudentDashboardView: View {
 
     @EnvironmentObject private var session: AppSession
     @StateObject private var viewModel: StudentDashboardViewModel
+    @State private var isTeacherLinkIconPulsing = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -41,8 +42,7 @@ struct StudentDashboardView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
                             header
-                            progressCard
-                            upcomingWorkoutsCard
+                            dashboardContent
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
                         .frame(maxWidth: contentMaxWidth)
@@ -99,6 +99,52 @@ struct StudentDashboardView: View {
                 .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    @ViewBuilder
+    private var dashboardContent: some View {
+        switch viewModel.teacherLinkState {
+        case .loading:
+            ProgressView()
+                .tint(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 28)
+        case .unlinked:
+            noLinkedTeacherCard
+        case .linked, .failed:
+            progressCard
+            upcomingWorkoutsCard
+        }
+    }
+
+    private var noLinkedTeacherCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Image(systemName: "person.crop.circle.badge.exclamationmark")
+                .font(.system(size: 34, weight: .medium))
+                .foregroundColor(Theme.Colors.primaryGreen)
+                .scaleEffect(isTeacherLinkIconPulsing ? 1.06 : 0.94)
+                .opacity(isTeacherLinkIconPulsing ? 1 : 0.75)
+                .animation(
+                    .easeInOut(duration: 1.6).repeatForever(autoreverses: true),
+                    value: isTeacherLinkIconPulsing
+                )
+
+            Text("Você ainda não tem um professor vinculado")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white.opacity(0.92))
+
+            Text("Vincule-se a um professor para receber treinos e acompanhar sua evolução.")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .onAppear {
+            isTeacherLinkIconPulsing = true
+        }
     }
 
     private var progressCard: some View {
