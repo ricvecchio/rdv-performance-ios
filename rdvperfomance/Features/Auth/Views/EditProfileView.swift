@@ -291,13 +291,16 @@ struct EditProfileView: View {
 
     private func photoAvatarButton() -> some View {
         Menu {
-            Button("Escolher foto da biblioteca") {
+            Button {
                 showPhotoPicker = true
+            } label: {
+                Label("Escolher foto da biblioteca", systemImage: "photo")
             }
-            Button("Escolher Avatar") {
+            Button {
                 showAvatarPicker = true
+            } label: {
+                Label("Escolher Avatar", systemImage: "person.crop.circle")
             }
-            Button("Cancelar", role: .cancel) {}
         } label: {
             HStack {
                 Spacer()
@@ -310,11 +313,11 @@ struct EditProfileView: View {
                 Spacer()
             }
             .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
+            .background(Theme.Colors.primaryGreen.opacity(0.14))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.30), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -327,31 +330,30 @@ struct EditProfileView: View {
             Button {
                 Task { await saveAllAndSync() }
             } label: {
-                HStack(spacing: 10) {
-                    if isSaving {
-                        ProgressView()
-                            .tint(.white.opacity(0.9))
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.white.opacity(0.9))
+                HStack {
+                    Spacer()
+                    HStack(spacing: 10) {
+                        if isSaving {
+                            ProgressView()
+                                .tint(.white.opacity(0.9))
+                        } else {
+                            Image(systemName: "checkmark.circle.fill")
+                        }
+
+                        Text(isSaving ? "Salvando..." : "Salvar")
                     }
-
-                    Text(isSaving ? "Salvando..." : "Salvar")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
                     Spacer()
                 }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    // ✅ Verde quando há alterações válidas; neutro caso contrário
-                    Capsule()
-                        .fill(canSave ? Color.green.opacity(0.28) : Color.white.opacity(0.10))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .padding(.vertical, 14)
+                .background(canSave ? Theme.Colors.primaryGreen.opacity(0.28) : Color.white.opacity(0.10))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            canSave ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.12),
+                            lineWidth: 1
                         )
                 )
             }
