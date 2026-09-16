@@ -4,6 +4,7 @@ struct StudentDashboardView: View {
     @Binding var path: [AppRoute]
     let studentId: String
     let onSelectSection: (StudentMainSection) -> Void
+    let onSelectWorkout: (String, String) -> Void
 
     @EnvironmentObject private var session: AppSession
     @StateObject private var viewModel: StudentDashboardViewModel
@@ -15,11 +16,13 @@ struct StudentDashboardView: View {
         path: Binding<[AppRoute]>,
         studentId: String,
         onSelectSection: @escaping (StudentMainSection) -> Void,
+        onSelectWorkout: @escaping (String, String) -> Void = { _, _ in },
         repository: FirestoreRepository = .shared
     ) {
         self._path = path
         self.studentId = studentId
         self.onSelectSection = onSelectSection
+        self.onSelectWorkout = onSelectWorkout
         _viewModel = StateObject(wrappedValue: StudentDashboardViewModel(studentId: studentId, repository: repository))
     }
 
@@ -222,12 +225,8 @@ struct StudentDashboardView: View {
             } else {
                 ForEach(Array(viewModel.upcomingDays.enumerated()), id: \.element.id) { index, item in
                     Button {
-                        path.append(.studentWeekDetail(
-                            studentId: studentId,
-                            weekId: item.weekId,
-                            weekTitle: item.weekTitle,
-                            selectedDayId: item.day.id
-                        ))
+                        guard let dayId = item.day.id else { return }
+                        onSelectWorkout(item.weekId, dayId)
                     } label: {
                         upcomingWorkoutRow(item)
                     }

@@ -49,6 +49,8 @@ struct StudentRootView: View {
     @State private var agendaPath: [AppRoute] = []
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
+    @State private var agendaInitialWeekId: String?
+    @State private var agendaInitialDayId: String?
 
     var body: some View {
         selectedTab
@@ -98,6 +100,13 @@ struct StudentRootView: View {
         selectedSection = target
     }
 
+    private func openAgenda(weekId: String, dayId: String) {
+        agendaPath = []
+        agendaInitialWeekId = weekId
+        agendaInitialDayId = dayId
+        selectedSection = .agenda
+    }
+
     // MARK: - Agenda
 
     private var homeTab: some View {
@@ -105,7 +114,8 @@ struct StudentRootView: View {
             StudentDashboardView(
                 path: $homePath,
                 studentId: studentId,
-                onSelectSection: selectSection
+                onSelectSection: selectSection,
+                onSelectWorkout: openAgenda
             )
             .navigationDestination(for: AppRoute.self) { route in
                 agendaDestination(for: route, path: $homePath)
@@ -119,6 +129,12 @@ struct StudentRootView: View {
                 path: $agendaPath,
                 studentId: studentId,
                 studentName: studentName,
+                initialExpandedWeekId: agendaInitialWeekId,
+                initialExpandedDayId: agendaInitialDayId,
+                onInitialExpansionHandled: {
+                    agendaInitialWeekId = nil
+                    agendaInitialDayId = nil
+                },
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in

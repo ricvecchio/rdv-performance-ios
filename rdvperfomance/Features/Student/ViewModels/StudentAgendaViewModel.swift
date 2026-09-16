@@ -24,11 +24,16 @@ final class StudentAgendaViewModel: ObservableObject {
     @Published var linkActionMessageIsError: Bool = false
 
     @Published private(set) var teacherNameById: [String: String] = [:]
+    @Published private(set) var daysByWeekId: [String: [TrainingDayFS]] = [:]
+    @Published private(set) var completedDayIdsByWeekId: [String: Set<String>] = [:]
+    @Published private(set) var loadingWeekIds = Set<String>()
+    @Published private(set) var weekDaysErrorByWeekId: [String: String] = [:]
 
     private var hasLoadedLinkStatus: Bool = false
     private var hasLoadedWeeksAndMeta: Bool = false
     private var linkStatusLoadTask: Task<Void, Never>?
     private var weeksLoadTask: Task<Void, Never>?
+    private var weekDaysLoadTasks: [String: Task<Void, Never>] = [:]
     private var metadataGeneration = UUID()
 
     var hasLoadedWeeks: Bool { hasLoadedWeeksAndMeta }
@@ -317,30 +322,8 @@ final class StudentAgendaViewModel: ObservableObject {
             for week in weeks {
                 guard let weekId = week.id, !weekId.isEmpty else { continue }
 
-                group.addTask { [studentId] in
-                    do {
-                        let days = try await self.repository.getDaysForWeek(weekId: weekId)
-                        if let range = StudentAgendaViewModel.computeRangeTextStatic(days: days) {
-                            await MainActor.run {
-                                guard self.metadataGeneration == generation else { return }
-                                self.weekRangeText[weekId] = range
-                            }
-                        }
-                        if let endDate = days.compactMap(\.date).max() {
-                            await MainActor.run {
-                                guard self.metadataGeneration == generation else { return }
-                                self.weekEndDate[weekId] = endDate
-                            }
-                        }
-
-                        let p = try await self.repository.getWeekProgress(weekId: weekId, studentId: studentId)
-                        let percent = StudentAgendaViewModel.computePercentStatic(completed: p.completed, total: p.total)
-                        await MainActor.run {
-                            guard self.metadataGeneration == generation else { return }
-                            self.weekProgressPercent[weekId] = percent
-                        }
-                    } catch {
-                    }
+                group.addTask {
+                    await self.loadCachedMetadata(for: weekId, generation: generation)
                 }
             }
         }
@@ -349,6 +332,30 @@ final class StudentAgendaViewModel: ObservableObject {
             hasLoadedWeekMetadata = true
             objectWillChange.send()
         }
+    }
+
+    private func loadCachedMetadata(for weekId: String, generation: UUID) async {
+        await loadDaysAndStatus(for: weekId)
+        guard metadataGeneration == generation,
+              daysError(for: weekId) == nil else {
+            return
+        }
+
+        let days = days(for: weekId)
+        if let range = Self.computeRangeTextStatic(days: days) {
+            weekRangeText[weekId] = range
+        }
+        if let endDate = days.compactMap(\.date).max() {
+            weekEndDate[weekId] = endDate
+        }
+
+        let completed = days.compactMap(\.id)
+            .filter { isCompleted(dayId: $0, in: weekId) }
+            .count
+        weekProgressPercent[weekId] = Self.computePercentStatic(
+            completed: completed,
+            total: days.count
+        )
     }
 
     func subtitleForWeek(_ week: TrainingWeekFS) -> String {
@@ -399,6 +406,88 @@ final class StudentAgendaViewModel: ObservableObject {
         guard let endDate = endDate(for: week) else { return false }
         let calendar = Calendar.current
         return calendar.startOfDay(for: endDate) < calendar.startOfDay(for: now)
+    }
+
+    func days(for weekId: String) -> [TrainingDayFS] {
+        daysByWeekId[weekId] ?? []
+    }
+
+    func isLoadingDays(for weekId: String) -> Bool {
+        loadingWeekIds.contains(weekId)
+    }
+
+    func daysError(for weekId: String) -> String? {
+        weekDaysErrorByWeekId[weekId]
+    }
+
+    func isCompleted(dayId: String, in weekId: String) -> Bool {
+        completedDayIdsByWeekId[weekId]?.contains(dayId) == true
+    }
+
+    func loadDaysAndStatus(for weekId: String, force: Bool = false) async {
+        guard !weekId.isEmpty else { return }
+        if let task = weekDaysLoadTasks[weekId] {
+            await task.value
+            return
+        }
+        guard force || daysByWeekId[weekId] == nil else { return }
+
+        let task = Task { [weak self] in
+            guard let self else { return }
+            self.loadingWeekIds.insert(weekId)
+            self.weekDaysErrorByWeekId.removeValue(forKey: weekId)
+            defer {
+                self.loadingWeekIds.remove(weekId)
+                self.weekDaysLoadTasks.removeValue(forKey: weekId)
+            }
+
+            do {
+                async let loadedDays = self.repository.getDaysForWeek(weekId: weekId)
+                async let statusMap = self.repository.getDayStatusMap(
+                    weekId: weekId,
+                    studentId: self.studentId
+                )
+                let (days, statuses) = try await (loadedDays, statusMap)
+                self.daysByWeekId[weekId] = days
+                self.completedDayIdsByWeekId[weekId] = Set(
+                    statuses.compactMap { $0.value ? $0.key : nil }
+                )
+            } catch {
+                self.weekDaysErrorByWeekId[weekId] = (error as NSError).localizedDescription
+            }
+        }
+        weekDaysLoadTasks[weekId] = task
+        await task.value
+    }
+
+    func toggleCompleted(dayId: String, in weekId: String) async {
+        let newValue = !isCompleted(dayId: dayId, in: weekId)
+
+        do {
+            try await repository.setDayCompleted(
+                weekId: weekId,
+                studentId: studentId,
+                dayId: dayId,
+                completed: newValue
+            )
+
+            var completed = completedDayIdsByWeekId[weekId] ?? []
+            if newValue {
+                completed.insert(dayId)
+            } else {
+                completed.remove(dayId)
+            }
+            completedDayIdsByWeekId[weekId] = completed
+
+            if let days = daysByWeekId[weekId] {
+                weekProgressPercent[weekId] = Self.computePercentStatic(
+                    completed: days.compactMap(\.id).filter { completed.contains($0) }.count,
+                    total: days.count
+                )
+            }
+        } catch {
+            weekDaysErrorByWeekId[weekId] = (error as NSError).localizedDescription
+        }
     }
 
     nonisolated static func computePercentStatic(completed: Int, total: Int) -> Int {
