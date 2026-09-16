@@ -1,6 +1,12 @@
 import Foundation
 import Combine
 
+enum StudentWorkoutDayStatus {
+    case completed
+    case overdue
+    case pending
+}
+
 @MainActor
 final class StudentWorkoutsViewModel: ObservableObject {
 
@@ -422,6 +428,38 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
     func isCompleted(dayId: String, in weekId: String) -> Bool {
         completedDayIdsByWeekId[weekId]?.contains(dayId) == true
+    }
+
+    func dayStatus(
+        for days: [TrainingDayFS],
+        in weekId: String,
+        now: Date = Date()
+    ) -> StudentWorkoutDayStatus {
+        let dayIds = days.compactMap(\.id)
+        guard !dayIds.isEmpty, dayIds.count == days.count else {
+            return .pending
+        }
+
+        if dayIds.allSatisfy({ isCompleted(dayId: $0, in: weekId) }) {
+            return .completed
+        }
+
+        return days.contains { isOverdue($0, in: weekId, now: now) } ? .overdue : .pending
+    }
+
+    func isOverdue(
+        _ day: TrainingDayFS,
+        in weekId: String,
+        now: Date = Date()
+    ) -> Bool {
+        guard let date = day.date,
+              let dayId = day.id,
+              !isCompleted(dayId: dayId, in: weekId) else {
+            return false
+        }
+
+        let calendar = Calendar.current
+        return calendar.startOfDay(for: date) < calendar.startOfDay(for: now)
     }
 
     func loadDaysAndStatus(for weekId: String, force: Bool = false) async {

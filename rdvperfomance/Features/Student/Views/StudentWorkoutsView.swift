@@ -707,6 +707,7 @@ struct StudentWorkoutsView: View {
     ) -> some View {
         let isExpanded = expandedDayIds.contains(group.id)
         let fallback = group.days.first?.subtitleText ?? ""
+        let status = vm.dayStatus(for: group.days, in: weekId)
 
         return VStack(spacing: 0) {
             Button {
@@ -727,8 +728,12 @@ struct StudentWorkoutsView: View {
                     Text(trainingDateSubtitle(for: group.date, fallback: fallback))
                         .font(.system(size: 17, weight: isExpanded ? .semibold : .medium))
                         .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
 
                     Spacer()
+
+                    dayStatusIndicator(status)
 
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
@@ -798,6 +803,13 @@ struct StudentWorkoutsView: View {
             .buttonStyle(.plain)
 
             if let dayId = day.id {
+                if vm.isOverdue(day, in: weekId) {
+                    Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.red.opacity(0.9))
+                        .labelStyle(.titleAndIcon)
+                }
+
                 Button {
                     Task { await vm.toggleCompleted(dayId: dayId, in: weekId) }
                 } label: {
@@ -811,6 +823,24 @@ struct StudentWorkoutsView: View {
         }
         .padding(.leading, 16)
         .padding(.vertical, 12)
+    }
+
+    @ViewBuilder
+    private func dayStatusIndicator(_ status: StudentWorkoutDayStatus) -> some View {
+        switch status {
+        case .completed:
+            Label("Concluído", systemImage: "checkmark.circle.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Theme.Colors.primaryGreen)
+                .labelStyle(.titleAndIcon)
+        case .overdue:
+            Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.red.opacity(0.9))
+                .labelStyle(.titleAndIcon)
+        case .pending:
+            EmptyView()
+        }
     }
 
     private func isVideoDay(_ day: TrainingDayFS) -> Bool {
