@@ -664,19 +664,16 @@ struct StudentWorkoutsView: View {
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
             } else {
-                VStack(spacing: 0) {
+                VStack(spacing: 10) {
                     if !videos.isEmpty {
                         videoSection(days: videos, week: week, weekId: weekId)
                     }
 
                     ForEach(groups) { group in
-                        if !videos.isEmpty {
-                            innerDivider(leading: 16)
-                        }
                         trainingDayGroup(group, week: week, weekId: weekId)
                     }
                 }
-                .padding(.bottom, 6)
+                .padding(.vertical, 8)
             }
         }
     }
@@ -746,6 +743,8 @@ struct StudentWorkoutsView: View {
 
             if isExpanded {
                 VStack(spacing: 0) {
+                    innerDivider(leading: 16)
+
                     ForEach(Array(group.days.enumerated()), id: \.element.id) { index, day in
                         trainingDayRow(day, week: week, weekId: weekId, isVideo: false)
                         if index < group.days.count - 1 {
@@ -753,9 +752,18 @@ struct StudentWorkoutsView: View {
                         }
                     }
                 }
+                .padding(.vertical, 4)
+                .background(Theme.Colors.cardBackground)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
     }
 
     private func trainingDayRow(
