@@ -4,8 +4,7 @@ struct TeacherDashboardView: View {
 
     private struct TodaySummary {
         let studentsWithWorkout: Int
-        let completedWorkouts: Int
-        let inProgressWorkouts: Int
+        let completedStudents: Int
         let studentsWithoutWorkout: Int
     }
 
@@ -19,7 +18,7 @@ struct TeacherDashboardView: View {
     @State private var isSummaryLoadInProgress = false
 
     private let contentMaxWidth: CGFloat = 380
-    private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 4)
+    private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
     private let quickAccessColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
 
     var body: some View {
@@ -127,18 +126,13 @@ struct TeacherDashboardView: View {
             LazyVGrid(columns: summaryColumns, spacing: 8) {
                 summaryItem(
                     value: todaySummary?.studentsWithWorkout,
-                    title: "Alunos com treino",
+                    title: "Treinos hoje",
                     icon: "person.3.fill"
                 )
                 summaryItem(
-                    value: todaySummary?.completedWorkouts,
-                    title: "Treinos concluídos",
+                    value: todaySummary?.completedStudents,
+                    title: "Concluídos",
                     icon: "checkmark.circle.fill"
-                )
-                summaryItem(
-                    value: todaySummary?.inProgressWorkouts,
-                    title: "Em andamento",
-                    icon: "clock.fill"
                 )
                 summaryItem(
                     value: todaySummary?.studentsWithoutWorkout,
@@ -286,8 +280,7 @@ struct TeacherDashboardView: View {
             guard !linkedStudentIDs.isEmpty else {
                 todaySummary = TodaySummary(
                     studentsWithWorkout: 0,
-                    completedWorkouts: 0,
-                    inProgressWorkouts: 0,
+                    completedStudents: 0,
                     studentsWithoutWorkout: 0
                 )
                 return
@@ -330,8 +323,7 @@ struct TeacherDashboardView: View {
                 return results
             }
 
-            var studentsWithWorkout = Set<String>()
-            var completedWorkouts = 0
+            var todayWorkoutsByStudent: [String: [Bool]] = [:]
 
             for (studentId, days, completionMap) in dayData {
                 let todayDays = days.filter {
@@ -340,18 +332,21 @@ struct TeacherDashboardView: View {
                 }
                 guard !todayDays.isEmpty else { continue }
 
-                studentsWithWorkout.insert(studentId)
-                completedWorkouts += todayDays.filter {
-                    guard let dayId = $0.id else { return false }
-                    return completionMap[dayId] == true
-                }.count
+                todayWorkoutsByStudent[studentId, default: []].append(
+                    contentsOf: todayDays.map { day in
+                        day.id.flatMap { completionMap[$0] } == true
+                    }
+                )
             }
+
+            let studentsWithWorkout = todayWorkoutsByStudent.keys
+            let completedStudents = todayWorkoutsByStudent.values.filter { workouts in
+                !workouts.isEmpty && workouts.allSatisfy { $0 }
+            }.count
 
             todaySummary = TodaySummary(
                 studentsWithWorkout: studentsWithWorkout.count,
-                completedWorkouts: completedWorkouts,
-                // The persisted progress model only records completion, not a started state.
-                inProgressWorkouts: 0,
+                completedStudents: completedStudents,
                 studentsWithoutWorkout: max(0, linkedStudentIDs.count - studentsWithWorkout.count)
             )
         } catch {
