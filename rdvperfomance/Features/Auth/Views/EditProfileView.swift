@@ -313,7 +313,7 @@ struct EditProfileView: View {
                 Spacer()
             }
             .padding(.vertical, 14)
-            .background(Theme.Colors.primaryGreen.opacity(0.14))
+            .background(Theme.Colors.primaryGreen.opacity(0.18))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
