@@ -30,6 +30,12 @@ struct StudentWeekDetailView: View {
     @State private var expandedDayIds = Set<String>()
     @State private var hasInitializedExpandedDays = false
 
+    private struct TrainingDayGroup: Identifiable {
+        let id: String
+        let date: Date?
+        var items: [(offset: Int, day: TrainingDayFS)]
+    }
+
     init(
         path: Binding<[AppRoute]>,
         studentId: String,
@@ -83,13 +89,36 @@ struct StudentWeekDetailView: View {
         }
     }
 
-    // ✅ Particiona em dois blocos REAIS: Vídeos e Treinos (como cards separados)
+    // Mantém vídeos separados dos treinos para preservar sua apresentação específica.
     private var videoDays: [(offset: Int, day: TrainingDayFS)] {
         orderedDays.filter { isVideoDay($0.day) }
     }
 
     private var trainingDays: [(offset: Int, day: TrainingDayFS)] {
         orderedDays.filter { !isVideoDay($0.day) }
+    }
+
+    private var trainingDayGroups: [TrainingDayGroup] {
+        var groups: [TrainingDayGroup] = []
+        var groupIndexes = [String: Int]()
+
+        for item in trainingDays {
+            let identifier = groupIdentifier(for: item.day, offset: item.offset)
+            if let index = groupIndexes[identifier] {
+                groups[index].items.append(item)
+            } else {
+                groupIndexes[identifier] = groups.count
+                groups.append(
+                    TrainingDayGroup(
+                        id: identifier,
+                        date: item.day.date.map { Calendar.current.startOfDay(for: $0) },
+                        items: [item]
+                    )
+                )
+            }
+        }
+
+        return groups
     }
 
     private var hasAnyVideo: Bool { !videoDays.isEmpty }
@@ -258,7 +287,7 @@ struct StudentWeekDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // ✅ Conteúdo principal: mantém card para loading/erro/empty, e para lista usa DOIS CARDS (vídeos e treinos)
+    // Conteúdo principal mantém os estados de loading, erro e vazio antes da lista de dias.
     private var contentCard: some View {
         VStack(spacing: 0) {
 
@@ -284,7 +313,6 @@ struct StudentWeekDetailView: View {
                     .cornerRadius(14)
 
             } else {
-                // ✅ Aqui ficam DOIS BLOCOS (cards) como no seu StudentDayDetailView
                 daysCards
             }
         }
@@ -327,8 +355,8 @@ struct StudentWeekDetailView: View {
                 )
             }
 
-            ForEach(trainingDays, id: \.offset) { item in
-                trainingDayCard(day: item.day, offset: item.offset)
+            ForEach(trainingDayGroups) { group in
+                trainingDayCard(group: group)
             }
         }
     }
@@ -417,98 +445,53 @@ struct StudentWeekDetailView: View {
         .cornerRadius(14)
     }
 
-    private func trainingDayCard(day: TrainingDayFS, offset: Int) -> some View {
-        let identifier = dayIdentifier(for: day, offset: offset)
-        let isExpanded = expandedDayIds.contains(identifier)
+    private func trainingDayCard(group: TrainingDayGroup) -> some View {
+        let isExpanded = expandedDayIds.contains(group.id)
+        let fallbackTitle = group.items.first?.day.subtitleText ?? ""
 
         return VStack(spacing: 0) {
             Button {
                 withAnimation(.easeInOut(duration: 0.2)) {
                     if isExpanded {
-                        expandedDayIds.remove(identifier)
+                        expandedDayIds.remove(group.id)
                     } else {
-                        expandedDayIds.insert(identifier)
+                        expandedDayIds.insert(group.id)
                     }
                 }
             } label: {
                 HStack(spacing: 14) {
                     Image(systemName: "calendar")
                         .font(.system(size: 16))
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundColor(Theme.Colors.primaryGreen)
                         .frame(width: 28)
 
-                    Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText))
-                        .font(.system(size: 18, weight: .medium))
+                    Text(trainingDateSubtitle(for: group.date, fallback: fallbackTitle))
+                        .font(.system(size: 18, weight: isExpanded ? .semibold : .medium))
                         .foregroundColor(.white.opacity(0.92))
 
                     Spacer()
 
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.35))
+                        .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .contentShape(Rectangle())
+                .background(isExpanded ? Theme.Colors.primaryGreen.opacity(0.12) : Color.clear)
             }
             .buttonStyle(.plain)
 
             if isExpanded {
-                innerDivider(leading: 16)
+                VStack(spacing: 0) {
+                    ForEach(Array(group.items.enumerated()), id: \.element.offset) { index, item in
+                        trainingDayRow(item.day)
 
-                HStack(spacing: 14) {
-                    Button {
-                        path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: weekTitle))
-                    } label: {
-                        HStack(spacing: 14) {
-                            Image(systemName: "dumbbell.fill")
-                                .font(.system(size: 16))
-                                .foregroundColor(.green.opacity(0.85))
-                                .frame(width: 28)
-
-                            VStack(alignment: .leading, spacing: 3) {
-                                Text(day.title)
-                                    .font(.system(size: 18, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.92))
-
-                                Text(day.subtitleText)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.35))
-                            }
-
-                            Spacer()
+                        if index < group.items.count - 1 {
+                            innerDivider(leading: 54)
                         }
-                        .contentShape(Rectangle())
-                    }
-                    .buttonStyle(.plain)
-
-                    if isStudentViewing, let dayId = day.id {
-                        Button {
-                            Task {
-                                await vm.toggleCompleted(dayId: dayId)
-
-                                if allWeekCompleted && !hasTriggeredWeekCompletedAnimation {
-                                    hasTriggeredWeekCompletedAnimation = true
-                                    triggerWeekCompletedAnimation()
-                                }
-                            }
-                        } label: {
-                            let completed = vm.isCompleted(dayId: dayId)
-                            let icon = completionIcon(isVideo: false, isCompleted: completed)
-
-                            Image(systemName: icon.name)
-                                .font(.system(size: 20))
-                                .foregroundColor(icon.color)
-                        }
-                        .buttonStyle(.plain)
-                        .padding(.trailing, 6)
-                    } else {
-                        Image(systemName: "chevron.right")
-                            .foregroundColor(.white.opacity(0.35))
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.vertical, 14)
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
@@ -519,6 +502,62 @@ struct StudentWeekDetailView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private func trainingDayRow(_ day: TrainingDayFS) -> some View {
+        HStack(spacing: 14) {
+            Button {
+                path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: weekTitle))
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "dumbbell.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green.opacity(0.85))
+                        .frame(width: 28)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(day.title)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+
+                        Text(day.subtitleText)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isStudentViewing, let dayId = day.id {
+                Button {
+                    Task {
+                        await vm.toggleCompleted(dayId: dayId)
+
+                        if allWeekCompleted && !hasTriggeredWeekCompletedAnimation {
+                            hasTriggeredWeekCompletedAnimation = true
+                            triggerWeekCompletedAnimation()
+                        }
+                    }
+                } label: {
+                    let completed = vm.isCompleted(dayId: dayId)
+                    let icon = completionIcon(isVideo: false, isCompleted: completed)
+
+                    Image(systemName: icon.name)
+                        .font(.system(size: 20))
+                        .foregroundColor(icon.color)
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 6)
+            } else {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
     }
 
     private var loadingView: some View {
@@ -591,8 +630,14 @@ struct StudentWeekDetailView: View {
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
-    private func dayIdentifier(for day: TrainingDayFS, offset: Int) -> String {
-        day.id ?? "day-\(day.dayIndex)-\(offset)"
+    private func groupIdentifier(for day: TrainingDayFS, offset: Int) -> String {
+        if let date = day.date {
+            let normalizedDate = Calendar.current.startOfDay(for: date)
+            return "date-\(Int(normalizedDate.timeIntervalSinceReferenceDate))"
+        }
+
+        let dayID = day.id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return dayID.isEmpty ? "undated-\(day.dayIndex)-\(offset)" : "undated-\(dayID)"
     }
 
     private func initializeExpandedDays(with days: [TrainingDayFS]) {
@@ -600,21 +645,22 @@ struct StudentWeekDetailView: View {
         hasInitializedExpandedDays = true
 
         if isTeacherViewing, initialExpandedDayId == nil {
-            expandedDayIds = Set(
-                days.enumerated()
-                    .filter { !isVideoDay($0.element) }
-                    .map { dayIdentifier(for: $0.element, offset: $0.offset) }
-            )
+            expandedDayIds = Set(trainingDayGroups.map(\.id))
             return
         }
 
-        guard let initialExpandedDayId,
-              days.contains(where: { $0.id == initialExpandedDayId })
+        guard let initialExpandedDayId
         else {
             return
         }
 
-        expandedDayIds = [initialExpandedDayId]
+        guard let group = trainingDayGroups.first(where: {
+            $0.items.contains { $0.day.id == initialExpandedDayId }
+        }) else {
+            return
+        }
+
+        expandedDayIds = [group.id]
     }
 
     private func pop() {
