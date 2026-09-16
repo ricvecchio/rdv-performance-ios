@@ -225,7 +225,8 @@ struct StudentDashboardView: View {
                         path.append(.studentWeekDetail(
                             studentId: studentId,
                             weekId: item.weekId,
-                            weekTitle: item.weekTitle
+                            weekTitle: item.weekTitle,
+                            selectedDayId: item.day.id
                         ))
                     } label: {
                         upcomingWorkoutRow(item)

@@ -131,12 +131,13 @@ struct StudentRootView: View {
     private func agendaDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
         switch route {
 
-        case .studentWeekDetail(let studentId, let weekId, let weekTitle):
+        case .studentWeekDetail(let studentId, let weekId, let weekTitle, let selectedDayId):
             StudentWeekDetailView(
                 path: path,
                 studentId: studentId,
                 weekId: weekId,
                 weekTitle: weekTitle,
+                initialExpandedDayId: selectedDayId,
                 onSelectSection: selectSection
             )
 

@@ -84,7 +84,12 @@ enum AppRoute: Hashable {
     case teacherFeedbacks(student: AppUser, category: TreinoTipo)
 
     case studentAgenda(studentId: String, studentName: String)
-    case studentWeekDetail(studentId: String, weekId: String, weekTitle: String)
+    case studentWeekDetail(
+        studentId: String,
+        weekId: String,
+        weekTitle: String,
+        selectedDayId: String? = nil
+    )
     case studentDayDetail(weekId: String, day: TrainingDayFS, weekTitle: String)
     case studentMessages(category: TreinoTipo)
     case studentFeedbacks(category: TreinoTipo)
