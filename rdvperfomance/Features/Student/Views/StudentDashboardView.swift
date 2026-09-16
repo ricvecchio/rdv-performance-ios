@@ -218,20 +218,20 @@ struct StudentDashboardView: View {
 
             if viewModel.isLoading {
                 ProgressView().tint(.white)
-            } else if viewModel.upcomingDays.isEmpty {
+            } else if viewModel.upcomingDayGroups.isEmpty {
                 Text("Nenhum treino programado.")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             } else {
-                ForEach(Array(viewModel.upcomingDays.enumerated()), id: \.element.id) { index, item in
+                ForEach(Array(viewModel.upcomingDayGroups.enumerated()), id: \.element.id) { index, item in
                     Button {
-                        guard let dayId = item.day.id else { return }
+                        guard let dayId = item.initialDayId else { return }
                         onSelectWorkout(item.weekId, dayId)
                     } label: {
                         upcomingWorkoutRow(item)
                     }
                     .buttonStyle(.plain)
-                    if index < viewModel.upcomingDays.count - 1 {
+                    if index < viewModel.upcomingDayGroups.count - 1 {
                         Divider().background(Theme.Colors.divider).padding(.leading, 42)
                     }
                 }
@@ -244,23 +244,32 @@ struct StudentDashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
 
-    private func upcomingWorkoutRow(_ item: StudentDashboardDay) -> some View {
-        HStack(spacing: 14) {
+    private func upcomingWorkoutRow(_ item: StudentDashboardDayGroup) -> some View {
+        HStack(alignment: .top, spacing: 14) {
             Image(systemName: "calendar")
                 .font(.system(size: 18))
                 .foregroundColor(.green.opacity(0.85))
                 .frame(width: 28)
             VStack(alignment: .leading, spacing: 3) {
-                Text(dateTitle(for: item.day.date))
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
-                Text(item.day.title)
+                HStack {
+                    Text(dateTitle(for: item.date))
+                        .font(.system(size: 16, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+                    Spacer()
+                    Text("\(Int((item.progress * 100).rounded()))%")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                }
+                Text("\(item.completedCount) de \(item.totalCount) \(item.totalCount == 1 ? "treino concluído" : "treinos concluídos")")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
+                ProgressView(value: item.progress)
+                    .tint(Theme.Colors.primaryGreen)
             }
             Spacer()
             Image(systemName: "chevron.right")
                 .foregroundColor(.white.opacity(0.35))
+                .padding(.top, 3)
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())

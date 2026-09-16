@@ -17,6 +17,28 @@ struct StudentDashboardDaySummary: Identifiable {
     var id: Date { date }
 }
 
+struct StudentDashboardDayGroup: Identifiable {
+    let weekId: String
+    let weekTitle: String
+    let date: Date
+    let workouts: [StudentDashboardDay]
+    let completedCount: Int
+
+    var id: String {
+        "\(weekId)-\(Int(date.timeIntervalSinceReferenceDate))"
+    }
+
+    var totalCount: Int { workouts.count }
+    var progress: Double {
+        guard totalCount > 0 else { return 0 }
+        return Double(completedCount) / Double(totalCount)
+    }
+
+    var initialDayId: String? {
+        workouts.compactMap { $0.day.id }.first
+    }
+}
+
 enum StudentDashboardTeacherLinkState: Equatable {
     case loading
     case linked
@@ -27,7 +49,7 @@ enum StudentDashboardTeacherLinkState: Equatable {
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
-    @Published private(set) var upcomingDays: [StudentDashboardDay] = []
+    @Published private(set) var upcomingDayGroups: [StudentDashboardDayGroup] = []
     @Published private(set) var isLoading = true
     @Published private(set) var teacherLinkState: StudentDashboardTeacherLinkState = .loading
 
@@ -62,7 +84,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
         guard teacherLinkState != .unlinked else {
             currentWeekDaySummaries = []
-            upcomingDays = []
+            upcomingDayGroups = []
             return
         }
 
@@ -76,20 +98,17 @@ final class StudentDashboardViewModel: ObservableObject {
                 today: today,
                 calendar: calendar
             )
-            upcomingDays = data
-                .filter {
-                    guard let date = $0.day.date else { return false }
-                    return date >= today && !$0.isCompleted
-                }
-                .sorted { ($0.day.date ?? .distantFuture) < ($1.day.date ?? .distantFuture) }
-                .prefix(3)
-                .map { $0 }
+            upcomingDayGroups = makeUpcomingDayGroups(
+                from: data,
+                today: today,
+                calendar: calendar
+            )
         } catch {
             #if DEBUG
             print("[StudentDashboard] Não foi possível carregar a Home: \(error.localizedDescription)")
             #endif
             currentWeekDaySummaries = []
-            upcomingDays = []
+            upcomingDayGroups = []
         }
     }
 
@@ -145,5 +164,33 @@ final class StudentDashboardViewModel: ObservableObject {
                 )
             }
             .sorted { $0.date < $1.date }
+    }
+
+    private func makeUpcomingDayGroups(
+        from days: [StudentDashboardDay],
+        today: Date,
+        calendar: Calendar
+    ) -> [StudentDashboardDayGroup] {
+        let grouped = Dictionary(grouping: days.compactMap { item -> (String, Date, StudentDashboardDay)? in
+            guard let date = item.day.date else { return nil }
+            let normalizedDate = calendar.startOfDay(for: date)
+            return ("\(item.weekId)-\(Int(normalizedDate.timeIntervalSinceReferenceDate))", normalizedDate, item)
+        }, by: \.0)
+
+        return grouped.compactMap { _, entries in
+            guard let first = entries.first else { return nil }
+            let workouts = entries.map(\.2)
+            return StudentDashboardDayGroup(
+                weekId: first.2.weekId,
+                weekTitle: first.2.weekTitle,
+                date: first.1,
+                workouts: workouts,
+                completedCount: workouts.filter(\.isCompleted).count
+            )
+        }
+        .filter { $0.date >= today && $0.completedCount < $0.totalCount }
+        .sorted { $0.date < $1.date }
+        .prefix(3)
+        .map { $0 }
     }
 }
