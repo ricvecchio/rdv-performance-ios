@@ -50,6 +50,7 @@ final class FirestoreRepository {
 
     func updateUserProfile(
         uid: String,
+        name: String,
         phone: String?,
         cref: String?,
         bio: String?,
@@ -57,6 +58,7 @@ final class FirestoreRepository {
     ) async throws {
         try await userRepository.updateUserProfile(
             uid: uid,
+            name: name,
             phone: phone,
             cref: cref,
             bio: bio,

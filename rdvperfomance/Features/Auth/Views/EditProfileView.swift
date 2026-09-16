@@ -33,6 +33,7 @@ struct EditProfileView: View {
 
     // Referência original para detectar alterações pendentes
     @State private var originalWhatsappDigits: String = ""
+    @State private var originalUserName: String = ""
     @State private var originalFocusArea: FocusAreaDTO = .CROSSFIT
     @State private var originalCref: String = ""
     @State private var originalBio: String = ""
@@ -71,6 +72,7 @@ struct EditProfileView: View {
 
     /// Existem alterações pendentes em relação ao estado original.
     private var hasChanges: Bool {
+        userName.trimmingCharacters(in: .whitespacesAndNewlines) != originalUserName ||
         whatsappDigits != originalWhatsappDigits ||
         focusAreaDraft != originalFocusArea ||
         crefDraft != originalCref ||
@@ -80,7 +82,10 @@ struct EditProfileView: View {
 
     /// Botão Salvar fica habilitado quando há alterações válidas e não está salvando.
     private var canSave: Bool {
-        isPhoneValid && hasChanges && !isSaving
+        !userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        isPhoneValid &&
+        hasChanges &&
+        !isSaving
     }
 
     // Interface principal com avatar, formulário e ações
@@ -224,8 +229,8 @@ struct EditProfileView: View {
     // Retorna card com campos do formulário
     private func formCard() -> some View {
         VStack(spacing: 18) {
-            readOnlyRow(title: "Nome", value: userName)
             readOnlyRow(title: "E-mail", value: userEmail)
+            nameField()
 
             // ✅ Campo de telefone com máscara brasileira e FocusState
             VStack(alignment: .leading, spacing: 6) {
@@ -402,6 +407,25 @@ struct EditProfileView: View {
         }
     }
 
+    private func nameField() -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Nome")
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            TextField("", text: $userName)
+                .foregroundColor(.white.opacity(0.92))
+                .font(.system(size: 16))
+                .textContentType(.name)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled(false)
+
+            Rectangle()
+                .fill(lineColor)
+                .frame(height: 1)
+        }
+    }
+
     private func multilineBioField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Bio (opcional)")
@@ -431,6 +455,7 @@ struct EditProfileView: View {
             focusAreaDraft = .CROSSFIT
             originalFocusArea = .CROSSFIT
             userName = ""
+            originalUserName = ""
             userEmail = ""
             crefDraft = ""
             originalCref = ""
@@ -454,6 +479,7 @@ struct EditProfileView: View {
             let area = FocusAreaDTO(rawValue: focusArea) ?? .CROSSFIT
 
             userName = user?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            originalUserName = userName
             userEmail = user?.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
             whatsappDigits = BrazilianPhoneFormatter.normalize(phone)
             originalWhatsappDigits = whatsappDigits
@@ -499,6 +525,7 @@ struct EditProfileView: View {
             }
             try await repository.updateUserProfile(
                 uid: uid,
+                name: userName,
                 phone: whatsappDigits.isEmpty ? nil : whatsappDigits,
                 cref: session.userType == .TRAINER ? crefDraft : nil,
                 bio: session.userType == .TRAINER ? bioDraft : nil,
@@ -512,11 +539,13 @@ struct EditProfileView: View {
                 errorMessage = ""
                 // Atualiza referência original para refletir dados salvos
                 originalWhatsappDigits = whatsappDigits
+                originalUserName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
                 originalFocusArea = focusAreaDraft
                 originalCref = crefDraft
                 originalBio = bioDraft
                 hasNewPhoto = false
             }
+            session.userName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
             pop()
         } catch {
             presentError((error as NSError).localizedDescription)

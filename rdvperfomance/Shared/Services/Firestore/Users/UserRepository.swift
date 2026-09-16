@@ -783,19 +783,23 @@ final class UserRepository: FirestoreBaseRepository {
 
     func updateUserProfile(
         uid: String,
+        name: String,
         phone: String?,
         cref: String?,
         bio: String?,
         focusArea: String
     ) async throws {
         let cleanUid = clean(uid)
+        let cleanName = clean(name)
         let cleanPhone = clean(phone ?? "")
         let cleanFocusArea = clean(focusArea)
 
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard !cleanName.isEmpty else { throw FirestoreRepositoryError.invalidData }
         guard !cleanFocusArea.isEmpty else { throw FirestoreRepositoryError.invalidData }
 
         var payload: [String: Any] = [
+            "name": cleanName,
             "phone": cleanPhone.isEmpty ? FieldValue.delete() : cleanPhone,
             "focusArea": cleanFocusArea,
             "updatedAt": FieldValue.serverTimestamp()
