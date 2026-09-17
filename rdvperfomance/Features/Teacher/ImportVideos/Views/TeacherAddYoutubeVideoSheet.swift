@@ -15,16 +15,16 @@ struct TeacherAddYoutubeVideoSheet: View {
     private let contentMaxWidth: CGFloat = 380
 
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Theme.Colors.headerBackground
-                    .ignoresSafeArea()
-                
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     HStack {
                         Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(spacing: 14) {
                             Capsule()
                                 .fill(Color.white.opacity(0.18))
                                 .frame(width: 44, height: 5)
@@ -37,69 +37,76 @@ struct TeacherAddYoutubeVideoSheet: View {
                                 .padding(.top, 4)
                                 .frame(maxWidth: .infinity)
 
-                            Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.60))
-                                .multilineTextAlignment(.center)
-                                .frame(maxWidth: .infinity)
-                                .padding(.horizontal, 16)
-
-                            formFields
-
-                            HStack(spacing: 12) {
-                                Button {
-                                    let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                                    onSave(t, u, selectedCategory)
-                                    dismiss()
-                                } label: {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "checkmark")
-                                        Text("Salvar")
-                                    }
+                            VStack(alignment: .leading, spacing: 10) {
+                                Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.white.opacity(0.60))
+                                    .multilineTextAlignment(.center)
                                     .frame(maxWidth: .infinity)
-                                    .primaryGreenActionButton()
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
-                                Button {
-                                    handleCopyYoutubeLink()
-                                } label: {
-                                    HStack(spacing: 10) {
-                                        Image(systemName: "doc.on.doc")
-                                        Text("Copiar link YouTube")
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .primaryGreenActionButton()
-                                }
-                                .buttonStyle(.plain)
-                            }
-                            .padding(.top, 6)
+                                formFields
 
-                            if let msg = sheetMessage {
-                                sheetMessageCard(text: msg, isError: sheetMessageIsError)
+                                if let msg = sheetMessage {
+                                    sheetMessageCard(text: msg, isError: sheetMessageIsError)
+                                }
                             }
-                            
-                            Color.clear.frame(height: 18)
+                            .padding(14)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Theme.Colors.cardBackground)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                            .padding(.horizontal, 16)
+                            .padding(.top, 14)
                         }
                         .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 24)
 
                         Spacer(minLength: 0)
                     }
                 }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+
+                HStack {
+                    Spacer(minLength: 0)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                            let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                            onSave(t, u, selectedCategory)
+                            dismiss()
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "checkmark")
+                                Text("Salvar")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                        Button {
+                            handleCopyYoutubeLink()
+                        } label: {
+                            HStack(spacing: 10) {
+                                Image(systemName: "doc.on.doc")
+                                Text("Copiar link YouTube")
+                            }
+                            .frame(maxWidth: .infinity)
+                            .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .frame(maxWidth: contentMaxWidth)
+
+                    Spacer(minLength: 0)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
-            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .presentationDetents([.medium])
         .presentationBackground(Theme.Colors.headerBackground)
@@ -186,29 +193,13 @@ struct TeacherAddYoutubeVideoSheet: View {
                 )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.top, 4)
     }
     
     private func sheetMessageCard(text: String, isError: Bool) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
-            
-            Text(text)
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.75))
-            
-            Spacer()
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-        )
+        Text(text)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private func handleCopyYoutubeLink() {
