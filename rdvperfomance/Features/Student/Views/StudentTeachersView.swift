@@ -569,7 +569,7 @@ struct StudentTeachersView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Color.black.opacity(0.22))
+                                    .background(Theme.Colors.cardBackground)
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)

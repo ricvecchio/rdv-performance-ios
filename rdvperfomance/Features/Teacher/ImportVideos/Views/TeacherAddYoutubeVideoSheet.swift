@@ -24,28 +24,29 @@ struct TeacherAddYoutubeVideoSheet: View {
                     HStack {
                         Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 16) {
-                            VStack(spacing: 14) {
-                                Capsule()
-                                    .fill(Color.white.opacity(0.35))
-                                    .frame(width: 44, height: 5)
-                                    .padding(.top, 10)
-                                
-                                Text("Adicionar Vídeo")
-                                    .font(.system(size: 18, weight: .bold))
-                                    .foregroundColor(.white)
-                            }
-                            .frame(maxWidth: .infinity)
-
-                            Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.65))
-                                .multilineTextAlignment(.center)
+                        VStack(alignment: .leading, spacing: 14) {
+                            Capsule()
+                                .fill(Color.white.opacity(0.18))
+                                .frame(width: 44, height: 5)
+                                .padding(.top, 10)
                                 .frame(maxWidth: .infinity)
 
-                            formCard
+                            Text("Adicionar Vídeo")
+                                .font(.system(size: 18, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(.top, 4)
+                                .frame(maxWidth: .infinity)
 
-                            HStack(spacing: 10) {
+                            Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.60))
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+                                .padding(.horizontal, 16)
+
+                            formFields
+
+                            HStack(spacing: 12) {
                                 Button {
                                     let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
                                     let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -56,14 +57,12 @@ struct TeacherAddYoutubeVideoSheet: View {
                                         Image(systemName: "checkmark")
                                         Text("Salvar")
                                     }
-                                    .padding(.horizontal, 14)
+                                    .frame(maxWidth: .infinity)
                                     .primaryGreenActionButton()
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                
-                                Spacer(minLength: 0)
-                                
+
                                 Button {
                                     handleCopyYoutubeLink()
                                 } label: {
@@ -71,11 +70,12 @@ struct TeacherAddYoutubeVideoSheet: View {
                                         Image(systemName: "doc.on.doc")
                                         Text("Copiar link YouTube")
                                     }
-                                    .padding(.horizontal, 14)
+                                    .frame(maxWidth: .infinity)
                                     .primaryGreenActionButton()
                                 }
                                 .buttonStyle(.plain)
                             }
+                            .padding(.top, 6)
 
                             if let msg = sheetMessage {
                                 sheetMessageCard(text: msg, isError: sheetMessageIsError)
@@ -85,7 +85,7 @@ struct TeacherAddYoutubeVideoSheet: View {
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
-                        .padding(.top, 10)
+                        .padding(.bottom, 24)
 
                         Spacer(minLength: 0)
                     }
@@ -101,33 +101,35 @@ struct TeacherAddYoutubeVideoSheet: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
-        .presentationDetents([.medium, .large])
-        .presentationDragIndicator(.hidden)
+        .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
         .presentationBackground(Theme.Colors.headerBackground)
     }
     
-    private var formCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
+    private var formFields: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Título (opcional)")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
                     if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text("Ex: Mobilidade de ombro")
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white.opacity(0.45))
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, 14)
                     }
                     
                     TextField("", text: $title)
                         .textInputAutocapitalization(.sentences)
                         .autocorrectionDisabled(false)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
                 }
-                .background(Color.black.opacity(0.22))
+                .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
@@ -135,29 +137,29 @@ struct TeacherAddYoutubeVideoSheet: View {
                 )
             }
             
-            Divider().background(Theme.Colors.divider)
-            
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Link do YouTube")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
                     if url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text("Cole aqui o link (youtu.be / youtube.com)")
+                            .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white.opacity(0.45))
-                            .padding(.horizontal, 12)
+                            .padding(.horizontal, 14)
                     }
                     
                     TextField("", text: $url)
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
                 }
-                .background(Color.black.opacity(0.22))
+                .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
@@ -165,12 +167,10 @@ struct TeacherAddYoutubeVideoSheet: View {
                 )
             }
             
-            Divider().background(Theme.Colors.divider)
-            
             VStack(alignment: .leading, spacing: 8) {
                 Text("Categoria do vídeo")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
                 
                 Picker("", selection: $selectedCategory) {
                     ForEach(TeacherYoutubeVideoCategory.allCases) { c in
@@ -178,17 +178,17 @@ struct TeacherAddYoutubeVideoSheet: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .padding(14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
             }
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
+        .padding(.top, 4)
     }
     
     private func sheetMessageCard(text: String, isError: Bool) -> some View {
