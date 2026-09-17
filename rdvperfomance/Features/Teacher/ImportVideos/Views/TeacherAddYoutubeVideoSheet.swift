@@ -96,7 +96,7 @@ struct TeacherAddYoutubeVideoSheet: View {
                 .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(2.0 / 3.0)])
     }
     
     private var formFields: some View {
@@ -107,13 +107,6 @@ struct TeacherAddYoutubeVideoSheet: View {
                     .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
-                    if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text("Ex: Mobilidade de ombro")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.45))
-                            .padding(.horizontal, 14)
-                    }
-                    
                     TextField("", text: $title)
                         .textInputAutocapitalization(.sentences)
                         .autocorrectionDisabled(false)
@@ -136,13 +129,6 @@ struct TeacherAddYoutubeVideoSheet: View {
                     .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
-                    if url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text("Cole aqui o link (youtu.be / youtube.com)")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.45))
-                            .padding(.horizontal, 14)
-                    }
-                    
                     TextField("", text: $url)
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
