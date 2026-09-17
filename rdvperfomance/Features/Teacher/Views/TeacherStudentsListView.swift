@@ -496,12 +496,6 @@ struct TeacherStudentsListView: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(Capsule().fill(Color.yellow.opacity(0.12)))
-
-                            if let cat = inv.category, !cat.isEmpty {
-                                Text(cat)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.45))
-                            }
                         }
                     }
 
@@ -771,51 +765,81 @@ struct TeacherStudentsListView: View {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            // ✅ AJUSTE 2: ScrollView para evitar “expansão” que corta conteúdo ao focar no e-mail e ao trocar abas
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 14) {
+            VStack(spacing: 0) {
+                // ✅ AJUSTE 2: ScrollView para evitar “expansão” que corta conteúdo ao focar no e-mail e ao trocar abas
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
 
-                    Capsule()
-                        .fill(Color.white.opacity(0.18))
-                        .frame(width: 44, height: 5)
-                        .padding(.top, 10)
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                    Text("Convidar aluno")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(.top, 4)
+                        Text("Convidar aluno")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
 
-                    VStack(alignment: .leading, spacing: 14) {
-                        Picker("", selection: $inviteTab) {
-                            ForEach(InviteTab.allCases, id: \.rawValue) { tab in
-                                Text(tab.title).tag(tab)
+                        VStack(alignment: .leading, spacing: 14) {
+                            Picker("", selection: $inviteTab) {
+                                ForEach(InviteTab.allCases, id: \.rawValue) { tab in
+                                    Text(tab.title).tag(tab)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+
+                            Group {
+                                switch inviteTab {
+                                case .invite:
+                                    inviteByEmailCard
+                                case .sent:
+                                    invitesSentCard
+                                }
                             }
                         }
-                        .pickerStyle(.segmented)
-
-                        Group {
-                            switch inviteTab {
-                            case .invite:
-                                inviteByEmailCard
-                            case .sent:
-                                invitesSentCard
-                            }
-                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
                     }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Theme.Colors.cardBackground)
-                    .cornerRadius(14)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                    )
-                    .padding(.horizontal, 16)
-                    .padding(.top, 14)
                 }
-                .padding(.bottom, 16)
+                .scrollDismissesKeyboard(.interactively)
+
+                if inviteTab == .invite {
+                    Button {
+                        Task {
+                            guard let teacherId = session.uid, !teacherId.isEmpty else {
+                                vm.setInviteError("Não foi possível identificar o professor logado.")
+                                return
+                            }
+                            await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Spacer()
+                            if vm.isInvitesLoading {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "paperplane.fill")
+                                Text("Enviar convite")
+                            }
+                            Spacer()
+                        }
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 16)
+                }
             }
-            .scrollDismissesKeyboard(.interactively)
         }
         .presentationDetents([.fraction(2.0 / 3.0)])
         // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
@@ -873,30 +897,6 @@ struct TeacherStudentsListView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.10), lineWidth: 1)
             )
-
-            Button {
-                Task {
-                    guard let teacherId = session.uid, !teacherId.isEmpty else {
-                        vm.setInviteError("Não foi possível identificar o professor logado.")
-                        return
-                    }
-                    await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
-                }
-            } label: {
-                HStack(spacing: 10) {
-                    Spacer()
-                    if vm.isInvitesLoading {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "paperplane.fill")
-                        Text("Enviar convite")
-                    }
-                    Spacer()
-                }
-                .primaryGreenActionButton()
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
             Text("O aluno só aparecerá na sua lista após aceitar o convite no app.")
                 .font(.system(size: 13))
