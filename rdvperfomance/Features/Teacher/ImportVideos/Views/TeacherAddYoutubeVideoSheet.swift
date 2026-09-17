@@ -153,7 +153,7 @@ struct TeacherAddYoutubeVideoSheet: View {
                 
                 Picker("", selection: $selectedCategory) {
                     ForEach(TeacherYoutubeVideoCategory.allCases) { c in
-                        Text(c.rawValue).tag(c)
+                        Text(c == .treinosEmCasa ? "Em Casa" : c.rawValue).tag(c)
                     }
                 }
                 .pickerStyle(.segmented)
