@@ -179,9 +179,7 @@ struct StudentTeachersView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .sheet(isPresented: $showRequestLinkModal) {
             requestLinkModalView()
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.hidden)
-                .presentationBackground(Theme.Colors.headerBackground)
+                .presentationDetents([.fraction(0.50)])
         }
         .sheet(item: $selectedTeacher) { teacher in
             teacherDetailsSheet(teacher)
@@ -544,18 +542,19 @@ struct StudentTeachersView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.35))
+                            .fill(Color.white.opacity(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("Convidar professor")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
+                            .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             Text("Digite o e-mail do professor para enviar a solicitação.")
                                 .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.55))
+                                .foregroundColor(.white.opacity(0.45))
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("E-mail do professor")
@@ -569,11 +568,11 @@ struct StudentTeachersView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Theme.Colors.cardBackground)
+                                    .background(Color.white.opacity(0.10))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
                                     )
                                     .foregroundColor(.white.opacity(0.92))
                             }
@@ -584,16 +583,21 @@ struct StudentTeachersView: View {
                                     .foregroundColor(linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
                             }
 
-                            HStack(spacing: 10) {
+                            HStack(spacing: 12) {
                                 Button {
                                     showRequestLinkModal = false
                                 } label: {
                                     Text("Voltar")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.75))
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 10)
-                                        .background(Capsule().fill(Color.white.opacity(0.08)))
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundColor(.white.opacity(0.85))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 14)
+                                        .background(Color.white.opacity(0.10))
+                                        .cornerRadius(14)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        )
                                 }
                                 .buttonStyle(.plain)
                                 .disabled(isProcessingLinkAction)
@@ -613,7 +617,7 @@ struct StudentTeachersView: View {
                                             ProgressView()
                                         }
                                     }
-                                    .padding(.horizontal, 14)
+                                    .frame(maxWidth: .infinity)
                                     .primaryGreenActionButton()
                                 }
                                 .buttonStyle(.plain)
@@ -621,10 +625,17 @@ struct StudentTeachersView: View {
                             }
                             .padding(.top, 6)
                         }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
                         .padding(.horizontal, 16)
-                        .padding(.top, 4)
+                        .padding(.top, 14)
                     }
-                    .padding(.horizontal, 16)
                     .padding(.bottom, 16)
                 }
             }
