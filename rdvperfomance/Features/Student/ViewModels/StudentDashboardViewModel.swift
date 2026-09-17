@@ -52,6 +52,9 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var upcomingDayGroups: [StudentDashboardDayGroup] = []
     @Published private(set) var isLoading = true
     @Published private(set) var teacherLinkState: StudentDashboardTeacherLinkState = .loading
+    @Published private(set) var pendingTeacherInvites: [TeacherStudentInviteFS] = []
+    @Published private(set) var pendingInviteTeachers: [String: AppUser] = [:]
+    @Published var inviteActionErrorMessage: String?
 
     private let studentId: String
     private let repository: FirestoreRepository
@@ -71,6 +74,7 @@ final class StudentDashboardViewModel: ObservableObject {
             isLoadingData = false
             isLoading = false
         }
+        async let pendingInvites: Void = loadPendingTeacherInvites()
 
         do {
             let teacherLinks = try await repository.getTeacherLinksForStudent(studentId: studentId)
@@ -85,6 +89,7 @@ final class StudentDashboardViewModel: ObservableObject {
         guard teacherLinkState != .unlinked else {
             currentWeekDaySummaries = []
             upcomingDayGroups = []
+            _ = await pendingInvites
             return
         }
 
@@ -109,6 +114,62 @@ final class StudentDashboardViewModel: ObservableObject {
             #endif
             currentWeekDaySummaries = []
             upcomingDayGroups = []
+        }
+
+        _ = await pendingInvites
+    }
+
+    func acceptTeacherInvite(_ invite: TeacherStudentInviteFS) async {
+        do {
+            try await repository.acceptInvite(invite: invite, studentId: studentId)
+            await load()
+        } catch {
+            inviteActionErrorMessage = (error as NSError).localizedDescription
+        }
+    }
+
+    func declineTeacherInvite(_ invite: TeacherStudentInviteFS) async {
+        do {
+            try await repository.declineInvite(invite: invite)
+            await load()
+        } catch {
+            inviteActionErrorMessage = (error as NSError).localizedDescription
+        }
+    }
+
+    private func loadPendingTeacherInvites() async {
+        do {
+            guard let student = try await repository.getUser(uid: studentId) else {
+                pendingTeacherInvites = []
+                pendingInviteTeachers = [:]
+                return
+            }
+
+            let email = student.email
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+            guard !email.isEmpty else {
+                pendingTeacherInvites = []
+                pendingInviteTeachers = [:]
+                return
+            }
+
+            pendingTeacherInvites = try await repository.getInvitesForStudent(studentEmail: email)
+                .filter {
+                    $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending"
+                }
+
+            let teacherIds = Array(
+                Set(
+                    pendingTeacherInvites
+                        .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                )
+            )
+            pendingInviteTeachers = try await repository.getUsers(byIds: teacherIds)
+        } catch {
+            pendingTeacherInvites = []
+            pendingInviteTeachers = [:]
         }
     }
 
