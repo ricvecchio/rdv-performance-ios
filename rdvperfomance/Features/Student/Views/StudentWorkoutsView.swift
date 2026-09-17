@@ -237,20 +237,20 @@ struct StudentWorkoutsView: View {
             selectedFilter = filter
         } label: {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
-                .fixedSize(horizontal: true, vertical: false)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 9)
                 .background(selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 999)
+                    RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.30) : Color.white.opacity(0.12),
                             lineWidth: 1
                         )
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 999))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
