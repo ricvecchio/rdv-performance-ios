@@ -56,6 +56,26 @@ struct TeacherAddYoutubeVideoSheet: View {
 
                 HStack(spacing: 12) {
                     Button {
+                        handleCopyYoutubeLink()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "doc.on.doc")
+                            Text("Abrir YouTube")
+                        }
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.white.opacity(0.10))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
                         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
                         let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
                         onSave(t, u, selectedCategory)
@@ -70,18 +90,6 @@ struct TeacherAddYoutubeVideoSheet: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                    Button {
-                        handleCopyYoutubeLink()
-                    } label: {
-                        HStack(spacing: 10) {
-                            Image(systemName: "doc.on.doc")
-                            Text("Copiar link YouTube")
-                        }
-                        .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
-                    }
-                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
