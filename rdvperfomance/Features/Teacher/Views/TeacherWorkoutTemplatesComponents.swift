@@ -12,7 +12,7 @@ struct TeacherWorkoutTemplatesAddButton: View {
                 Text(title)
             }
             .padding(.horizontal, 14)
-            .primaryGreenActionButton()
+            .compactPrimaryGreenActionButton()
         }
         .buttonStyle(.plain)
     }
