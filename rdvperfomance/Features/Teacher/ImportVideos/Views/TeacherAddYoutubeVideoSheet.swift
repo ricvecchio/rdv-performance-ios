@@ -102,7 +102,6 @@ struct TeacherAddYoutubeVideoSheet: View {
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
         .presentationDetents([.medium])
-        .presentationDragIndicator(.visible)
         .presentationBackground(Theme.Colors.headerBackground)
     }
     

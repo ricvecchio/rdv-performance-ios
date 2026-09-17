@@ -619,15 +619,10 @@ struct StudentTeachersView: View {
                                 .buttonStyle(.plain)
                                 .disabled(isProcessingLinkAction)
                             }
+                            .padding(.top, 6)
                         }
-                        .padding(16)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
                     }
                     .padding(.horizontal, 16)
                     .padding(.bottom, 16)
