@@ -15,8 +15,8 @@ struct TeacherStudentsListView: View {
     @State private var filter: TreinoTipo? = nil
     private let contentMaxWidth: CGFloat = 380
 
-    @State private var studentPendingUnlink: AppUser? = nil
-    @State private var showUnlinkConfirm: Bool = false
+    @State private var studentPendingCategoryChange: AppUser? = nil
+    @State private var showCategoryChangeDialog: Bool = false
 
     // Modal convite
     @State private var showInviteSheet: Bool = false
@@ -101,6 +101,11 @@ struct TeacherStudentsListView: View {
         .onAppear {
             filter = initialFilter
         }
+        .onChange(of: path) { _, newPath in
+            guard let teacherId = session.uid, !teacherId.isEmpty else { return }
+            if case .some(.teacherStudentDetail) = newPath.last { return }
+            Task { await vm.loadStudents(teacherId: teacherId, force: true) }
+        }
         // Carrega alunos e convites pendentes assim que session.uid estiver disponível
         .task(id: session.uid ?? "") {
             await loadInitialData()
@@ -159,12 +164,6 @@ struct TeacherStudentsListView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
-            Button("Cancelar", role: .cancel) { studentPendingUnlink = nil }
-            Button("Desvincular", role: .destructive) { Task { await confirmUnlink() } }
-        } message: {
-            Text(unlinkMessageText())
-        }
         // ✅ Cancelamento de convite pendente com confirmação
         .alert("Cancelar convite?", isPresented: $showCancelInviteConfirm) {
             Button("Cancelar", role: .cancel) { invitePendingCancel = nil }
@@ -207,6 +206,18 @@ struct TeacherStudentsListView: View {
             Button("Cancelar", role: .cancel) { studentPendingLink = nil }
         } message: {
             Text(linkDialogMessageText())
+        }
+        .confirmationDialog(
+            "Selecione a categoria do vínculo",
+            isPresented: $showCategoryChangeDialog,
+            titleVisibility: .visible
+        ) {
+            Button(TreinoTipo.crossfit.displayName) { Task { await confirmCategoryChange(.crossfit) } }
+            Button(TreinoTipo.academia.displayName) { Task { await confirmCategoryChange(.academia) } }
+            Button(TreinoTipo.emCasa.displayName) { Task { await confirmCategoryChange(.emCasa) } }
+            Button("Cancelar", role: .cancel) { studentPendingCategoryChange = nil }
+        } message: {
+            Text(categoryChangeDialogMessageText())
         }
         // Sheet Convites — ao fechar, recarrega alunos e convites
         .sheet(isPresented: $showInviteSheet, onDismiss: {
@@ -310,11 +321,11 @@ struct TeacherStudentsListView: View {
                     Spacer()
 
                     Menu {
-                        Button(role: .destructive) {
-                            studentPendingUnlink = student
-                            showUnlinkConfirm = true
+                        Button {
+                            studentPendingCategoryChange = student
+                            showCategoryChangeDialog = true
                         } label: {
-                            Label("Desvincular", systemImage: "link.badge.minus")
+                            Label("Alterar categoria", systemImage: "arrow.triangle.2.circlepath")
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -325,7 +336,7 @@ struct TeacherStudentsListView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(vm.isUnlinking)
+                    .disabled(vm.isChangingStudentCategory)
 
                     Image(systemName: "chevron.right")
                         .foregroundColor(.white.opacity(0.35))
@@ -434,36 +445,39 @@ struct TeacherStudentsListView: View {
         vm.removeLinkedStudentsFromPendingLinkRequests(teacherId: teacherId)
     }
 
-    private func unlinkMessageText() -> String {
-        guard let student = studentPendingUnlink else {
-            return "Tem certeza que deseja desvincular este aluno?"
+    private func categoryChangeDialogMessageText() -> String {
+        guard let student = studentPendingCategoryChange else {
+            return "Selecione uma categoria."
         }
-
-        if let chipCategory = filter {
-            return "O aluno \"\(student.name)\" será desvinculado da categoria \(chipCategory.displayName)."
-        } else {
-            return "O aluno \"\(student.name)\" será desvinculado de todas as categorias."
-        }
+        return "Aluno: \(student.name)\nEscolha a nova categoria do vínculo."
     }
 
-    private func confirmUnlink() async {
+    private func confirmCategoryChange(_ newCategory: TreinoTipo) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o professor logado."
-            studentPendingUnlink = nil
+            vm.setLinkError("Não foi possível identificar o professor logado.")
+            studentPendingCategoryChange = nil
             return
         }
-        guard let student = studentPendingUnlink, let studentId = student.id, !studentId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o aluno para desvincular."
-            studentPendingUnlink = nil
+        guard let student = studentPendingCategoryChange,
+              let studentId = student.id,
+              !studentId.isEmpty,
+              let currentCategory = vm.linkedCategory(
+                  for: studentId,
+                  preferred: filter ?? categoryFromStudentProfile(student) ?? selectedCategory
+              )
+        else {
+            vm.setLinkError("Não foi possível identificar a categoria atual do vínculo.")
+            studentPendingCategoryChange = nil
             return
         }
 
-        await vm.unlinkStudent(
+        await vm.changeStudentCategory(
             teacherId: teacherId,
             studentId: studentId,
-            categoryToRemove: filter
+            currentCategory: currentCategory,
+            newCategory: newCategory
         )
-        studentPendingUnlink = nil
+        studentPendingCategoryChange = nil
     }
 
     private var pendingInvitesCard: some View {
@@ -680,9 +694,10 @@ struct TeacherStudentsListView: View {
 
     private func combinedCategoryText(_ student: AppUser) -> String {
         let profile = categoryFromStudentProfile(student)
-        guard let link = filter else {
-            return profile?.displayName ?? "—"
+        let link = filter ?? student.id.flatMap {
+            vm.linkedCategory(for: $0, preferred: profile ?? selectedCategory)
         }
+        guard let link else { return profile?.displayName ?? "—" }
         guard let profile else {
             return link.displayName
         }
@@ -718,10 +733,14 @@ struct TeacherStudentsListView: View {
         if let filter {
             return filter
         }
-        if let fromProfile = categoryFromStudentProfile(student) {
-            return fromProfile
+        if let studentId = student.id,
+           let linkedCategory = vm.linkedCategory(
+               for: studentId,
+               preferred: categoryFromStudentProfile(student) ?? selectedCategory
+           ) {
+            return linkedCategory
         }
-        return selectedCategory
+        return categoryFromStudentProfile(student) ?? selectedCategory
     }
 
     private func mapCategoryStringToTreinoTipo(_ rawOpt: String?) -> TreinoTipo? {

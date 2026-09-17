@@ -756,6 +756,64 @@ final class UserRepository: FirestoreBaseRepository {
         }
     }
 
+    func changeStudentCategoryForTeacher(
+        teacherId: String,
+        studentId: String,
+        currentCategory: String,
+        newCategory: String
+    ) async throws {
+        let teacherId = clean(teacherId)
+        let studentId = clean(studentId)
+        let currentCategory = clean(currentCategory)
+        let newCategory = clean(newCategory)
+
+        guard !teacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !studentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard !currentCategory.isEmpty, !newCategory.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        let snapshot = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+
+        guard !snapshot.documents.isEmpty else { throw FirestoreRepositoryError.notFound }
+
+        let currentCandidates = Set(categoryCandidates(from: currentCategory).map { $0.lowercased() })
+        let newCandidates = Set(categoryCandidates(from: newCategory).map { $0.lowercased() })
+        guard !currentCandidates.isEmpty, !newCandidates.isEmpty else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        var didUpdate = false
+        let batch = db.batch()
+        for document in snapshot.documents {
+            let categories = (document.data()["categories"] as? [String]) ?? []
+            let containsCurrentCategory = categories.contains {
+                currentCandidates.contains(clean($0).lowercased())
+            }
+            guard containsCurrentCategory else { continue }
+
+            var updatedCategories = categories.filter {
+                let category = clean($0).lowercased()
+                return !currentCandidates.contains(category) && !newCandidates.contains(category)
+            }
+            updatedCategories.append(newCategory)
+
+            batch.setData(
+                [
+                    "categories": updatedCategories,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                forDocument: document.reference,
+                merge: true
+            )
+            didUpdate = true
+        }
+
+        guard didUpdate else { throw FirestoreRepositoryError.notFound }
+        try await batch.commit()
+    }
+
     // MARK: - Perfil / Foto / Unidade
 
     func upsertUserProfile(uid: String, form: RegisterFormDTO) async throws {

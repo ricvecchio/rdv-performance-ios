@@ -10,10 +10,27 @@ struct TeacherStudentDetailView: View {
 
     @EnvironmentObject private var session: AppSession
 
+    @StateObject private var studentsViewModel: TeacherStudentsListViewModel
+
     private let contentMaxWidth: CGFloat = 380
 
     @State private var progress: Double = 0.0
     @State private var isLoadingProgress: Bool = false
+    @State private var showUnlinkConfirm: Bool = false
+
+    init(
+        path: Binding<[AppRoute]>,
+        student: AppUser,
+        category: TreinoTipo,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.student = student
+        self.category = category
+        _studentsViewModel = StateObject(
+            wrappedValue: TeacherStudentsListViewModel(repository: repository)
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -98,6 +115,14 @@ struct TeacherStudentDetailView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .task {
             await loadProgress()
+        }
+        .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
+            Button("Cancelar", role: .cancel) {}
+            Button("Desvincular", role: .destructive) {
+                Task { await confirmUnlink() }
+            }
+        } message: {
+            Text("O aluno \"\(student.name)\" será desvinculado da categoria \(category.displayName).")
         }
     }
 
@@ -195,6 +220,13 @@ struct TeacherStudentDetailView: View {
             actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
             }
+
+            Divider()
+                .background(Theme.Colors.divider)
+
+            actionButton(title: "Desvincular", icon: "link.badge.minus") {
+                showUnlinkConfirm = true
+            }
         }
         .padding(16)
         .frame(maxWidth: .infinity)
@@ -226,6 +258,22 @@ struct TeacherStudentDetailView: View {
     private func openWorkouts() {
         guard let sid = student.id, !sid.isEmpty else { return }
         path.append(.studentWorkouts(studentId: sid, studentName: student.name))
+    }
+
+    private func confirmUnlink() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty,
+              let studentId = student.id, !studentId.isEmpty
+        else {
+            return
+        }
+
+        if await studentsViewModel.unlinkStudent(
+            teacherId: teacherId,
+            studentId: studentId,
+            categoryToRemove: category
+        ) {
+            pop()
+        }
     }
 
     private func pop() {

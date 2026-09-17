@@ -44,6 +44,20 @@ final class FirestoreRepository {
         )
     }
 
+    func changeStudentCategoryForTeacher(
+        teacherId: String,
+        studentId: String,
+        currentCategory: String,
+        newCategory: String
+    ) async throws {
+        try await userRepository.changeStudentCategoryForTeacher(
+            teacherId: teacherId,
+            studentId: studentId,
+            currentCategory: currentCategory,
+            newCategory: newCategory
+        )
+    }
+
     func upsertUserProfile(uid: String, form: RegisterFormDTO) async throws {
         try await userRepository.upsertUserProfile(uid: uid, form: form)
     }
