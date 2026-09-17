@@ -96,14 +96,9 @@ struct StudentTeachersView: View {
                                     Image(systemName: "person.badge.plus")
 
                                     Text("Convidar professor")
-
-                                    Spacer(minLength: 0)
-
-                                    Image(systemName: "chevron.right")
                                 }
                                 .padding(.horizontal, 14)
-                                .frame(maxWidth: .infinity)
-                                .primaryGreenActionButton()
+                                .compactPrimaryGreenActionButton()
                             }
                             .buttonStyle(.plain)
                             .disabled(isProcessingLinkAction)
