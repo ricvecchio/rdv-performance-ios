@@ -535,10 +535,10 @@ struct StudentTeachersView: View {
     }
 
     private func requestLinkModalView() -> some View {
-        NavigationStack {
-            ZStack {
-                Theme.Colors.headerBackground.ignoresSafeArea()
+        ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
 
+            VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
@@ -582,48 +582,6 @@ struct StudentTeachersView: View {
                                     .font(.system(size: 13))
                                     .foregroundColor(linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
                             }
-
-                            HStack(spacing: 12) {
-                                Button {
-                                    showRequestLinkModal = false
-                                } label: {
-                                    Text("Voltar")
-                                        .font(.system(size: 15, weight: .bold))
-                                        .foregroundColor(.white.opacity(0.85))
-                                        .frame(maxWidth: .infinity)
-                                        .padding(.vertical, 14)
-                                        .background(Color.white.opacity(0.10))
-                                        .cornerRadius(14)
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                        )
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(isProcessingLinkAction)
-
-                                Button {
-                                    Task {
-                                        let didSend = await requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
-                                        if didSend {
-                                            showRequestLinkModal = false
-                                        }
-                                    }
-                                } label: {
-                                    HStack(spacing: 10) {
-                                        Text("Enviar solicitação")
-
-                                        if isProcessingLinkAction {
-                                            ProgressView()
-                                        }
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .primaryGreenActionButton()
-                                }
-                                .buttonStyle(.plain)
-                                .disabled(isProcessingLinkAction)
-                            }
-                            .padding(.top, 6)
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -636,21 +594,52 @@ struct StudentTeachersView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
                     }
-                    .padding(.bottom, 16)
                 }
-            }
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fechar") {
+
+                HStack(spacing: 12) {
+                    Button {
                         showRequestLinkModal = false
+                    } label: {
+                        Text("Voltar")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
                     }
-                    .foregroundColor(.white)
+                    .buttonStyle(.plain)
+                    .disabled(isProcessingLinkAction)
+
+                    Button {
+                        Task {
+                            let didSend = await requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                            if didSend {
+                                showRequestLinkModal = false
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text("Enviar solicitação")
+
+                            if isProcessingLinkAction {
+                                ProgressView()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isProcessingLinkAction)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
-            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
     }
 
