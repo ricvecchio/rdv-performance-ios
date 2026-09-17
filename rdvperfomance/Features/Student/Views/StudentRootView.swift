@@ -169,6 +169,13 @@ struct StudentRootView: View {
         case .arExercise(let weekId, let dayId):
             ARExerciseView(path: path, weekId: weekId, dayId: dayId)
 
+        case .studentTeachers(let studentEmail):
+            StudentTeachersView(
+                path: path,
+                studentEmail: studentEmail,
+                onSelectSection: selectSection
+            )
+
         default:
             EmptyView()
         }

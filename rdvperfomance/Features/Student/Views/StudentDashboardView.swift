@@ -9,8 +9,6 @@ struct StudentDashboardView: View {
     @EnvironmentObject private var session: AppSession
     @StateObject private var viewModel: StudentDashboardViewModel
     @State private var isTeacherLinkIconPulsing = false
-    @State private var invitePendingDecline: TeacherStudentInviteFS?
-    @State private var showInviteDeclineConfirmation = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -92,26 +90,6 @@ struct StudentDashboardView: View {
         .onAppear {
             Task { await viewModel.load() }
         }
-        .alert("Recusar convite?", isPresented: $showInviteDeclineConfirmation) {
-            Button("Cancelar", role: .cancel) {
-                invitePendingDecline = nil
-            }
-            Button("Recusar", role: .destructive) {
-                guard let invite = invitePendingDecline else { return }
-                invitePendingDecline = nil
-                Task { await viewModel.declineTeacherInvite(invite) }
-            }
-        } message: {
-            Text("Deseja recusar este convite de vínculo?")
-        }
-        .alert("Erro", isPresented: Binding(
-            get: { viewModel.inviteActionErrorMessage != nil },
-            set: { if !$0 { viewModel.inviteActionErrorMessage = nil } }
-        )) {
-            Button("OK", role: .cancel) {}
-        } message: {
-            Text(viewModel.inviteActionErrorMessage ?? "Ocorreu um erro.")
-        }
     }
 
     private var header: some View {
@@ -129,7 +107,7 @@ struct StudentDashboardView: View {
     @ViewBuilder
     private var dashboardContent: some View {
         if !viewModel.pendingTeacherInvites.isEmpty {
-            teacherInvitesCard
+            noticesCard
         }
 
         switch viewModel.teacherLinkState {
@@ -146,20 +124,28 @@ struct StudentDashboardView: View {
         }
     }
 
-    private var teacherInvitesCard: some View {
+    private var noticesCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Convite de professor")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
-
-            ForEach(Array(viewModel.pendingTeacherInvites.enumerated()), id: \.element.id) { index, invite in
-                teacherInviteRow(invite)
-
-                if index < viewModel.pendingTeacherInvites.count - 1 {
-                    Divider()
-                        .background(Theme.Colors.divider)
-                }
+            HStack(spacing: 8) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundColor(.yellow.opacity(0.85))
+                Text("Avisos")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
             }
+
+            Button {
+                path.append(.studentTeachers(
+                    studentEmail: viewModel.pendingTeacherInvites[0].studentEmail
+                ))
+            } label: {
+                noticeRow(
+                    icon: "person.crop.circle.badge.checkmark",
+                    title: "Convite de professor",
+                    message: inviteNoticeMessage
+                )
+            }
+            .buttonStyle(.plain)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -168,60 +154,35 @@ struct StudentDashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
 
-    private func teacherInviteRow(_ invite: TeacherStudentInviteFS) -> some View {
-        let teacher = viewModel.pendingInviteTeachers[invite.teacherId]
+    private var inviteNoticeMessage: String {
+        let count = viewModel.pendingTeacherInvites.count
+        return count == 1
+            ? "Você possui um convite pendente"
+            : "Você possui \(count) convites pendentes"
+    }
 
-        return VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 14) {
-                StudentAvatarView(base64: teacher?.photoBase64, size: 28)
-                    .frame(width: 28)
+    private func noticeRow(icon: String, title: String, message: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+                .foregroundColor(Theme.Colors.primaryGreen)
+                .frame(width: 28)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(teacher?.name ?? invite.teacherEmail)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(1)
-
-                    Text(invite.teacherEmail)
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.35))
-                        .lineLimit(1)
-                }
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 16, weight: .medium))
+                    .foregroundColor(.white.opacity(0.92))
+                Text(message)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
             }
 
-            Text("Professor convidou você para se vincular.")
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.55))
+            Spacer()
 
-            HStack(spacing: 12) {
-                Button {
-                    invitePendingDecline = invite
-                    showInviteDeclineConfirmation = true
-                } label: {
-                    Text("Recusar")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.85))
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 14)
-                        .background(Color.white.opacity(0.10))
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-
-                Button {
-                    Task { await viewModel.acceptTeacherInvite(invite) }
-                } label: {
-                    Text("Aceitar")
-                        .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
-                }
-                .buttonStyle(.plain)
-            }
+            Image(systemName: "chevron.right")
+                .foregroundColor(.white.opacity(0.35))
         }
+        .contentShape(Rectangle())
     }
 
     private var noLinkedTeacherCard: some View {
