@@ -205,7 +205,7 @@ struct CreateTreinoAcademiaView: View {
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(.green.opacity(0.85))
-                        .font(.system(size: 18))
+                        .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)
             }

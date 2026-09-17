@@ -33,7 +33,7 @@ private struct CompactPrimaryGreenActionButtonModifier: ViewModifier {
         content
             .font(.system(size: 15, weight: .semibold))
             .foregroundColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
-            .padding(.vertical, 10)
+            .padding(.vertical, 9)
             .background(
                 isEnabled
                     ? Theme.Colors.primaryGreen.opacity(0.18)
