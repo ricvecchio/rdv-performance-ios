@@ -12,8 +12,6 @@ struct TeacherAddYoutubeVideoSheet: View {
 
     let onSave: (_ title: String, _ url: String, _ category: TeacherYoutubeVideoCategory) -> Void
 
-    private let contentMaxWidth: CGFloat = 380
-
     var body: some View {
         ZStack {
             Theme.Colors.headerBackground
@@ -21,87 +19,69 @@ struct TeacherAddYoutubeVideoSheet: View {
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                        VStack(spacing: 14) {
-                            Capsule()
-                                .fill(Color.white.opacity(0.18))
-                                .frame(width: 44, height: 5)
-                                .padding(.top, 10)
-                                .frame(maxWidth: .infinity)
+                        Text("Adicionar Vídeo")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
 
-                            Text("Adicionar Vídeo")
-                                .font(.system(size: 18, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(.top, 4)
-                                .frame(maxWidth: .infinity)
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.45))
 
-                            VStack(alignment: .leading, spacing: 10) {
-                                Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.white.opacity(0.60))
-                                    .multilineTextAlignment(.center)
-                                    .frame(maxWidth: .infinity)
+                            formFields
 
-                                formFields
-
-                                if let msg = sheetMessage {
-                                    sheetMessageCard(text: msg, isError: sheetMessageIsError)
-                                }
+                            if let msg = sheetMessage {
+                                sheetMessageCard(text: msg, isError: sheetMessageIsError)
                             }
-                            .padding(14)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                            .padding(.horizontal, 16)
-                            .padding(.top, 14)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-
-                        Spacer(minLength: 0)
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
                     }
                 }
 
-                HStack {
-                    Spacer(minLength: 0)
-
-                    HStack(spacing: 12) {
-                        Button {
-                            let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                            let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                            onSave(t, u, selectedCategory)
-                            dismiss()
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "checkmark")
-                                Text("Salvar")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .primaryGreenActionButton()
+                HStack(spacing: 12) {
+                    Button {
+                        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                        onSave(t, u, selectedCategory)
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark")
+                            Text("Salvar")
                         }
-                        .buttonStyle(.plain)
-                        .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-
-                        Button {
-                            handleCopyYoutubeLink()
-                        } label: {
-                            HStack(spacing: 10) {
-                                Image(systemName: "doc.on.doc")
-                                Text("Copiar link YouTube")
-                            }
-                            .frame(maxWidth: .infinity)
-                            .primaryGreenActionButton()
-                        }
-                        .buttonStyle(.plain)
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
                     }
-                    .frame(maxWidth: contentMaxWidth)
+                    .buttonStyle(.plain)
+                    .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
-                    Spacer(minLength: 0)
+                    Button {
+                        handleCopyYoutubeLink()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "doc.on.doc")
+                            Text("Copiar link YouTube")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
@@ -135,11 +115,11 @@ struct TeacherAddYoutubeVideoSheet: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                 }
-                .background(Theme.Colors.cardBackground)
+                .background(Color.white.opacity(0.10))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 )
             }
             
@@ -165,11 +145,11 @@ struct TeacherAddYoutubeVideoSheet: View {
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                 }
-                .background(Theme.Colors.cardBackground)
+                .background(Color.white.opacity(0.10))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 )
             }
             
@@ -185,11 +165,11 @@ struct TeacherAddYoutubeVideoSheet: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(14)
-                .background(Theme.Colors.cardBackground)
+                .background(Color.white.opacity(0.10))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 )
             }
         }
