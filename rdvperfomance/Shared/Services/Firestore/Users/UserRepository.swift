@@ -814,6 +814,67 @@ final class UserRepository: FirestoreBaseRepository {
         try await batch.commit()
     }
 
+    func ensureStudentCategoriesForTeacher(
+        teacherId: String,
+        studentId: String,
+        categories: [String]
+    ) async throws {
+        let teacherId = clean(teacherId)
+        let studentId = clean(studentId)
+        let desiredCategories = categories.compactMap(TreinoTipo.normalized(from:))
+        guard !teacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !studentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard Set(desiredCategories).count == 3 else { throw FirestoreRepositoryError.invalidData }
+
+        let snapshot = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+
+        guard !snapshot.documents.isEmpty else { throw FirestoreRepositoryError.notFound }
+
+        let desiredKeys = Set(desiredCategories.map(\.firestoreKey))
+        let batch = db.batch()
+        var didUpdate = false
+
+        for document in snapshot.documents {
+            let existingCategories = (document.data()["categories"] as? [String]) ?? []
+            var retainedCategories: [String] = []
+            var foundCategories: Set<String> = []
+
+            for existingCategory in existingCategories {
+                guard let normalized = TreinoTipo.normalized(from: existingCategory) else {
+                    retainedCategories.append(existingCategory)
+                    continue
+                }
+
+                let key = normalized.firestoreKey
+                if desiredKeys.contains(key), foundCategories.insert(key).inserted {
+                    retainedCategories.append(existingCategory)
+                }
+            }
+
+            for category in desiredCategories where !foundCategories.contains(category.firestoreKey) {
+                retainedCategories.append(category.firestoreKey)
+            }
+
+            guard retainedCategories != existingCategories else { continue }
+            batch.setData(
+                [
+                    "categories": retainedCategories,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                forDocument: document.reference,
+                merge: true
+            )
+            didUpdate = true
+        }
+
+        if didUpdate {
+            try await batch.commit()
+        }
+    }
+
     // MARK: - Perfil / Foto / Unidade
 
     func upsertUserProfile(uid: String, form: RegisterFormDTO) async throws {

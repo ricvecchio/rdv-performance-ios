@@ -234,6 +234,41 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
+    func ensureStudentCategories(
+        teacherId: String,
+        studentId: String,
+        categories: [TreinoTipo]
+    ) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty, !studentId.isEmpty else {
+            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            return
+        }
+        activateTeacher(teacherId)
+        let generation = teacherGeneration
+        isChangingStudentCategory = true
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isChangingStudentCategory = false
+            }
+        }
+
+        do {
+            try await repository.ensureStudentCategoriesForTeacher(
+                teacherId: teacherId,
+                studentId: studentId,
+                categories: categories.map(\.firestoreKey)
+            )
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            await loadStudents(teacherId: teacherId, force: true)
+        } catch {
+            if isActiveTeacher(teacherId, generation: generation) {
+                setLinkError((error as NSError).localizedDescription)
+            }
+        }
+    }
+
 
     func loadInvites(teacherId: String, force: Bool = false) async {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -170,6 +170,7 @@ struct TeacherStudentsListView: View {
             Button(TreinoTipo.crossfit.displayName) { Task { await confirmCategoryChange(.crossfit) } }
             Button(TreinoTipo.academia.displayName) { Task { await confirmCategoryChange(.academia) } }
             Button(TreinoTipo.emCasa.displayName) { Task { await confirmCategoryChange(.emCasa) } }
+            Button("Todos") { Task { await confirmAllCategoryChanges() } }
             Button("Cancelar", role: .cancel) { studentPendingCategoryChange = nil }
         } message: {
             Text(categoryChangeDialogMessageText())
@@ -453,7 +454,7 @@ struct TeacherStudentsListView: View {
         guard let student = studentPendingCategoryChange else {
             return "Selecione uma categoria."
         }
-        return "Aluno: \(student.name)\nEscolha a nova categoria do vínculo."
+        return "Aluno: \(student.name)"
     }
 
     private func confirmCategoryChange(_ newCategory: TreinoTipo) async {
@@ -480,6 +481,29 @@ struct TeacherStudentsListView: View {
             studentId: studentId,
             currentCategory: currentCategory,
             newCategory: newCategory
+        )
+        studentPendingCategoryChange = nil
+    }
+
+    private func confirmAllCategoryChanges() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty else {
+            vm.setLinkError("Não foi possível identificar o professor logado.")
+            studentPendingCategoryChange = nil
+            return
+        }
+        guard let student = studentPendingCategoryChange,
+              let studentId = student.id,
+              !studentId.isEmpty
+        else {
+            vm.setLinkError("Não foi possível identificar o aluno para alterar a categoria.")
+            studentPendingCategoryChange = nil
+            return
+        }
+
+        await vm.ensureStudentCategories(
+            teacherId: teacherId,
+            studentId: studentId,
+            categories: [.crossfit, .academia, .emCasa]
         )
         studentPendingCategoryChange = nil
     }

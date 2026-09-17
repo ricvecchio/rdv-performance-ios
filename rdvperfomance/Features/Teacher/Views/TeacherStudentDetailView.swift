@@ -224,7 +224,7 @@ struct TeacherStudentDetailView: View {
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Desvincular", icon: "link.badge.minus") {
+            actionButton(title: "Desvincular", icon: "person.badge.minus") {
                 showUnlinkConfirm = true
             }
         }
