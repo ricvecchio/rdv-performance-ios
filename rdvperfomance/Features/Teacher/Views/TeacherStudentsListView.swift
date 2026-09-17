@@ -240,7 +240,7 @@ struct TeacherStudentsListView: View {
             filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
             filterChip(title: TreinoTipo.crossfit.displayName, isSelected: filter == .crossfit) { filter = .crossfit }
             filterChip(title: TreinoTipo.academia.displayName, isSelected: filter == .academia) { filter = .academia }
-            filterChip(title: TreinoTipo.emCasa.displayName, isSelected: filter == .emCasa) { filter = .emCasa }
+            filterChip(title: "Em Casa", isSelected: filter == .emCasa) { filter = .emCasa }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
