@@ -236,18 +236,11 @@ struct TeacherStudentsListView: View {
     }
 
     private var filterRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-
-                    filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
-
-                    filterChip(title: TreinoTipo.crossfit.displayName, isSelected: filter == .crossfit) { filter = .crossfit }
-                    filterChip(title: TreinoTipo.academia.displayName, isSelected: filter == .academia) { filter = .academia }
-                    filterChip(title: TreinoTipo.emCasa.displayName, isSelected: filter == .emCasa) { filter = .emCasa }
-                }
-                .padding(.vertical, 2)
-            }
+        HStack(spacing: 6) {
+            filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
+            filterChip(title: TreinoTipo.crossfit.displayName, isSelected: filter == .crossfit) { filter = .crossfit }
+            filterChip(title: TreinoTipo.academia.displayName, isSelected: filter == .academia) { filter = .academia }
+            filterChip(title: TreinoTipo.emCasa.displayName, isSelected: filter == .emCasa) { filter = .emCasa }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -255,16 +248,19 @@ struct TeacherStudentsListView: View {
     private func filterChip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.green.opacity(0.16) : Color.white.opacity(0.10))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity)
+                .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 999)
-                        .stroke(isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Color.white.opacity(0.12), lineWidth: 1)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 999))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
