@@ -196,20 +196,9 @@ struct RegisterStudentView: View {
                     }
 
                     Text(vm.isLoading ? "Criando..." : "Criar Conta")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(vm.isLoading)

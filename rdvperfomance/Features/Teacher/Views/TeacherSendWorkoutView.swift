@@ -854,11 +854,9 @@ struct TeacherSendWorkoutView: View {
         HStack {
             Spacer()
             Text("Próximo")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
             Spacer()
         }
-        .modifier(PrimaryActionButtonStyle())
+        .primaryGreenActionButton()
     }
 
     private var sendButtonContent: some View {
@@ -868,25 +866,10 @@ struct TeacherSendWorkoutView: View {
                 ProgressView().tint(.white)
             } else {
                 Text("Enviar treino")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
             }
             Spacer()
         }
-        .modifier(PrimaryActionButtonStyle())
-    }
-
-    private struct PrimaryActionButtonStyle: ViewModifier {
-        func body(content: Content) -> some View {
-            content
-                .padding(.vertical, 14)
-                .background(Color.green.opacity(0.16))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                )
-        }
+        .primaryGreenActionButton()
     }
 
     private func sectionTitle(_ title: String) -> some View {
@@ -1395,12 +1378,8 @@ private struct WorkoutTemplateSelectionSheet: View {
                 dismiss()
             } label: {
                 Text("Selecionar")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.black.opacity(0.85))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.green.opacity(0.90))
-                    .cornerRadius(14)
+                    .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(!canConfirmSelection)

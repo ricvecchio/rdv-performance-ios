@@ -216,17 +216,9 @@ struct StudentWorkoutsView: View {
             HStack {
                 Spacer()
                 Text("Publicar Treino")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
     }
@@ -308,11 +300,8 @@ struct StudentWorkoutsView: View {
                         isRequestLinkSheetPresented = true
                     } label: {
                         Text("Solicitar vínculo por e-mail")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.green.opacity(0.18)))
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }
@@ -342,11 +331,8 @@ struct StudentWorkoutsView: View {
                             Task { await vm.acceptPendingInvite() }
                         } label: {
                             Text("Aceitar")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
                                 .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .background(Capsule().fill(Color.green.opacity(0.20)))
+                                .primaryGreenActionButton()
                         }
                         .buttonStyle(.plain)
                         .disabled(vm.isProcessingLinkAction)
@@ -399,11 +385,8 @@ struct StudentWorkoutsView: View {
                         Task { await vm.loadLinkStatus(force: true) }
                     } label: {
                         Text("Tentar novamente")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.9))
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.green.opacity(0.16)))
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }
@@ -473,11 +456,8 @@ struct StudentWorkoutsView: View {
                         }
                     } label: {
                         Text("Enviar solicitação")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.green.opacity(0.20)))
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isProcessingLinkAction)
@@ -957,11 +937,8 @@ struct StudentWorkoutsView: View {
 
             Button { Task { await vm.loadWeeksAndMeta(force: true) } } label: {
                 Text("Tentar novamente")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
         }

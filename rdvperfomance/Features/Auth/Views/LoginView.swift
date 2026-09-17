@@ -97,20 +97,12 @@ struct LoginView: View {
                         }
 
                         Text(vm.isLoading ? "Entrando..." : "Acessar")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
 
                         Spacer()
                     }
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.green.opacity(0.16))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                    )
                     .frame(width: 260)
+                    .primaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 22)

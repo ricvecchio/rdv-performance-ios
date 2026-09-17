@@ -140,15 +140,12 @@ struct TeacherStudentsListView: View {
                         showInviteSheet = true
                         Task { await loadInvitesIfPossible() }
                     } label: {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 10) {
                             Image(systemName: "paperplane.fill")
                             Text("Convidar")
                         }
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                        .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
 
@@ -382,11 +379,8 @@ struct TeacherStudentsListView: View {
                 Task { await loadAllStudents() }
             } label: {
                 Text("Tentar novamente")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
         }
@@ -884,24 +878,17 @@ struct TeacherStudentsListView: View {
                     await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
                 }
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Spacer()
                     if vm.isInvitesLoading {
                         ProgressView()
                     } else {
                         Image(systemName: "paperplane.fill")
                         Text("Enviar convite")
-                            .font(.system(size: 14, weight: .semibold))
                     }
                     Spacer()
                 }
-                .foregroundColor(.white.opacity(0.92))
-                .padding(.vertical, 12)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Color.green.opacity(0.18)))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(0.30), lineWidth: 1)
-                )
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)

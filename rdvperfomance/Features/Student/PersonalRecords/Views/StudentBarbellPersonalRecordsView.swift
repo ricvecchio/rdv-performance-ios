@@ -504,12 +504,8 @@ struct StudentBarbellPersonalRecordsView: View {
                         selectedMove = nil
                     } label: {
                         Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
 
@@ -564,12 +560,8 @@ struct StudentBarbellPersonalRecordsView: View {
                         showPRDatePicker = false
                     } label: {
                         Text("Confirmar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }
@@ -821,12 +813,8 @@ struct StudentBarbellPersonalRecordsView: View {
                         addNewMove()
                     } label: {
                         Text("Adicionar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }

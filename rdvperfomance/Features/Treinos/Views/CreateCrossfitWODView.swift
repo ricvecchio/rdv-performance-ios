@@ -293,18 +293,10 @@ struct CreateCrossfitWODView: View {
                     ProgressView().tint(.white)
                 } else {
                     Text("Salvar WOD")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSaving)

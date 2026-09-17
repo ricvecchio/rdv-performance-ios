@@ -6,15 +6,12 @@ struct WorkoutTemplateAttachmentButton: View {
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 6) {
+            HStack(spacing: 10) {
                 Image(systemName: "paperclip")
                 Text("Anexar de Meus Treinos")
             }
-            .font(.system(size: 13, weight: .semibold))
-            .foregroundColor(.white.opacity(0.92))
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Capsule().fill(Color.green.opacity(0.16)))
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isLoading)

@@ -245,15 +245,12 @@ struct TeacherImportWorkoutsView: View {
                 successMessage = nil
                 isImportPickerPresented = true
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: "plus")
                     Text("Importar Excel")
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
                 .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isImporting || isSendingToWorkouts)
@@ -265,15 +262,12 @@ struct TeacherImportWorkoutsView: View {
                 successMessage = nil
                 prepareTemplateShare()
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: "arrow.down.doc")
                     Text("Baixar Planilha Excel")
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
                 .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isSendingToWorkouts)

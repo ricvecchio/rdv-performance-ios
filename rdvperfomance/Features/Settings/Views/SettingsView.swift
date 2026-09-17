@@ -441,12 +441,8 @@ private struct WeightUnitSheetView: View {
 
                     Button(action: onSave) {
                         Text("Salvar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }

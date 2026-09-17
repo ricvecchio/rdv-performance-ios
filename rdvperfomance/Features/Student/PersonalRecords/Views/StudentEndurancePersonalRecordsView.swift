@@ -389,12 +389,8 @@ struct StudentEndurancePersonalRecordsView: View {
                                 .environment(\.locale, Locale(identifier: "pt_BR"))
                             Button { showPRDatePicker = false } label: {
                                 Text("Confirmar")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.black.opacity(0.85))
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.green.opacity(0.90))
-                                    .cornerRadius(14)
+                                    .primaryGreenActionButton()
                             }
                             .buttonStyle(.plain)
                         }
@@ -433,12 +429,8 @@ struct StudentEndurancePersonalRecordsView: View {
                         selectedMove = nil
                     } label: {
                         Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
 
@@ -835,12 +827,8 @@ struct StudentEndurancePersonalRecordsView: View {
                             addNewItem()
                         } label: {
                             Text("Adicionar")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.black.opacity(0.85))
                                 .frame(maxWidth: .infinity)
-                                .padding(.vertical, 14)
-                                .background(Color.green.opacity(0.90))
-                                .cornerRadius(14)
+                                .primaryGreenActionButton()
                         }
                         .buttonStyle(.plain)
                     }

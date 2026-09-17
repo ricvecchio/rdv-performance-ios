@@ -94,29 +94,16 @@ struct StudentTeachersView: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "person.badge.plus")
-                                        .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.green.opacity(0.9))
 
                                     Text("Convidar professor")
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
 
                                     Spacer(minLength: 0)
 
                                     Image(systemName: "chevron.right")
-                                        .foregroundColor(.white.opacity(0.35))
                                 }
                                 .padding(.horizontal, 14)
-                                .padding(.vertical, 12)
                                 .frame(maxWidth: .infinity)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .fill(Color.green.opacity(0.16))
-                                        .overlay(
-                                            RoundedRectangle(cornerRadius: 14)
-                                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                        )
-                                )
+                                .primaryGreenActionButton()
                             }
                             .buttonStyle(.plain)
                             .disabled(isProcessingLinkAction)
@@ -464,12 +451,10 @@ struct StudentTeachersView: View {
                     Button("Fechar") {
                         selectedTeacher = nil
                     }
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.20)))
+                    .primaryGreenActionButton()
                     .frame(maxWidth: .infinity)
+                    .buttonStyle(.plain)
                 }
                 .padding(16)
             }
@@ -605,16 +590,13 @@ struct StudentTeachersView: View {
                         } label: {
                             HStack(spacing: 10) {
                                 Text("Enviar solicitação")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
 
                                 if isProcessingLinkAction {
                                     ProgressView()
                                 }
                             }
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.green.opacity(0.20)))
+                            .primaryGreenActionButton()
                         }
                         .buttonStyle(.plain)
                         .disabled(isProcessingLinkAction)
