@@ -97,7 +97,6 @@ struct TeacherAddYoutubeVideoSheet: View {
             }
         }
         .presentationDetents([.medium])
-        .presentationBackground(Theme.Colors.headerBackground)
     }
     
     private var formFields: some View {
