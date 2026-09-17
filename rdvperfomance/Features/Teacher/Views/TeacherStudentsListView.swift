@@ -768,9 +768,7 @@ struct TeacherStudentsListView: View {
 
     private var inviteSheet: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
+            Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
             // ✅ AJUSTE 2: ScrollView para evitar “expansão” que corta conteúdo ao focar no e-mail e ao trocar abas
@@ -778,43 +776,50 @@ struct TeacherStudentsListView: View {
                 VStack(spacing: 14) {
 
                     Capsule()
-                        .fill(Color.white.opacity(0.22))
-                        .frame(width: 48, height: 6)
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
                     Text("Convidar aluno")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .padding(.top, 2)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
 
-                    Picker("", selection: $inviteTab) {
-                        ForEach(InviteTab.allCases, id: \.rawValue) { tab in
-                            Text(tab.title).tag(tab)
+                    VStack(alignment: .leading, spacing: 14) {
+                        Picker("", selection: $inviteTab) {
+                            ForEach(InviteTab.allCases, id: \.rawValue) { tab in
+                                Text(tab.title).tag(tab)
+                            }
+                        }
+                        .pickerStyle(.segmented)
+
+                        Group {
+                            switch inviteTab {
+                            case .invite:
+                                inviteByEmailCard
+                            case .sent:
+                                invitesSentCard
+                            }
                         }
                     }
-                    .pickerStyle(.segmented)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
                     .padding(.horizontal, 16)
-
-                    Group {
-                        switch inviteTab {
-                        case .invite:
-                            inviteByEmailCard
-                        case .sent:
-                            invitesSentCard
-                        }
-                    }
-                    .padding(.horizontal, 16)
-
-                    Spacer(minLength: 10)
+                    .padding(.top, 14)
                 }
                 .padding(.bottom, 16)
             }
             .scrollDismissesKeyboard(.interactively)
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.fraction(2.0 / 3.0)])
         // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
         .presentationContentInteraction(.scrolls)
-        .presentationDragIndicator(.hidden)
         .onAppear {
             Task { await loadInvitesIfPossible() }
         }
@@ -850,6 +855,7 @@ struct TeacherStudentsListView: View {
                     .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
+                    .font(.system(size: 16, weight: .semibold))
 
                 if !inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button { inviteEmail = "" } label: {
@@ -859,12 +865,12 @@ struct TeacherStudentsListView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color.white.opacity(0.08))
-            .cornerRadius(12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .background(Color.white.opacity(0.10))
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.10), lineWidth: 1)
             )
 
@@ -896,11 +902,6 @@ struct TeacherStudentsListView: View {
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.35))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
     private var invitesSentCard: some View {
@@ -959,11 +960,6 @@ struct TeacherStudentsListView: View {
                 )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
     private func inviteRow(_ inv: TeacherStudentInviteFS) -> some View {
