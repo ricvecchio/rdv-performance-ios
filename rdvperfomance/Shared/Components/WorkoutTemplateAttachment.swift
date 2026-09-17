@@ -11,7 +11,7 @@ struct WorkoutTemplateAttachmentButton: View {
                 Text("Anexar de Meus Treinos")
             }
             .padding(.horizontal, 12)
-            .primaryGreenActionButton()
+            .compactPrimaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isLoading)

@@ -1,92 +1,96 @@
 import SwiftUI
 
 struct TeacherAddYoutubeVideoSheet: View {
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var title: String = ""
     @State private var url: String = ""
     @State private var selectedCategory: TeacherYoutubeVideoCategory = .crossfit
     @State private var sheetMessage: String? = nil
     @State private var sheetMessageIsError: Bool = false
-    
+
     let onSave: (_ title: String, _ url: String, _ category: TeacherYoutubeVideoCategory) -> Void
-    
+
     private let contentMaxWidth: CGFloat = 380
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
-                Image("rdv_fundo")
-                    .resizable()
-                    .scaledToFill()
+                Theme.Colors.headerBackground
                     .ignoresSafeArea()
                 
-                VStack(spacing: 0) {
-                    Rectangle()
-                        .fill(Theme.Colors.divider)
-                        .frame(height: 1)
-                    
-                    ScrollView(showsIndicators: false) {
-                        HStack {
-                            Spacer(minLength: 0)
-                            
-                            VStack(alignment: .leading, spacing: 14) {
-                                Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.65))
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(alignment: .leading, spacing: 16) {
+                            VStack(spacing: 14) {
+                                Capsule()
+                                    .fill(Color.white.opacity(0.35))
+                                    .frame(width: 44, height: 5)
+                                    .padding(.top, 10)
                                 
-                                formCard
-                                
-                                HStack(spacing: 10) {
-                                    Button {
-                                        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        onSave(t, u, selectedCategory)
-                                        dismiss()
-                                    } label: {
-                                        HStack(spacing: 10) {
-                                            Image(systemName: "checkmark")
-                                            Text("Salvar")
-                                        }
-                                        .padding(.horizontal, 14)
-                                        .primaryGreenActionButton()
-                                    }
-                                    .buttonStyle(.plain)
-                                    .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    
-                                    Spacer(minLength: 0)
-                                    
-                                    Button {
-                                        handleCopyYoutubeLink()
-                                    } label: {
-                                        HStack(spacing: 10) {
-                                            Image(systemName: "doc.on.doc")
-                                            Text("Copiar link YouTube")
-                                        }
-                                        .padding(.horizontal, 14)
-                                        .primaryGreenActionButton()
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                
-                                if let msg = sheetMessage {
-                                    sheetMessageCard(text: msg, isError: sheetMessageIsError)
-                                }
-                                
-                                Color.clear.frame(height: 18)
+                                Text("Adicionar Vídeo")
+                                    .font(.system(size: 18, weight: .bold))
+                                    .foregroundColor(.white)
                             }
-                            .frame(maxWidth: contentMaxWidth)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)
+                            .frame(maxWidth: .infinity)
+
+                            Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
+                                .font(.system(size: 14))
+                                .foregroundColor(.white.opacity(0.65))
+                                .multilineTextAlignment(.center)
+                                .frame(maxWidth: .infinity)
+
+                            formCard
+
+                            HStack(spacing: 10) {
+                                Button {
+                                    let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                                    onSave(t, u, selectedCategory)
+                                    dismiss()
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "checkmark")
+                                        Text("Salvar")
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .primaryGreenActionButton()
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                                
+                                Spacer(minLength: 0)
+                                
+                                Button {
+                                    handleCopyYoutubeLink()
+                                } label: {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "doc.on.doc")
+                                        Text("Copiar link YouTube")
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .primaryGreenActionButton()
+                                }
+                                .buttonStyle(.plain)
+                            }
+
+                            if let msg = sheetMessage {
+                                sheetMessageCard(text: msg, isError: sheetMessageIsError)
+                            }
                             
-                            Spacer(minLength: 0)
+                            Color.clear.frame(height: 18)
                         }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 10)
+
+                        Spacer(minLength: 0)
                     }
                 }
-                .ignoresSafeArea(.container, edges: [.bottom])
             }
-            .navigationTitle("Adicionar Vídeo")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
@@ -97,6 +101,9 @@ struct TeacherAddYoutubeVideoSheet: View {
             .toolbarBackground(.visible, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        .presentationDetents([.medium, .large])
+        .presentationDragIndicator(.hidden)
+        .presentationBackground(Theme.Colors.headerBackground)
     }
     
     private var formCard: some View {
@@ -120,11 +127,11 @@ struct TeacherAddYoutubeVideoSheet: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 12)
                 }
-                .background(Color.white.opacity(0.10))
-                .cornerRadius(12)
+                .background(Color.black.opacity(0.22))
+                .cornerRadius(14)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
             }
             
@@ -150,11 +157,11 @@ struct TeacherAddYoutubeVideoSheet: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 12)
                 }
-                .background(Color.white.opacity(0.10))
-                .cornerRadius(12)
+                .background(Color.black.opacity(0.22))
+                .cornerRadius(14)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
                 )
             }
             

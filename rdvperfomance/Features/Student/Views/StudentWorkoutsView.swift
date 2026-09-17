@@ -224,7 +224,7 @@ struct StudentWorkoutsView: View {
     }
 
     private var filterRow: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 8) {
             filterChip(title: "Ativos", filter: .active)
             filterChip(title: "Concluídos", filter: .completed)
             filterChip(title: "Todos", filter: .all)
@@ -239,13 +239,14 @@ struct StudentWorkoutsView: View {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(selectedFilter == filter ? Color.green.opacity(0.16) : Color.white.opacity(0.10))
+                .fixedSize(horizontal: true, vertical: false)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .background(selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 999)
                         .stroke(
-                            selectedFilter == filter ? Color.green.opacity(0.35) : Color.white.opacity(0.12),
+                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.30) : Color.white.opacity(0.12),
                             lineWidth: 1
                         )
                 )

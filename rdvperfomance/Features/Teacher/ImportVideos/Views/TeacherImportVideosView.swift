@@ -150,7 +150,7 @@ struct TeacherImportVideosView: View {
                 Text("Adicionar Vídeo")
             }
             .padding(.horizontal, 14)
-            .primaryGreenActionButton()
+            .compactPrimaryGreenActionButton()
         }
         .buttonStyle(.plain)
     }

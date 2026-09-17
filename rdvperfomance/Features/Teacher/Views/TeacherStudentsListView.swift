@@ -140,12 +140,15 @@ struct TeacherStudentsListView: View {
                         showInviteSheet = true
                         Task { await loadInvitesIfPossible() }
                     } label: {
-                        HStack(spacing: 10) {
+                        HStack(spacing: 6) {
                             Image(systemName: "paperplane.fill")
                             Text("Convidar")
                         }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
                         .padding(.horizontal, 10)
-                        .primaryGreenActionButton()
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
                     }
                     .buttonStyle(.plain)
 

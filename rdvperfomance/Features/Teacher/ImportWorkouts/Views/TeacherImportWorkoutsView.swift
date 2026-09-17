@@ -250,7 +250,7 @@ struct TeacherImportWorkoutsView: View {
                     Text("Importar Excel")
                 }
                 .padding(.horizontal, 14)
-                .primaryGreenActionButton()
+                .compactPrimaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isImporting || isSendingToWorkouts)
@@ -267,7 +267,7 @@ struct TeacherImportWorkoutsView: View {
                     Text("Baixar Planilha Excel")
                 }
                 .padding(.horizontal, 14)
-                .primaryGreenActionButton()
+                .compactPrimaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isSendingToWorkouts)
