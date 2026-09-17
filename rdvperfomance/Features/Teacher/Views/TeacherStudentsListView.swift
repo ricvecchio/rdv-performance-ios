@@ -48,52 +48,7 @@ struct TeacherStudentsListView: View {
     }
 
     var body: some View {
-        ZStack {
-
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-
-                Rectangle()
-                    .fill(Theme.Colors.divider)
-                    .frame(height: 1)
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        header
-                        filterRow
-                        contentCard
-                        if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
-                            pendingInvitesCard
-                        }
-                        pendingLinkRequestsCard
-                    }
-                    .frame(maxWidth: contentMaxWidth)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 28)
-                    .frame(maxWidth: .infinity)
-                }
-
-                FooterBar(
-                    path: $path,
-                    kind: .teacherHomeAlunosSobrePerfil(
-                        selectedCategory: selectedCategory,
-                        isHomeSelected: false,
-                        isAlunosSelected: true,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
-            }
-            .ignoresSafeArea(.container, edges: [.bottom])
-        }
+        mainContent
         // ✅ AJUSTE 1: desfoca a tela de fundo quando o modal "Convidar aluno" estiver aberto
         .blur(radius: showInviteSheet ? 8 : 0)
         .animation(.easeInOut(duration: 0.18), value: showInviteSheet)
@@ -226,6 +181,55 @@ struct TeacherStudentsListView: View {
             }
         }) {
             inviteSheet
+        }
+    }
+
+    private var mainContent: some View {
+        ZStack {
+
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        header
+                        filterRow
+                        contentCard
+                        if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
+                            pendingInvitesCard
+                        }
+                        pendingLinkRequestsCard
+                    }
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 28)
+                    .frame(maxWidth: .infinity)
+                }
+
+                FooterBar(
+                    path: $path,
+                    kind: .teacherHomeAlunosSobrePerfil(
+                        selectedCategory: selectedCategory,
+                        isHomeSelected: false,
+                        isAlunosSelected: true,
+                        isSobreSelected: false,
+                        isPerfilSelected: false
+                    )
+                )
+                .frame(height: Theme.Layout.footerHeight)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.footerBackground)
+            }
+            .ignoresSafeArea(.container, edges: [.bottom])
         }
     }
 
