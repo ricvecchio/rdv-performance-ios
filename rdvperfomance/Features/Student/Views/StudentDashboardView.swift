@@ -216,9 +216,13 @@ struct StudentDashboardView: View {
                 teacherEmailInput = ""
                 isRequestLinkSheetPresented = true
             } label: {
-                Text("Solicitar vínculo por e-mail")
-                    .padding(.horizontal, 14)
-                    .primaryGreenActionButton()
+                HStack(spacing: 10) {
+                    Image(systemName: "person.badge.plus")
+
+                    Text("Convidar professor")
+                }
+                .padding(.horizontal, 14)
+                .compactPrimaryGreenActionButton()
             }
             .buttonStyle(.plain)
         }
