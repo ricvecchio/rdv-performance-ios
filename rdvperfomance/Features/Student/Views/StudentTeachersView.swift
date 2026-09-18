@@ -21,8 +21,10 @@ struct StudentTeachersView: View {
     @State private var isLoadingData: Bool = false
     @State private var requestPendingCancellation: TeacherStudentLinkRequestFS? = nil
     @State private var invitePendingDecline: TeacherStudentInviteFS? = nil
+    @State private var teacherPendingUnlink: AppUser? = nil
     @State private var showRequestCancellationConfirmation: Bool = false
     @State private var showInviteDeclineConfirmation: Bool = false
+    @State private var showTeacherUnlinkConfirmation: Bool = false
     @State private var actionErrorMessage: String? = nil
     @State private var selectedTeacher: AppUser? = nil
 
@@ -202,6 +204,14 @@ struct StudentTeachersView: View {
         } message: {
             Text("Deseja recusar este convite de vínculo?")
         }
+        .alert("Recusar vínculo?", isPresented: $showTeacherUnlinkConfirmation) {
+            Button("Cancelar", role: .cancel) { teacherPendingUnlink = nil }
+            Button("Recusar vínculo", role: .destructive) {
+                Task { await unlinkTeacher() }
+            }
+        } message: {
+            Text("Deseja remover o vínculo com o professor \"\(teacherPendingUnlink?.name ?? "")\"?")
+        }
         .alert("Erro", isPresented: Binding(
             get: { actionErrorMessage != nil },
             set: { if !$0 { actionErrorMessage = nil } }
@@ -285,33 +295,51 @@ struct StudentTeachersView: View {
     }
 
     private func teacherRow(_ teacher: AppUser) -> some View {
-        Button {
-            selectedTeacher = teacher
-        } label: {
-            HStack(spacing: 14) {
-                StudentAvatarView(base64: teacher.photoBase64, size: 28)
-                    .frame(width: 28)
+        HStack(spacing: 0) {
+            Button {
+                selectedTeacher = teacher
+            } label: {
+                HStack(spacing: 14) {
+                    StudentAvatarView(base64: teacher.photoBase64, size: 28)
+                        .frame(width: 28)
 
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(teacher.name)
-                        .font(.system(size: 18, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                    Text(teacher.email)
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.35))
-                        .lineLimit(1)
-                        .truncationMode(.tail)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(teacher.name)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                        Text(teacher.email)
+                            .font(.system(size: 13))
+                            .foregroundColor(.white.opacity(0.35))
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                    }
+                    .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
                 }
-                .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
+            .buttonStyle(.plain)
+            .padding(.trailing, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
+
+            Menu {
+                Button(role: .destructive) {
+                    teacherPendingUnlink = teacher
+                    showTeacherUnlinkConfirmation = true
+                } label: {
+                    Label("Recusar vínculo", systemImage: "person.badge.minus")
+                }
+            } label: {
+                menuIcon
+            }
+            .buttonStyle(.plain)
+            .fixedSize()
+            .disabled(isProcessingLinkAction)
         }
-        .buttonStyle(.plain)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
     }
 
     private func sentRequestRow(_ request: TeacherStudentLinkRequestFS) -> some View {
@@ -815,6 +843,39 @@ struct StudentTeachersView: View {
             await refreshData()
         } catch {
             invitePendingDecline = nil
+            actionErrorMessage = (error as NSError).localizedDescription
+        }
+    }
+
+    private func unlinkTeacher() async {
+        showTeacherUnlinkConfirmation = false
+        guard let teacher = teacherPendingUnlink,
+              let teacherId = teacher.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !teacherId.isEmpty else {
+            teacherPendingUnlink = nil
+            actionErrorMessage = "Não foi possível identificar o professor."
+            return
+        }
+
+        let studentId = currentUid
+        guard !studentId.isEmpty else {
+            teacherPendingUnlink = nil
+            actionErrorMessage = "Não foi possível identificar o aluno."
+            return
+        }
+
+        isProcessingLinkAction = true
+        defer { isProcessingLinkAction = false }
+
+        do {
+            try await repository.unlinkStudentCompletelyFromTeacher(
+                teacherId: teacherId,
+                studentId: studentId
+            )
+            teacherPendingUnlink = nil
+            await refreshData()
+        } catch {
+            teacherPendingUnlink = nil
             actionErrorMessage = (error as NSError).localizedDescription
         }
     }
