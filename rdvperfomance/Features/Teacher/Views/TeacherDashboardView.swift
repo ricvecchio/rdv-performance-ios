@@ -119,7 +119,7 @@ struct TeacherDashboardView: View {
                 Spacer()
 
                 Text(todayText)
-                    .font(.system(size: 12, weight: .medium))
+                    .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
             }
 
@@ -236,7 +236,7 @@ struct TeacherDashboardView: View {
             }
 
             Text(title)
-                .font(.system(size: 10, weight: .medium))
+                .font(.system(size: 13, weight: .medium))
                 .foregroundColor(.white.opacity(0.62))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
@@ -385,12 +385,12 @@ struct TeacherDashboardView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.system(size: 14, weight: .semibold))
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(2)
 
                     Text(subtitle)
-                        .font(.system(size: 11))
+                        .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(3)
                 }
