@@ -416,7 +416,7 @@ struct StudentWorkoutsView: View {
             .padding(.vertical, 16)
         } else {
             let days = vm.days(for: weekId)
-            let videos = days.filter(isVideoDay)
+            let videos = days.filter(\.isVideoDay)
             let groups = trainingDayGroups(from: days)
 
             if days.isEmpty {
@@ -461,6 +461,13 @@ struct StudentWorkoutsView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
     }
 
     private func trainingDayGroup(
@@ -565,7 +572,7 @@ struct StudentWorkoutsView: View {
             }
             .buttonStyle(.plain)
 
-            if let dayId = day.id {
+            if !isVideo, let dayId = day.id {
                 if vm.isOverdue(day, in: weekId) {
                     Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 12, weight: .semibold))
@@ -576,7 +583,7 @@ struct StudentWorkoutsView: View {
                 Button {
                     Task { await vm.toggleCompleted(dayId: dayId, in: weekId) }
                 } label: {
-                    Image(systemName: completionIcon(isVideo: isVideo, isCompleted: vm.isCompleted(dayId: dayId, in: weekId)))
+                    Image(systemName: completionIcon(isCompleted: vm.isCompleted(dayId: dayId, in: weekId)))
                         .font(.system(size: 20))
                         .foregroundColor(vm.isCompleted(dayId: dayId, in: weekId) ? .green.opacity(0.85) : .white.opacity(0.35))
                 }
@@ -606,18 +613,8 @@ struct StudentWorkoutsView: View {
         }
     }
 
-    private func isVideoDay(_ day: TrainingDayFS) -> Bool {
-        day.blocks.contains { block in
-            block.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                .caseInsensitiveCompare("Vídeo") == .orderedSame
-                && YouTubeVideoImporter.extractYoutubeVideoId(
-                    from: block.details.trimmingCharacters(in: .whitespacesAndNewlines)
-                ) != nil
-        }
-    }
-
     private func trainingDayGroups(from days: [TrainingDayFS]) -> [TrainingDayGroup] {
-        let ordered = days.filter { !isVideoDay($0) }.enumerated().sorted { lhs, rhs in
+        let ordered = days.filter { !$0.isVideoDay }.enumerated().sorted { lhs, rhs in
             let lhsDate = lhs.element.date ?? .distantFuture
             let rhsDate = rhs.element.date ?? .distantFuture
             if lhsDate != rhsDate { return lhsDate < rhsDate }
@@ -656,10 +653,7 @@ struct StudentWorkoutsView: View {
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
-    private func completionIcon(isVideo: Bool, isCompleted: Bool) -> String {
-        if isVideo {
-            return isCompleted ? "checkmark.seal.fill" : "play.circle"
-        }
+    private func completionIcon(isCompleted: Bool) -> String {
         return isCompleted ? "checkmark.circle.fill" : "circle"
     }
 

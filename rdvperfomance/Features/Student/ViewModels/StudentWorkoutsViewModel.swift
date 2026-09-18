@@ -204,12 +204,13 @@ final class StudentWorkoutsViewModel: ObservableObject {
             weekEndDate[weekId] = endDate
         }
 
-        let completed = days.compactMap(\.id)
+        let trainingDays = days.filter { !$0.isVideoDay }
+        let completed = trainingDays.compactMap(\.id)
             .filter { isCompleted(dayId: $0, in: weekId) }
             .count
         weekProgressPercent[weekId] = Self.computePercentStatic(
             completed: completed,
-            total: days.count
+            total: trainingDays.count
         )
     }
 
@@ -367,9 +368,10 @@ final class StudentWorkoutsViewModel: ObservableObject {
             completedDayIdsByWeekId[weekId] = completed
 
             if let days = daysByWeekId[weekId] {
+                let trainingDays = days.filter { !$0.isVideoDay }
                 weekProgressPercent[weekId] = Self.computePercentStatic(
-                    completed: days.compactMap(\.id).filter { completed.contains($0) }.count,
-                    total: days.count
+                    completed: trainingDays.compactMap(\.id).filter { completed.contains($0) }.count,
+                    total: trainingDays.count
                 )
             }
         } catch {
