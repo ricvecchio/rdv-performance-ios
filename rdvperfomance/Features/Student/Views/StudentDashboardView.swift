@@ -9,6 +9,8 @@ struct StudentDashboardView: View {
     @EnvironmentObject private var session: AppSession
     @StateObject private var viewModel: StudentDashboardViewModel
     @State private var isTeacherLinkIconPulsing = false
+    @State private var isRequestLinkSheetPresented = false
+    @State private var teacherEmailInput = ""
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -89,6 +91,11 @@ struct StudentDashboardView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
             Task { await viewModel.load() }
+        }
+        .sheet(isPresented: $isRequestLinkSheetPresented) {
+            requestLinkSheet
+                .presentationDetents([.medium])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -204,6 +211,16 @@ struct StudentDashboardView: View {
             Text("Vincule-se a um professor para receber treinos e acompanhar sua evolução.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
+
+            Button {
+                teacherEmailInput = ""
+                isRequestLinkSheetPresented = true
+            } label: {
+                Text("Solicitar vínculo por e-mail")
+                    .padding(.horizontal, 14)
+                    .primaryGreenActionButton()
+            }
+            .buttonStyle(.plain)
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -212,6 +229,77 @@ struct StudentDashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
         .onAppear {
             isTeacherLinkIconPulsing = true
+        }
+    }
+
+    private var requestLinkSheet: some View {
+        ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+
+            VStack(alignment: .leading, spacing: 14) {
+
+                Text("Solicitar vínculo")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text("Digite o e-mail do professor para enviar a solicitação.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("E-mail do professor")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.75))
+
+                    TextField("professor@email.com", text: $teacherEmailInput)
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.emailAddress)
+                        .autocorrectionDisabled(true)
+                        .padding(12)
+                        .background(Color.white.opacity(0.08))
+                        .cornerRadius(12)
+                        .foregroundColor(.white.opacity(0.92))
+                }
+
+                if let msg = viewModel.linkActionMessage {
+                    Text(msg)
+                        .font(.system(size: 13))
+                        .foregroundColor(viewModel.linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
+                }
+
+                HStack(spacing: 10) {
+                    Button {
+                        isRequestLinkSheetPresented = false
+                    } label: {
+                        Text("Cancelar")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 10)
+                            .background(Capsule().fill(Color.white.opacity(0.08)))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isProcessingLinkAction)
+
+                    Button {
+                        Task {
+                            let ok = await viewModel.requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                            if ok {
+                                isRequestLinkSheetPresented = false
+                            }
+                        }
+                    } label: {
+                        Text("Enviar solicitação")
+                            .padding(.horizontal, 14)
+                            .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isProcessingLinkAction)
+                }
+
+                Spacer(minLength: 0)
+            }
+            .padding(16)
         }
     }
 

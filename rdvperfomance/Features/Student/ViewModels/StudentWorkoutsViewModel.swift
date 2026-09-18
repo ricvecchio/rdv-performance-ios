@@ -10,24 +10,10 @@ enum StudentWorkoutDayStatus {
 @MainActor
 final class StudentWorkoutsViewModel: ObservableObject {
 
-    enum LinkBannerState: Equatable {
-        case idle
-        case loading
-        case notLinked
-        case invitePending(teacherEmail: String)
-        case linked
-        case error(message: String)
-    }
-
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published private(set) var hasLoadedWeekMetadata: Bool = false
     @Published var errorMessage: String? = nil
-
-    @Published private(set) var linkBannerState: LinkBannerState = .idle
-    @Published private(set) var isProcessingLinkAction: Bool = false
-    @Published var linkActionMessage: String? = nil
-    @Published var linkActionMessageIsError: Bool = false
 
     @Published private(set) var teacherNameById: [String: String] = [:]
     @Published private(set) var daysByWeekId: [String: [TrainingDayFS]] = [:]
@@ -35,9 +21,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
     @Published private(set) var loadingWeekIds = Set<String>()
     @Published private(set) var weekDaysErrorByWeekId: [String: String] = [:]
 
-    private var hasLoadedLinkStatus: Bool = false
     private var hasLoadedWeeksAndMeta: Bool = false
-    private var linkStatusLoadTask: Task<Void, Never>?
     private var weeksLoadTask: Task<Void, Never>?
     private var weekDaysLoadTasks: [String: Task<Void, Never>] = [:]
     private var metadataGeneration = UUID()
@@ -51,164 +35,9 @@ final class StudentWorkoutsViewModel: ObservableObject {
     private let studentId: String
     private let repository: FirestoreRepository
 
-    private var pendingInvite: TeacherStudentInviteFS? = nil
-    private var currentStudentUser: AppUser? = nil
-
     init(studentId: String, repository: FirestoreRepository) {
         self.studentId = studentId
         self.repository = repository
-    }
-
-    // MARK: - Link Status (Banner)
-
-    func loadLinkStatusIfNeeded() async {
-        await loadLinkStatus(force: false)
-    }
-
-    func loadLinkStatus(force: Bool) async {
-        if let task = linkStatusLoadTask {
-            await task.value
-            return
-        }
-
-        guard force || !hasLoadedLinkStatus else { return }
-
-        if force {
-            linkBannerState = .loading
-        }
-        linkActionMessage = nil
-        linkActionMessageIsError = false
-
-        let task = Task { [weak self] in
-            guard let self else { return }
-            await self.performLinkStatusLoad()
-        }
-        linkStatusLoadTask = task
-        await task.value
-        linkStatusLoadTask = nil
-    }
-
-    private func performLinkStatusLoad() async {
-        do {
-            currentStudentUser = try await repository.getUser(uid: studentId)
-
-            if let _ = try await repository.getActiveTeacherRelationForStudent(studentId: studentId) {
-                pendingInvite = nil
-                linkBannerState = .linked
-                hasLoadedLinkStatus = true
-                return
-            }
-
-            if let studentEmail = currentStudentUser?.email,
-               !studentEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                if let invite = try await repository.getPendingInviteForStudentEmail(studentEmail: studentEmail) {
-                    pendingInvite = invite
-                    linkBannerState = .invitePending(teacherEmail: invite.teacherEmail)
-                    hasLoadedLinkStatus = true
-                    return
-                }
-            }
-
-            pendingInvite = nil
-            linkBannerState = .notLinked
-            hasLoadedLinkStatus = true
-
-        } catch {
-            linkBannerState = .error(message: (error as NSError).localizedDescription)
-        }
-    }
-
-    func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
-        let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-
-        guard email.contains("@"), email.contains(".") else {
-            linkActionMessage = "Informe um e-mail válido."
-            linkActionMessageIsError = true
-            return false
-        }
-
-        isProcessingLinkAction = true
-        linkActionMessage = nil
-        linkActionMessageIsError = false
-        defer { isProcessingLinkAction = false }
-
-        do {
-            guard let teacher = try await repository.getTeacherByEmail(email: email),
-                  let teacherId = teacher.id else {
-                linkActionMessage = "Não encontrei um professor com esse e-mail."
-                linkActionMessageIsError = true
-                return false
-            }
-
-            if currentStudentUser == nil {
-                currentStudentUser = try await repository.getUser(uid: studentId)
-            }
-
-            let studentEmail = (currentStudentUser?.email ?? "")
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-                .lowercased()
-
-            try await repository.createLinkRequest(
-                studentId: studentId,
-                studentEmail: studentEmail,
-                teacherId: teacherId,
-                teacherEmail: email
-            )
-
-            linkActionMessage = "Solicitação enviada com sucesso."
-            linkActionMessageIsError = false
-
-            await loadLinkStatus(force: true)
-            return true
-
-        } catch {
-            linkActionMessage = (error as NSError).localizedDescription
-            linkActionMessageIsError = true
-            return false
-        }
-    }
-
-    func acceptPendingInvite() async {
-        guard let invite = pendingInvite else { return }
-
-        isProcessingLinkAction = true
-        linkActionMessage = nil
-        linkActionMessageIsError = false
-        defer { isProcessingLinkAction = false }
-
-        do {
-            if currentStudentUser == nil {
-                currentStudentUser = try await repository.getUser(uid: studentId)
-            }
-
-            try await repository.acceptInvite(
-                invite: invite,
-                studentId: studentId,
-                studentUser: currentStudentUser
-            )
-
-            pendingInvite = nil
-            await loadLinkStatus(force: true)
-        } catch {
-            linkBannerState = .error(message: (error as NSError).localizedDescription)
-        }
-    }
-
-    func declinePendingInvite() async {
-        guard let invite = pendingInvite else { return }
-
-        isProcessingLinkAction = true
-        linkActionMessage = nil
-        linkActionMessageIsError = false
-        defer { isProcessingLinkAction = false }
-
-        do {
-            try await repository.declineInvite(invite: invite)
-            pendingInvite = nil
-            await loadLinkStatus(force: true)
-        } catch {
-            linkBannerState = .error(message: (error as NSError).localizedDescription)
-        }
     }
 
     // MARK: - Semanas / Meta

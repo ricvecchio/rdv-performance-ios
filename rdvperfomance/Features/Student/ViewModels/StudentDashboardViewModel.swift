@@ -53,10 +53,14 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isLoading = true
     @Published private(set) var teacherLinkState: StudentDashboardTeacherLinkState = .loading
     @Published private(set) var pendingTeacherInvites: [TeacherStudentInviteFS] = []
+    @Published private(set) var isProcessingLinkAction = false
+    @Published var linkActionMessage: String?
+    @Published var linkActionMessageIsError = false
 
     private let studentId: String
     private let repository: FirestoreRepository
     private var isLoadingData = false
+    private var currentStudentUser: AppUser?
 
     init(studentId: String, repository: FirestoreRepository) {
         self.studentId = studentId
@@ -127,6 +131,55 @@ final class StudentDashboardViewModel: ObservableObject {
         }
 
         _ = await pendingInvites
+    }
+
+    func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
+        let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+
+        guard email.contains("@"), email.contains(".") else {
+            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessageIsError = true
+            return false
+        }
+
+        isProcessingLinkAction = true
+        linkActionMessage = nil
+        linkActionMessageIsError = false
+        defer { isProcessingLinkAction = false }
+
+        do {
+            guard let teacher = try await repository.getTeacherByEmail(email: email),
+                  let teacherId = teacher.id else {
+                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessageIsError = true
+                return false
+            }
+
+            if currentStudentUser == nil {
+                currentStudentUser = try await repository.getUser(uid: studentId)
+            }
+
+            let studentEmail = (currentStudentUser?.email ?? "")
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .lowercased()
+
+            try await repository.createLinkRequest(
+                studentId: studentId,
+                studentEmail: studentEmail,
+                teacherId: teacherId,
+                teacherEmail: email
+            )
+
+            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessageIsError = false
+            await load()
+            return true
+
+        } catch {
+            linkActionMessage = (error as NSError).localizedDescription
+            linkActionMessageIsError = true
+            return false
+        }
     }
 
     private func loadPendingTeacherInvites() async {
