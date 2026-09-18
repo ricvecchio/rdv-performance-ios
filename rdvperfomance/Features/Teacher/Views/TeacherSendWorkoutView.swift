@@ -393,23 +393,18 @@ struct TeacherSendWorkoutView: View {
     }
 
     private var studentFilterRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-                    studentFilterChip(title: "Todos", isSelected: studentFilter == nil) {
-                        studentFilter = nil
-                    }
-                    studentFilterChip(title: TreinoTipo.crossfit.displayName, isSelected: studentFilter == .crossfit) {
-                        studentFilter = .crossfit
-                    }
-                    studentFilterChip(title: TreinoTipo.academia.displayName, isSelected: studentFilter == .academia) {
-                        studentFilter = .academia
-                    }
-                    studentFilterChip(title: TreinoTipo.emCasa.displayName, isSelected: studentFilter == .emCasa) {
-                        studentFilter = .emCasa
-                    }
-                }
-                .padding(.vertical, 2)
+        HStack(spacing: 6) {
+            studentFilterChip(title: "Todos", isSelected: studentFilter == nil) {
+                studentFilter = nil
+            }
+            studentFilterChip(title: TreinoTipo.crossfit.displayName, isSelected: studentFilter == .crossfit) {
+                studentFilter = .crossfit
+            }
+            studentFilterChip(title: TreinoTipo.academia.displayName, isSelected: studentFilter == .academia) {
+                studentFilter = .academia
+            }
+            studentFilterChip(title: "Em Casa", isSelected: studentFilter == .emCasa) {
+                studentFilter = .emCasa
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -422,16 +417,28 @@ struct TeacherSendWorkoutView: View {
     ) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.green.opacity(0.16) : Color.white.opacity(0.10))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 999)
-                        .stroke(isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.12), lineWidth: 1)
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity)
+                .background(
+                    isSelected
+                        ? Theme.Colors.primaryGreen.opacity(0.18)
+                        : Color.white.opacity(0.10)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 999))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            isSelected
+                                ? Theme.Colors.primaryGreen.opacity(0.30)
+                                : Color.white.opacity(0.12),
+                            lineWidth: 1
+                        )
+                )
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
