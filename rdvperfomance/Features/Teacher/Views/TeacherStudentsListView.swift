@@ -17,6 +17,7 @@ struct TeacherStudentsListView: View {
 
     @State private var studentPendingCategoryChange: AppUser? = nil
     @State private var showCategoryChangeDialog: Bool = false
+    @State private var selectedCategoryChangeCategories: Set<TreinoTipo> = []
 
     // Modal convite
     @State private var showInviteSheet: Bool = false
@@ -29,6 +30,7 @@ struct TeacherStudentsListView: View {
 
     @State private var studentPendingLink: StudentLinkItem? = nil
     @State private var showCategoryDialog: Bool = false
+    @State private var selectedLinkCategories: Set<TreinoTipo> = []
 
     @State private var linkRequestPendingDecline: StudentLinkItem? = nil
     @State private var showDeclineLinkRequestConfirm: Bool = false
@@ -156,30 +158,35 @@ struct TeacherStudentsListView: View {
         } message: {
             Text(vm.linkSuccessMessage ?? "Aluno vinculado.")
         }
-        .confirmationDialog(
-            "Selecione a categoria do vínculo",
-            isPresented: $showCategoryDialog,
-            titleVisibility: .visible
-        ) {
-            Button(TreinoTipo.crossfit.displayName) { Task { await confirmLink(.crossfit) } }
-            Button(TreinoTipo.academia.displayName) { Task { await confirmLink(.academia) } }
-            Button(TreinoTipo.emCasa.displayName) { Task { await confirmLink(.emCasa) } }
-            Button("Cancelar", role: .cancel) { studentPendingLink = nil }
-        } message: {
-            Text(linkDialogMessageText())
+        .sheet(isPresented: $showCategoryDialog, onDismiss: {
+            studentPendingLink = nil
+            selectedLinkCategories = []
+        }) {
+            CategoryMultiSelectionSheet(
+                selectedCategories: $selectedLinkCategories,
+                isSaving: vm.isLinkRequestsLoading,
+                onCancel: {
+                    showCategoryDialog = false
+                },
+                onSave: {
+                    Task { await confirmLink(selectedLinkCategories) }
+                }
+            )
         }
-        .confirmationDialog(
-            "Selecione a categoria do vínculo",
-            isPresented: $showCategoryChangeDialog,
-            titleVisibility: .visible
-        ) {
-            Button(TreinoTipo.crossfit.displayName) { Task { await confirmCategoryChange(.crossfit) } }
-            Button(TreinoTipo.academia.displayName) { Task { await confirmCategoryChange(.academia) } }
-            Button(TreinoTipo.emCasa.displayName) { Task { await confirmCategoryChange(.emCasa) } }
-            Button("Todos") { Task { await confirmAllCategoryChanges() } }
-            Button("Cancelar", role: .cancel) { studentPendingCategoryChange = nil }
-        } message: {
-            Text(categoryChangeDialogMessageText())
+        .sheet(isPresented: $showCategoryChangeDialog, onDismiss: {
+            studentPendingCategoryChange = nil
+            selectedCategoryChangeCategories = []
+        }) {
+            CategoryMultiSelectionSheet(
+                selectedCategories: $selectedCategoryChangeCategories,
+                isSaving: vm.isChangingStudentCategory,
+                onCancel: {
+                    showCategoryChangeDialog = false
+                },
+                onSave: {
+                    Task { await confirmCategoryChange(selectedCategoryChangeCategories) }
+                }
+            )
         }
         // Sheet Convites — ao fechar, recarrega alunos e convites
         .sheet(isPresented: $showInviteSheet, onDismiss: {
@@ -334,6 +341,9 @@ struct TeacherStudentsListView: View {
                     Menu {
                         Button {
                             studentPendingCategoryChange = student
+                            selectedCategoryChangeCategories = Set(
+                                vm.linkedCategories(for: student.id ?? "")
+                            )
                             showCategoryChangeDialog = true
                         } label: {
                             Label("Alterar categoria", systemImage: "arrow.triangle.2.circlepath")
@@ -456,45 +466,9 @@ struct TeacherStudentsListView: View {
         vm.removeLinkedStudentsFromPendingLinkRequests(teacherId: teacherId)
     }
 
-    private func categoryChangeDialogMessageText() -> String {
-        guard let student = studentPendingCategoryChange else {
-            return "Selecione uma categoria."
-        }
-        return "Aluno: \(student.name)"
-    }
-
-    private func confirmCategoryChange(_ newCategory: TreinoTipo) async {
+    private func confirmCategoryChange(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.setLinkError("Não foi possível identificar o professor logado.")
-            studentPendingCategoryChange = nil
-            return
-        }
-        guard let student = studentPendingCategoryChange,
-              let studentId = student.id,
-              !studentId.isEmpty,
-              let currentCategory = vm.linkedCategory(
-                  for: studentId,
-                  preferred: filter ?? categoryFromStudentProfile(student) ?? selectedCategory
-              )
-        else {
-            vm.setLinkError("Não foi possível identificar a categoria atual do vínculo.")
-            studentPendingCategoryChange = nil
-            return
-        }
-
-        await vm.changeStudentCategory(
-            teacherId: teacherId,
-            studentId: studentId,
-            currentCategory: currentCategory,
-            newCategory: newCategory
-        )
-        studentPendingCategoryChange = nil
-    }
-
-    private func confirmAllCategoryChanges() async {
-        guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.setLinkError("Não foi possível identificar o professor logado.")
-            studentPendingCategoryChange = nil
             return
         }
         guard let student = studentPendingCategoryChange,
@@ -502,16 +476,17 @@ struct TeacherStudentsListView: View {
               !studentId.isEmpty
         else {
             vm.setLinkError("Não foi possível identificar o aluno para alterar a categoria.")
-            studentPendingCategoryChange = nil
             return
         }
 
-        await vm.ensureStudentCategories(
+        let didSave = await vm.setStudentCategories(
             teacherId: teacherId,
             studentId: studentId,
-            categories: [.crossfit, .academia, .emCasa]
+            categories: Array(categories)
         )
-        studentPendingCategoryChange = nil
+        if didSave {
+            showCategoryChangeDialog = false
+        }
     }
 
     private var pendingInvitesCard: some View {
@@ -647,6 +622,7 @@ struct TeacherStudentsListView: View {
             Menu {
                 Button {
                     studentPendingLink = item
+                    selectedLinkCategories = []
                     showCategoryDialog = true
                 } label: {
                     Label("Aceitar vínculo", systemImage: "checkmark")
@@ -698,26 +674,130 @@ struct TeacherStudentsListView: View {
         linkRequestPendingDecline = nil
     }
 
-    private func linkDialogMessageText() -> String {
-        guard let item = studentPendingLink else { return "Selecione uma categoria." }
-        return "Aluno: \(item.name)\nEscolha a categoria para vincular."
-    }
-
-    private func confirmLink(_ category: TreinoTipo) async {
+    private func confirmLink(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.setLinkError("Não foi possível identificar o professor logado.")
-            studentPendingLink = nil
             return
         }
         guard let item = studentPendingLink else { return }
 
-        await vm.approveRequestAndLinkStudent(
+        let didSave = await vm.approveRequestAndLinkStudent(
             teacherId: teacherId,
             requestId: item.requestId,
             studentId: item.studentId,
-            category: category.firestoreKey
+            categories: Array(categories)
         )
-        studentPendingLink = nil
+        if didSave {
+            showCategoryDialog = false
+        }
+    }
+
+    private struct CategoryMultiSelectionSheet: View {
+        @Binding var selectedCategories: Set<TreinoTipo>
+        let isSaving: Bool
+        let onCancel: () -> Void
+        let onSave: () -> Void
+
+        private let categories: [TreinoTipo] = [.crossfit, .academia, .emCasa]
+
+        var body: some View {
+            ZStack {
+                Theme.Colors.headerBackground
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .padding(.top, 10)
+
+                    Text("Selecione a categoria do vínculo")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 12)
+                        .padding(.bottom, 14)
+
+                    VStack(spacing: 0) {
+                        ForEach(categories, id: \.self) { category in
+                            Button {
+                                toggle(category)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: selectedCategories.contains(category) ? "checkmark.square.fill" : "square")
+                                        .foregroundColor(
+                                            selectedCategories.contains(category)
+                                                ? Theme.Colors.primaryGreen
+                                                : .white.opacity(0.35)
+                                        )
+                                        .font(.system(size: 20, weight: .semibold))
+
+                                    Text(title(for: category))
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 14)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isSaving)
+
+                            if category != categories.last {
+                                Divider()
+                                    .background(Theme.Colors.divider)
+                                    .padding(.leading, 16)
+                            }
+                        }
+                    }
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 16)
+
+                    HStack(spacing: 12) {
+                        Button(action: onCancel) {
+                            Text("Cancelar")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isSaving)
+
+                        Button(action: onSave) {
+                            Text("Salvar")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(selectedCategories.isEmpty || isSaving)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 16)
+                }
+            }
+        }
+
+        private func toggle(_ category: TreinoTipo) {
+            if selectedCategories.contains(category) {
+                selectedCategories.remove(category)
+            } else {
+                selectedCategories.insert(category)
+            }
+        }
+
+        private func title(for category: TreinoTipo) -> String {
+            category == .emCasa ? "Em Casa" : category.displayName
+        }
     }
 
     private func studentActivitiesLastSeenKey(teacherId: String) -> String {

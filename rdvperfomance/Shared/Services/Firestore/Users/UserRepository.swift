@@ -483,17 +483,22 @@ final class UserRepository: FirestoreBaseRepository {
         teacherId: String,
         requestId: String,
         studentId: String,
-        category: String
+        categories: [String]
     ) async throws {
         let tid = clean(teacherId)
         let rid = clean(requestId)
         let sid = clean(studentId)
-        let cat = clean(category)
+        let normalizedCategories = categories.compactMap(TreinoTipo.normalized(from:))
 
         guard !tid.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
         guard !rid.isEmpty else { throw FirestoreRepositoryError.invalidData }
         guard !sid.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
-        guard !cat.isEmpty else { throw FirestoreRepositoryError.invalidData }
+        guard !normalizedCategories.isEmpty,
+              normalizedCategories.count == categories.count,
+              Set(normalizedCategories).count == normalizedCategories.count else {
+            throw FirestoreRepositoryError.invalidData
+        }
+        let categoryKeys = normalizedCategories.map(\.firestoreKey)
 
         let (teacherStudentRef, teacherStudentIsNew) = try await resolveOrCreateRef(
             in: Collections.teacherStudents,
@@ -510,7 +515,7 @@ final class UserRepository: FirestoreBaseRepository {
         var teacherStudentPayload: [String: Any] = [
             "teacherId": tid,
             "studentId": sid,
-            "categories": FieldValue.arrayUnion([cat]),
+            "categories": categoryKeys,
             "updatedAt": FieldValue.serverTimestamp()
         ]
         if teacherStudentIsNew { teacherStudentPayload["createdAt"] = FieldValue.serverTimestamp() }
@@ -519,7 +524,7 @@ final class UserRepository: FirestoreBaseRepository {
         var relationPayload: [String: Any] = [
             "teacherId": tid,
             "studentId": sid,
-            "categories": FieldValue.arrayUnion([cat]),
+            "categories": categoryKeys,
             "updatedAt": FieldValue.serverTimestamp()
         ]
         if relationIsNew { relationPayload["createdAt"] = FieldValue.serverTimestamp() }
@@ -902,6 +907,53 @@ final class UserRepository: FirestoreBaseRepository {
         if didUpdate {
             try await batch.commit()
         }
+    }
+
+    func setStudentCategoriesForTeacher(
+        teacherId: String,
+        studentId: String,
+        categories: [String]
+    ) async throws {
+        let teacherId = clean(teacherId)
+        let studentId = clean(studentId)
+        let normalizedCategories = categories.compactMap(TreinoTipo.normalized(from:))
+
+        guard !teacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !studentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard !normalizedCategories.isEmpty,
+              normalizedCategories.count == categories.count,
+              Set(normalizedCategories).count == normalizedCategories.count else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        let teacherStudents = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+        let relations = try await db.collection(Collections.relations)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+
+        guard !teacherStudents.documents.isEmpty else {
+            throw FirestoreRepositoryError.notFound
+        }
+
+        var payload: [String: Any] = [
+            "categories": normalizedCategories.map(\.firestoreKey),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        let batch = db.batch()
+        teacherStudents.documents.forEach { batch.setData(payload, forDocument: $0.reference, merge: true) }
+        if relations.documents.isEmpty {
+            payload["teacherId"] = teacherId
+            payload["studentId"] = studentId
+            payload["createdAt"] = FieldValue.serverTimestamp()
+            batch.setData(payload, forDocument: db.collection(Collections.relations).document())
+        } else {
+            relations.documents.forEach { batch.setData(payload, forDocument: $0.reference, merge: true) }
+        }
+        try await batch.commit()
     }
 
     // MARK: - Perfil / Foto / Unidade

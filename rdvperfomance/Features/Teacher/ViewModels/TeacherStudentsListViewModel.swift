@@ -138,6 +138,10 @@ final class TeacherStudentsListViewModel: ObservableObject {
         return categories.contains(preferred) ? preferred : categories.first
     }
 
+    func linkedCategories(for studentId: String) -> [TreinoTipo] {
+        categoriesWhereStudentIsLinked(studentId: studentId)
+    }
+
     func unlinkStudent(
         teacherId: String,
         studentId: String,
@@ -233,6 +237,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             setLinkError("Não foi possível identificar o vínculo do aluno.")
             return
         }
+
         activateTeacher(teacherId)
         let generation = teacherGeneration
         isChangingStudentCategory = true
@@ -254,6 +259,43 @@ final class TeacherStudentsListViewModel: ObservableObject {
             if isActiveTeacher(teacherId, generation: generation) {
                 setLinkError((error as NSError).localizedDescription)
             }
+        }
+    }
+
+    func setStudentCategories(
+        teacherId: String,
+        studentId: String,
+        categories: [TreinoTipo]
+    ) async -> Bool {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty, !studentId.isEmpty, !categories.isEmpty else {
+            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            return false
+        }
+        activateTeacher(teacherId)
+        let generation = teacherGeneration
+        isChangingStudentCategory = true
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isChangingStudentCategory = false
+            }
+        }
+
+        do {
+            try await repository.setStudentCategoriesForTeacher(
+                teacherId: teacherId,
+                studentId: studentId,
+                categories: categories.map(\.firestoreKey)
+            )
+            guard isActiveTeacher(teacherId, generation: generation) else { return false }
+            await loadStudents(teacherId: teacherId, force: true)
+            return true
+        } catch {
+            if isActiveTeacher(teacherId, generation: generation) {
+                setLinkError((error as NSError).localizedDescription)
+            }
+            return false
         }
     }
 
@@ -522,17 +564,16 @@ final class TeacherStudentsListViewModel: ObservableObject {
         teacherId: String,
         requestId: String,
         studentId: String,
-        category: String
-    ) async {
+        categories: [TreinoTipo]
+    ) async -> Bool {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard activeTeacherId == teacherId else { return }
+        guard activeTeacherId == teacherId else { return false }
         let generation = teacherGeneration
         let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
         let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !id.isEmpty, !sid.isEmpty, !normalizedCategory.isEmpty else {
+        guard !id.isEmpty, !sid.isEmpty, !categories.isEmpty else {
             setLinkError("Não foi possível identificar a solicitação de vínculo.")
-            return
+            return false
         }
 
         isLinkRequestsLoading = true
@@ -547,20 +588,22 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 teacherId: teacherId,
                 requestId: id,
                 studentId: sid,
-                category: normalizedCategory
+                categories: categories.map(\.firestoreKey)
             )
 
-            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            guard isActiveTeacher(teacherId, generation: generation) else { return false }
             pendingLinkRequests.removeAll { $0.requestId == id }
             await loadStudents(teacherId: teacherId, force: true)
             await loadPendingLinkRequests(teacherId: teacherId, force: true)
-            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            guard isActiveTeacher(teacherId, generation: generation) else { return false }
             linkSuccessMessage = "Aluno vinculado com sucesso."
             showLinkSuccessAlert = true
+            return true
         } catch {
             if isActiveTeacher(teacherId, generation: generation) {
                 setLinkError((error as NSError).localizedDescription)
             }
+            return false
         }
     }
 

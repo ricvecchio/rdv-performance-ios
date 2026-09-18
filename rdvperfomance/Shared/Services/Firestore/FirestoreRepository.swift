@@ -77,6 +77,18 @@ final class FirestoreRepository {
         )
     }
 
+    func setStudentCategoriesForTeacher(
+        teacherId: String,
+        studentId: String,
+        categories: [String]
+    ) async throws {
+        try await userRepository.setStudentCategoriesForTeacher(
+            teacherId: teacherId,
+            studentId: studentId,
+            categories: categories
+        )
+    }
+
     func upsertUserProfile(uid: String, form: RegisterFormDTO) async throws {
         try await userRepository.upsertUserProfile(uid: uid, form: form)
     }
@@ -337,13 +349,13 @@ final class FirestoreRepository {
         teacherId: String,
         requestId: String,
         studentId: String,
-        category: String
+        categories: [String]
     ) async throws {
         try await userRepository.approveLinkRequestAndLinkStudent(
             teacherId: teacherId,
             requestId: requestId,
             studentId: studentId,
-            category: category
+            categories: categories
         )
     }
 
