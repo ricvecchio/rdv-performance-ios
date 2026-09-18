@@ -785,6 +785,7 @@ struct TeacherStudentsListView: View {
                     .padding(.bottom, 16)
                 }
             }
+            .presentationDetents([.medium])
         }
 
         private func toggle(_ category: TreinoTipo) {
