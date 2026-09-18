@@ -1128,6 +1128,10 @@ private struct WorkoutTemplateSelectionSheet: View {
     @Environment(\.dismiss) private var dismiss
     @State private var expandedPicker: ExpandedPicker?
     @State private var pendingSelectedTemplate: WorkoutTemplateFS?
+    @State private var loadedSectionTemplates: [WorkoutTemplateFS] = []
+    @State private var isLoadingSectionTemplates = false
+    @State private var hasLoadedSectionTemplates = false
+    @State private var sectionTemplatesLoadID = UUID()
 
     private enum ExpandedPicker: Equatable {
         case section
@@ -1135,12 +1139,7 @@ private struct WorkoutTemplateSelectionSheet: View {
     }
 
     private var sectionTemplates: [WorkoutTemplateFS] {
-        guard let selectedSectionKey else { return [] }
-
-        return templates.filter {
-            TreinoTipo.normalized(from: $0.categoryRaw) == category
-                && $0.sectionKey == selectedSectionKey
-        }
+        loadedSectionTemplates
     }
 
     private var selectedTemplate: WorkoutTemplateFS? {
@@ -1151,7 +1150,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         guard selectedSectionKey != nil else {
             return "Selecione uma seção primeiro"
         }
-        if isLoading {
+        if isLoading || isLoadingSectionTemplates || !hasLoadedSectionTemplates {
             return "Carregando treinos..."
         }
         return selectedTemplate?.title ?? "Selecionar treino"
@@ -1208,6 +1207,17 @@ private struct WorkoutTemplateSelectionSheet: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
             pendingSelectedTemplate = templates.first { $0.id == selectedTemplateID }
+            if let selectedSectionKey {
+                let selectedSectionTitle = selectedSectionTitle
+                    ?? sectionOptions.first { $0.sectionKey == selectedSectionKey }?.title
+                    ?? selectedSectionKey
+                Task {
+                    await loadSectionTemplates(
+                        sectionKey: selectedSectionKey,
+                        sectionTitle: selectedSectionTitle
+                    )
+                }
+            }
         }
     }
 
@@ -1236,7 +1246,10 @@ private struct WorkoutTemplateSelectionSheet: View {
     }
 
     private var templatePickerField: some View {
-        let isEnabled = selectedSectionKey != nil && !isLoading
+        let isEnabled = selectedSectionKey != nil
+            && !isLoading
+            && !isLoadingSectionTemplates
+            && hasLoadedSectionTemplates
 
         return Button {
             togglePicker(.template)
@@ -1281,7 +1294,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
     @ViewBuilder
     private var templateOptionsList: some View {
-        if isLoading {
+        if isLoading || isLoadingSectionTemplates || !hasLoadedSectionTemplates {
             HStack(spacing: 10) {
                 ProgressView()
                 Text("Carregando treinos...")
@@ -1335,6 +1348,69 @@ private struct WorkoutTemplateSelectionSheet: View {
         selectedSectionKey = option.sectionKey
         selectedSectionTitle = option.title
         expandedPicker = nil
+        Task {
+            await loadSectionTemplates(
+                sectionKey: option.sectionKey,
+                sectionTitle: option.title
+            )
+        }
+    }
+
+    private func loadSectionTemplates(sectionKey: String, sectionTitle: String) async {
+        let loadID = UUID()
+        sectionTemplatesLoadID = loadID
+        isLoadingSectionTemplates = true
+        hasLoadedSectionTemplates = false
+        loadedSectionTemplates = []
+
+        let teacherId = (Auth.auth().currentUser?.uid ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            guard sectionTemplatesLoadID == loadID,
+                  selectedSectionKey == sectionKey else { return }
+            isLoadingSectionTemplates = false
+            return
+        }
+
+        do {
+            var fetched = try await FirestoreRepository.shared.getWorkoutTemplates(
+                teacherId: teacherId,
+                categoryRaw: category.rawValue,
+                sectionKey: sectionKey
+            )
+
+            if sectionKey != "meusTreinos" {
+                let didInsert = try await WorkoutTemplateDefaultsSeeder.shared.seedMissingDefaultsIfNeeded(
+                    teacherId: teacherId,
+                    category: category,
+                    sectionKey: sectionKey,
+                    sectionTitle: sectionTitle,
+                    existingTemplates: fetched
+                )
+
+                if didInsert {
+                    fetched = try await FirestoreRepository.shared.getWorkoutTemplates(
+                        teacherId: teacherId,
+                        categoryRaw: category.rawValue,
+                        sectionKey: sectionKey
+                    )
+                }
+            }
+
+            guard sectionTemplatesLoadID == loadID,
+                  selectedSectionKey == sectionKey else { return }
+            loadedSectionTemplates = fetched
+            if let pendingSelectedTemplate,
+               !fetched.contains(where: { $0.id == pendingSelectedTemplate.id }) {
+                self.pendingSelectedTemplate = nil
+            }
+            hasLoadedSectionTemplates = true
+            isLoadingSectionTemplates = false
+        } catch {
+            guard sectionTemplatesLoadID == loadID,
+                  selectedSectionKey == sectionKey else { return }
+            isLoadingSectionTemplates = false
+        }
     }
 
     private func selectionRow(title: String, isSelected: Bool) -> some View {
