@@ -171,29 +171,17 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 }
             }
         } else {
-            let catsToRemove = categoriesWhereStudentIsLinked(studentId: studentId)
-            let effective = catsToRemove.isEmpty ? supportedCategories : catsToRemove
-
-            for cat in effective {
-                let variants = categoryVariants(cat)
-                for v in variants {
-                    do {
-                        try await repository.unlinkStudentFromTeacher(
-                            teacherId: teacherId,
-                            studentId: studentId,
-                            category: v
-                        )
-                        didUnlink = true
-                    } catch {
-                        continue
-                    }
-                }
+            do {
+                try await repository.unlinkStudentCompletelyFromTeacher(
+                    teacherId: teacherId,
+                    studentId: studentId
+                )
+                didUnlink = true
+            } catch {
+                return false
             }
         }
 
-        if didUnlink, isActiveTeacher(teacherId, generation: generation) {
-            await loadStudents(teacherId: teacherId, force: true)
-        }
         return didUnlink
     }
 

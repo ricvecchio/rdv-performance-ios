@@ -270,7 +270,7 @@ struct TeacherStudentDetailView: View {
         if await studentsViewModel.unlinkStudent(
             teacherId: teacherId,
             studentId: studentId,
-            categoryToRemove: category
+            categoryToRemove: nil
         ) {
             pop()
         }

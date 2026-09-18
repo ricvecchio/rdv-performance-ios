@@ -44,6 +44,13 @@ final class FirestoreRepository {
         )
     }
 
+    func unlinkStudentCompletelyFromTeacher(teacherId: String, studentId: String) async throws {
+        try await userRepository.unlinkStudentCompletelyFromTeacher(
+            teacherId: teacherId,
+            studentId: studentId
+        )
+    }
+
     func changeStudentCategoryForTeacher(
         teacherId: String,
         studentId: String,

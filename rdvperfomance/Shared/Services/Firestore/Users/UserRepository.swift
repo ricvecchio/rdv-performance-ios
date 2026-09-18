@@ -760,6 +760,31 @@ final class UserRepository: FirestoreBaseRepository {
         guard didUpdate else { throw FirestoreRepositoryError.notFound }
     }
 
+    func unlinkStudentCompletelyFromTeacher(teacherId: String, studentId: String) async throws {
+        let t = clean(teacherId)
+        let s = clean(studentId)
+        guard !t.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !s.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+
+        let teacherStudents = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("studentId", isEqualTo: s)
+            .getDocuments()
+        let relations = try await db.collection(Collections.relations)
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("studentId", isEqualTo: s)
+            .getDocuments()
+
+        guard !teacherStudents.documents.isEmpty || !relations.documents.isEmpty else {
+            throw FirestoreRepositoryError.notFound
+        }
+
+        let batch = db.batch()
+        teacherStudents.documents.forEach { batch.deleteDocument($0.reference) }
+        relations.documents.forEach { batch.deleteDocument($0.reference) }
+        try await batch.commit()
+    }
+
     func changeStudentCategoryForTeacher(
         teacherId: String,
         studentId: String,
