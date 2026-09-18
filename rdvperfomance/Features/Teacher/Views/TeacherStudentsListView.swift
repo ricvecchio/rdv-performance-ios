@@ -55,6 +55,12 @@ struct TeacherStudentsListView: View {
 
         .onAppear {
             filter = initialFilter
+            guard vm.hasLoadedStudents,
+                  let teacherId = session.uid,
+                  !teacherId.isEmpty else {
+                return
+            }
+            Task { await vm.loadStudents(teacherId: teacherId, force: true) }
         }
         .onChange(of: path) { _, newPath in
             guard let teacherId = session.uid, !teacherId.isEmpty else { return }

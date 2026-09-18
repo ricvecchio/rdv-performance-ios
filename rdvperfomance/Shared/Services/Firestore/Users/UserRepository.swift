@@ -728,6 +728,7 @@ final class UserRepository: FirestoreBaseRepository {
         let targets = categoryCandidates(from: c).map { $0.lowercased() }
         if targets.isEmpty { throw FirestoreRepositoryError.invalidData }
 
+        var didUpdate = false
         for doc in snap.documents {
             let ref = doc.reference
             let data = doc.data()
@@ -753,7 +754,10 @@ final class UserRepository: FirestoreBaseRepository {
                     merge: true
                 )
             }
+            didUpdate = true
         }
+
+        guard didUpdate else { throw FirestoreRepositoryError.notFound }
     }
 
     func changeStudentCategoryForTeacher(
