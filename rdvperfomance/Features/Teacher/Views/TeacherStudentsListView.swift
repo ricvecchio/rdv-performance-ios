@@ -714,8 +714,7 @@ struct TeacherStudentsListView: View {
                     Text("Selecione a categoria do vínculo")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
-                        .padding(.top, 12)
-                        .padding(.bottom, 14)
+                        .padding(.top, 4)
 
                     VStack(spacing: 0) {
                         ForEach(categories, id: \.self) { category in
@@ -758,6 +757,9 @@ struct TeacherStudentsListView: View {
                             .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
                     .padding(.horizontal, 16)
+                    .padding(.top, 14)
+
+                    Spacer(minLength: 0)
 
                     HStack(spacing: 12) {
                         Button(action: onCancel) {
@@ -781,11 +783,11 @@ struct TeacherStudentsListView: View {
                         .disabled(selectedCategories.isEmpty || isSaving)
                     }
                     .padding(.horizontal, 16)
-                    .padding(.top, 16)
+                    .padding(.top, 6)
                     .padding(.bottom, 16)
                 }
             }
-            .presentationDetents([.medium])
+            .presentationDetents([.fraction(0.50)])
         }
 
         private func toggle(_ category: TreinoTipo) {
