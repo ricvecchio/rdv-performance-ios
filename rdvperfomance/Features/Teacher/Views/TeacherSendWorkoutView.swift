@@ -604,7 +604,7 @@ struct TeacherSendWorkoutView: View {
 
     private var templateSectionTitle: some View {
         Text("SELECIONAR TREINO")
-            .font(.system(size: 12, weight: .bold))
+            .font(.system(size: 14, weight: .bold))
             .foregroundColor(.white.opacity(0.55))
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
@@ -630,6 +630,7 @@ struct TeacherSendWorkoutView: View {
             .fill(Color.white.opacity(0.08))
             .frame(height: 1)
             .padding(.leading, 14)
+            .padding(.vertical, 4)
     }
 
     private func categoryHeader(category: TreinoTipo, title: String) -> some View {
