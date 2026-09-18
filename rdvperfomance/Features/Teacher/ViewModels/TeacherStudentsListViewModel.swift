@@ -360,12 +360,15 @@ final class TeacherStudentsListViewModel: ObservableObject {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard activeTeacherId == teacherId else { return }
         let generation = teacherGeneration
-        let email = studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = studentEmail
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
         guard !email.isEmpty else {
             setInviteError("Informe o e-mail do aluno.")
             return
         }
 
+        guard !isInvitesLoading else { return }
         isInvitesLoading = true
         invitesErrorMessageInline = nil
         defer {
@@ -381,6 +384,40 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
             if teacherEmail.isEmpty {
                 setInviteError("Não foi possível identificar o e-mail do professor.")
+                return
+            }
+
+            async let groupedStudents = repository.getStudentsGroupedByTeacher(teacherId: teacherId)
+            async let sentInvites = repository.getInvitesSentByTeacher(
+                teacherId: teacherId,
+                status: "pending",
+                limit: 50
+            )
+            let (studentsByCategory, pendingInvites) = try await (groupedStudents, sentInvites)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+
+            let isStudentLinked = studentsByCategory.values
+                .flatMap { $0 }
+                .contains {
+                    $0.email
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased() == email
+                }
+            if isStudentLinked {
+                setInviteError("Esse aluno já esta vinculado.")
+                return
+            }
+
+            let hasPendingInvite = pendingInvites.contains {
+                $0.studentEmail
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased() == email
+                    && $0.status
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased() == "pending"
+            }
+            if hasPendingInvite {
+                setInviteError("Já existe uma solicitação pendente para esse aluno.")
                 return
             }
 
