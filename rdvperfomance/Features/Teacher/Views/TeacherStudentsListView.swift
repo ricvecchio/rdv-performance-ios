@@ -813,18 +813,16 @@ struct TeacherStudentsListView: View {
     // MARK: - ✅ Categoria combinada (vínculo / cadastro) + navegação
 
     private func combinedCategoryText(_ student: AppUser) -> String {
-        let profile = categoryFromStudentProfile(student)
-        let link = filter ?? student.id.flatMap {
-            vm.linkedCategory(for: $0, preferred: profile ?? selectedCategory)
+        guard let studentId = student.id, !studentId.isEmpty else {
+            return "—"
         }
-        guard let link else { return profile?.displayName ?? "—" }
-        guard let profile else {
-            return link.displayName
-        }
-        if link == profile {
-            return link.displayName
-        }
-        return "\(link.displayName) / \(profile.displayName)"
+
+        let categories = vm.linkedCategories(for: studentId)
+        guard !categories.isEmpty else { return "—" }
+
+        return categories
+            .map { $0 == .emCasa ? "Em Casa" : $0.displayName }
+            .joined(separator: " / ")
     }
 
     private func categoryFromStudentProfile(_ student: AppUser) -> TreinoTipo? {
