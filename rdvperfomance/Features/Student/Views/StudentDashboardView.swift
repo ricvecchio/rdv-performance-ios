@@ -94,8 +94,7 @@ struct StudentDashboardView: View {
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
-                .presentationDetents([.medium])
-                .presentationDragIndicator(.visible)
+                .presentationDetents([.fraction(0.50)])
         }
     }
 
@@ -240,47 +239,79 @@ struct StudentDashboardView: View {
         ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                Text("Solicitar vínculo")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                        Text("Solicitar vínculo")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
 
-                Text("Digite o e-mail do professor para enviar a solicitação.")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Digite o e-mail do professor para enviar a solicitação.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.45))
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("E-mail do professor")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("E-mail do professor")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.75))
 
-                    TextField("professor@email.com", text: $teacherEmailInput)
-                        .textInputAutocapitalization(.never)
-                        .keyboardType(.emailAddress)
-                        .autocorrectionDisabled(true)
-                        .padding(12)
-                        .background(Color.white.opacity(0.08))
-                        .cornerRadius(12)
-                        .foregroundColor(.white.opacity(0.92))
+                                TextField("professor@email.com", text: $teacherEmailInput)
+                                    .textInputAutocapitalization(.never)
+                                    .keyboardType(.emailAddress)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(Color.white.opacity(0.10))
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    )
+                                    .foregroundColor(.white.opacity(0.92))
+                            }
+
+                            if let msg = viewModel.linkActionMessage {
+                                Text(msg)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(viewModel.linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                    }
                 }
 
-                if let msg = viewModel.linkActionMessage {
-                    Text(msg)
-                        .font(.system(size: 13))
-                        .foregroundColor(viewModel.linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
-                }
-
-                HStack(spacing: 10) {
+                HStack(spacing: 12) {
                     Button {
                         isRequestLinkSheetPresented = false
                     } label: {
                         Text("Cancelar")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.white.opacity(0.08)))
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isProcessingLinkAction)
@@ -293,17 +324,23 @@ struct StudentDashboardView: View {
                             }
                         }
                     } label: {
-                        Text("Enviar solicitação")
-                            .padding(.horizontal, 14)
-                            .primaryGreenActionButton()
+                        HStack(spacing: 10) {
+                            Text("Enviar solicitação")
+
+                            if viewModel.isProcessingLinkAction {
+                                ProgressView()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isProcessingLinkAction)
                 }
-
-                Spacer(minLength: 0)
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
-            .padding(16)
         }
     }
 
