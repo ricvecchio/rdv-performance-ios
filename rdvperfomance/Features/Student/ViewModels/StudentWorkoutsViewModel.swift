@@ -213,7 +213,10 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
     // MARK: - Semanas / Meta
 
-    func loadWeeksAndMeta(force: Bool = false) async {
+    func loadWeeksAndMeta(
+        force: Bool = false,
+        filterByActiveTeacherLinks: Bool
+    ) async {
         if let task = weeksLoadTask {
             await task.value
             return
@@ -226,31 +229,48 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
         let task = Task { [weak self] in
             guard let self else { return }
-            await self.performWeeksLoad()
+            await self.performWeeksLoad(filterByActiveTeacherLinks: filterByActiveTeacherLinks)
         }
         weeksLoadTask = task
         await task.value
         weeksLoadTask = nil
     }
 
-    private func performWeeksLoad() async {
+    private func performWeeksLoad(filterByActiveTeacherLinks: Bool) async {
         do {
             #if DEBUG
             let t0 = Date()
             #endif
 
+            let activeTeacherIds: Set<String>
+            if filterByActiveTeacherLinks {
+                activeTeacherIds = Set(
+                    try await repository.getTeacherLinksForStudent(studentId: studentId)
+                        .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                        .filter { !$0.isEmpty }
+                )
+            } else {
+                activeTeacherIds = []
+            }
             let result = try await repository.getWeeksForStudent(studentId: studentId)
+            let visibleWeeks = filterByActiveTeacherLinks
+                ? result.filter {
+                    activeTeacherIds.contains(
+                        $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    )
+                }
+                : result
 
             #if DEBUG
-            print("[StudentWorkouts] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(result.count) semana(s)")
+            print("[StudentWorkouts] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(visibleWeeks.count) semana(s)")
             #endif
 
             // ✅ Publica semanas e encerra o loading principal imediatamente.
             // Metadados secundários (nomes de professor, datas, progresso) chegam
             // progressivamente sem bloquear a exibição da lista.
-            self.weeks = result
+            self.weeks = visibleWeeks
             hasLoadedWeeksAndMeta = true
-            hasLoadedWeekMetadata = result.isEmpty
+            hasLoadedWeekMetadata = visibleWeeks.isEmpty
             isLoading = false
             weekRangeText = [:]
             weekProgressPercent = [:]
@@ -261,7 +281,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
             metadataGeneration = generation
             Task { [weak self] in
                 guard let self else { return }
-                await self.loadSecondaryMetadata(for: result, generation: generation)
+                await self.loadSecondaryMetadata(for: visibleWeeks, generation: generation)
             }
         } catch {
             self.errorMessage = (error as NSError).localizedDescription

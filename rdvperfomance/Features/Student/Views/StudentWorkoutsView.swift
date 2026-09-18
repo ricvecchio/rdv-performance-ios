@@ -149,7 +149,12 @@ struct StudentWorkoutsView: View {
         }
         .onAppear {
             guard vm.hasLoadedWeeks else { return }
-            Task { await vm.loadWeeksAndMeta(force: true) }
+            Task {
+                await vm.loadWeeksAndMeta(
+                    force: true,
+                    filterByActiveTeacherLinks: !isTeacherViewing
+                )
+            }
         }
         .onChange(of: vm.weeks) { _, _ in
             applyInitialExpansionIfNeeded()
@@ -936,7 +941,14 @@ struct StudentWorkoutsView: View {
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
-            Button { Task { await vm.loadWeeksAndMeta(force: true) } } label: {
+            Button {
+                Task {
+                    await vm.loadWeeksAndMeta(
+                        force: true,
+                        filterByActiveTeacherLinks: !isTeacherViewing
+                    )
+                }
+            } label: {
                 Text("Tentar novamente")
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
@@ -1011,9 +1023,9 @@ struct StudentWorkoutsView: View {
 
     private func loadInitialData() async {
         if isTeacherViewing {
-            await vm.loadWeeksAndMeta()
+            await vm.loadWeeksAndMeta(filterByActiveTeacherLinks: false)
         } else {
-            await vm.loadWeeksAndMeta()
+            await vm.loadWeeksAndMeta(filterByActiveTeacherLinks: true)
             await vm.loadLinkStatusIfNeeded()
         }
     }

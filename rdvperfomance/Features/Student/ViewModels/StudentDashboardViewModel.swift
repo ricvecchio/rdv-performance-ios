@@ -74,17 +74,24 @@ final class StudentDashboardViewModel: ObservableObject {
         }
         async let pendingInvites: Void = loadPendingTeacherInvites()
 
+        let activeTeacherIds: Set<String>
         do {
             let teacherLinks = try await repository.getTeacherLinksForStudent(studentId: studentId)
-            teacherLinkState = teacherLinks.isEmpty ? .unlinked : .linked
+            activeTeacherIds = Set(
+                teacherLinks
+                    .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+            )
+            teacherLinkState = activeTeacherIds.isEmpty ? .unlinked : .linked
         } catch {
             #if DEBUG
             print("[StudentDashboard] Não foi possível carregar os vínculos: \(error.localizedDescription)")
             #endif
             teacherLinkState = .failed
+            activeTeacherIds = []
         }
 
-        guard teacherLinkState != .unlinked else {
+        guard !activeTeacherIds.isEmpty else {
             currentWeekDaySummaries = []
             upcomingDayGroups = []
             _ = await pendingInvites
@@ -93,6 +100,11 @@ final class StudentDashboardViewModel: ObservableObject {
 
         do {
             let weeks = try await repository.getWeeksForStudent(studentId: studentId)
+                .filter {
+                    activeTeacherIds.contains(
+                        $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    )
+                }
             let calendar = Calendar.current
             let today = calendar.startOfDay(for: Date())
             let data = try await loadDays(for: weeks)

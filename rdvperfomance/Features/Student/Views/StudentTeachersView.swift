@@ -660,7 +660,7 @@ struct StudentTeachersView: View {
         }
     }
 
-    private func loadLinkedTeachers(forceFallbackFromWeeks: Bool) async {
+    private func loadLinkedTeachers() async {
         let uid = currentUid
         guard !uid.isEmpty else {
             linkedTeachers = []
@@ -684,21 +684,6 @@ struct StudentTeachersView: View {
             )
         } catch {
             teacherIds = []
-        }
-
-        if teacherIds.isEmpty, forceFallbackFromWeeks {
-            do {
-                let weeks = try await repository.getWeeksForStudent(studentId: uid, onlyPublished: false)
-                teacherIds = Array(
-                    Set(
-                        weeks
-                            .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
-                            .filter { !$0.isEmpty }
-                    )
-                )
-            } catch {
-                teacherIds = []
-            }
         }
 
         linkedTeacherIds = Set(teacherIds)
@@ -746,7 +731,7 @@ struct StudentTeachersView: View {
 
         isLoadingData = true
         defer { isLoadingData = false }
-        await loadLinkedTeachers(forceFallbackFromWeeks: true)
+        await loadLinkedTeachers()
 
         do {
             async let requests = repository.getRequestsForStudent(studentId: uid)
@@ -878,7 +863,7 @@ struct StudentTeachersView: View {
                 return false
             }
 
-            await loadLinkedTeachers(forceFallbackFromWeeks: true)
+            await loadLinkedTeachers()
 
             if linkedTeacherIds.contains(teacherId) {
                 linkActionMessage = "Esse professor já está vinculado."
