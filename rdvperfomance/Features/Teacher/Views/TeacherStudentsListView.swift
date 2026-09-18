@@ -51,9 +51,8 @@ struct TeacherStudentsListView: View {
 
     var body: some View {
         mainContent
-        // ✅ AJUSTE 1: desfoca a tela de fundo quando o modal "Convidar aluno" estiver aberto
-        .blur(radius: showInviteSheet ? 8 : 0)
-        .animation(.easeInOut(duration: 0.18), value: showInviteSheet)
+        .blur(radius: isAnySheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: isAnySheetPresented)
 
         .onAppear {
             filter = initialFilter
@@ -196,6 +195,10 @@ struct TeacherStudentsListView: View {
         }) {
             inviteSheet
         }
+    }
+
+    private var isAnySheetPresented: Bool {
+        showInviteSheet || showCategoryDialog || showCategoryChangeDialog
     }
 
     private var mainContent: some View {
