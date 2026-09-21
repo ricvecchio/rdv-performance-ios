@@ -30,6 +30,13 @@ final class UserRepository: FirestoreBaseRepository {
         return try await fetchUsers(byIds: cleanIds)
     }
 
+    func getAllUsers() async throws -> [AppUser] {
+        let snap = try await db.collection(Collections.users).getDocuments()
+        return try snap.documents
+            .compactMap { try $0.data(as: AppUser.self) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     // MARK: - Professor por e-mail
 
     func getTeacherByEmail(email: String) async throws -> AppUser? {
@@ -671,6 +678,22 @@ final class UserRepository: FirestoreBaseRepository {
         }
 
         return result
+    }
+
+    func getAllStudentsForTeacher(teacherId: String) async throws -> [AppUser] {
+        let grouped = try await getStudentsGroupedByTeacher(teacherId: teacherId)
+        var uniqueStudents: [String: AppUser] = [:]
+
+        for students in grouped.values {
+            for student in students {
+                guard let studentId = student.id.map(clean(_:)), !studentId.isEmpty else { continue }
+                uniqueStudents[studentId] = student
+            }
+        }
+
+        return uniqueStudents.values.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
     }
 
     /// Busca perfis de usuários em lote (`whereField(FieldPath.documentID(), in:)`), evitando

@@ -31,7 +31,7 @@ struct StudentDayDetailView: View {
 
     @State private var didPrepareEditFields: Bool = false
 
-    private var isTeacherViewing: Bool { session.userType == .TRAINER }
+    private var isTeacherViewing: Bool { session.isTrainer }
 
     // ✅ Player de vídeo (mesmo comportamento da TeacherImportVideosView)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil

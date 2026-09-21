@@ -135,7 +135,7 @@ struct SettingsView: View {
 
     @ViewBuilder
     private func footerForUser() -> some View {
-        if session.userType == .STUDENT {
+        if session.isStudent {
             FooterBar(
                 path: $path,
                 kind: .studentHomeTreinosRecordsProfile(

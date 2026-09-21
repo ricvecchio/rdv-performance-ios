@@ -268,7 +268,7 @@ struct EditProfileView: View {
                 displayText: displayTextForFocusArea
             )
 
-            if session.userType == .TRAINER {
+            if session.isTrainer {
                 UnderlineTextField(
                     title: "CREF (opcional)",
                     text: $crefDraft,
@@ -529,8 +529,8 @@ struct EditProfileView: View {
                 uid: uid,
                 name: userName,
                 phone: whatsappDigits.isEmpty ? nil : whatsappDigits,
-                cref: session.userType == .TRAINER ? crefDraft : nil,
-                bio: session.userType == .TRAINER ? bioDraft : nil,
+                cref: session.isTrainer ? crefDraft : nil,
+                bio: session.isTrainer ? bioDraft : nil,
                 focusArea: focusAreaDraft.rawValue
             )
             try await savePhotoIfNeededAndSync()

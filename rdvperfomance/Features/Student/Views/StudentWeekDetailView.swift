@@ -54,8 +54,8 @@ struct StudentWeekDetailView: View {
         _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, studentId: studentId, repository: repository))
     }
 
-    private var isTeacherViewing: Bool { session.userType == .TRAINER }
-    private var isStudentViewing: Bool { session.userType == .STUDENT }
+    private var isTeacherViewing: Bool { session.isTrainer }
+    private var isStudentViewing: Bool { session.isStudent }
 
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit

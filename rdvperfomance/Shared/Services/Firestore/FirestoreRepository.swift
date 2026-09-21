@@ -26,6 +26,10 @@ final class FirestoreRepository {
         try await userRepository.getUsers(byIds: ids)
     }
 
+    func getAllUsers() async throws -> [AppUser] {
+        try await userRepository.getAllUsers()
+    }
+
     func getStudentsForTeacher(teacherId: String, category: String) async throws -> [AppUser] {
         try await userRepository.getStudentsForTeacher(teacherId: teacherId, category: category)
     }
@@ -34,6 +38,10 @@ final class FirestoreRepository {
     /// no Firestore (1 query em teacher_students + leitura em lote de /users).
     func getStudentsGroupedByTeacher(teacherId: String) async throws -> [TreinoTipo: [AppUser]] {
         try await userRepository.getStudentsGroupedByTeacher(teacherId: teacherId)
+    }
+
+    func getAllStudentsForTeacher(teacherId: String) async throws -> [AppUser] {
+        try await userRepository.getAllStudentsForTeacher(teacherId: teacherId)
     }
 
     func unlinkStudentFromTeacher(teacherId: String, studentId: String, category: String) async throws {

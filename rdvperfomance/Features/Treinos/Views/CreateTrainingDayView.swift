@@ -583,7 +583,7 @@ struct CreateTrainingDayView: View {
         errorMessage = nil
         successMessage = nil
 
-        guard session.userType == .TRAINER else {
+        guard session.isTrainer else {
             errorMessage = "Apenas professor pode adicionar dias."
             return
         }

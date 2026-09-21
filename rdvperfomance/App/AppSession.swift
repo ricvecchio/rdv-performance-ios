@@ -4,6 +4,12 @@ import Combine
 import FirebaseAuth
 import FirebaseFirestore
 
+enum AdminProfileMode: Equatable {
+    case administrator
+    case student
+    case trainer
+}
+
 /// Gerencia o estado de autenticação e perfil do usuário no app
 @MainActor
 final class AppSession: ObservableObject {
@@ -16,11 +22,14 @@ final class AppSession: ObservableObject {
     @Published var uid: String? = nil
     @Published var userType: UserTypeDTO? = nil
     @Published var userName: String? = nil
+    @Published private(set) var isAdmin: Bool = false
+    @Published private(set) var adminProfileMode: AdminProfileMode? = nil
     @Published private(set) var measurementUnitLoadState: MeasurementUnitLoadState = .idle
 
 
     private var authListener: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
+    private let administratorEmail = "ric.vecchio@gmail.com"
 
     enum MeasurementUnitLoadState {
         case idle
@@ -65,7 +74,7 @@ final class AppSession: ObservableObject {
 
     // Retorna verdadeiro se existe um usuário autenticado
     var isLoggedIn: Bool {
-        uid != nil && userType != nil
+        uid != nil && (userType != nil || isAdmin)
     }
 
     // Retorna o identificador único do usuário autenticado
@@ -76,14 +85,25 @@ final class AppSession: ObservableObject {
 
     // Retorna verdadeiro se o usuário é um aluno
     var isStudent: Bool {
+        if isAdmin { return adminProfileMode == .student }
         userType?.rawValue.lowercased() == "student"
     }
 
     // Retorna verdadeiro se o usuário é um professor
     var isTrainer: Bool {
+        if isAdmin { return adminProfileMode == .trainer }
         userType?.rawValue.lowercased() == "trainer"
     }
 
+    func selectAdminProfile(_ mode: AdminProfileMode) {
+        guard isAdmin else { return }
+        adminProfileMode = mode
+    }
+
+    func clearAdminProfileMode() {
+        guard isAdmin else { return }
+        adminProfileMode = nil
+    }
 
     // Observa mudanças no estado de autenticação do Firebase
     private func observeAuthState() {
@@ -100,6 +120,8 @@ final class AppSession: ObservableObject {
                     self.preferredWeightUnit = "kg"
                     self.measurementUnitLoadState = .loading
                     self.uid = user.uid
+                    self.isAdmin = self.isAuthenticatedAdministrator()
+                    self.adminProfileMode = nil
                     self.storedUid = user.uid
                     await self.loadUserProfile(uid: user.uid)
                     await PersonalRecordsSyncService.shared.synchronizeForAuthenticatedUser(uid: user.uid)
@@ -119,6 +141,8 @@ final class AppSession: ObservableObject {
 
     // Carrega nome e tipo de usuário do documento Firestore
     func loadUserProfile(uid: String) async {
+        isAdmin = isAuthenticatedAdministrator()
+
         do {
             let snap = try await db.collection("users").document(uid).getDocument(source: .server)
 
@@ -187,10 +211,19 @@ final class AppSession: ObservableObject {
         uid = nil
         userType = nil
         userName = nil
+        isAdmin = false
+        adminProfileMode = nil
         measurementUnitLoadState = .idle
 
         storedUid = ""
         storedUserTypeRaw = ""
         storedUserName = ""
+    }
+
+    private func isAuthenticatedAdministrator() -> Bool {
+        let email = (Auth.auth().currentUser?.email ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
+        return email == administratorEmail
     }
 }

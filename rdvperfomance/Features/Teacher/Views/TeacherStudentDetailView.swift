@@ -283,7 +283,7 @@ struct TeacherStudentDetailView: View {
 
     // Carrega progresso geral do aluno
     private func loadProgress() async {
-        guard session.userType == .TRAINER else { return }
+        guard session.isTrainer else { return }
         guard let sid = student.id, !sid.isEmpty else { return }
 
         isLoadingProgress = true

@@ -147,7 +147,7 @@ struct LoginView: View {
         // ✅ Ajuste mínimo: força o carregamento do perfil após login
         await session.refreshProfile()
 
-        guard session.userType != nil else {
+        guard session.isLoggedIn else {
             vm.errorMessage = "Seu perfil não foi encontrado no Firestore (users/{uid})."
             return
         }

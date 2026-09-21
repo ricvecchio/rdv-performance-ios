@@ -63,7 +63,7 @@ struct StudentWorkoutsView: View {
         _vm = StateObject(wrappedValue: StudentWorkoutsViewModel(studentId: studentId, repository: repository))
     }
 
-    private var isTeacherViewing: Bool { session.userType == .TRAINER }
+    private var isTeacherViewing: Bool { session.isTrainer }
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }

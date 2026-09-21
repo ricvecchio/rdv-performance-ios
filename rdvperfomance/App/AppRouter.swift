@@ -7,7 +7,21 @@ struct AppRouter: View {
     var body: some View {
         Group {
             if session.isLoggedIn {
-                if session.isTrainer {
+                if session.isAdmin {
+                    switch session.adminProfileMode {
+                    case .administrator:
+                        AdminUsersView()
+                    case .student:
+                        StudentRootView(
+                            studentId: session.uid ?? "",
+                            studentName: session.userName ?? ""
+                        )
+                    case .trainer:
+                        TeacherRootView()
+                    case nil:
+                        AdminProfileSelectionView()
+                    }
+                } else if session.isTrainer {
                     TeacherRootView()
                 } else {
                     StudentRootView(

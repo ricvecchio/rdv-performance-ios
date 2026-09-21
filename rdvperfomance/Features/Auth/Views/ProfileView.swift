@@ -313,7 +313,7 @@ struct ProfileView: View {
 
     @ViewBuilder
     private func footerForUser() -> some View {
-        if session.userType == .STUDENT {
+        if session.isStudent {
             FooterBar(
                 path: $path,
                 kind: .studentHomeTreinosRecordsProfile(
@@ -391,7 +391,7 @@ struct ProfileView: View {
 
     private func loadProfileActivityCounts() async {
         let uid = currentUid
-        guard session.userType == .STUDENT, !uid.isEmpty else {
+        guard session.isStudent, !uid.isEmpty else {
             unreadMessagesCount = 0
             unreadFeedbacksCount = 0
             teacherActivitiesCount = 0
@@ -409,7 +409,7 @@ struct ProfileView: View {
             feedbacks,
             teacherActivities
         )
-        guard currentUid == uid, session.userType == .STUDENT else { return }
+        guard currentUid == uid, session.isStudent else { return }
 
         let notificationState = state ?? ProfileNotificationState(
             messagesLastSeenByCategory: [:],
@@ -812,7 +812,14 @@ struct ProfileView: View {
                 openTrocarUnidade()
             }
 
-            if session.userType == .STUDENT {
+            if session.isAdmin {
+                divider()
+                optionRow(icon: "person.3.fill", title: "Trocar perfil de Administração", trailing: .chevron) {
+                    session.clearAdminProfileMode()
+                }
+            }
+
+            if session.isStudent {
                 divider()
                 optionRow(
                     icon: "envelope.fill",
