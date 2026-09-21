@@ -146,6 +146,8 @@ enum TecnofitPersonalRecordsTarget: Hashable {
     case endurance
     case girls
     case open
+    case notables
+    case heroes
 
     var valuesKey: String {
         switch self {
@@ -154,6 +156,8 @@ enum TecnofitPersonalRecordsTarget: Hashable {
         case .endurance: "student_pr_endurance_values_v1"
         case .girls: "student_pr_girls_values_v1"
         case .open: "student_pr_open_values_v1"
+        case .notables: "student_pr_notables_values_v1"
+        case .heroes: "student_pr_heroes_values_v1"
         }
     }
 
@@ -164,7 +168,14 @@ enum TecnofitPersonalRecordsTarget: Hashable {
         case .endurance: "student_pr_endurance_history_v1"
         case .girls: "student_pr_girls_history_v1"
         case .open: "student_pr_open_history_v1"
+            case .notables: "student_pr_notables_history_v1"
+            case .heroes: "student_pr_heroes_history_v1"
         }
+    }
+
+    enum TecnofitPersonalRecordSource: Equatable {
+        case movement
+        case workoutDay
     }
 }
 
@@ -183,6 +194,7 @@ struct TecnofitMappedPersonalRecord: Equatable {
     let target: TecnofitPersonalRecordsTarget
     let storageKey: String
     let value: TecnofitPersonalRecordValue
+    let source: TecnofitPersonalRecordSource
     let movementID: String?
     let histories: [TecnofitPersonalRecordHistory]
     let shouldImportCurrentValue: Bool
@@ -191,6 +203,7 @@ struct TecnofitMappedPersonalRecord: Equatable {
         target: TecnofitPersonalRecordsTarget,
         storageKey: String,
         value: TecnofitPersonalRecordValue,
+        source: TecnofitPersonalRecordSource = .movement,
         movementID: String? = nil,
         histories: [TecnofitPersonalRecordHistory] = [],
         shouldImportCurrentValue: Bool = true
@@ -198,6 +211,7 @@ struct TecnofitMappedPersonalRecord: Equatable {
         self.target = target
         self.storageKey = storageKey
         self.value = value
+        self.source = source
         self.movementID = movementID
         self.histories = histories
         self.shouldImportCurrentValue = shouldImportCurrentValue

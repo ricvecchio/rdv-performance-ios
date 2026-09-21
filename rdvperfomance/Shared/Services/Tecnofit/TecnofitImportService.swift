@@ -94,14 +94,14 @@ struct TecnofitImportService {
         guard mapped.actualCount > 0 else {
             throw TecnofitImportError.noRecords
         }
-        let detailed = await detailedRecords(
+        let detailed = try await detailedRecords(
             for: mapped.records,
             companyID: company.id.value,
             token: token
         )
         return TecnofitPersonalRecordsImporter.preview(
-            records: detailed.records,
-            unmatchedCount: mapped.unmatchedCount + detailed.skippedCount
+            records: detailed,
+            unmatchedCount: mapped.unmatchedCount
         )
     }
 
@@ -138,12 +138,12 @@ struct TecnofitImportService {
         for records: [TecnofitMappedPersonalRecord],
         companyID: String,
         token: String
-    ) async -> (records: [TecnofitMappedPersonalRecord], skippedCount: Int) {
+    ) async throws -> [TecnofitMappedPersonalRecord] {
         var uniqueRecords = [TecnofitMappedPersonalRecord]()
         var seenRecords = Set<String>()
 
         for record in records {
-            let identity = "\(record.target)|\(record.storageKey)|\(record.movementID ?? "")"
+            let identity = "\(record.source)|\(record.target)|\(record.storageKey)|\(record.movementID ?? "")"
             if seenRecords.insert(identity).inserted {
                 uniqueRecords.append(record)
             }
@@ -152,12 +152,15 @@ struct TecnofitImportService {
         var detailsByMovement = [String: TecnofitPersonalRecordDetailResponse]()
         var attemptedMovementIDs = Set<String>()
         var imported = [TecnofitMappedPersonalRecord]()
-        var skippedCount = 0
-
         for record in uniqueRecords {
+            guard record.source == .movement else {
+                imported.append(record)
+                continue
+            }
+
             guard let movementID = record.movementID?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !movementID.isEmpty else {
-                skippedCount += 1
+                imported.append(record)
                 continue
             }
 
@@ -174,20 +177,22 @@ struct TecnofitImportService {
                     )
                     detailsByMovement[movementID] = response
                     detail = response
+                } catch TecnofitHTTPError.unauthorized {
+                    throw TecnofitHTTPError.unauthorized
                 } catch {
                     detail = nil
                 }
             }
 
-            guard let detail,
-                  let mapped = TecnofitPersonalRecordsMapper.map(detail: detail, to: record) else {
-                skippedCount += 1
-                continue
+            if let detail,
+               let mapped = TecnofitPersonalRecordsMapper.map(detail: detail, to: record) {
+                imported.append(mapped)
+            } else {
+                imported.append(record)
             }
-            imported.append(mapped)
         }
 
-        return (imported, skippedCount)
+        return imported
     }
 
     private func personalRecordDetail(
@@ -296,6 +301,33 @@ enum TecnofitPersonalRecordsMapper {
         "Oleta": "girls_oleta", "Yvonne": "girls_yvonne"
     ])
 
+    private static let notablesKeys = storageKeys([
+        "Black Jack": "black_jack", "Bear Complex": "bear_complex",
+        "Broomstick Mile": "broomstick_mile", "Circus": "circus",
+        "Crossfit Total": "crossfit_total", "Death by Pull-Ups": "death_by_pull_ups",
+        "Fat Amy": "fat_amy", "Fight Gone Bad": "fight_gone_bad",
+        "Filthy Fifty": "filthy_fifty", "Hope": "hope",
+        "Iron Triathlon": "iron_triathlon", "Jeremy": "jeremy",
+        "King Kong": "king_kong", "Nasty Girls": "nasty_gilrs",
+        "Tabata Something Else": "tabata_something_else", "Tabata This": "tabata_this",
+        "The 300": "the_300", "The Chief": "the_chief"
+    ])
+
+    private static let heroesKeys = storageKeys([
+        "Abbate": "hero_abbate", "Adam Brown": "hero_adam_brown", "Adrian": "hero_adrian",
+        "Alexander": "hero_alexander", "Andy": "hero_andy", "Bert": "hero_bert",
+        "Big Sexy": "hero_big_sexy", "Blake": "hero_blake", "Bowen": "hero_bowen",
+        "Bradley": "hero_bradley", "Bradshaw": "hero_bradshaw", "Brehm": "hero_brehm",
+        "Brian": "hero_brian", "Bruck": "hero_bruck", "Bulger": "hero_bulger",
+        "Bull": "hero_bull", "Cameron": "hero_cameron", "Capoot": "hero_capoot",
+        "Carse": "hero_carse", "Chad": "hero_chad", "Coe": "hero_coe",
+        "Coffey": "hero_coffey", "Garrett": "hero_garrett", "Gator": "hero_gator",
+        "Gaza": "hero_gaza", "Glen": "hero_glen", "Griff": "hero_griff",
+        "Hall": "hero_hall", "Hamilton": "hero_hamilton", "Hammer": "hero_hammer",
+        "Hansen": "hero_hansen", "Murph": "hero_murph", "JT": "hero_jt",
+        "Michael": "hero_michael", "Sisson": "hero_sisson", "Randy": "hero_randy"
+    ])
+
     private static let openKeys = storageKeys([
         "Open 11.1": "open_11_1", "Open 11.2": "open_11_2", "Open 11.3": "open_11_3",
         "Open 12.1": "open_12_1", "Open 12.2": "open_12_2", "Open 12.3": "open_12_3",
@@ -394,13 +426,13 @@ enum TecnofitPersonalRecordsMapper {
         switch normalize(modality) {
         case "barbell":
             guard let key = barbellKeys[normalize(movement)], let value = decimalValue(record) else { return nil }
-            return .init(target: .barbell, storageKey: key, value: .numeric(value), movementID: movementID(record))
+            return .init(target: .barbell, storageKey: key, value: .numeric(value), source: .movement, movementID: movementID(record))
         case "gymnastic":
             guard let key = gymnasticKeys[normalize(movement)], let value = textValue(record) else { return nil }
-            return .init(target: .gymnastic, storageKey: key, value: .text(value), movementID: movementID(record))
+            return .init(target: .gymnastic, storageKey: key, value: .text(value), source: .movement, movementID: movementID(record))
         case "endurance":
             guard let key = enduranceKeys[normalize(movement)], let value = textValue(record) else { return nil }
-            return .init(target: .endurance, storageKey: key, value: .text(value), movementID: movementID(record))
+            return .init(target: .endurance, storageKey: key, value: .text(value), source: .movement, movementID: movementID(record))
         default:
             return nil
         }
@@ -413,12 +445,22 @@ enum TecnofitPersonalRecordsMapper {
         if normalize(workoutDay) == "girls",
            let key = girlsKeys[normalize(name)],
            let value = girlsValue(record) {
-            return .init(target: .girls, storageKey: key, value: .numeric(value), movementID: movementID(record))
+            return .init(target: .girls, storageKey: key, value: .numeric(value), source: .workoutDay)
         }
         if isOpenWorkoutDay(workoutDay),
            let key = openKeys[normalize(name)],
            let value = textValue(record) {
-            return .init(target: .open, storageKey: key, value: .text(value), movementID: movementID(record))
+            return .init(target: .open, storageKey: key, value: .text(value), source: .workoutDay)
+        }
+        if normalize(workoutDay) == "notables",
+           let key = notablesKeys[normalize(name)],
+           let value = textValue(record) {
+            return .init(target: .notables, storageKey: key, value: .text(value), source: .workoutDay)
+        }
+        if normalize(workoutDay) == "heroes",
+           let key = heroesKeys[normalize(name)],
+           let value = textValue(record) {
+            return .init(target: .heroes, storageKey: key, value: .text(value), source: .workoutDay)
         }
         return nil
     }
@@ -505,7 +547,7 @@ enum TecnofitPersonalRecordsMapper {
             value = .numeric(kilograms)
             sourceValues = [record.recordKgs?.value, record.record?.value, record.recordPounds?.value]
                 .compactMap { $0 }
-        case .girls, .gymnastic, .endurance, .open:
+        case .girls, .gymnastic, .endurance, .open, .notables, .heroes:
             guard let text = detailTextValue(record.record?.value, resultType: resultType) else { return nil }
             value = .text(text)
             sourceValues = [record.record?.value].compactMap { $0 }
@@ -806,11 +848,15 @@ enum TecnofitPersonalRecordsImporter {
             loadText(.gymnastic, defaults: defaults)
             loadText(.endurance, defaults: defaults)
             loadText(.open, defaults: defaults)
+            loadText(.notables, defaults: defaults)
+            loadText(.heroes, defaults: defaults)
             loadBarbellHistory(defaults: defaults)
             loadTextHistory(.girls, defaults: defaults)
             loadTextHistory(.gymnastic, defaults: defaults)
             loadTextHistory(.endurance, defaults: defaults)
             loadTextHistory(.open, defaults: defaults)
+            loadTextHistory(.notables, defaults: defaults)
+            loadTextHistory(.heroes, defaults: defaults)
         }
 
         func hasValue(for target: TecnofitPersonalRecordsTarget, storageKey: String) -> Bool {
@@ -834,7 +880,7 @@ enum TecnofitPersonalRecordsImporter {
                     !existingIDs.contains($0.id) &&
                     isFiniteNumericValue($0.value)
                 }
-            case .girls, .gymnastic, .endurance, .open:
+            case .girls, .gymnastic, .endurance, .open, .notables, .heroes:
                 let existingIDs = Set(textHistory[record.target]?[record.storageKey]?.map(\.id) ?? [])
                 return record.histories.contains {
                     !($0.id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) &&
@@ -894,7 +940,7 @@ enum TecnofitPersonalRecordsImporter {
                 }
                 guard entries.count != barbellHistory[record.storageKey, default: []].count else { return false }
                 barbellHistory[record.storageKey] = entries
-            case .girls, .gymnastic, .endurance, .open:
+            case .girls, .gymnastic, .endurance, .open, .notables, .heroes:
                 var historiesByKey = textHistory[record.target, default: [:]]
                 var entries = historiesByKey[record.storageKey, default: []]
                 var existingIDs = Set(entries.map(\.id))
@@ -922,7 +968,7 @@ enum TecnofitPersonalRecordsImporter {
                 switch target {
                 case .barbell, .girls:
                     data = try? JSONEncoder().encode(numeric[target] ?? [:])
-                case .gymnastic, .endurance, .open:
+                case .gymnastic, .endurance, .open, .notables, .heroes:
                     data = try? JSONEncoder().encode(text[target] ?? [:])
                 }
                 if let data { defaults.set(data, forKey: target.valuesKey) }
@@ -932,7 +978,7 @@ enum TecnofitPersonalRecordsImporter {
                 switch target {
                 case .barbell:
                     data = try? JSONEncoder().encode(barbellHistory)
-                case .girls, .gymnastic, .endurance, .open:
+                case .girls, .gymnastic, .endurance, .open, .notables, .heroes:
                     data = try? JSONEncoder().encode(textHistory[target] ?? [:])
                 }
                 if let data { defaults.set(data, forKey: target.historyKey) }
