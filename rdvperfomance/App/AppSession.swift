@@ -86,13 +86,13 @@ final class AppSession: ObservableObject {
     // Retorna verdadeiro se o usuário é um aluno
     var isStudent: Bool {
         if isAdmin { return adminProfileMode == .student }
-        userType?.rawValue.lowercased() == "student"
+        return userType?.rawValue.lowercased() == "student"
     }
 
     // Retorna verdadeiro se o usuário é um professor
     var isTrainer: Bool {
         if isAdmin { return adminProfileMode == .trainer }
-        userType?.rawValue.lowercased() == "trainer"
+        return userType?.rawValue.lowercased() == "trainer"
     }
 
     func selectAdminProfile(_ mode: AdminProfileMode) {
