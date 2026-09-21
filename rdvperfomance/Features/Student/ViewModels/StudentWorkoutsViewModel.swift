@@ -29,7 +29,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
     var hasLoadedWeeks: Bool { hasLoadedWeeksAndMeta }
 
     private var weekRangeText: [String: String] = [:]
-    private var weekProgressPercent: [String: Int] = [:]
+    @Published private(set) var weekProgressPercent: [String: Int] = [:]
     private var weekEndDate: [String: Date] = [:]
 
     private let studentId: String
@@ -219,9 +219,8 @@ final class StudentWorkoutsViewModel: ObservableObject {
         guard let weekId = week.id else { return "Treinos da semana" }
 
         let range = weekRangeText[weekId] ?? "Treinos da semana"
-        let percent = weekProgressPercent[weekId] ?? 0
 
-        return "\(range) \(percent)%"
+        return range
     }
 
     func teacherLineForWeek(_ week: TrainingWeekFS) -> String {

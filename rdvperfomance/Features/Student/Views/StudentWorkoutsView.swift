@@ -361,11 +361,19 @@ struct StudentWorkoutsView: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(vm.subtitleForWeek(week))
-                    .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                HStack(spacing: 8) {
+                    Text(vm.subtitleForWeek(week))
+                        .font(.system(size: 18, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+
+                    Spacer(minLength: 4)
+
+                    Text("\(vm.progressPercent(for: week))%")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+                }
 
                 HStack(spacing: 8) {
                     Text(vm.teacherLineForWeek(week))
