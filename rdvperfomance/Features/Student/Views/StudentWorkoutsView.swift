@@ -64,6 +64,9 @@ struct StudentWorkoutsView: View {
     }
 
     private var isTeacherViewing: Bool { session.isTrainer }
+    private var viewingTeacherId: String? {
+        isTeacherViewing ? (session.uid ?? "") : nil
+    }
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
@@ -145,7 +148,8 @@ struct StudentWorkoutsView: View {
             Task {
                 await vm.loadWeeksAndMeta(
                     force: true,
-                    filterByActiveTeacherLinks: !isTeacherViewing
+                    filterByActiveTeacherLinks: !isTeacherViewing,
+                    viewingTeacherId: viewingTeacherId
                 )
             }
         }
@@ -734,7 +738,8 @@ struct StudentWorkoutsView: View {
                 Task {
                     await vm.loadWeeksAndMeta(
                         force: true,
-                        filterByActiveTeacherLinks: !isTeacherViewing
+                        filterByActiveTeacherLinks: !isTeacherViewing,
+                        viewingTeacherId: viewingTeacherId
                     )
                 }
             } label: {
@@ -812,9 +817,15 @@ struct StudentWorkoutsView: View {
 
     private func loadInitialData() async {
         if isTeacherViewing {
-            await vm.loadWeeksAndMeta(filterByActiveTeacherLinks: false)
+            await vm.loadWeeksAndMeta(
+                filterByActiveTeacherLinks: false,
+                viewingTeacherId: viewingTeacherId
+            )
         } else {
-            await vm.loadWeeksAndMeta(filterByActiveTeacherLinks: true)
+            await vm.loadWeeksAndMeta(
+                filterByActiveTeacherLinks: true,
+                viewingTeacherId: viewingTeacherId
+            )
         }
     }
 }

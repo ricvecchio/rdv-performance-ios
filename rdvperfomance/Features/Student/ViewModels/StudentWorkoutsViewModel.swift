@@ -44,7 +44,8 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
     func loadWeeksAndMeta(
         force: Bool = false,
-        filterByActiveTeacherLinks: Bool
+        filterByActiveTeacherLinks: Bool,
+        viewingTeacherId: String? = nil
     ) async {
         if let task = weeksLoadTask {
             await task.value
@@ -58,14 +59,20 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
         let task = Task { [weak self] in
             guard let self else { return }
-            await self.performWeeksLoad(filterByActiveTeacherLinks: filterByActiveTeacherLinks)
+            await self.performWeeksLoad(
+                filterByActiveTeacherLinks: filterByActiveTeacherLinks,
+                viewingTeacherId: viewingTeacherId
+            )
         }
         weeksLoadTask = task
         await task.value
         weeksLoadTask = nil
     }
 
-    private func performWeeksLoad(filterByActiveTeacherLinks: Bool) async {
+    private func performWeeksLoad(
+        filterByActiveTeacherLinks: Bool,
+        viewingTeacherId: String?
+    ) async {
         do {
             #if DEBUG
             let t0 = Date()
@@ -81,7 +88,16 @@ final class StudentWorkoutsViewModel: ObservableObject {
             } else {
                 activeTeacherIds = []
             }
-            let result = try await repository.getWeeksForStudent(studentId: studentId)
+            let cleanViewingTeacherId = viewingTeacherId?
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+            if let cleanViewingTeacherId, cleanViewingTeacherId.isEmpty {
+                throw FirestoreRepositoryError.missingTeacherId
+            }
+
+            let result = try await repository.getWeeksForStudent(
+                studentId: studentId,
+                teacherId: cleanViewingTeacherId
+            )
             let visibleWeeks = filterByActiveTeacherLinks
                 ? result.filter {
                     activeTeacherIds.contains(
