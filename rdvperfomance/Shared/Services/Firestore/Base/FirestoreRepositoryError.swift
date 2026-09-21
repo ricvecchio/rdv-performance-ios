@@ -8,6 +8,7 @@ enum FirestoreRepositoryError: LocalizedError {
     case invalidData
     case writeFailed
     case notFound
+    case weekNotStarted
     case deleteFailed(String)
 
     var errorDescription: String? {
@@ -26,6 +27,8 @@ enum FirestoreRepositoryError: LocalizedError {
             return "Não foi possível salvar os dados no Firestore."
         case .notFound:
             return "Registro não encontrado no Firestore."
+        case .weekNotStarted:
+            return "Esta semana ainda não começou e não pode receber conclusões."
         case .deleteFailed(let details):
             return "Falha ao excluir: \(details)"
         }

@@ -401,8 +401,18 @@ final class FirestoreRepository {
 
     // MARK: - Training Operations
 
-    func getWeeksForStudent(studentId: String, onlyPublished: Bool = true) async throws -> [TrainingWeekFS] {
-        try await trainingRepository.getWeeksForStudent(studentId: studentId, onlyPublished: onlyPublished)
+    func getWeeksForStudent(
+        studentId: String,
+        teacherId: String? = nil,
+        categoryRaw: String? = nil,
+        onlyPublished: Bool = true
+    ) async throws -> [TrainingWeekFS] {
+        try await trainingRepository.getWeeksForStudent(
+            studentId: studentId,
+            teacherId: teacherId,
+            categoryRaw: categoryRaw,
+            onlyPublished: onlyPublished
+        )
     }
 
     func getPublishedWeeksForTeacher(teacherId: String) async throws -> [TrainingWeekFS] {
@@ -481,10 +491,6 @@ final class FirestoreRepository {
 
     func updateWeekTitle(weekId: String, newTitle: String) async throws {
         try await trainingRepository.updateWeekTitle(weekId: weekId, newTitle: newTitle)
-    }
-
-    func updateWeekDateRangeFromDays(weekId: String) async throws {
-        try await trainingRepository.updateWeekDateRangeFromDays(weekId: weekId)
     }
 
     func deleteTrainingWeekCascade(weekId: String) async throws {

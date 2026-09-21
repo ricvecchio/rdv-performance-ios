@@ -383,9 +383,16 @@ struct CreateTrainingWeekView: View {
             vm.errorMessage = "Aluno inválido: id não encontrado."
             return
         }
+        guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
+            vm.errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
 
-        await vm.loadWeeks(studentId: studentId)
-        await vm.repairWeekRangesIfNeeded()
+        await vm.loadWeeks(
+            studentId: studentId,
+            teacherId: teacherId,
+            categoryRaw: category.rawValue
+        )
     }
 
     private func openWeekDays(_ week: TrainingWeekFS) {

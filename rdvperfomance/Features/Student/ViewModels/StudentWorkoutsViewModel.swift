@@ -178,7 +178,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
                 guard let weekId = week.id, !weekId.isEmpty else { continue }
 
                 group.addTask {
-                    await self.loadCachedMetadata(for: weekId, generation: generation)
+                    await self.loadCachedMetadata(for: week, generation: generation)
                 }
             }
         }
@@ -189,20 +189,21 @@ final class StudentWorkoutsViewModel: ObservableObject {
         }
     }
 
-    private func loadCachedMetadata(for weekId: String, generation: UUID) async {
+    private func loadCachedMetadata(for week: TrainingWeekFS, generation: UUID) async {
+        guard let weekId = week.id else { return }
         await loadDaysAndStatus(for: weekId)
         guard metadataGeneration == generation,
               daysError(for: weekId) == nil else {
             return
         }
 
-        let days = days(for: weekId)
-        if let range = Self.computeRangeTextStatic(days: days) {
+        if let range = Self.computeRangeTextStatic(startDate: week.startDate, endDate: week.endDate) {
             weekRangeText[weekId] = range
         }
-        if let endDate = days.compactMap(\.date).max() {
+        if let endDate = week.endDate {
             weekEndDate[weekId] = endDate
         }
+        let days = days(for: weekId)
 
         let trainingDays = days.filter { !$0.isVideoDay }
         let completed = trainingDays.compactMap(\.id)
@@ -349,6 +350,16 @@ final class StudentWorkoutsViewModel: ObservableObject {
     }
 
     func toggleCompleted(dayId: String, in weekId: String) async {
+        guard let week = weeks.first(where: { $0.id == weekId }),
+              let startDate = week.startDate else {
+            weekDaysErrorByWeekId[weekId] = "Não foi possível validar o início desta semana."
+            return
+        }
+        guard Calendar.current.startOfDay(for: Date()) >= Calendar.current.startOfDay(for: startDate) else {
+            weekDaysErrorByWeekId[weekId] = FirestoreRepositoryError.weekNotStarted.localizedDescription
+            return
+        }
+
         let newValue = !isCompleted(dayId: dayId, in: weekId)
 
         do {
@@ -385,14 +396,13 @@ final class StudentWorkoutsViewModel: ObservableObject {
         return Int(v.rounded())
     }
 
-    nonisolated static func computeRangeTextStatic(days: [TrainingDayFS]) -> String? {
-        let dates = days.compactMap { $0.date }
-        guard let minDate = dates.min(), let maxDate = dates.max() else { return nil }
+    nonisolated static func computeRangeTextStatic(startDate: Date?, endDate: Date?) -> String? {
+        guard let startDate, let endDate else { return nil }
 
         let f = DateFormatter()
         f.locale = Locale(identifier: "pt_BR")
         f.dateFormat = "dd/MM/yyyy"
 
-        return "\(f.string(from: minDate)) a \(f.string(from: maxDate))"
+        return "\(f.string(from: startDate)) a \(f.string(from: endDate))"
     }
 }

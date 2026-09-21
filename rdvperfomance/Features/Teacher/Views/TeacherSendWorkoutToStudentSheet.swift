@@ -350,12 +350,22 @@ struct TeacherSendWorkoutToStudentSheet: View {
         successMessage = nil
 
         guard let student = selectedStudent, let sid = student.id, !sid.isEmpty else { return }
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
 
         isLoading = true
         defer { isLoading = false }
 
         do {
-            weeks = try await FirestoreRepository.shared.getWeeksForStudent(studentId: sid, onlyPublished: false)
+            weeks = try await FirestoreRepository.shared.getWeeksForStudent(
+                studentId: sid,
+                teacherId: teacherId,
+                categoryRaw: category.rawValue,
+                onlyPublished: false
+            )
         } catch {
             errorMessage = error.localizedDescription
             weeks = []
