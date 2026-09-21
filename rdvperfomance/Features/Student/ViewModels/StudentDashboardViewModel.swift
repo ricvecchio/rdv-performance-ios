@@ -54,17 +54,30 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var teacherLinkState: StudentDashboardTeacherLinkState = .loading
     @Published private(set) var pendingTeacherInvites: [TeacherStudentInviteFS] = []
     @Published private(set) var isProcessingLinkAction = false
+    @Published private(set) var isMuralhaStudent = false
+    @Published private(set) var isLoadingNextFitWod = false
+    @Published private(set) var nextFitWod: NextFitWodDisplay?
+    @Published private(set) var needsNextFitAuthentication = false
+    @Published private(set) var nextFitError: String?
+    @Published private(set) var isAuthenticatingNextFit = false
+    @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
     @Published var linkActionMessageIsError = false
 
     private let studentId: String
     private let repository: FirestoreRepository
+    private let nextFitService: NextFitService
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
 
-    init(studentId: String, repository: FirestoreRepository) {
+    init(
+        studentId: String,
+        repository: FirestoreRepository,
+        nextFitService: NextFitService = NextFitService()
+    ) {
         self.studentId = studentId
         self.repository = repository
+        self.nextFitService = nextFitService
     }
 
     func load() async {
@@ -77,6 +90,14 @@ final class StudentDashboardViewModel: ObservableObject {
             isLoading = false
         }
         async let pendingInvites: Void = loadPendingTeacherInvites()
+
+        do {
+            currentStudentUser = try await repository.getUser(uid: studentId)
+            isMuralhaStudent = isMuralhaUnit(currentStudentUser?.unitName)
+        } catch {
+            currentStudentUser = nil
+            isMuralhaStudent = false
+        }
 
         let activeTeacherIds: Set<String>
         do {
@@ -98,8 +119,19 @@ final class StudentDashboardViewModel: ObservableObject {
         guard !activeTeacherIds.isEmpty else {
             currentWeekDaySummaries = []
             upcomingDayGroups = []
+            if isMuralhaStudent, teacherLinkState == .failed {
+                await loadNextFitWod()
+            } else {
+                resetNextFitWod()
+            }
             _ = await pendingInvites
             return
+        }
+
+        if isMuralhaStudent {
+            await loadNextFitWod()
+        } else {
+            resetNextFitWod()
         }
 
         do {
@@ -131,6 +163,39 @@ final class StudentDashboardViewModel: ObservableObject {
         }
 
         _ = await pendingInvites
+    }
+
+    func authenticateNextFit(email: String, password: String) async -> Bool {
+        let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmedEmail.isEmpty, !password.isEmpty else {
+            nextFitLoginError = "Informe seu e-mail e senha do NextFit."
+            return false
+        }
+
+        isAuthenticatingNextFit = true
+        nextFitLoginError = nil
+        defer { isAuthenticatingNextFit = false }
+
+        do {
+            try await nextFitService.authenticate(
+                email: trimmedEmail,
+                password: password,
+                sessionAccount: studentId
+            )
+            await loadNextFitWod()
+            return true
+        } catch let error as NextFitServiceError {
+            nextFitLoginError = error.localizedDescription
+            return false
+        } catch {
+            nextFitLoginError = "Não foi possível entrar no NextFit. Tente novamente."
+            return false
+        }
+    }
+
+    func retryNextFitWod() async {
+        guard isMuralhaStudent else { return }
+        await loadNextFitWod()
     }
 
     func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
@@ -204,6 +269,44 @@ final class StudentDashboardViewModel: ObservableObject {
         } catch {
             pendingTeacherInvites = []
         }
+    }
+
+    private func loadNextFitWod() async {
+        guard !isLoadingNextFitWod else { return }
+
+        isLoadingNextFitWod = true
+        nextFitError = nil
+        nextFitWod = nil
+        needsNextFitAuthentication = false
+        defer { isLoadingNextFitWod = false }
+
+        do {
+            nextFitWod = try await nextFitService.loadTodayWod(sessionAccount: studentId)
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                needsNextFitAuthentication = true
+            default:
+                nextFitError = error.localizedDescription
+            }
+        } catch {
+            nextFitError = "Não foi possível carregar o WOD. Tente novamente."
+        }
+    }
+
+    private func resetNextFitWod() {
+        isLoadingNextFitWod = false
+        nextFitWod = nil
+        needsNextFitAuthentication = false
+        nextFitError = nil
+        nextFitLoginError = nil
+    }
+
+    private func isMuralhaUnit(_ unitName: String?) -> Bool {
+        let normalized = (unitName ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current)
+        return normalized == "muralha" || normalized == "crossfit muralha"
     }
 
     private func loadDays(for weeks: [TrainingWeekFS]) async throws -> [StudentDashboardDay] {

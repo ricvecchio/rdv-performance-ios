@@ -11,6 +11,9 @@ struct StudentDashboardView: View {
     @State private var isTeacherLinkIconPulsing = false
     @State private var isRequestLinkSheetPresented = false
     @State private var teacherEmailInput = ""
+    @State private var isNextFitLoginSheetPresented = false
+    @State private var nextFitEmailInput = ""
+    @State private var nextFitPasswordInput = ""
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -96,6 +99,10 @@ struct StudentDashboardView: View {
             requestLinkSheet
                 .presentationDetents([.fraction(0.50)])
         }
+        .sheet(isPresented: $isNextFitLoginSheetPresented, onDismiss: clearNextFitCredentials) {
+            nextFitLoginSheet
+                .presentationDetents([.fraction(0.50)])
+        }
     }
 
     private var header: some View {
@@ -126,7 +133,11 @@ struct StudentDashboardView: View {
             noLinkedTeacherCard
         case .linked, .failed:
             progressCard
-            upcomingWorkoutsCard
+            if viewModel.isMuralhaStudent {
+                nextFitWodCard
+            } else {
+                upcomingWorkoutsCard
+            }
         }
     }
 
@@ -395,6 +406,65 @@ struct StudentDashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
     }
 
+    private var nextFitWodCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("WOD do dia")
+                .font(.system(size: 18, weight: .bold))
+                .foregroundColor(.white.opacity(0.92))
+
+            if viewModel.isLoadingNextFitWod {
+                ProgressView()
+                    .tint(.white)
+            } else if viewModel.needsNextFitAuthentication {
+                Text("Conecte sua conta NextFit para consultar o treino de hoje.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Button {
+                    nextFitEmailInput = ""
+                    nextFitPasswordInput = ""
+                    isNextFitLoginSheetPresented = true
+                } label: {
+                    Text("Conectar NextFit")
+                        .padding(.horizontal, 14)
+                        .compactPrimaryGreenActionButton()
+                }
+                .buttonStyle(.plain)
+            } else if let wod = viewModel.nextFitWod {
+                Text(wod.activityTitle)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+
+                Text(wod.description)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.92))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            } else if let error = viewModel.nextFitError {
+                Text(error)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Button {
+                    Task { await viewModel.retryNextFitWod() }
+                } label: {
+                    Text("Tentar novamente")
+                        .padding(.horizontal, 14)
+                        .compactPrimaryGreenActionButton()
+                }
+                .buttonStyle(.plain)
+            } else {
+                Text("Nenhum WOD disponível para hoje.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+    }
+
     private var upcomingWorkoutsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
@@ -436,6 +506,139 @@ struct StudentDashboardView: View {
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+    }
+
+    private var nextFitLoginSheet: some View {
+        ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
+
+                        Text("Entrar no NextFit")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
+
+                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("E-mail")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.75))
+
+                                TextField("seu@email.com", text: $nextFitEmailInput)
+                                    .textInputAutocapitalization(.never)
+                                    .keyboardType(.emailAddress)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(Color.white.opacity(0.10))
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    )
+                                    .foregroundColor(.white.opacity(0.92))
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Senha")
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.75))
+
+                                SecureField("Sua senha", text: $nextFitPasswordInput)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(Color.white.opacity(0.10))
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    )
+                                    .foregroundColor(.white.opacity(0.92))
+                            }
+
+                            if let error = viewModel.nextFitLoginError {
+                                Text(error)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.yellow.opacity(0.95))
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    Button {
+                        isNextFitLoginSheetPresented = false
+                    } label: {
+                        Text("Cancelar")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isAuthenticatingNextFit)
+
+                    Button {
+                        let email = nextFitEmailInput
+                        let password = nextFitPasswordInput
+                        nextFitPasswordInput = ""
+
+                        Task {
+                            if await viewModel.authenticateNextFit(email: email, password: password) {
+                                isNextFitLoginSheetPresented = false
+                            }
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Text("Entrar")
+
+                            if viewModel.isAuthenticatingNextFit {
+                                ProgressView()
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isAuthenticatingNextFit)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
+            }
+        }
+    }
+
+    private func clearNextFitCredentials() {
+        nextFitEmailInput = ""
+        nextFitPasswordInput = ""
     }
 
     private func upcomingWorkoutRow(_ item: StudentDashboardDayGroup) -> some View {
