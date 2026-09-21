@@ -377,6 +377,16 @@ enum TecnofitPersonalRecordsMapper {
         "Open 25.3 RX": "open_25_3_rx", "Open 25.3 SCALE": "open_25_3_scale"
     ])
 
+    private static let openWorkoutDayAliases = storageKeys([
+        "13.4": "open_13_4",
+        "14.1": "open_14_1",
+        "15.4": "open_15_4",
+        "19.2 RX": "open_19_2_rx",
+        "19.4 RX": "open_19_4_rx",
+        "20.4 RX": "open_20_4_rx",
+        "23.3 RX": "open_23_3_rx"
+    ])
+
     static func map(_ response: TecnofitPersonalRecordsResponse) -> (records: [TecnofitMappedPersonalRecord], actualCount: Int, unmatchedCount: Int) {
         var mapped = [TecnofitMappedPersonalRecord]()
         var actualCount = 0
@@ -448,7 +458,7 @@ enum TecnofitPersonalRecordsMapper {
             return .init(target: .girls, storageKey: key, value: .numeric(value), source: .workoutDay)
         }
         if isOpenWorkoutDay(workoutDay),
-           let key = openKeys[normalize(name)],
+           let key = openKeys[normalize(name)] ?? openWorkoutDayAliases[normalize(name)],
            let value = textValue(record) {
             return .init(target: .open, storageKey: key, value: .text(value), source: .workoutDay)
         }
@@ -796,12 +806,15 @@ enum TecnofitPersonalRecordsImporter {
 
         for record in records {
             let currentValueExists = existing.hasValue(for: record.target, storageKey: record.storageKey)
-            if record.shouldImportCurrentValue && currentValueExists {
-                conflicts += 1
-            }
-            if (record.shouldImportCurrentValue && !currentValueExists && existing.canPersistHistories(for: record)) ||
-                existing.hasNewHistory(for: record) {
+            let currentValueNeedsImport = record.shouldImportCurrentValue &&
+                !currentValueExists &&
+                existing.canPersistHistories(for: record)
+            let historyNeedsImport = existing.hasNewHistory(for: record)
+
+            if currentValueNeedsImport || historyNeedsImport {
                 ready.append(record)
+            } else if record.shouldImportCurrentValue && currentValueExists {
+                conflicts += 1
             }
         }
 
