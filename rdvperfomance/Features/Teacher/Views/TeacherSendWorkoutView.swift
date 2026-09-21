@@ -46,6 +46,20 @@ struct TeacherSendWorkoutView: View {
         case day
     }
 
+    private enum DaySelectionPeriod: Int, CaseIterable {
+        case currentWeek = 0
+        case upcomingWeeks = 1
+
+        var title: String {
+            switch self {
+            case .currentWeek:
+                return "Semana atual"
+            case .upcomingWeeks:
+                return "Próximas semanas"
+            }
+        }
+    }
+
     private struct AvailableDay: Identifiable {
         let date: Date
 
@@ -66,6 +80,8 @@ struct TeacherSendWorkoutView: View {
     @State private var selectedStudentIDs: Set<String> = []
     @State private var selectedTemplates: [TreinoTipo: WorkoutTemplateFS] = [:]
     @State private var selectedDay: AvailableDay?
+    @State private var daySelectionPeriod: DaySelectionPeriod = .currentWeek
+    @State private var futureWeekOffset = 0
     @State private var step: Step = .student
     @State private var selectingWorkoutCategory: TreinoTipo?
     @State private var selectedWorkoutSectionKey: String?
@@ -142,9 +158,44 @@ struct TeacherSendWorkoutView: View {
     private var availableDays: [AvailableDay] {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
+        let weekday = calendar.component(.weekday, from: today)
+        let daysUntilSunday = (8 - weekday) % 7
 
-        return (0..<5).compactMap { offset in
-            guard let date = calendar.date(byAdding: .day, value: offset, to: today) else {
+        guard let currentWeekEnd = calendar.date(
+            byAdding: .day,
+            value: daysUntilSunday,
+            to: today
+        ) else {
+            return []
+        }
+
+        switch daySelectionPeriod {
+        case .currentWeek:
+            return days(startingAt: today, count: daysUntilSunday + 1, calendar: calendar)
+        case .upcomingWeeks:
+            guard let firstUpcomingWeekStart = calendar.date(
+                byAdding: .day,
+                value: 1,
+                to: currentWeekEnd
+            ),
+            let weekStart = calendar.date(
+                byAdding: .day,
+                value: futureWeekOffset * 7,
+                to: firstUpcomingWeekStart
+            ) else {
+                return []
+            }
+            return days(startingAt: weekStart, count: 7, calendar: calendar)
+        }
+    }
+
+    private func days(
+        startingAt startDate: Date,
+        count: Int,
+        calendar: Calendar
+    ) -> [AvailableDay] {
+        (0..<count).compactMap { offset in
+            guard let date = calendar.date(byAdding: .day, value: offset, to: startDate) else {
                 return nil
             }
             return AvailableDay(date: date)
@@ -784,6 +835,26 @@ struct TeacherSendWorkoutView: View {
         VStack(spacing: 0) {
             cardSectionTitle("SELECIONAR dia")
 
+            Picker("", selection: $daySelectionPeriod) {
+                ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { period in
+                    Text(period.title).tag(period)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 16)
+            .padding(.bottom, daySelectionPeriod == .upcomingWeeks ? 12 : 16)
+            .disabled(isSending)
+            .onChange(of: daySelectionPeriod) { _ in
+                selectedDay = nil
+                futureWeekOffset = 0
+            }
+
+            if daySelectionPeriod == .upcomingWeeks {
+                futureWeekNavigation
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 12)
+            }
+
             VStack(spacing: 0) {
                 ForEach(Array(availableDays.enumerated()), id: \.element.id) { index, day in
                     Button {
@@ -818,6 +889,45 @@ struct TeacherSendWorkoutView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private var futureWeekNavigation: some View {
+        HStack {
+            Button {
+                futureWeekOffset -= 1
+                selectedDay = nil
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(futureWeekOffset == 0 ? 0.25 : 0.75))
+                    .frame(width: 32, height: 28)
+            }
+            .buttonStyle(.plain)
+            .disabled(futureWeekOffset == 0 || isSending)
+
+            Spacer()
+
+            if let firstDay = availableDays.first?.date,
+               let lastDay = availableDays.last?.date {
+                Text("\(dateTitle(for: firstDay)) - \(dateTitle(for: lastDay))")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+
+            Spacer()
+
+            Button {
+                futureWeekOffset += 1
+                selectedDay = nil
+            } label: {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                    .frame(width: 32, height: 28)
+            }
+            .buttonStyle(.plain)
+            .disabled(isSending)
+        }
     }
 
     private func dayRow(day: AvailableDay, isSelected: Bool) -> some View {
