@@ -54,7 +54,6 @@ struct TeacherStudentDetailView: View {
                         VStack(spacing: 14) {
 
                             headerCard()
-                            progressCard()
                             actionsCard()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -129,19 +128,9 @@ struct TeacherStudentDetailView: View {
     // MARK: - Cards
 
     private func headerCard() -> some View {
+        let percent = Int((progress * 100.0).rounded())
+
         VStack(alignment: .leading, spacing: 10) {
-
-            Text("Categoria do Treino")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-
-            // ✅ Agora essa categoria vem correta pela navegação (TeacherStudentsListView)
-            Text(category.tituloOverlayImagem)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Divider()
-                .background(Theme.Colors.divider)
 
             Text("Aluno")
                 .font(.system(size: 14, weight: .medium))
@@ -151,40 +140,43 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.95))
 
+            Divider()
+                .background(Theme.Colors.divider)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Progresso do Aluno")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    Spacer()
+
+                    if isLoadingProgress {
+                        ProgressView().tint(.white)
+                    }
+                }
+
+                Text("\(percent)% completo")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                ProgressView(value: progress)
+                    .tint(.green.opacity(0.85))
+            }
+
+            Divider()
+                .background(Theme.Colors.divider)
+
+            Text("Categoria do Treino")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+
+            Text(category.tituloOverlayImagem)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.green.opacity(0.85))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-    }
-
-    private func progressCard() -> some View {
-
-        let percent = Int((progress * 100.0).rounded())
-
-        return VStack(alignment: .leading, spacing: 12) {
-
-            HStack {
-                Text("Progresso do Aluno")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-
-                Spacer()
-
-                if isLoadingProgress {
-                    ProgressView().tint(.white)
-                }
-            }
-
-            Text("\(percent)% completo")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-
-            ProgressView(value: progress)
-                .tint(.green.opacity(0.85))
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
     }
