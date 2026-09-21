@@ -130,7 +130,7 @@ struct TeacherStudentDetailView: View {
     private func headerCard() -> some View {
         let percent = Int((progress * 100.0).rounded())
 
-        VStack(alignment: .leading, spacing: 10) {
+        return VStack(alignment: .leading, spacing: 10) {
 
             Text("Aluno")
                 .font(.system(size: 14, weight: .medium))
