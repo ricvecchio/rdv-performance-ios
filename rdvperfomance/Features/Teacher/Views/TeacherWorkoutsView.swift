@@ -23,68 +23,72 @@ struct TeacherWorkoutsView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                HStack {
-                    Spacer(minLength: 0)
+                ScrollView(.vertical, showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
 
-                    VStack(alignment: .leading, spacing: 14) {
-                        quickAccessCard(
-                            title: "Enviar treino",
-                            subtitle: "Envie um treino para seus alunos",
-                            icon: "paperplane.fill"
-                        ) {
-                            path.append(
-                                .teacherSendWorkout(
-                                    preselectedStudentID: nil,
-                                    startsAtWorkout: false
+                        VStack(alignment: .leading, spacing: 14) {
+                            quickAccessCard(
+                                title: "Enviar treino",
+                                subtitle: "Envie um treino para seus alunos",
+                                icon: "paperplane.fill"
+                            ) {
+                                path.append(
+                                    .teacherSendWorkout(
+                                        preselectedStudentID: nil,
+                                        startsAtWorkout: false
+                                    )
                                 )
-                            )
-                        }
+                            }
 
-                        quickAccessCard(
-                            title: "Criar treino",
-                            subtitle: "Monte um novo treino",
-                            icon: "plus.circle.fill"
-                        ) {
-                            path.append(.teacherMyWorkouts(category: category, mode: .create))
-                        }
+                            quickAccessCard(
+                                title: "Criar treino",
+                                subtitle: "Monte um novo treino",
+                                icon: "plus.circle.fill"
+                            ) {
+                                path.append(.teacherMyWorkouts(category: category, mode: .create))
+                            }
 
-                        quickAccessCard(
-                            title: "Biblioteca de Treinos",
-                            subtitle: "Use modelos prontos",
-                            icon: "square.grid.2x2.fill"
-                        ) {
-                            path.append(.teacherMyWorkouts(category: category, mode: .library))
-                        }
+                            quickAccessCard(
+                                title: "Biblioteca de Treinos",
+                                subtitle: "Use modelos prontos",
+                                icon: "square.grid.2x2.fill"
+                            ) {
+                                path.append(.teacherMyWorkouts(category: category, mode: .library))
+                            }
 
-                        quickAccessCard(
-                            title: "Importar",
-                            subtitle: "Importe treinos por planilha",
-                            icon: "doc.text.fill"
-                        ) {
-                            path.append(.teacherImportWorkouts(category: category))
-                        }
+                            quickAccessCard(
+                                title: "Importar",
+                                subtitle: "Importe treinos por planilha",
+                                icon: "doc.text.fill"
+                            ) {
+                                path.append(.teacherImportWorkouts(category: category))
+                            }
 
-                        quickAccessCard(
-                            title: "Meus Recordes",
-                            subtitle: "Acompanhe e registre seus resultados",
-                            icon: "trophy.fill"
-                        ) {
-                            path.append(.teacherPersonalRecords(category: category))
-                        }
+                            quickAccessCard(
+                                title: "Meus Recordes",
+                                subtitle: "Acompanhe e registre seus resultados",
+                                icon: "trophy.fill"
+                            ) {
+                                path.append(.teacherPersonalRecords(category: category))
+                            }
 
-                        quickAccessCard(
-                            title: "Meus Vídeos",
-                            subtitle: "Organize seus vídeos",
-                            icon: "video.fill"
-                        ) {
-                            path.append(.teacherImportVideos(category: category))
+                            quickAccessCard(
+                                title: "Meus Vídeos",
+                                subtitle: "Organize seus vídeos",
+                                icon: "video.fill"
+                            ) {
+                                path.append(.teacherImportVideos(category: category))
+                            }
                         }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+                        .padding(.bottom, 16)
+
+                        Spacer(minLength: 0)
                     }
-                    .frame(maxWidth: contentMaxWidth)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-
-                    Spacer(minLength: 0)
+                    .frame(maxWidth: .infinity, alignment: .top)
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
 
