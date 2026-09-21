@@ -28,8 +28,8 @@ struct StudentWorkoutsView: View {
 
     private enum WorkoutsFilter: Equatable {
         case active
+        case upcoming
         case completed
-        case all
     }
 
     private struct TrainingDayGroup: Identifiable {
@@ -219,8 +219,8 @@ struct StudentWorkoutsView: View {
     private var filterRow: some View {
         HStack(spacing: 8) {
             filterChip(title: "Ativos", filter: .active)
+            filterChip(title: "Próximos", filter: .upcoming)
             filterChip(title: "Concluídos", filter: .completed)
-            filterChip(title: "Todos", filter: .all)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -257,7 +257,7 @@ struct StudentWorkoutsView: View {
                 errorView(message: errorMessage)
             } else if vm.weeks.isEmpty {
                 emptyView
-            } else if selectedFilter != .all && !vm.hasLoadedWeekMetadata {
+            } else if !vm.hasLoadedWeekMetadata {
                 loadingView
             } else if filteredWeeks.isEmpty {
                 filteredEmptyView
@@ -272,11 +272,13 @@ struct StudentWorkoutsView: View {
     private var filteredWeeks: [TrainingWeekFS] {
         switch selectedFilter {
         case .active:
-            return vm.weeks.filter { !vm.isCompleted($0) && !vm.isExpired($0) }
+            return vm.weeks.filter {
+                !vm.isCompleted($0) && !vm.isExpired($0) && !vm.isUpcoming($0)
+            }
+        case .upcoming:
+            return vm.weeks.filter { vm.isUpcoming($0) }
         case .completed:
             return vm.weeks.filter { vm.isCompleted($0) || vm.isExpired($0) }
-        case .all:
-            return vm.weeks
         }
     }
 
@@ -359,18 +361,30 @@ struct StudentWorkoutsView: View {
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
-                Text(week.weekTitle)
+                Text(vm.subtitleForWeek(week))
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
 
-                Text(vm.teacherLineForWeek(week))
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+                HStack(spacing: 8) {
+                    Text(vm.teacherLineForWeek(week))
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .lineLimit(1)
 
-                Text(vm.subtitleForWeek(week))
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.35))
+                    Spacer(minLength: 4)
+
+                    if vm.isUpcoming(week) {
+                        Label("Em breve", systemImage: "clock.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.55))
+                            .labelStyle(.titleAndIcon)
+                            .lineLimit(1)
+                    }
+                }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             Spacer()
 
@@ -572,7 +586,7 @@ struct StudentWorkoutsView: View {
             }
             .buttonStyle(.plain)
 
-            if !isVideo, let dayId = day.id {
+            if !isVideo, let dayId = day.id, !vm.isUpcoming(week) {
                 if vm.isOverdue(day, in: weekId) {
                     Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 12, weight: .semibold))
@@ -747,10 +761,10 @@ struct StudentWorkoutsView: View {
         let content: (title: String, message: String) = switch selectedFilter {
         case .active:
             ("Nenhum treino ativo", "Você não possui treinos pendentes a partir de hoje.")
+        case .upcoming:
+            ("Nenhum treino futuro", "Você não possui treinos programados para as próximas semanas.")
         case .completed:
             ("Nenhum treino concluído", "Treinos concluídos ou com período encerrado aparecerão aqui.")
-        case .all:
-            ("Nenhuma semana cadastrada", "O professor ainda não publicou treinos para este aluno.")
         }
 
         return VStack(spacing: 10) {

@@ -221,7 +221,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
         let range = weekRangeText[weekId] ?? "Treinos da semana"
         let percent = weekProgressPercent[weekId] ?? 0
 
-        return "\(range) • \(percent)%"
+        return "\(range) \(percent)%"
     }
 
     func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
@@ -263,6 +263,12 @@ final class StudentWorkoutsViewModel: ObservableObject {
         guard let endDate = endDate(for: week) else { return false }
         let calendar = Calendar.current
         return calendar.startOfDay(for: endDate) < calendar.startOfDay(for: now)
+    }
+
+    func isUpcoming(_ week: TrainingWeekFS, now: Date = Date()) -> Bool {
+        guard let startDate = week.startDate else { return false }
+        let calendar = Calendar.current
+        return calendar.startOfDay(for: startDate) > calendar.startOfDay(for: now)
     }
 
     func days(for weekId: String) -> [TrainingDayFS] {
