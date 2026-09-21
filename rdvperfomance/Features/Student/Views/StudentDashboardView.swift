@@ -131,6 +131,9 @@ struct StudentDashboardView: View {
                 .padding(.vertical, 28)
         case .unlinked:
             noLinkedTeacherCard
+            if viewModel.isMuralhaStudent {
+                nextFitWodCard
+            }
         case .linked, .failed:
             progressCard
             if viewModel.isMuralhaStudent {
@@ -408,7 +411,7 @@ struct StudentDashboardView: View {
 
     private var nextFitWodCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("WOD do dia")
+            Text(nextFitWodTitle)
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
 
@@ -463,6 +466,11 @@ struct StudentDashboardView: View {
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+    }
+
+    private var nextFitWodTitle: String {
+        let unitName = viewModel.studentUnitName
+        return unitName.isEmpty ? "WOD do dia" : "WOD do dia (\(unitName))"
     }
 
     private var upcomingWorkoutsCard: some View {

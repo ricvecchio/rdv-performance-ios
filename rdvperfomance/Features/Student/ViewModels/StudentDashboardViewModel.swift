@@ -70,6 +70,11 @@ final class StudentDashboardViewModel: ObservableObject {
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
 
+    var studentUnitName: String {
+        (currentStudentUser?.unitName ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
     init(
         studentId: String,
         repository: FirestoreRepository,
@@ -119,7 +124,7 @@ final class StudentDashboardViewModel: ObservableObject {
         guard !activeTeacherIds.isEmpty else {
             currentWeekDaySummaries = []
             upcomingDayGroups = []
-            if isMuralhaStudent, teacherLinkState == .failed {
+            if isMuralhaStudent {
                 await loadNextFitWod()
             } else {
                 resetNextFitWod()
