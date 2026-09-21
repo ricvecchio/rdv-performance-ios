@@ -14,6 +14,8 @@ struct StudentDashboardView: View {
     @State private var isNextFitLoginSheetPresented = false
     @State private var nextFitEmailInput = ""
     @State private var nextFitPasswordInput = ""
+    @State private var isNextFitLogoutConfirmationPresented = false
+    @State private var isNextFitLogoutErrorPresented = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -102,6 +104,27 @@ struct StudentDashboardView: View {
         .sheet(isPresented: $isNextFitLoginSheetPresented, onDismiss: clearNextFitCredentials) {
             nextFitLoginSheet
                 .presentationDetents([.fraction(0.50)])
+        }
+        .confirmationDialog(
+            "Desconectar NextFit?",
+            isPresented: $isNextFitLogoutConfirmationPresented,
+            titleVisibility: .visible
+        ) {
+            Button("Desconectar", role: .destructive) {
+                do {
+                    try viewModel.logoutNextFit()
+                } catch {
+                    isNextFitLogoutErrorPresented = true
+                }
+            }
+            Button("Cancelar", role: .cancel) { }
+        } message: {
+            Text("Você precisará entrar novamente para consultar o WOD do dia.")
+        }
+        .alert("Não foi possível desconectar do NextFit.", isPresented: $isNextFitLogoutErrorPresented) {
+            Button("OK", role: .cancel) { }
+        } message: {
+            Text("Tente novamente.")
         }
     }
 
@@ -411,9 +434,27 @@ struct StudentDashboardView: View {
 
     private var nextFitWodCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text(nextFitWodTitle)
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
+            HStack {
+                Text(nextFitWodTitle)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Spacer()
+
+                if viewModel.hasNextFitSession {
+                    Button {
+                        isNextFitLogoutConfirmationPresented = true
+                    } label: {
+                        Image(systemName: "rectangle.portrait.and.arrow.right")
+                            .font(.system(size: 13, weight: .medium))
+                            .foregroundColor(.white.opacity(0.45))
+                            .frame(width: 44, height: 44)
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.isLoadingNextFitWod)
+                    .accessibilityLabel("Desconectar NextFit")
+                }
+            }
 
             if viewModel.isLoadingNextFitWod {
                 ProgressView()

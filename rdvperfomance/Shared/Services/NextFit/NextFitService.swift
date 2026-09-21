@@ -142,6 +142,14 @@ struct NextFitService {
         }
     }
 
+    func hasSession(sessionAccount: String) -> Bool {
+        (try? NextFitKeychainStore.token(for: sessionAccount)) != nil
+    }
+
+    func logout(sessionAccount: String) throws {
+        try NextFitKeychainStore.deleteToken(for: sessionAccount)
+    }
+
     private func recoverRegistration(email: String) async throws -> NextFitIdentificationResponse {
         var components = URLComponents(
             url: Self.baseURL.appending(path: "Auth/v2/RecuperarPorIdentificacao"),

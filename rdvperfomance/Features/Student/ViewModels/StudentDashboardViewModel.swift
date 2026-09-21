@@ -58,6 +58,7 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isLoadingNextFitWod = false
     @Published private(set) var nextFitWod: NextFitWodDisplay?
     @Published private(set) var needsNextFitAuthentication = false
+    @Published private(set) var hasNextFitSession = false
     @Published private(set) var nextFitError: String?
     @Published private(set) var isAuthenticatingNextFit = false
     @Published var nextFitLoginError: String?
@@ -187,6 +188,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 password: password,
                 sessionAccount: studentId
             )
+            hasNextFitSession = true
             await loadNextFitWod()
             return true
         } catch let error as NextFitServiceError {
@@ -201,6 +203,15 @@ final class StudentDashboardViewModel: ObservableObject {
     func retryNextFitWod() async {
         guard isMuralhaStudent else { return }
         await loadNextFitWod()
+    }
+
+    func logoutNextFit() throws {
+        try nextFitService.logout(sessionAccount: studentId)
+        nextFitWod = nil
+        nextFitError = nil
+        nextFitLoginError = nil
+        hasNextFitSession = false
+        needsNextFitAuthentication = true
     }
 
     func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
@@ -280,6 +291,7 @@ final class StudentDashboardViewModel: ObservableObject {
         guard !isLoadingNextFitWod else { return }
 
         isLoadingNextFitWod = true
+        hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         nextFitError = nil
         nextFitWod = nil
         needsNextFitAuthentication = false
@@ -290,6 +302,7 @@ final class StudentDashboardViewModel: ObservableObject {
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
+                hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
                 nextFitError = error.localizedDescription
@@ -302,6 +315,7 @@ final class StudentDashboardViewModel: ObservableObject {
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
         nextFitWod = nil
+        hasNextFitSession = false
         needsNextFitAuthentication = false
         nextFitError = nil
         nextFitLoginError = nil
