@@ -428,10 +428,19 @@ struct StudentDashboardView: View {
                     nextFitPasswordInput = ""
                     isNextFitLoginSheetPresented = true
                 } label: {
-                    HStack(spacing: 10) {
-                        Image(systemName: "link")
+                    ZStack(alignment: .leading) {
+                        HStack(spacing: 10) {
+                            Image(systemName: "person.badge.plus")
 
-                        Text("Conectar NextFit")
+                            Text("Convidar professor")
+                        }
+                        .hidden()
+
+                        HStack(spacing: 10) {
+                            Image(systemName: "link")
+
+                            Text("Conectar NextFit")
+                        }
                     }
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
