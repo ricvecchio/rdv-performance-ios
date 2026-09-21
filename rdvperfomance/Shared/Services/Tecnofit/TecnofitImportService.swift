@@ -458,7 +458,7 @@ enum TecnofitPersonalRecordsMapper {
             return .init(target: .girls, storageKey: key, value: .numeric(value), source: .workoutDay)
         }
         if isOpenWorkoutDay(workoutDay),
-           let key = openKeys[normalize(name)] ?? openWorkoutDayAliases[normalize(name)],
+           let key = openStorageKey(for: name),
            let value = textValue(record) {
             return .init(target: .open, storageKey: key, value: .text(value), source: .workoutDay)
         }
@@ -483,6 +483,24 @@ enum TecnofitPersonalRecordsMapper {
     private static func isOpenWorkoutDay(_ value: String) -> Bool {
         let category = normalize(value)
         return category == "open" || category == "crossfit open" || category.hasPrefix("open ")
+    }
+
+    private static func openStorageKey(for value: String) -> String? {
+        let normalized = normalize(value)
+        var candidates = [normalized]
+
+        if normalized.hasPrefix("crossfit open ") {
+            candidates.append(String(normalized.dropFirst("crossfit ".count)))
+        } else if !normalized.hasPrefix("open ") {
+            candidates.append("open \(normalized)")
+        }
+
+        for candidate in candidates {
+            if let key = openKeys[candidate] ?? openWorkoutDayAliases[candidate] {
+                return key
+            }
+        }
+        return nil
     }
 
     static func map(
