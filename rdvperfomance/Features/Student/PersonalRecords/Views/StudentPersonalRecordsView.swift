@@ -48,6 +48,7 @@ struct StudentPersonalRecordsView: View {
     var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
+    @State private var isTecnofitImportPresented = false
 
     private struct PRMenuItem: Identifiable, Hashable {
         let id = UUID()
@@ -91,6 +92,8 @@ struct StudentPersonalRecordsView: View {
                             Text("Selecione uma seção.")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
+
+                            tecnofitImportButton
 
                             VStack(spacing: 12) {
                                 ForEach(menuItems) { item in
@@ -162,6 +165,9 @@ struct StudentPersonalRecordsView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $isTecnofitImportPresented) {
+            TecnofitImportSheet()
+        }
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
@@ -218,6 +224,20 @@ struct StudentPersonalRecordsView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var tecnofitImportButton: some View {
+        Button {
+            isTecnofitImportPresented = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "plus")
+                Text("Importar do Tecnofit")
+            }
+            .padding(.horizontal, 14)
+            .compactPrimaryGreenActionButton()
         }
         .buttonStyle(.plain)
     }
