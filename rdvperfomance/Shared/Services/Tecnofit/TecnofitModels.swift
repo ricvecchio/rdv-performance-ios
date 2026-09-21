@@ -168,15 +168,15 @@ enum TecnofitPersonalRecordsTarget: Hashable {
         case .endurance: "student_pr_endurance_history_v1"
         case .girls: "student_pr_girls_history_v1"
         case .open: "student_pr_open_history_v1"
-            case .notables: "student_pr_notables_history_v1"
-            case .heroes: "student_pr_heroes_history_v1"
+        case .notables: "student_pr_notables_history_v1"
+        case .heroes: "student_pr_heroes_history_v1"
         }
     }
+}
 
-    enum TecnofitPersonalRecordSource: Equatable {
-        case movement
-        case workoutDay
-    }
+enum TecnofitPersonalRecordSource: Equatable {
+    case movement
+    case workoutDay
 }
 
 enum TecnofitPersonalRecordValue: Equatable {
