@@ -428,9 +428,13 @@ struct StudentDashboardView: View {
                     nextFitPasswordInput = ""
                     isNextFitLoginSheetPresented = true
                 } label: {
-                    Text("Conectar NextFit")
-                        .padding(.horizontal, 14)
-                        .compactPrimaryGreenActionButton()
+                    HStack(spacing: 10) {
+                        Image(systemName: "link")
+
+                        Text("Conectar NextFit")
+                    }
+                    .padding(.horizontal, 14)
+                    .compactPrimaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
             } else if let wod = viewModel.nextFitWod {
