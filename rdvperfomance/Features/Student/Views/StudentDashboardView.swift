@@ -105,22 +105,6 @@ struct StudentDashboardView: View {
             nextFitLoginSheet
                 .presentationDetents([.fraction(0.50)])
         }
-        .confirmationDialog(
-            "Desconectar NextFit?",
-            isPresented: $isNextFitLogoutConfirmationPresented,
-            titleVisibility: .visible
-        ) {
-            Button("Desconectar", role: .destructive) {
-                do {
-                    try viewModel.logoutNextFit()
-                } catch {
-                    isNextFitLogoutErrorPresented = true
-                }
-            }
-            Button("Cancelar", role: .cancel) { }
-        } message: {
-            Text("Você precisará entrar novamente para consultar o WOD do dia.")
-        }
         .alert("Não foi possível desconectar do NextFit.", isPresented: $isNextFitLogoutErrorPresented) {
             Button("OK", role: .cancel) { }
         } message: {
@@ -453,6 +437,22 @@ struct StudentDashboardView: View {
                     .buttonStyle(.plain)
                     .disabled(viewModel.isLoadingNextFitWod)
                     .accessibilityLabel("Desconectar NextFit")
+                    .confirmationDialog(
+                        "Desconectar NextFit?",
+                        isPresented: $isNextFitLogoutConfirmationPresented,
+                        titleVisibility: .visible
+                    ) {
+                        Button("Desconectar", role: .destructive) {
+                            do {
+                                try viewModel.logoutNextFit()
+                            } catch {
+                                isNextFitLogoutErrorPresented = true
+                            }
+                        }
+                        Button("Cancelar", role: .cancel) { }
+                    } message: {
+                        Text("Você precisará entrar novamente para consultar o WOD do dia.")
+                    }
                 }
             }
 
