@@ -314,6 +314,9 @@ final class StudentDashboardViewModel: ObservableObject {
         do {
             nextFitWods = try await nextFitService.loadTodayWods(sessionAccount: studentId)
             selectedNextFitModalityId = nextFitWods.first?.modalityId
+            #if DEBUG
+            print("[NextFit Debug] ViewModel recebeu \(nextFitWods.count) modalidade(s).")
+            #endif
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:

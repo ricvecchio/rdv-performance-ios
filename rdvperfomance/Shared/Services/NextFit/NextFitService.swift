@@ -100,12 +100,21 @@ struct NextFitService {
                 throw NextFitServiceError.unavailable
             }
 
+            debugLog("Endpoint diário retornou \(dailyResponse.content.count) registro(s).")
+            for wod in dailyResponse.content {
+                debugLog(
+                    "Diário - Id: \(wod.id), CodigoModalidade: \(wod.codigoModalidade), DataExec: \(wod.dataExec)"
+                )
+            }
+
             let calendar = Calendar.current
             let availableTodayWods = dailyResponse.content
                 .filter {
                     Self.dailyModalityCodes.contains($0.codigoModalidade) &&
                         isToday($0.dataExec, calendar: calendar)
                 }
+            debugLog("WOD(s) das modalidades solicitadas para hoje: \(availableTodayWods.count).")
+
             let todayWods = availableTodayWods.filter {
                 $0.codigoModalidade == Self.crossFitModalityCode
             } + availableTodayWods.filter {
@@ -113,7 +122,7 @@ struct NextFitService {
             }
 
             var displays = [NextFitWodDisplay]()
-            var displayedModalityIds = Set<Int>()
+            var displayedModalityCodes = Set<Int>()
 
             for wod in todayWods {
                 var detailsRequest = URLRequest(
@@ -125,15 +134,22 @@ struct NextFitService {
                 let detailsData = try await responseData(for: detailsRequest)
                 let detailsResponse = try JSONDecoder().decode(NextFitWodDetailsResponse.self, from: detailsData)
                 guard detailsResponse.success,
-                      let content = detailsResponse.content,
-                      let modality = content.modalidade else {
+                      let content = detailsResponse.content else {
                     throw NextFitServiceError.unavailable
                 }
 
-                let modalityName = modality.descricao.trimmingCharacters(in: .whitespacesAndNewlines)
-                guard !modalityName.isEmpty else {
-                    continue
-                }
+                let modalityId = content.modalidade?.id ?? wod.codigoModalidade
+                let apiModalityName = content.modalidade?.descricao
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let modalityName = apiModalityName.isEmpty
+                    ? "Modalidade \(modalityId)"
+                    : apiModalityName
+                debugLog(
+                    "Detalhe - Wod Id: \(wod.id), CodigoModalidade: \(wod.codigoModalidade), "
+                        + "Modalidade.Id: \(content.modalidade?.id.description ?? "ausente"), "
+                        + "Modalidade.Descricao: \(apiModalityName.isEmpty ? "ausente" : apiModalityName), "
+                        + "Atividades: \(content.wodAtividadeCross.count)."
+                )
 
                 let wodActivities = content.wodAtividadeCross
                     .sorted { $0.ordem < $1.ordem }
@@ -153,20 +169,25 @@ struct NextFitService {
                     )
                 }
 
-                guard !displayActivities.isEmpty,
-                      displayedModalityIds.insert(modality.id).inserted else {
+                guard displayedModalityCodes.insert(wod.codigoModalidade).inserted else {
+                    debugLog("Modalidade \(wod.codigoModalidade) já adicionada; WOD \(wod.id) ignorado.")
                     continue
                 }
 
                 displays.append(
                     NextFitWodDisplay(
-                        modalityId: modality.id,
+                        modalityId: modalityId,
                         modalityName: modalityName,
                         activities: displayActivities
                     )
                 )
+                debugLog(
+                    "Modalidade adicionada - Id: \(modalityId), Nome: \(modalityName), "
+                        + "Atividades exibíveis: \(displayActivities.count), Total: \(displays.count)."
+                )
             }
 
+            debugLog("Total final de modalidades entregues à ViewModel: \(displays.count).")
             return displays
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
@@ -248,11 +269,20 @@ struct NextFitService {
     private func isToday(_ value: String, calendar: Calendar) -> Bool {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "dd/MM/yyyy HH:mm:ss"
         guard let date = formatter.date(from: value) else {
+            debugLog("Não foi possível interpretar DataExec: \(value).")
             return false
         }
         return calendar.isDateInToday(date)
+    }
+
+    private func debugLog(_ message: String) {
+        #if DEBUG
+        print("[NextFit Debug] \(message)")
+        #endif
     }
 
     private func plainText(fromHTML html: String) throws -> String {
