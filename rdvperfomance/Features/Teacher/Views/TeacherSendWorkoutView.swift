@@ -792,8 +792,6 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedWorkoutsSummary: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("TREINOS SELECIONADOS")
-
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(selectedTemplatesInOrder, id: \.category) { item in
                     selectedWorkoutRow(category: item.category, template: item.template)
@@ -801,6 +799,7 @@ struct TeacherSendWorkoutView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
+            .padding(.top, 14)
             .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
