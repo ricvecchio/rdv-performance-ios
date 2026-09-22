@@ -267,10 +267,12 @@ struct TeacherSendWorkoutView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text(step == .day ? "Selecionar dia" : "Enviar treino")
-                    .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
-                    .lineLimit(1)
+                if step != .day {
+                    Text("Enviar treino")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                }
             }
 
             ToolbarItem(placement: .topBarTrailing) {
