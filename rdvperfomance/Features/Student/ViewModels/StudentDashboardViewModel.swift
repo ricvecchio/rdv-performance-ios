@@ -95,7 +95,6 @@ final class StudentDashboardViewModel: ObservableObject {
             isLoadingData = false
             isLoading = false
         }
-        async let pendingInvites: Void = loadPendingTeacherInvites()
 
         do {
             currentStudentUser = try await repository.getUser(uid: studentId)
@@ -122,6 +121,12 @@ final class StudentDashboardViewModel: ObservableObject {
             activeTeacherIds = []
         }
 
+        if teacherLinkState == .failed {
+            pendingTeacherInvites = []
+        } else {
+            await loadPendingTeacherInvites(excludingTeacherIds: activeTeacherIds)
+        }
+
         guard !activeTeacherIds.isEmpty else {
             currentWeekDaySummaries = []
             upcomingDayGroups = []
@@ -130,7 +135,6 @@ final class StudentDashboardViewModel: ObservableObject {
             } else {
                 resetNextFitWod()
             }
-            _ = await pendingInvites
             return
         }
 
@@ -168,7 +172,6 @@ final class StudentDashboardViewModel: ObservableObject {
             upcomingDayGroups = []
         }
 
-        _ = await pendingInvites
     }
 
     func authenticateNextFit(email: String, password: String) async -> Bool {
@@ -263,9 +266,9 @@ final class StudentDashboardViewModel: ObservableObject {
         }
     }
 
-    private func loadPendingTeacherInvites() async {
+    private func loadPendingTeacherInvites(excludingTeacherIds linkedTeacherIds: Set<String>) async {
         do {
-            guard let student = try await repository.getUser(uid: studentId) else {
+            guard let student = currentStudentUser else {
                 pendingTeacherInvites = []
                 return
             }
@@ -280,7 +283,11 @@ final class StudentDashboardViewModel: ObservableObject {
 
             pendingTeacherInvites = try await repository.getInvitesForStudent(studentEmail: email)
                 .filter {
-                    $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending"
+                    let status = $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
+                    let teacherId = $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return status == "pending"
+                        && !teacherId.isEmpty
+                        && !linkedTeacherIds.contains(teacherId)
                 }
         } catch {
             pendingTeacherInvites = []
