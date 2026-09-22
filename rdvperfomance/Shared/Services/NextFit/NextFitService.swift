@@ -135,22 +135,28 @@ struct NextFitService {
                     continue
                 }
 
-                let displayActivities = try content.wodAtividadeCross
+                let wodActivities = content.wodAtividadeCross
                     .filter {
                         $0.titulo
                             .trimmingCharacters(in: .whitespacesAndNewlines)
                             .caseInsensitiveCompare("WOD") == .orderedSame
                     }
                     .sorted { $0.ordem < $1.ordem }
-                    .compactMap { activity in
-                        let description = try plainText(fromHTML: activity.descricao)
-                        guard !description.isEmpty else { return nil }
-                        return NextFitWodActivityDisplay(
+
+                var displayActivities = [NextFitWodActivityDisplay]()
+                for activity in wodActivities {
+                    let description = try plainText(fromHTML: activity.descricao)
+                    guard !description.isEmpty else {
+                        continue
+                    }
+                    displayActivities.append(
+                        NextFitWodActivityDisplay(
                             title: activity.titulo,
                             description: description,
                             order: activity.ordem
                         )
-                    }
+                    )
+                }
 
                 guard !displayActivities.isEmpty,
                       displayedModalityIds.insert(modality.id).inserted else {
