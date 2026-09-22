@@ -157,7 +157,8 @@ struct RegisterTeacherView: View {
             pickerRow(
                 title: "Área de foco",
                 selection: $vm.focusArea,
-                options: FocusAreaDTO.allCases
+                options: FocusAreaDTO.allCases,
+                displayText: displayTextForFocusArea
             )
         }
         .padding(.horizontal, 16)
@@ -247,11 +248,20 @@ struct RegisterTeacherView: View {
         .padding(.top, 12)
     }
 
+    private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        switch opt {
+        case .CROSSFIT: return "Crossfit"
+        case .GYM: return "Academia"
+        case .HOME: return "Em Casa"
+        }
+    }
+
     // Renderiza picker estilizado com linha inferior
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
         selection: Binding<T>,
-        options: [T]
+        options: [T],
+        displayText: ((T) -> String)? = nil
     ) -> some View where T.RawValue == String {
         VStack(alignment: .leading, spacing: 8) {
 
@@ -261,11 +271,11 @@ struct RegisterTeacherView: View {
 
             Menu {
                 ForEach(options, id: \.rawValue) { opt in
-                    Button(opt.rawValue) { selection.wrappedValue = opt }
+                    Button(displayText?(opt) ?? opt.rawValue) { selection.wrappedValue = opt }
                 }
             } label: {
                 HStack {
-                    Text(selection.wrappedValue.rawValue)
+                    Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
                         .foregroundColor(.white.opacity(0.92))
                         .font(.system(size: 16))
 
