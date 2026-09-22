@@ -8,8 +8,12 @@ struct NextFitWodActivityDisplay: Equatable, Identifiable {
     var id: String { "\(order)-\(title)" }
 }
 
-struct NextFitWodDisplay: Equatable {
+struct NextFitWodDisplay: Equatable, Identifiable {
+    let modalityId: Int
+    let modalityName: String
     let activities: [NextFitWodActivityDisplay]
+
+    var id: Int { modalityId }
 }
 
 struct NextFitIdentificationResponse: Decodable {
@@ -97,7 +101,18 @@ struct NextFitWodDetailsResponse: Decodable {
     let success: Bool
 
     struct Content: Decodable {
+        let modalidade: Modality?
         let wodAtividadeCross: [Activity]
+
+        struct Modality: Decodable {
+            let id: Int
+            let descricao: String
+
+            enum CodingKeys: String, CodingKey {
+                case id = "Id"
+                case descricao = "Descricao"
+            }
+        }
 
         struct Activity: Decodable {
             let titulo: String
@@ -112,6 +127,7 @@ struct NextFitWodDetailsResponse: Decodable {
         }
 
         enum CodingKeys: String, CodingKey {
+            case modalidade = "Modalidade"
             case wodAtividadeCross = "WodAtividadeCross"
         }
     }

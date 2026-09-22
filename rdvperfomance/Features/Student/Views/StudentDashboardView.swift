@@ -488,6 +488,16 @@ struct StudentDashboardView: View {
                 }
                 .buttonStyle(.plain)
             } else if let wod = viewModel.nextFitWod {
+                if viewModel.nextFitWods.count > 1 {
+                    Picker("", selection: $viewModel.selectedNextFitModalityId) {
+                        ForEach(viewModel.nextFitWods) { modalityWod in
+                            Text(modalityWod.modalityName.uppercased())
+                                .tag(Optional(modalityWod.modalityId))
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
                 ForEach(wod.activities) { activity in
                     Text(activity.title)
                         .font(.system(size: 16, weight: .semibold))

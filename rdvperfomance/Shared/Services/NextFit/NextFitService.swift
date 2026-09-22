@@ -29,6 +29,7 @@ struct NextFitService {
     private static let baseURL = URL(string: "https://apiappaluno.nextfit.com.br/api")!
     private static let muralhaUnitCode = 30299
     private static let crossFitModalityCode = 262777
+    private static let dailyModalityCodes = [262777, 265536]
     private static let dailyModalities = "[262777,265536]"
 
     func authenticate(email: String, password: String, sessionAccount: String) async throws {
@@ -75,7 +76,7 @@ struct NextFitService {
         try NextFitKeychainStore.save(token: token, for: sessionAccount)
     }
 
-    func loadTodayWod(sessionAccount: String) async throws -> NextFitWodDisplay? {
+    func loadTodayWods(sessionAccount: String) async throws -> [NextFitWodDisplay] {
         guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
             throw NextFitServiceError.missingSession
         }
@@ -100,53 +101,72 @@ struct NextFitService {
             }
 
             let calendar = Calendar.current
-            guard let wod = dailyResponse.content.first(where: {
-                $0.codigoModalidade == Self.crossFitModalityCode &&
-                    isToday($0.dataExec, calendar: calendar)
-            }) else {
-                return nil
-            }
-
-            var detailsRequest = URLRequest(
-                url: Self.baseURL.appending(path: "WodCross/\(wod.id)")
-            )
-            detailsRequest.timeoutInterval = 20
-            applyAuthenticatedHeaders(to: &detailsRequest, token: token)
-
-            let detailsData = try await responseData(for: detailsRequest)
-            let detailsResponse = try JSONDecoder().decode(NextFitWodDetailsResponse.self, from: detailsData)
-            guard detailsResponse.success,
-                  let activities = detailsResponse.content?.wodAtividadeCross else {
-                throw NextFitServiceError.unavailable
-            }
-
-            let selectedActivities = activities
+            let availableTodayWods = dailyResponse.content
                 .filter {
-                    let title = $0.titulo.trimmingCharacters(in: .whitespacesAndNewlines)
-                    return ["Warm-up", "Skill", "WOD"].contains {
-                        title.caseInsensitiveCompare($0) == .orderedSame
-                    }
+                    Self.dailyModalityCodes.contains($0.codigoModalidade) &&
+                        isToday($0.dataExec, calendar: calendar)
                 }
-                .sorted { $0.ordem < $1.ordem }
+            let todayWods = availableTodayWods.filter {
+                $0.codigoModalidade == Self.crossFitModalityCode
+            } + availableTodayWods.filter {
+                $0.codigoModalidade != Self.crossFitModalityCode
+            }
 
-            var displayActivities = [NextFitWodActivityDisplay]()
-            for activity in selectedActivities {
-                let description = try plainText(fromHTML: activity.descricao)
-                guard !description.isEmpty else { continue }
-                displayActivities.append(
-                    .init(
-                        title: activity.titulo,
-                        description: description,
-                        order: activity.ordem
+            var displays = [NextFitWodDisplay]()
+            var displayedModalityIds = Set<Int>()
+
+            for wod in todayWods {
+                var detailsRequest = URLRequest(
+                    url: Self.baseURL.appending(path: "WodCross/\(wod.id)")
+                )
+                detailsRequest.timeoutInterval = 20
+                applyAuthenticatedHeaders(to: &detailsRequest, token: token)
+
+                let detailsData = try await responseData(for: detailsRequest)
+                let detailsResponse = try JSONDecoder().decode(NextFitWodDetailsResponse.self, from: detailsData)
+                guard detailsResponse.success,
+                      let content = detailsResponse.content,
+                      let modality = content.modalidade else {
+                    throw NextFitServiceError.unavailable
+                }
+
+                let modalityName = modality.descricao.trimmingCharacters(in: .whitespacesAndNewlines)
+                guard !modalityName.isEmpty else {
+                    continue
+                }
+
+                let displayActivities = try content.wodAtividadeCross
+                    .filter {
+                        $0.titulo
+                            .trimmingCharacters(in: .whitespacesAndNewlines)
+                            .caseInsensitiveCompare("WOD") == .orderedSame
+                    }
+                    .sorted { $0.ordem < $1.ordem }
+                    .compactMap { activity in
+                        let description = try plainText(fromHTML: activity.descricao)
+                        guard !description.isEmpty else { return nil }
+                        return NextFitWodActivityDisplay(
+                            title: activity.titulo,
+                            description: description,
+                            order: activity.ordem
+                        )
+                    }
+
+                guard !displayActivities.isEmpty,
+                      displayedModalityIds.insert(modality.id).inserted else {
+                    continue
+                }
+
+                displays.append(
+                    NextFitWodDisplay(
+                        modalityId: modality.id,
+                        modalityName: modalityName,
+                        activities: displayActivities
                     )
                 )
             }
 
-            guard !displayActivities.isEmpty else {
-                return nil
-            }
-
-            return NextFitWodDisplay(activities: displayActivities)
+            return displays
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession

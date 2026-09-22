@@ -56,7 +56,8 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isProcessingLinkAction = false
     @Published private(set) var isMuralhaStudent = false
     @Published private(set) var isLoadingNextFitWod = false
-    @Published private(set) var nextFitWod: NextFitWodDisplay?
+    @Published private(set) var nextFitWods: [NextFitWodDisplay] = []
+    @Published var selectedNextFitModalityId: Int?
     @Published private(set) var needsNextFitAuthentication = false
     @Published private(set) var hasNextFitSession = false
     @Published private(set) var nextFitError: String?
@@ -70,6 +71,10 @@ final class StudentDashboardViewModel: ObservableObject {
     private let nextFitService: NextFitService
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
+
+    var nextFitWod: NextFitWodDisplay? {
+        nextFitWods.first { $0.modalityId == selectedNextFitModalityId }
+    }
 
     var studentUnitName: String {
         (currentStudentUser?.unitName ?? "")
@@ -210,7 +215,8 @@ final class StudentDashboardViewModel: ObservableObject {
 
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
-        nextFitWod = nil
+        nextFitWods = []
+        selectedNextFitModalityId = nil
         nextFitError = nil
         nextFitLoginError = nil
         hasNextFitSession = false
@@ -300,12 +306,14 @@ final class StudentDashboardViewModel: ObservableObject {
         isLoadingNextFitWod = true
         hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         nextFitError = nil
-        nextFitWod = nil
+        nextFitWods = []
+        selectedNextFitModalityId = nil
         needsNextFitAuthentication = false
         defer { isLoadingNextFitWod = false }
 
         do {
-            nextFitWod = try await nextFitService.loadTodayWod(sessionAccount: studentId)
+            nextFitWods = try await nextFitService.loadTodayWods(sessionAccount: studentId)
+            selectedNextFitModalityId = nextFitWods.first?.modalityId
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -321,7 +329,8 @@ final class StudentDashboardViewModel: ObservableObject {
 
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
-        nextFitWod = nil
+        nextFitWods = []
+        selectedNextFitModalityId = nil
         hasNextFitSession = false
         needsNextFitAuthentication = false
         nextFitError = nil
