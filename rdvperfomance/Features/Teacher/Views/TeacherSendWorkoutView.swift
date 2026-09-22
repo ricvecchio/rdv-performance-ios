@@ -794,14 +794,14 @@ struct TeacherSendWorkoutView: View {
         VStack(spacing: 0) {
             cardSectionTitle("TREINOS SELECIONADOS")
 
-            VStack(alignment: .leading, spacing: 8) {
+            VStack(alignment: .leading, spacing: 6) {
                 ForEach(selectedTemplatesInOrder, id: \.category) { item in
                     selectedWorkoutRow(category: item.category, template: item.template)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
-            .padding(.bottom, 12)
+            .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
@@ -816,7 +816,7 @@ struct TeacherSendWorkoutView: View {
         category: TreinoTipo,
         template: WorkoutTemplateFS
     ) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 8) {
                 Image(systemName: categoryIcon(for: category))
                     .font(.system(size: 13))
