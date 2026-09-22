@@ -794,14 +794,14 @@ struct TeacherSendWorkoutView: View {
         VStack(spacing: 0) {
             cardSectionTitle("TREINOS SELECIONADOS")
 
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 8) {
                 ForEach(selectedTemplatesInOrder, id: \.category) { item in
                     selectedWorkoutRow(category: item.category, template: item.template)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            .padding(.bottom, 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
@@ -842,6 +842,7 @@ struct TeacherSendWorkoutView: View {
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 16)
+            .padding(.top, 14)
             .padding(.bottom, daySelectionPeriod == .upcomingWeeks ? 12 : 16)
             .disabled(isSending)
             .onChange(of: daySelectionPeriod) { _ in
