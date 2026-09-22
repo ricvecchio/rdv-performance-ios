@@ -22,12 +22,7 @@ final class TrainingRepository: FirestoreBaseRepository {
             query = query.whereField("isPublished", isEqualTo: true)
         }
         
-        let snap: QuerySnapshot
-        do {
-            snap = try await query.order(by: "createdAt", descending: false).getDocuments()
-        } catch {
-            snap = try await query.getDocuments()
-        }
+        let snap = try await query.getDocuments()
         
         let weeks = try snap.documents.compactMap { try $0.data(as: TrainingWeekFS.self) }
         

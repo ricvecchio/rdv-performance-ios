@@ -153,7 +153,13 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
         let ids = Array(
             Set(
-                weeks.map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                weeks
+                    .filter {
+                        let name = ($0.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        let email = ($0.teacherEmail ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+                        return name.isEmpty && email.isEmpty
+                    }
+                    .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
                     .filter { !$0.isEmpty }
             )
         )
