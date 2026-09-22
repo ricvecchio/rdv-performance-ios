@@ -81,12 +81,16 @@ struct NextFitDailyWodsResponse: Decodable {
     struct Wod: Decodable {
         let id: Int
         let dataExec: String
+        let descricao: String?
         let codigoModalidade: Int
+        let descricaoModalidade: String?
 
         enum CodingKeys: String, CodingKey {
             case id = "Id"
             case dataExec = "DataExec"
+            case descricao = "Descricao"
             case codigoModalidade = "CodigoModalidade"
+            case descricaoModalidade = "DescricaoModalidade"
         }
     }
 

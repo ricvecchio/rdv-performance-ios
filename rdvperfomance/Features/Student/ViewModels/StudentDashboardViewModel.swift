@@ -54,7 +54,6 @@ enum StudentDashboardTeacherLinkState: Equatable {
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
     private static let primaryNextFitModalityCode = 262777
-    private static let enduranceNextFitModalityCode = 265536
 
     @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
     @Published private(set) var upcomingDayGroups: [StudentDashboardDayGroup] = []
@@ -85,15 +84,12 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     var nextFitModalityOptions: [StudentDashboardNextFitModalityOption] {
-        [
-            .init(id: Self.primaryNextFitModalityCode, title: "WOD"),
-            .init(
-                id: Self.enduranceNextFitModalityCode,
-                title: nextFitWods.first {
-                    $0.modalityId == Self.enduranceNextFitModalityCode
-                }?.modalityName ?? "Endurance"
+        nextFitWods.map {
+            StudentDashboardNextFitModalityOption(
+                id: $0.modalityId,
+                title: $0.modalityName
             )
-        ]
+        }
     }
 
     var studentUnitName: String {

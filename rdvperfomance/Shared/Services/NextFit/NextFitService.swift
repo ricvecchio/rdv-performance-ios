@@ -29,8 +29,8 @@ struct NextFitService {
     private static let baseURL = URL(string: "https://apiappaluno.nextfit.com.br/api")!
     private static let muralhaUnitCode = 30299
     private static let crossFitModalityCode = 262777
-    private static let dailyModalityCodes = [262777, 265536]
-    private static let dailyModalities = "[262777,265536]"
+    private static let dailyModalityCodes = [262777, 265538]
+    private static let dailyModalities = "[262777,265538]"
 
     func authenticate(email: String, password: String, sessionAccount: String) async throws {
         let registration = try await recoverRegistration(email: email)
@@ -122,9 +122,14 @@ struct NextFitService {
             }
 
             var displays = [NextFitWodDisplay]()
-            var displayedModalityCodes = Set<Int>()
+            var displayedDailyModalityCodes = Set<Int>()
 
             for wod in todayWods {
+                guard displayedDailyModalityCodes.insert(wod.codigoModalidade).inserted else {
+                    debugLog("Modalidade diária \(wod.codigoModalidade) já adicionada; WOD \(wod.id) ignorado.")
+                    continue
+                }
+
                 var detailsRequest = URLRequest(
                     url: Self.baseURL.appending(path: "WodCross/\(wod.id)")
                 )
@@ -141,9 +146,11 @@ struct NextFitService {
                 let modalityId = content.modalidade?.id ?? wod.codigoModalidade
                 let apiModalityName = content.modalidade?.descricao
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                let modalityName = apiModalityName.isEmpty
-                    ? "Modalidade \(modalityId)"
-                    : apiModalityName
+                let dailyModalityName = wod.descricaoModalidade?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let modalityName = !apiModalityName.isEmpty
+                    ? apiModalityName
+                    : (!dailyModalityName.isEmpty ? dailyModalityName : "Modalidade \(modalityId)")
                 debugLog(
                     "Detalhe - Wod Id: \(wod.id), CodigoModalidade: \(wod.codigoModalidade), "
                         + "Modalidade.Id: \(content.modalidade?.id.description ?? "ausente"), "
@@ -157,9 +164,6 @@ struct NextFitService {
                 var displayActivities = [NextFitWodActivityDisplay]()
                 for activity in wodActivities {
                     let description = try plainText(fromHTML: activity.descricao)
-                    guard !description.isEmpty else {
-                        continue
-                    }
                     displayActivities.append(
                         NextFitWodActivityDisplay(
                             title: activity.titulo,
@@ -167,11 +171,6 @@ struct NextFitService {
                             order: activity.ordem
                         )
                     )
-                }
-
-                guard displayedModalityCodes.insert(wod.codigoModalidade).inserted else {
-                    debugLog("Modalidade \(wod.codigoModalidade) já adicionada; WOD \(wod.id) ignorado.")
-                    continue
                 }
 
                 displays.append(
