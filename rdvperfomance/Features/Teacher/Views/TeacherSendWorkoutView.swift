@@ -835,8 +835,6 @@ struct TeacherSendWorkoutView: View {
 
     private var daySection: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("SELECIONAR dia")
-
             Picker("", selection: $daySelectionPeriod) {
                 ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { period in
                     Text(period.title).tag(period)
