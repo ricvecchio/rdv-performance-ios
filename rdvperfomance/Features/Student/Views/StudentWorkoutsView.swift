@@ -222,7 +222,7 @@ struct StudentWorkoutsView: View {
 
     private var filterRow: some View {
         HStack(spacing: 8) {
-            filterChip(title: "Ativos", filter: .active)
+            filterChip(title: "Atuais", filter: .active)
             filterChip(title: "Próximos", filter: .upcoming)
             filterChip(title: "Concluídos", filter: .completed)
         }
