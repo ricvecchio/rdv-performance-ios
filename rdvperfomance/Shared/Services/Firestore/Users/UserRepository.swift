@@ -192,21 +192,24 @@ final class UserRepository: FirestoreBaseRepository {
         let tid = clean(teacherId)
         guard !tid.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
 
-        var q: Query = db.collection(Collections.invites)
+        let snap = try await db.collection(Collections.invites)
             .whereField("teacherId", isEqualTo: tid)
+            .getDocuments()
 
         let st = (status ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if !st.isEmpty {
-            q = q.whereField("status", isEqualTo: st)
-        }
-
-        q = q.order(by: "createdAt", descending: true)
-            .limit(to: max(1, min(limit, 200)))
-
-        let snap = try await q.getDocuments()
-        return try snap.documents.compactMap { doc in
+        let invites = try snap.documents.compactMap { doc in
             try doc.data(as: TeacherStudentInviteFS.self)
         }
+        let filtered = st.isEmpty ? invites : invites.filter {
+            $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == st
+        }
+        return Array(
+            filtered
+                .sorted {
+                    ($0.createdAt?.dateValue() ?? .distantPast) > ($1.createdAt?.dateValue() ?? .distantPast)
+                }
+                .prefix(max(1, min(limit, 200)))
+        )
     }
 
     func createTeacherInviteByEmail(
