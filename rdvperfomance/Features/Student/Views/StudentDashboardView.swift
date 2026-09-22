@@ -396,7 +396,7 @@ struct StudentDashboardView: View {
                     HStack(spacing: 10) {
                         ForEach(viewModel.currentWeekDaySummaries) { item in
                             VStack(spacing: 6) {
-                                Image(systemName: item.isCompleted ? "checkmark.circle.fill" : "circle")
+                                Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
                                     .foregroundColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35))
                                 Text(weekdayAbbreviation(for: item.date))
                                     .font(.system(size: 12, weight: .medium))
