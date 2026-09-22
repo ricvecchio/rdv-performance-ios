@@ -136,11 +136,6 @@ struct NextFitService {
                 }
 
                 let wodActivities = content.wodAtividadeCross
-                    .filter {
-                        $0.titulo
-                            .trimmingCharacters(in: .whitespacesAndNewlines)
-                            .caseInsensitiveCompare("WOD") == .orderedSame
-                    }
                     .sorted { $0.ordem < $1.ordem }
 
                 var displayActivities = [NextFitWodActivityDisplay]()
