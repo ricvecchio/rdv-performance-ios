@@ -41,8 +41,7 @@ enum PersonalRecordsPayloadMerger {
     ]
 
     private static let numericValuesKeys: Set<String> = [
-        "student_pr_barbell_values_v1",
-        "student_pr_girls_values_v1"
+        "student_pr_barbell_values_v1"
     ]
 
     private static let customPayloadConfigurations = [

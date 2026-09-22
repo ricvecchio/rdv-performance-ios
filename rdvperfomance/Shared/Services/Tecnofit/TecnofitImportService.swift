@@ -455,7 +455,7 @@ enum TecnofitPersonalRecordsMapper {
         if normalize(workoutDay) == "girls",
            let key = girlsKeys[normalize(name)],
            let value = girlsValue(record) {
-            return .init(target: .girls, storageKey: key, value: .numeric(value), source: .workoutDay)
+            return .init(target: .girls, storageKey: key, value: .text(value), source: .workoutDay)
         }
         if isOpenWorkoutDay(workoutDay),
            let key = openStorageKey(for: name),
@@ -763,18 +763,23 @@ enum TecnofitPersonalRecordsMapper {
         return format(decimal)
     }
 
-    private static func girlsValue(_ record: TecnofitRecord) -> Double? {
-        if let time = record.timeRecord?.trimmingCharacters(in: .whitespacesAndNewlines), !time.isEmpty {
-            return seconds(from: time)
-        }
+    private static func girlsValue(_ record: TecnofitRecord) -> String? {
         let type = normalize(record.resultType ?? "")
+        if type == "time" {
+            guard let time = record.timeRecord?.trimmingCharacters(in: .whitespacesAndNewlines),
+                  time.contains(":"),
+                  seconds(from: time) != nil else {
+                return nil
+            }
+            return time
+        }
         guard [
             "rep", "reps", "max rep", "max reps", "repetition", "repetitions", "max repetitions",
             "score", "round", "rounds", "cal", "cals", "calorie", "calories", "point", "points"
         ].contains(type) else {
             return nil
         }
-        return decimalValue(record)
+        return decimalValue(record).map(format)
     }
 
     private static func seconds(from value: String) -> Double? {
@@ -825,7 +830,7 @@ enum TecnofitPersonalRecordsImporter {
         for record in records {
             let currentValueExists = existing.hasValue(for: record.target, storageKey: record.storageKey)
             let currentValueNeedsImport = record.shouldImportCurrentValue &&
-                !currentValueExists &&
+                (!currentValueExists || existing.isLegacyGirlsTimeCorrection(record)) &&
                 existing.canPersistHistories(for: record)
             let historyNeedsImport = existing.hasNewHistory(for: record)
 
@@ -875,7 +880,7 @@ enum TecnofitPersonalRecordsImporter {
 
         init(defaults: UserDefaults) {
             loadNumeric(.barbell, defaults: defaults)
-            loadNumeric(.girls, defaults: defaults)
+            loadGirlsText(defaults: defaults)
             loadText(.gymnastic, defaults: defaults)
             loadText(.endurance, defaults: defaults)
             loadText(.open, defaults: defaults)
@@ -928,7 +933,7 @@ enum TecnofitPersonalRecordsImporter {
         mutating func add(_ record: TecnofitMappedPersonalRecord) -> Bool {
             var changed = false
             if record.shouldImportCurrentValue,
-               !hasValue(for: record.target, storageKey: record.storageKey),
+               (!hasValue(for: record.target, storageKey: record.storageKey) || isLegacyGirlsTimeCorrection(record)),
                canPersistHistories(for: record),
                insertCurrentValue(record) {
                 changed = true
@@ -997,9 +1002,9 @@ enum TecnofitPersonalRecordsImporter {
             for target in dirtyTargets {
                 let data: Data?
                 switch target {
-                case .barbell, .girls:
+                case .barbell:
                     data = try? JSONEncoder().encode(numeric[target] ?? [:])
-                case .gymnastic, .endurance, .open, .notables, .heroes:
+                case .girls, .gymnastic, .endurance, .open, .notables, .heroes:
                     data = try? JSONEncoder().encode(text[target] ?? [:])
                 }
                 if let data { defaults.set(data, forKey: target.valuesKey) }
@@ -1036,6 +1041,58 @@ enum TecnofitPersonalRecordsImporter {
             guard let values = try? JSONDecoder().decode([String: String].self, from: data) else { return }
             text[target] = values
             validTargets.insert(target)
+        }
+
+        private mutating func loadGirlsText(defaults: UserDefaults) {
+            let target = TecnofitPersonalRecordsTarget.girls
+            guard let data = defaults.data(forKey: target.valuesKey), !data.isEmpty else {
+                text[target] = [:]
+                validTargets.insert(target)
+                return
+            }
+            if let values = try? JSONDecoder().decode([String: String].self, from: data) {
+                text[target] = values
+                validTargets.insert(target)
+                return
+            }
+            guard let values = try? JSONDecoder().decode([String: Double].self, from: data) else { return }
+            text[target] = values.mapValues { Self.format($0) }
+            validTargets.insert(target)
+        }
+
+        func isLegacyGirlsTimeCorrection(_ record: TecnofitMappedPersonalRecord) -> Bool {
+            guard record.target == .girls,
+                  case .text(let importedValue) = record.value,
+                  importedValue.contains(":"),
+                  let importedSeconds = Self.seconds(from: importedValue),
+                  let localValue = text[.girls]?[record.storageKey],
+                  let localSeconds = Double(localValue.replacingOccurrences(of: ",", with: ".")),
+                  !localValue.contains(":") else {
+                return false
+            }
+            return abs(importedSeconds - localSeconds) < 0.000_001
+        }
+
+        private static func seconds(from value: String) -> Double? {
+            let parts = value.split(separator: ":", omittingEmptySubsequences: false)
+            guard (2...3).contains(parts.count),
+                  let seconds = Int(parts[parts.count - 1]), (0..<60).contains(seconds),
+                  let minutes = Int(parts[parts.count - 2]), (0..<60).contains(minutes) else {
+                return nil
+            }
+            if parts.count == 2 { return Double(minutes * 60 + seconds) }
+            guard let hours = Int(parts[0]), hours >= 0 else { return nil }
+            return Double(hours * 3_600 + minutes * 60 + seconds)
+        }
+
+        private static func format(_ value: Double) -> String {
+            let formatter = NumberFormatter()
+            formatter.locale = Locale(identifier: "en_US_POSIX")
+            formatter.numberStyle = .decimal
+            formatter.usesGroupingSeparator = false
+            formatter.minimumFractionDigits = 0
+            formatter.maximumFractionDigits = 6
+            return formatter.string(from: NSNumber(value: value)) ?? String(value)
         }
 
         private mutating func loadBarbellHistory(defaults: UserDefaults) {

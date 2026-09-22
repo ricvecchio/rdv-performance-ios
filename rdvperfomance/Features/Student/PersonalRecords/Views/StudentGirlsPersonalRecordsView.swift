@@ -495,8 +495,8 @@ struct StudentGirlsPersonalRecordsView: View {
         }
         .onAppear {
             // ✅ Garante carregar o score sempre que abrir pela primeira vez (igual ao Heroes)
-            if let stored = loadValue(for: wod.storageKey) {
-                inputValue = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey)) ?? formatNumber(stored)
+            if let stored = loadStoredValue(for: wod.storageKey) {
+                inputValue = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey)) ?? stored
             } else {
                 inputValue = ""
             }
@@ -567,7 +567,7 @@ struct StudentGirlsPersonalRecordsView: View {
 
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let metadata = wodDetailText(for: wod.storageKey)
-        guard let correctedValue = numericValue(trimmed, metadata: metadata), correctedValue > 0 else { return }
+        guard (numericValue(trimmed, metadata: metadata) ?? 0) > 0 else { return }
 
         let key = wod.storageKey
         var history = loadHistoryMap()
@@ -578,7 +578,7 @@ struct StudentGirlsPersonalRecordsView: View {
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
                 primaryCandidates = entries.map(\.value) + [trimmed]
                 saveHistoryValue(trimmed, for: key, date: selectedPRDate)
-                saveValue(bestNumericValue(from: primaryCandidates, metadata: metadata) ?? correctedValue, for: key)
+                saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
                 return
             }
 
@@ -596,7 +596,7 @@ struct StudentGirlsPersonalRecordsView: View {
             saveHistoryValue(trimmed, for: key, date: selectedPRDate)
         }
 
-        saveValue(bestNumericValue(from: primaryCandidates, metadata: metadata) ?? correctedValue, for: key)
+        saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
     }
 
     private func resetExistingPREditing() {
@@ -634,7 +634,7 @@ struct StudentGirlsPersonalRecordsView: View {
         let shouldSave = shouldUpdatePrimary(value, key: wod.storageKey, metadata: metadata)
         saveHistoryValue(raw, for: wod.storageKey, date: selectedPRDate)
         if shouldSave {
-            saveValue(value, for: wod.storageKey)
+            saveValue(raw, for: wod.storageKey)
         }
     }
 
@@ -811,15 +811,16 @@ struct StudentGirlsPersonalRecordsView: View {
 
     private func bestDisplayValue(for key: String, metadata: String) -> String? {
         guard let comparison = metricComparison(for: metadata) else {
-            return loadValue(for: key).map(formatNumber)
+            return loadStoredValue(for: key)
         }
         var candidates: [(String, Double)] = historyEntries(for: key).compactMap { entry in
             numericValue(entry.value, metadata: metadata).map { (entry.value, $0) }
         }
-        if let legacy = loadValue(for: key) {
-            candidates.append((formatNumber(legacy), legacy))
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            candidates.append((stored, numeric))
         }
-        guard var best = candidates.first else { return loadValue(for: key).map(formatNumber) }
+        guard var best = candidates.first else { return loadStoredValue(for: key) }
         for candidate in candidates.dropFirst() {
             if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 { best = candidate }
         }
@@ -827,16 +828,24 @@ struct StudentGirlsPersonalRecordsView: View {
     }
 
     private func bestNumericValue(for key: String, metadata: String) -> Double? {
-        guard let comparison = metricComparison(for: metadata) else { return loadValue(for: key) }
+        guard let comparison = metricComparison(for: metadata) else {
+            return loadStoredValue(for: key).flatMap { numericValue($0, metadata: metadata) }
+        }
         var values = historyEntries(for: key).compactMap { numericValue($0.value, metadata: metadata) }
-        if let legacy = loadValue(for: key) { values.append(legacy) }
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            values.append(numeric)
+        }
         return comparison == .time ? values.min() : values.max()
     }
 
     private func shouldUpdatePrimary(_ value: Double, key: String, metadata: String) -> Bool {
-        guard let comparison = metricComparison(for: metadata) else { return loadValue(for: key) == nil }
+        guard let comparison = metricComparison(for: metadata) else { return loadStoredValue(for: key) == nil }
         var values = historyEntries(for: key).compactMap { numericValue($0.value, metadata: metadata) }
-        if let legacy = loadValue(for: key) { values.append(legacy) }
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            values.append(numeric)
+        }
         guard let best = comparison == .time ? values.min() : values.max() else { return true }
         return comparison == .time ? value < best : value > best
     }
@@ -1282,16 +1291,18 @@ Jasmine (AMRAP 20 min)
 // MARK: - Persistência (JSON em Data)
 private extension StudentGirlsPersonalRecordsView {
 
-    func loadMap() -> [String: Double] {
+    func loadMap() -> [String: String] {
         guard !girlsValuesData.isEmpty else { return [:] }
-        do {
-            return try JSONDecoder().decode([String: Double].self, from: girlsValuesData)
-        } catch {
+        if let values = try? JSONDecoder().decode([String: String].self, from: girlsValuesData) {
+            return values
+        }
+        guard let legacyValues = try? JSONDecoder().decode([String: Double].self, from: girlsValuesData) else {
             return [:]
         }
+        return legacyValues.mapValues(formatNumber)
     }
 
-    func saveMap(_ map: [String: Double]) {
+    func saveMap(_ map: [String: String]) {
         do {
             girlsValuesData = try JSONEncoder().encode(map)
         } catch {
@@ -1338,12 +1349,11 @@ private extension StudentGirlsPersonalRecordsView {
         saveHistoryMap(map)
     }
 
-    func loadValue(for key: String) -> Double? {
-        let map = loadMap()
-        return map[key]
+    func loadStoredValue(for key: String) -> String? {
+        loadMap()[key]
     }
 
-    func saveValue(_ value: Double, for key: String) {
+    func saveValue(_ value: String, for key: String) {
         var map = loadMap()
         map[key] = value
         saveMap(map)
@@ -1353,5 +1363,19 @@ private extension StudentGirlsPersonalRecordsView {
         var map = loadMap()
         map.removeValue(forKey: key)
         saveMap(map)
+    }
+
+    private func bestValue(from values: [String], metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else { return values.last }
+        let candidates = values.compactMap { value in
+            numericValue(value, metadata: metadata).map { (value, $0) }
+        }
+        guard var best = candidates.first else { return values.last }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 {
+                best = candidate
+            }
+        }
+        return best.0
     }
 }
