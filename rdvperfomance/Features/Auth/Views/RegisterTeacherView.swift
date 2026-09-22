@@ -1,6 +1,5 @@
 // Tela de cadastro para usuários do tipo professor
 import SwiftUI
-import UIKit
 
 struct RegisterTeacherView: View {
 
@@ -81,18 +80,6 @@ struct RegisterTeacherView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        // ✅ Botão "Concluir" para fechar o teclado .phonePad
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Concluir") {
-                    UIApplication.shared.sendAction(
-                        #selector(UIResponder.resignFirstResponder),
-                        to: nil, from: nil, for: nil
-                    )
-                }
-            }
-        }
         .onChange(of: vm.successMessage) { _, newValue in
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
