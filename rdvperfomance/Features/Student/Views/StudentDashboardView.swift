@@ -487,27 +487,6 @@ struct StudentDashboardView: View {
                     .compactPrimaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
-            } else if let wod = viewModel.nextFitWod {
-                if viewModel.nextFitWods.count > 1 {
-                    Picker("", selection: $viewModel.selectedNextFitModalityId) {
-                        ForEach(viewModel.nextFitWods) { modalityWod in
-                            Text(modalityWod.modalityName.uppercased())
-                                .tag(Optional(modalityWod.modalityId))
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                }
-
-                ForEach(wod.activities) { activity in
-                    Text(activity.title)
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(Theme.Colors.primaryGreen)
-
-                    Text(activity.description)
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.92))
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                }
             } else if let error = viewModel.nextFitError {
                 Text(error)
                     .font(.system(size: 14))
@@ -522,9 +501,32 @@ struct StudentDashboardView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                Text("Nenhum WOD disponível para hoje.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                if viewModel.nextFitModalityOptions.count > 1 {
+                    Picker("", selection: $viewModel.selectedNextFitModalityId) {
+                        ForEach(viewModel.nextFitModalityOptions) { modality in
+                            Text(modality.title.uppercased())
+                                .tag(Optional(modality.id))
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                }
+
+                if let wod = viewModel.nextFitWod {
+                    ForEach(wod.activities) { activity in
+                        Text(activity.title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen)
+
+                        Text(activity.description)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.92))
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                } else {
+                    Text("Nenhum WOD disponível para hoje.")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.55))
+                }
             }
         }
         .padding(14)

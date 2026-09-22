@@ -17,6 +17,11 @@ struct StudentDashboardDaySummary: Identifiable {
     var id: Date { date }
 }
 
+struct StudentDashboardNextFitModalityOption: Identifiable {
+    let id: Int
+    let title: String
+}
+
 struct StudentDashboardDayGroup: Identifiable {
     let weekId: String
     let weekTitle: String
@@ -48,6 +53,9 @@ enum StudentDashboardTeacherLinkState: Equatable {
 
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
+    private static let primaryNextFitModalityCode = 262777
+    private static let enduranceNextFitModalityCode = 265536
+
     @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
     @Published private(set) var upcomingDayGroups: [StudentDashboardDayGroup] = []
     @Published private(set) var isLoading = true
@@ -74,6 +82,18 @@ final class StudentDashboardViewModel: ObservableObject {
 
     var nextFitWod: NextFitWodDisplay? {
         nextFitWods.first { $0.modalityId == selectedNextFitModalityId }
+    }
+
+    var nextFitModalityOptions: [StudentDashboardNextFitModalityOption] {
+        [
+            .init(id: Self.primaryNextFitModalityCode, title: "WOD"),
+            .init(
+                id: Self.enduranceNextFitModalityCode,
+                title: nextFitWods.first {
+                    $0.modalityId == Self.enduranceNextFitModalityCode
+                }?.modalityName ?? "Endurance"
+            )
+        ]
     }
 
     var studentUnitName: String {
@@ -313,7 +333,9 @@ final class StudentDashboardViewModel: ObservableObject {
 
         do {
             nextFitWods = try await nextFitService.loadTodayWods(sessionAccount: studentId)
-            selectedNextFitModalityId = nextFitWods.first?.modalityId
+            selectedNextFitModalityId = nextFitWods.first {
+                $0.modalityId == Self.primaryNextFitModalityCode
+            }?.modalityId ?? nextFitWods.first?.modalityId ?? nextFitModalityOptions.first?.id
             #if DEBUG
             print("[NextFit Debug] ViewModel recebeu \(nextFitWods.count) modalidade(s).")
             #endif
