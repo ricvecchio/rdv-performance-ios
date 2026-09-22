@@ -219,11 +219,8 @@ struct TeacherWorkoutTemplatesListView: View {
                 Task { await load() }
             } label: {
                 Text("Tentar novamente")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
         }

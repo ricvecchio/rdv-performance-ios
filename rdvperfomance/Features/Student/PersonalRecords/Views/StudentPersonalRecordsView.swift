@@ -1,5 +1,39 @@
 import SwiftUI
 
+enum PersonalRecordsNavigationContext {
+    case student
+    case teacher(category: TreinoTipo)
+}
+
+struct PersonalRecordsFooter: View {
+    @Binding var path: [AppRoute]
+    let navigationContext: PersonalRecordsNavigationContext
+    let studentFooterKind: FooterBar.Kind
+    let onSelectStudentSection: (StudentMainSection) -> Void
+
+    var body: some View {
+        switch navigationContext {
+        case .student:
+            FooterBar(
+                path: $path,
+                kind: studentFooterKind,
+                onSelectStudentSection: onSelectStudentSection
+            )
+        case .teacher(let category):
+            FooterBar(
+                path: $path,
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: category,
+                    isHomeSelected: false,
+                    isAlunosSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: false
+                )
+            )
+        }
+    }
+}
+
 // Tela do Aluno: Recorde Pessoal (menu de seções)
 struct StudentPersonalRecordsView: View {
 
@@ -9,10 +43,12 @@ struct StudentPersonalRecordsView: View {
     /// Sempre fornecido pelo `StudentRootView`. Usado tanto pelo rodapé
     /// quanto pelo botão `<` desta tela: como esta view é a RAIZ da seção
     /// Recordes, `path` está sempre vazio aqui — não existe nada para dar
-    /// pop. "Voltar" nesta tela sempre significa "trocar para a seção Agenda".
+    /// pop. "Voltar" nesta tela sempre significa "trocar para a seção Treinos".
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
+    @State private var isTecnofitImportPresented = false
 
     private struct PRMenuItem: Identifiable, Hashable {
         let id = UUID()
@@ -56,6 +92,8 @@ struct StudentPersonalRecordsView: View {
                             Text("Selecione uma seção.")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
+
+                            tecnofitImportButton
 
                             VStack(spacing: 12) {
                                 ForEach(menuItems) { item in
@@ -110,11 +148,13 @@ struct StudentPersonalRecordsView: View {
                     }
                 }
 
-                FooterBar(
+                PersonalRecordsFooter(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
-                        isSobreSelected: true,
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
@@ -125,6 +165,9 @@ struct StudentPersonalRecordsView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $isTecnofitImportPresented) {
+            TecnofitImportSheet()
+        }
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
@@ -181,6 +224,20 @@ struct StudentPersonalRecordsView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
+        }
+        .buttonStyle(.plain)
+    }
+
+    private var tecnofitImportButton: some View {
+        Button {
+            isTecnofitImportPresented = true
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "plus")
+                Text("Importar do Tecnofit")
+            }
+            .padding(.horizontal, 14)
+            .compactPrimaryGreenActionButton()
         }
         .buttonStyle(.plain)
     }

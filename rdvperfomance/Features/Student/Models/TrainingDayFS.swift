@@ -35,4 +35,14 @@ extension TrainingDayFS {
         }
         return "Dia \(idx)"
     }
+
+    var isVideoDay: Bool {
+        blocks.contains { block in
+            block.name.trimmingCharacters(in: .whitespacesAndNewlines)
+                .caseInsensitiveCompare("Vídeo") == .orderedSame
+                && YouTubeVideoImporter.extractYoutubeVideoId(
+                    from: block.details.trimmingCharacters(in: .whitespacesAndNewlines)
+                ) != nil
+        }
+    }
 }

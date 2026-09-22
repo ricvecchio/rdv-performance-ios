@@ -1,27 +1,22 @@
 // Tela que exibe informações sobre o aplicativo
 import SwiftUI
-import UIKit
 
 // View da tela Sobre com card de informações e funcionalidades
 struct AboutView: View {
 
     @Binding var path: [AppRoute]
-    @EnvironmentObject private var session: AppSession
 
-    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
-    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    init(
+        path: Binding<[AppRoute]>,
+        onSelectSection: @escaping (StudentMainSection) -> Void = { _ in }
+    ) {
+        _path = path
+        _ = onSelectSection
+    }
 
     private let cardMaxWidth: CGFloat = 360
     private let logoLift: CGFloat = 30
     private let cardLift: CGFloat = 26
-
-    @AppStorage("ultimoTreinoSelecionado")
-    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
-
-    // Retorna a categoria selecionada pelo professor
-    private var categoriaAtualProfessor: TreinoTipo {
-        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
-    }
 
     // Constrói a interface da tela Sobre
     var body: some View {
@@ -59,11 +54,8 @@ struct AboutView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.horizontal, 20)
                 }
-
-                footerForUser()
-                    .frame(height: Theme.Layout.footerHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Theme.Colors.footerBackground)
+                .frame(maxWidth: .infinity)
+                .frame(maxHeight: .infinity)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -97,33 +89,6 @@ struct AboutView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-    }
-
-    // Retorna o footer apropriado baseado no tipo de usuário
-    @ViewBuilder
-    private func footerForUser() -> some View {
-        if session.userType == .STUDENT {
-            FooterBar(
-                path: $path,
-                kind: .agendaSobrePerfil(
-                    isAgendaSelected: false,
-                    isSobreSelected: false, // ✅ Agora "Sobre" não existe no rodapé do aluno (virou "Recordes")
-                    isPerfilSelected: false
-                ),
-                onSelectStudentSection: onSelectSection
-            )
-        } else {
-            FooterBar(
-                path: $path,
-                kind: .teacherHomeAlunosSobrePerfil(
-                    selectedCategory: categoriaAtualProfessor,
-                    isHomeSelected: false,
-                    isAlunosSelected: false,
-                    isSobreSelected: true,
-                    isPerfilSelected: false
-                )
-            )
-        }
     }
 
     // Remove a última rota da pilha para voltar

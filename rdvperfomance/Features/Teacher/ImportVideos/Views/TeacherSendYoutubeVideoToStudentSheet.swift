@@ -290,18 +290,10 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
                     ProgressView().tint(.white)
                 } else {
                     Text("Enviar")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSending || selectedStudent == nil || selectedWeek?.id == nil)
@@ -336,12 +328,22 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         successMessage = nil
 
         guard let student = selectedStudent, let sid = student.id, !sid.isEmpty else { return }
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
 
         isLoading = true
         defer { isLoading = false }
 
         do {
-            weeks = try await FirestoreRepository.shared.getWeeksForStudent(studentId: sid, onlyPublished: false)
+            weeks = try await FirestoreRepository.shared.getWeeksForStudent(
+                studentId: sid,
+                teacherId: teacherId,
+                categoryRaw: category.rawValue,
+                onlyPublished: false
+            )
         } catch {
             errorMessage = error.localizedDescription
             weeks = []

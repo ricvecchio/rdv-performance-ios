@@ -10,6 +10,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
     @Published var errorMessage: String? = nil
 
     @Published private(set) var isUnlinking: Bool = false
+    @Published private(set) var isChangingStudentCategory: Bool = false
 
     @Published private(set) var invites: [TeacherStudentInviteFS] = []
     @Published private(set) var isInvitesLoading: Bool = false
@@ -125,13 +126,30 @@ final class TeacherStudentsListViewModel: ObservableObject {
         return studentsByCategory[filter] ?? []
     }
 
+    func linkedCategory(for studentId: String, preferred: TreinoTipo) -> TreinoTipo? {
+        let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !studentId.isEmpty else { return nil }
+
+        let categories = supportedCategories.filter { category in
+            (studentsByCategory[category] ?? []).contains {
+                ($0.id ?? "").trimmingCharacters(in: .whitespacesAndNewlines) == studentId
+            }
+        }
+        return categories.contains(preferred) ? preferred : categories.first
+    }
+
+    func linkedCategories(for studentId: String) -> [TreinoTipo] {
+        categoriesWhereStudentIsLinked(studentId: studentId)
+    }
+
     func unlinkStudent(
         teacherId: String,
         studentId: String,
         categoryToRemove: TreinoTipo?
-    ) async {
+    ) async -> Bool {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard activeTeacherId == teacherId else { return }
+        guard !teacherId.isEmpty else { return false }
+        activateTeacher(teacherId)
         let generation = teacherGeneration
         isUnlinking = true
         errorMessage = nil
@@ -157,28 +175,127 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 }
             }
         } else {
-            let catsToRemove = categoriesWhereStudentIsLinked(studentId: studentId)
-            let effective = catsToRemove.isEmpty ? supportedCategories : catsToRemove
-
-            for cat in effective {
-                let variants = categoryVariants(cat)
-                for v in variants {
-                    do {
-                        try await repository.unlinkStudentFromTeacher(
-                            teacherId: teacherId,
-                            studentId: studentId,
-                            category: v
-                        )
-                        didUnlink = true
-                    } catch {
-                        continue
-                    }
-                }
+            do {
+                try await repository.unlinkStudentCompletelyFromTeacher(
+                    teacherId: teacherId,
+                    studentId: studentId
+                )
+                didUnlink = true
+            } catch {
+                return false
             }
         }
 
-        if didUnlink, isActiveTeacher(teacherId, generation: generation) {
+        return didUnlink
+    }
+
+    func changeStudentCategory(
+        teacherId: String,
+        studentId: String,
+        currentCategory: TreinoTipo,
+        newCategory: TreinoTipo
+    ) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty, !studentId.isEmpty else {
+            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            return
+        }
+        activateTeacher(teacherId)
+        let generation = teacherGeneration
+        isChangingStudentCategory = true
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isChangingStudentCategory = false
+            }
+        }
+
+        do {
+            try await repository.changeStudentCategoryForTeacher(
+                teacherId: teacherId,
+                studentId: studentId,
+                currentCategory: currentCategory.firestoreKey,
+                newCategory: newCategory.firestoreKey
+            )
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
             await loadStudents(teacherId: teacherId, force: true)
+        } catch {
+            if isActiveTeacher(teacherId, generation: generation) {
+                setLinkError((error as NSError).localizedDescription)
+            }
+        }
+    }
+
+    func ensureStudentCategories(
+        teacherId: String,
+        studentId: String,
+        categories: [TreinoTipo]
+    ) async {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty, !studentId.isEmpty else {
+            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            return
+        }
+
+        activateTeacher(teacherId)
+        let generation = teacherGeneration
+        isChangingStudentCategory = true
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isChangingStudentCategory = false
+            }
+        }
+
+        do {
+            try await repository.ensureStudentCategoriesForTeacher(
+                teacherId: teacherId,
+                studentId: studentId,
+                categories: categories.map(\.firestoreKey)
+            )
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            await loadStudents(teacherId: teacherId, force: true)
+        } catch {
+            if isActiveTeacher(teacherId, generation: generation) {
+                setLinkError((error as NSError).localizedDescription)
+            }
+        }
+    }
+
+    func setStudentCategories(
+        teacherId: String,
+        studentId: String,
+        categories: [TreinoTipo]
+    ) async -> Bool {
+        let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty, !studentId.isEmpty, !categories.isEmpty else {
+            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            return false
+        }
+        activateTeacher(teacherId)
+        let generation = teacherGeneration
+        isChangingStudentCategory = true
+        defer {
+            if isActiveTeacher(teacherId, generation: generation) {
+                isChangingStudentCategory = false
+            }
+        }
+
+        do {
+            try await repository.setStudentCategoriesForTeacher(
+                teacherId: teacherId,
+                studentId: studentId,
+                categories: categories.map(\.firestoreKey)
+            )
+            guard isActiveTeacher(teacherId, generation: generation) else { return false }
+            await loadStudents(teacherId: teacherId, force: true)
+            return true
+        } catch {
+            if isActiveTeacher(teacherId, generation: generation) {
+                setLinkError((error as NSError).localizedDescription)
+            }
+            return false
         }
     }
 
@@ -243,12 +360,15 @@ final class TeacherStudentsListViewModel: ObservableObject {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard activeTeacherId == teacherId else { return }
         let generation = teacherGeneration
-        let email = studentEmail.trimmingCharacters(in: .whitespacesAndNewlines)
+        let email = studentEmail
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .lowercased()
         guard !email.isEmpty else {
             setInviteError("Informe o e-mail do aluno.")
             return
         }
 
+        guard !isInvitesLoading else { return }
         isInvitesLoading = true
         invitesErrorMessageInline = nil
         defer {
@@ -264,6 +384,40 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
             if teacherEmail.isEmpty {
                 setInviteError("Não foi possível identificar o e-mail do professor.")
+                return
+            }
+
+            async let groupedStudents = repository.getStudentsGroupedByTeacher(teacherId: teacherId)
+            async let sentInvites = repository.getInvitesSentByTeacher(
+                teacherId: teacherId,
+                status: "pending",
+                limit: 50
+            )
+            let (studentsByCategory, pendingInvites) = try await (groupedStudents, sentInvites)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+
+            let isStudentLinked = studentsByCategory.values
+                .flatMap { $0 }
+                .contains {
+                    $0.email
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased() == email
+                }
+            if isStudentLinked {
+                setInviteError("Esse aluno já esta vinculado.")
+                return
+            }
+
+            let hasPendingInvite = pendingInvites.contains {
+                $0.studentEmail
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+                    .lowercased() == email
+                    && $0.status
+                        .trimmingCharacters(in: .whitespacesAndNewlines)
+                        .lowercased() == "pending"
+            }
+            if hasPendingInvite {
+                setInviteError("Já existe uma solicitação pendente para esse aluno.")
                 return
             }
 
@@ -447,17 +601,16 @@ final class TeacherStudentsListViewModel: ObservableObject {
         teacherId: String,
         requestId: String,
         studentId: String,
-        category: String
-    ) async {
+        categories: [TreinoTipo]
+    ) async -> Bool {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard activeTeacherId == teacherId else { return }
+        guard activeTeacherId == teacherId else { return false }
         let generation = teacherGeneration
         let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
         let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
-        let normalizedCategory = category.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !id.isEmpty, !sid.isEmpty, !normalizedCategory.isEmpty else {
+        guard !id.isEmpty, !sid.isEmpty, !categories.isEmpty else {
             setLinkError("Não foi possível identificar a solicitação de vínculo.")
-            return
+            return false
         }
 
         isLinkRequestsLoading = true
@@ -472,20 +625,22 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 teacherId: teacherId,
                 requestId: id,
                 studentId: sid,
-                category: normalizedCategory
+                categories: categories.map(\.firestoreKey)
             )
 
-            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            guard isActiveTeacher(teacherId, generation: generation) else { return false }
             pendingLinkRequests.removeAll { $0.requestId == id }
             await loadStudents(teacherId: teacherId, force: true)
             await loadPendingLinkRequests(teacherId: teacherId, force: true)
-            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            guard isActiveTeacher(teacherId, generation: generation) else { return false }
             linkSuccessMessage = "Aluno vinculado com sucesso."
             showLinkSuccessAlert = true
+            return true
         } catch {
             if isActiveTeacher(teacherId, generation: generation) {
                 setLinkError((error as NSError).localizedDescription)
             }
+            return false
         }
     }
 
@@ -571,6 +726,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         isInvitesLoading = false
         isLinkRequestsLoading = false
         isUnlinking = false
+        isChangingStudentCategory = false
         errorMessage = nil
         invitesErrorMessageInline = nil
         linkErrorMessage = nil

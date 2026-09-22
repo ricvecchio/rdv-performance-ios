@@ -1,214 +1,178 @@
 import SwiftUI
 
 struct TeacherAddYoutubeVideoSheet: View {
-    
+
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var title: String = ""
     @State private var url: String = ""
     @State private var selectedCategory: TeacherYoutubeVideoCategory = .crossfit
     @State private var sheetMessage: String? = nil
     @State private var sheetMessageIsError: Bool = false
-    
+
     let onSave: (_ title: String, _ url: String, _ category: TeacherYoutubeVideoCategory) -> Void
-    
-    private let contentMaxWidth: CGFloat = 380
-    
+
     var body: some View {
-        NavigationStack {
-            ZStack {
-                Image("rdv_fundo")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
-                
-                VStack(spacing: 0) {
-                    Rectangle()
-                        .fill(Theme.Colors.divider)
-                        .frame(height: 1)
-                    
-                    ScrollView(showsIndicators: false) {
-                        HStack {
-                            Spacer(minLength: 0)
-                            
-                            VStack(alignment: .leading, spacing: 14) {
-                                Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.65))
-                                
-                                formCard
-                                
-                                HStack(spacing: 10) {
-                                    Button {
-                                        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
-                                        onSave(t, u, selectedCategory)
-                                        dismiss()
-                                    } label: {
-                                        HStack {
-                                            Image(systemName: "checkmark")
-                                            Text("Salvar")
-                                        }
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 10)
-                                        .background(Capsule().fill(Color.green.opacity(0.16)))
-                                    }
-                                    .buttonStyle(.plain)
-                                    .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                                    
-                                    Spacer(minLength: 0)
-                                    
-                                    Button {
-                                        handleCopyYoutubeLink()
-                                    } label: {
-                                        HStack {
-                                            Image(systemName: "doc.on.doc")
-                                            Text("Copiar link YouTube")
-                                        }
-                                        .font(.system(size: 14, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
-                                        .padding(.horizontal, 14)
-                                        .padding(.vertical, 10)
-                                        .background(Capsule().fill(Color.green.opacity(0.16)))
-                                    }
-                                    .buttonStyle(.plain)
-                                }
-                                
-                                if let msg = sheetMessage {
-                                    sheetMessageCard(text: msg, isError: sheetMessageIsError)
-                                }
-                                
-                                Color.clear.frame(height: 18)
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
+
+                        Text("Adicionar Vídeo")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
+
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
+                                .font(.system(size: 13))
+                                .foregroundColor(.white.opacity(0.45))
+
+                            formFields
+
+                            if let msg = sheetMessage {
+                                sheetMessageCard(text: msg, isError: sheetMessageIsError)
                             }
-                            .frame(maxWidth: contentMaxWidth)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 16)
-                            
-                            Spacer(minLength: 0)
                         }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
                     }
                 }
-                .ignoresSafeArea(.container, edges: [.bottom])
-            }
-            .navigationTitle("Adicionar Vídeo")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+
+                HStack(spacing: 12) {
+                    Button {
+                        handleCopyYoutubeLink()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "doc.on.doc")
+                            Text("Abrir YouTube")
+                        }
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.white.opacity(0.10))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+                        let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                        onSave(t, u, selectedCategory)
+                        dismiss()
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "checkmark")
+                            Text("Salvar")
+                        }
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
-            .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
-            .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
         }
+        .presentationDetents([.fraction(2.0 / 3.0)])
     }
     
-    private var formCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            VStack(alignment: .leading, spacing: 6) {
+    private var formFields: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Título (opcional)")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
-                    if title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text("Ex: Mobilidade de ombro")
-                            .foregroundColor(.white.opacity(0.45))
-                            .padding(.horizontal, 12)
-                    }
-                    
                     TextField("", text: $title)
                         .textInputAutocapitalization(.sentences)
                         .autocorrectionDisabled(false)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
                 }
                 .background(Color.white.opacity(0.10))
-                .cornerRadius(12)
+                .cornerRadius(14)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 )
             }
             
-            Divider().background(Theme.Colors.divider)
-            
-            VStack(alignment: .leading, spacing: 6) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Link do YouTube")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
-                    if url.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                        Text("Cole aqui o link (youtu.be / youtube.com)")
-                            .foregroundColor(.white.opacity(0.45))
-                            .padding(.horizontal, 12)
-                    }
-                    
                     TextField("", text: $url)
                         .keyboardType(.URL)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
+                        .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 12)
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
                 }
                 .background(Color.white.opacity(0.10))
-                .cornerRadius(12)
+                .cornerRadius(14)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
                 )
             }
             
-            Divider().background(Theme.Colors.divider)
-            
             VStack(alignment: .leading, spacing: 8) {
                 Text("Categoria do vídeo")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
                 
                 Picker("", selection: $selectedCategory) {
                     ForEach(TeacherYoutubeVideoCategory.allCases) { c in
-                        Text(c.rawValue).tag(c)
+                        Text(c == .treinosEmCasa ? "Em Casa" : c.rawValue).tag(c)
                     }
                 }
                 .pickerStyle(.segmented)
+                .padding(14)
+                .background(Color.white.opacity(0.10))
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
     }
     
     private func sheetMessageCard(text: String, isError: Bool) -> some View {
-        HStack(spacing: 10) {
-            Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
-                .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
-            
-            Text(text)
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.75))
-            
-            Spacer()
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-        )
+        Text(text)
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
+            .frame(maxWidth: .infinity, alignment: .leading)
     }
     
     private func handleCopyYoutubeLink() {

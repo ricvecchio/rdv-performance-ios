@@ -3,7 +3,7 @@ import SwiftUI
 /// Raiz de navegação do ALUNO.
 ///
 /// Esta view é o coração da correção arquitetural: ela é a ÚNICA dona da
-/// "seção principal" selecionada (Agenda / Recordes / Perfil) e de TRÊS
+/// "seção principal" selecionada (Treinos / Recordes / Perfil) e de TRÊS
 /// pilhas de navegação hierárquica totalmente independentes — uma por seção.
 ///
 /// Por quê:
@@ -19,24 +19,23 @@ import SwiftUI
 /// nada (porque `path.removeLast()` era um no-op quando `path` já estava
 /// vazio — Recordes SEMPRE chegava com `path = [.studentPersonalRecords]`,
 /// ou seja, `path.count == 1`; ao dar pop, o "topo" virava a raiz do
-/// NavigationStack, mas nada de fato pedia para trocar para a Agenda).
+/// NavigationStack, mas nada de fato pedia para trocar para Treinos).
 ///
 /// Como ficou:
 /// - `selectedSection` é só um enum (`StudentMainSection`), trocado por uma
 ///   simples atribuição de estado — nunca um push/pop.
-/// - `agendaPath` / `recordsPath` / `profilePath` são 3 arrays de `AppRoute`
+/// - `workoutsPath` / `recordsPath` / `profilePath` são 3 arrays de `AppRoute`
 ///   independentes, cada um dono de um `NavigationStack` próprio. Cada um
 ///   representa SOMENTE os filhos hierárquicos daquela seção (ex.:
 ///   `recordsPath = [.studentPersonalRecordsBarbell]`, nunca
 ///   `[.studentPersonalRecords, .studentPersonalRecordsBarbell]` — a própria
 ///   seção nunca aparece dentro do seu próprio path).
-/// - As 3 seções ficam sempre montadas em um `ZStack`, preservando os
-///   `@StateObject` (ex.: `StudentAgendaViewModel`) entre trocas de seção,
-///   sem introduzir uma tab bar nativa ou alterar o rodapé existente.
+/// - Somente a seção selecionada é montada. Assim, a largura intrínseca de
+///   uma aba inativa não pode alterar o viewport da tela visível.
 /// - O botão `<` da raiz de Recordes e da raiz de Perfil deixou de ser um
 ///   pop (que já não fazia sentido, pois essas telas são a RAIZ da sua
 ///   própria pilha) e passou a significar exatamente o que o produto exige:
-///   "voltar para a Agenda" == `selectedSection = .agenda`.
+///   "voltar para Treinos" == `selectedSection = .agenda`.
 struct StudentRootView: View {
 
     @EnvironmentObject private var session: AppSession
@@ -44,31 +43,31 @@ struct StudentRootView: View {
     let studentId: String
     let studentName: String
 
-    @State private var selectedSection: StudentMainSection = .agenda
+    @State private var selectedSection: StudentMainSection = .home
 
-    @State private var agendaPath: [AppRoute] = []
+    @State private var homePath: [AppRoute] = []
+    @State private var workoutsPath: [AppRoute] = []
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
+    @State private var workoutsInitialWeekId: String?
+    @State private var workoutsInitialDayId: String?
 
     var body: some View {
-        ZStack {
-            agendaTab
-                .opacity(selectedSection == .agenda ? 1 : 0)
-                .allowsHitTesting(selectedSection == .agenda)
-                .toolbar(selectedSection == .agenda ? .visible : .hidden, for: .navigationBar)
-                .zIndex(selectedSection == .agenda ? 1 : 0)
+        selectedTab
+            .environment(\.selectStudentMainSection, selectSection)
+    }
 
+    @ViewBuilder
+    private var selectedTab: some View {
+        switch selectedSection {
+        case .home:
+            homeTab
+        case .agenda:
+            workoutsTab
+        case .records:
             recordsTab
-                .opacity(selectedSection == .records ? 1 : 0)
-                .allowsHitTesting(selectedSection == .records)
-                .toolbar(selectedSection == .records ? .visible : .hidden, for: .navigationBar)
-                .zIndex(selectedSection == .records ? 1 : 0)
-
+        case .profile:
             profileTab
-                .opacity(selectedSection == .profile ? 1 : 0)
-                .allowsHitTesting(selectedSection == .profile)
-                .toolbar(selectedSection == .profile ? .visible : .hidden, for: .navigationBar)
-                .zIndex(selectedSection == .profile ? 1 : 0)
         }
     }
 
@@ -83,7 +82,8 @@ struct StudentRootView: View {
     private func selectSection(_ target: StudentMainSection) {
         let alreadyAtRoot: Bool
         switch target {
-        case .agenda: alreadyAtRoot = agendaPath.isEmpty
+        case .home: alreadyAtRoot = homePath.isEmpty
+        case .agenda: alreadyAtRoot = workoutsPath.isEmpty
         case .records: alreadyAtRoot = recordsPath.isEmpty
         case .profile: alreadyAtRoot = profilePath.isEmpty
         }
@@ -91,7 +91,8 @@ struct StudentRootView: View {
         if selectedSection == target && alreadyAtRoot { return }
 
         switch target {
-        case .agenda: agendaPath = []
+        case .home: homePath = []
+        case .agenda: workoutsPath = []
         case .records: recordsPath = []
         case .profile: profilePath = []
         }
@@ -99,38 +100,66 @@ struct StudentRootView: View {
         selectedSection = target
     }
 
-    // MARK: - Agenda
+    private func openWorkouts(weekId: String, dayId: String) {
+        workoutsPath = []
+        workoutsInitialWeekId = weekId
+        workoutsInitialDayId = dayId
+        selectedSection = .agenda
+    }
 
-    private var agendaTab: some View {
-        NavigationStack(path: $agendaPath) {
-            StudentAgendaView(
-                path: $agendaPath,
+    // MARK: - Treinos
+
+    private var homeTab: some View {
+        NavigationStack(path: $homePath) {
+            StudentDashboardView(
+                path: $homePath,
+                studentId: studentId,
+                onSelectSection: selectSection,
+                onSelectWorkout: openWorkouts
+            )
+            .navigationDestination(for: AppRoute.self) { route in
+                workoutsDestination(for: route, path: $homePath)
+            }
+        }
+    }
+
+    private var workoutsTab: some View {
+        NavigationStack(path: $workoutsPath) {
+            StudentWorkoutsView(
+                path: $workoutsPath,
                 studentId: studentId,
                 studentName: studentName,
+                initialExpandedWeekId: workoutsInitialWeekId,
+                initialExpandedDayId: workoutsInitialDayId,
+                onInitialExpansionHandled: {
+                    workoutsInitialWeekId = nil
+                    workoutsInitialDayId = nil
+                },
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in
-                agendaDestination(for: route)
+                workoutsDestination(for: route, path: $workoutsPath)
             }
         }
     }
 
     @ViewBuilder
-    private func agendaDestination(for route: AppRoute) -> some View {
+    private func workoutsDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
         switch route {
 
-        case .studentWeekDetail(let studentId, let weekId, let weekTitle):
+        case .studentWeekDetail(let studentId, let weekId, let weekTitle, let selectedDayId):
             StudentWeekDetailView(
-                path: $agendaPath,
+                path: path,
                 studentId: studentId,
                 weekId: weekId,
                 weekTitle: weekTitle,
+                initialExpandedDayId: selectedDayId,
                 onSelectSection: selectSection
             )
 
         case .studentDayDetail(let weekId, let day, let weekTitle):
             StudentDayDetailView(
-                path: $agendaPath,
+                path: path,
                 weekId: weekId,
                 day: day,
                 weekTitle: weekTitle,
@@ -138,7 +167,14 @@ struct StudentRootView: View {
             )
 
         case .arExercise(let weekId, let dayId):
-            ARExerciseView(path: $agendaPath, weekId: weekId, dayId: dayId)
+            ARExerciseView(path: path, weekId: weekId, dayId: dayId)
+
+        case .studentTeachers(let studentEmail):
+            StudentTeachersView(
+                path: path,
+                studentEmail: studentEmail,
+                onSelectSection: selectSection
+            )
 
         default:
             EmptyView()
@@ -151,6 +187,7 @@ struct StudentRootView: View {
         NavigationStack(path: $recordsPath) {
             StudentPersonalRecordsView(
                 path: $recordsPath,
+                onBack: { selectSection(.agenda) },
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in
@@ -201,7 +238,7 @@ struct StudentRootView: View {
         NavigationStack(path: $profilePath) {
             ProfileView(
                 path: $profilePath,
-                onSelectSection: selectSection
+                onBack: { selectSection(.agenda) }
             )
             .navigationDestination(for: AppRoute.self) { route in
                 profileDestination(for: route)
@@ -214,7 +251,7 @@ struct StudentRootView: View {
         switch route {
 
         case .configuracoes:
-            SettingsView(path: $profilePath, onSelectSection: selectSection)
+            SettingsView(path: $profilePath)
 
         case .editarPerfil:
             EditProfileView(path: $profilePath)
@@ -239,6 +276,13 @@ struct StudentRootView: View {
 
         case .studentFeedbacks(let category):
             StudentFeedbacksView(path: $profilePath, category: category, onSelectSection: selectSection)
+
+        case .studentTeachers(let studentEmail):
+            StudentTeachersView(
+                path: $profilePath,
+                studentEmail: studentEmail,
+                onSelectSection: selectSection
+            )
 
         default:
             EmptyView()

@@ -43,6 +43,7 @@ struct ARExerciseView: View {
                     }
                 }
 
+
                 observerTask?.cancel()
                 observerTask = Task {
                     for await _ in vm.$correctionPoints.values {
@@ -106,23 +107,19 @@ struct ARExerciseView: View {
                     VStack(alignment: .trailing, spacing: 8) {
                         Button(action: { Task { await vm.saveCorrectionPoints() } }) {
                             Text("Salvar pontos")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding(10)
-                                .background(Color.green.opacity(0.18))
-                                .cornerRadius(10)
+                                .padding(.horizontal, 10)
+                                .primaryGreenActionButton()
                         }
+                        .buttonStyle(.plain)
 
                         Button(action: {
                             // marca execução rápida — para futuro integrar com Student progress
                         }) {
                             Text("Marcar execução")
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white)
-                                .padding(10)
-                                .background(Color.green.opacity(0.18))
-                                .cornerRadius(10)
+                                .padding(.horizontal, 10)
+                                .primaryGreenActionButton()
                         }
+                        .buttonStyle(.plain)
                     }
                     .padding(.trailing, 12)
                 }
@@ -300,4 +297,3 @@ struct ARExerciseView: View {
         }
     }
 }
-

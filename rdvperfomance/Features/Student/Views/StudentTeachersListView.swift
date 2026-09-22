@@ -87,15 +87,12 @@ struct StudentTeachersListView: View {
                         inviteError = nil
                         showInviteSheet = true
                     } label: {
-                        HStack(spacing: 6) {
+                        HStack(spacing: 10) {
                             Image(systemName: "paperplane.fill")
                             Text("Convidar")
                         }
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                         .padding(.horizontal, 10)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                        .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
 
@@ -393,19 +390,13 @@ struct StudentTeachersListView: View {
                         Button {
                             Task { await sendInvite() }
                         } label: {
-                            HStack {
+                            HStack(spacing: 10) {
                                 Spacer()
                                 Image(systemName: "paperplane.fill")
-                                Text("Enviar convite").font(.system(size: 14, weight: .semibold))
+                                Text("Enviar convite")
                                 Spacer()
                             }
-                            .foregroundColor(.white.opacity(0.92))
-                            .padding(.vertical, 12)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.green.opacity(0.18)))
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.green.opacity(0.30), lineWidth: 1)
-                            )
+                            .primaryGreenActionButton()
                         }
                         .buttonStyle(.plain)
                         .disabled(teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -490,11 +481,9 @@ struct StudentTeachersListView: View {
                 .cornerRadius(14)
 
                 Button("Fechar") { selectedTeacher = nil }
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.20)))
+                    .primaryGreenActionButton()
+                    .buttonStyle(.plain)
                 Spacer()
             }
             .padding(16)

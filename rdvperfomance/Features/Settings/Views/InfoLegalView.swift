@@ -12,24 +12,22 @@ struct InfoLegalSection: Hashable {
 struct InfoLegalView: View {
 
     @Binding var path: [AppRoute]
-    @EnvironmentObject private var session: AppSession
 
     let kind: InfoLegalKind
 
-    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
-    var onSelectSection: (StudentMainSection) -> Void = { _ in }
-
     private let contentMaxWidth: CGFloat = 380
 
-    @AppStorage("ultimoTreinoSelecionado")
-    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
-
-    // Retorna a categoria atual do professor
-    private var categoriaAtualProfessor: TreinoTipo {
-        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
+    init(
+        path: Binding<[AppRoute]>,
+        kind: InfoLegalKind,
+        onSelectSection: @escaping (StudentMainSection) -> Void = { _ in }
+    ) {
+        _path = path
+        self.kind = kind
+        _ = onSelectSection
     }
 
-    // Constrói a interface com conteúdo legal e footer
+    // Constrói a interface com conteúdo legal
     var body: some View {
         ZStack {
 
@@ -65,10 +63,6 @@ struct InfoLegalView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                footerForUser()
-                    .frame(height: Theme.Layout.footerHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -102,33 +96,6 @@ struct InfoLegalView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-    }
-
-    // Retorna o footer apropriado conforme tipo de usuário
-    @ViewBuilder
-    private func footerForUser() -> some View {
-        if session.userType == .STUDENT {
-            FooterBar(
-                path: $path,
-                kind: .agendaSobrePerfil(
-                    isAgendaSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                ),
-                onSelectStudentSection: onSelectSection
-            )
-        } else {
-            FooterBar(
-                path: $path,
-                kind: .teacherHomeAlunosSobrePerfil(
-                    selectedCategory: categoriaAtualProfessor,
-                    isHomeSelected: false,
-                    isAlunosSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                )
-            )
-        }
     }
 
     // Remove a última rota da pilha de navegação

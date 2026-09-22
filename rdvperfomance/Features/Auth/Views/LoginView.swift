@@ -89,20 +89,20 @@ struct LoginView: View {
                     Task { await doLogin() }
                 } label: {
                     HStack(spacing: 10) {
+                        Spacer()
+
                         if vm.isLoading {
-                            ProgressView().tint(.white.opacity(0.9))
+                            ProgressView()
+                                .tint(.white.opacity(0.92))
                         }
+
                         Text(vm.isLoading ? "Entrando..." : "Acessar")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.9))
+
+                        Spacer()
                     }
-                    .frame(width: 260, height: 44)
-                    .background(
-                        Capsule()
-                            .fill(Color.green.opacity(0.28))
-                            .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
-                    )
-                    .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                    .frame(maxWidth: .infinity)
+                    .frame(width: 260)
+                    .primaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 22)
@@ -147,7 +147,7 @@ struct LoginView: View {
         // ✅ Ajuste mínimo: força o carregamento do perfil após login
         await session.refreshProfile()
 
-        guard session.userType != nil else {
+        guard session.isLoggedIn else {
             vm.errorMessage = "Seu perfil não foi encontrado no Firestore (users/{uid})."
             return
         }

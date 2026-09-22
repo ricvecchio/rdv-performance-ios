@@ -74,7 +74,6 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         // Keeps each document well under Firestore's 1 MiB limit after field overhead.
         static let payloadChunkByteCount = 512 * 1024
         static let chunksPerBatch = 16
-        static let documentIDsPerQuery = 30
         static let maximumChunkCount = 10_000
         static let saveAttempts = 3
     }
@@ -127,6 +126,9 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         let cleanUid = clean(uid)
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
 
+        #if DEBUG
+        print("[PersonalRecords] Loading remote records for user \(cleanUid) at users/\(cleanUid)/student_personal_records")
+        #endif
         try await retryPendingChunkCleanup(uid: cleanUid)
         return try await loadCloudState(uid: cleanUid).document
     }
@@ -198,6 +200,9 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
                 )
                 try await retryPendingChunkCleanup(uid: cleanUid)
 
+                #if DEBUG
+                print("[PersonalRecords] Remote write completed for user \(cleanUid) at users/\(cleanUid)/student_personal_records")
+                #endif
                 return StudentPersonalRecordsCloudDocument(
                     payloads: mergedPayloads,
                     customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(allTombstones)
@@ -251,14 +256,12 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
             + PersonalRecordsPayloadMerger.managedPayloadKeys
         var snapshots = [String: DocumentSnapshot]()
 
-        for chunk in documentIDs.chunked(into: Limits.documentIDsPerQuery) {
+        for documentID in documentIDs {
             try Task.checkCancellation()
-            let result = try await personalRecordsCollection(for: uid)
-                .whereField(FieldPath.documentID(), in: chunk)
-                .getDocuments()
-            for snapshot in result.documents {
-                snapshots[snapshot.documentID] = snapshot
-            }
+            let snapshot = try await personalRecordsCollection(for: uid)
+                .document(documentID)
+                .getDocument(source: .server)
+            snapshots[documentID] = snapshot
         }
 
         return snapshots
@@ -286,12 +289,14 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         guard !documentIDs.isEmpty else { return [] }
 
         var snapshots = [DocumentSnapshot]()
-        for chunk in documentIDs.chunked(into: Limits.documentIDsPerQuery) {
+        for documentID in documentIDs {
             try Task.checkCancellation()
-            let result = try await personalRecordsCollection(for: uid)
-                .whereField(FieldPath.documentID(), in: chunk)
-                .getDocuments()
-            snapshots.append(contentsOf: result.documents)
+            let snapshot = try await personalRecordsCollection(for: uid)
+                .document(documentID)
+                .getDocument(source: .server)
+            if snapshot.exists {
+                snapshots.append(snapshot)
+            }
         }
 
         return snapshots
@@ -353,11 +358,13 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
             ? StudentPersonalRecordsCloudDocument(
                 payloads: mergedPayloads,
                 customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(tombstones),
-                requiresMigration: legacy != nil && (
-                    decodedMetadata?.legacyV1Migrated != true
-                        || mergedPayloads != partitionedMergedPayloads
-                        || tombstones != partitionedTombstones.mapValues { Set($0) }
-                )
+                requiresMigration: (
+                    legacy != nil && (
+                        decodedMetadata?.legacyV1Migrated != true
+                            || mergedPayloads != partitionedMergedPayloads
+                            || tombstones != partitionedTombstones.mapValues { Set($0) }
+                    )
+                ) || partitionedPayloads != partitionedMergedPayloads
             )
             : nil
 

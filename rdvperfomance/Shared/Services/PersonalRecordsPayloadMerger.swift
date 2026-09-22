@@ -19,23 +19,29 @@ enum PersonalRecordsPayloadMerger {
         "student_pr_gymnastic_custom_items_v1",
         "student_pr_endurance_values_v1",
         "student_pr_endurance_history_v1",
+        "student_pr_endurance_custom_items_v1",
         "student_pr_notables_values_v1",
         "student_pr_notables_history_v1",
+        "student_pr_notables_custom_items_v1",
         "student_pr_girls_values_v1",
         "student_pr_girls_history_v1",
+        "student_pr_girls_custom_items_v1",
         "student_pr_open_values_v1",
         "student_pr_open_history_v1",
+        "student_pr_open_custom_items_v1",
         "student_pr_heroes_values_v1",
         "student_pr_heroes_history_v1",
+        "student_pr_heroes_custom_items_v1",
         "student_pr_campeonatos_values_v1",
         "student_pr_campeonatos_history_v1",
+        "student_pr_campeonatos_custom_items_v1",
         "student_pr_crossfit_games_values_v1",
-        "student_pr_crossfit_games_history_v1"
+        "student_pr_crossfit_games_history_v1",
+        "student_pr_crossfit_games_custom_items_v1"
     ]
 
     private static let numericValuesKeys: Set<String> = [
-        "student_pr_barbell_values_v1",
-        "student_pr_girls_values_v1"
+        "student_pr_barbell_values_v1"
     ]
 
     private static let customPayloadConfigurations = [
@@ -48,6 +54,41 @@ enum PersonalRecordsPayloadMerger {
             customKey: "student_pr_gymnastic_custom_items_v1",
             valuesKey: "student_pr_gymnastic_values_v1",
             historyKey: "student_pr_gymnastic_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_endurance_custom_items_v1",
+            valuesKey: "student_pr_endurance_values_v1",
+            historyKey: "student_pr_endurance_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_notables_custom_items_v1",
+            valuesKey: "student_pr_notables_values_v1",
+            historyKey: "student_pr_notables_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_girls_custom_items_v1",
+            valuesKey: "student_pr_girls_values_v1",
+            historyKey: "student_pr_girls_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_open_custom_items_v1",
+            valuesKey: "student_pr_open_values_v1",
+            historyKey: "student_pr_open_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_heroes_custom_items_v1",
+            valuesKey: "student_pr_heroes_values_v1",
+            historyKey: "student_pr_heroes_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_campeonatos_custom_items_v1",
+            valuesKey: "student_pr_campeonatos_values_v1",
+            historyKey: "student_pr_campeonatos_history_v1"
+        ),
+        CustomPayloadConfiguration(
+            customKey: "student_pr_crossfit_games_custom_items_v1",
+            valuesKey: "student_pr_crossfit_games_values_v1",
+            historyKey: "student_pr_crossfit_games_history_v1"
         )
     ]
 
@@ -73,7 +114,9 @@ enum PersonalRecordsPayloadMerger {
             }
         }
 
-        return applying(tombstones: tombstones, to: merged)
+        return reconcilingBarbellCurrentValues(
+            in: applying(tombstones: tombstones, to: merged)
+        )
     }
 
     static func mergePayload(key: String, local: Data, remote: Data) -> Data {
@@ -240,6 +283,40 @@ enum PersonalRecordsPayloadMerger {
             }
         }
         return result
+    }
+
+    private static func reconcilingBarbellCurrentValues(in snapshot: Snapshot) -> Snapshot {
+        let valuesKey = "student_pr_barbell_values_v1"
+        let historyKey = "student_pr_barbell_history_v1"
+
+        guard var values = snapshot[valuesKey].flatMap(jsonObject) as? [String: Any],
+              let history = snapshot[historyKey].flatMap(historyMap)
+        else {
+            return snapshot
+        }
+
+        var didUpdateValues = false
+        for (key, entries) in history {
+            guard let latestEntry = entries.sorted(by: historyEntryComesBefore).last,
+                  let entry = latestEntry as? [String: Any],
+                  let valueKg = entry["valueKg"].flatMap(finiteNumber)
+            else {
+                continue
+            }
+
+            if finiteNumber(values[key]) != valueKg {
+                values[key] = valueKg
+                didUpdateValues = true
+            }
+        }
+
+        guard didUpdateValues, let data = jsonData(from: values) else {
+            return snapshot
+        }
+
+        var reconciled = snapshot
+        reconciled[valuesKey] = data
+        return reconciled
     }
 
     private static func customStorageKeys(from data: Data) -> Set<String> {

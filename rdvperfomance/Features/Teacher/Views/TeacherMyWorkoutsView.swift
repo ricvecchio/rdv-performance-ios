@@ -4,6 +4,7 @@ struct TeacherMyWorkoutsView: View {
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    let mode: TeacherWorkoutsMode
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -33,7 +34,16 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos Crossfit",
                             badgeIcon: "figure.strengthtraining.traditional"
                         ) {
-                            path.append(.teacherCrossfitLibrary(section: .benchmarks))
+                            switch mode {
+                            case .library:
+                                path.append(.teacherCrossfitLibrary(section: .benchmarks, mode: mode))
+                            case .create:
+                                path.append(.createCrossfitWOD(
+                                    category: .crossfit,
+                                    sectionKey: "meusTreinos",
+                                    sectionTitle: "Meus Treinos"
+                                ))
+                            }
                         }
 
                         programaTile(
@@ -42,7 +52,16 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos Academia",
                             badgeIcon: "dumbbell"
                         ) {
-                            path.append(.teacherAcademiaLibrary)
+                            switch mode {
+                            case .library:
+                                path.append(.teacherAcademiaLibrary(mode: mode))
+                            case .create:
+                                path.append(.createTreinoAcademia(
+                                    category: .academia,
+                                    sectionKey: "meusTreinos",
+                                    sectionTitle: "Meus Treinos"
+                                ))
+                            }
                         }
 
                         programaTile(
@@ -51,7 +70,16 @@ struct TeacherMyWorkoutsView: View {
                             badgeText: "Treinos em Casa",
                             badgeIcon: "house.fill"
                         ) {
-                            path.append(.teacherEmCasaLibrary)
+                            switch mode {
+                            case .library:
+                                path.append(.teacherEmCasaLibrary(mode: mode))
+                            case .create:
+                                path.append(.createTreinoCasa(
+                                    category: .emCasa,
+                                    sectionKey: "meusTreinos",
+                                    sectionTitle: "Meus Treinos"
+                                ))
+                            }
                         }
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)

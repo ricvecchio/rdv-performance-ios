@@ -8,6 +8,7 @@ struct StudentGirlsPersonalRecordsView: View {
 
     /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -17,6 +18,13 @@ struct StudentGirlsPersonalRecordsView: View {
         let storageKey: String
     }
 
+
+    private struct CustomGirlWOD: Identifiable, Hashable, Codable {
+        let id: String
+        let name: String
+        let storageKey: String
+        let description: String
+    }
 
     private struct PRHistoryEntry: Identifiable, Codable, Hashable {
         let id: String
@@ -81,6 +89,9 @@ struct StudentGirlsPersonalRecordsView: View {
     @AppStorage("student_pr_girls_history_v1")
     private var girlsHistoryData: Data = Data()
 
+    @AppStorage("student_pr_girls_custom_items_v1")
+    private var customGirlsItemsData: Data = Data()
+
     // ✅ Correção: usar o próprio item como gatilho da sheet (igual ao Heroes)
     @State private var selectedWod: GirlWOD? = nil
     @State private var inputValue: String = ""
@@ -89,6 +100,21 @@ struct StudentGirlsPersonalRecordsView: View {
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+
+    @State private var showAddItemSheet: Bool = false
+    @State private var newItemName: String = ""
+    @State private var newItemDescription: String = ""
+    @State private var newItemValue: String = ""
+    @State private var addItemErrorMessage: String? = nil
+    @State private var showDeleteAlert: Bool = false
+
+    private var allWods: [GirlWOD] {
+        wods + loadCustomItems().map { GirlWOD(name: $0.name, storageKey: $0.storageKey) }
+    }
+
+    private var canDeleteSelectedItem: Bool {
+        selectedWod?.storageKey.hasPrefix("custom_girls_") == true
+    }
 
     var body: some View {
         ZStack {
@@ -110,9 +136,27 @@ struct StudentGirlsPersonalRecordsView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Adicione seu melhor resultado por treino.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
+                            HStack(alignment: .center, spacing: 10) {
+                                Text("Adicione seu melhor resultado por treino.")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.55))
+
+                                Spacer()
+
+                                Button {
+                                    addItemErrorMessage = nil
+                                    newItemName = ""
+                                    newItemDescription = ""
+                                    newItemValue = ""
+                                    showAddItemSheet = true
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Adicionar novo WOD")
+                            }
 
                             tableContainer()
 
@@ -126,11 +170,13 @@ struct StudentGirlsPersonalRecordsView: View {
                     }
                 }
 
-                FooterBar(
+                PersonalRecordsFooter(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
-                        isSobreSelected: true,
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
@@ -140,7 +186,7 @@ struct StudentGirlsPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: (selectedWod != nil || historyWod != nil || showPRDatePicker) ? 4 : 0)
+        .blur(radius: (selectedWod != nil || historyWod != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -176,6 +222,9 @@ struct StudentGirlsPersonalRecordsView: View {
         }) { wod in
             editSheet(for: wod)
         }
+        .sheet(isPresented: $showAddItemSheet) {
+            addItemSheet()
+        }
     }
 
     // MARK: - Tabela
@@ -189,7 +238,7 @@ struct StudentGirlsPersonalRecordsView: View {
                 .frame(height: 1)
 
             // ✅ Se não existir treino relacionado (texto vazio), remove o item da lista
-            let list = wods.filter { !wodDetailText(for: $0.storageKey).isEmpty }
+            let list = wods.filter { !wodDetailText(for: $0.storageKey).isEmpty } + loadCustomItems().map { GirlWOD(name: $0.name, storageKey: $0.storageKey) }
 
             ForEach(Array(list.enumerated()), id: \.element.id) { index, wod in
 
@@ -368,12 +417,8 @@ struct StudentGirlsPersonalRecordsView: View {
                                         .environment(\.locale, Locale(identifier: "pt_BR"))
                                     Button { showPRDatePicker = false } label: {
                                         Text("Confirmar")
-                                            .font(.system(size: 15, weight: .bold))
-                                            .foregroundColor(.black.opacity(0.85))
                                             .frame(maxWidth: .infinity)
-                                            .padding(.vertical, 14)
-                                            .background(Color.green.opacity(0.90))
-                                            .cornerRadius(14)
+                                            .primaryGreenActionButton()
                                     }
                                     .buttonStyle(.plain)
                                 }
@@ -414,14 +459,25 @@ struct StudentGirlsPersonalRecordsView: View {
                         selectedWod = nil
                     } label: {
                         Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
+
+                    if canDeleteSelectedItem {
+                        Button {
+                            showDeleteAlert = true
+                        } label: {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16, weight: .bold))
+                                .frame(width: 50, height: 50)
+                                .background(Color.red.opacity(0.85))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Excluir WOD")
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
@@ -429,10 +485,18 @@ struct StudentGirlsPersonalRecordsView: View {
             }
         }
         .presentationDetents([.fraction(0.80)])
+        .alert("Excluir registro", isPresented: $showDeleteAlert) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Excluir", role: .destructive) {
+                deleteSelectedItem()
+            }
+        } message: {
+            Text("Deseja excluir o registro de \(selectedWod?.name ?? "este WOD")?")
+        }
         .onAppear {
             // ✅ Garante carregar o score sempre que abrir pela primeira vez (igual ao Heroes)
-            if let stored = loadValue(for: wod.storageKey) {
-                inputValue = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey)) ?? formatNumber(stored)
+            if let stored = loadStoredValue(for: wod.storageKey) {
+                inputValue = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey)) ?? stored
             } else {
                 inputValue = ""
             }
@@ -503,7 +567,7 @@ struct StudentGirlsPersonalRecordsView: View {
 
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         let metadata = wodDetailText(for: wod.storageKey)
-        guard let correctedValue = numericValue(trimmed, metadata: metadata), correctedValue > 0 else { return }
+        guard (numericValue(trimmed, metadata: metadata) ?? 0) > 0 else { return }
 
         let key = wod.storageKey
         var history = loadHistoryMap()
@@ -513,7 +577,8 @@ struct StudentGirlsPersonalRecordsView: View {
             var entries = history[key, default: []]
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
                 primaryCandidates = entries.map(\.value) + [trimmed]
-                saveValue(bestNumericValue(from: primaryCandidates, metadata: metadata) ?? correctedValue, for: key)
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
+                saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
                 return
             }
 
@@ -528,9 +593,10 @@ struct StudentGirlsPersonalRecordsView: View {
             primaryCandidates = entries.map(\.value)
         } else {
             primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
         }
 
-        saveValue(bestNumericValue(from: primaryCandidates, metadata: metadata) ?? correctedValue, for: key)
+        saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
     }
 
     private func resetExistingPREditing() {
@@ -568,7 +634,7 @@ struct StudentGirlsPersonalRecordsView: View {
         let shouldSave = shouldUpdatePrimary(value, key: wod.storageKey, metadata: metadata)
         saveHistoryValue(raw, for: wod.storageKey, date: selectedPRDate)
         if shouldSave {
-            saveValue(value, for: wod.storageKey)
+            saveValue(raw, for: wod.storageKey)
         }
     }
 
@@ -745,15 +811,16 @@ struct StudentGirlsPersonalRecordsView: View {
 
     private func bestDisplayValue(for key: String, metadata: String) -> String? {
         guard let comparison = metricComparison(for: metadata) else {
-            return loadValue(for: key).map(formatNumber)
+            return loadStoredValue(for: key)
         }
         var candidates: [(String, Double)] = historyEntries(for: key).compactMap { entry in
             numericValue(entry.value, metadata: metadata).map { (entry.value, $0) }
         }
-        if let legacy = loadValue(for: key) {
-            candidates.append((formatNumber(legacy), legacy))
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            candidates.append((stored, numeric))
         }
-        guard var best = candidates.first else { return loadValue(for: key).map(formatNumber) }
+        guard var best = candidates.first else { return loadStoredValue(for: key) }
         for candidate in candidates.dropFirst() {
             if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 { best = candidate }
         }
@@ -761,16 +828,24 @@ struct StudentGirlsPersonalRecordsView: View {
     }
 
     private func bestNumericValue(for key: String, metadata: String) -> Double? {
-        guard let comparison = metricComparison(for: metadata) else { return loadValue(for: key) }
+        guard let comparison = metricComparison(for: metadata) else {
+            return loadStoredValue(for: key).flatMap { numericValue($0, metadata: metadata) }
+        }
         var values = historyEntries(for: key).compactMap { numericValue($0.value, metadata: metadata) }
-        if let legacy = loadValue(for: key) { values.append(legacy) }
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            values.append(numeric)
+        }
         return comparison == .time ? values.min() : values.max()
     }
 
     private func shouldUpdatePrimary(_ value: Double, key: String, metadata: String) -> Bool {
-        guard let comparison = metricComparison(for: metadata) else { return loadValue(for: key) == nil }
+        guard let comparison = metricComparison(for: metadata) else { return loadStoredValue(for: key) == nil }
         var values = historyEntries(for: key).compactMap { numericValue($0.value, metadata: metadata) }
-        if let legacy = loadValue(for: key) { values.append(legacy) }
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            values.append(numeric)
+        }
         guard let best = comparison == .time ? values.min() : values.max() else { return true }
         return comparison == .time ? value < best : value > best
     }
@@ -782,6 +857,10 @@ struct StudentGirlsPersonalRecordsView: View {
 
     // MARK: - WOD Details (texto fixo por registro)
     private func wodDetailText(for key: String) -> String {
+        if let custom = loadCustomItems().first(where: { $0.storageKey == key }) {
+            return custom.description
+        }
+
         switch key {
 
         case "girls_amanda":
@@ -1064,21 +1143,166 @@ Jasmine (AMRAP 20 min)
             return ""
         }
     }
+    private func addItemSheet() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .padding(.top, 10)
+
+                    Text("Novo WOD Girls")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+
+                    Text("Crie um WOD e, se quiser, já informe seu resultado inicial.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                    addItemField("Nome do WOD", placeholder: "Ex: Meu benchmark", text: $newItemName)
+
+                    addItemField("Descrição (opcional)", placeholder: "Ex: For Time — 21-15-9", text: $newItemDescription)
+
+                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 150", text: $newItemValue)
+
+                        if let message = addItemErrorMessage {
+                            Text(message)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            showAddItemSheet = false
+                        } label: {
+                            Text("Cancelar")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            addNewItem()
+                        } label: {
+                            Text("Adicionar")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 24)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
+            TextField(placeholder, text: text)
+                .textInputAutocapitalization(.sentences)
+                .autocorrectionDisabled(true)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+    }
+
+    private func addNewItem() {
+        addItemErrorMessage = nil
+        let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else {
+            addItemErrorMessage = "Informe o nome do WOD."
+            return
+        }
+
+        let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        guard !existingNames.contains(cleanName.lowercased()) else {
+            addItemErrorMessage = "Este WOD já existe na sua lista."
+            return
+        }
+
+        let id = UUID().uuidString
+        let key = "custom_girls_\(id)"
+        let customItem = CustomGirlWOD(id: id, name: cleanName, storageKey: key, description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        var list = loadCustomItems()
+        list.append(customItem)
+        saveCustomItems(list)
+
+        let item = GirlWOD(name: customItem.name, storageKey: customItem.storageKey)
+        let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedValue.isEmpty {
+            inputValue = trimmedValue
+            saveCurrentInput(for: item)
+        }
+        showAddItemSheet = false
+    }
+
+    private func deleteSelectedItem() {
+        guard let item = selectedWod, item.storageKey.hasPrefix("custom_girls_") else { return }
+        removeValue(for: item.storageKey)
+        removeHistory(for: item.storageKey)
+        var list = loadCustomItems()
+        list.removeAll { $0.storageKey == item.storageKey }
+        saveCustomItems(list)
+        selectedWod = nil
+    }
+
+    private func loadCustomItems() -> [CustomGirlWOD] {
+        guard !customGirlsItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomGirlWOD].self, from: customGirlsItemsData)) ?? []
+    }
+
+    private func saveCustomItems(_ list: [CustomGirlWOD]) {
+        customGirlsItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
 }
 
 // MARK: - Persistência (JSON em Data)
 private extension StudentGirlsPersonalRecordsView {
 
-    func loadMap() -> [String: Double] {
+    func loadMap() -> [String: String] {
         guard !girlsValuesData.isEmpty else { return [:] }
-        do {
-            return try JSONDecoder().decode([String: Double].self, from: girlsValuesData)
-        } catch {
+        if let values = try? JSONDecoder().decode([String: String].self, from: girlsValuesData) {
+            return values
+        }
+        guard let legacyValues = try? JSONDecoder().decode([String: Double].self, from: girlsValuesData) else {
             return [:]
         }
+        return legacyValues.mapValues(formatNumber)
     }
 
-    func saveMap(_ map: [String: Double]) {
+    func saveMap(_ map: [String: String]) {
         do {
             girlsValuesData = try JSONEncoder().encode(map)
         } catch {
@@ -1125,12 +1349,11 @@ private extension StudentGirlsPersonalRecordsView {
         saveHistoryMap(map)
     }
 
-    func loadValue(for key: String) -> Double? {
-        let map = loadMap()
-        return map[key]
+    func loadStoredValue(for key: String) -> String? {
+        loadMap()[key]
     }
 
-    func saveValue(_ value: Double, for key: String) {
+    func saveValue(_ value: String, for key: String) {
         var map = loadMap()
         map[key] = value
         saveMap(map)
@@ -1140,5 +1363,19 @@ private extension StudentGirlsPersonalRecordsView {
         var map = loadMap()
         map.removeValue(forKey: key)
         saveMap(map)
+    }
+
+    private func bestValue(from values: [String], metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else { return values.last }
+        let candidates = values.compactMap { value in
+            numericValue(value, metadata: metadata).map { (value, $0) }
+        }
+        guard var best = candidates.first else { return values.last }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 {
+                best = candidate
+            }
+        }
+        return best.0
     }
 }

@@ -6,6 +6,7 @@ import os.log
 
 extension Notification.Name {
     static let workoutTemplateUpdated = Notification.Name("workoutTemplateUpdated")
+    static let workoutTemplateSelectedForAttachment = Notification.Name("workoutTemplateSelectedForAttachment")
 }
 
 struct TeacherWorkoutTemplatesView: View {
@@ -14,6 +15,7 @@ struct TeacherWorkoutTemplatesView: View {
     let category: TreinoTipo
     let sectionKey: String
     let sectionTitle: String
+    let mode: TeacherWorkoutTemplatesMode
 
     @State private var templates: [WorkoutTemplateFS] = []
     @State private var isLoading: Bool = true
@@ -38,6 +40,8 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private var shouldShowAddButton: Bool {
+        guard mode == .manage else { return false }
+
         // ✅ Crossfit sempre mostra
         if isCrossfitCategory { return true }
 
@@ -120,8 +124,13 @@ struct TeacherWorkoutTemplatesView: View {
                                 hasLoadedInitialData: hasLoadedInitialData,
                                 templates: templates,
                                 isCrossfitCategory: isCrossfitCategory,
+                                showsTemplateActions: mode == .manage,
                                 onTapTemplate: { t in
-                                    activeSheet = .detail(t)
+                                    if mode == .attach {
+                                        selectTemplateForAttachment(t)
+                                    } else {
+                                        activeSheet = .detail(t)
+                                    }
                                 },
                                 onSendTemplate: { t in
                                     activeSheet = .send(t)
@@ -352,6 +361,12 @@ struct TeacherWorkoutTemplatesView: View {
         } catch {
             errorMessage = "Falha ao remover o treino: \(error.localizedDescription)"
         }
+    }
+
+    private func selectTemplateForAttachment(_ template: WorkoutTemplateFS) {
+        NotificationCenter.default.post(name: .workoutTemplateSelectedForAttachment, object: template)
+        guard path.count >= 2 else { return }
+        path.removeLast(2)
     }
 
     private func pop() {

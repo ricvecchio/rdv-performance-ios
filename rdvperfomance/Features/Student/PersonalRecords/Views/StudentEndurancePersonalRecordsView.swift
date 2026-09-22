@@ -8,6 +8,7 @@ struct StudentEndurancePersonalRecordsView: View {
 
     /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -17,6 +18,12 @@ struct StudentEndurancePersonalRecordsView: View {
         let storageKey: String
     }
 
+
+    private struct CustomEnduranceMove: Identifiable, Hashable, Codable {
+        let id: String
+        let name: String
+        let storageKey: String
+    }
 
     private struct PRHistoryEntry: Identifiable, Codable, Hashable {
         let id: String
@@ -70,6 +77,9 @@ struct StudentEndurancePersonalRecordsView: View {
     @AppStorage("student_pr_endurance_history_v1")
     private var enduranceHistoryData: Data = Data()
 
+    @AppStorage("student_pr_endurance_custom_items_v1")
+    private var customEnduranceItemsData: Data = Data()
+
     @State private var selectedMove: EnduranceMove?
     @State private var inputValue: String = ""
     @State private var historyMove: EnduranceMove?
@@ -77,6 +87,20 @@ struct StudentEndurancePersonalRecordsView: View {
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+
+    @State private var showAddItemSheet: Bool = false
+    @State private var newItemName: String = ""
+    @State private var newItemValue: String = ""
+    @State private var addItemErrorMessage: String? = nil
+    @State private var showDeleteAlert: Bool = false
+
+    private var allMoves: [EnduranceMove] {
+        moves + loadCustomItems().map { EnduranceMove(name: $0.name, storageKey: $0.storageKey) }
+    }
+
+    private var canDeleteSelectedItem: Bool {
+        selectedMove?.storageKey.hasPrefix("custom_endurance_") == true
+    }
 
     var body: some View {
         ZStack {
@@ -98,9 +122,26 @@ struct StudentEndurancePersonalRecordsView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Adicione seu melhor resultado por item.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
+                            HStack(alignment: .center, spacing: 10) {
+                                Text("Adicione seu melhor resultado por item.")
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.55))
+
+                                Spacer()
+
+                                Button {
+                                    addItemErrorMessage = nil
+                                    newItemName = ""
+                                    newItemValue = ""
+                                    showAddItemSheet = true
+                                } label: {
+                                    Image(systemName: "plus.circle.fill")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .font(.system(size: 18, weight: .semibold))
+                                }
+                                .buttonStyle(.plain)
+                                .accessibilityLabel("Adicionar novo item")
+                            }
 
                             tableContainer()
 
@@ -114,11 +155,13 @@ struct StudentEndurancePersonalRecordsView: View {
                     }
                 }
 
-                FooterBar(
+                PersonalRecordsFooter(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
-                        isSobreSelected: true,
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
@@ -128,7 +171,7 @@ struct StudentEndurancePersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: (selectedMove != nil || historyMove != nil || showPRDatePicker) ? 4 : 0)
+        .blur(radius: (selectedMove != nil || historyMove != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -164,6 +207,9 @@ struct StudentEndurancePersonalRecordsView: View {
         }) { move in
             editSheet(move: move)
         }
+        .sheet(isPresented: $showAddItemSheet) {
+            addItemSheet()
+        }
     }
 
     // MARK: - Tabela
@@ -176,7 +222,7 @@ struct StudentEndurancePersonalRecordsView: View {
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
 
-            let list = moves
+            let list = allMoves
 
             ForEach(Array(list.enumerated()), id: \.element.id) { index, move in
 
@@ -343,12 +389,8 @@ struct StudentEndurancePersonalRecordsView: View {
                                 .environment(\.locale, Locale(identifier: "pt_BR"))
                             Button { showPRDatePicker = false } label: {
                                 Text("Confirmar")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.black.opacity(0.85))
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.green.opacity(0.90))
-                                    .cornerRadius(14)
+                                    .primaryGreenActionButton()
                             }
                             .buttonStyle(.plain)
                         }
@@ -387,14 +429,25 @@ struct StudentEndurancePersonalRecordsView: View {
                         selectedMove = nil
                     } label: {
                         Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
+
+                    if canDeleteSelectedItem {
+                        Button {
+                            showDeleteAlert = true
+                        } label: {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16, weight: .bold))
+                                .frame(width: 50, height: 50)
+                                .background(Color.red.opacity(0.85))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Excluir item")
+                    }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
@@ -403,6 +456,14 @@ struct StudentEndurancePersonalRecordsView: View {
             }
         }
         .presentationDetents([.fraction(0.75)])
+        .alert("Excluir registro", isPresented: $showDeleteAlert) {
+            Button("Cancelar", role: .cancel) { }
+            Button("Excluir", role: .destructive) {
+                deleteSelectedItem()
+            }
+        } message: {
+            Text("Deseja excluir o registro de \(selectedMove?.name ?? "este item")?")
+        }
         .onAppear {
             inputValue = bestDisplayValue(for: move.storageKey, metadata: move.name) ?? ""
             selectedPRDate = Date()
@@ -441,6 +502,7 @@ struct StudentEndurancePersonalRecordsView: View {
             var entries = history[key, default: []]
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
                 primaryCandidates = entries.map(\.value) + [trimmed]
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
                 if let primaryValue = bestValue(from: primaryCandidates, metadata: metadata) {
                     saveValue(primaryValue, for: key)
                 }
@@ -458,6 +520,7 @@ struct StudentEndurancePersonalRecordsView: View {
             primaryCandidates = entries.map(\.value)
         } else {
             primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
         }
 
         saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
@@ -706,6 +769,147 @@ struct StudentEndurancePersonalRecordsView: View {
         guard !path.isEmpty else { return }
         path.removeLast()
     }
+    private func addItemSheet() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .padding(.top, 10)
+
+                    Text("Novo item de Endurance")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+
+                    Text("Crie um item e, se quiser, já informe seu resultado inicial.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                    addItemField("Nome do item", placeholder: "Ex: Corrida 3 km", text: $newItemName)
+
+                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 500", text: $newItemValue)
+
+                        if let message = addItemErrorMessage {
+                            Text(message)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            showAddItemSheet = false
+                        } label: {
+                            Text("Cancelar")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            addNewItem()
+                        } label: {
+                            Text("Adicionar")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 24)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
+            TextField(placeholder, text: text)
+                .textInputAutocapitalization(.sentences)
+                .autocorrectionDisabled(true)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+    }
+
+    private func addNewItem() {
+        addItemErrorMessage = nil
+        let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else {
+            addItemErrorMessage = "Informe o nome do item."
+            return
+        }
+
+        let existingNames = allMoves.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        guard !existingNames.contains(cleanName.lowercased()) else {
+            addItemErrorMessage = "Este item já existe na sua lista."
+            return
+        }
+
+        let id = UUID().uuidString
+        let key = "custom_endurance_\(id)"
+        let customItem = CustomEnduranceMove(id: id, name: cleanName, storageKey: key)
+        var list = loadCustomItems()
+        list.append(customItem)
+        saveCustomItems(list)
+
+        let item = EnduranceMove(name: customItem.name, storageKey: customItem.storageKey)
+        let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedValue.isEmpty {
+            saveValue(trimmedValue, for: key)
+            saveHistoryValue(trimmedValue, for: key, date: Date())
+        }
+        showAddItemSheet = false
+    }
+
+    private func deleteSelectedItem() {
+        guard let item = selectedMove, item.storageKey.hasPrefix("custom_endurance_") else { return }
+        removeValue(for: item.storageKey)
+        removeHistory(for: item.storageKey)
+        var list = loadCustomItems()
+        list.removeAll { $0.storageKey == item.storageKey }
+        saveCustomItems(list)
+        selectedMove = nil
+    }
+
+    private func loadCustomItems() -> [CustomEnduranceMove] {
+        guard !customEnduranceItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomEnduranceMove].self, from: customEnduranceItemsData)) ?? []
+    }
+
+    private func saveCustomItems(_ list: [CustomEnduranceMove]) {
+        customEnduranceItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
 }
 
 // MARK: - Persistência (JSON em Data)

@@ -103,7 +103,7 @@ struct HomeView: View {
             // ✅ HomeView agora é somente do aluno
             guard let uid = session.uid else { return }
             let name = session.userName ?? "Aluno"
-            path.append(.studentAgenda(studentId: uid, studentName: name))
+            path.append(.studentWorkouts(studentId: uid, studentName: name))
         } label: {
             tileLayout(
                 title: title,
@@ -210,4 +210,3 @@ struct HomeView: View {
         .clipped()
     }
 }
-

@@ -15,8 +15,7 @@ struct TeacherImportWorkoutsView: View {
     @State private var errorMessage: String? = nil
     
     @State private var isAddSheetPresented: Bool = false
-    @State private var isTemplateSharePresented: Bool = false
-    @State private var templateFileURL: URL? = nil
+    @State private var templateShareItem: TemplateShareItem? = nil
     @State private var isImportPickerPresented: Bool = false
     @State private var isImporting: Bool = false
     @State private var activeSheet: ActiveSheet? = nil
@@ -36,6 +35,11 @@ struct TeacherImportWorkoutsView: View {
                 return "detail-\(w.id)"
             }
         }
+    }
+
+    private struct TemplateShareItem: Identifiable {
+        let id = UUID()
+        let url: URL
     }
     
     private enum SendDestination: CaseIterable {
@@ -173,31 +177,9 @@ struct TeacherImportWorkoutsView: View {
                 Task { await addWorkout(title: title) }
             }
         }
-        .sheet(isPresented: $isTemplateSharePresented) {
-            if let url = templateFileURL {
-                ActivityView(activityItems: [url])
-                    .ignoresSafeArea()
-            } else {
-                ZStack {
-                    Color.black.opacity(0.95).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        Text("Falha ao localizar a planilha no Bundle")
-                            .foregroundColor(.white.opacity(0.90))
-                            .font(.system(size: 16, weight: .semibold))
-                            .multilineTextAlignment(.center)
-                        
-                        Text(errorMessage ?? "Sem detalhes.")
-                            .foregroundColor(.white.opacity(0.70))
-                            .font(.system(size: 13))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 18)
-                        
-                        Button("Fechar") { isTemplateSharePresented = false }
-                            .foregroundColor(.green)
-                    }
-                    .padding()
-                }
-            }
+        .sheet(item: $templateShareItem) { item in
+            ActivityView(activityItems: [item.url])
+                .ignoresSafeArea()
         }
         .sheet(isPresented: $isImportPickerPresented) {
             DocumentPicker(
@@ -263,15 +245,12 @@ struct TeacherImportWorkoutsView: View {
                 successMessage = nil
                 isImportPickerPresented = true
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: "plus")
                     Text("Importar Excel")
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
                 .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
+                .compactPrimaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isImporting || isSendingToWorkouts)
@@ -283,15 +262,12 @@ struct TeacherImportWorkoutsView: View {
                 successMessage = nil
                 prepareTemplateShare()
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: "arrow.down.doc")
                     Text("Baixar Planilha Excel")
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
                 .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
+                .compactPrimaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isSendingToWorkouts)
@@ -534,49 +510,50 @@ struct TeacherImportWorkoutsView: View {
     
     private func prepareTemplateShare() {
         errorMessage = nil
-        
-        let expectedFileName = "\(templateResourceName).\(templateResourceExtension)"
-        
-        guard let bundleURL = Bundle.main.resourceURL else {
-            templateFileURL = nil
-            errorMessage = "DEBUG: Bundle.main.resourceURL é nil."
-            isTemplateSharePresented = true
+        templateShareItem = nil
+
+        guard let sourceURL = resolveTemplateURL() else {
+            errorMessage = "Não foi possível localizar o modelo da planilha no aplicativo."
             return
         }
-        
-        var foundURL: URL? = nil
-        if let en = FileManager.default.enumerator(at: bundleURL, includingPropertiesForKeys: nil) {
-            for case let u as URL in en {
-                if u.lastPathComponent == expectedFileName {
-                    foundURL = u
-                    break
-                }
-            }
+
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            errorMessage = "Não foi possível localizar o modelo da planilha no aplicativo."
+            return
         }
-        
-        if let foundURL {
-            do {
-                let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(expectedFileName)
-                if FileManager.default.fileExists(atPath: tmp.path) {
-                    try FileManager.default.removeItem(at: tmp)
-                }
-                try FileManager.default.copyItem(at: foundURL, to: tmp)
-                
-                templateFileURL = tmp
-                errorMessage = nil
-                isTemplateSharePresented = true
-                return
-            } catch {
-                templateFileURL = nil
-                errorMessage = "DEBUG: encontrei o arquivo, mas falhei ao copiar para /tmp: \(error.localizedDescription)"
-                isTemplateSharePresented = true
+
+        do {
+            let destinationURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(sourceURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
+            }
+            try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+
+            guard FileManager.default.fileExists(atPath: destinationURL.path) else {
+                errorMessage = "Não foi possível preparar a planilha para download: a cópia temporária não foi encontrada."
                 return
             }
+
+            templateShareItem = TemplateShareItem(url: destinationURL)
+        } catch {
+            errorMessage = "Não foi possível preparar a planilha para download: \(error.localizedDescription)"
         }
-        
-        templateFileURL = nil
-        errorMessage = "Arquivo da planilha não encontrado no bundle."
-        isTemplateSharePresented = true
+    }
+
+    private func resolveTemplateURL() -> URL? {
+        if let url = Bundle.main.url(
+            forResource: templateResourceName,
+            withExtension: templateResourceExtension
+        ) {
+            return url
+        }
+
+        return Bundle.main.url(
+            forResource: templateResourceName,
+            withExtension: templateResourceExtension,
+            subdirectory: "Templates"
+        )
     }
     
     private func handlePickedExcel(url: URL) async {

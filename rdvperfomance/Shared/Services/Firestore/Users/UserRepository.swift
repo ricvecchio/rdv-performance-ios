@@ -30,6 +30,13 @@ final class UserRepository: FirestoreBaseRepository {
         return try await fetchUsers(byIds: cleanIds)
     }
 
+    func getAllUsers() async throws -> [AppUser] {
+        let snap = try await db.collection(Collections.users).getDocuments()
+        return try snap.documents
+            .compactMap { try $0.data(as: AppUser.self) }
+            .sorted { $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending }
+    }
+
     // MARK: - Professor por e-mail
 
     func getTeacherByEmail(email: String) async throws -> AppUser? {
@@ -185,21 +192,24 @@ final class UserRepository: FirestoreBaseRepository {
         let tid = clean(teacherId)
         guard !tid.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
 
-        var q: Query = db.collection(Collections.invites)
+        let snap = try await db.collection(Collections.invites)
             .whereField("teacherId", isEqualTo: tid)
+            .getDocuments()
 
         let st = (status ?? "").trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if !st.isEmpty {
-            q = q.whereField("status", isEqualTo: st)
-        }
-
-        q = q.order(by: "createdAt", descending: true)
-            .limit(to: max(1, min(limit, 200)))
-
-        let snap = try await q.getDocuments()
-        return try snap.documents.compactMap { doc in
+        let invites = try snap.documents.compactMap { doc in
             try doc.data(as: TeacherStudentInviteFS.self)
         }
+        let filtered = st.isEmpty ? invites : invites.filter {
+            $0.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == st
+        }
+        return Array(
+            filtered
+                .sorted {
+                    ($0.createdAt?.dateValue() ?? .distantPast) > ($1.createdAt?.dateValue() ?? .distantPast)
+                }
+                .prefix(max(1, min(limit, 200)))
+        )
     }
 
     func createTeacherInviteByEmail(
@@ -483,17 +493,22 @@ final class UserRepository: FirestoreBaseRepository {
         teacherId: String,
         requestId: String,
         studentId: String,
-        category: String
+        categories: [String]
     ) async throws {
         let tid = clean(teacherId)
         let rid = clean(requestId)
         let sid = clean(studentId)
-        let cat = clean(category)
+        let normalizedCategories = categories.compactMap(TreinoTipo.normalized(from:))
 
         guard !tid.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
         guard !rid.isEmpty else { throw FirestoreRepositoryError.invalidData }
         guard !sid.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
-        guard !cat.isEmpty else { throw FirestoreRepositoryError.invalidData }
+        guard !normalizedCategories.isEmpty,
+              normalizedCategories.count == categories.count,
+              Set(normalizedCategories).count == normalizedCategories.count else {
+            throw FirestoreRepositoryError.invalidData
+        }
+        let categoryKeys = normalizedCategories.map(\.firestoreKey)
 
         let (teacherStudentRef, teacherStudentIsNew) = try await resolveOrCreateRef(
             in: Collections.teacherStudents,
@@ -510,7 +525,7 @@ final class UserRepository: FirestoreBaseRepository {
         var teacherStudentPayload: [String: Any] = [
             "teacherId": tid,
             "studentId": sid,
-            "categories": FieldValue.arrayUnion([cat]),
+            "categories": categoryKeys,
             "updatedAt": FieldValue.serverTimestamp()
         ]
         if teacherStudentIsNew { teacherStudentPayload["createdAt"] = FieldValue.serverTimestamp() }
@@ -519,7 +534,7 @@ final class UserRepository: FirestoreBaseRepository {
         var relationPayload: [String: Any] = [
             "teacherId": tid,
             "studentId": sid,
-            "categories": FieldValue.arrayUnion([cat]),
+            "categories": categoryKeys,
             "updatedAt": FieldValue.serverTimestamp()
         ]
         if relationIsNew { relationPayload["createdAt"] = FieldValue.serverTimestamp() }
@@ -668,6 +683,22 @@ final class UserRepository: FirestoreBaseRepository {
         return result
     }
 
+    func getAllStudentsForTeacher(teacherId: String) async throws -> [AppUser] {
+        let grouped = try await getStudentsGroupedByTeacher(teacherId: teacherId)
+        var uniqueStudents: [String: AppUser] = [:]
+
+        for students in grouped.values {
+            for student in students {
+                guard let studentId = student.id.map(clean(_:)), !studentId.isEmpty else { continue }
+                uniqueStudents[studentId] = student
+            }
+        }
+
+        return uniqueStudents.values.sorted {
+            $0.name.localizedCaseInsensitiveCompare($1.name) == .orderedAscending
+        }
+    }
+
     /// Busca perfis de usuários em lote (`whereField(FieldPath.documentID(), in:)`), evitando
     /// 1 getDocument() por aluno. Distingue erro de permissão (Firestore Rules) de outros
     /// erros, para não mascarar `permissionDenied` como "lista vazia".
@@ -728,6 +759,7 @@ final class UserRepository: FirestoreBaseRepository {
         let targets = categoryCandidates(from: c).map { $0.lowercased() }
         if targets.isEmpty { throw FirestoreRepositoryError.invalidData }
 
+        var didUpdate = false
         for doc in snap.documents {
             let ref = doc.reference
             let data = doc.data()
@@ -753,7 +785,201 @@ final class UserRepository: FirestoreBaseRepository {
                     merge: true
                 )
             }
+            didUpdate = true
         }
+
+        guard didUpdate else { throw FirestoreRepositoryError.notFound }
+    }
+
+    func unlinkStudentCompletelyFromTeacher(teacherId: String, studentId: String) async throws {
+        let t = clean(teacherId)
+        let s = clean(studentId)
+        guard !t.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !s.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+
+        let teacherStudents = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("studentId", isEqualTo: s)
+            .getDocuments()
+        let relations = try await db.collection(Collections.relations)
+            .whereField("teacherId", isEqualTo: t)
+            .whereField("studentId", isEqualTo: s)
+            .getDocuments()
+
+        guard !teacherStudents.documents.isEmpty || !relations.documents.isEmpty else {
+            throw FirestoreRepositoryError.notFound
+        }
+
+        let batch = db.batch()
+        teacherStudents.documents.forEach { batch.deleteDocument($0.reference) }
+        relations.documents.forEach { batch.deleteDocument($0.reference) }
+        try await batch.commit()
+    }
+
+    func changeStudentCategoryForTeacher(
+        teacherId: String,
+        studentId: String,
+        currentCategory: String,
+        newCategory: String
+    ) async throws {
+        let teacherId = clean(teacherId)
+        let studentId = clean(studentId)
+        let currentCategory = clean(currentCategory)
+        let newCategory = clean(newCategory)
+
+        guard !teacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !studentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard !currentCategory.isEmpty, !newCategory.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        let snapshot = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+
+        guard !snapshot.documents.isEmpty else { throw FirestoreRepositoryError.notFound }
+
+        let currentCandidates = Set(categoryCandidates(from: currentCategory).map { $0.lowercased() })
+        let newCandidates = Set(categoryCandidates(from: newCategory).map { $0.lowercased() })
+        guard !currentCandidates.isEmpty, !newCandidates.isEmpty else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        var didUpdate = false
+        let batch = db.batch()
+        for document in snapshot.documents {
+            let categories = (document.data()["categories"] as? [String]) ?? []
+            let containsCurrentCategory = categories.contains {
+                currentCandidates.contains(clean($0).lowercased())
+            }
+            guard containsCurrentCategory else { continue }
+
+            var updatedCategories = categories.filter {
+                let category = clean($0).lowercased()
+                return !currentCandidates.contains(category) && !newCandidates.contains(category)
+            }
+            updatedCategories.append(newCategory)
+
+            batch.setData(
+                [
+                    "categories": updatedCategories,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                forDocument: document.reference,
+                merge: true
+            )
+            didUpdate = true
+        }
+
+        guard didUpdate else { throw FirestoreRepositoryError.notFound }
+        try await batch.commit()
+    }
+
+    func ensureStudentCategoriesForTeacher(
+        teacherId: String,
+        studentId: String,
+        categories: [String]
+    ) async throws {
+        let teacherId = clean(teacherId)
+        let studentId = clean(studentId)
+        let desiredCategories = categories.compactMap(TreinoTipo.normalized(from:))
+        guard !teacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !studentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard Set(desiredCategories).count == 3 else { throw FirestoreRepositoryError.invalidData }
+
+        let snapshot = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+
+        guard !snapshot.documents.isEmpty else { throw FirestoreRepositoryError.notFound }
+
+        let desiredKeys = Set(desiredCategories.map(\.firestoreKey))
+        let batch = db.batch()
+        var didUpdate = false
+
+        for document in snapshot.documents {
+            let existingCategories = (document.data()["categories"] as? [String]) ?? []
+            var retainedCategories: [String] = []
+            var foundCategories: Set<String> = []
+
+            for existingCategory in existingCategories {
+                guard let normalized = TreinoTipo.normalized(from: existingCategory) else {
+                    retainedCategories.append(existingCategory)
+                    continue
+                }
+
+                let key = normalized.firestoreKey
+                if desiredKeys.contains(key), foundCategories.insert(key).inserted {
+                    retainedCategories.append(existingCategory)
+                }
+            }
+
+            for category in desiredCategories where !foundCategories.contains(category.firestoreKey) {
+                retainedCategories.append(category.firestoreKey)
+            }
+
+            guard retainedCategories != existingCategories else { continue }
+            batch.setData(
+                [
+                    "categories": retainedCategories,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                forDocument: document.reference,
+                merge: true
+            )
+            didUpdate = true
+        }
+
+        if didUpdate {
+            try await batch.commit()
+        }
+    }
+
+    func setStudentCategoriesForTeacher(
+        teacherId: String,
+        studentId: String,
+        categories: [String]
+    ) async throws {
+        let teacherId = clean(teacherId)
+        let studentId = clean(studentId)
+        let normalizedCategories = categories.compactMap(TreinoTipo.normalized(from:))
+
+        guard !teacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !studentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard !normalizedCategories.isEmpty,
+              normalizedCategories.count == categories.count,
+              Set(normalizedCategories).count == normalizedCategories.count else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        let teacherStudents = try await db.collection(Collections.teacherStudents)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+        let relations = try await db.collection(Collections.relations)
+            .whereField("teacherId", isEqualTo: teacherId)
+            .whereField("studentId", isEqualTo: studentId)
+            .getDocuments()
+
+        guard !teacherStudents.documents.isEmpty else {
+            throw FirestoreRepositoryError.notFound
+        }
+
+        var payload: [String: Any] = [
+            "categories": normalizedCategories.map(\.firestoreKey),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
+        let batch = db.batch()
+        teacherStudents.documents.forEach { batch.setData(payload, forDocument: $0.reference, merge: true) }
+        if relations.documents.isEmpty {
+            payload["teacherId"] = teacherId
+            payload["studentId"] = studentId
+            payload["createdAt"] = FieldValue.serverTimestamp()
+            batch.setData(payload, forDocument: db.collection(Collections.relations).document())
+        } else {
+            relations.documents.forEach { batch.setData(payload, forDocument: $0.reference, merge: true) }
+        }
+        try await batch.commit()
     }
 
     // MARK: - Perfil / Foto / Unidade
@@ -783,19 +1009,23 @@ final class UserRepository: FirestoreBaseRepository {
 
     func updateUserProfile(
         uid: String,
+        name: String,
         phone: String?,
         cref: String?,
         bio: String?,
         focusArea: String
     ) async throws {
         let cleanUid = clean(uid)
+        let cleanName = clean(name)
         let cleanPhone = clean(phone ?? "")
         let cleanFocusArea = clean(focusArea)
 
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard !cleanName.isEmpty else { throw FirestoreRepositoryError.invalidData }
         guard !cleanFocusArea.isEmpty else { throw FirestoreRepositoryError.invalidData }
 
         var payload: [String: Any] = [
+            "name": cleanName,
             "phone": cleanPhone.isEmpty ? FieldValue.delete() : cleanPhone,
             "focusArea": cleanFocusArea,
             "updatedAt": FieldValue.serverTimestamp()
@@ -867,5 +1097,25 @@ final class UserRepository: FirestoreBaseRepository {
         try await db.collection(Collections.users)
             .document(cleanUid)
             .setData(payload, merge: true)
+    }
+
+    func setMeasurementUnit(uid: String, measurementUnit: String) async throws {
+        let cleanUid = clean(uid)
+        let cleanMeasurementUnit = clean(measurementUnit).lowercased()
+
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard cleanMeasurementUnit == "kg" || cleanMeasurementUnit == "lbs" else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .setData(
+                [
+                    "measurementUnit": cleanMeasurementUnit,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
     }
 }

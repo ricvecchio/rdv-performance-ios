@@ -33,6 +33,7 @@ struct EditProfileView: View {
 
     // Referência original para detectar alterações pendentes
     @State private var originalWhatsappDigits: String = ""
+    @State private var originalUserName: String = ""
     @State private var originalFocusArea: FocusAreaDTO = .CROSSFIT
     @State private var originalCref: String = ""
     @State private var originalBio: String = ""
@@ -71,6 +72,7 @@ struct EditProfileView: View {
 
     /// Existem alterações pendentes em relação ao estado original.
     private var hasChanges: Bool {
+        userName.trimmingCharacters(in: .whitespacesAndNewlines) != originalUserName ||
         whatsappDigits != originalWhatsappDigits ||
         focusAreaDraft != originalFocusArea ||
         crefDraft != originalCref ||
@@ -80,7 +82,10 @@ struct EditProfileView: View {
 
     /// Botão Salvar fica habilitado quando há alterações válidas e não está salvando.
     private var canSave: Bool {
-        isPhoneValid && hasChanges && !isSaving
+        !userName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty &&
+        isPhoneValid &&
+        hasChanges &&
+        !isSaving
     }
 
     // Interface principal com avatar, formulário e ações
@@ -107,7 +112,8 @@ struct EditProfileView: View {
 
                             avatarCard()
                             formCard()
-                            actionCard()
+                            photoAvatarButton()
+                            actionButtons()
 
                             if showError {
                                 Text(errorMessage)
@@ -223,8 +229,8 @@ struct EditProfileView: View {
     // Retorna card com campos do formulário
     private func formCard() -> some View {
         VStack(spacing: 18) {
-            readOnlyRow(title: "Nome", value: userName)
             readOnlyRow(title: "E-mail", value: userEmail)
+            nameField()
 
             // ✅ Campo de telefone com máscara brasileira e FocusState
             VStack(alignment: .leading, spacing: 6) {
@@ -262,7 +268,7 @@ struct EditProfileView: View {
                 displayText: displayTextForFocusArea
             )
 
-            if session.userType == .TRAINER {
+            if session.isTrainer {
                 UnderlineTextField(
                     title: "CREF (opcional)",
                     text: $crefDraft,
@@ -283,73 +289,71 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
-    // Retorna card com botões de ação (importar, salvar, remover)
-    private func actionCard() -> some View {
-        VStack(spacing: 10) {
-
-            Menu {
-                Button("Escolher foto da biblioteca") {
-                    showPhotoPicker = true
-                }
-                Button("Escolher Avatar") {
-                    showAvatarPicker = true
-                }
-                Button("Cancelar", role: .cancel) {}
+    private func photoAvatarButton() -> some View {
+        Menu {
+            Button {
+                showPhotoPicker = true
             } label: {
+                Label("Escolher foto da biblioteca", systemImage: "photo")
+            }
+            Button {
+                showAvatarPicker = true
+            } label: {
+                Label("Escolher Avatar", systemImage: "person.crop.circle")
+            }
+        } label: {
+            HStack {
+                Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "photo.on.rectangle.angled")
-                        .foregroundColor(.white.opacity(0.9))
-
                     Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Spacer()
                 }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                Spacer()
             }
-            .buttonStyle(.plain)
-            .disabled(isLoadingImage)
+            .padding(.vertical, 14)
+            .background(Theme.Colors.primaryGreen.opacity(0.18))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.30), lineWidth: 1)
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(isLoadingImage)
+    }
+
+    private func actionButtons() -> some View {
+        VStack(spacing: 10) {
 
             Button {
                 Task { await saveAllAndSync() }
             } label: {
-                HStack(spacing: 10) {
-                    if isSaving {
-                        ProgressView()
-                            .tint(.white.opacity(0.9))
-                    } else {
-                        Image(systemName: "checkmark.circle.fill")
-                            .foregroundColor(.white.opacity(0.9))
+                HStack {
+                    Spacer()
+                    HStack(spacing: 10) {
+                        if isSaving {
+                            ProgressView()
+                                .tint(.white.opacity(0.9))
+                        } else {
+                            Image(systemName: "checkmark.circle.fill")
+                        }
+
+                        Text(isSaving ? "Salvando..." : "Salvar")
                     }
-
-                    Text(isSaving ? "Salvando..." : "Salvar")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
                     Spacer()
                 }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    // ✅ Verde quando há alterações válidas; neutro caso contrário
-                    Capsule()
-                        .fill(canSave ? Color.green.opacity(0.28) : Color.white.opacity(0.10))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .padding(.vertical, 14)
+                .background(canSave ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            canSave ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.12),
+                            lineWidth: 1
                         )
                 )
             }
@@ -367,11 +371,7 @@ struct EditProfileView: View {
             }
             .buttonStyle(.plain)
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
     // Escolhe imagem correta para exibir (preview > armazenada > padrão)
@@ -409,6 +409,25 @@ struct EditProfileView: View {
         }
     }
 
+    private func nameField() -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Nome")
+                .font(.system(size: 14))
+                .foregroundColor(textSecondary)
+
+            TextField("", text: $userName)
+                .foregroundColor(.white.opacity(0.92))
+                .font(.system(size: 16))
+                .textContentType(.name)
+                .textInputAutocapitalization(.words)
+                .autocorrectionDisabled(false)
+
+            Rectangle()
+                .fill(lineColor)
+                .frame(height: 1)
+        }
+    }
+
     private func multilineBioField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("Bio (opcional)")
@@ -438,6 +457,7 @@ struct EditProfileView: View {
             focusAreaDraft = .CROSSFIT
             originalFocusArea = .CROSSFIT
             userName = ""
+            originalUserName = ""
             userEmail = ""
             crefDraft = ""
             originalCref = ""
@@ -461,6 +481,7 @@ struct EditProfileView: View {
             let area = FocusAreaDTO(rawValue: focusArea) ?? .CROSSFIT
 
             userName = user?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            originalUserName = userName
             userEmail = user?.email.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() ?? ""
             whatsappDigits = BrazilianPhoneFormatter.normalize(phone)
             originalWhatsappDigits = whatsappDigits
@@ -506,9 +527,10 @@ struct EditProfileView: View {
             }
             try await repository.updateUserProfile(
                 uid: uid,
+                name: userName,
                 phone: whatsappDigits.isEmpty ? nil : whatsappDigits,
-                cref: session.userType == .TRAINER ? crefDraft : nil,
-                bio: session.userType == .TRAINER ? bioDraft : nil,
+                cref: session.isTrainer ? crefDraft : nil,
+                bio: session.isTrainer ? bioDraft : nil,
                 focusArea: focusAreaDraft.rawValue
             )
             try await savePhotoIfNeededAndSync()
@@ -519,11 +541,13 @@ struct EditProfileView: View {
                 errorMessage = ""
                 // Atualiza referência original para refletir dados salvos
                 originalWhatsappDigits = whatsappDigits
+                originalUserName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
                 originalFocusArea = focusAreaDraft
                 originalCref = crefDraft
                 originalBio = bioDraft
                 hasNewPhoto = false
             }
+            session.userName = userName.trimmingCharacters(in: .whitespacesAndNewlines)
             pop()
         } catch {
             presentError((error as NSError).localizedDescription)
@@ -682,11 +706,41 @@ struct EditProfileView: View {
     }
 
     private struct AvatarPickerView: View {
-        private struct AvatarOption: Identifiable {
-            let symbolName: String
-            let color: UIColor
+        private enum HairStyle {
+            case bald
+            case short
+            case long
+            case curly
+        }
 
-            var id: String { symbolName }
+        private struct PersonStyle {
+            let skinColor: UIColor
+            let hairColor: UIColor
+            let shirtColor: UIColor
+            let hairStyle: HairStyle
+            let beardColor: UIColor?
+            let wearsGlasses: Bool
+        }
+
+        private struct AvatarOption: Identifiable {
+            let id: String
+            let color: UIColor
+            let symbolName: String?
+            let person: PersonStyle?
+
+            init(symbolName: String, color: UIColor) {
+                self.id = symbolName
+                self.color = color
+                self.symbolName = symbolName
+                self.person = nil
+            }
+
+            init(id: String, color: UIColor, person: PersonStyle) {
+                self.id = id
+                self.color = color
+                self.symbolName = nil
+                self.person = person
+            }
 
             func image() -> UIImage {
                 let size = CGSize(width: 512, height: 512)
@@ -698,10 +752,79 @@ struct EditProfileView: View {
                     color.setFill()
                     UIBezierPath(ovalIn: CGRect(origin: .zero, size: size)).fill()
 
-                    let configuration = UIImage.SymbolConfiguration(pointSize: 260, weight: .medium)
-                    let symbol = UIImage(systemName: symbolName, withConfiguration: configuration)?
-                        .withTintColor(.white, renderingMode: .alwaysOriginal)
-                    symbol?.draw(in: CGRect(x: 126, y: 126, width: 260, height: 260))
+                    if let person {
+                        drawPerson(person)
+                    } else if let symbolName {
+                        let configuration = UIImage.SymbolConfiguration(pointSize: 260, weight: .medium)
+                        let symbol = UIImage(systemName: symbolName, withConfiguration: configuration)?
+                            .withTintColor(.white, renderingMode: .alwaysOriginal)
+                        symbol?.draw(in: CGRect(x: 126, y: 126, width: 260, height: 260))
+                    }
+                }
+            }
+
+            private func drawPerson(_ person: PersonStyle) {
+                let shoulderRect = CGRect(x: 78, y: 342, width: 356, height: 220)
+                person.shirtColor.setFill()
+                UIBezierPath(roundedRect: shoulderRect, cornerRadius: 150).fill()
+
+                if case .long = person.hairStyle {
+                    person.hairColor.setFill()
+                    UIBezierPath(roundedRect: CGRect(x: 126, y: 106, width: 260, height: 290), cornerRadius: 118).fill()
+                }
+
+                person.skinColor.setFill()
+                UIBezierPath(roundedRect: CGRect(x: 218, y: 278, width: 76, height: 98), cornerRadius: 26).fill()
+                UIBezierPath(ovalIn: CGRect(x: 151, y: 104, width: 210, height: 246)).fill()
+
+                switch person.hairStyle {
+                case .bald:
+                    break
+                case .short:
+                    person.hairColor.setFill()
+                    UIBezierPath(roundedRect: CGRect(x: 150, y: 92, width: 212, height: 118), cornerRadius: 84).fill()
+                    person.skinColor.setFill()
+                    UIBezierPath(ovalIn: CGRect(x: 174, y: 145, width: 164, height: 178)).fill()
+                case .long:
+                    person.hairColor.setFill()
+                    UIBezierPath(roundedRect: CGRect(x: 144, y: 90, width: 224, height: 150), cornerRadius: 94).fill()
+                    person.skinColor.setFill()
+                    UIBezierPath(ovalIn: CGRect(x: 168, y: 148, width: 176, height: 174)).fill()
+                case .curly:
+                    person.hairColor.setFill()
+                    for x in stride(from: 148, through: 332, by: 46) {
+                        UIBezierPath(ovalIn: CGRect(x: x, y: 92, width: 68, height: 78)).fill()
+                    }
+                    UIBezierPath(ovalIn: CGRect(x: 142, y: 138, width: 70, height: 86)).fill()
+                    UIBezierPath(ovalIn: CGRect(x: 302, y: 138, width: 70, height: 86)).fill()
+                }
+
+                let featureColor = UIColor(white: 0.16, alpha: 0.82)
+                featureColor.setFill()
+                UIBezierPath(ovalIn: CGRect(x: 204, y: 218, width: 18, height: 18)).fill()
+                UIBezierPath(ovalIn: CGRect(x: 290, y: 218, width: 18, height: 18)).fill()
+                UIBezierPath(roundedRect: CGRect(x: 226, y: 280, width: 60, height: 12), cornerRadius: 6).fill()
+
+                if let beardColor = person.beardColor {
+                    beardColor.setFill()
+                    UIBezierPath(roundedRect: CGRect(x: 190, y: 274, width: 132, height: 74), cornerRadius: 34).fill()
+                    person.skinColor.setFill()
+                    UIBezierPath(roundedRect: CGRect(x: 226, y: 280, width: 60, height: 12), cornerRadius: 6).fill()
+                }
+
+                if person.wearsGlasses {
+                    featureColor.setStroke()
+                    let leftLens = UIBezierPath(ovalIn: CGRect(x: 180, y: 198, width: 66, height: 54))
+                    leftLens.lineWidth = 9
+                    leftLens.stroke()
+                    let rightLens = UIBezierPath(ovalIn: CGRect(x: 266, y: 198, width: 66, height: 54))
+                    rightLens.lineWidth = 9
+                    rightLens.stroke()
+                    let bridge = UIBezierPath()
+                    bridge.move(to: CGPoint(x: 246, y: 225))
+                    bridge.addLine(to: CGPoint(x: 266, y: 225))
+                    bridge.lineWidth = 9
+                    bridge.stroke()
                 }
             }
         }
@@ -712,7 +835,19 @@ struct EditProfileView: View {
             AvatarOption(symbolName: "figure.walk", color: .systemOrange),
             AvatarOption(symbolName: "heart.fill", color: .systemPink),
             AvatarOption(symbolName: "bolt.fill", color: .systemIndigo),
-            AvatarOption(symbolName: "star.fill", color: .systemPurple)
+            AvatarOption(symbolName: "star.fill", color: .systemPurple),
+            AvatarOption(id: "avatar_person_01", color: .systemTeal, person: PersonStyle(skinColor: UIColor(red: 0.96, green: 0.77, blue: 0.61, alpha: 1), hairColor: UIColor(red: 0.20, green: 0.12, blue: 0.08, alpha: 1), shirtColor: .systemBlue, hairStyle: .short, beardColor: nil, wearsGlasses: false)),
+            AvatarOption(id: "avatar_person_02", color: .systemPurple, person: PersonStyle(skinColor: UIColor(red: 0.61, green: 0.38, blue: 0.24, alpha: 1), hairColor: UIColor(red: 0.10, green: 0.07, blue: 0.05, alpha: 1), shirtColor: .systemPink, hairStyle: .curly, beardColor: nil, wearsGlasses: true)),
+            AvatarOption(id: "avatar_person_03", color: .systemOrange, person: PersonStyle(skinColor: UIColor(red: 0.79, green: 0.53, blue: 0.35, alpha: 1), hairColor: UIColor(red: 0.17, green: 0.10, blue: 0.06, alpha: 1), shirtColor: .systemIndigo, hairStyle: .bald, beardColor: UIColor(red: 0.17, green: 0.10, blue: 0.06, alpha: 1), wearsGlasses: false)),
+            AvatarOption(id: "avatar_person_04", color: .systemBlue, person: PersonStyle(skinColor: UIColor(red: 0.98, green: 0.83, blue: 0.72, alpha: 1), hairColor: UIColor(red: 0.72, green: 0.36, blue: 0.16, alpha: 1), shirtColor: .systemGreen, hairStyle: .long, beardColor: nil, wearsGlasses: false)),
+            AvatarOption(id: "avatar_person_05", color: .systemGreen, person: PersonStyle(skinColor: UIColor(red: 0.42, green: 0.25, blue: 0.16, alpha: 1), hairColor: UIColor(red: 0.04, green: 0.03, blue: 0.02, alpha: 1), shirtColor: .systemYellow, hairStyle: .short, beardColor: UIColor(red: 0.04, green: 0.03, blue: 0.02, alpha: 1), wearsGlasses: true)),
+            AvatarOption(id: "avatar_person_06", color: .systemPink, person: PersonStyle(skinColor: UIColor(red: 0.87, green: 0.64, blue: 0.49, alpha: 1), hairColor: UIColor(red: 0.16, green: 0.09, blue: 0.04, alpha: 1), shirtColor: .systemTeal, hairStyle: .curly, beardColor: nil, wearsGlasses: false)),
+            AvatarOption(id: "avatar_person_07", color: .systemIndigo, person: PersonStyle(skinColor: UIColor(red: 0.70, green: 0.45, blue: 0.28, alpha: 1), hairColor: UIColor(red: 0.33, green: 0.18, blue: 0.08, alpha: 1), shirtColor: .systemOrange, hairStyle: .long, beardColor: nil, wearsGlasses: true)),
+            AvatarOption(id: "avatar_person_08", color: .systemMint, person: PersonStyle(skinColor: UIColor(red: 0.94, green: 0.72, blue: 0.56, alpha: 1), hairColor: UIColor(red: 0.50, green: 0.28, blue: 0.12, alpha: 1), shirtColor: .systemPurple, hairStyle: .short, beardColor: nil, wearsGlasses: true)),
+            AvatarOption(id: "avatar_person_09", color: .systemRed, person: PersonStyle(skinColor: UIColor(red: 0.32, green: 0.19, blue: 0.12, alpha: 1), hairColor: UIColor(red: 0.03, green: 0.02, blue: 0.01, alpha: 1), shirtColor: .systemCyan, hairStyle: .bald, beardColor: UIColor(red: 0.03, green: 0.02, blue: 0.01, alpha: 1), wearsGlasses: false)),
+            AvatarOption(id: "avatar_person_10", color: .systemBrown, person: PersonStyle(skinColor: UIColor(red: 0.83, green: 0.58, blue: 0.42, alpha: 1), hairColor: UIColor(red: 0.76, green: 0.63, blue: 0.31, alpha: 1), shirtColor: .systemBlue, hairStyle: .long, beardColor: nil, wearsGlasses: false)),
+            AvatarOption(id: "avatar_person_11", color: .systemCyan, person: PersonStyle(skinColor: UIColor(red: 0.56, green: 0.34, blue: 0.21, alpha: 1), hairColor: UIColor(red: 0.12, green: 0.07, blue: 0.04, alpha: 1), shirtColor: .systemPink, hairStyle: .curly, beardColor: UIColor(red: 0.12, green: 0.07, blue: 0.04, alpha: 1), wearsGlasses: false)),
+            AvatarOption(id: "avatar_person_12", color: .systemGray, person: PersonStyle(skinColor: UIColor(red: 0.97, green: 0.78, blue: 0.65, alpha: 1), hairColor: UIColor(red: 0.27, green: 0.20, blue: 0.16, alpha: 1), shirtColor: .systemGreen, hairStyle: .short, beardColor: nil, wearsGlasses: true))
         ]
 
         let onSelect: (UIImage) -> Void
@@ -724,28 +859,27 @@ struct EditProfileView: View {
                     Theme.Colors.headerBackground
                         .ignoresSafeArea()
 
-                    LazyVGrid(
-                        columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 3),
-                        spacing: 16
-                    ) {
-                        ForEach(options) { option in
-                            Button {
-                                onSelect(option.image())
-                                dismiss()
-                            } label: {
-                                ZStack {
-                                    Circle()
-                                        .fill(Color(uiColor: option.color))
-                                    Image(systemName: option.symbolName)
-                                        .font(.system(size: 38, weight: .medium))
-                                        .foregroundColor(.white)
+                    ScrollView(showsIndicators: false) {
+                        LazyVGrid(
+                            columns: Array(repeating: GridItem(.flexible(), spacing: 16), count: 3),
+                            spacing: 16
+                        ) {
+                            ForEach(options) { option in
+                                Button {
+                                    onSelect(option.image())
+                                    dismiss()
+                                } label: {
+                                    Image(uiImage: option.image())
+                                        .resizable()
+                                        .scaledToFill()
+                                        .clipShape(Circle())
+                                        .frame(width: 88, height: 88)
                                 }
-                                .frame(width: 88, height: 88)
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
                         }
+                        .padding(24)
                     }
-                    .padding(24)
                 }
                 .navigationTitle("Escolher Avatar")
                 .navigationBarTitleDisplayMode(.inline)

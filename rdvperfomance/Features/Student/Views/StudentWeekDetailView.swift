@@ -11,6 +11,7 @@ struct StudentWeekDetailView: View {
     let studentId: String
     let weekId: String
     let weekTitle: String
+    let initialExpandedDayId: String?
 
     /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
@@ -26,12 +27,21 @@ struct StudentWeekDetailView: View {
     // ✅ Animação quando tudo estiver concluído
     @State private var showWeekCompletedAnimation: Bool = false
     @State private var hasTriggeredWeekCompletedAnimation: Bool = false
+    @State private var expandedDayIds = Set<String>()
+    @State private var hasInitializedExpandedDays = false
+
+    private struct TrainingDayGroup: Identifiable {
+        let id: String
+        let date: Date?
+        var items: [(offset: Int, day: TrainingDayFS)]
+    }
 
     init(
         path: Binding<[AppRoute]>,
         studentId: String,
         weekId: String,
         weekTitle: String,
+        initialExpandedDayId: String? = nil,
         onSelectSection: @escaping (StudentMainSection) -> Void = { _ in },
         repository: FirestoreRepository = .shared
     ) {
@@ -39,12 +49,13 @@ struct StudentWeekDetailView: View {
         self.studentId = studentId
         self.weekId = weekId
         self.weekTitle = weekTitle
+        self.initialExpandedDayId = initialExpandedDayId
         self.onSelectSection = onSelectSection
         _vm = StateObject(wrappedValue: StudentWeekDetailViewModel(weekId: weekId, studentId: studentId, repository: repository))
     }
 
-    private var isTeacherViewing: Bool { session.userType == .TRAINER }
-    private var isStudentViewing: Bool { session.userType == .STUDENT }
+    private var isTeacherViewing: Bool { session.isTrainer }
+    private var isStudentViewing: Bool { session.isStudent }
 
     private var teacherSelectedCategory: TreinoTipo {
         TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
@@ -61,18 +72,24 @@ struct StudentWeekDetailView: View {
         }
     }
 
-    // ✅ Lista ordenada: vídeos primeiro, mantendo a ordem original dentro de cada grupo
+    // Mantém vídeos no bloco próprio e ordena os treinos cronologicamente.
     private var orderedDays: [(offset: Int, day: TrainingDayFS)] {
         let enumerated = Array(vm.days.enumerated()).map { (offset: $0.offset, day: $0.element) }
         return enumerated.sorted { a, b in
             let aIsVideo = isVideoDay(a.day)
             let bIsVideo = isVideoDay(b.day)
             if aIsVideo != bIsVideo { return aIsVideo && !bIsVideo }
+            if !aIsVideo {
+                let aDate = a.day.date ?? .distantFuture
+                let bDate = b.day.date ?? .distantFuture
+                if aDate != bDate { return aDate < bDate }
+                if a.day.dayIndex != b.day.dayIndex { return a.day.dayIndex < b.day.dayIndex }
+            }
             return a.offset < b.offset
         }
     }
 
-    // ✅ Particiona em dois blocos REAIS: Vídeos e Treinos (como cards separados)
+    // Mantém vídeos separados dos treinos para preservar sua apresentação específica.
     private var videoDays: [(offset: Int, day: TrainingDayFS)] {
         orderedDays.filter { isVideoDay($0.day) }
     }
@@ -81,8 +98,30 @@ struct StudentWeekDetailView: View {
         orderedDays.filter { !isVideoDay($0.day) }
     }
 
+    private var trainingDayGroups: [TrainingDayGroup] {
+        var groups: [TrainingDayGroup] = []
+        var groupIndexes = [String: Int]()
+
+        for item in trainingDays {
+            let identifier = groupIdentifier(for: item.day, offset: item.offset)
+            if let index = groupIndexes[identifier] {
+                groups[index].items.append(item)
+            } else {
+                groupIndexes[identifier] = groups.count
+                groups.append(
+                    TrainingDayGroup(
+                        id: identifier,
+                        date: item.day.date.map { Calendar.current.startOfDay(for: $0) },
+                        items: [item]
+                    )
+                )
+            }
+        }
+
+        return groups
+    }
+
     private var hasAnyVideo: Bool { !videoDays.isEmpty }
-    private var hasAnyNonVideo: Bool { !trainingDays.isEmpty }
 
     // ✅ Todos os registros concluídos (para aluno): se todos os dias com id estiverem marcados como concluídos
     private var allWeekCompleted: Bool {
@@ -179,6 +218,9 @@ struct StudentWeekDetailView: View {
             hasTriggeredWeekCompletedAnimation = true
             triggerWeekCompletedAnimation()
         }
+        .onChange(of: vm.days) { _, days in
+            initializeExpandedDays(with: days)
+        }
     }
 
     // Footer adaptado por tipo de usuário
@@ -198,9 +240,10 @@ struct StudentWeekDetailView: View {
             } else {
                 FooterBar(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: true,
-                        isSobreSelected: false,
+                    kind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: true,
+                        isRecordsSelected: false,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
@@ -228,15 +271,12 @@ struct StudentWeekDetailView: View {
                 Button {
                     path.append(.createTrainingDay(weekId: weekId, category: teacherSelectedCategory))
                 } label: {
-                    HStack {
+                    HStack(spacing: 10) {
                         Image(systemName: "plus")
                         Text("Adicionar primeiro dia")
                     }
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
             }
@@ -244,7 +284,7 @@ struct StudentWeekDetailView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    // ✅ Conteúdo principal: mantém card para loading/erro/empty, e para lista usa DOIS CARDS (vídeos e treinos)
+    // Conteúdo principal mantém os estados de loading, erro e vazio antes da lista de dias.
     private var contentCard: some View {
         VStack(spacing: 0) {
 
@@ -270,7 +310,6 @@ struct StudentWeekDetailView: View {
                     .cornerRadius(14)
 
             } else {
-                // ✅ Aqui ficam DOIS BLOCOS (cards) como no seu StudentDayDetailView
                 daysCards
             }
         }
@@ -303,10 +342,8 @@ struct StudentWeekDetailView: View {
         }
     }
 
-    // ✅ DOIS CARDS separados (como Treino/Vídeos no StudentDayDetailView)
     private var daysCards: some View {
         VStack(spacing: 16) {
-
             if hasAnyVideo {
                 daysSectionCard(
                     title: "Vídeos",
@@ -315,17 +352,12 @@ struct StudentWeekDetailView: View {
                 )
             }
 
-            if hasAnyNonVideo {
-                daysSectionCard(
-                    title: "Treinos",
-                    systemImage: "dumbbell.fill",
-                    items: trainingDays
-                )
+            ForEach(trainingDayGroups) { group in
+                trainingDayCard(group: group)
             }
         }
     }
 
-    // ✅ Card de seção (mesmo padrão do seu StudentDayDetailView: background + cornerRadius)
     private func daysSectionCard(
         title: String,
         systemImage: String,
@@ -354,7 +386,11 @@ struct StudentWeekDetailView: View {
                                 .font(.system(size: 18, weight: .medium))
                                 .foregroundColor(.white.opacity(0.92))
 
-                            Text(day.subtitleText)
+                            Text(
+                                isVideo
+                                    ? day.subtitleText
+                                    : trainingDateSubtitle(for: day.date, fallback: day.subtitleText)
+                            )
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.35))
                         }
@@ -406,6 +442,121 @@ struct StudentWeekDetailView: View {
         .cornerRadius(14)
     }
 
+    private func trainingDayCard(group: TrainingDayGroup) -> some View {
+        let isExpanded = expandedDayIds.contains(group.id)
+        let fallbackTitle = group.items.first?.day.subtitleText ?? ""
+
+        return VStack(spacing: 0) {
+            Button {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    if isExpanded {
+                        expandedDayIds.remove(group.id)
+                    } else {
+                        expandedDayIds.insert(group.id)
+                    }
+                }
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "calendar")
+                        .font(.system(size: 16))
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .frame(width: 28)
+
+                    Text(trainingDateSubtitle(for: group.date, fallback: fallbackTitle))
+                        .font(.system(size: 18, weight: isExpanded ? .semibold : .medium))
+                        .foregroundColor(.white.opacity(0.92))
+
+                    Spacer()
+
+                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
+                .contentShape(Rectangle())
+                .background(isExpanded ? Theme.Colors.primaryGreen.opacity(0.12) : Color.clear)
+            }
+            .buttonStyle(.plain)
+
+            if isExpanded {
+                VStack(spacing: 0) {
+                    ForEach(Array(group.items.enumerated()), id: \.element.offset) { index, item in
+                        trainingDayRow(item.day)
+
+                        if index < group.items.count - 1 {
+                            innerDivider(leading: 54)
+                        }
+                    }
+                }
+                .transition(.opacity.combined(with: .move(edge: .top)))
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private func trainingDayRow(_ day: TrainingDayFS) -> some View {
+        HStack(spacing: 14) {
+            Button {
+                path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: weekTitle))
+            } label: {
+                HStack(spacing: 14) {
+                    Image(systemName: "dumbbell.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(.green.opacity(0.85))
+                        .frame(width: 28)
+
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(day.title)
+                            .font(.system(size: 18, weight: .medium))
+                            .foregroundColor(.white.opacity(0.92))
+
+                        Text(day.subtitleText)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.35))
+                    }
+
+                    Spacer()
+                }
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+
+            if isStudentViewing, let dayId = day.id {
+                Button {
+                    Task {
+                        await vm.toggleCompleted(dayId: dayId)
+
+                        if allWeekCompleted && !hasTriggeredWeekCompletedAnimation {
+                            hasTriggeredWeekCompletedAnimation = true
+                            triggerWeekCompletedAnimation()
+                        }
+                    }
+                } label: {
+                    let completed = vm.isCompleted(dayId: dayId)
+                    let icon = completionIcon(isVideo: false, isCompleted: completed)
+
+                    Image(systemName: icon.name)
+                        .font(.system(size: 20))
+                        .foregroundColor(icon.color)
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 6)
+            } else {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+    }
+
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
@@ -430,11 +581,8 @@ struct StudentWeekDetailView: View {
 
             Button { Task { await vm.loadDaysAndStatus() } } label: {
                 Text("Tentar novamente")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
         }
@@ -465,6 +613,48 @@ struct StudentWeekDetailView: View {
         Divider()
             .background(Theme.Colors.divider)
             .padding(.leading, leading)
+    }
+
+    private func trainingDateSubtitle(for date: Date?, fallback: String) -> String {
+        guard let date else { return fallback }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "EEEE dd/MM"
+        return formatter.string(from: date).capitalized(with: formatter.locale)
+    }
+
+    private func groupIdentifier(for day: TrainingDayFS, offset: Int) -> String {
+        if let date = day.date {
+            let normalizedDate = Calendar.current.startOfDay(for: date)
+            return "date-\(Int(normalizedDate.timeIntervalSinceReferenceDate))"
+        }
+
+        let dayID = day.id?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return dayID.isEmpty ? "undated-\(day.dayIndex)-\(offset)" : "undated-\(dayID)"
+    }
+
+    private func initializeExpandedDays(with days: [TrainingDayFS]) {
+        guard !hasInitializedExpandedDays, !days.isEmpty else { return }
+        hasInitializedExpandedDays = true
+
+        if isTeacherViewing, initialExpandedDayId == nil {
+            expandedDayIds = Set(trainingDayGroups.map(\.id))
+            return
+        }
+
+        guard let initialExpandedDayId
+        else {
+            return
+        }
+
+        guard let group = trainingDayGroups.first(where: {
+            $0.items.contains { $0.day.id == initialExpandedDayId }
+        }) else {
+            return
+        }
+
+        expandedDayIds = [group.id]
     }
 
     private func pop() {

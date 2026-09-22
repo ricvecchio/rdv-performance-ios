@@ -240,15 +240,12 @@ struct CreateTrainingDayView: View {
                 Button {
                     Task { await openTemplates() }
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 10) {
                         Image(systemName: "paperclip")
                         Text("Anexar de Meus Treinos")
                     }
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
                 .disabled(isLoadingTemplates)
@@ -391,18 +388,10 @@ struct CreateTrainingDayView: View {
                     ProgressView().tint(.white)
                 } else {
                     Text(currentEditingDayId == nil ? "Salvar Dia" : "Salvar Alterações")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSaving)
@@ -594,7 +583,7 @@ struct CreateTrainingDayView: View {
         errorMessage = nil
         successMessage = nil
 
-        guard session.userType == .TRAINER else {
+        guard session.isTrainer else {
             errorMessage = "Apenas professor pode adicionar dias."
             return
         }

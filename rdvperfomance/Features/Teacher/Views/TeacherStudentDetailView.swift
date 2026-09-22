@@ -10,10 +10,27 @@ struct TeacherStudentDetailView: View {
 
     @EnvironmentObject private var session: AppSession
 
+    @StateObject private var studentsViewModel: TeacherStudentsListViewModel
+
     private let contentMaxWidth: CGFloat = 380
 
     @State private var progress: Double = 0.0
     @State private var isLoadingProgress: Bool = false
+    @State private var showUnlinkConfirm: Bool = false
+
+    init(
+        path: Binding<[AppRoute]>,
+        student: AppUser,
+        category: TreinoTipo,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.student = student
+        self.category = category
+        _studentsViewModel = StateObject(
+            wrappedValue: TeacherStudentsListViewModel(repository: repository)
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -37,7 +54,6 @@ struct TeacherStudentDetailView: View {
                         VStack(spacing: 14) {
 
                             headerCard()
-                            progressCard()
                             actionsCard()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -52,10 +68,10 @@ struct TeacherStudentDetailView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunoSobrePerfil(
+                    kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
                         isHomeSelected: false,
-                        isAlunoSelected: true,
+                        isAlunosSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -99,24 +115,22 @@ struct TeacherStudentDetailView: View {
         .task {
             await loadProgress()
         }
+        .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
+            Button("Cancelar", role: .cancel) {}
+            Button("Desvincular", role: .destructive) {
+                Task { await confirmUnlink() }
+            }
+        } message: {
+            Text("O aluno \"\(student.name)\" será desvinculado da categoria \(category.displayName).")
+        }
     }
 
     // MARK: - Cards
 
     private func headerCard() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let percent = Int((progress * 100.0).rounded())
 
-            Text("Categoria do Treino")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-
-            // ✅ Agora essa categoria vem correta pela navegação (TeacherStudentsListView)
-            Text(category.tituloOverlayImagem)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Divider()
-                .background(Theme.Colors.divider)
+        return VStack(alignment: .leading, spacing: 10) {
 
             Text("Aluno")
                 .font(.system(size: 14, weight: .medium))
@@ -126,40 +140,43 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.95))
 
+            Divider()
+                .background(Theme.Colors.divider)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("Progresso do Aluno")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    Spacer()
+
+                    if isLoadingProgress {
+                        ProgressView().tint(.white)
+                    }
+                }
+
+                Text("\(percent)% completo")
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                ProgressView(value: progress)
+                    .tint(.green.opacity(0.85))
+            }
+
+            Divider()
+                .background(Theme.Colors.divider)
+
+            Text("Categoria do Treino")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+
+            Text(category.tituloOverlayImagem)
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.green.opacity(0.85))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-    }
-
-    private func progressCard() -> some View {
-
-        let percent = Int((progress * 100.0).rounded())
-
-        return VStack(alignment: .leading, spacing: 12) {
-
-            HStack {
-                Text("Progresso do Aluno")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-
-                Spacer()
-
-                if isLoadingProgress {
-                    ProgressView().tint(.white)
-                }
-            }
-
-            Text("\(percent)% completo")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-
-            ProgressView(value: progress)
-                .tint(.green.opacity(0.85))
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
     }
@@ -171,24 +188,36 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            actionButton(title: "Publicar Semana", icon: "square.and.pencil") {
-                path.append(.createTrainingWeek(student: student, category: category))
+            actionButton(title: "Treinos", icon: "calendar") {
+                openWorkouts()
             }
 
-            actionButton(title: "Ver Agenda do Aluno", icon: "calendar") {
-                openAgenda()
-            }
+            Divider()
+                .background(Theme.Colors.divider)
 
             actionButton(title: "Mensagens", icon: "paperplane.fill") {
                 path.append(.teacherMessage(student: student, category: category))
             }
 
+            Divider()
+                .background(Theme.Colors.divider)
+
             actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
 
+            Divider()
+                .background(Theme.Colors.divider)
+
             actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
+            }
+
+            Divider()
+                .background(Theme.Colors.divider)
+
+            actionButton(title: "Desvincular", icon: "person.badge.minus") {
+                showUnlinkConfirm = true
             }
         }
         .padding(16)
@@ -218,9 +247,25 @@ struct TeacherStudentDetailView: View {
         .buttonStyle(.plain)
     }
 
-    private func openAgenda() {
+    private func openWorkouts() {
         guard let sid = student.id, !sid.isEmpty else { return }
-        path.append(.studentAgenda(studentId: sid, studentName: student.name))
+        path.append(.studentWorkouts(studentId: sid, studentName: student.name))
+    }
+
+    private func confirmUnlink() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty,
+              let studentId = student.id, !studentId.isEmpty
+        else {
+            return
+        }
+
+        if await studentsViewModel.unlinkStudent(
+            teacherId: teacherId,
+            studentId: studentId,
+            categoryToRemove: nil
+        ) {
+            pop()
+        }
     }
 
     private func pop() {
@@ -230,7 +275,7 @@ struct TeacherStudentDetailView: View {
 
     // Carrega progresso geral do aluno
     private func loadProgress() async {
-        guard session.userType == .TRAINER else { return }
+        guard session.isTrainer else { return }
         guard let sid = student.id, !sid.isEmpty else { return }
 
         isLoadingProgress = true

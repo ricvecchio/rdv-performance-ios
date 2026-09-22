@@ -1,6 +1,5 @@
 // Tela de cadastro para usuários do tipo aluno
 import SwiftUI
-import UIKit
 
 struct RegisterStudentView: View {
 
@@ -82,18 +81,6 @@ struct RegisterStudentView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        // ✅ Botão "Concluir" para fechar o teclado .phonePad
-        .toolbar {
-            ToolbarItemGroup(placement: .keyboard) {
-                Spacer()
-                Button("Concluir") {
-                    UIApplication.shared.sendAction(
-                        #selector(UIResponder.resignFirstResponder),
-                        to: nil, from: nil, for: nil
-                    )
-                }
-            }
-        }
         .onChange(of: vm.successMessage) { _, newValue in
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
@@ -196,20 +183,9 @@ struct RegisterStudentView: View {
                     }
 
                     Text(vm.isLoading ? "Criando..." : "Criar Conta")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(vm.isLoading)

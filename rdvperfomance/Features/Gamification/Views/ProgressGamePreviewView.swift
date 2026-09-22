@@ -33,15 +33,12 @@ struct ProgressGamePreviewView: View {
                         Button {
                             Task { await vm.randomizePreview() }
                         } label: {
-                            HStack {
+                            HStack(spacing: 10) {
                                 Image(systemName: "shuffle")
                                 Text("Randomizar cenário")
                             }
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Capsule().fill(Color.green.opacity(0.16)))
+                            .primaryGreenActionButton()
                         }
                         .buttonStyle(.plain)
 

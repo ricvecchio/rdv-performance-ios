@@ -15,8 +15,9 @@ struct TeacherStudentsListView: View {
     @State private var filter: TreinoTipo? = nil
     private let contentMaxWidth: CGFloat = 380
 
-    @State private var studentPendingUnlink: AppUser? = nil
-    @State private var showUnlinkConfirm: Bool = false
+    @State private var studentPendingCategoryChange: AppUser? = nil
+    @State private var showCategoryChangeDialog: Bool = false
+    @State private var selectedCategoryChangeCategories: Set<TreinoTipo> = []
 
     // Modal convite
     @State private var showInviteSheet: Bool = false
@@ -29,6 +30,7 @@ struct TeacherStudentsListView: View {
 
     @State private var studentPendingLink: StudentLinkItem? = nil
     @State private var showCategoryDialog: Bool = false
+    @State private var selectedLinkCategories: Set<TreinoTipo> = []
 
     @State private var linkRequestPendingDecline: StudentLinkItem? = nil
     @State private var showDeclineLinkRequestConfirm: Bool = false
@@ -48,58 +50,23 @@ struct TeacherStudentsListView: View {
     }
 
     var body: some View {
-        ZStack {
-
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-
-                Rectangle()
-                    .fill(Theme.Colors.divider)
-                    .frame(height: 1)
-
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 16) {
-                        header
-                        filterRow
-                        contentCard
-                        if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
-                            pendingInvitesCard
-                        }
-                        pendingLinkRequestsCard
-                    }
-                    .frame(maxWidth: contentMaxWidth)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 16)
-                    .padding(.bottom, 28)
-                    .frame(maxWidth: .infinity)
-                }
-
-                FooterBar(
-                    path: $path,
-                    kind: .teacherHomeAlunosSobrePerfil(
-                        selectedCategory: selectedCategory,
-                        isHomeSelected: false,
-                        isAlunosSelected: true,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
-            }
-            .ignoresSafeArea(.container, edges: [.bottom])
-        }
-        // ✅ AJUSTE 1: desfoca a tela de fundo quando o modal "Convidar aluno" estiver aberto
-        .blur(radius: showInviteSheet ? 8 : 0)
-        .animation(.easeInOut(duration: 0.18), value: showInviteSheet)
+        mainContent
+        .blur(radius: isAnySheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: isAnySheetPresented)
 
         .onAppear {
             filter = initialFilter
+            guard vm.hasLoadedStudents,
+                  let teacherId = session.uid,
+                  !teacherId.isEmpty else {
+                return
+            }
+            Task { await vm.loadStudents(teacherId: teacherId, force: true) }
+        }
+        .onChange(of: path) { _, newPath in
+            guard let teacherId = session.uid, !teacherId.isEmpty else { return }
+            if case .some(.teacherStudentDetail) = newPath.last { return }
+            Task { await vm.loadStudents(teacherId: teacherId, force: true) }
         }
         // Carrega alunos e convites pendentes assim que session.uid estiver disponível
         .task(id: session.uid ?? "") {
@@ -159,12 +126,6 @@ struct TeacherStudentsListView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
-            Button("Cancelar", role: .cancel) { studentPendingUnlink = nil }
-            Button("Desvincular", role: .destructive) { Task { await confirmUnlink() } }
-        } message: {
-            Text(unlinkMessageText())
-        }
         // ✅ Cancelamento de convite pendente com confirmação
         .alert("Cancelar convite?", isPresented: $showCancelInviteConfirm) {
             Button("Cancelar", role: .cancel) { invitePendingCancel = nil }
@@ -196,17 +157,35 @@ struct TeacherStudentsListView: View {
         } message: {
             Text(vm.linkSuccessMessage ?? "Aluno vinculado.")
         }
-        .confirmationDialog(
-            "Selecione a categoria do vínculo",
-            isPresented: $showCategoryDialog,
-            titleVisibility: .visible
-        ) {
-            Button(TreinoTipo.crossfit.displayName) { Task { await confirmLink(.crossfit) } }
-            Button(TreinoTipo.academia.displayName) { Task { await confirmLink(.academia) } }
-            Button(TreinoTipo.emCasa.displayName) { Task { await confirmLink(.emCasa) } }
-            Button("Cancelar", role: .cancel) { studentPendingLink = nil }
-        } message: {
-            Text(linkDialogMessageText())
+        .sheet(isPresented: $showCategoryDialog, onDismiss: {
+            studentPendingLink = nil
+            selectedLinkCategories = []
+        }) {
+            CategoryMultiSelectionSheet(
+                selectedCategories: $selectedLinkCategories,
+                isSaving: vm.isLinkRequestsLoading,
+                onCancel: {
+                    showCategoryDialog = false
+                },
+                onSave: {
+                    Task { await confirmLink(selectedLinkCategories) }
+                }
+            )
+        }
+        .sheet(isPresented: $showCategoryChangeDialog, onDismiss: {
+            studentPendingCategoryChange = nil
+            selectedCategoryChangeCategories = []
+        }) {
+            CategoryMultiSelectionSheet(
+                selectedCategories: $selectedCategoryChangeCategories,
+                isSaving: vm.isChangingStudentCategory,
+                onCancel: {
+                    showCategoryChangeDialog = false
+                },
+                onSave: {
+                    Task { await confirmCategoryChange(selectedCategoryChangeCategories) }
+                }
+            )
         }
         // Sheet Convites — ao fechar, recarrega alunos e convites
         .sheet(isPresented: $showInviteSheet, onDismiss: {
@@ -215,6 +194,59 @@ struct TeacherStudentsListView: View {
             }
         }) {
             inviteSheet
+        }
+    }
+
+    private var isAnySheetPresented: Bool {
+        showInviteSheet || showCategoryDialog || showCategoryChangeDialog
+    }
+
+    private var mainContent: some View {
+        ZStack {
+
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 16) {
+                        header
+                        filterRow
+                        contentCard
+                        if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
+                            pendingInvitesCard
+                        }
+                        pendingLinkRequestsCard
+                    }
+                    .frame(maxWidth: contentMaxWidth)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 16)
+                    .padding(.bottom, 28)
+                    .frame(maxWidth: .infinity)
+                }
+
+                FooterBar(
+                    path: $path,
+                    kind: .teacherHomeAlunosSobrePerfil(
+                        selectedCategory: selectedCategory,
+                        isHomeSelected: false,
+                        isAlunosSelected: true,
+                        isSobreSelected: false,
+                        isPerfilSelected: false
+                    )
+                )
+                .frame(height: Theme.Layout.footerHeight)
+                .frame(maxWidth: .infinity)
+                .background(Theme.Colors.footerBackground)
+            }
+            .ignoresSafeArea(.container, edges: [.bottom])
         }
     }
 
@@ -236,23 +268,11 @@ struct TeacherStudentsListView: View {
     }
 
     private var filterRow: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("FILTRO")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
-                .padding(.horizontal, 6)
-
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 10) {
-
-                    filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
-
-                    filterChip(title: TreinoTipo.crossfit.displayName, isSelected: filter == .crossfit) { filter = .crossfit }
-                    filterChip(title: TreinoTipo.academia.displayName, isSelected: filter == .academia) { filter = .academia }
-                    filterChip(title: TreinoTipo.emCasa.displayName, isSelected: filter == .emCasa) { filter = .emCasa }
-                }
-                .padding(.vertical, 2)
-            }
+        HStack(spacing: 6) {
+            filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
+            filterChip(title: TreinoTipo.crossfit.displayName, isSelected: filter == .crossfit) { filter = .crossfit }
+            filterChip(title: TreinoTipo.academia.displayName, isSelected: filter == .academia) { filter = .academia }
+            filterChip(title: "Em Casa", isSelected: filter == .emCasa) { filter = .emCasa }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -260,16 +280,19 @@ struct TeacherStudentsListView: View {
     private func filterChip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
-                .padding(.horizontal, 12)
-                .padding(.vertical, 8)
-                .background(isSelected ? Color.green.opacity(0.16) : Color.white.opacity(0.10))
+                .lineLimit(1)
+                .minimumScaleFactor(0.85)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 9)
+                .frame(maxWidth: .infinity)
+                .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 999)
-                        .stroke(isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Color.white.opacity(0.12), lineWidth: 1)
                 )
-                .clipShape(RoundedRectangle(cornerRadius: 999))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
         }
         .buttonStyle(.plain)
     }
@@ -319,11 +342,14 @@ struct TeacherStudentsListView: View {
                     Spacer()
 
                     Menu {
-                        Button(role: .destructive) {
-                            studentPendingUnlink = student
-                            showUnlinkConfirm = true
+                        Button {
+                            studentPendingCategoryChange = student
+                            selectedCategoryChangeCategories = Set(
+                                vm.linkedCategories(for: student.id ?? "")
+                            )
+                            showCategoryChangeDialog = true
                         } label: {
-                            Label("Desvincular", systemImage: "link.badge.minus")
+                            Label("Alterar categoria", systemImage: "arrow.triangle.2.circlepath")
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -334,7 +360,7 @@ struct TeacherStudentsListView: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
-                    .disabled(vm.isUnlinking)
+                    .disabled(vm.isChangingStudentCategory)
 
                     Image(systemName: "chevron.right")
                         .foregroundColor(.white.opacity(0.35))
@@ -353,7 +379,9 @@ struct TeacherStudentsListView: View {
                 }
 
                 if idx < list.count - 1 {
-                    innerDivider(leading: 54)
+                    Divider()
+                        .background(Theme.Colors.divider)
+                        .padding(.horizontal, 16)
                 }
             }
         }
@@ -385,11 +413,8 @@ struct TeacherStudentsListView: View {
                 Task { await loadAllStudents() }
             } label: {
                 Text("Tentar novamente")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.9))
                     .padding(.horizontal, 14)
-                    .padding(.vertical, 10)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
         }
@@ -435,45 +460,36 @@ struct TeacherStudentsListView: View {
             return
         }
 
-        await vm.loadStudents(teacherId: teacherId)
         UserDefaults.standard.set(Date(), forKey: studentActivitiesLastSeenKey(teacherId: teacherId))
 
+        async let students: Void = vm.loadStudents(teacherId: teacherId)
         async let invites: Void = vm.loadInvites(teacherId: teacherId)
         async let requests: Void = vm.loadPendingLinkRequests(teacherId: teacherId)
-        _ = await (invites, requests)
+        _ = await (students, invites, requests)
         vm.removeLinkedStudentsFromPendingLinkRequests(teacherId: teacherId)
     }
 
-    private func unlinkMessageText() -> String {
-        guard let student = studentPendingUnlink else {
-            return "Tem certeza que deseja desvincular este aluno?"
-        }
-
-        if let chipCategory = filter {
-            return "O aluno \"\(student.name)\" será desvinculado da categoria \(chipCategory.displayName)."
-        } else {
-            return "O aluno \"\(student.name)\" será desvinculado de todas as categorias."
-        }
-    }
-
-    private func confirmUnlink() async {
+    private func confirmCategoryChange(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o professor logado."
-            studentPendingUnlink = nil
+            vm.setLinkError("Não foi possível identificar o professor logado.")
             return
         }
-        guard let student = studentPendingUnlink, let studentId = student.id, !studentId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o aluno para desvincular."
-            studentPendingUnlink = nil
+        guard let student = studentPendingCategoryChange,
+              let studentId = student.id,
+              !studentId.isEmpty
+        else {
+            vm.setLinkError("Não foi possível identificar o aluno para alterar a categoria.")
             return
         }
 
-        await vm.unlinkStudent(
+        let didSave = await vm.setStudentCategories(
             teacherId: teacherId,
             studentId: studentId,
-            categoryToRemove: filter
+            categories: Array(categories)
         )
-        studentPendingUnlink = nil
+        if didSave {
+            showCategoryChangeDialog = false
+        }
     }
 
     private var pendingInvitesCard: some View {
@@ -506,12 +522,6 @@ struct TeacherStudentsListView: View {
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(Capsule().fill(Color.yellow.opacity(0.12)))
-
-                            if let cat = inv.category, !cat.isEmpty {
-                                Text(cat)
-                                    .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.45))
-                            }
                         }
                     }
 
@@ -540,7 +550,9 @@ struct TeacherStudentsListView: View {
                 .contentShape(Rectangle())
 
                 if idx < pending.count - 1 {
-                    innerDivider(leading: 54)
+                    Divider()
+                        .background(Theme.Colors.divider)
+                        .padding(.horizontal, 16)
                 }
             }
 
@@ -577,7 +589,9 @@ struct TeacherStudentsListView: View {
                     linkRequestRow(item)
 
                     if index < vm.pendingLinkRequests.count - 1 {
-                        innerDivider(leading: 54)
+                        Divider()
+                            .background(Theme.Colors.divider)
+                            .padding(.horizontal, 16)
                     }
                 }
 
@@ -611,6 +625,7 @@ struct TeacherStudentsListView: View {
             Menu {
                 Button {
                     studentPendingLink = item
+                    selectedLinkCategories = []
                     showCategoryDialog = true
                 } label: {
                     Label("Aceitar vínculo", systemImage: "checkmark")
@@ -662,26 +677,133 @@ struct TeacherStudentsListView: View {
         linkRequestPendingDecline = nil
     }
 
-    private func linkDialogMessageText() -> String {
-        guard let item = studentPendingLink else { return "Selecione uma categoria." }
-        return "Aluno: \(item.name)\nEscolha a categoria para vincular."
-    }
-
-    private func confirmLink(_ category: TreinoTipo) async {
+    private func confirmLink(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.setLinkError("Não foi possível identificar o professor logado.")
-            studentPendingLink = nil
             return
         }
         guard let item = studentPendingLink else { return }
 
-        await vm.approveRequestAndLinkStudent(
+        let didSave = await vm.approveRequestAndLinkStudent(
             teacherId: teacherId,
             requestId: item.requestId,
             studentId: item.studentId,
-            category: category.firestoreKey
+            categories: Array(categories)
         )
-        studentPendingLink = nil
+        if didSave {
+            showCategoryDialog = false
+        }
+    }
+
+    private struct CategoryMultiSelectionSheet: View {
+        @Binding var selectedCategories: Set<TreinoTipo>
+        let isSaving: Bool
+        let onCancel: () -> Void
+        let onSave: () -> Void
+
+        private let categories: [TreinoTipo] = [.crossfit, .academia, .emCasa]
+
+        var body: some View {
+            ZStack {
+                Theme.Colors.headerBackground
+                    .ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .padding(.top, 10)
+
+                    Text("Selecione a categoria do vínculo")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+
+                    VStack(spacing: 0) {
+                        ForEach(categories, id: \.self) { category in
+                            Button {
+                                toggle(category)
+                            } label: {
+                                HStack(spacing: 12) {
+                                    Image(systemName: selectedCategories.contains(category) ? "checkmark.square.fill" : "square")
+                                        .foregroundColor(
+                                            selectedCategories.contains(category)
+                                                ? Theme.Colors.primaryGreen
+                                                : .white.opacity(0.35)
+                                        )
+                                        .font(.system(size: 20, weight: .semibold))
+
+                                    Text(title(for: category))
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+
+                                    Spacer()
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 14)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+                            .disabled(isSaving)
+
+                            if category != categories.last {
+                                Divider()
+                                    .background(Theme.Colors.divider)
+                                    .padding(.leading, 16)
+                            }
+                        }
+                    }
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 14)
+
+                    Spacer(minLength: 0)
+
+                    HStack(spacing: 12) {
+                        Button(action: onCancel) {
+                            Text("Cancelar")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(isSaving)
+
+                        Button(action: onSave) {
+                            Text("Salvar")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                        .disabled(selectedCategories.isEmpty || isSaving)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 16)
+                }
+            }
+            .presentationDetents([.fraction(0.50)])
+        }
+
+        private func toggle(_ category: TreinoTipo) {
+            if selectedCategories.contains(category) {
+                selectedCategories.remove(category)
+            } else {
+                selectedCategories.insert(category)
+            }
+        }
+
+        private func title(for category: TreinoTipo) -> String {
+            category == .emCasa ? "Em Casa" : category.displayName
+        }
     }
 
     private func studentActivitiesLastSeenKey(teacherId: String) -> String {
@@ -691,17 +813,16 @@ struct TeacherStudentsListView: View {
     // MARK: - ✅ Categoria combinada (vínculo / cadastro) + navegação
 
     private func combinedCategoryText(_ student: AppUser) -> String {
-        let profile = categoryFromStudentProfile(student)
-        guard let link = filter else {
-            return profile?.displayName ?? "—"
+        guard let studentId = student.id, !studentId.isEmpty else {
+            return "—"
         }
-        guard let profile else {
-            return link.displayName
-        }
-        if link == profile {
-            return link.displayName
-        }
-        return "\(link.displayName) / \(profile.displayName)"
+
+        let categories = vm.linkedCategories(for: studentId)
+        guard !categories.isEmpty else { return "—" }
+
+        return categories
+            .map { $0 == .emCasa ? "Em Casa" : $0.displayName }
+            .joined(separator: " / ")
     }
 
     private func categoryFromStudentProfile(_ student: AppUser) -> TreinoTipo? {
@@ -730,10 +851,14 @@ struct TeacherStudentsListView: View {
         if let filter {
             return filter
         }
-        if let fromProfile = categoryFromStudentProfile(student) {
-            return fromProfile
+        if let studentId = student.id,
+           let linkedCategory = vm.linkedCategory(
+               for: studentId,
+               preferred: categoryFromStudentProfile(student) ?? selectedCategory
+           ) {
+            return linkedCategory
         }
-        return selectedCategory
+        return categoryFromStudentProfile(student) ?? selectedCategory
     }
 
     private func mapCategoryStringToTreinoTipo(_ rawOpt: String?) -> TreinoTipo? {
@@ -774,53 +899,88 @@ struct TeacherStudentsListView: View {
 
     private var inviteSheet: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
+            Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            // ✅ AJUSTE 2: ScrollView para evitar “expansão” que corta conteúdo ao focar no e-mail e ao trocar abas
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 14) {
+            VStack(spacing: 0) {
+                // ✅ AJUSTE 2: ScrollView para evitar “expansão” que corta conteúdo ao focar no e-mail e ao trocar abas
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
 
-                    Capsule()
-                        .fill(Color.white.opacity(0.22))
-                        .frame(width: 48, height: 6)
-                        .padding(.top, 10)
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                    Text("Convidar aluno")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .padding(.top, 2)
+                        Text("Convidar aluno")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
 
-                    Picker("", selection: $inviteTab) {
-                        ForEach(InviteTab.allCases, id: \.rawValue) { tab in
-                            Text(tab.title).tag(tab)
+                        VStack(alignment: .leading, spacing: 14) {
+                            Picker("", selection: $inviteTab) {
+                                ForEach(InviteTab.allCases, id: \.rawValue) { tab in
+                                    Text(tab.title).tag(tab)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+
+                            Group {
+                                switch inviteTab {
+                                case .invite:
+                                    inviteByEmailCard
+                                case .sent:
+                                    invitesSentCard
+                                }
+                            }
                         }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
                     }
-                    .pickerStyle(.segmented)
-                    .padding(.horizontal, 16)
-
-                    Group {
-                        switch inviteTab {
-                        case .invite:
-                            inviteByEmailCard
-                        case .sent:
-                            invitesSentCard
-                        }
-                    }
-                    .padding(.horizontal, 16)
-
-                    Spacer(minLength: 10)
                 }
-                .padding(.bottom, 16)
+                .scrollDismissesKeyboard(.interactively)
+
+                if inviteTab == .invite {
+                    Button {
+                        Task {
+                            guard let teacherId = session.uid, !teacherId.isEmpty else {
+                                vm.setInviteError("Não foi possível identificar o professor logado.")
+                                return
+                            }
+                            await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
+                        }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Spacer()
+                            if vm.isInvitesLoading {
+                                ProgressView()
+                            } else {
+                                Image(systemName: "paperplane.fill")
+                                Text("Enviar convite")
+                            }
+                            Spacer()
+                        }
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 16)
+                }
             }
-            .scrollDismissesKeyboard(.interactively)
         }
-        .presentationDetents([.medium, .large])
+        .presentationDetents([.fraction(2.0 / 3.0)])
         // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
         .presentationContentInteraction(.scrolls)
-        .presentationDragIndicator(.hidden)
         .onAppear {
             Task { await loadInvitesIfPossible() }
         }
@@ -856,6 +1016,7 @@ struct TeacherStudentsListView: View {
                     .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
+                    .font(.system(size: 16, weight: .semibold))
 
                 if !inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button { inviteEmail = "" } label: {
@@ -865,55 +1026,19 @@ struct TeacherStudentsListView: View {
                     .buttonStyle(.plain)
                 }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 10)
-            .background(Color.white.opacity(0.08))
-            .cornerRadius(12)
+            .padding(.horizontal, 14)
+            .padding(.vertical, 14)
+            .background(Color.white.opacity(0.10))
+            .cornerRadius(14)
             .overlay(
-                RoundedRectangle(cornerRadius: 12)
+                RoundedRectangle(cornerRadius: 14)
                     .stroke(Color.white.opacity(0.10), lineWidth: 1)
             )
-
-            Button {
-                Task {
-                    guard let teacherId = session.uid, !teacherId.isEmpty else {
-                        vm.setInviteError("Não foi possível identificar o professor logado.")
-                        return
-                    }
-                    await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
-                }
-            } label: {
-                HStack {
-                    Spacer()
-                    if vm.isInvitesLoading {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "paperplane.fill")
-                        Text("Enviar convite")
-                            .font(.system(size: 14, weight: .semibold))
-                    }
-                    Spacer()
-                }
-                .foregroundColor(.white.opacity(0.92))
-                .padding(.vertical, 12)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Color.green.opacity(0.18)))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(0.30), lineWidth: 1)
-                )
-            }
-            .buttonStyle(.plain)
-            .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
 
             Text("O aluno só aparecerá na sua lista após aceitar o convite no app.")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.35))
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
     private var invitesSentCard: some View {
@@ -972,11 +1097,6 @@ struct TeacherStudentsListView: View {
                 )
             }
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
     }
 
     private func inviteRow(_ inv: TeacherStudentInviteFS) -> some View {

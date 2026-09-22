@@ -27,6 +27,7 @@ struct CreateTreinoAcademiaView: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
+    @State private var isSelectingTemplateAttachment: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -120,27 +121,33 @@ struct CreateTreinoAcademiaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateSelectedForAttachment)) { notification in
+            guard isSelectingTemplateAttachment,
+                  let template = notification.object as? WorkoutTemplateFS else {
+                return
+            }
+            isSelectingTemplateAttachment = false
+            applyTemplate(template)
+        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(category.displayName) • \(sectionTitle)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Text("Crie um treino para aparecer na lista desta seção.")
+            (
+                Text("Crie um novo ")
+                    .foregroundColor(.white.opacity(0.55))
+                + Text("treino de academia")
+                    .foregroundColor(.green.opacity(0.85))
+                + Text(" para esta seção.")
+                    .foregroundColor(.white.opacity(0.55))
+            )
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-
-            Text("Treino")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
 
             UnderlineTextField(
                 title: "Título do Treino",
@@ -187,13 +194,18 @@ struct CreateTreinoAcademiaView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
+                WorkoutTemplateAttachmentButton(isLoading: false) {
+                    isSelectingTemplateAttachment = true
+                    path.append(.teacherAcademiaLibrary(mode: .library, templateMode: .attach))
+                }
+
                 Spacer()
                 Button {
                     blocks.append(BlockDraft(name: "Novo bloco", details: ""))
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(.green.opacity(0.85))
-                        .font(.system(size: 18))
+                        .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)
             }
@@ -202,9 +214,18 @@ struct CreateTreinoAcademiaView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text(b.name.isEmpty ? "Sem nome" : b.name)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.70))
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField("Novo bloco", text: $b.name)
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+
+                            Rectangle()
+                                .fill(Theme.Colors.divider)
+                                .frame(height: 1)
+                        }
+                        .frame(maxWidth: .infinity)
 
                         Spacer()
 
@@ -219,21 +240,7 @@ struct CreateTreinoAcademiaView: View {
                         .buttonStyle(.plain)
                     }
 
-                    UnderlineTextField(
-                        title: "",
-                        text: $b.name,
-                        isSecure: false,
-                        showPassword: $showPasswordDummy,
-                        lineColor: Theme.Colors.divider,
-                        textColor: .white.opacity(0.92),
-                        placeholderColor: .white.opacity(0.55)
-                    )
-
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Detalhes")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
-
                         TextEditor(text: $b.details)
                             .foregroundColor(.white.opacity(0.92))
                             .scrollContentBackground(.hidden)
@@ -279,18 +286,10 @@ struct CreateTreinoAcademiaView: View {
                     ProgressView().tint(.white)
                 } else {
                     Text("Salvar Treino")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSaving)
@@ -307,6 +306,7 @@ struct CreateTreinoAcademiaView: View {
 
             Spacer()
         }
+
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
         .background(Color.black.opacity(0.35))
@@ -317,11 +317,19 @@ struct CreateTreinoAcademiaView: View {
         )
     }
 
+    private func applyTemplate(_ template: WorkoutTemplateFS) {
+        title = template.title
+        description = template.description
+        blocks = (template.blocks ?? []).map {
+            BlockDraft(name: $0.name, details: $0.details)
+        }
+    }
+
     private func saveTemplate() async {
         errorMessage = nil
         successMessage = nil
 
-        guard session.userType == .TRAINER else {
+        guard session.isTrainer else {
             errorMessage = "Apenas professor pode adicionar treinos."
             return
         }

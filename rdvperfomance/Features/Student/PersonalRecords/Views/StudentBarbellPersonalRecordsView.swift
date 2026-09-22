@@ -8,6 +8,7 @@ struct StudentBarbellPersonalRecordsView: View {
 
     /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -176,11 +177,13 @@ struct StudentBarbellPersonalRecordsView: View {
                     }
                 }
 
-                FooterBar(
+                PersonalRecordsFooter(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
-                        isSobreSelected: true,
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
@@ -290,7 +293,7 @@ struct StudentBarbellPersonalRecordsView: View {
     }
 
     private func tableRow(move: BarbellMove) -> some View {
-        let storedKgValue = bestPRValueKg(for: move.storageKey)
+        let storedKgValue = currentPRValueKg(for: move.storageKey)
         let displayValue = storedKgValue.map { convertFromStorageKgToPreferredUnit($0) }
 
         return Button {
@@ -364,7 +367,7 @@ struct StudentBarbellPersonalRecordsView: View {
 
                             Spacer()
 
-                            if bestPRValueKg(for: move.storageKey) != nil {
+                            if currentPRValueKg(for: move.storageKey) != nil {
                                 Button {
                                     beginEditingExistingPR(for: move)
                                 } label: {
@@ -501,12 +504,8 @@ struct StudentBarbellPersonalRecordsView: View {
                         selectedMove = nil
                     } label: {
                         Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
 
@@ -561,12 +560,8 @@ struct StudentBarbellPersonalRecordsView: View {
                         showPRDatePicker = false
                     } label: {
                         Text("Confirmar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }
@@ -818,12 +813,8 @@ struct StudentBarbellPersonalRecordsView: View {
                         addNewMove()
                     } label: {
                         Text("Adicionar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }
@@ -863,8 +854,7 @@ struct StudentBarbellPersonalRecordsView: View {
         // ✅ Usa WeightParser que aceita vírgula e ponto
         if !trimmedValue.isEmpty, let value = WeightParser.parse(trimmedValue), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
-            saveValue(storageKg, for: key)
-            saveHistoryValue(storageKg, for: key, date: Date())
+            saveCurrentPR(storageKg, for: key, date: Date())
         }
 
         showAddMoveSheet = false
@@ -883,19 +873,12 @@ struct StudentBarbellPersonalRecordsView: View {
         // ✅ Usa WeightParser que aceita vírgula e ponto, valida casas decimais
         if let value = WeightParser.parse(trimmed), value > 0 {
             let storageKg = convertFromPreferredUnitToStorageKg(value)
-            if let currentBest = bestPRValueKg(for: move.storageKey) {
-                if storageKg > currentBest {
-                    saveValue(storageKg, for: move.storageKey)
-                }
-            } else {
-                saveValue(storageKg, for: move.storageKey)
-            }
-            saveHistoryValue(storageKg, for: move.storageKey, date: selectedPRDate)
+            saveCurrentPR(storageKg, for: move.storageKey, date: selectedPRDate)
         }
     }
 
     private func beginEditingExistingPR(for move: BarbellMove) {
-        guard let valueKg = bestPRValueKg(for: move.storageKey) else { return }
+        guard let valueKg = currentPRValueKg(for: move.storageKey) else { return }
 
         inputValue = formatNumber(convertFromStorageKgToPreferredUnit(valueKg))
         if let entry = currentPRHistoryEntry(for: move.storageKey, valueKg: valueKg) {
@@ -920,7 +903,9 @@ struct StudentBarbellPersonalRecordsView: View {
         if let entryID = editingHistoryEntryID {
             var entries = history[key, default: []]
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
-                saveValue(max(valueKg, entries.map(\.valueKg).max() ?? 0), for: key)
+                var values = loadMap()
+                values[key] = valueKg
+                saveBarbellRecords(values: values, history: history)
                 return
             }
 
@@ -931,13 +916,13 @@ struct StudentBarbellPersonalRecordsView: View {
                 createdAt: Calendar.current.startOfDay(for: selectedPRDate)
             )
             history[key] = entries
-            saveHistoryMap(history)
-            if let highestValue = entries.map(\.valueKg).max() {
-                saveValue(highestValue, for: key)
-            }
+            var values = loadMap()
+            values[key] = valueKg
+            saveBarbellRecords(values: values, history: history)
         } else {
-            let highestHistoryValue = history[key]?.map(\.valueKg).max() ?? 0
-            saveValue(max(valueKg, highestHistoryValue), for: key)
+            var values = loadMap()
+            values[key] = valueKg
+            saveBarbellRecords(values: values, history: history)
         }
     }
 
@@ -978,22 +963,8 @@ struct StudentBarbellPersonalRecordsView: View {
         return formatter.string(from: date)
     }
 
-    private func bestPRValueKg(for key: String) -> Double? {
-        let historyBest = historyEntries(for: key)
-            .map(\.valueKg)
-            .max()
-        let legacyValue = loadValue(for: key)
-
-        switch (historyBest, legacyValue) {
-        case let (history?, legacy?):
-            return max(history, legacy)
-        case let (history?, nil):
-            return history
-        case let (nil, legacy?):
-            return legacy
-        case (nil, nil):
-            return nil
-        }
+    private func currentPRValueKg(for key: String) -> Double? {
+        historyEntries(for: key).last?.valueKg ?? loadValue(for: key)
     }
 
     private func currentPRHistoryEntry(for key: String, valueKg: Double) -> BarbellPRHistoryEntry? {
@@ -1069,7 +1040,8 @@ private extension StudentBarbellPersonalRecordsView {
         loadHistoryMap()[key, default: []].sorted { $0.createdAt < $1.createdAt }
     }
 
-    private func saveHistoryValue(_ valueKg: Double, for key: String, date: Date) {
+    private func saveCurrentPR(_ valueKg: Double, for key: String, date: Date) {
+        var values = loadMap()
         var map = loadHistoryMap()
         var entries = map[key, default: []].sorted { $0.createdAt < $1.createdAt }
         let normalizedDate = Calendar.current.startOfDay(for: date)
@@ -1078,6 +1050,8 @@ private extension StudentBarbellPersonalRecordsView {
             abs($0.valueKg - valueKg) < 0.000_001 &&
             Calendar.current.isDate($0.createdAt, inSameDayAs: normalizedDate)
         }) {
+            values[key] = valueKg
+            saveBarbellRecords(values: values, history: map)
             return
         }
 
@@ -1089,7 +1063,8 @@ private extension StudentBarbellPersonalRecordsView {
             )
         )
         map[key] = entries
-        saveHistoryMap(map)
+        values[key] = valueKg
+        saveBarbellRecords(values: values, history: map)
     }
 
     private func removeHistory(for key: String) {
@@ -1103,10 +1078,19 @@ private extension StudentBarbellPersonalRecordsView {
         return map[key]
     }
 
-    func saveValue(_ value: Double, for key: String) {
-        var map = loadMap()
-        map[key] = value
-        saveMap(map)
+    private func saveBarbellRecords(
+        values: [String: Double],
+        history: [String: [BarbellPRHistoryEntry]]
+    ) {
+        do {
+            barbellValuesData = try JSONEncoder().encode(values)
+            barbellHistoryData = try JSONEncoder().encode(history)
+            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+        } catch {
+            #if DEBUG
+            print("[BarbellPR] Falha ao preparar valores e histórico: \(error.localizedDescription)")
+            #endif
+        }
     }
 
     func removeValue(for key: String) {

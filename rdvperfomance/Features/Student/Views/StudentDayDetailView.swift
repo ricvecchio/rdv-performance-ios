@@ -31,7 +31,7 @@ struct StudentDayDetailView: View {
 
     @State private var didPrepareEditFields: Bool = false
 
-    private var isTeacherViewing: Bool { session.userType == .TRAINER }
+    private var isTeacherViewing: Bool { session.isTrainer }
 
     // ✅ Player de vídeo (mesmo comportamento da TeacherImportVideosView)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
@@ -325,13 +325,14 @@ struct StudentDayDetailView: View {
         }
     }
 
-    // Footer padrão da Agenda
+    // Footer padrão de Treinos
     private var footer: some View {
         FooterBar(
             path: $path,
-            kind: .agendaSobrePerfil(
-                isAgendaSelected: true,
-                isSobreSelected: false,
+            kind: .studentHomeTreinosRecordsProfile(
+                isHomeSelected: false,
+                isTreinosSelected: true,
+                isRecordsSelected: false,
                 isPerfilSelected: false
             ),
             onSelectStudentSection: onSelectSection
@@ -1036,20 +1037,12 @@ struct StudentDayDetailView: View {
                     .disabled(isSaving)
 
                     Button { Task { await saveDayEdits() } } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 10) {
                             if isSaving { ProgressView().tint(.white) }
                             Text("Salvar")
                         }
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Color.green.opacity(0.16))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                        )
+                        .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)

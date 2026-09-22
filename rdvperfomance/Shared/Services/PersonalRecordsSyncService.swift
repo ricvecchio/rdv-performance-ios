@@ -271,6 +271,9 @@ final class PersonalRecordsSyncService {
                 revision: revision
             )
         } catch {
+            #if DEBUG
+            print("[PersonalRecordsSync] Remote synchronization failed for users/\(uid)/student_personal_records: \(error)")
+            #endif
             scheduleRetry(for: uid)
         }
     }
@@ -306,6 +309,9 @@ final class PersonalRecordsSyncService {
                 revision: revision
             )
         } catch {
+            #if DEBUG
+            print("[PersonalRecordsSync] Remote upload failed for users/\(uid)/student_personal_records: \(error)")
+            #endif
             scheduleRetry(for: uid)
         }
     }

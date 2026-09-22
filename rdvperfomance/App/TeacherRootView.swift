@@ -7,6 +7,7 @@ struct TeacherRootView: View {
     @State private var selectedSection: TeacherMainSection = .home
     @State private var homePath: [AppRoute] = []
     @State private var studentsPath: [AppRoute] = []
+    @State private var workoutsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
 
     private var category: TreinoTipo {
@@ -26,6 +27,11 @@ struct TeacherRootView: View {
                     TeacherStudentsListView(path: $studentsPath, selectedCategory: category, initialFilter: nil, onBack: { select(.home) })
                         .navigationDestination(for: AppRoute.self, destination: teacherDestination)
                 }
+            case .workouts:
+                NavigationStack(path: $workoutsPath) {
+                    TeacherWorkoutsView(path: $workoutsPath, category: category)
+                        .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
             case .profile:
                 NavigationStack(path: $profilePath) {
                     ProfileView(path: $profilePath, onBack: { select(.home) })
@@ -34,6 +40,7 @@ struct TeacherRootView: View {
             }
         }
         .environment(\.selectTeacherMainSection, select)
+        .environment(\.teacherMainSection, selectedSection)
     }
 
     private func select(_ section: TeacherMainSection) {
@@ -42,6 +49,7 @@ struct TeacherRootView: View {
         switch section {
         case .home: homePath.removeAll()
         case .students: studentsPath.removeAll()
+        case .workouts: workoutsPath.removeAll()
         case .profile: profilePath.removeAll()
         }
 
@@ -51,6 +59,57 @@ struct TeacherRootView: View {
     @ViewBuilder
     private func teacherDestination(_ route: AppRoute) -> some View {
         switch route {
+        case .teacherPersonalRecords(let category):
+            StudentPersonalRecordsView(
+                path: destinationPath,
+                onBack: { destinationPath.wrappedValue.removeLast() },
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsBarbell:
+            StudentBarbellPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsGymnastic:
+            StudentGymnasticPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsEndurance:
+            StudentEndurancePersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsNotables:
+            StudentNotablesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsGirls:
+            StudentGirlsPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsOpen:
+            StudentOpenPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsHeroes:
+            StudentHeroesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsCampeonatos:
+            StudentCampeonatosPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsCrossfitGames:
+            StudentCrossfitGamesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
         case .teacherStudentDetail(let student, let category):
             TeacherStudentDetailView(path: destinationPath, student: student, category: category)
         case .teacherMessage(let student, let category):
@@ -61,16 +120,34 @@ struct TeacherRootView: View {
             CreateTrainingWeekView(path: destinationPath, student: student, category: category)
         case .createTrainingDay(let weekId, let category):
             CreateTrainingDayView(path: destinationPath, weekId: weekId, category: category)
-        case .teacherMyWorkouts(let category):
-            TeacherMyWorkoutsView(path: destinationPath, category: category)
-        case .teacherCrossfitLibrary(let section):
-            TeacherCrossfitLibraryView(path: destinationPath, section: section)
-        case .teacherAcademiaLibrary:
-            TeacherAcademiaLibraryView(path: destinationPath)
-        case .teacherEmCasaLibrary:
-            TeacherEmCasaLibraryView(path: destinationPath)
-        case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle):
-            TeacherWorkoutTemplatesView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
+        case .teacherMyWorkouts(let category, let mode):
+            TeacherMyWorkoutsView(path: destinationPath, category: category, mode: mode)
+        case .teacherCrossfitLibrary(let section, let mode, let templateMode):
+            TeacherCrossfitLibraryView(
+                path: destinationPath,
+                section: section,
+                mode: mode,
+                templateMode: templateMode
+            )
+        case .teacherAcademiaLibrary(let mode, let templateMode):
+            TeacherAcademiaLibraryView(path: destinationPath, mode: mode, templateMode: templateMode)
+        case .teacherEmCasaLibrary(let mode, let templateMode):
+            TeacherEmCasaLibraryView(path: destinationPath, mode: mode, templateMode: templateMode)
+        case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle, let mode):
+            TeacherWorkoutTemplatesView(
+                path: destinationPath,
+                category: category,
+                sectionKey: sectionKey,
+                sectionTitle: sectionTitle,
+                mode: mode
+            )
+        case .teacherSendWorkout(let preselectedStudentID, let startsAtWorkout):
+            TeacherSendWorkoutView(
+                path: destinationPath,
+                category: category,
+                preselectedStudentID: preselectedStudentID,
+                startsAtWorkout: startsAtWorkout
+            )
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)
         case .teacherImportVideos(let category):
@@ -81,10 +158,16 @@ struct TeacherRootView: View {
             CreateTreinoAcademiaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
         case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
             CreateTreinoCasaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
-        case .studentAgenda(let studentId, let studentName):
-            StudentAgendaView(path: destinationPath, studentId: studentId, studentName: studentName)
-        case .studentWeekDetail(let studentId, let weekId, let weekTitle):
-            StudentWeekDetailView(path: destinationPath, studentId: studentId, weekId: weekId, weekTitle: weekTitle)
+        case .studentWorkouts(let studentId, let studentName):
+            StudentWorkoutsView(path: destinationPath, studentId: studentId, studentName: studentName)
+        case .studentWeekDetail(let studentId, let weekId, let weekTitle, let selectedDayId):
+            StudentWeekDetailView(
+                path: destinationPath,
+                studentId: studentId,
+                weekId: weekId,
+                weekTitle: weekTitle,
+                initialExpandedDayId: selectedDayId
+            )
         case .studentDayDetail(let weekId, let day, let weekTitle):
             StudentDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
         case .configuracoes:
@@ -110,6 +193,7 @@ struct TeacherRootView: View {
         switch selectedSection {
         case .home: $homePath
         case .students: $studentsPath
+        case .workouts: $workoutsPath
         case .profile: $profilePath
         }
     }

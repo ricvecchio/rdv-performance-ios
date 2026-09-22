@@ -8,6 +8,7 @@ struct StudentGymnasticPersonalRecordsView: View {
 
     /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -165,9 +166,10 @@ struct StudentGymnasticPersonalRecordsView: View {
                     }
                 }
 
-                FooterBar(
+                PersonalRecordsFooter(
                     path: $path,
-                    kind: .agendaSobrePerfil(
+                    navigationContext: navigationContext,
+                    studentFooterKind: .agendaSobrePerfil(
                         isAgendaSelected: false,
                         isSobreSelected: true,
                         isPerfilSelected: false
@@ -422,12 +424,8 @@ struct StudentGymnasticPersonalRecordsView: View {
                                 .environment(\.locale, Locale(identifier: "pt_BR"))
                             Button { showPRDatePicker = false } label: {
                                 Text("Confirmar")
-                                    .font(.system(size: 15, weight: .bold))
-                                    .foregroundColor(.black.opacity(0.85))
                                     .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 14)
-                                    .background(Color.green.opacity(0.90))
-                                    .cornerRadius(14)
+                                    .primaryGreenActionButton()
                             }
                             .buttonStyle(.plain)
                         }
@@ -466,12 +464,8 @@ struct StudentGymnasticPersonalRecordsView: View {
                         selectedItem = nil
                     } label: {
                         Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
 
@@ -629,12 +623,8 @@ struct StudentGymnasticPersonalRecordsView: View {
                         addNewItem()
                     } label: {
                         Text("Adicionar")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.black.opacity(0.85))
                             .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.green.opacity(0.90))
-                            .cornerRadius(14)
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                 }
@@ -712,6 +702,7 @@ struct StudentGymnasticPersonalRecordsView: View {
             var entries = history[key, default: []]
             guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
                 primaryCandidates = entries.map(\.value) + [trimmed]
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
                 if let primaryValue = bestValue(from: primaryCandidates, metadata: metadata) {
                     saveValue(primaryValue, for: key)
                 }
@@ -729,6 +720,7 @@ struct StudentGymnasticPersonalRecordsView: View {
             primaryCandidates = entries.map(\.value)
         } else {
             primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
         }
 
         saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)

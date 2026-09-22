@@ -4,9 +4,16 @@ import FirebaseFirestore
 final class TrainingRepository: FirestoreBaseRepository {
     let db = Firestore.firestore()
     
-    func getWeeksForStudent(studentId: String, onlyPublished: Bool = true) async throws -> [TrainingWeekFS] {
+    func getWeeksForStudent(
+        studentId: String,
+        teacherId: String? = nil,
+        categoryRaw: String? = nil,
+        onlyPublished: Bool = true
+    ) async throws -> [TrainingWeekFS] {
         let cleanStudentId = clean(studentId)
         guard !cleanStudentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        let cleanTeacherId = teacherId.map(clean(_:)) ?? ""
+        let cleanCategoryRaw = categoryRaw.map(normalizedCategory(_:)) ?? ""
         
         var query: Query = db.collection(TrainingFS.weeksCollection)
             .whereField("studentId", isEqualTo: cleanStudentId)
@@ -15,18 +22,31 @@ final class TrainingRepository: FirestoreBaseRepository {
             query = query.whereField("isPublished", isEqualTo: true)
         }
         
-        let snap: QuerySnapshot
-        do {
-            snap = try await query.order(by: "createdAt", descending: false).getDocuments()
-        } catch {
-            snap = try await query.getDocuments()
-        }
+        let snap = try await query.getDocuments()
         
         let weeks = try snap.documents.compactMap { try $0.data(as: TrainingWeekFS.self) }
         
-        return weeks.sorted { a, b in
+        return weeks
+            .filter { week in
+                (cleanTeacherId.isEmpty || clean(week.teacherId) == cleanTeacherId)
+                    && (cleanCategoryRaw.isEmpty || normalizedCategory(week.categoryRaw) == cleanCategoryRaw)
+            }
+            .sorted { a, b in
             a.weekTitle.localizedCaseInsensitiveCompare(b.weekTitle) == .orderedAscending
         }
+    }
+
+    func getPublishedWeeksForTeacher(teacherId: String) async throws -> [TrainingWeekFS] {
+        let cleanTeacherId = clean(teacherId)
+        guard !cleanTeacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+
+        let snap = try await db.collection(TrainingFS.weeksCollection)
+            .whereField("teacherId", isEqualTo: cleanTeacherId)
+            .getDocuments()
+
+        return try snap.documents
+            .compactMap { try $0.data(as: TrainingWeekFS.self) }
+            .filter(\.isPublished)
     }
     
     func getDaysForWeek(weekId: String) async throws -> [TrainingDayFS] {
@@ -48,7 +68,7 @@ final class TrainingRepository: FirestoreBaseRepository {
         }
         return try await getDaysForWeek(weekId: weekId)
     }
-    
+
     func createWeekForStudent(
         studentId: String,
         teacherId: String,
@@ -56,7 +76,8 @@ final class TrainingRepository: FirestoreBaseRepository {
         categoryRaw: String,
         startDate: Date,
         endDate: Date,
-        isPublished: Bool = true
+        isPublished: Bool = true,
+        documentId: String? = nil
     ) async throws -> String {
         
         let cleanStudentId = clean(studentId)
@@ -67,24 +88,106 @@ final class TrainingRepository: FirestoreBaseRepository {
         
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else { throw FirestoreRepositoryError.invalidData }
+        let cleanCategoryRaw = clean(categoryRaw)
+        guard !cleanCategoryRaw.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        let (normalizedStartDate, normalizedEndDate) = try calendarWeek(containing: startDate)
         
         let payload: [String: Any] = [
             "studentId": cleanStudentId,
             "teacherId": cleanTeacherId,
             "title": cleanTitle,
             "weekTitle": cleanTitle,
-            "categoryRaw": categoryRaw,
-            "startDate": Timestamp(date: startDate),
-            "endDate": Timestamp(date: endDate),
+            "categoryRaw": cleanCategoryRaw,
+            "startDate": Timestamp(date: normalizedStartDate),
+            "endDate": Timestamp(date: normalizedEndDate),
             "isPublished": isPublished,
             "createdAt": FieldValue.serverTimestamp(),
             "updatedAt": FieldValue.serverTimestamp()
         ]
         
-        let ref = db.collection(TrainingFS.weeksCollection).document()
+        let cleanDocumentId = documentId.map(clean(_:)) ?? ""
+        let ref = cleanDocumentId.isEmpty
+            ? db.collection(TrainingFS.weeksCollection).document()
+            : db.collection(TrainingFS.weeksCollection).document(cleanDocumentId)
         try await ref.setData(payload, merge: true)
         
         return ref.documentID
+    }
+
+    func resolveOrCreateWeekForStudent(
+        studentId: String,
+        teacherId: String,
+        categoryRaw: String,
+        date: Date
+    ) async throws -> (weekId: String, startDate: Date) {
+        let cleanStudentId = clean(studentId)
+        let cleanTeacherId = clean(teacherId)
+        guard !cleanStudentId.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
+        guard !cleanTeacherId.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+
+        let calendar = Calendar.current
+        let selectedDate = calendar.startOfDay(for: date)
+        let cleanCategoryRaw = clean(categoryRaw)
+        let normalizedCategoryRaw = normalizedCategory(cleanCategoryRaw)
+        guard !normalizedCategoryRaw.isEmpty else { throw FirestoreRepositoryError.invalidData }
+        let (weekStartDate, weekEndDate) = try calendarWeek(containing: selectedDate)
+        let existingWeeks = try await getWeeksForStudent(
+            studentId: cleanStudentId,
+            teacherId: cleanTeacherId,
+            categoryRaw: normalizedCategoryRaw,
+            onlyPublished: false
+        )
+
+        let matchingWeeks = existingWeeks.compactMap { week -> (weekId: String, startDate: Date)? in
+            guard let weekId = week.id.map(clean(_:)),
+                  !weekId.isEmpty,
+                  clean(week.studentId) == cleanStudentId,
+                  clean(week.teacherId) == cleanTeacherId,
+                  normalizedCategory(week.categoryRaw) == normalizedCategoryRaw,
+                  let startDate = week.startDate,
+                  let endDate = week.endDate else {
+                return nil
+            }
+
+            let start = calendar.startOfDay(for: startDate)
+            let end = calendar.startOfDay(for: endDate)
+            guard calendar.isDate(start, inSameDayAs: weekStartDate),
+                  calendar.isDate(end, inSameDayAs: weekEndDate),
+                  selectedDate >= start,
+                  selectedDate <= end else {
+                return nil
+            }
+            return (weekId, start)
+        }
+        .sorted { $0.startDate > $1.startDate }
+
+        if let matchingWeek = matchingWeeks.first {
+            return matchingWeek
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "dd/MM"
+        let title = "Semana \(formatter.string(from: weekStartDate)) - \(formatter.string(from: weekEndDate))"
+
+        let identifierFormatter = DateFormatter()
+        identifierFormatter.locale = Locale(identifier: "en_US_POSIX")
+        identifierFormatter.calendar = calendar
+        identifierFormatter.dateFormat = "yyyyMMdd"
+        let automaticWeekId = "automatic-\(cleanStudentId)-\(cleanTeacherId)-\(automaticIdentifierComponent(normalizedCategoryRaw))-\(identifierFormatter.string(from: weekStartDate))"
+        _ = try await createWeekForStudent(
+            studentId: cleanStudentId,
+            teacherId: cleanTeacherId,
+            title: title,
+            categoryRaw: cleanCategoryRaw,
+            startDate: weekStartDate,
+            endDate: weekEndDate,
+            isPublished: true,
+            documentId: automaticWeekId
+        )
+
+        return (automaticWeekId, weekStartDate)
     }
     
     func upsertDay(
@@ -171,46 +274,6 @@ final class TrainingRepository: FirestoreBaseRepository {
             )
     }
     
-    func updateWeekDateRangeFromDays(weekId: String) async throws {
-        let cleanWeekId = clean(weekId)
-        guard !cleanWeekId.isEmpty else { throw FirestoreRepositoryError.missingWeekId }
-        
-        let daysSnap = try await db
-            .collection(TrainingFS.weeksCollection)
-            .document(cleanWeekId)
-            .collection(TrainingFS.daysSubcollection)
-            .getDocuments()
-        
-        guard !daysSnap.documents.isEmpty else { return }
-        
-        var dates: [Date] = []
-        dates.reserveCapacity(daysSnap.documents.count)
-        
-        for doc in daysSnap.documents {
-            let data = doc.data()
-            
-            if let ts = data["date"] as? Timestamp {
-                dates.append(ts.dateValue())
-            } else if let d = data["date"] as? Date {
-                dates.append(d)
-            }
-        }
-        
-        guard let minDate = dates.min(), let maxDate = dates.max() else { return }
-        
-        try await db
-            .collection(TrainingFS.weeksCollection)
-            .document(cleanWeekId)
-            .setData(
-                [
-                    "startDate": Timestamp(date: minDate),
-                    "endDate": Timestamp(date: maxDate),
-                    "updatedAt": FieldValue.serverTimestamp()
-                ],
-                merge: true
-            )
-    }
-    
     // MARK: - Operações de Deleção
     func deleteTrainingWeekCascade(weekId: String) async throws {
         let w = clean(weekId)
@@ -262,5 +325,26 @@ final class TrainingRepository: FirestoreBaseRepository {
             .getDocuments()
         
         return !snap.documents.isEmpty
+    }
+
+    private func calendarWeek(containing date: Date) throws -> (startDate: Date, endDate: Date) {
+        let calendar = Calendar.current
+        let selectedDate = calendar.startOfDay(for: date)
+        let weekday = calendar.component(.weekday, from: selectedDate)
+        let daysFromMonday = (weekday + 5) % 7
+        guard let startDate = calendar.date(byAdding: .day, value: -daysFromMonday, to: selectedDate),
+              let endDate = calendar.date(byAdding: .day, value: 6, to: startDate) else {
+            throw FirestoreRepositoryError.invalidData
+        }
+        return (calendar.startOfDay(for: startDate), calendar.startOfDay(for: endDate))
+    }
+
+    private func normalizedCategory(_ categoryRaw: String) -> String {
+        clean(categoryRaw).lowercased()
+    }
+
+    private func automaticIdentifierComponent(_ value: String) -> String {
+        value.unicodeScalars.map { CharacterSet.alphanumerics.contains($0) ? String($0) : "-" }
+            .joined()
     }
 }

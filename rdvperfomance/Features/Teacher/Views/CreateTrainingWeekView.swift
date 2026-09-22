@@ -293,16 +293,8 @@ struct CreateTrainingWeekView: View {
 
                 Button { openAddDay(week) } label: {
                     Text("Adicionar dias")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                         .padding(.horizontal, 12)
-                        .padding(.vertical, 9)
-                        .background(Color.green.opacity(0.16))
-                        .cornerRadius(10)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 10)
-                                .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                        )
+                        .primaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
 
@@ -338,18 +330,10 @@ struct CreateTrainingWeekView: View {
                         ProgressView().tint(.white)
                     } else {
                         Text("Publicar")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
                     }
                     Spacer()
                 }
-                .padding(.vertical, 14)
-                .background(Color.green.opacity(0.16))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                )
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isSaving || isDeletingWeek)
@@ -399,9 +383,16 @@ struct CreateTrainingWeekView: View {
             vm.errorMessage = "Aluno inválido: id não encontrado."
             return
         }
+        guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
+            vm.errorMessage = "Não foi possível identificar o professor logado."
+            return
+        }
 
-        await vm.loadWeeks(studentId: studentId)
-        await vm.repairWeekRangesIfNeeded()
+        await vm.loadWeeks(
+            studentId: studentId,
+            teacherId: teacherId,
+            categoryRaw: category.rawValue
+        )
     }
 
     private func openWeekDays(_ week: TrainingWeekFS) {
@@ -455,16 +446,8 @@ struct CreateTrainingWeekView: View {
 
                     Button { Task { await saveEditedTitle() } } label: {
                         Text("Salvar")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Color.green.opacity(0.16))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                            )
+                            .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
 

@@ -46,6 +46,13 @@ struct FooterBar: View {
             isPerfilSelected: Bool
         )
 
+        case studentHomeTreinosRecordsProfile(
+            isHomeSelected: Bool,
+            isTreinosSelected: Bool,
+            isRecordsSelected: Bool,
+            isPerfilSelected: Bool
+        )
+
         case teacherHomeAlunosSobrePerfil(
             selectedCategory: TreinoTipo,
             isHomeSelected: Bool,
@@ -78,6 +85,7 @@ struct FooterBar: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.selectStudentMainSection) private var selectStudentMainSection
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
+    @Environment(\.teacherMainSection) private var teacherMainSection
     @State private var teacherStudentActivityCount = 0
 
     // Constrói o footer com divider superior e botões de navegação
@@ -194,9 +202,37 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        // ✅ PROFESSOR (3 ícones) — espaçamento igual ao ALUNO
+        case .studentHomeTreinosRecordsProfile(
+            let isHomeSelected,
+            let isTreinosSelected,
+            let isRecordsSelected,
+            let isPerfilSelected
+        ):
+            HStack(spacing: 16) {
+                Button { goStudentHome() } label: {
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+
+                Button { goTreinosAluno() } label: {
+                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: isTreinosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+
+                Button { goPersonalRecords() } label: {
+                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+
+                Button { goPerfilStudent() } label: {
+                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                }
+                .buttonStyle(.plain)
+            }
+
+        // ✅ PROFESSOR (4 ícones) — espaçamento igual ao ALUNO
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
-            HStack(spacing: 28) {
+            HStack(spacing: 16) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
@@ -204,6 +240,11 @@ struct FooterBar: View {
 
                 Button { goTeacherAlunos(category: selectedCategory) } label: {
                     teacherStudentsFooterItem(isSelected: isAlunosSelected)
+                }
+                .buttonStyle(.plain)
+
+                Button { goTeacherWorkouts(category: selectedCategory) } label: {
+                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: teacherMainSection == .workouts, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
 
@@ -240,7 +281,7 @@ struct FooterBar: View {
         if session.isTrainer {
             selectTeacherMainSection(.home)
         } else {
-            selectStudentMainSection(.agenda)
+            selectStudentSection(.agenda)
         }
     }
 
@@ -248,24 +289,36 @@ struct FooterBar: View {
         if session.isTrainer {
             selectTeacherMainSection(.profile)
         } else {
-            selectStudentMainSection(.profile)
+            selectStudentSection(.profile)
         }
     }
 
     private func goAgenda() {
-        selectStudentMainSection(.agenda)
+        selectStudentSection(.agenda)
+    }
+
+    private func goStudentHome() {
+        selectStudentSection(.home)
     }
 
     private func goTreinosAluno() {
-        selectStudentMainSection(.agenda)
+        selectStudentSection(.agenda)
     }
 
     private func goPersonalRecords() {
-        selectStudentMainSection(.records)
+        selectStudentSection(.records)
     }
 
     private func goPerfilStudent() {
-        selectStudentMainSection(.profile)
+        selectStudentSection(.profile)
+    }
+
+    private func selectStudentSection(_ section: StudentMainSection) {
+        if let onSelectStudentSection {
+            onSelectStudentSection(section)
+        } else {
+            selectStudentMainSection(section)
+        }
     }
 
     private func goTeacherHome(category: TreinoTipo) {
@@ -278,6 +331,10 @@ struct FooterBar: View {
 
     private func goTeacherPerfil(category: TreinoTipo) {
         selectTeacherMainSection(.profile)
+    }
+
+    private func goTeacherWorkouts(category: TreinoTipo) {
+        selectTeacherMainSection(.workouts)
     }
 
     private func teacherStudentsFooterItem(isSelected: Bool) -> some View {

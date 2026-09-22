@@ -26,6 +26,10 @@ final class FirestoreRepository {
         try await userRepository.getUsers(byIds: ids)
     }
 
+    func getAllUsers() async throws -> [AppUser] {
+        try await userRepository.getAllUsers()
+    }
+
     func getStudentsForTeacher(teacherId: String, category: String) async throws -> [AppUser] {
         try await userRepository.getStudentsForTeacher(teacherId: teacherId, category: category)
     }
@@ -36,11 +40,60 @@ final class FirestoreRepository {
         try await userRepository.getStudentsGroupedByTeacher(teacherId: teacherId)
     }
 
+    func getAllStudentsForTeacher(teacherId: String) async throws -> [AppUser] {
+        try await userRepository.getAllStudentsForTeacher(teacherId: teacherId)
+    }
+
     func unlinkStudentFromTeacher(teacherId: String, studentId: String, category: String) async throws {
         try await userRepository.unlinkStudentFromTeacher(
             teacherId: teacherId,
             studentId: studentId,
             category: category
+        )
+    }
+
+    func unlinkStudentCompletelyFromTeacher(teacherId: String, studentId: String) async throws {
+        try await userRepository.unlinkStudentCompletelyFromTeacher(
+            teacherId: teacherId,
+            studentId: studentId
+        )
+    }
+
+    func changeStudentCategoryForTeacher(
+        teacherId: String,
+        studentId: String,
+        currentCategory: String,
+        newCategory: String
+    ) async throws {
+        try await userRepository.changeStudentCategoryForTeacher(
+            teacherId: teacherId,
+            studentId: studentId,
+            currentCategory: currentCategory,
+            newCategory: newCategory
+        )
+    }
+
+    func ensureStudentCategoriesForTeacher(
+        teacherId: String,
+        studentId: String,
+        categories: [String]
+    ) async throws {
+        try await userRepository.ensureStudentCategoriesForTeacher(
+            teacherId: teacherId,
+            studentId: studentId,
+            categories: categories
+        )
+    }
+
+    func setStudentCategoriesForTeacher(
+        teacherId: String,
+        studentId: String,
+        categories: [String]
+    ) async throws {
+        try await userRepository.setStudentCategoriesForTeacher(
+            teacherId: teacherId,
+            studentId: studentId,
+            categories: categories
         )
     }
 
@@ -50,6 +103,7 @@ final class FirestoreRepository {
 
     func updateUserProfile(
         uid: String,
+        name: String,
         phone: String?,
         cref: String?,
         bio: String?,
@@ -57,6 +111,7 @@ final class FirestoreRepository {
     ) async throws {
         try await userRepository.updateUserProfile(
             uid: uid,
+            name: name,
             phone: phone,
             cref: cref,
             bio: bio,
@@ -74,6 +129,10 @@ final class FirestoreRepository {
 
     func setStudentUnitName(uid: String, unitName: String?) async throws {
         try await userRepository.setStudentUnitName(uid: uid, unitName: unitName)
+    }
+
+    func setMeasurementUnit(uid: String, measurementUnit: String) async throws {
+        try await userRepository.setMeasurementUnit(uid: uid, measurementUnit: measurementUnit)
     }
 
     // MARK: - Profile Notification State
@@ -298,13 +357,13 @@ final class FirestoreRepository {
         teacherId: String,
         requestId: String,
         studentId: String,
-        category: String
+        categories: [String]
     ) async throws {
         try await userRepository.approveLinkRequestAndLinkStudent(
             teacherId: teacherId,
             requestId: requestId,
             studentId: studentId,
-            category: category
+            categories: categories
         )
     }
 
@@ -350,8 +409,22 @@ final class FirestoreRepository {
 
     // MARK: - Training Operations
 
-    func getWeeksForStudent(studentId: String, onlyPublished: Bool = true) async throws -> [TrainingWeekFS] {
-        try await trainingRepository.getWeeksForStudent(studentId: studentId, onlyPublished: onlyPublished)
+    func getWeeksForStudent(
+        studentId: String,
+        teacherId: String? = nil,
+        categoryRaw: String? = nil,
+        onlyPublished: Bool = true
+    ) async throws -> [TrainingWeekFS] {
+        try await trainingRepository.getWeeksForStudent(
+            studentId: studentId,
+            teacherId: teacherId,
+            categoryRaw: categoryRaw,
+            onlyPublished: onlyPublished
+        )
+    }
+
+    func getPublishedWeeksForTeacher(teacherId: String) async throws -> [TrainingWeekFS] {
+        try await trainingRepository.getPublishedWeeksForTeacher(teacherId: teacherId)
     }
 
     func getDaysForWeek(weekId: String) async throws -> [TrainingDayFS] {
@@ -369,7 +442,8 @@ final class FirestoreRepository {
         categoryRaw: String,
         startDate: Date,
         endDate: Date,
-        isPublished: Bool = true
+        isPublished: Bool = true,
+        documentId: String? = nil
     ) async throws -> String {
         try await trainingRepository.createWeekForStudent(
             studentId: studentId,
@@ -378,7 +452,22 @@ final class FirestoreRepository {
             categoryRaw: categoryRaw,
             startDate: startDate,
             endDate: endDate,
-            isPublished: isPublished
+            isPublished: isPublished,
+            documentId: documentId
+        )
+    }
+
+    func resolveOrCreateWeekForStudent(
+        studentId: String,
+        teacherId: String,
+        categoryRaw: String,
+        date: Date
+    ) async throws -> (weekId: String, startDate: Date) {
+        try await trainingRepository.resolveOrCreateWeekForStudent(
+            studentId: studentId,
+            teacherId: teacherId,
+            categoryRaw: categoryRaw,
+            date: date
         )
     }
 
@@ -410,10 +499,6 @@ final class FirestoreRepository {
 
     func updateWeekTitle(weekId: String, newTitle: String) async throws {
         try await trainingRepository.updateWeekTitle(weekId: weekId, newTitle: newTitle)
-    }
-
-    func updateWeekDateRangeFromDays(weekId: String) async throws {
-        try await trainingRepository.updateWeekDateRangeFromDays(weekId: weekId)
     }
 
     func deleteTrainingWeekCascade(weekId: String) async throws {
@@ -600,6 +685,14 @@ final class FirestoreRepository {
             categoryRaw: categoryRaw,
             sectionKey: sectionKey,
             limit: limit
+        )
+    }
+
+    func getWorkoutTemplatesForTeacher(
+        teacherId: String
+    ) async throws -> [WorkoutTemplateFS] {
+        try await workoutTemplateRepository.getWorkoutTemplatesForTeacher(
+            teacherId: teacherId
         )
     }
 
