@@ -174,11 +174,11 @@ struct DeleteAccountView: View {
                 Spacer()
             }
             .padding(.vertical, 14)
-            .background(Color.red.opacity(0.16))
+            .background(Color.red.opacity(0.28))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.red.opacity(0.35), lineWidth: 1)
+                    .stroke(Color.red.opacity(0.55), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
