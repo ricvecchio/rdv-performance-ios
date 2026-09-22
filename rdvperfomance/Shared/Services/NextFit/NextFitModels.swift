@@ -1,8 +1,15 @@
 import Foundation
 
-struct NextFitWodDisplay: Equatable {
-    let activityTitle: String
+struct NextFitWodActivityDisplay: Equatable, Identifiable {
+    let title: String
     let description: String
+    let order: Int
+
+    var id: String { "\(order)-\(title)" }
+}
+
+struct NextFitWodDisplay: Equatable {
+    let activities: [NextFitWodActivityDisplay]
 }
 
 struct NextFitIdentificationResponse: Decodable {

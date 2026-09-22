@@ -488,14 +488,16 @@ struct StudentDashboardView: View {
                 }
                 .buttonStyle(.plain)
             } else if let wod = viewModel.nextFitWod {
-                Text(wod.activityTitle)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                ForEach(wod.activities) { activity in
+                    Text(activity.title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(Theme.Colors.primaryGreen)
 
-                Text(wod.description)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.92))
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    Text(activity.description)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.92))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             } else if let error = viewModel.nextFitError {
                 Text(error)
                     .font(.system(size: 14))

@@ -120,18 +120,33 @@ struct NextFitService {
                 throw NextFitServiceError.unavailable
             }
 
-            guard let activity = activities
-                .filter({ $0.titulo.trimmingCharacters(in: .whitespacesAndNewlines).caseInsensitiveCompare("WOD") == .orderedSame })
-                .sorted(by: { $0.ordem < $1.ordem })
-                .first else {
+            let selectedActivities = activities
+                .filter {
+                    let title = $0.titulo.trimmingCharacters(in: .whitespacesAndNewlines)
+                    return ["Warm-up", "Skill", "WOD"].contains {
+                        title.caseInsensitiveCompare($0) == .orderedSame
+                    }
+                }
+                .sorted { $0.ordem < $1.ordem }
+
+            var displayActivities = [NextFitWodActivityDisplay]()
+            for activity in selectedActivities {
+                let description = try plainText(fromHTML: activity.descricao)
+                guard !description.isEmpty else { continue }
+                displayActivities.append(
+                    .init(
+                        title: activity.titulo,
+                        description: description,
+                        order: activity.ordem
+                    )
+                )
+            }
+
+            guard !displayActivities.isEmpty else {
                 return nil
             }
 
-            let description = try plainText(fromHTML: activity.descricao)
-            guard !description.isEmpty else {
-                return nil
-            }
-            return NextFitWodDisplay(activityTitle: activity.titulo, description: description)
+            return NextFitWodDisplay(activities: displayActivities)
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
