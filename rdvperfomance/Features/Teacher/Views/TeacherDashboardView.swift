@@ -392,9 +392,10 @@ struct TeacherDashboardView: View {
                     .foregroundColor(.white.opacity(0.35))
                     .font(.system(size: 12, weight: .semibold))
             }
-            .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
-            .padding(12)
-            .background(Theme.Colors.cardBackground.opacity(0.72))
+            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.06))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
