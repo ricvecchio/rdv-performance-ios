@@ -509,6 +509,7 @@ struct StudentDashboardView: View {
                         }
                     }
                     .pickerStyle(.segmented)
+                    .tint(Color.white.opacity(0.22))
                 }
 
                 if viewModel.isNextFitAgendaSelected {
