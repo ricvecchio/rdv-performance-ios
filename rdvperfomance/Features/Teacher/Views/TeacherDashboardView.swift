@@ -234,7 +234,7 @@ struct TeacherDashboardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 118)
         .padding(.horizontal, 6)
-        .background(Theme.Colors.cardBackground.opacity(0.72))
+        .background(Color.white.opacity(0.06))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
