@@ -1,243 +1,273 @@
-# 📱 RDV Perfomance – App Mobile iOS (SwiftUI)
+# RDV Performance - App iOS (SwiftUI)
 
-O **RDV Perfomance** é um aplicativo iOS para gestão e acompanhamento de treinos. A aplicação oferece experiências específicas para alunos e professores, com modalidades de Crossfit, Academia e Treinos em Casa.
-
----
-
-## 🚀 Tecnologias Utilizadas
-
-- Swift e SwiftUI
-- Firebase Authentication e Cloud Firestore
-- PhotosUI e UIKit para seleção e tratamento de foto de perfil
-- CoreData e UserDefaults para persistência local
-- MapKit e CoreLocation para recursos de mapa e localização
-- ARKit, RealityKit e CoreMotion para recursos de realidade aumentada
-- SpriteKit para gamificação
-- CoreXLSX para importação de planilhas Excel
-- WebKit, AVFoundation e AVKit para vídeos do YouTube
-- Combine, `NavigationStack`, `AppStorage` e SF Symbols
+O **RDV Performance** e um aplicativo iOS em SwiftUI para gerenciamento e acompanhamento de treinos. O produto atende as modalidades **Crossfit**, **Academia** e **Treinos em Casa**, com experiencias distintas para **Aluno**, **Professor** e **Administrador**.
 
 ---
 
-## 🧭 Estrutura de Navegação
+## Tecnologias utilizadas
 
-`AppRouter` controla o fluxo de autenticação e as rotas declaradas em `AppRoute`. Após a autenticação, `AppSession` identifica o tipo de usuário e direciona o fluxo para `StudentRootView` ou `TeacherRootView`.
-
-- **Aluno:** agenda, records pessoais e perfil.
-- **Professor:** dashboard, alunos, bibliotecas de treino e perfil.
-
-As seções principais usam `MainSectionNavigation`, enquanto cada fluxo mantém sua própria pilha de navegação.
-
----
-
-## 🔐 Autenticação, Sessão e Perfil
-
-O aplicativo possui login, cadastro de aluno e cadastro de professor com Firebase Authentication. `AppSession` observa o estado de autenticação, carrega o perfil em Firestore e mantém os dados essenciais da sessão.
-
-### 👤 Perfil
-
-`ProfileView` apresenta informações do perfil e atalhos para configurações, mensagens, feedbacks, professores vinculados e ícones. Para alunos, os atalhos de Mensagens, Feedbacks e Meus professores exibem indicadores locais de atividades ainda não visualizadas.
-
-`EditProfileView` permite atualizar:
-
-- foto de perfil ou Avatar local;
-- WhatsApp;
-- área de foco;
-- CREF e biografia para professores.
-
-O Avatar e a foto da biblioteca seguem o mesmo pipeline: `UIImage`, processamento JPEG, Base64 e persistência em `photoBase64`. A foto é sincronizada com Firestore e armazenada em cache por usuário em `LocalProfileStore`; após o login, a foto remota também restaura esse cache quando necessário. `HeaderAvatarView` reage às notificações do cache, sem consultar Firestore individualmente.
-
-### ⚙️ Configurações
-
-O módulo de configurações inclui edição de perfil, troca de senha, exclusão de conta e informações legais. A exclusão exige senha atual e a confirmação textual `EXCLUIR`.
+- **Swift** e **SwiftUI**, com `NavigationStack`, `AppStorage` e SF Symbols;
+- **Firebase Authentication** para autenticacao;
+- **Cloud Firestore** para perfis, vinculos, treinos, comunicacao, templates e recordes;
+- **Combine** para estados observaveis dos fluxos;
+- **PhotosUI** e **UIKit** para foto e avatar do perfil;
+- **CoreXLSX** e `UIDocumentPickerViewController` para importacao de planilhas Excel;
+- **WebKit** e **AVKit** para reproducao de videos do YouTube e AirPlay;
+- **UserDefaults** para preferencias e cache local, incluindo dados pendentes de sincronizacao de recordes.
 
 ---
 
-## 🏋️ Modalidades
+## Estrutura de navegacao
 
-As modalidades suportadas por `TreinoTipo` são:
+`AppRouter` controla o fluxo principal a partir de `AppSession`. A sessao observa a autenticacao, carrega o perfil em Firestore e encaminha o usuario para a experiencia correspondente:
+
+```text
+Usuario nao autenticado
+  -> Login
+  -> Selecao do tipo de conta
+  -> Cadastro de Aluno ou Professor
+
+Aluno autenticado
+  -> StudentRootView
+
+Professor autenticado
+  -> TeacherRootView
+
+Administrador autenticado
+  -> AdminProfileSelectionView
+  -> Perfil Administrador, Perfil Aluno ou Perfil Professor
+```
+
+As raizes de aluno e professor mantem pilhas de navegacao independentes para suas secoes principais. Isso separa a troca de secao da navegacao hierarquica de cada tela.
+
+---
+
+## Autenticacao, sessao e perfil
+
+O login e os cadastros de aluno e professor usam Firebase Authentication. `AppSession` acompanha a sessao autenticada, recupera os dados essenciais do perfil no Firestore e prepara a sincronizacao de Recordes Pessoais para o UID ativo.
+
+### Perfil
+
+`ProfileView` exibe foto ou avatar, nome, unidade, e-mail, WhatsApp, CREF e biografia quando disponiveis. A edicao de perfil permite atualizar foto/avatar, nome, WhatsApp, area de foco, CREF e biografia; o e-mail e apenas informativo nessa tela.
+
+As opcoes exibidas respeitam o perfil ativo:
+
+| Perfil | Opcoes especificas |
+|---|---|
+| Aluno | Trocar unidade, Mensagens, Feedbacks e Meus professores |
+| Professor | Trocar unidade e Meus Icones |
+| Administrador em perfil de aluno ou professor | Trocar perfil (Admin), alem das opcoes do perfil selecionado |
+
+O modulo de configuracoes oferece edicao de perfil, unidade de medida, troca de senha, exclusao da propria conta, central de ajuda, politica de privacidade e termos de uso.
+
+---
+
+## Modalidades
+
+As modalidades organizam os vinculos entre professores e alunos, as bibliotecas, os templates e os treinos enviados:
 
 - **Crossfit**
 - **Academia**
 - **Treinos em Casa**
 
-As modalidades organizam bibliotecas, templates, vínculos e a apresentação de treinos.
-
 ---
 
-## 🎓 Área do Aluno
+## Area do aluno
 
-### 📅 Agenda, treinos e progresso
+`StudentRootView` disponibiliza quatro secoes principais:
 
-- agenda semanal de treinos;
-- detalhes de semana e de dia;
-- visualização de treinos recebidos;
-- acompanhamento de progresso;
-- gamificação com métricas, badges e cenas SpriteKit.
-
-### 💬 Comunicação e vínculos
-
-- mensagens enviadas por professores;
-- feedbacks recebidos;
-- visualização de professores vinculados;
-- recebimento e aceite de convites;
-- solicitação de vínculo com professor.
-
-### 🏅 Records e recursos adicionais
-
-O módulo de records pessoais possui categorias para barra, ginástica, endurance, notáveis, Girls, Heroes, Open, campeonatos e CrossFit Games. O projeto também inclui recursos de mapa, demonstração de mapa, AR para exercícios e visualização de vídeos.
-
----
-
-## 👨‍🏫 Área do Professor
-
-### 👥 Alunos e vínculos
-
-O professor pode:
-
-- visualizar alunos vinculados e filtrar por modalidade;
-- enviar convites por e-mail;
-- cancelar convites enviados;
-- receber solicitações de vínculo iniciadas por alunos;
-- aceitar uma solicitação escolhendo a categoria do vínculo;
-- recusar uma solicitação sem criar vínculo;
-- desvincular alunos;
-- acessar detalhes do aluno, mensagens e feedbacks.
-
-### 📝 Treinos, WODs e templates
-
-O professor cria semanas e dias de treino, envia treinos para alunos e administra templates reutilizáveis. As bibliotecas incluem WODs, benchmarks, Girls, Heroes/Tributes, Opens, Qualifiers/Competições e treinos nomeados, além de treinos para Academia e Treinos em Casa.
-
-Os defaults de templates são semeados quando necessário, sem bloquear o carregamento inicial da lista.
-
-### 📊 Importação de treinos
-
-O módulo `ImportWorkouts` importa planilhas Excel por `DocumentPicker`, usando o template `rdv_import_treinos_template_pt_crossfit.xlsx`. Os treinos importados podem ser visualizados, editados, excluídos e enviados para alunos.
-
-### 📹 Importação de vídeos
-
-O módulo `ImportVideos` permite cadastrar vídeos do YouTube, organizá-los por modalidade, reproduzi-los em player WebView com suporte a AirPlay e enviá-los para alunos.
-
----
-
-## 🗃️ Persistência e Firestore
-
-`FirestoreRepository` centraliza a interface de dados e delega operações aos repositórios especializados:
-
-| Repositório | Responsabilidade |
+| Secao | Funcionalidades ativas |
 |---|---|
-| `UserRepository` | usuários, vínculos, convites e solicitações |
-| `TrainingRepository` | semanas, dias e envio de treinos |
-| `ProgressRepository` | progresso de treinos |
-| `MessageRepository` | mensagens entre professor e aluno |
-| `FeedbackRepository` | feedbacks de alunos |
-| `WorkoutTemplateRepository` | templates de treino |
+| Home | Avisos de vinculo, solicitacao de vinculo com professor, progresso semanal e proximos treinos |
+| Treinos | Semanas recebidas, filtros de situacao, dias de treino, detalhes e progresso |
+| Recordes | Categorias de Recordes Pessoais, edicao e importacao do Tecnofit quando disponivel |
+| Perfil | Dados da conta, unidade, mensagens, feedbacks e professores vinculados |
 
-Collections e subcollections relevantes:
+### Treinos e progresso
+
+O aluno consulta semanas de treino recebidas e seus dias, com filtros para semanas atuais, proximas e concluidas. O detalhe do treino apresenta os blocos, videos associados e o acompanhamento de conclusao por dia.
+
+Quando um bloco utiliza percentual de Recorde Pessoal de **Barbell**, o app calcula o peso correspondente a partir do recorde salvo pelo aluno. O progresso da semana e atualizado conforme os dias sao marcados como concluidos.
+
+### Recordes Pessoais
+
+O aluno pode visualizar e editar recordes nas categorias:
+
+- Barbell
+- Gymnastic
+- Endurance
+- Notables
+- Girls
+- Open
+- The Heroes
+- Campeonatos
+- Crossfit Games
+
+Os recordes sao vinculados ao usuario e sincronizados com uma estrutura propria de Personal Records no Firestore. Alteracoes locais e remotas sao preservadas por merge, inclusive em cenarios de dados pendentes.
+
+### Importar do Tecnofit
+
+No fluxo de Recorde Pessoal, a primeira importacao segue este processo:
+
+```text
+Recorde Pessoal
+  -> Importar do Tecnofit
+  -> Informar credenciais
+  -> Buscar recordes
+  -> Visualizar resumo
+  -> Importar
+```
+
+Os recordes existentes sao preservados; itens compativeis sao importados e itens sem mapeamento sao ignorados. A conclusao da primeira importacao fica registrada por usuario e, depois de concluida, o botao de importacao deixa de ser exibido.
+
+---
+
+## Area do professor
+
+`TeacherRootView` organiza a experiencia do professor em quatro secoes:
+
+| Secao | Funcionalidades ativas |
+|---|---|
+| Home | Visao geral de alunos e treinos publicados |
+| Alunos | Viculos, convites, solicitacoes e acesso ao acompanhamento individual |
+| Treinos | Biblioteca, criacao, envio, importacao, videos e recordes |
+| Perfil | Dados da conta, unidade e Meus Icones |
+
+### Alunos e vinculos
+
+O professor pode listar alunos vinculados e filtrar por modalidade, convidar alunos por e-mail e cancelar convites enviados. Tambem pode analisar solicitacoes de vinculo, definir a categoria ao aceitar, recusar solicitacoes e desvincular alunos.
+
+No detalhe de um aluno, o professor consulta o progresso, acessa os treinos, envia mensagens e feedbacks, cria e envia treinos.
+
+### Treinos do professor
+
+A secao **Treinos** oferece os acessos:
+
+- **Enviar treino** para alunos vinculados;
+- **Criar treino**;
+- **Biblioteca de Treinos**;
+- **Importar** planilhas Excel;
+- **Meus Recordes**;
+- **Meus Videos**.
+
+#### Bibliotecas por modalidade
+
+As bibliotecas ativas sao organizadas conforme a modalidade:
+
+| Modalidade | Secoes |
+|---|---|
+| Crossfit | Girls WODs, Hero & Tribute Workouts, Open WODs, WODs Nomeados, Qualifiers / WODs de Competicoes e Meus Treinos |
+| Academia | Peito, Costas, Pernas, Ombros, Bracos, Core / Abdomen, Full Body e Meus Treinos |
+| Treinos em Casa | Peito, Costas, Pernas, Ombros, Bracos, Core / Abdomen, Full Body e Meus Treinos |
+
+Em cada secao, o professor administra templates e cria treinos apropriados para a modalidade.
+
+### Importacao de treinos por Excel
+
+O fluxo **Importar** permite baixar e utilizar o modelo de planilha Excel incluido no app, selecionar um arquivo `.xlsx` e ler seus treinos. Os itens importados podem ser visualizados, editados, excluidos e enviados a alunos.
+
+### Meus Videos
+
+O professor pode cadastrar links do YouTube com titulo e modalidade, organizar os videos salvos, reproduzi-los e envia-los para um aluno em uma semana e dia de treino. A reproducao usa WebView e inclui suporte a AirPlay.
+
+---
+
+## Administracao
+
+`AdminProfileSelectionView` permite que o administrador escolha entre **Perfil Administrador**, **Perfil Aluno** e **Perfil Professor**. A escolha pode ser alterada posteriormente pela tela de Perfil.
+
+No perfil de administrador, `AdminUsersView` lista usuarios, permite filtrar alunos e professores e consultar os dados disponiveis de cada perfil, incluindo vinculos e treinos relacionados.
+
+---
+
+## Persistencia e Firestore
+
+`FirestoreRepository` centraliza a interface usada pelas telas e delega operacoes aos repositorios especializados.
+
+| Repositorio | Responsabilidade |
+|---|---|
+| `UserRepository` | Perfis, vinculos, convites, solicitacoes e preferencias do usuario |
+| `TrainingRepository` | Semanas, dias, publicacao e envio de treinos |
+| `ProgressRepository` | Conclusao de dias e progresso de treino |
+| `MessageRepository` | Mensagens entre professor e aluno |
+| `FeedbackRepository` | Feedbacks destinados ao aluno |
+| `WorkoutTemplateRepository` | Templates reutilizaveis de treino |
+| `StudentPersonalRecordsRepository` | Armazenamento remoto dos Recordes Pessoais |
+
+Os caminhos usados pelos fluxos ativos incluem:
 
 | Caminho | Uso |
 |---|---|
-| `users` | perfis de aluno e professor |
-| `teacher_students` | alunos associados ao professor |
-| `teacher_student_relations` | relações e categorias de vínculo |
-| `teacher_student_invites` | convites enviados pelo professor |
-| `teacher_student_link_requests` | solicitações de vínculo iniciadas pelo aluno |
-| `teacher_messages` | mensagens para alunos |
-| `student_feedbacks` | feedbacks de alunos |
-| `workout_templates` | templates e WODs reutilizáveis |
-| `training_weeks/{weekId}/days` | semanas e dias de treino |
-| `training_weeks/{weekId}/student_progress` | progresso por aluno |
-| `teachers/{teacherId}/importedWorkouts` | treinos importados |
-| `teachers/{teacherId}/youtubeVideos` | vídeos importados |
+| `users` | Perfis, preferencias e unidade do usuario |
+| `teacher_students` | Associacoes entre professor e alunos |
+| `teacher_student_relations` | Relacoes e categorias de vinculo |
+| `teacher_student_invites` | Convites enviados por professores |
+| `teacher_student_link_requests` | Solicitacoes de vinculo iniciadas por alunos |
+| `teacher_messages` | Mensagens entre professor e aluno |
+| `student_feedbacks` | Feedbacks destinados a alunos |
+| `workout_templates` | Templates de treino |
+| `training_weeks/{weekId}/days` | Semanas e dias de treino |
+| `training_weeks/{weekId}/student_progress` | Progresso do aluno na semana |
+| `users/{uid}/student_personal_records` | Dados e metadados dos Recordes Pessoais |
+| `teachers/{teacherId}/importedWorkouts` | Treinos importados por planilha |
+| `teachers/{teacherId}/youtubeVideos` | Videos cadastrados pelo professor |
 
-`LocalProfileStore` usa `UserDefaults` com chaves por usuário para cache de foto, WhatsApp, área de foco e preferências locais relacionadas ao mapa. CoreData mantém as atividades locais do aplicativo.
+### Sincronizacao de Recordes Pessoais
 
----
-
-## 🧩 Componentes Compartilhados
-
-- `FooterBar` e `HeaderBar` padronizam a navegação visual.
-- `HeaderAvatarView` e `MiniProfileHeader` exibem a foto de perfil em cache.
-- `PhoneTextField` aplica a máscara brasileira e limita o número a 11 dígitos.
-- `UnderlineTextField` fornece campos com linha inferior e suporte a senha.
-- `BlockDraft` é usado na montagem de blocos de treino.
-- `Theme` centraliza cores, fontes e medidas compartilhadas.
+`PersonalRecordsSyncService` sincroniza os registros locais e remotos para o UID autenticado. O servico vincula o cache ao usuario atual, trata alteracoes pendentes, evita a exposicao de dados de outra conta depois de uma troca de sessao e preserva exclusoes e dados concorrentes durante o merge antes da gravacao no Firestore.
 
 ---
 
-## 🗂 Estrutura Geral do App
+## Componentes compartilhados
+
+Os componentes reutilizados pelos fluxos ativos incluem:
+
+- `FooterBar` e `HeaderBar` para navegacao e cabecalhos;
+- `HeaderAvatarView` e `MiniProfileHeader` para apresentacao do perfil;
+- `PhoneTextField` e `UnderlineTextField` para campos de formulario;
+- `BlockDraft` para montagem de blocos de treino;
+- `Theme` para cores, tipografia e medidas compartilhadas.
+
+---
+
+## Estrutura geral do app
 
 ```text
-rdvperformance-ios/
-├── rdvperfomance.xcodeproj/
-└── rdvperfomance/
-    ├── App/
-    │   ├── AppRouter.swift
-    │   ├── AppRoute.swift
-    │   ├── AppSession.swift
-    │   ├── StudentRootView.swift
-    │   └── TeacherRootView.swift
-    ├── About/
-    ├── Features/
-    │   ├── AR/
-    │   ├── Auth/
-    │   │   ├── Models/
-    │   │   ├── Services/
-    │   │   ├── ViewModels/
-    │   │   └── Views/
-    │   ├── CoreData/
-    │   ├── Gamification/
-    │   ├── Home/
-    │   ├── Map/
-    │   ├── Settings/
-    │   ├── Sprites/
-    │   ├── Student/
-    │   │   ├── Models/
-    │   │   ├── PersonalRecords/
-    │   │   ├── ViewModels/
-    │   │   └── Views/
-    │   ├── Teacher/
-    │   │   ├── ImportVideos/
-    │   │   ├── ImportWorkouts/
-    │   │   ├── ViewModels/
-    │   │   └── Views/
-    │   └── Treinos/
-    │       ├── Models/
-    │       └── Views/
-    ├── Resources/
-    │   ├── Assets.xcassets/
-    │   └── Templates/
-    └── Shared/
-        ├── Components/
-        ├── Extensions/
-        ├── Navigation/
-        ├── Services/
-        │   └── Firestore/
-        │       ├── Base/
-        │       ├── Communication/
-        │       ├── Templates/
-        │       ├── Training/
-        │       └── Users/
-        ├── UI/
-        └── Utilities/
+rdvperfomance/
+├── App/
+│   ├── AppRouter.swift
+│   ├── AppRoute.swift
+│   ├── AppSession.swift
+│   └── TeacherRootView.swift
+├── Features/
+│   ├── Admin/
+│   ├── Auth/
+│   ├── Settings/
+│   ├── Student/
+│   │   ├── PersonalRecords/
+│   │   └── Views/
+│   ├── Teacher/
+│   │   ├── ImportVideos/
+│   │   ├── ImportWorkouts/
+│   │   └── Views/
+│   └── Treinos/
+│       ├── Models/
+│       └── Views/
+├── Resources/
+│   └── Templates/
+└── Shared/
+    ├── Components/
+    ├── Navigation/
+    ├── Services/
+    │   └── Firestore/
+    ├── UI/
+    └── Utilities/
 ```
 
 ---
 
-## 🔧 Build / Execução
+## Build e execucao
 
-1. Abra `rdvperfomance.xcodeproj` no Xcode compatível com o deployment target configurado no projeto.
-2. Configure um `GoogleService-Info.plist` válido para o ambiente de desenvolvimento.
-3. Execute em simulador ou dispositivo com as permissões necessárias para os recursos utilizados.
-
----
-
-## 🎯 Destaques do Projeto
-
-- navegação por rotas e sessão autenticada;
-- experiências distintas para aluno e professor;
-- gestão de treinos, WODs, templates e vínculos;
-- mensagens, feedbacks e indicadores locais de atividades;
-- importação de treinos Excel e vídeos do YouTube;
-- persistência local e sincronização com Cloud Firestore;
-- recursos de mapa, AR, records pessoais e gamificação.
+1. Abra `rdvperfomance.xcodeproj` em uma versao do Xcode compativel com o deployment target do projeto.
+2. Configure um `GoogleService-Info.plist` valido para o ambiente de desenvolvimento.
+3. Execute em simulador ou dispositivo iOS.
