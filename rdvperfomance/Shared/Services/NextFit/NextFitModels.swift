@@ -178,6 +178,9 @@ struct NextFitWodDetailsResponse: Decodable {
 struct NextFitAgendaResponse: Decodable {
     let content: [Entry]
     let success: Bool
+    let last: Bool?
+    let message: String?
+    let errorCode: Int?
 
     struct Entry: Decodable {
         let id: Int
@@ -210,12 +213,17 @@ struct NextFitAgendaResponse: Decodable {
     enum CodingKeys: String, CodingKey {
         case content = "Content"
         case success = "Success"
+        case last = "Last"
+        case message = "Message"
+        case errorCode = "ErrorCode"
     }
 }
 
 struct NextFitAgendaCheckInResponse: Decodable {
     let content: Content?
     let success: Bool
+    let message: String?
+    let errorCode: Int?
 
     struct Content: Decodable {
         let entrouNaFilaDeEspera: Bool
@@ -230,14 +238,20 @@ struct NextFitAgendaCheckInResponse: Decodable {
     enum CodingKeys: String, CodingKey {
         case content = "Content"
         case success = "Success"
+        case message = "Message"
+        case errorCode = "ErrorCode"
     }
 }
 
 struct NextFitAgendaCancelCheckInResponse: Decodable {
     let success: Bool
+    let message: String?
+    let errorCode: Int?
 
     enum CodingKeys: String, CodingKey {
         case success = "Success"
+        case message = "Message"
+        case errorCode = "ErrorCode"
     }
 }
 

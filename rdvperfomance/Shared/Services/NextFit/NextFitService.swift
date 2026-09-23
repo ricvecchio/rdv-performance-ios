@@ -31,6 +31,7 @@ struct NextFitService {
     private static let crossFitModalityCode = 262777
     private static let dailyModalityCodes = [262777, 265538]
     private static let dailyModalities = "[262777,265538]"
+    private static let agendaPageLimit = 10
 
     func authenticate(email: String, password: String, sessionAccount: String) async throws {
         let registration = try await recoverRegistration(email: email)
@@ -204,41 +205,30 @@ struct NextFitService {
         }
 
         do {
-            var components = URLComponents(
-                url: Self.baseURL.appending(path: "AgendaV2"),
-                resolvingAgainstBaseURL: false
-            )!
             let today = formattedCurrentDate()
-            components.queryItems = [
-                URLQueryItem(name: "DataInicialStr", value: today),
-                URLQueryItem(name: "DataFinalStr", value: today),
-                URLQueryItem(name: "FiltrarMeusAgendamentos", value: "false"),
-                URLQueryItem(name: "FiltrarHistorico", value: "false"),
-                URLQueryItem(name: "PeriodosStr", value: "[]"),
-                URLQueryItem(name: "CodigosModalidadesStr", value: "[]"),
-                URLQueryItem(name: "page", value: "1"),
-                URLQueryItem(name: "limit", value: "10"),
-                URLQueryItem(name: "sort", value: "[]"),
-                URLQueryItem(name: "filter", value: "[]"),
-                URLQueryItem(name: "includes", value: "[]"),
-                URLQueryItem(name: "fields", value: "[]")
-            ]
+            var page = 1
+            var hasMorePages = true
+            var entries = [NextFitAgendaResponse.Entry]()
 
-            guard let url = components.url else {
-                throw NextFitServiceError.unavailable
-            }
-            var request = URLRequest(url: url)
-            request.timeoutInterval = 20
-            applyAuthenticatedHeaders(to: &request, token: token)
+            while hasMorePages {
+                let request = try agendaRequest(
+                    date: today,
+                    page: page,
+                    token: token
+                )
+                let data = try await responseData(for: request)
+                let response = try JSONDecoder().decode(NextFitAgendaResponse.self, from: data)
+                guard response.success, (response.errorCode ?? 0) == 0 else {
+                    throw NextFitServiceError.unavailable
+                }
 
-            let data = try await responseData(for: request)
-            let response = try JSONDecoder().decode(NextFitAgendaResponse.self, from: data)
-            guard response.success else {
-                throw NextFitServiceError.unavailable
+                entries.append(contentsOf: response.content)
+                hasMorePages = response.last == false && !response.content.isEmpty
+                page += 1
             }
 
             let calendar = Calendar.current
-            let agenda = try response.content.compactMap { entry -> NextFitAgendaDisplay? in
+            let agenda = try entries.compactMap { entry -> NextFitAgendaDisplay? in
                 guard let startDate = agendaDate(from: entry.dataInicial),
                       let endDate = agendaDate(from: entry.dataFinal) else {
                     throw NextFitServiceError.unavailable
@@ -298,7 +288,7 @@ struct NextFitService {
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
-            guard response.success else {
+            guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
             return response.content?.entrouNaFilaDeEspera ?? false
@@ -326,13 +316,11 @@ struct NextFitService {
             request.timeoutInterval = 20
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             applyAuthenticatedHeaders(to: &request, token: token)
-            request.httpBody = try JSONEncoder().encode(
-                AgendaCancelCheckInRequest(agendaId: agendaId, confirmation: true)
-            )
+            request.httpBody = try JSONEncoder().encode(AgendaCancelCheckInRequest(agendaId: agendaId))
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCancelCheckInResponse.self, from: data)
-            guard response.success else {
+            guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
         } catch NextFitHTTPError.unauthorized {
@@ -423,6 +411,36 @@ struct NextFitService {
         } catch {
             throw NextFitServiceError.unavailable
         }
+
+    }
+
+    private func agendaRequest(date: String, page: Int, token: String) throws -> URLRequest {
+        var components = URLComponents(
+            url: Self.baseURL.appending(path: "AgendaV2"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "DataInicialStr", value: date),
+            URLQueryItem(name: "DataFinalStr", value: date),
+            URLQueryItem(name: "FiltrarMeusAgendamentos", value: "false"),
+            URLQueryItem(name: "FiltrarHistorico", value: "false"),
+            URLQueryItem(name: "PeriodosStr", value: "[]"),
+            URLQueryItem(name: "CodigosModalidadesStr", value: "[]"),
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "limit", value: String(Self.agendaPageLimit)),
+            URLQueryItem(name: "sort", value: "[]"),
+            URLQueryItem(name: "filter", value: "[]"),
+            URLQueryItem(name: "includes", value: "[]"),
+            URLQueryItem(name: "fields", value: "[]")
+        ]
+        guard let url = components.url else {
+            throw NextFitServiceError.unavailable
+        }
+
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 20
+        applyAuthenticatedHeaders(to: &request, token: token)
+        return request
     }
 
     private func applyBaseHeaders(to request: inout URLRequest) {
@@ -542,11 +560,9 @@ private struct AgendaCheckInRequest: Encodable {
 
 private struct AgendaCancelCheckInRequest: Encodable {
     let agendaId: Int
-    let confirmation: Bool
 
     enum CodingKeys: String, CodingKey {
         case agendaId = "CodigoAgenda"
-        case confirmation = "Confirmacao"
     }
 }
 
