@@ -98,6 +98,7 @@ final class StudentDashboardViewModel: ObservableObject {
     private let nextFitService: NextFitService
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
+    private var nextFitContractClientId: Int?
 
     var nextFitWod: NextFitWodDisplay? {
         guard case let .wod(modalityId)? = selectedNextFitContent else {
@@ -263,6 +264,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 password: password,
                 sessionAccount: studentId
             )
+            nextFitContractClientId = nil
             hasNextFitSession = true
             await loadNextFitWod()
             return true
@@ -322,15 +324,22 @@ final class StudentDashboardViewModel: ObservableObject {
         agendaActionErrors[agendaId] = nil
         defer { processingAgendaIds.remove(agendaId) }
 
-        guard let contractClientId = agenda.contractClientId else {
-            agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
-            return
-        }
-
         do {
+            guard let contract = try await resolveNextFitAgendaContract() else {
+                agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+                return
+            }
+            #if DEBUG
+            print(
+                "[NextFit Agenda] Check-in\n" +
+                "CodigoAgenda: \(agendaId)\n" +
+                "CodigoCliente: \(contract.clientId)\n" +
+                "CodigoContratoCliente: \(contract.contractClientId)"
+            )
+            #endif
             try await nextFitService.checkInAgenda(
                 agendaId: agendaId,
-                contractClientId: contractClientId,
+                contractClientId: contract.contractClientId,
                 sessionAccount: studentId
             )
             await refreshNextFitAgenda(
@@ -390,6 +399,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
+        nextFitContractClientId = nil
         nextFitWods = []
         nextFitAgenda = []
         processingAgendaIds = []
@@ -535,6 +545,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
+        nextFitContractClientId = nil
         nextFitWods = []
         nextFitAgenda = []
         processingAgendaIds = []
@@ -565,6 +576,36 @@ final class StudentDashboardViewModel: ObservableObject {
         } catch {
             agendaActionErrors[agendaId] = errorMessage
         }
+    }
+
+    private func resolveNextFitAgendaContract() async throws -> (clientId: Int, contractClientId: Int)? {
+        let clientId = try nextFitService.clientId(sessionAccount: studentId)
+
+        if let nextFitContractClientId {
+            return (clientId, nextFitContractClientId)
+        }
+
+        if let contractClientId = selectedNextFitAgendaDetail?.participants.first(
+            where: { $0.clientId == clientId }
+        )?.contractClientId {
+            nextFitContractClientId = contractClientId
+            return (clientId, contractClientId)
+        }
+
+        for agendaId in nextFitAgenda.filter(\.hasCheckIn).map(\.id) {
+            let detail = try await nextFitService.loadAgendaDetail(
+                agendaId: agendaId,
+                sessionAccount: studentId
+            )
+            if let contractClientId = detail.participants.first(
+                where: { $0.clientId == clientId }
+            )?.contractClientId {
+                nextFitContractClientId = contractClientId
+                return (clientId, contractClientId)
+            }
+        }
+
+        return nil
     }
 
     private func isMuralhaUnit(_ unitName: String?) -> Bool {

@@ -252,7 +252,7 @@ struct NextFitService {
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
                     canSchedule: !hasCheckIn && entry.podeAgendar == true,
                     canCancelCheckIn: hasCheckIn && entry.permiteCancelarCheckin != false,
-                    contractClientId: entry.codigoContratoCliente
+                    hasCheckIn: hasCheckIn
                 )
             }
             return agenda.sorted { $0.startDate < $1.startDate }
@@ -292,6 +292,14 @@ struct NextFitService {
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
             guard response.success, (response.errorCode ?? 0) == 0 else {
+                #if DEBUG
+                print(
+                    "[NextFit Agenda] Falha no check-in. " +
+                    "Success: \(response.success), " +
+                    "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
+                    "Message: \(response.message ?? "")"
+                )
+                #endif
                 throw NextFitServiceError.unavailable
             }
             return response.content?.entrouNaFilaDeEspera ?? false
@@ -368,7 +376,12 @@ struct NextFitService {
                 locationName: content.descricaoLocalAgenda?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
                 participants: content.participantes.map {
-                    NextFitAgendaParticipantDisplay(id: $0.id, name: $0.nomeParticipante)
+                    NextFitAgendaParticipantDisplay(
+                        id: $0.id,
+                        name: $0.nomeParticipante,
+                        clientId: $0.codigoCliente,
+                        contractClientId: $0.codigoContratoCliente
+                    )
                 }
             )
         } catch NextFitHTTPError.unauthorized {
@@ -383,6 +396,16 @@ struct NextFitService {
 
     func hasSession(sessionAccount: String) -> Bool {
         (try? NextFitKeychainStore.token(for: sessionAccount)) != nil
+    }
+
+    func clientId(sessionAccount: String) throws -> Int {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+        guard let clientId = clientId(from: token) else {
+            throw NextFitServiceError.unavailable
+        }
+        return clientId
     }
 
     func logout(sessionAccount: String) throws {
@@ -470,6 +493,34 @@ struct NextFitService {
             throw NextFitServiceError.unavailable
         }
         return data
+    }
+
+    private func clientId(from token: String) -> Int? {
+        let components = token.split(separator: ".")
+        guard components.count > 1 else {
+            return nil
+        }
+
+        var payload = String(components[1])
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        payload += String(repeating: "=", count: (4 - payload.count % 4) % 4)
+
+        guard let data = Data(base64Encoded: payload),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        if let clientId = json["codigoCliente"] as? Int {
+            return clientId
+        }
+        if let clientId = json["codigoCliente"] as? NSNumber {
+            return clientId.intValue
+        }
+        if let clientId = json["codigoCliente"] as? String {
+            return Int(clientId)
+        }
+        return nil
     }
 
     private func formData(_ values: [String: String]) -> Data {
