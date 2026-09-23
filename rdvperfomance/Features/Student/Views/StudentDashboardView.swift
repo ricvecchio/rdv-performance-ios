@@ -501,17 +501,19 @@ struct StudentDashboardView: View {
                 }
                 .buttonStyle(.plain)
             } else {
-                if viewModel.nextFitModalityOptions.count > 1 {
-                    Picker("", selection: $viewModel.selectedNextFitModalityId) {
-                        ForEach(viewModel.nextFitModalityOptions) { modality in
-                            Text(modality.title.uppercased())
-                                .tag(Optional(modality.id))
+                if viewModel.nextFitContentOptions.count > 1 {
+                    Picker("", selection: $viewModel.selectedNextFitContent) {
+                        ForEach(viewModel.nextFitContentOptions) { option in
+                            Text(option.title.uppercased())
+                                .tag(Optional(option.selection))
                         }
                     }
                     .pickerStyle(.segmented)
                 }
 
-                if let wod = viewModel.nextFitWod {
+                if viewModel.isNextFitAgendaSelected {
+                    nextFitAgendaContent
+                } else if let wod = viewModel.nextFitWod {
                     ForEach(wod.activities) { activity in
                         Text(activity.title)
                             .font(.system(size: 16, weight: .semibold))
@@ -534,6 +536,50 @@ struct StudentDashboardView: View {
         .background(Theme.Colors.cardBackground)
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+    }
+
+    @ViewBuilder
+    private var nextFitAgendaContent: some View {
+        if let error = viewModel.nextFitAgendaError {
+            Text(error)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+
+            Button {
+                Task { await viewModel.retryNextFitWod() }
+            } label: {
+                Text("Tentar novamente")
+                    .padding(.horizontal, 14)
+                    .compactPrimaryGreenActionButton()
+            }
+            .buttonStyle(.plain)
+        } else if viewModel.nextFitAgenda.isEmpty {
+            Text("Nenhum horário disponível para hoje.")
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        } else {
+            ForEach(viewModel.nextFitAgenda) { entry in
+                HStack {
+                    Text(entry.scheduleText)
+                    Spacer()
+                    Text(entry.capacityText)
+                }
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.92))
+
+                Text(entry.modalityName)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+
+                Text(entry.instructorName)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(entry.locationName)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+        }
     }
 
     private var nextFitWodTitle: String {

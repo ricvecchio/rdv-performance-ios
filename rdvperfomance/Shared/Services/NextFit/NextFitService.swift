@@ -198,6 +198,56 @@ struct NextFitService {
         }
     }
 
+    func loadTodayAgenda(sessionAccount: String) async throws -> [NextFitAgendaDisplay] {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(url: Self.baseURL.appending(path: "AgendaV2"))
+            request.timeoutInterval = 20
+            applyAuthenticatedHeaders(to: &request, token: token)
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitAgendaResponse.self, from: data)
+            guard response.success else {
+                throw NextFitServiceError.unavailable
+            }
+
+            let calendar = Calendar.current
+            let agenda = try response.content.compactMap { entry -> NextFitAgendaDisplay? in
+                guard let startDate = agendaDate(from: entry.dataInicial),
+                      let endDate = agendaDate(from: entry.dataFinal) else {
+                    throw NextFitServiceError.unavailable
+                }
+                guard calendar.isDateInToday(startDate) else {
+                    return nil
+                }
+
+                return NextFitAgendaDisplay(
+                    id: entry.id,
+                    startDate: startDate,
+                    startTime: formattedTime(from: startDate),
+                    endTime: formattedTime(from: endDate),
+                    enrolledStudents: entry.qtdeAlunos,
+                    studentLimit: entry.limiteAlunos,
+                    modalityName: entry.descricao?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                    instructorName: entry.nomeInstrutor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                    locationName: entry.descricaoLocalAgenda?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                )
+            }
+            return agenda.sorted { $0.startDate < $1.startDate }
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
     func hasSession(sessionAccount: String) -> Bool {
         (try? NextFitKeychainStore.token(for: sessionAccount)) != nil
     }
@@ -276,6 +326,24 @@ struct NextFitService {
             return false
         }
         return calendar.isDateInToday(date)
+    }
+
+    private func agendaDate(from value: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "dd/MM/yyyy HH:mm:ss"
+        return formatter.date(from: value)
+    }
+
+    private func formattedTime(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
     }
 
     private func debugLog(_ message: String) {

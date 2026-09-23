@@ -16,6 +16,21 @@ struct NextFitWodDisplay: Equatable, Identifiable {
     var id: Int { modalityId }
 }
 
+struct NextFitAgendaDisplay: Equatable, Identifiable {
+    let id: Int
+    let startDate: Date
+    let startTime: String
+    let endTime: String
+    let enrolledStudents: Int
+    let studentLimit: Int
+    let modalityName: String
+    let instructorName: String
+    let locationName: String
+
+    var scheduleText: String { "\(startTime) às \(endTime)" }
+    var capacityText: String { String(format: "%02d/%02d", enrolledStudents, studentLimit) }
+}
+
 struct NextFitIdentificationResponse: Decodable {
     let content: Content?
     let success: Bool
@@ -133,6 +148,38 @@ struct NextFitWodDetailsResponse: Decodable {
         enum CodingKeys: String, CodingKey {
             case modalidade = "Modalidade"
             case wodAtividadeCross = "WodAtividadeCross"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case content = "Content"
+        case success = "Success"
+    }
+}
+
+struct NextFitAgendaResponse: Decodable {
+    let content: [Entry]
+    let success: Bool
+
+    struct Entry: Decodable {
+        let id: Int
+        let dataInicial: String
+        let dataFinal: String
+        let descricao: String?
+        let qtdeAlunos: Int
+        let limiteAlunos: Int
+        let nomeInstrutor: String?
+        let descricaoLocalAgenda: String?
+
+        enum CodingKeys: String, CodingKey {
+            case id = "Id"
+            case dataInicial = "DataInicial"
+            case dataFinal = "DataFinal"
+            case descricao = "Descricao"
+            case qtdeAlunos = "QtdeAlunos"
+            case limiteAlunos = "LimiteAlunos"
+            case nomeInstrutor = "NomeInstrutor"
+            case descricaoLocalAgenda = "DescricaoLocalAgenda"
         }
     }
 

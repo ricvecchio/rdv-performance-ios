@@ -22,6 +22,18 @@ struct StudentDashboardNextFitModalityOption: Identifiable {
     let title: String
 }
 
+enum StudentDashboardNextFitSelection: Hashable {
+    case wod(Int)
+    case agenda
+}
+
+struct StudentDashboardNextFitContentOption: Identifiable {
+    let selection: StudentDashboardNextFitSelection
+    let title: String
+
+    var id: StudentDashboardNextFitSelection { selection }
+}
+
 struct StudentDashboardDayGroup: Identifiable {
     let weekId: String
     let weekTitle: String
@@ -64,10 +76,12 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isMuralhaStudent = false
     @Published private(set) var isLoadingNextFitWod = false
     @Published private(set) var nextFitWods: [NextFitWodDisplay] = []
-    @Published var selectedNextFitModalityId: Int?
+    @Published private(set) var nextFitAgenda: [NextFitAgendaDisplay] = []
+    @Published var selectedNextFitContent: StudentDashboardNextFitSelection?
     @Published private(set) var needsNextFitAuthentication = false
     @Published private(set) var hasNextFitSession = false
     @Published private(set) var nextFitError: String?
+    @Published private(set) var nextFitAgendaError: String?
     @Published private(set) var isAuthenticatingNextFit = false
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
@@ -80,7 +94,14 @@ final class StudentDashboardViewModel: ObservableObject {
     private var currentStudentUser: AppUser?
 
     var nextFitWod: NextFitWodDisplay? {
-        nextFitWods.first { $0.modalityId == selectedNextFitModalityId }
+        guard case let .wod(modalityId)? = selectedNextFitContent else {
+            return nil
+        }
+        return nextFitWods.first { $0.modalityId == modalityId }
+    }
+
+    var isNextFitAgendaSelected: Bool {
+        selectedNextFitContent == .agenda
     }
 
     var nextFitModalityOptions: [StudentDashboardNextFitModalityOption] {
@@ -90,6 +111,14 @@ final class StudentDashboardViewModel: ObservableObject {
                 title: $0.modalityName
             )
         }
+    }
+
+    var nextFitContentOptions: [StudentDashboardNextFitContentOption] {
+        nextFitModalityOptions.map {
+            StudentDashboardNextFitContentOption(selection: .wod($0.id), title: $0.title)
+        } + [
+            StudentDashboardNextFitContentOption(selection: .agenda, title: "Agenda")
+        ]
     }
 
     var studentUnitName: String {
@@ -232,8 +261,10 @@ final class StudentDashboardViewModel: ObservableObject {
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
         nextFitWods = []
-        selectedNextFitModalityId = nil
+        nextFitAgenda = []
+        selectedNextFitContent = nil
         nextFitError = nil
+        nextFitAgendaError = nil
         nextFitLoginError = nil
         hasNextFitSession = false
         needsNextFitAuthentication = true
@@ -322,16 +353,19 @@ final class StudentDashboardViewModel: ObservableObject {
         isLoadingNextFitWod = true
         hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         nextFitError = nil
+        nextFitAgendaError = nil
         nextFitWods = []
-        selectedNextFitModalityId = nil
+        nextFitAgenda = []
+        selectedNextFitContent = nil
         needsNextFitAuthentication = false
         defer { isLoadingNextFitWod = false }
 
         do {
             nextFitWods = try await nextFitService.loadTodayWods(sessionAccount: studentId)
-            selectedNextFitModalityId = nextFitWods.first {
+            let selectedModalityId = nextFitWods.first {
                 $0.modalityId == Self.primaryNextFitModalityCode
-            }?.modalityId ?? nextFitWods.first?.modalityId ?? nextFitModalityOptions.first?.id
+            }?.modalityId ?? nextFitWods.first?.modalityId
+            selectedNextFitContent = selectedModalityId.map(StudentDashboardNextFitSelection.wod) ?? .agenda
             #if DEBUG
             print("[NextFit Debug] ViewModel recebeu \(nextFitWods.count) modalidade(s).")
             #endif
@@ -345,16 +379,27 @@ final class StudentDashboardViewModel: ObservableObject {
             }
         } catch {
             nextFitError = "Não foi possível carregar o WOD. Tente novamente."
+            return
+        }
+
+        do {
+            nextFitAgenda = try await nextFitService.loadTodayAgenda(sessionAccount: studentId)
+        } catch let error as NextFitServiceError {
+            nextFitAgendaError = error.localizedDescription
+        } catch {
+            nextFitAgendaError = "Não foi possível carregar a agenda. Tente novamente."
         }
     }
 
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
         nextFitWods = []
-        selectedNextFitModalityId = nil
+        nextFitAgenda = []
+        selectedNextFitContent = nil
         hasNextFitSession = false
         needsNextFitAuthentication = false
         nextFitError = nil
+        nextFitAgendaError = nil
         nextFitLoginError = nil
     }
 
