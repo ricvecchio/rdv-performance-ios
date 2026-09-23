@@ -606,7 +606,7 @@ struct StudentDashboardView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground.opacity(0.65))
+                        .background(Color.white.opacity(0.06))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
