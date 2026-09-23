@@ -137,6 +137,26 @@ struct NextFitDailyWodsResponse: Decodable {
     }
 }
 
+struct NextFitStudentModalitiesResponse: Decodable {
+    let content: [Modality]
+    let success: Bool
+
+    struct Modality: Decodable {
+        let id: Int
+        let descricao: String
+
+        enum CodingKeys: String, CodingKey {
+            case id = "Id"
+            case descricao = "Descricao"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case content = "Content"
+        case success = "Success"
+    }
+}
+
 struct NextFitWodDetailsResponse: Decodable {
     let content: Content?
     let success: Bool

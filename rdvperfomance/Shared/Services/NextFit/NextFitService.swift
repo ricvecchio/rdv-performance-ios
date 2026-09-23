@@ -29,8 +29,6 @@ struct NextFitService {
     private static let baseURL = URL(string: "https://apiappaluno.nextfit.com.br/api")!
     private static let muralhaUnitCode = 30299
     private static let crossFitModalityCode = 262777
-    private static let dailyModalityCodes = [262777, 265538]
-    private static let dailyModalities = "[262777,265538]"
     private static let agendaPageLimit = 10
 
     func authenticate(email: String, password: String, sessionAccount: String) async throws {
@@ -83,12 +81,26 @@ struct NextFitService {
         }
 
         do {
+            let studentModalities = try await loadStudentModalities(token: token)
+            let studentModalityCodes = studentModalities.map(\.id)
+            guard !studentModalityCodes.isEmpty else {
+                return []
+            }
+            var studentModalityNames = [Int: String]()
+            for modality in studentModalities where studentModalityNames[modality.id] == nil {
+                studentModalityNames[modality.id] = modality.descricao
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+
             var components = URLComponents(
                 url: Self.baseURL.appending(path: "WodCross/RecuperarWodsDiaPorModalidade"),
                 resolvingAgainstBaseURL: false
             )!
             components.queryItems = [
-                URLQueryItem(name: "ModalidadesStr", value: Self.dailyModalities)
+                URLQueryItem(
+                    name: "ModalidadesStr",
+                    value: "[\(studentModalityCodes.map(String.init).joined(separator: ","))]"
+                )
             ]
 
             var dailyRequest = URLRequest(url: components.url!)
@@ -111,15 +123,18 @@ struct NextFitService {
             let calendar = Calendar.current
             let availableTodayWods = dailyResponse.content
                 .filter {
-                    Self.dailyModalityCodes.contains($0.codigoModalidade) &&
+                    studentModalityCodes.contains($0.codigoModalidade) &&
                         isToday($0.dataExec, calendar: calendar)
                 }
             debugLog("WOD(s) das modalidades solicitadas para hoje: \(availableTodayWods.count).")
 
-            let todayWods = availableTodayWods.filter {
-                $0.codigoModalidade == Self.crossFitModalityCode
-            } + availableTodayWods.filter {
-                $0.codigoModalidade != Self.crossFitModalityCode
+            let orderedModalityCodes = studentModalityCodes.contains(Self.crossFitModalityCode)
+                ? [Self.crossFitModalityCode] + studentModalityCodes.filter {
+                    $0 != Self.crossFitModalityCode
+                }
+                : studentModalityCodes
+            let todayWods = orderedModalityCodes.compactMap { modalityCode in
+                availableTodayWods.first { $0.codigoModalidade == modalityCode }
             }
 
             var displays = [NextFitWodDisplay]()
@@ -149,9 +164,12 @@ struct NextFitService {
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 let dailyModalityName = wod.descricaoModalidade?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let studentModalityName = studentModalityNames[modalityId] ?? ""
                 let modalityName = !apiModalityName.isEmpty
                     ? apiModalityName
-                    : (!dailyModalityName.isEmpty ? dailyModalityName : "Modalidade \(modalityId)")
+                    : (!dailyModalityName.isEmpty
+                        ? dailyModalityName
+                        : (!studentModalityName.isEmpty ? studentModalityName : "Modalidade \(modalityId)"))
                 debugLog(
                     "Detalhe - Wod Id: \(wod.id), CodigoModalidade: \(wod.codigoModalidade), "
                         + "Modalidade.Id: \(content.modalidade?.id.description ?? "ausente"), "
@@ -438,6 +456,32 @@ struct NextFitService {
             throw NextFitServiceError.unavailable
         }
 
+    }
+
+    private func loadStudentModalities(
+        token: String
+    ) async throws -> [NextFitStudentModalitiesResponse.Modality] {
+        var components = URLComponents(
+            url: Self.baseURL.appending(path: "Modalidade/ListarPorAluno"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "page", value: "1"),
+            URLQueryItem(name: "limit", value: "50"),
+            URLQueryItem(name: "fields[]", value: "Id"),
+            URLQueryItem(name: "fields[]", value: "Descricao")
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.timeoutInterval = 20
+        applyAuthenticatedHeaders(to: &request, token: token)
+
+        let data = try await responseData(for: request)
+        let response = try JSONDecoder().decode(NextFitStudentModalitiesResponse.self, from: data)
+        guard response.success else {
+            throw NextFitServiceError.unavailable
+        }
+        return response.content
     }
 
     private func agendaRequest(date: String, page: Int, token: String) throws -> URLRequest {
