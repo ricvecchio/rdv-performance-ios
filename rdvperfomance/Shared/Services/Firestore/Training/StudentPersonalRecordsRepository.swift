@@ -52,6 +52,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         static let legacyV1Migrated = "legacyV1Migrated"
         static let syncRevision = "syncRevision"
         static let updatedAt = "updatedAt"
+        static let tecnofitImportCompleted = "tecnofitImportCompleted"
     }
 
     private enum DocumentTypes {
@@ -105,6 +106,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         let payloadVersions: [String: DocumentVersion]
         let payloadStorage: [String: PayloadStorage]
         let legacyWasMigrated: Bool
+        let tecnofitImportCompleted: Bool
     }
 
     private struct DocumentVersion {
@@ -131,6 +133,80 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         #endif
         try await retryPendingChunkCleanup(uid: cleanUid)
         return try await loadCloudState(uid: cleanUid).document
+    }
+
+    func hasCompletedTecnofitImport(uid: String) async throws -> Bool {
+        let cleanUid = clean(uid)
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+
+        let snapshot = try await personalRecordsCollection(for: cleanUid)
+            .document(DocumentIDs.metadata)
+            .getDocument(source: .server)
+        guard let data = snapshot.data(),
+              isOwned(
+                data,
+                by: cleanUid,
+                schemaVersions: [SchemaVersions.partitioned, SchemaVersions.current]
+              ),
+              data[Fields.documentType] as? String == DocumentTypes.metadata
+        else {
+            return false
+        }
+
+        return data[Fields.tecnofitImportCompleted] as? Bool ?? false
+    }
+
+    func markTecnofitImportCompleted(uid: String) async throws {
+        let cleanUid = clean(uid)
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+
+        let metadataReference = personalRecordsCollection(for: cleanUid)
+            .document(DocumentIDs.metadata)
+        let result = try await db.runTransaction { transaction, errorPointer in
+            do {
+                let snapshot = try transaction.getDocument(metadataReference)
+                if snapshot.exists {
+                    guard let data = snapshot.data(),
+                          self.isOwned(
+                            data,
+                            by: cleanUid,
+                            schemaVersions: [SchemaVersions.partitioned, SchemaVersions.current]
+                          ),
+                          data[Fields.documentType] as? String == DocumentTypes.metadata
+                    else {
+                        throw FirestoreRepositoryError.writeFailed
+                    }
+
+                    transaction.updateData(
+                        [
+                            Fields.tecnofitImportCompleted: true,
+                            Fields.syncRevision: UUID().uuidString,
+                            Fields.updatedAt: FieldValue.serverTimestamp()
+                        ],
+                        forDocument: metadataReference
+                    )
+                } else {
+                    transaction.setData(
+                        self.metadataDocumentData(
+                            uid: cleanUid,
+                            tombstones: [:],
+                            legacyWasMigrated: false,
+                            tecnofitImportCompleted: true,
+                            revision: UUID().uuidString
+                        ),
+                        forDocument: metadataReference
+                    )
+                }
+                return true
+            } catch {
+                errorPointer?.pointee = error as NSError
+                return nil
+            }
+        }
+
+        guard result as? Bool == true else {
+            throw FirestoreRepositoryError.writeFailed
+        }
     }
 
     func saveStudentPersonalRecords(
@@ -378,14 +454,19 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
                 }
             ),
             payloadStorage: payloadStorage,
-            legacyWasMigrated: decodedMetadata?.legacyV1Migrated == true || legacy != nil
+            legacyWasMigrated: decodedMetadata?.legacyV1Migrated == true || legacy != nil,
+            tecnofitImportCompleted: decodedMetadata?.tecnofitImportCompleted == true
         )
     }
 
     private func metadata(
         from snapshot: DocumentSnapshot,
         uid: String
-    ) -> (customTombstones: [String: [String]], legacyV1Migrated: Bool)? {
+    ) -> (
+        customTombstones: [String: [String]],
+        legacyV1Migrated: Bool,
+        tecnofitImportCompleted: Bool
+    )? {
         guard snapshot.exists,
               let data = snapshot.data(),
               isOwned(data, by: uid, schemaVersions: [SchemaVersions.partitioned, SchemaVersions.current]),
@@ -396,7 +477,8 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
 
         return (
             customTombstones: tombstones(from: data),
-            legacyV1Migrated: data[Fields.legacyV1Migrated] as? Bool ?? false
+            legacyV1Migrated: data[Fields.legacyV1Migrated] as? Bool ?? false,
+            tecnofitImportCompleted: data[Fields.tecnofitImportCompleted] as? Bool ?? false
         )
     }
 
@@ -653,6 +735,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
                         uid: uid,
                         tombstones: tombstones,
                         legacyWasMigrated: legacyWasMigrated,
+                        tecnofitImportCompleted: state.tecnofitImportCompleted,
                         revision: metadataRevision
                     ),
                     forDocument: metadataReference
@@ -918,6 +1001,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         uid: String,
         tombstones: PersonalRecordsPayloadMerger.Tombstones,
         legacyWasMigrated: Bool,
+        tecnofitImportCompleted: Bool,
         revision: String
     ) -> [String: Any] {
         [
@@ -926,6 +1010,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
             Fields.documentType: DocumentTypes.metadata,
             Fields.customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(tombstones),
             Fields.legacyV1Migrated: legacyWasMigrated,
+            Fields.tecnofitImportCompleted: tecnofitImportCompleted,
             Fields.syncRevision: revision,
             Fields.updatedAt: FieldValue.serverTimestamp()
         ]

@@ -17,6 +17,23 @@ struct StudentDashboardDaySummary: Identifiable {
     var id: Date { date }
 }
 
+struct StudentDashboardNextFitModalityOption: Identifiable {
+    let id: Int
+    let title: String
+}
+
+enum StudentDashboardNextFitSelection: Hashable {
+    case wod(Int)
+    case agenda
+}
+
+struct StudentDashboardNextFitContentOption: Identifiable {
+    let selection: StudentDashboardNextFitSelection
+    let title: String
+
+    var id: StudentDashboardNextFitSelection { selection }
+}
+
 struct StudentDashboardDayGroup: Identifiable {
     let weekId: String
     let weekTitle: String
@@ -48,6 +65,8 @@ enum StudentDashboardTeacherLinkState: Equatable {
 
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
+    private static let primaryNextFitModalityCode = 262777
+
     @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
     @Published private(set) var upcomingDayGroups: [StudentDashboardDayGroup] = []
     @Published private(set) var isLoading = true
@@ -56,10 +75,19 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isProcessingLinkAction = false
     @Published private(set) var isMuralhaStudent = false
     @Published private(set) var isLoadingNextFitWod = false
-    @Published private(set) var nextFitWod: NextFitWodDisplay?
+    @Published private(set) var nextFitWods: [NextFitWodDisplay] = []
+    @Published private(set) var nextFitAgenda: [NextFitAgendaDisplay] = []
+    @Published private(set) var selectedNextFitAgendaId: Int?
+    @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay?
+    @Published private(set) var isLoadingNextFitAgendaDetail = false
+    @Published var selectedNextFitContent: StudentDashboardNextFitSelection?
     @Published private(set) var needsNextFitAuthentication = false
     @Published private(set) var hasNextFitSession = false
     @Published private(set) var nextFitError: String?
+    @Published private(set) var nextFitAgendaError: String?
+    @Published private(set) var nextFitAgendaDetailError: String?
+    @Published private(set) var processingAgendaIds: Set<Int> = []
+    @Published private(set) var agendaActionErrors: [Int: String] = [:]
     @Published private(set) var isAuthenticatingNextFit = false
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
@@ -70,6 +98,51 @@ final class StudentDashboardViewModel: ObservableObject {
     private let nextFitService: NextFitService
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
+    private var nextFitContractClientId: Int?
+
+    var nextFitWod: NextFitWodDisplay? {
+        guard case let .wod(modalityId)? = selectedNextFitContent else {
+            return nil
+        }
+        return nextFitWods.first { $0.modalityId == modalityId }
+    }
+
+    var isNextFitAgendaSelected: Bool {
+        selectedNextFitContent == .agenda
+    }
+
+    func isProcessingAgenda(_ agendaId: Int) -> Bool {
+        processingAgendaIds.contains(agendaId)
+    }
+
+    func canCancelAgendaCheckIn(_ agendaId: Int) -> Bool {
+        nextFitAgenda.first { $0.id == agendaId }?.canCancelCheckIn == true
+    }
+
+    func canScheduleAgendaCheckIn(_ agendaId: Int) -> Bool {
+        nextFitAgenda.first { $0.id == agendaId }?.canSchedule == true
+    }
+
+    func agendaActionError(for agendaId: Int) -> String? {
+        agendaActionErrors[agendaId]
+    }
+
+    var nextFitModalityOptions: [StudentDashboardNextFitModalityOption] {
+        nextFitWods.map {
+            StudentDashboardNextFitModalityOption(
+                id: $0.modalityId,
+                title: $0.modalityName
+            )
+        }
+    }
+
+    var nextFitContentOptions: [StudentDashboardNextFitContentOption] {
+        nextFitModalityOptions.map {
+            StudentDashboardNextFitContentOption(selection: .wod($0.id), title: $0.title)
+        } + [
+            StudentDashboardNextFitContentOption(selection: .agenda, title: "Agenda")
+        ]
+    }
 
     var studentUnitName: String {
         (currentStudentUser?.unitName ?? "")
@@ -191,6 +264,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 password: password,
                 sessionAccount: studentId
             )
+            nextFitContractClientId = nil
             hasNextFitSession = true
             await loadNextFitWod()
             return true
@@ -208,10 +282,132 @@ final class StudentDashboardViewModel: ObservableObject {
         await loadNextFitWod()
     }
 
+    func selectNextFitAgenda(_ agendaId: Int) async {
+        guard !isLoadingNextFitAgendaDetail else { return }
+
+        selectedNextFitAgendaId = agendaId
+        selectedNextFitAgendaDetail = nil
+        nextFitAgendaDetailError = nil
+        isLoadingNextFitAgendaDetail = true
+        defer { isLoadingNextFitAgendaDetail = false }
+
+        do {
+            selectedNextFitAgendaDetail = try await nextFitService.loadAgendaDetail(
+                agendaId: agendaId,
+                sessionAccount: studentId
+            )
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+            }
+        } catch {
+            nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+        }
+    }
+
+    func retryNextFitAgendaDetail() async {
+        guard let agendaId = selectedNextFitAgendaId else { return }
+        await selectNextFitAgenda(agendaId)
+    }
+
+    func checkInAgenda(_ agendaId: Int) async {
+        guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }),
+              agenda.endDate >= Date(),
+              agenda.canSchedule else {
+            return
+        }
+        guard processingAgendaIds.insert(agendaId).inserted else { return }
+        agendaActionErrors[agendaId] = nil
+        defer { processingAgendaIds.remove(agendaId) }
+
+        do {
+            guard let contract = try await resolveNextFitAgendaContract() else {
+                agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+                return
+            }
+            #if DEBUG
+            print(
+                "[NextFit Agenda] Check-in\n" +
+                "CodigoAgenda: \(agendaId)\n" +
+                "CodigoCliente: \(contract.clientId)\n" +
+                "CodigoContratoCliente: \(contract.contractClientId)"
+            )
+            #endif
+            try await nextFitService.checkInAgenda(
+                agendaId: agendaId,
+                contractClientId: contract.contractClientId,
+                sessionAccount: studentId
+            )
+            await refreshNextFitAgenda(
+                afterActionFor: agendaId,
+                errorMessage: "Não foi possível realizar o agendamento. Tente novamente."
+            )
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+            }
+        } catch {
+            agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+        }
+    }
+
+    func cancelAgendaCheckIn(_ agendaId: Int) async {
+        guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }),
+              agenda.endDate >= Date(),
+              agenda.canCancelCheckIn else {
+            return
+        }
+        guard processingAgendaIds.insert(agendaId).inserted else { return }
+        agendaActionErrors[agendaId] = nil
+        defer { processingAgendaIds.remove(agendaId) }
+
+        do {
+            try await nextFitService.cancelAgendaCheckIn(
+                agendaId: agendaId,
+                sessionAccount: studentId
+            )
+            await refreshNextFitAgenda(
+                afterActionFor: agendaId,
+                errorMessage: "Não foi possível cancelar o agendamento. Tente novamente."
+            )
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            }
+        } catch {
+            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+        }
+    }
+
+    func clearNextFitAgendaDetail() {
+        selectedNextFitAgendaId = nil
+        selectedNextFitAgendaDetail = nil
+        nextFitAgendaDetailError = nil
+    }
+
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
-        nextFitWod = nil
+        nextFitContractClientId = nil
+        nextFitWods = []
+        nextFitAgenda = []
+        processingAgendaIds = []
+        agendaActionErrors = [:]
+        clearNextFitAgendaDetail()
+        selectedNextFitContent = nil
         nextFitError = nil
+        nextFitAgendaError = nil
         nextFitLoginError = nil
         hasNextFitSession = false
         needsNextFitAuthentication = true
@@ -300,12 +496,25 @@ final class StudentDashboardViewModel: ObservableObject {
         isLoadingNextFitWod = true
         hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         nextFitError = nil
-        nextFitWod = nil
+        nextFitAgendaError = nil
+        nextFitWods = []
+        nextFitAgenda = []
+        processingAgendaIds = []
+        agendaActionErrors = [:]
+        clearNextFitAgendaDetail()
+        selectedNextFitContent = nil
         needsNextFitAuthentication = false
         defer { isLoadingNextFitWod = false }
 
         do {
-            nextFitWod = try await nextFitService.loadTodayWod(sessionAccount: studentId)
+            nextFitWods = try await nextFitService.loadTodayWods(sessionAccount: studentId)
+            let selectedModalityId = nextFitWods.first {
+                $0.modalityId == Self.primaryNextFitModalityCode
+            }?.modalityId ?? nextFitWods.first?.modalityId
+            selectedNextFitContent = selectedModalityId.map(StudentDashboardNextFitSelection.wod) ?? .agenda
+            #if DEBUG
+            print("[NextFit Debug] ViewModel recebeu \(nextFitWods.count) modalidade(s).")
+            #endif
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -316,16 +525,87 @@ final class StudentDashboardViewModel: ObservableObject {
             }
         } catch {
             nextFitError = "Não foi possível carregar o WOD. Tente novamente."
+            return
+        }
+
+        do {
+            nextFitAgenda = try await nextFitService.loadTodayAgenda(sessionAccount: studentId)
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+            }
+        } catch {
+            nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
         }
     }
 
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
-        nextFitWod = nil
+        nextFitContractClientId = nil
+        nextFitWods = []
+        nextFitAgenda = []
+        processingAgendaIds = []
+        agendaActionErrors = [:]
+        clearNextFitAgendaDetail()
+        selectedNextFitContent = nil
         hasNextFitSession = false
         needsNextFitAuthentication = false
         nextFitError = nil
+        nextFitAgendaError = nil
         nextFitLoginError = nil
+    }
+
+    private func refreshNextFitAgenda(afterActionFor agendaId: Int, errorMessage: String) async {
+        do {
+            nextFitAgenda = try await nextFitService.loadTodayAgenda(sessionAccount: studentId)
+            if selectedNextFitAgendaId == agendaId {
+                await selectNextFitAgenda(agendaId)
+            }
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                agendaActionErrors[agendaId] = errorMessage
+            }
+        } catch {
+            agendaActionErrors[agendaId] = errorMessage
+        }
+    }
+
+    private func resolveNextFitAgendaContract() async throws -> (clientId: Int, contractClientId: Int)? {
+        let clientId = try nextFitService.clientId(sessionAccount: studentId)
+
+        if let nextFitContractClientId {
+            return (clientId, nextFitContractClientId)
+        }
+
+        if let contractClientId = selectedNextFitAgendaDetail?.participants.first(
+            where: { $0.clientId == clientId }
+        )?.contractClientId {
+            nextFitContractClientId = contractClientId
+            return (clientId, contractClientId)
+        }
+
+        for agendaId in nextFitAgenda.filter(\.hasCheckIn).map(\.id) {
+            let detail = try await nextFitService.loadAgendaDetail(
+                agendaId: agendaId,
+                sessionAccount: studentId
+            )
+            if let contractClientId = detail.participants.first(
+                where: { $0.clientId == clientId }
+            )?.contractClientId {
+                nextFitContractClientId = contractClientId
+                return (clientId, contractClientId)
+            }
+        }
+
+        return nil
     }
 
     private func isMuralhaUnit(_ unitName: String?) -> Bool {

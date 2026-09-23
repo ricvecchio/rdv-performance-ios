@@ -3,6 +3,7 @@ import SwiftUI
 struct TecnofitImportSheet: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
+    let onImportCompleted: () -> Void
 
     @State private var email = ""
     @State private var password = ""
@@ -12,6 +13,7 @@ struct TecnofitImportSheet: View {
     @State private var successMessage: String?
 
     private let service = TecnofitImportService()
+    private let repository = FirestoreRepository.shared
 
     var body: some View {
         ZStack {
@@ -235,12 +237,28 @@ struct TecnofitImportSheet: View {
     }
 
     private func importRecords() {
-        guard let preview else { return }
+        guard let preview,
+              let uid = session.currentUid,
+              !uid.isEmpty
+        else {
+            errorMessage = "Sua sessão não está disponível para importar recordes."
+            return
+        }
+
         let imported = TecnofitPersonalRecordsImporter.apply(preview)
-        successMessage = imported > 0
-            ? "\(imported) recorde(s) importado(s) com sucesso."
-            : "Nenhum recorde foi alterado; os registros existentes foram preservados."
         self.preview = nil
+
+        Task { @MainActor in
+            do {
+                try await repository.markTecnofitImportCompleted(uid: uid)
+                successMessage = imported > 0
+                    ? "\(imported) recorde(s) importado(s) com sucesso."
+                    : "Nenhum recorde foi alterado; os registros existentes foram preservados."
+                onImportCompleted()
+            } catch {
+                errorMessage = "Não foi possível concluir a importação. Tente novamente."
+            }
+        }
     }
 
     private func clearPassword() {

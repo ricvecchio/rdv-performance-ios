@@ -29,7 +29,7 @@ struct NextFitService {
     private static let baseURL = URL(string: "https://apiappaluno.nextfit.com.br/api")!
     private static let muralhaUnitCode = 30299
     private static let crossFitModalityCode = 262777
-    private static let dailyModalities = "[262777,265536]"
+    private static let agendaPageLimit = 10
 
     func authenticate(email: String, password: String, sessionAccount: String) async throws {
         let registration = try await recoverRegistration(email: email)
@@ -75,18 +75,32 @@ struct NextFitService {
         try NextFitKeychainStore.save(token: token, for: sessionAccount)
     }
 
-    func loadTodayWod(sessionAccount: String) async throws -> NextFitWodDisplay? {
+    func loadTodayWods(sessionAccount: String) async throws -> [NextFitWodDisplay] {
         guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
             throw NextFitServiceError.missingSession
         }
 
         do {
+            let studentModalities = try await loadStudentModalities(token: token)
+            let studentModalityCodes = studentModalities.map(\.id)
+            guard !studentModalityCodes.isEmpty else {
+                return []
+            }
+            var studentModalityNames = [Int: String]()
+            for modality in studentModalities where studentModalityNames[modality.id] == nil {
+                studentModalityNames[modality.id] = modality.descricao
+                    .trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+
             var components = URLComponents(
                 url: Self.baseURL.appending(path: "WodCross/RecuperarWodsDiaPorModalidade"),
                 resolvingAgainstBaseURL: false
             )!
             components.queryItems = [
-                URLQueryItem(name: "ModalidadesStr", value: Self.dailyModalities)
+                URLQueryItem(
+                    name: "ModalidadesStr",
+                    value: "[\(studentModalityCodes.map(String.init).joined(separator: ","))]"
+                )
             ]
 
             var dailyRequest = URLRequest(url: components.url!)
@@ -99,54 +113,295 @@ struct NextFitService {
                 throw NextFitServiceError.unavailable
             }
 
-            let calendar = Calendar.current
-            guard let wod = dailyResponse.content.first(where: {
-                $0.codigoModalidade == Self.crossFitModalityCode &&
-                    isToday($0.dataExec, calendar: calendar)
-            }) else {
-                return nil
-            }
-
-            var detailsRequest = URLRequest(
-                url: Self.baseURL.appending(path: "WodCross/\(wod.id)")
-            )
-            detailsRequest.timeoutInterval = 20
-            applyAuthenticatedHeaders(to: &detailsRequest, token: token)
-
-            let detailsData = try await responseData(for: detailsRequest)
-            let detailsResponse = try JSONDecoder().decode(NextFitWodDetailsResponse.self, from: detailsData)
-            guard detailsResponse.success,
-                  let activities = detailsResponse.content?.wodAtividadeCross else {
-                throw NextFitServiceError.unavailable
-            }
-
-            let selectedActivities = activities
-                .filter {
-                    let title = $0.titulo.trimmingCharacters(in: .whitespacesAndNewlines)
-                    return ["Warm-up", "Skill", "WOD"].contains {
-                        title.caseInsensitiveCompare($0) == .orderedSame
-                    }
-                }
-                .sorted { $0.ordem < $1.ordem }
-
-            var displayActivities = [NextFitWodActivityDisplay]()
-            for activity in selectedActivities {
-                let description = try plainText(fromHTML: activity.descricao)
-                guard !description.isEmpty else { continue }
-                displayActivities.append(
-                    .init(
-                        title: activity.titulo,
-                        description: description,
-                        order: activity.ordem
-                    )
+            debugLog("Endpoint diário retornou \(dailyResponse.content.count) registro(s).")
+            for wod in dailyResponse.content {
+                debugLog(
+                    "Diário - Id: \(wod.id), CodigoModalidade: \(wod.codigoModalidade), DataExec: \(wod.dataExec)"
                 )
             }
 
-            guard !displayActivities.isEmpty else {
-                return nil
+            let calendar = Calendar.current
+            let availableTodayWods = dailyResponse.content
+                .filter {
+                    studentModalityCodes.contains($0.codigoModalidade) &&
+                        isToday($0.dataExec, calendar: calendar)
+                }
+            debugLog("WOD(s) das modalidades solicitadas para hoje: \(availableTodayWods.count).")
+
+            let orderedModalityCodes = studentModalityCodes.contains(Self.crossFitModalityCode)
+                ? [Self.crossFitModalityCode] + studentModalityCodes.filter {
+                    $0 != Self.crossFitModalityCode
+                }
+                : studentModalityCodes
+            let todayWods = orderedModalityCodes.compactMap { modalityCode in
+                availableTodayWods.first { $0.codigoModalidade == modalityCode }
             }
 
-            return NextFitWodDisplay(activities: displayActivities)
+            var displays = [NextFitWodDisplay]()
+            var displayedDailyModalityCodes = Set<Int>()
+
+            for wod in todayWods {
+                guard displayedDailyModalityCodes.insert(wod.codigoModalidade).inserted else {
+                    debugLog("Modalidade diária \(wod.codigoModalidade) já adicionada; WOD \(wod.id) ignorado.")
+                    continue
+                }
+
+                var detailsRequest = URLRequest(
+                    url: Self.baseURL.appending(path: "WodCross/\(wod.id)")
+                )
+                detailsRequest.timeoutInterval = 20
+                applyAuthenticatedHeaders(to: &detailsRequest, token: token)
+
+                let detailsData = try await responseData(for: detailsRequest)
+                let detailsResponse = try JSONDecoder().decode(NextFitWodDetailsResponse.self, from: detailsData)
+                guard detailsResponse.success,
+                      let content = detailsResponse.content else {
+                    throw NextFitServiceError.unavailable
+                }
+
+                let modalityId = content.modalidade?.id ?? wod.codigoModalidade
+                let apiModalityName = content.modalidade?.descricao
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let dailyModalityName = wod.descricaoModalidade?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                let studentModalityName = studentModalityNames[modalityId] ?? ""
+                let modalityName = !apiModalityName.isEmpty
+                    ? apiModalityName
+                    : (!dailyModalityName.isEmpty
+                        ? dailyModalityName
+                        : (!studentModalityName.isEmpty ? studentModalityName : "Modalidade \(modalityId)"))
+                debugLog(
+                    "Detalhe - Wod Id: \(wod.id), CodigoModalidade: \(wod.codigoModalidade), "
+                        + "Modalidade.Id: \(content.modalidade?.id.description ?? "ausente"), "
+                        + "Modalidade.Descricao: \(apiModalityName.isEmpty ? "ausente" : apiModalityName), "
+                        + "Atividades: \(content.wodAtividadeCross.count)."
+                )
+
+                let wodActivities = content.wodAtividadeCross
+                    .sorted { $0.ordem < $1.ordem }
+
+                var displayActivities = [NextFitWodActivityDisplay]()
+                for activity in wodActivities {
+                    let description = try plainText(fromHTML: activity.descricao)
+                    displayActivities.append(
+                        NextFitWodActivityDisplay(
+                            title: activity.titulo,
+                            description: description,
+                            order: activity.ordem
+                        )
+                    )
+                }
+
+                displays.append(
+                    NextFitWodDisplay(
+                        modalityId: modalityId,
+                        modalityName: modalityName,
+                        activities: displayActivities
+                    )
+                )
+                debugLog(
+                    "Modalidade adicionada - Id: \(modalityId), Nome: \(modalityName), "
+                        + "Atividades exibíveis: \(displayActivities.count), Total: \(displays.count)."
+                )
+            }
+
+            debugLog("Total final de modalidades entregues à ViewModel: \(displays.count).")
+            return displays
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func loadTodayAgenda(sessionAccount: String) async throws -> [NextFitAgendaDisplay] {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            let today = formattedCurrentDate()
+            var page = 1
+            var hasMorePages = true
+            var entries = [NextFitAgendaResponse.Entry]()
+
+            while hasMorePages {
+                let request = try agendaRequest(
+                    date: today,
+                    page: page,
+                    token: token
+                )
+                let data = try await responseData(for: request)
+                let response = try JSONDecoder().decode(NextFitAgendaResponse.self, from: data)
+                guard response.success, (response.errorCode ?? 0) == 0 else {
+                    throw NextFitServiceError.unavailable
+                }
+
+                entries.append(contentsOf: response.content)
+                hasMorePages = response.last == false && !response.content.isEmpty
+                page += 1
+            }
+
+            let calendar = Calendar.current
+            let agenda = try entries.compactMap { entry -> NextFitAgendaDisplay? in
+                guard let startDate = agendaDate(from: entry.dataInicial),
+                      let endDate = agendaDate(from: entry.dataFinal) else {
+                    throw NextFitServiceError.unavailable
+                }
+                guard calendar.isDateInToday(startDate) else {
+                    return nil
+                }
+
+                let hasCheckIn = entry.fezCheckin == true
+                return NextFitAgendaDisplay(
+                    id: entry.id,
+                    startDate: startDate,
+                    endDate: endDate,
+                    startTime: formattedTime(from: startDate),
+                    endTime: formattedTime(from: endDate),
+                    enrolledStudents: entry.qtdeAlunos,
+                    studentLimit: entry.limiteAlunos,
+                    modalityName: entry.descricao?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                    instructorName: entry.nomeInstrutor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                    locationName: entry.descricaoLocalAgenda?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                    canSchedule: !hasCheckIn && entry.podeAgendar == true,
+                    canCancelCheckIn: hasCheckIn && entry.permiteCancelarCheckin != false,
+                    hasCheckIn: hasCheckIn
+                )
+            }
+            return agenda.sorted { $0.startDate < $1.startDate }
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func checkInAgenda(
+        agendaId: Int,
+        contractClientId: Int,
+        sessionAccount: String
+    ) async throws -> Bool {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(url: Self.baseURL.appending(path: "Agenda/CheckinFila"))
+            request.httpMethod = "POST"
+            request.timeoutInterval = 20
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            applyAuthenticatedHeaders(to: &request, token: token)
+            request.httpBody = try JSONEncoder().encode(
+                AgendaCheckInRequest(
+                    agendaId: agendaId,
+                    contractClientId: contractClientId,
+                    waitResult: true
+                )
+            )
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
+            guard response.success, (response.errorCode ?? 0) == 0 else {
+                #if DEBUG
+                print(
+                    "[NextFit Agenda] Falha no check-in. " +
+                    "Success: \(response.success), " +
+                    "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
+                    "Message: \(response.message ?? "")"
+                )
+                #endif
+                throw NextFitServiceError.unavailable
+            }
+            return response.content?.entrouNaFilaDeEspera ?? false
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func cancelAgendaCheckIn(
+        agendaId: Int,
+        sessionAccount: String
+    ) async throws {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(url: Self.baseURL.appending(path: "AgendaV2/CancelarCheckin"))
+            request.httpMethod = "POST"
+            request.timeoutInterval = 20
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            applyAuthenticatedHeaders(to: &request, token: token)
+            request.httpBody = try JSONEncoder().encode(AgendaCancelCheckInRequest(agendaId: agendaId))
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitAgendaCancelCheckInResponse.self, from: data)
+            guard response.success, (response.errorCode ?? 0) == 0 else {
+                throw NextFitServiceError.unavailable
+            }
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func loadAgendaDetail(
+        agendaId: Int,
+        sessionAccount: String
+    ) async throws -> NextFitAgendaDetailDisplay {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(url: Self.baseURL.appending(path: "Agenda/\(agendaId)"))
+            request.timeoutInterval = 20
+            applyAuthenticatedHeaders(to: &request, token: token)
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitAgendaDetailResponse.self, from: data)
+            guard response.success,
+                  let content = response.content,
+                  let startDate = agendaDate(from: content.dataInicial),
+                  let endDate = agendaDate(from: content.dataFinal) else {
+                throw NextFitServiceError.unavailable
+            }
+
+            return NextFitAgendaDetailDisplay(
+                id: content.id,
+                dateText: formattedDate(from: startDate),
+                scheduleText: "\(formattedTime(from: startDate)) às \(formattedTime(from: endDate))",
+                capacityText: String(format: "%02d/%02d", content.qtdeAlunos, content.limiteAlunos),
+                modalityName: content.descricao?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                instructorName: content.nomeInstrutor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                locationName: content.descricaoLocalAgenda?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                participants: content.participantes.map {
+                    NextFitAgendaParticipantDisplay(
+                        id: $0.id,
+                        name: $0.nomeParticipante,
+                        clientId: $0.codigoCliente,
+                        contractClientId: $0.codigoContratoCliente
+                    )
+                }
+            )
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
@@ -159,6 +414,16 @@ struct NextFitService {
 
     func hasSession(sessionAccount: String) -> Bool {
         (try? NextFitKeychainStore.token(for: sessionAccount)) != nil
+    }
+
+    func clientId(sessionAccount: String) throws -> Int {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+        guard let clientId = clientId(from: token) else {
+            throw NextFitServiceError.unavailable
+        }
+        return clientId
     }
 
     func logout(sessionAccount: String) throws {
@@ -190,6 +455,62 @@ struct NextFitService {
         } catch {
             throw NextFitServiceError.unavailable
         }
+
+    }
+
+    private func loadStudentModalities(
+        token: String
+    ) async throws -> [NextFitStudentModalitiesResponse.Modality] {
+        var components = URLComponents(
+            url: Self.baseURL.appending(path: "Modalidade/ListarPorAluno"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "page", value: "1"),
+            URLQueryItem(name: "limit", value: "50"),
+            URLQueryItem(name: "fields[]", value: "Id"),
+            URLQueryItem(name: "fields[]", value: "Descricao")
+        ]
+
+        var request = URLRequest(url: components.url!)
+        request.timeoutInterval = 20
+        applyAuthenticatedHeaders(to: &request, token: token)
+
+        let data = try await responseData(for: request)
+        let response = try JSONDecoder().decode(NextFitStudentModalitiesResponse.self, from: data)
+        guard response.success else {
+            throw NextFitServiceError.unavailable
+        }
+        return response.content
+    }
+
+    private func agendaRequest(date: String, page: Int, token: String) throws -> URLRequest {
+        var components = URLComponents(
+            url: Self.baseURL.appending(path: "AgendaV2"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "DataInicialStr", value: date),
+            URLQueryItem(name: "DataFinalStr", value: date),
+            URLQueryItem(name: "FiltrarMeusAgendamentos", value: "false"),
+            URLQueryItem(name: "FiltrarHistorico", value: "false"),
+            URLQueryItem(name: "PeriodosStr", value: "[]"),
+            URLQueryItem(name: "CodigosModalidadesStr", value: "[]"),
+            URLQueryItem(name: "page", value: String(page)),
+            URLQueryItem(name: "limit", value: String(Self.agendaPageLimit)),
+            URLQueryItem(name: "sort", value: "[]"),
+            URLQueryItem(name: "filter", value: "[]"),
+            URLQueryItem(name: "includes", value: "[]"),
+            URLQueryItem(name: "fields", value: "[]")
+        ]
+        guard let url = components.url else {
+            throw NextFitServiceError.unavailable
+        }
+
+        var request = URLRequest(url: url)
+        request.timeoutInterval = 20
+        applyAuthenticatedHeaders(to: &request, token: token)
+        return request
     }
 
     private func applyBaseHeaders(to request: inout URLRequest) {
@@ -218,6 +539,34 @@ struct NextFitService {
         return data
     }
 
+    private func clientId(from token: String) -> Int? {
+        let components = token.split(separator: ".")
+        guard components.count > 1 else {
+            return nil
+        }
+
+        var payload = String(components[1])
+            .replacingOccurrences(of: "-", with: "+")
+            .replacingOccurrences(of: "_", with: "/")
+        payload += String(repeating: "=", count: (4 - payload.count % 4) % 4)
+
+        guard let data = Data(base64Encoded: payload),
+              let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else {
+            return nil
+        }
+
+        if let clientId = json["codigoCliente"] as? Int {
+            return clientId
+        }
+        if let clientId = json["codigoCliente"] as? NSNumber {
+            return clientId.intValue
+        }
+        if let clientId = json["codigoCliente"] as? String {
+            return Int(clientId)
+        }
+        return nil
+    }
+
     private func formData(_ values: [String: String]) -> Data {
         var components = URLComponents()
         components.queryItems = values.map { URLQueryItem(name: $0.key, value: $0.value) }
@@ -227,11 +576,56 @@ struct NextFitService {
     private func isToday(_ value: String, calendar: Calendar) -> Bool {
         let formatter = DateFormatter()
         formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "dd/MM/yyyy HH:mm:ss"
         guard let date = formatter.date(from: value) else {
+            debugLog("Não foi possível interpretar DataExec: \(value).")
             return false
         }
         return calendar.isDateInToday(date)
+    }
+
+    private func agendaDate(from value: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "dd/MM/yyyy HH:mm:ss"
+        return formatter.date(from: value)
+    }
+
+    private func formattedCurrentDate() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = Calendar.current.timeZone
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: Date())
+    }
+
+    private func formattedDate(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: date)
+    }
+
+    private func formattedTime(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "HH:mm"
+        return formatter.string(from: date)
+    }
+
+    private func debugLog(_ message: String) {
+        #if DEBUG
+        print("[NextFit Debug] \(message)")
+        #endif
     }
 
     private func plainText(fromHTML html: String) throws -> String {
@@ -247,6 +641,26 @@ struct NextFitService {
             .replacingOccurrences(of: "\u{00A0}", with: " ")
             .replacingOccurrences(of: "\r\n", with: "\n")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+private struct AgendaCheckInRequest: Encodable {
+    let agendaId: Int
+    let contractClientId: Int
+    let waitResult: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case agendaId = "CodigoAgenda"
+        case contractClientId = "CodigoContratoCliente"
+        case waitResult = "WaitResult"
+    }
+}
+
+private struct AgendaCancelCheckInRequest: Encodable {
+    let agendaId: Int
+
+    enum CodingKeys: String, CodingKey {
+        case agendaId = "CodigoAgenda"
     }
 }
 

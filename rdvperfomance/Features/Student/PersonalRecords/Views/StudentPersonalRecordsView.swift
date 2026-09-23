@@ -39,6 +39,7 @@ struct StudentPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
     let onBack: () -> Void
+    @EnvironmentObject private var session: AppSession
 
     /// Sempre fornecido pelo `StudentRootView`. Usado tanto pelo rodapé
     /// quanto pelo botão `<` desta tela: como esta view é a RAIZ da seção
@@ -48,7 +49,10 @@ struct StudentPersonalRecordsView: View {
     var navigationContext: PersonalRecordsNavigationContext = .student
 
     private let contentMaxWidth: CGFloat = 380
+    private let repository = FirestoreRepository.shared
     @State private var isTecnofitImportPresented = false
+    @State private var hasCompletedTecnofitImport = false
+    @State private var hasLoadedTecnofitImportStatus = false
 
     private struct PRMenuItem: Identifiable, Hashable {
         let id = UUID()
@@ -93,7 +97,9 @@ struct StudentPersonalRecordsView: View {
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
 
-                            tecnofitImportButton
+                            if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
+                                tecnofitImportButton
+                            }
 
                             VStack(spacing: 12) {
                                 ForEach(menuItems) { item in
@@ -166,7 +172,12 @@ struct StudentPersonalRecordsView: View {
         }
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $isTecnofitImportPresented) {
-            TecnofitImportSheet()
+            TecnofitImportSheet {
+                hasCompletedTecnofitImport = true
+            }
+        }
+        .task(id: session.currentUid) {
+            await loadTecnofitImportStatus()
         }
         .toolbar {
 
@@ -240,6 +251,28 @@ struct StudentPersonalRecordsView: View {
             .compactPrimaryGreenActionButton()
         }
         .buttonStyle(.plain)
+    }
+
+    private func loadTecnofitImportStatus() async {
+        hasLoadedTecnofitImportStatus = false
+        hasCompletedTecnofitImport = false
+
+        guard let uid = session.currentUid?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !uid.isEmpty
+        else {
+            return
+        }
+
+        do {
+            let hasCompletedImport = try await repository.hasCompletedTecnofitImport(uid: uid)
+            guard !Task.isCancelled, session.currentUid == uid else { return }
+            hasCompletedTecnofitImport = hasCompletedImport
+            hasLoadedTecnofitImportStatus = true
+        } catch {
+            #if DEBUG
+            print("[PersonalRecords] Não foi possível carregar o status de importação do Tecnofit: \(error)")
+            #endif
+        }
     }
 
 }

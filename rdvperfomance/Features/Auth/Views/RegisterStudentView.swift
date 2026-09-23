@@ -209,7 +209,7 @@ struct RegisterStudentView: View {
         switch opt {
         case .CROSSFIT: return "Crossfit"
         case .GYM: return "Academia"
-        case .HOME: return "Treinos em Casa"
+        case .HOME: return "Em Casa"
         }
     }
 

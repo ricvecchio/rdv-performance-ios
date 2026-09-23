@@ -267,10 +267,12 @@ struct TeacherSendWorkoutView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text(step == .day ? "Selecionar dia" : "Enviar treino")
-                    .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
-                    .lineLimit(1)
+                if step != .day {
+                    Text("Enviar treino")
+                        .font(Theme.Fonts.headerTitle())
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                }
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -790,16 +792,15 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedWorkoutsSummary: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("TREINOS SELECIONADOS")
-
-            VStack(alignment: .leading, spacing: 12) {
+            VStack(alignment: .leading, spacing: 6) {
                 ForEach(selectedTemplatesInOrder, id: \.category) { item in
                     selectedWorkoutRow(category: item.category, template: item.template)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 16)
-            .padding(.bottom, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
@@ -814,7 +815,7 @@ struct TeacherSendWorkoutView: View {
         category: TreinoTipo,
         template: WorkoutTemplateFS
     ) -> some View {
-        VStack(alignment: .leading, spacing: 3) {
+        VStack(alignment: .leading, spacing: 2) {
             HStack(spacing: 8) {
                 Image(systemName: categoryIcon(for: category))
                     .font(.system(size: 13))
@@ -833,8 +834,6 @@ struct TeacherSendWorkoutView: View {
 
     private var daySection: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("SELECIONAR dia")
-
             Picker("", selection: $daySelectionPeriod) {
                 ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { period in
                     Text(period.title).tag(period)
@@ -842,6 +841,7 @@ struct TeacherSendWorkoutView: View {
             }
             .pickerStyle(.segmented)
             .padding(.horizontal, 16)
+            .padding(.top, 14)
             .padding(.bottom, daySelectionPeriod == .upcomingWeeks ? 12 : 16)
             .disabled(isSending)
             .onChange(of: daySelectionPeriod) { _ in
