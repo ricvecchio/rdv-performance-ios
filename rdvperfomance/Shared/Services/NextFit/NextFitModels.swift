@@ -31,6 +31,22 @@ struct NextFitAgendaDisplay: Equatable, Identifiable {
     var capacityText: String { String(format: "%02d/%02d", enrolledStudents, studentLimit) }
 }
 
+struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
+    let id: Int
+    let name: String
+}
+
+struct NextFitAgendaDetailDisplay: Equatable {
+    let id: Int
+    let dateText: String
+    let scheduleText: String
+    let capacityText: String
+    let modalityName: String
+    let instructorName: String
+    let locationName: String
+    let participants: [NextFitAgendaParticipantDisplay]
+}
+
 struct NextFitIdentificationResponse: Decodable {
     let content: Content?
     let success: Bool
@@ -180,6 +196,50 @@ struct NextFitAgendaResponse: Decodable {
             case limiteAlunos = "LimiteAlunos"
             case nomeInstrutor = "NomeInstrutor"
             case descricaoLocalAgenda = "DescricaoLocalAgenda"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case content = "Content"
+        case success = "Success"
+    }
+}
+
+struct NextFitAgendaDetailResponse: Decodable {
+    let content: Content?
+    let success: Bool
+
+    struct Content: Decodable {
+        let id: Int
+        let dataInicial: String
+        let dataFinal: String
+        let descricao: String?
+        let nomeInstrutor: String?
+        let descricaoLocalAgenda: String?
+        let limiteAlunos: Int
+        let qtdeAlunos: Int
+        let participantes: [Participant]
+
+        struct Participant: Decodable {
+            let id: Int
+            let nomeParticipante: String
+
+            enum CodingKeys: String, CodingKey {
+                case id = "Id"
+                case nomeParticipante = "NomeParticipante"
+            }
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case id = "Id"
+            case dataInicial = "DataInicial"
+            case dataFinal = "DataFinal"
+            case descricao = "Descricao"
+            case nomeInstrutor = "NomeInstrutor"
+            case descricaoLocalAgenda = "DescricaoLocalAgenda"
+            case limiteAlunos = "LimiteAlunos"
+            case qtdeAlunos = "QtdeAlunos"
+            case participantes = "Participantes"
         }
     }
 

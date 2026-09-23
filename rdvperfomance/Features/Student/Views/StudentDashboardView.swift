@@ -540,7 +540,14 @@ struct StudentDashboardView: View {
 
     @ViewBuilder
     private var nextFitAgendaContent: some View {
-        if let error = viewModel.nextFitAgendaError {
+        if viewModel.isLoadingNextFitAgendaDetail {
+            ProgressView()
+                .tint(.white)
+        } else if let detail = viewModel.selectedNextFitAgendaDetail {
+            nextFitAgendaDetailContent(detail)
+        } else if let error = viewModel.nextFitAgendaDetailError {
+            nextFitAgendaDetailErrorContent(error)
+        } else if let error = viewModel.nextFitAgendaError {
             Text(error)
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
@@ -559,27 +566,119 @@ struct StudentDashboardView: View {
                 .foregroundColor(.white.opacity(0.55))
         } else {
             ForEach(viewModel.nextFitAgenda) { entry in
-                HStack {
-                    Text(entry.scheduleText)
-                    Spacer()
-                    Text(entry.capacityText)
+                Button {
+                    Task { await viewModel.selectNextFitAgenda(entry.id) }
+                } label: {
+                    VStack(alignment: .leading, spacing: 14) {
+                        HStack {
+                            Text(entry.scheduleText)
+                            Spacer()
+                            Text(entry.capacityText)
+                        }
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.92))
+
+                        Text(entry.modalityName)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen)
+
+                        Text(entry.instructorName)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.92))
+
+                        Text(entry.locationName)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.55))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.92))
-
-                Text(entry.modalityName)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
-
-                Text(entry.instructorName)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.92))
-
-                Text(entry.locationName)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                .buttonStyle(.plain)
             }
         }
+    }
+
+    private func nextFitAgendaDetailContent(_ detail: NextFitAgendaDetailDisplay) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Button {
+                viewModel.clearNextFitAgendaDetail()
+            } label: {
+                Label("Voltar à agenda", systemImage: "chevron.left")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+            }
+            .buttonStyle(.plain)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    nextFitAgendaDetailRow(icon: "calendar", text: detail.dateText)
+                    Spacer()
+                    nextFitAgendaDetailRow(icon: "person.2.fill", text: detail.capacityText)
+                }
+                nextFitAgendaDetailRow(icon: "clock", text: detail.scheduleText)
+                nextFitAgendaDetailRow(icon: "dumbbell.fill", text: detail.modalityName)
+                nextFitAgendaDetailRow(icon: "person.fill", text: detail.instructorName)
+                nextFitAgendaDetailRow(icon: "mappin.and.ellipse", text: detail.locationName)
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.white.opacity(0.06))
+            .cornerRadius(12)
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08), lineWidth: 1))
+
+            Text("PARTICIPANTES")
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(.white.opacity(0.92))
+
+            if detail.participants.isEmpty {
+                Text("Nenhum participante neste horário.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+            } else {
+                ForEach(detail.participants) { participant in
+                    Text(participant.name)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.92))
+                }
+            }
+        }
+    }
+
+    private func nextFitAgendaDetailErrorContent(_ error: String) -> some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Button {
+                viewModel.clearNextFitAgendaDetail()
+            } label: {
+                Label("Voltar à agenda", systemImage: "chevron.left")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+            }
+            .buttonStyle(.plain)
+
+            Text(error)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+
+            Button {
+                Task { await viewModel.retryNextFitAgendaDetail() }
+            } label: {
+                Text("Tentar novamente")
+                    .padding(.horizontal, 14)
+                    .compactPrimaryGreenActionButton()
+            }
+            .buttonStyle(.plain)
+        }
+    }
+
+    private func nextFitAgendaDetailRow(icon: String, text: String) -> some View {
+        Label {
+            Text(text)
+        } icon: {
+            Image(systemName: icon)
+                .foregroundColor(Theme.Colors.primaryGreen)
+                .frame(width: 18)
+        }
+        .font(.system(size: 14))
+        .foregroundColor(.white.opacity(0.92))
     }
 
     private var nextFitWodTitle: String {

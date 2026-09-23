@@ -271,6 +271,51 @@ struct NextFitService {
         }
     }
 
+    func loadAgendaDetail(
+        agendaId: Int,
+        sessionAccount: String
+    ) async throws -> NextFitAgendaDetailDisplay {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(url: Self.baseURL.appending(path: "Agenda/\(agendaId)"))
+            request.timeoutInterval = 20
+            applyAuthenticatedHeaders(to: &request, token: token)
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitAgendaDetailResponse.self, from: data)
+            guard response.success,
+                  let content = response.content,
+                  let startDate = agendaDate(from: content.dataInicial),
+                  let endDate = agendaDate(from: content.dataFinal) else {
+                throw NextFitServiceError.unavailable
+            }
+
+            return NextFitAgendaDetailDisplay(
+                id: content.id,
+                dateText: formattedDate(from: startDate),
+                scheduleText: "\(formattedTime(from: startDate)) às \(formattedTime(from: endDate))",
+                capacityText: String(format: "%02d/%02d", content.qtdeAlunos, content.limiteAlunos),
+                modalityName: content.descricao?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                instructorName: content.nomeInstrutor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                locationName: content.descricaoLocalAgenda?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                participants: content.participantes.map {
+                    NextFitAgendaParticipantDisplay(id: $0.id, name: $0.nomeParticipante)
+                }
+            )
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
     func hasSession(sessionAccount: String) -> Bool {
         (try? NextFitKeychainStore.token(for: sessionAccount)) != nil
     }
@@ -367,6 +412,15 @@ struct NextFitService {
         formatter.timeZone = Calendar.current.timeZone
         formatter.dateFormat = "dd/MM/yyyy"
         return formatter.string(from: Date())
+    }
+
+    private func formattedDate(from date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = .current
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: date)
     }
 
     private func formattedTime(from date: Date) -> String {

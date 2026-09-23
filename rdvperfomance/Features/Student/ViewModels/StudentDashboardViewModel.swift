@@ -77,11 +77,15 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isLoadingNextFitWod = false
     @Published private(set) var nextFitWods: [NextFitWodDisplay] = []
     @Published private(set) var nextFitAgenda: [NextFitAgendaDisplay] = []
+    @Published private(set) var selectedNextFitAgendaId: Int?
+    @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay?
+    @Published private(set) var isLoadingNextFitAgendaDetail = false
     @Published var selectedNextFitContent: StudentDashboardNextFitSelection?
     @Published private(set) var needsNextFitAuthentication = false
     @Published private(set) var hasNextFitSession = false
     @Published private(set) var nextFitError: String?
     @Published private(set) var nextFitAgendaError: String?
+    @Published private(set) var nextFitAgendaDetailError: String?
     @Published private(set) var isAuthenticatingNextFit = false
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
@@ -258,10 +262,49 @@ final class StudentDashboardViewModel: ObservableObject {
         await loadNextFitWod()
     }
 
+    func selectNextFitAgenda(_ agendaId: Int) async {
+        guard !isLoadingNextFitAgendaDetail else { return }
+
+        selectedNextFitAgendaId = agendaId
+        selectedNextFitAgendaDetail = nil
+        nextFitAgendaDetailError = nil
+        isLoadingNextFitAgendaDetail = true
+        defer { isLoadingNextFitAgendaDetail = false }
+
+        do {
+            selectedNextFitAgendaDetail = try await nextFitService.loadAgendaDetail(
+                agendaId: agendaId,
+                sessionAccount: studentId
+            )
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+            }
+        } catch {
+            nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+        }
+    }
+
+    func retryNextFitAgendaDetail() async {
+        guard let agendaId = selectedNextFitAgendaId else { return }
+        await selectNextFitAgenda(agendaId)
+    }
+
+    func clearNextFitAgendaDetail() {
+        selectedNextFitAgendaId = nil
+        selectedNextFitAgendaDetail = nil
+        nextFitAgendaDetailError = nil
+    }
+
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
         nextFitWods = []
         nextFitAgenda = []
+        clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         nextFitError = nil
         nextFitAgendaError = nil
@@ -356,6 +399,7 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitAgendaError = nil
         nextFitWods = []
         nextFitAgenda = []
+        clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         needsNextFitAuthentication = false
         defer { isLoadingNextFitWod = false }
@@ -401,6 +445,7 @@ final class StudentDashboardViewModel: ObservableObject {
         isLoadingNextFitWod = false
         nextFitWods = []
         nextFitAgenda = []
+        clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         hasNextFitSession = false
         needsNextFitAuthentication = false
