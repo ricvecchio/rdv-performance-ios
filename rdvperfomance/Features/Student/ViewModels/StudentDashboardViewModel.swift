@@ -86,6 +86,8 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var nextFitError: String?
     @Published private(set) var nextFitAgendaError: String?
     @Published private(set) var nextFitAgendaDetailError: String?
+    @Published private(set) var processingAgendaIds: Set<Int> = []
+    @Published private(set) var agendaActionErrors: [Int: String] = [:]
     @Published private(set) var isAuthenticatingNextFit = false
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
@@ -106,6 +108,22 @@ final class StudentDashboardViewModel: ObservableObject {
 
     var isNextFitAgendaSelected: Bool {
         selectedNextFitContent == .agenda
+    }
+
+    func isProcessingAgenda(_ agendaId: Int) -> Bool {
+        processingAgendaIds.contains(agendaId)
+    }
+
+    func canCancelAgendaCheckIn(_ agendaId: Int) -> Bool {
+        nextFitAgenda.first { $0.id == agendaId }?.canCancelCheckIn == true
+    }
+
+    func canScheduleAgendaCheckIn(_ agendaId: Int) -> Bool {
+        nextFitAgenda.first { $0.id == agendaId }?.canSchedule == true
+    }
+
+    func agendaActionError(for agendaId: Int) -> String? {
+        agendaActionErrors[agendaId]
     }
 
     var nextFitModalityOptions: [StudentDashboardNextFitModalityOption] {
@@ -294,6 +312,34 @@ final class StudentDashboardViewModel: ObservableObject {
         await selectNextFitAgenda(agendaId)
     }
 
+    func checkInAgenda(_ agendaId: Int) async {
+        agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+    }
+
+    func cancelAgendaCheckIn(_ agendaId: Int) async {
+        guard processingAgendaIds.insert(agendaId).inserted else { return }
+        agendaActionErrors[agendaId] = nil
+        defer { processingAgendaIds.remove(agendaId) }
+
+        do {
+            try await nextFitService.cancelAgendaCheckIn(
+                agendaId: agendaId,
+                sessionAccount: studentId
+            )
+            await refreshNextFitAgenda(afterActionFor: agendaId)
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            }
+        } catch {
+            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+        }
+    }
+
     func clearNextFitAgendaDetail() {
         selectedNextFitAgendaId = nil
         selectedNextFitAgendaDetail = nil
@@ -304,6 +350,8 @@ final class StudentDashboardViewModel: ObservableObject {
         try nextFitService.logout(sessionAccount: studentId)
         nextFitWods = []
         nextFitAgenda = []
+        processingAgendaIds = []
+        agendaActionErrors = [:]
         clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         nextFitError = nil
@@ -399,6 +447,8 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitAgendaError = nil
         nextFitWods = []
         nextFitAgenda = []
+        processingAgendaIds = []
+        agendaActionErrors = [:]
         clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         needsNextFitAuthentication = false
@@ -445,6 +495,8 @@ final class StudentDashboardViewModel: ObservableObject {
         isLoadingNextFitWod = false
         nextFitWods = []
         nextFitAgenda = []
+        processingAgendaIds = []
+        agendaActionErrors = [:]
         clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         hasNextFitSession = false
@@ -452,6 +504,25 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitError = nil
         nextFitAgendaError = nil
         nextFitLoginError = nil
+    }
+
+    private func refreshNextFitAgenda(afterActionFor agendaId: Int) async {
+        do {
+            nextFitAgenda = try await nextFitService.loadTodayAgenda(sessionAccount: studentId)
+            if selectedNextFitAgendaId == agendaId {
+                await selectNextFitAgenda(agendaId)
+            }
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            }
+        } catch {
+            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+        }
     }
 
     private func isMuralhaUnit(_ unitName: String?) -> Bool {

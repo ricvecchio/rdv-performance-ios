@@ -257,10 +257,84 @@ struct NextFitService {
                     modalityName: entry.descricao?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
                     instructorName: entry.nomeInstrutor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
                     locationName: entry.descricaoLocalAgenda?
-                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                    canSchedule: entry.podeAgendar ?? false,
+                    canCancelCheckIn: entry.permiteCancelarCheckin ?? entry.fezCheckin ?? false
                 )
             }
             return agenda.sorted { $0.startDate < $1.startDate }
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func checkInAgenda(
+        agendaId: Int,
+        contractClientId: Int,
+        sessionAccount: String
+    ) async throws -> Bool {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(url: Self.baseURL.appending(path: "Agenda/CheckinFila"))
+            request.httpMethod = "POST"
+            request.timeoutInterval = 20
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            applyAuthenticatedHeaders(to: &request, token: token)
+            request.httpBody = try JSONEncoder().encode(
+                AgendaCheckInRequest(
+                    agendaId: agendaId,
+                    contractClientId: contractClientId,
+                    waitResult: true
+                )
+            )
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
+            guard response.success else {
+                throw NextFitServiceError.unavailable
+            }
+            return response.content?.entrouNaFilaDeEspera ?? false
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func cancelAgendaCheckIn(
+        agendaId: Int,
+        sessionAccount: String
+    ) async throws {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(url: Self.baseURL.appending(path: "AgendaV2/CancelarCheckin"))
+            request.httpMethod = "POST"
+            request.timeoutInterval = 20
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            applyAuthenticatedHeaders(to: &request, token: token)
+            request.httpBody = try JSONEncoder().encode(
+                AgendaCancelCheckInRequest(agendaId: agendaId, confirmation: true)
+            )
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitAgendaCancelCheckInResponse.self, from: data)
+            guard response.success else {
+                throw NextFitServiceError.unavailable
+            }
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
@@ -451,6 +525,28 @@ struct NextFitService {
             .replacingOccurrences(of: "\u{00A0}", with: " ")
             .replacingOccurrences(of: "\r\n", with: "\n")
             .trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+}
+
+private struct AgendaCheckInRequest: Encodable {
+    let agendaId: Int
+    let contractClientId: Int
+    let waitResult: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case agendaId = "CodigoAgenda"
+        case contractClientId = "CodigoContratoCliente"
+        case waitResult = "WaitResult"
+    }
+}
+
+private struct AgendaCancelCheckInRequest: Encodable {
+    let agendaId: Int
+    let confirmation: Bool
+
+    enum CodingKeys: String, CodingKey {
+        case agendaId = "CodigoAgenda"
+        case confirmation = "Confirmacao"
     }
 }
 

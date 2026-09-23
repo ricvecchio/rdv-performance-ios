@@ -1,5 +1,31 @@
 import SwiftUI
 
+private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        content
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
+            .padding(.vertical, 9)
+            .background(isEnabled ? Color.red.opacity(0.20) : Color.white.opacity(0.10))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12),
+                        lineWidth: 1
+                    )
+            )
+    }
+}
+
+private extension View {
+    func compactDestructiveAgendaActionButton() -> some View {
+        modifier(CompactDestructiveAgendaActionButtonModifier())
+    }
+}
+
 struct StudentDashboardView: View {
     @Binding var path: [AppRoute]
     let studentId: String
@@ -623,16 +649,12 @@ struct StudentDashboardView: View {
                                 textColor: .white.opacity(0.55)
                             )
                             Spacer()
-                            Button {
-                            } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "calendar.badge.plus")
-                                    Text("Agendar")
-                                }
-                                .padding(.horizontal, 14)
-                                .compactPrimaryGreenActionButton()
-                            }
-                            .buttonStyle(.plain)
+                            agendaCheckInButton(for: entry.id)
+                        }
+                        if let error = viewModel.agendaActionError(for: entry.id) {
+                            Text(error)
+                                .font(.system(size: 13))
+                                .foregroundColor(.red.opacity(0.9))
                         }
                     }
                     .padding(14)
@@ -691,6 +713,19 @@ struct StudentDashboardView: View {
                         .foregroundColor(.white.opacity(0.92))
                 }
             }
+
+            if viewModel.canCancelAgendaCheckIn(detail.id) {
+                HStack {
+                    Spacer()
+                    agendaCheckInButton(for: detail.id)
+                }
+            }
+
+            if let error = viewModel.agendaActionError(for: detail.id) {
+                Text(error)
+                    .font(.system(size: 13))
+                    .foregroundColor(.red.opacity(0.9))
+            }
         }
     }
 
@@ -735,6 +770,46 @@ struct StudentDashboardView: View {
         }
         .font(font)
         .foregroundColor(textColor)
+    }
+
+    @ViewBuilder
+    private func agendaCheckInButton(for agendaId: Int) -> some View {
+        let isProcessing = viewModel.isProcessingAgenda(agendaId)
+        if viewModel.canCancelAgendaCheckIn(agendaId) {
+            Button {
+                Task { await viewModel.cancelAgendaCheckIn(agendaId) }
+            } label: {
+                HStack(spacing: 10) {
+                    if isProcessing {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "xmark.circle")
+                    }
+                    Text("Cancelar")
+                }
+                .padding(.horizontal, 14)
+                .compactDestructiveAgendaActionButton()
+            }
+            .buttonStyle(.plain)
+            .disabled(isProcessing)
+        } else {
+            Button {
+                Task { await viewModel.checkInAgenda(agendaId) }
+            } label: {
+                HStack(spacing: 10) {
+                    if isProcessing {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "calendar.badge.plus")
+                    }
+                    Text("Agendar")
+                }
+                .padding(.horizontal, 14)
+                .compactPrimaryGreenActionButton()
+            }
+            .buttonStyle(.plain)
+            .disabled(isProcessing || !viewModel.canScheduleAgendaCheckIn(agendaId))
+        }
     }
 
     private var nextFitWodTitle: String {

@@ -26,6 +26,8 @@ struct NextFitAgendaDisplay: Equatable, Identifiable {
     let modalityName: String
     let instructorName: String
     let locationName: String
+    let canSchedule: Bool
+    let canCancelCheckIn: Bool
 
     var scheduleText: String { "\(startTime) às \(endTime)" }
     var capacityText: String { String(format: "%02d/%02d", enrolledStudents, studentLimit) }
@@ -186,6 +188,9 @@ struct NextFitAgendaResponse: Decodable {
         let limiteAlunos: Int
         let nomeInstrutor: String?
         let descricaoLocalAgenda: String?
+        let fezCheckin: Bool?
+        let podeAgendar: Bool?
+        let permiteCancelarCheckin: Bool?
 
         enum CodingKeys: String, CodingKey {
             case id = "Id"
@@ -196,11 +201,42 @@ struct NextFitAgendaResponse: Decodable {
             case limiteAlunos = "LimiteAlunos"
             case nomeInstrutor = "NomeInstrutor"
             case descricaoLocalAgenda = "DescricaoLocalAgenda"
+            case fezCheckin = "FezCheckin"
+            case podeAgendar = "PodeAgendar"
+            case permiteCancelarCheckin = "PermiteCancelarCheckin"
         }
     }
 
     enum CodingKeys: String, CodingKey {
         case content = "Content"
+        case success = "Success"
+    }
+}
+
+struct NextFitAgendaCheckInResponse: Decodable {
+    let content: Content?
+    let success: Bool
+
+    struct Content: Decodable {
+        let entrouNaFilaDeEspera: Bool
+        let waitResult: Bool
+
+        enum CodingKeys: String, CodingKey {
+            case entrouNaFilaDeEspera = "EntrouNaFilaDeEspera"
+            case waitResult = "WaitResult"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case content = "Content"
+        case success = "Success"
+    }
+}
+
+struct NextFitAgendaCancelCheckInResponse: Decodable {
+    let success: Bool
+
+    enum CodingKeys: String, CodingKey {
         case success = "Success"
     }
 }
