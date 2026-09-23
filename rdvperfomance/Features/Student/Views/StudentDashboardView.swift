@@ -536,6 +536,11 @@ struct StudentDashboardView: View {
                     }
                     .pickerStyle(.segmented)
                     .tint(Color.white.opacity(0.06))
+                    .onChange(of: viewModel.selectedNextFitContent) { _, selection in
+                        if selection != .agenda {
+                            viewModel.clearNextFitAgendaDetail()
+                        }
+                    }
                 }
 
                 if viewModel.isNextFitAgendaSelected {
@@ -776,7 +781,10 @@ struct StudentDashboardView: View {
     private func agendaCheckInButton(for entry: NextFitAgendaDisplay) -> some View {
         if entry.endDate < Date() {
             Button { } label: {
-                Text("Encerrado")
+                HStack(spacing: 10) {
+                    Image(systemName: "clock.badge.xmark")
+                    Text("Encerrado")
+                }
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
             }
