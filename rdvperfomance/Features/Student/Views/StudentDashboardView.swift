@@ -515,15 +515,27 @@ struct StudentDashboardView: View {
                 if viewModel.isNextFitAgendaSelected {
                     nextFitAgendaContent
                 } else if let wod = viewModel.nextFitWod {
-                    ForEach(wod.activities) { activity in
-                        Text(activity.title)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Theme.Colors.primaryGreen)
+                    VStack(spacing: 10) {
+                        ForEach(wod.activities) { activity in
+                            VStack(alignment: .leading, spacing: 14) {
+                                Text(activity.title)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(Theme.Colors.primaryGreen)
 
-                        Text(activity.description)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.92))
+                                Text(activity.description)
+                                    .font(.system(size: 14))
+                                    .foregroundColor(.white.opacity(0.92))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                            }
+                            .padding(14)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.white.opacity(0.06))
+                            .cornerRadius(12)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                        }
                     }
                 } else {
                     Text("Nenhum WOD disponível para hoje.")
