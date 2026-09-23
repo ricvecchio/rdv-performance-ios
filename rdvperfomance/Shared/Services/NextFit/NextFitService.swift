@@ -204,7 +204,30 @@ struct NextFitService {
         }
 
         do {
-            var request = URLRequest(url: Self.baseURL.appending(path: "AgendaV2"))
+            var components = URLComponents(
+                url: Self.baseURL.appending(path: "AgendaV2"),
+                resolvingAgainstBaseURL: false
+            )!
+            let today = formattedCurrentDate()
+            components.queryItems = [
+                URLQueryItem(name: "DataInicialStr", value: today),
+                URLQueryItem(name: "DataFinalStr", value: today),
+                URLQueryItem(name: "FiltrarMeusAgendamentos", value: "false"),
+                URLQueryItem(name: "FiltrarHistorico", value: "false"),
+                URLQueryItem(name: "PeriodosStr", value: "[]"),
+                URLQueryItem(name: "CodigosModalidadesStr", value: "[]"),
+                URLQueryItem(name: "page", value: "1"),
+                URLQueryItem(name: "limit", value: "10"),
+                URLQueryItem(name: "sort", value: "[]"),
+                URLQueryItem(name: "filter", value: "[]"),
+                URLQueryItem(name: "includes", value: "[]"),
+                URLQueryItem(name: "fields", value: "[]")
+            ]
+
+            guard let url = components.url else {
+                throw NextFitServiceError.unavailable
+            }
+            var request = URLRequest(url: url)
             request.timeoutInterval = 20
             applyAuthenticatedHeaders(to: &request, token: token)
 
@@ -335,6 +358,15 @@ struct NextFitService {
         formatter.timeZone = .current
         formatter.dateFormat = "dd/MM/yyyy HH:mm:ss"
         return formatter.date(from: value)
+    }
+
+    private func formattedCurrentDate() -> String {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = Calendar.current.timeZone
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.string(from: Date())
     }
 
     private func formattedTime(from date: Date) -> String {

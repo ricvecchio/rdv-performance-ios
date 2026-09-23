@@ -385,9 +385,15 @@ final class StudentDashboardViewModel: ObservableObject {
         do {
             nextFitAgenda = try await nextFitService.loadTodayAgenda(sessionAccount: studentId)
         } catch let error as NextFitServiceError {
-            nextFitAgendaError = error.localizedDescription
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+            }
         } catch {
-            nextFitAgendaError = "Não foi possível carregar a agenda. Tente novamente."
+            nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
         }
     }
 
