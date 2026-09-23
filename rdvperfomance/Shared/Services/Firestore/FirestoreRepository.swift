@@ -542,6 +542,14 @@ final class FirestoreRepository {
         try await studentPersonalRecordsRepository.getStudentPersonalRecords(uid: uid)
     }
 
+    func hasCompletedTecnofitImport(uid: String) async throws -> Bool {
+        try await studentPersonalRecordsRepository.hasCompletedTecnofitImport(uid: uid)
+    }
+
+    func markTecnofitImportCompleted(uid: String) async throws {
+        try await studentPersonalRecordsRepository.markTecnofitImportCompleted(uid: uid)
+    }
+
     func saveStudentPersonalRecords(
         uid: String,
         payloads: [String: Data],
