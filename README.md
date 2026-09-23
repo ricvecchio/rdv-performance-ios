@@ -128,7 +128,7 @@ Os recordes existentes sao preservados; itens compativeis sao importados e itens
 
 | Secao | Funcionalidades ativas |
 |---|---|
-| Home | Visao geral de alunos e treinos publicados |
+| Home | Visao geral de alunos e treinos publicados, com acesso rapido a Biblioteca de Treinos, Importar e Meus Videos |
 | Alunos | Viculos, convites, solicitacoes e acesso ao acompanhamento individual |
 | Treinos | Biblioteca, criacao, envio, importacao, videos e recordes |
 | Perfil | Dados da conta, unidade e Meus Icones |

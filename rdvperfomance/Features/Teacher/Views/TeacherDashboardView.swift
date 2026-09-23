@@ -19,7 +19,6 @@ struct TeacherDashboardView: View {
 
     private let contentMaxWidth: CGFloat = 380
     private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
-    private let quickAccessColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
 
     var body: some View {
         ZStack {
@@ -157,15 +156,7 @@ struct TeacherDashboardView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
 
-            LazyVGrid(columns: quickAccessColumns, spacing: 12) {
-                quickAccessItem(
-                    title: "Meus alunos",
-                    subtitle: "Gerencie sua turma",
-                    icon: "person.3.fill"
-                ) {
-                    selectTeacherMainSection(.students)
-                }
-
+            VStack(spacing: 12) {
                 quickAccessItem(
                     title: "Biblioteca de Treinos",
                     subtitle: "Use modelos prontos",
