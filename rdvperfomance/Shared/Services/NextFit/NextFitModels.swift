@@ -19,6 +19,7 @@ struct NextFitWodDisplay: Equatable, Identifiable {
 struct NextFitAgendaDisplay: Equatable, Identifiable {
     let id: Int
     let startDate: Date
+    let endDate: Date
     let startTime: String
     let endTime: String
     let enrolledStudents: Int

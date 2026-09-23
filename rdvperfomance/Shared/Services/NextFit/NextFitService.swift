@@ -240,6 +240,7 @@ struct NextFitService {
                 return NextFitAgendaDisplay(
                     id: entry.id,
                     startDate: startDate,
+                    endDate: endDate,
                     startTime: formattedTime(from: startDate),
                     endTime: formattedTime(from: endDate),
                     enrolledStudents: entry.qtdeAlunos,

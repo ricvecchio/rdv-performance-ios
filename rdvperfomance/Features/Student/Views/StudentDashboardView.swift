@@ -649,7 +649,7 @@ struct StudentDashboardView: View {
                                 textColor: .white.opacity(0.55)
                             )
                             Spacer()
-                            agendaCheckInButton(for: entry.id)
+                            agendaCheckInButton(for: entry)
                         }
                         if let error = viewModel.agendaActionError(for: entry.id) {
                             Text(error)
@@ -770,6 +770,21 @@ struct StudentDashboardView: View {
         }
         .font(font)
         .foregroundColor(textColor)
+    }
+
+    @ViewBuilder
+    private func agendaCheckInButton(for entry: NextFitAgendaDisplay) -> some View {
+        if entry.endDate < Date() {
+            Button { } label: {
+                Text("Encerrado")
+                    .padding(.horizontal, 14)
+                    .compactPrimaryGreenActionButton()
+            }
+            .buttonStyle(.plain)
+            .disabled(true)
+        } else {
+            agendaCheckInButton(for: entry.id)
+        }
     }
 
     @ViewBuilder

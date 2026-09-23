@@ -317,6 +317,9 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     func cancelAgendaCheckIn(_ agendaId: Int) async {
+        guard nextFitAgenda.first(where: { $0.id == agendaId })?.endDate >= Date() ?? true else {
+            return
+        }
         guard processingAgendaIds.insert(agendaId).inserted else { return }
         agendaActionErrors[agendaId] = nil
         defer { processingAgendaIds.remove(agendaId) }
