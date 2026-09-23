@@ -611,17 +611,17 @@ struct StudentDashboardView: View {
                                     text: entry.instructorName,
                                     textColor: .white.opacity(0.92)
                                 )
-                                nextFitAgendaDetailRow(
-                                    icon: "mappin.and.ellipse",
-                                    text: entry.locationName,
-                                    textColor: .white.opacity(0.55)
-                                )
                             }
                             .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .buttonStyle(.plain)
 
                         HStack {
+                            nextFitAgendaDetailRow(
+                                icon: "mappin.and.ellipse",
+                                text: entry.locationName,
+                                textColor: .white.opacity(0.55)
+                            )
                             Spacer()
                             Button {
                             } label: {
