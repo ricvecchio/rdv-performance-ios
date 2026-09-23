@@ -808,15 +808,21 @@ struct ProfileView: View {
     private func optionsCard() -> some View {
         VStack(spacing: 0) {
 
-            optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron) {
-                openTrocarUnidade()
-            }
-
             if session.isAdmin {
-                divider()
-                optionRow(icon: "person.3.fill", title: "Trocar perfil de Administração", trailing: .chevron) {
+                optionRow(
+                    icon: "person.3.fill",
+                    title: "Trocar perfil (Admin)",
+                    trailing: .chevron,
+                    iconColor: .red.opacity(0.85),
+                    titleColor: .red.opacity(0.95)
+                ) {
                     session.clearAdminProfileMode()
                 }
+                divider()
+            }
+
+            optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron) {
+                openTrocarUnidade()
             }
 
             if session.isStudent {
@@ -885,26 +891,49 @@ struct ProfileView: View {
         title: String,
         trailing: Trailing,
         activityBadgeCount: Int = 0,
+        iconColor: Color = .green.opacity(0.85),
+        titleColor: Color = .white.opacity(0.95),
         onTap: (() -> Void)? = nil
     ) -> some View {
         Group {
             if let onTap {
                 Button(action: onTap) {
-                    optionRowContent(icon: icon, title: title, trailing: trailing, activityBadgeCount: activityBadgeCount)
+                    optionRowContent(
+                        icon: icon,
+                        title: title,
+                        trailing: trailing,
+                        activityBadgeCount: activityBadgeCount,
+                        iconColor: iconColor,
+                        titleColor: titleColor
+                    )
                 }
                 .buttonStyle(.plain)
             } else {
-                optionRowContent(icon: icon, title: title, trailing: trailing, activityBadgeCount: activityBadgeCount)
+                optionRowContent(
+                    icon: icon,
+                    title: title,
+                    trailing: trailing,
+                    activityBadgeCount: activityBadgeCount,
+                    iconColor: iconColor,
+                    titleColor: titleColor
+                )
             }
         }
     }
 
-    private func optionRowContent(icon: String, title: String, trailing: Trailing, activityBadgeCount: Int) -> some View {
+    private func optionRowContent(
+        icon: String,
+        title: String,
+        trailing: Trailing,
+        activityBadgeCount: Int,
+        iconColor: Color,
+        titleColor: Color
+    ) -> some View {
         HStack(spacing: 14) {
 
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundColor(iconColor)
                 .frame(width: 28)
                 .overlay(alignment: .topTrailing) {
                     if activityBadgeCount > 0 {
@@ -920,7 +949,7 @@ struct ProfileView: View {
 
             Text(title)
                 .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.white.opacity(0.95))
+                .foregroundColor(titleColor)
 
             Spacer()
 
