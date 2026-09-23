@@ -565,34 +565,55 @@ struct StudentDashboardView: View {
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         } else {
-            ForEach(viewModel.nextFitAgenda) { entry in
-                Button {
-                    Task { await viewModel.selectNextFitAgenda(entry.id) }
-                } label: {
-                    VStack(alignment: .leading, spacing: 14) {
-                        HStack {
-                            Text(entry.scheduleText)
-                            Spacer()
-                            Text(entry.capacityText)
+            VStack(spacing: 10) {
+                ForEach(viewModel.nextFitAgenda) { entry in
+                    Button {
+                        Task { await viewModel.selectNextFitAgenda(entry.id) }
+                    } label: {
+                        VStack(alignment: .leading, spacing: 12) {
+                            HStack {
+                                nextFitAgendaDetailRow(
+                                    icon: "clock",
+                                    text: entry.scheduleText,
+                                    font: .system(size: 14, weight: .medium),
+                                    textColor: .white.opacity(0.92)
+                                )
+                                Spacer()
+                                nextFitAgendaDetailRow(
+                                    icon: "person.2.fill",
+                                    text: entry.capacityText,
+                                    font: .system(size: 14, weight: .medium),
+                                    textColor: .white.opacity(0.92)
+                                )
+                            }
+                            nextFitAgendaDetailRow(
+                                icon: "dumbbell.fill",
+                                text: entry.modalityName,
+                                font: .system(size: 16, weight: .semibold),
+                                textColor: Theme.Colors.primaryGreen
+                            )
+                            nextFitAgendaDetailRow(
+                                icon: "person.fill",
+                                text: entry.instructorName,
+                                textColor: .white.opacity(0.92)
+                            )
+                            nextFitAgendaDetailRow(
+                                icon: "mappin.and.ellipse",
+                                text: entry.locationName,
+                                textColor: .white.opacity(0.55)
+                            )
                         }
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
-
-                        Text(entry.modalityName)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Theme.Colors.primaryGreen)
-
-                        Text(entry.instructorName)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.92))
-
-                        Text(entry.locationName)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground.opacity(0.65))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
             }
         }
     }
@@ -669,7 +690,12 @@ struct StudentDashboardView: View {
         }
     }
 
-    private func nextFitAgendaDetailRow(icon: String, text: String) -> some View {
+    private func nextFitAgendaDetailRow(
+        icon: String,
+        text: String,
+        font: Font = .system(size: 14),
+        textColor: Color = .white.opacity(0.92)
+    ) -> some View {
         Label {
             Text(text)
         } icon: {
@@ -677,8 +703,8 @@ struct StudentDashboardView: View {
                 .foregroundColor(Theme.Colors.primaryGreen)
                 .frame(width: 18)
         }
-        .font(.system(size: 14))
-        .foregroundColor(.white.opacity(0.92))
+        .font(font)
+        .foregroundColor(textColor)
     }
 
     private var nextFitWodTitle: String {
