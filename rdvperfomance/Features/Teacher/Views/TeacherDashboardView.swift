@@ -19,7 +19,6 @@ struct TeacherDashboardView: View {
 
     private let contentMaxWidth: CGFloat = 380
     private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
-    private let quickAccessColumns = Array(repeating: GridItem(.flexible(), spacing: 12), count: 2)
 
     var body: some View {
         ZStack {
@@ -157,15 +156,7 @@ struct TeacherDashboardView: View {
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
 
-            LazyVGrid(columns: quickAccessColumns, spacing: 12) {
-                quickAccessItem(
-                    title: "Meus alunos",
-                    subtitle: "Gerencie sua turma",
-                    icon: "person.3.fill"
-                ) {
-                    selectTeacherMainSection(.students)
-                }
-
+            VStack(spacing: 12) {
                 quickAccessItem(
                     title: "Biblioteca de Treinos",
                     subtitle: "Use modelos prontos",
@@ -243,7 +234,7 @@ struct TeacherDashboardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 118)
         .padding(.horizontal, 6)
-        .background(Theme.Colors.cardBackground.opacity(0.72))
+        .background(Color.white.opacity(0.06))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -401,9 +392,10 @@ struct TeacherDashboardView: View {
                     .foregroundColor(.white.opacity(0.35))
                     .font(.system(size: 12, weight: .semibold))
             }
-            .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
-            .padding(12)
-            .background(Theme.Colors.cardBackground.opacity(0.72))
+            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(Color.white.opacity(0.06))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
