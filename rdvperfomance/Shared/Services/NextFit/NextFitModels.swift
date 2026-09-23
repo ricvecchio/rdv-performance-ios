@@ -29,6 +29,7 @@ struct NextFitAgendaDisplay: Equatable, Identifiable {
     let locationName: String
     let canSchedule: Bool
     let canCancelCheckIn: Bool
+    let contractClientId: Int?
 
     var scheduleText: String { "\(startTime) às \(endTime)" }
     var capacityText: String { String(format: "%02d/%02d", enrolledStudents, studentLimit) }
@@ -195,6 +196,7 @@ struct NextFitAgendaResponse: Decodable {
         let fezCheckin: Bool?
         let podeAgendar: Bool?
         let permiteCancelarCheckin: Bool?
+        let codigoContratoCliente: Int?
 
         enum CodingKeys: String, CodingKey {
             case id = "Id"
@@ -208,6 +210,7 @@ struct NextFitAgendaResponse: Decodable {
             case fezCheckin = "FezCheckin"
             case podeAgendar = "PodeAgendar"
             case permiteCancelarCheckin = "PermiteCancelarCheckin"
+            case codigoContratoCliente = "CodigoContratoCliente"
         }
     }
 

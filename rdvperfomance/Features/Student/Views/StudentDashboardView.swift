@@ -714,10 +714,10 @@ struct StudentDashboardView: View {
                 }
             }
 
-            if viewModel.canCancelAgendaCheckIn(detail.id) {
+            if let entry = viewModel.nextFitAgenda.first(where: { $0.id == detail.id }) {
                 HStack {
                     Spacer()
-                    agendaCheckInButton(for: detail.id)
+                    agendaCheckInButton(for: entry)
                 }
             }
 

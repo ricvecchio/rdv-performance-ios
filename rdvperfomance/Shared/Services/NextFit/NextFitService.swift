@@ -237,6 +237,7 @@ struct NextFitService {
                     return nil
                 }
 
+                let hasCheckIn = entry.fezCheckin == true
                 return NextFitAgendaDisplay(
                     id: entry.id,
                     startDate: startDate,
@@ -249,8 +250,9 @@ struct NextFitService {
                     instructorName: entry.nomeInstrutor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
                     locationName: entry.descricaoLocalAgenda?
                         .trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
-                    canSchedule: entry.podeAgendar ?? false,
-                    canCancelCheckIn: entry.permiteCancelarCheckin ?? entry.fezCheckin ?? false
+                    canSchedule: !hasCheckIn && entry.podeAgendar == true,
+                    canCancelCheckIn: hasCheckIn && entry.permiteCancelarCheckin != false,
+                    contractClientId: entry.codigoContratoCliente
                 )
             }
             return agenda.sorted { $0.startDate < $1.startDate }
