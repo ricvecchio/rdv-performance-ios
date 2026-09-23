@@ -580,52 +580,69 @@ struct StudentDashboardView: View {
         } else {
             VStack(spacing: 10) {
                 ForEach(viewModel.nextFitAgenda) { entry in
-                    Button {
-                        Task { await viewModel.selectNextFitAgenda(entry.id) }
-                    } label: {
-                        VStack(alignment: .leading, spacing: 12) {
-                            HStack {
+                    VStack(alignment: .leading, spacing: 12) {
+                        Button {
+                            Task { await viewModel.selectNextFitAgenda(entry.id) }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 12) {
+                                HStack {
+                                    nextFitAgendaDetailRow(
+                                        icon: "clock",
+                                        text: entry.scheduleText,
+                                        font: .system(size: 14, weight: .medium),
+                                        textColor: .white.opacity(0.92)
+                                    )
+                                    Spacer()
+                                    nextFitAgendaDetailRow(
+                                        icon: "person.2.fill",
+                                        text: entry.capacityText,
+                                        font: .system(size: 14, weight: .medium),
+                                        textColor: .white.opacity(0.92)
+                                    )
+                                }
                                 nextFitAgendaDetailRow(
-                                    icon: "clock",
-                                    text: entry.scheduleText,
-                                    font: .system(size: 14, weight: .medium),
+                                    icon: "dumbbell.fill",
+                                    text: entry.modalityName,
+                                    font: .system(size: 16, weight: .semibold),
+                                    textColor: Theme.Colors.primaryGreen
+                                )
+                                nextFitAgendaDetailRow(
+                                    icon: "person.fill",
+                                    text: entry.instructorName,
                                     textColor: .white.opacity(0.92)
                                 )
-                                Spacer()
                                 nextFitAgendaDetailRow(
-                                    icon: "person.2.fill",
-                                    text: entry.capacityText,
-                                    font: .system(size: 14, weight: .medium),
-                                    textColor: .white.opacity(0.92)
+                                    icon: "mappin.and.ellipse",
+                                    text: entry.locationName,
+                                    textColor: .white.opacity(0.55)
                                 )
                             }
-                            nextFitAgendaDetailRow(
-                                icon: "dumbbell.fill",
-                                text: entry.modalityName,
-                                font: .system(size: 16, weight: .semibold),
-                                textColor: Theme.Colors.primaryGreen
-                            )
-                            nextFitAgendaDetailRow(
-                                icon: "person.fill",
-                                text: entry.instructorName,
-                                textColor: .white.opacity(0.92)
-                            )
-                            nextFitAgendaDetailRow(
-                                icon: "mappin.and.ellipse",
-                                text: entry.locationName,
-                                textColor: .white.opacity(0.55)
-                            )
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.white.opacity(0.06))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
+                        .buttonStyle(.plain)
+
+                        HStack {
+                            Spacer()
+                            Button {
+                            } label: {
+                                HStack(spacing: 10) {
+                                    Image(systemName: "calendar.badge.plus")
+                                    Text("Agendar")
+                                }
+                                .padding(.horizontal, 14)
+                                .compactPrimaryGreenActionButton()
+                            }
+                            .buttonStyle(.plain)
+                        }
                     }
-                    .buttonStyle(.plain)
+                    .padding(14)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .background(Color.white.opacity(0.06))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
                 }
             }
         }
