@@ -261,6 +261,7 @@ struct NextFitService {
                 let hasCheckIn = entry.fezCheckin == true
                 return NextFitAgendaDisplay(
                     id: entry.id,
+                    statusAgendaParticipante: entry.statusAgendaParticipante,
                     startDate: startDate,
                     endDate: endDate,
                     startTime: formattedTime(from: startDate),
@@ -472,6 +473,7 @@ struct NextFitService {
 
             return NextFitAgendaDetailDisplay(
                 id: content.id,
+                statusAgendaParticipante: content.statusAgendaParticipante,
                 modalityId: content.codigoModalidade,
                 hasCheckIn: content.fezCheckin,
                 canSchedule: content.podeAgendar,

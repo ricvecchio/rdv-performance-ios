@@ -779,7 +779,15 @@ struct StudentDashboardView: View {
 
     @ViewBuilder
     private func agendaCheckInButton(for entry: NextFitAgendaDisplay) -> some View {
-        if entry.endDate < Date() {
+        if viewModel.isAgendaWithdrawal(entry.id) {
+            HStack(spacing: 10) {
+                Image(systemName: "xmark.circle")
+                Text("Desistente")
+            }
+            .padding(.horizontal, 14)
+            .compactDestructiveAgendaActionButton()
+            .accessibilityLabel("Desistente")
+        } else if entry.endDate < Date() {
             Button { } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "clock.badge.xmark")

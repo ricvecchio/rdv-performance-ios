@@ -121,6 +121,14 @@ final class StudentDashboardViewModel: ObservableObject {
         processingAgendaIds.contains(agendaId)
     }
 
+    func isAgendaWithdrawal(_ agendaId: Int) -> Bool {
+        if selectedNextFitAgendaDetail?.id == agendaId,
+           let statusAgendaParticipante = selectedNextFitAgendaDetail?.statusAgendaParticipante {
+            return statusAgendaParticipante == 8
+        }
+        return nextFitAgenda.first { $0.id == agendaId }?.statusAgendaParticipante == 8
+    }
+
     func canCancelAgendaCheckIn(_ agendaId: Int) -> Bool {
         if selectedNextFitAgendaDetail?.id == agendaId,
            let hasCheckIn = selectedNextFitAgendaDetail?.hasCheckIn,
@@ -332,6 +340,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     func checkInAgenda(_ agendaId: Int) async {
         guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }),
+              !isAgendaWithdrawal(agendaId),
               agenda.endDate >= Date(),
               agenda.canSchedule else {
             return
