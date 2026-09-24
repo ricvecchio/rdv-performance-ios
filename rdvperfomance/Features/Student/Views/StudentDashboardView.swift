@@ -136,27 +136,6 @@ struct StudentDashboardView: View {
         } message: {
             Text("Tente novamente.")
         }
-        .confirmationDialog(
-            "Confirmar cancelamento?",
-            isPresented: Binding(
-                get: { viewModel.agendaCancellationConfirmation != nil },
-                set: { isPresented in
-                    if !isPresented {
-                        viewModel.dismissAgendaCancellationConfirmation()
-                    }
-                }
-            ),
-            titleVisibility: .visible
-        ) {
-            Button("Confirmar", role: .destructive) {
-                Task { await viewModel.confirmAgendaCancellation() }
-            }
-            Button("Cancelar", role: .cancel) {
-                viewModel.dismissAgendaCancellationConfirmation()
-            }
-        } message: {
-            Text(viewModel.agendaCancellationConfirmation?.question ?? "")
-        }
     }
 
     private var header: some View {
@@ -836,6 +815,20 @@ struct StudentDashboardView: View {
             }
             .buttonStyle(.plain)
             .disabled(isProcessing)
+            .popover(
+                isPresented: Binding(
+                    get: { viewModel.agendaCancellationConfirmation?.agendaId == agendaId },
+                    set: { isPresented in
+                        if !isPresented {
+                            viewModel.dismissAgendaCancellationConfirmation()
+                        }
+                    }
+                ),
+                arrowEdge: .bottom
+            ) {
+                agendaCancellationConfirmationCard
+                    .presentationCompactAdaptation(.popover)
+            }
         } else {
             Button {
                 Task { await viewModel.checkInAgenda(agendaId) }
@@ -854,6 +847,31 @@ struct StudentDashboardView: View {
             .buttonStyle(.plain)
             .disabled(isProcessing || !viewModel.canScheduleAgendaCheckIn(agendaId))
         }
+    }
+
+    private var agendaCancellationConfirmationCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Confirmar Cancelamento?")
+                .font(.system(size: 17, weight: .semibold))
+
+            Text(viewModel.agendaCancellationConfirmation?.question ?? "")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+
+            HStack {
+                Button("Cancelar", role: .cancel) {
+                    viewModel.dismissAgendaCancellationConfirmation()
+                }
+
+                Spacer()
+
+                Button("Confirmar", role: .destructive) {
+                    Task { await viewModel.confirmAgendaCancellation() }
+                }
+            }
+        }
+        .padding(16)
+        .frame(width: 300, alignment: .leading)
     }
 
     private var nextFitWodTitle: String {
