@@ -586,46 +586,47 @@ final class StudentDashboardViewModel: ObservableObject {
     private func resolveNextFitAgendaContract() async throws -> (clientId: Int, contractClientId: Int)? {
         print("[NextFit Agenda TRACE] resolveNextFitAgendaContract executado")
         let clientId = try nextFitService.clientId(sessionAccount: studentId)
-
-        #if DEBUG
         let checkedInAgendaIds = nextFitAgenda
             .filter(\.hasCheckIn)
             .map(\.id)
-        let selectedDetailParticipants = selectedNextFitAgendaDetail?.participants.map {
-            "CodigoCliente: \($0.clientId.map(String.init) ?? "nil"), " +
-                "CodigoContratoCliente: \($0.contractClientId.map(String.init) ?? "nil")"
-        } ?? []
+        print("[NextFit Agenda TRACE] CodigoCliente: \(clientId)")
         print(
-            "[NextFit Agenda] Resolução de contrato\n" +
-                "CodigoCliente: \(clientId)\n" +
-                "CodigoContratoCliente em cache: \(nextFitContractClientId.map(String.init) ?? "nil")\n" +
-                "Agendas do dia: \(nextFitAgenda.count)\n" +
-                "Agendas com check-in: \(checkedInAgendaIds)\n" +
-                "Detalhe selecionado: \(selectedNextFitAgendaDetail == nil ? "não" : "sim")\n" +
-                "Participantes do detalhe selecionado: [\(selectedDetailParticipants.joined(separator: " | "))]"
+            "[NextFit Agenda TRACE] CodigoContratoCliente cache: " +
+                "\(nextFitContractClientId.map(String.init) ?? "nil")"
         )
-        #endif
+        print("[NextFit Agenda TRACE] Quantidade agendas do dia: \(nextFitAgenda.count)")
+        print("[NextFit Agenda TRACE] Agendas com hasCheckIn=true: \(checkedInAgendaIds)")
+        print(
+            "[NextFit Agenda TRACE] Existe detalhe selecionado: " +
+                "\(selectedNextFitAgendaDetail == nil ? "não" : "sim")"
+        )
+        if let selectedNextFitAgendaDetail {
+            for participant in selectedNextFitAgendaDetail.participants {
+                print(
+                    "[NextFit Agenda TRACE] Participante do detalhe selecionado. " +
+                        "CodigoCliente: \(participant.clientId.map(String.init) ?? "nil"), " +
+                        "CodigoContratoCliente: \(participant.contractClientId.map(String.init) ?? "nil")"
+                )
+            }
+        }
 
         if let nextFitContractClientId {
-            #if DEBUG
-            print("[NextFit Agenda] Contrato resolvido pelo cache: \(nextFitContractClientId)")
-            #endif
+            print("[NextFit Agenda TRACE] Contrato resolvido pelo cache: \(nextFitContractClientId)")
             return (clientId, nextFitContractClientId)
         }
 
         if let contractClientId = selectedNextFitAgendaDetail?.participants.first(
             where: { $0.clientId == clientId }
         )?.contractClientId {
-            #if DEBUG
             print(
-                "[NextFit Agenda] Contrato resolvido pelo detalhe selecionado: \(contractClientId)"
+                "[NextFit Agenda TRACE] Contrato resolvido pelo detalhe selecionado: \(contractClientId)"
             )
-            #endif
             nextFitContractClientId = contractClientId
             return (clientId, contractClientId)
         }
 
-        for agendaId in nextFitAgenda.filter(\.hasCheckIn).map(\.id) {
+        for agendaId in checkedInAgendaIds {
+            print("[NextFit Agenda TRACE] Procurando contrato na agenda: \(agendaId)")
             let detail: NextFitAgendaDetailDisplay
             do {
                 detail = try await nextFitService.loadAgendaDetail(
@@ -633,44 +634,39 @@ final class StudentDashboardViewModel: ObservableObject {
                     sessionAccount: studentId
                 )
             } catch {
-                #if DEBUG
                 print(
-                    "[NextFit Agenda] Não foi possível carregar o detalhe da agenda \(agendaId) " +
+                    "[NextFit Agenda TRACE] Não foi possível carregar o detalhe da agenda \(agendaId) " +
                         "ao resolver o contrato: \(error.localizedDescription)"
                 )
-                #endif
                 throw error
             }
-            #if DEBUG
             let participants = detail.participants.map {
                 "CodigoCliente: \($0.clientId.map(String.init) ?? "nil"), " +
                     "CodigoContratoCliente: \($0.contractClientId.map(String.init) ?? "nil")"
             }
             print(
-                "[NextFit Agenda] Participantes da agenda \(agendaId): " +
+                "[NextFit Agenda TRACE] Participantes/contratos da agenda \(agendaId): " +
                     "[\(participants.joined(separator: " | "))]"
             )
-            #endif
             if let contractClientId = detail.participants.first(
                 where: { $0.clientId == clientId }
             )?.contractClientId {
-                #if DEBUG
                 print(
-                    "[NextFit Agenda] Contrato resolvido pela agenda \(agendaId): \(contractClientId)"
+                    "[NextFit Agenda TRACE] Contrato resolvido pela agenda \(agendaId): \(contractClientId)"
                 )
-                #endif
                 nextFitContractClientId = contractClientId
                 return (clientId, contractClientId)
             }
         }
 
-        #if DEBUG
         print(
-            "[NextFit Agenda] Contrato não resolvido: não há contrato em cache, " +
-                "o detalhe selecionado não possui participante com CodigoCliente \(clientId), " +
-                "e nenhuma agenda com check-in retornou esse participante."
+            "[NextFit Agenda TRACE] FALHA: CodigoContratoCliente não foi localizado. " +
+                "CodigoCliente: \(clientId), " +
+                "CodigoContratoCliente cache: \(nextFitContractClientId.map(String.init) ?? "nil"), " +
+                "Quantidade agendas: \(nextFitAgenda.count), " +
+                "Quantidade agendas com check-in: \(checkedInAgendaIds.count), " +
+                "Existe detalhe selecionado: \(selectedNextFitAgendaDetail == nil ? "não" : "sim")"
         )
-        #endif
         return nil
     }
 
