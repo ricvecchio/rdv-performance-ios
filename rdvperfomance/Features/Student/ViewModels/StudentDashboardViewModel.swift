@@ -34,6 +34,11 @@ struct StudentDashboardNextFitContentOption: Identifiable {
     var id: StudentDashboardNextFitSelection { selection }
 }
 
+struct StudentDashboardAgendaCancellationConfirmation: Equatable {
+    let agendaId: Int
+    let question: String
+}
+
 struct StudentDashboardDayGroup: Identifiable {
     let weekId: String
     let weekTitle: String
@@ -88,6 +93,7 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var nextFitAgendaDetailError: String?
     @Published private(set) var processingAgendaIds: Set<Int> = []
     @Published private(set) var agendaActionErrors: [Int: String] = [:]
+    @Published private(set) var agendaCancellationConfirmation: StudentDashboardAgendaCancellationConfirmation?
     @Published private(set) var isAuthenticatingNextFit = false
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
@@ -408,14 +414,11 @@ final class StudentDashboardViewModel: ObservableObject {
         defer { processingAgendaIds.remove(agendaId) }
 
         do {
-            try await nextFitService.cancelAgendaCheckIn(
+            let response = try await nextFitService.cancelAgendaCheckIn(
                 agendaId: agendaId,
                 sessionAccount: studentId
             )
-            await refreshNextFitAgenda(
-                afterActionFor: agendaId,
-                errorMessage: "Não foi possível cancelar o agendamento. Tente novamente."
-            )
+            await handleAgendaCancellationResponse(response, agendaId: agendaId)
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -427,6 +430,43 @@ final class StudentDashboardViewModel: ObservableObject {
         } catch {
             agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
         }
+    }
+
+    func confirmAgendaCancellation() async {
+        guard let confirmation = agendaCancellationConfirmation else { return }
+        let agendaId = confirmation.agendaId
+        agendaCancellationConfirmation = nil
+
+        guard processingAgendaIds.insert(agendaId).inserted else {
+            print("[NextFit Agenda CANCEL TRACE] Interrompido: ação já em processamento.")
+            return
+        }
+        agendaActionErrors[agendaId] = nil
+        defer { processingAgendaIds.remove(agendaId) }
+
+        do {
+            print("[NextFit Agenda CANCEL TRACE] Usuário confirmou cancelamento. CodigoAgenda: \(agendaId)")
+            let response = try await nextFitService.cancelAgendaCheckIn(
+                agendaId: agendaId,
+                confirmation: true,
+                sessionAccount: studentId
+            )
+            await handleAgendaCancellationResponse(response, agendaId: agendaId)
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            }
+        } catch {
+            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+        }
+    }
+
+    func dismissAgendaCancellationConfirmation() {
+        agendaCancellationConfirmation = nil
     }
 
     func clearNextFitAgendaDetail() {
@@ -614,6 +654,31 @@ final class StudentDashboardViewModel: ObservableObject {
         } catch {
             agendaActionErrors[agendaId] = errorMessage
         }
+    }
+
+    private func handleAgendaCancellationResponse(
+        _ response: NextFitAgendaCancelCheckInResponse,
+        agendaId: Int
+    ) async {
+        if let question = response.content?.question?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !question.isEmpty {
+            print(
+                "[NextFit Agenda CANCEL TRACE] Confirmação solicitada pela API. " +
+                    "CodigoAgenda: \(agendaId)"
+            )
+            agendaCancellationConfirmation = StudentDashboardAgendaCancellationConfirmation(
+                agendaId: agendaId,
+                question: question
+            )
+            return
+        }
+
+        agendaActionErrors[agendaId] = nil
+        await refreshNextFitAgenda(
+            afterActionFor: agendaId,
+            errorMessage: "Não foi possível cancelar o agendamento. Tente novamente."
+        )
     }
 
     private func resolveNextFitAgendaContract(

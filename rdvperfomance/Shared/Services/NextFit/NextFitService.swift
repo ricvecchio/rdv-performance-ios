@@ -369,35 +369,51 @@ struct NextFitService {
 
     func cancelAgendaCheckIn(
         agendaId: Int,
+        confirmation: Bool? = nil,
         sessionAccount: String
-    ) async throws {
+    ) async throws -> NextFitAgendaCancelCheckInResponse {
         guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
             throw NextFitServiceError.missingSession
         }
 
         do {
-            print(
-                "[NextFit Agenda CANCEL TRACE] Executando POST AgendaV2/CancelarCheckin. " +
-                    "CodigoAgenda: \(agendaId)"
-            )
+            if confirmation == true {
+                print(
+                    "[NextFit Agenda CANCEL TRACE] Executando confirmação do cancelamento. " +
+                        "CodigoAgenda: \(agendaId), Confirmacao: true"
+                )
+            } else {
+                print(
+                    "[NextFit Agenda CANCEL TRACE] Executando POST AgendaV2/CancelarCheckin. " +
+                        "CodigoAgenda: \(agendaId)"
+                )
+            }
             var request = URLRequest(url: Self.baseURL.appending(path: "AgendaV2/CancelarCheckin"))
             request.httpMethod = "POST"
             request.timeoutInterval = 20
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             applyAuthenticatedHeaders(to: &request, token: token)
-            request.httpBody = try JSONEncoder().encode(AgendaCancelCheckInRequest(agendaId: agendaId))
+            request.httpBody = try JSONEncoder().encode(
+                AgendaCancelCheckInRequest(
+                    agendaId: agendaId,
+                    confirmation: confirmation
+                )
+            )
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCancelCheckInResponse.self, from: data)
             print(
-                "[NextFit Agenda CANCEL TRACE] Resposta CancelarCheckin. " +
+                "[NextFit Agenda CANCEL TRACE] " +
+                    "\(confirmation == true ? "Resposta confirmação" : "Resposta CancelarCheckin"). " +
                     "Success: \(response.success), " +
                     "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
-                    "Message: \(response.message ?? "")"
+                    "Message: \(response.message ?? ""), " +
+                    "Pergunta: \(response.content?.question ?? "nil")"
             )
             guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
+            return response
         } catch NextFitHTTPError.unauthorized {
             print("[NextFit Agenda CANCEL TRACE] Falha de autorização ao cancelar check-in.")
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
@@ -715,9 +731,11 @@ private struct AgendaCheckInRequest: Encodable {
 
 private struct AgendaCancelCheckInRequest: Encodable {
     let agendaId: Int
+    let confirmation: Bool?
 
     enum CodingKeys: String, CodingKey {
         case agendaId = "CodigoAgenda"
+        case confirmation = "Confirmacao"
     }
 }
 

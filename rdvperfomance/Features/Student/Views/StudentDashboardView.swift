@@ -136,6 +136,27 @@ struct StudentDashboardView: View {
         } message: {
             Text("Tente novamente.")
         }
+        .confirmationDialog(
+            "Confirmar cancelamento?",
+            isPresented: Binding(
+                get: { viewModel.agendaCancellationConfirmation != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        viewModel.dismissAgendaCancellationConfirmation()
+                    }
+                }
+            ),
+            titleVisibility: .visible
+        ) {
+            Button("Confirmar", role: .destructive) {
+                Task { await viewModel.confirmAgendaCancellation() }
+            }
+            Button("Cancelar", role: .cancel) {
+                viewModel.dismissAgendaCancellationConfirmation()
+            }
+        } message: {
+            Text(viewModel.agendaCancellationConfirmation?.question ?? "")
+        }
     }
 
     private var header: some View {

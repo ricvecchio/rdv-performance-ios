@@ -320,11 +320,23 @@ struct NextFitAgendaCheckInResponse: Decodable {
 }
 
 struct NextFitAgendaCancelCheckInResponse: Decodable {
+    let content: Content?
     let success: Bool
     let message: String?
     let errorCode: Int?
 
+    struct Content: Decodable {
+        let agendaId: Int?
+        let question: String?
+
+        enum CodingKeys: String, CodingKey {
+            case agendaId = "CodigoAgenda"
+            case question = "Pergunta"
+        }
+    }
+
     enum CodingKeys: String, CodingKey {
+        case content = "Content"
         case success = "Success"
         case message = "Message"
         case errorCode = "ErrorCode"
