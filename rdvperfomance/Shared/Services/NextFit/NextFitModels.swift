@@ -45,6 +45,9 @@ struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
 struct NextFitAgendaDetailDisplay: Equatable {
     let id: Int
     let modalityId: Int?
+    let hasCheckIn: Bool?
+    let canSchedule: Bool?
+    let canCancelCheckIn: Bool?
     let dateText: String
     let scheduleText: String
     let capacityText: String
@@ -335,6 +338,9 @@ struct NextFitAgendaDetailResponse: Decodable {
     struct Content: Decodable {
         let id: Int
         let codigoModalidade: Int?
+        let fezCheckin: Bool?
+        let podeAgendar: Bool?
+        let permiteCancelarCheckin: Bool?
         let dataInicial: String
         let dataFinal: String
         let descricao: String?
@@ -361,6 +367,9 @@ struct NextFitAgendaDetailResponse: Decodable {
         enum CodingKeys: String, CodingKey {
             case id = "Id"
             case codigoModalidade = "CodigoModalidade"
+            case fezCheckin = "FezCheckin"
+            case podeAgendar = "PodeAgendar"
+            case permiteCancelarCheckin = "PermiteCancelarCheckin"
             case dataInicial = "DataInicial"
             case dataFinal = "DataFinal"
             case descricao = "Descricao"

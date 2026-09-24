@@ -376,6 +376,10 @@ struct NextFitService {
         }
 
         do {
+            print(
+                "[NextFit Agenda CANCEL TRACE] Executando POST AgendaV2/CancelarCheckin. " +
+                    "CodigoAgenda: \(agendaId)"
+            )
             var request = URLRequest(url: Self.baseURL.appending(path: "AgendaV2/CancelarCheckin"))
             request.httpMethod = "POST"
             request.timeoutInterval = 20
@@ -385,15 +389,28 @@ struct NextFitService {
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCancelCheckInResponse.self, from: data)
+            print(
+                "[NextFit Agenda CANCEL TRACE] Resposta CancelarCheckin. " +
+                    "Success: \(response.success), " +
+                    "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
+                    "Message: \(response.message ?? "")"
+            )
             guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
         } catch NextFitHTTPError.unauthorized {
+            print("[NextFit Agenda CANCEL TRACE] Falha de autorização ao cancelar check-in.")
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
         } catch let error as NextFitServiceError {
+            print(
+                "[NextFit Agenda CANCEL TRACE] Falha ao cancelar check-in: \(error.localizedDescription)"
+            )
             throw error
         } catch {
+            print(
+                "[NextFit Agenda CANCEL TRACE] Falha ao cancelar check-in: \(error.localizedDescription)"
+            )
             throw NextFitServiceError.unavailable
         }
     }
@@ -423,6 +440,9 @@ struct NextFitService {
             return NextFitAgendaDetailDisplay(
                 id: content.id,
                 modalityId: content.codigoModalidade,
+                hasCheckIn: content.fezCheckin,
+                canSchedule: content.podeAgendar,
+                canCancelCheckIn: content.permiteCancelarCheckin,
                 dateText: formattedDate(from: startDate),
                 scheduleText: "\(formattedTime(from: startDate)) às \(formattedTime(from: endDate))",
                 capacityText: String(format: "%02d/%02d", content.qtdeAlunos, content.limiteAlunos),

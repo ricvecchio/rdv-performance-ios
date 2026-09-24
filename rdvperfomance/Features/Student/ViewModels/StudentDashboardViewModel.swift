@@ -116,11 +116,19 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     func canCancelAgendaCheckIn(_ agendaId: Int) -> Bool {
-        nextFitAgenda.first { $0.id == agendaId }?.canCancelCheckIn == true
+        if selectedNextFitAgendaDetail?.id == agendaId,
+           let canCancelCheckIn = selectedNextFitAgendaDetail?.canCancelCheckIn {
+            return canCancelCheckIn
+        }
+        return nextFitAgenda.first { $0.id == agendaId }?.canCancelCheckIn == true
     }
 
     func canScheduleAgendaCheckIn(_ agendaId: Int) -> Bool {
-        nextFitAgenda.first { $0.id == agendaId }?.canSchedule == true
+        if selectedNextFitAgendaDetail?.id == agendaId,
+           let canSchedule = selectedNextFitAgendaDetail?.canSchedule {
+            return canSchedule
+        }
+        return nextFitAgenda.first { $0.id == agendaId }?.canSchedule == true
     }
 
     func agendaActionError(for agendaId: Int) -> String? {
@@ -365,12 +373,37 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     func cancelAgendaCheckIn(_ agendaId: Int) async {
-        guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }),
-              agenda.endDate >= Date(),
-              agenda.canCancelCheckIn else {
+        print("[NextFit Agenda CANCEL TRACE] Botão Cancelar acionado. CodigoAgenda: \(agendaId)")
+
+        guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }) else {
+            print("[NextFit Agenda CANCEL TRACE] Interrompido: agenda não encontrada.")
             return
         }
-        guard processingAgendaIds.insert(agendaId).inserted else { return }
+
+        let currentDate = Date()
+        let canCancelCheckIn = canCancelAgendaCheckIn(agendaId)
+        print(
+            "[NextFit Agenda CANCEL TRACE] Estado da agenda. " +
+                "Encontrada: sim, " +
+                "endDate: \(agenda.endDate), " +
+                "Date() atual: \(currentDate), " +
+                "hasCheckIn: \(agenda.hasCheckIn), " +
+                "canCancelCheckIn: \(canCancelCheckIn), " +
+                "processando: \(processingAgendaIds.contains(agendaId) ? "sim" : "não")"
+        )
+
+        guard agenda.endDate >= currentDate else {
+            print("[NextFit Agenda CANCEL TRACE] Interrompido: agenda encerrada.")
+            return
+        }
+        guard canCancelCheckIn else {
+            print("[NextFit Agenda CANCEL TRACE] Interrompido: canCancelCheckIn=false.")
+            return
+        }
+        guard processingAgendaIds.insert(agendaId).inserted else {
+            print("[NextFit Agenda CANCEL TRACE] Interrompido: ação já em processamento.")
+            return
+        }
         agendaActionErrors[agendaId] = nil
         defer { processingAgendaIds.remove(agendaId) }
 
