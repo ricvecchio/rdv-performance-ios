@@ -7,6 +7,7 @@ enum NextFitServiceError: LocalizedError {
     case registrationNotFound
     case muralhaRegistrationNotFound
     case invalidCredentials
+    case agendaCheckInBusinessFailure(errorCode: Int?, message: String)
     case unavailable
 
     var errorDescription: String? {
@@ -19,6 +20,8 @@ enum NextFitServiceError: LocalizedError {
             return "Não encontramos um cadastro da Muralha nesta conta NextFit."
         case .invalidCredentials:
             return "Não foi possível entrar no NextFit. Verifique seus dados."
+        case let .agendaCheckInBusinessFailure(_, message):
+            return message
         case .unavailable:
             return "Não foi possível carregar o WOD. Tente novamente."
         }
@@ -311,10 +314,13 @@ struct NextFitService {
                 )
             )
 
-            let data = try await checkInAgendaResponseData(for: request)
+            let checkInHTTPResponse = try await checkInAgendaResponseData(for: request)
             let response: NextFitAgendaCheckInResponse
             do {
-                response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
+                response = try JSONDecoder().decode(
+                    NextFitAgendaCheckInResponse.self,
+                    from: checkInHTTPResponse.data
+                )
             } catch {
                 logCheckInAgendaDecodingError(error)
                 throw error
@@ -327,8 +333,10 @@ struct NextFitService {
                     "EntrouNaFilaDeEspera: \(response.content?.entrouNaFilaDeEspera.description ?? "nil"), " +
                     "WaitResult: \(response.content?.waitResult.description ?? "nil")"
             )
-            guard response.success, (response.errorCode ?? 0) == 0 else {
-                throw NextFitServiceError.unavailable
+            guard (200...299).contains(checkInHTTPResponse.statusCode),
+                  response.success,
+                  (response.errorCode ?? 0) == 0 else {
+                throw checkInAgendaBusinessError(from: response)
             }
             return response.content?.entrouNaFilaDeEspera ?? false
         } catch NextFitHTTPError.unauthorized {
@@ -621,7 +629,9 @@ struct NextFitService {
         return data
     }
 
-    private func checkInAgendaResponseData(for request: URLRequest) async throws -> Data {
+    private func checkInAgendaResponseData(
+        for request: URLRequest
+    ) async throws -> (data: Data, statusCode: Int) {
         let data: Data
         let response: URLResponse
         do {
@@ -645,10 +655,26 @@ struct NextFitService {
         if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
             throw NextFitHTTPError.unauthorized
         }
-        guard (200...299).contains(httpResponse.statusCode) else {
-            throw NextFitServiceError.unavailable
+        return (data, httpResponse.statusCode)
+    }
+
+    private func checkInAgendaBusinessError(
+        from response: NextFitAgendaCheckInResponse
+    ) -> NextFitServiceError {
+        let message = response.message?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !message.isEmpty {
+            return .agendaCheckInBusinessFailure(
+                errorCode: response.errorCode,
+                message: message
+            )
         }
-        return data
+        if response.errorCode == 71038 {
+            return .agendaCheckInBusinessFailure(
+                errorCode: response.errorCode,
+                message: "Você está marcado como desistente nessa aula, entre em contato com a recepção caso deseje alterar."
+            )
+        }
+        return .unavailable
     }
 
     private func logCheckInAgendaDecodingError(_ error: Error) {

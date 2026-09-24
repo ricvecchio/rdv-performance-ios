@@ -372,6 +372,8 @@ final class StudentDashboardViewModel: ObservableObject {
             case .missingSession, .invalidSession:
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
+            case let .agendaCheckInBusinessFailure(_, message):
+                agendaActionErrors[agendaId] = message
             default:
                 agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
             }
