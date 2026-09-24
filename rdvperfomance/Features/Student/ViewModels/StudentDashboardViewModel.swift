@@ -320,6 +320,7 @@ final class StudentDashboardViewModel: ObservableObject {
               agenda.canSchedule else {
             return
         }
+        print("[NextFit Agenda TRACE] checkInAgenda executado. CodigoAgenda: \(agenda.id)")
         guard processingAgendaIds.insert(agendaId).inserted else { return }
         agendaActionErrors[agendaId] = nil
         defer { processingAgendaIds.remove(agendaId) }
@@ -328,6 +329,7 @@ final class StudentDashboardViewModel: ObservableObject {
             #if DEBUG
             print("[NextFit Agenda] Iniciando agendamento. CodigoAgenda: \(agendaId)")
             #endif
+            print("[NextFit Agenda TRACE] Iniciando resolveNextFitAgendaContract")
             guard let contract = try await resolveNextFitAgendaContract() else {
                 agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
                 return
@@ -582,6 +584,7 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     private func resolveNextFitAgendaContract() async throws -> (clientId: Int, contractClientId: Int)? {
+        print("[NextFit Agenda TRACE] resolveNextFitAgendaContract executado")
         let clientId = try nextFitService.clientId(sessionAccount: studentId)
 
         #if DEBUG
