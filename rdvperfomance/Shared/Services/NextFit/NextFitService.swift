@@ -294,6 +294,12 @@ struct NextFitService {
         }
 
         do {
+            #if DEBUG
+            print(
+                "[NextFit Agenda] Executando POST Agenda/CheckinFila. " +
+                    "CodigoAgenda: \(agendaId), CodigoContratoCliente: \(contractClientId), WaitResult: true"
+            )
+            #endif
             var request = URLRequest(url: Self.baseURL.appending(path: "Agenda/CheckinFila"))
             request.httpMethod = "POST"
             request.timeoutInterval = 20
@@ -309,15 +315,17 @@ struct NextFitService {
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
-            guard response.success, (response.errorCode ?? 0) == 0 else {
-                #if DEBUG
-                print(
-                    "[NextFit Agenda] Falha no check-in. " +
+            #if DEBUG
+            print(
+                "[NextFit Agenda] Resposta de Agenda/CheckinFila. " +
                     "Success: \(response.success), " +
                     "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
-                    "Message: \(response.message ?? "")"
-                )
-                #endif
+                    "Message: \(response.message ?? ""), " +
+                    "EntrouNaFilaDeEspera: \(response.content?.entrouNaFilaDeEspera.description ?? "nil"), " +
+                    "WaitResult: \(response.content?.waitResult.description ?? "nil")"
+            )
+            #endif
+            guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
             return response.content?.entrouNaFilaDeEspera ?? false
