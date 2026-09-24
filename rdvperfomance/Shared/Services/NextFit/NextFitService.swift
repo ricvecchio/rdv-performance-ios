@@ -298,10 +298,6 @@ struct NextFitService {
         }
 
         do {
-            print(
-                "[NextFit Agenda TRACE] Executando POST Agenda/CheckinFila. " +
-                    "CodigoAgenda: \(agendaId), CodigoContratoCliente: \(contractClientId), WaitResult: true"
-            )
             var request = URLRequest(url: Self.baseURL.appending(path: "Agenda/CheckinFila"))
             request.httpMethod = "POST"
             request.timeoutInterval = 20
@@ -323,17 +319,8 @@ struct NextFitService {
                     from: checkInHTTPResponse.data
                 )
             } catch {
-                logCheckInAgendaDecodingError(error)
                 throw error
             }
-            print(
-                "[NextFit Agenda TRACE] Resposta CheckinFila. " +
-                    "Success: \(response.success), " +
-                    "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
-                    "Message: \(response.message ?? ""), " +
-                    "EntrouNaFilaDeEspera: \(response.content?.entrouNaFilaDeEspera.description ?? "nil"), " +
-                    "WaitResult: \(response.content?.waitResult.description ?? "nil")"
-            )
             guard (200...299).contains(checkInHTTPResponse.statusCode),
                   response.success,
                   (response.errorCode ?? 0) == 0 else {
@@ -341,14 +328,11 @@ struct NextFitService {
             }
             return response.content?.entrouNaFilaDeEspera ?? false
         } catch NextFitHTTPError.unauthorized {
-            print("[NextFit Agenda TRACE] Falha de autorização em CheckinFila.")
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
         } catch let error as NextFitServiceError {
-            print("[NextFit Agenda TRACE] Falha de serviço em CheckinFila: \(error.localizedDescription)")
             throw error
         } catch {
-            print("[NextFit Agenda TRACE] Falha de transporte ou timeout em CheckinFila: \(error.localizedDescription)")
             throw NextFitServiceError.unavailable
         }
     }
@@ -395,17 +379,6 @@ struct NextFitService {
         }
 
         do {
-            if confirmation == true {
-                print(
-                    "[NextFit Agenda CANCEL TRACE] Executando confirmação do cancelamento. " +
-                        "CodigoAgenda: \(agendaId), Confirmacao: true"
-                )
-            } else {
-                print(
-                    "[NextFit Agenda CANCEL TRACE] Executando POST AgendaV2/CancelarCheckin. " +
-                        "CodigoAgenda: \(agendaId)"
-                )
-            }
             var request = URLRequest(url: Self.baseURL.appending(path: "AgendaV2/CancelarCheckin"))
             request.httpMethod = "POST"
             request.timeoutInterval = 20
@@ -420,31 +393,16 @@ struct NextFitService {
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCancelCheckInResponse.self, from: data)
-            print(
-                "[NextFit Agenda CANCEL TRACE] " +
-                    "\(confirmation == true ? "Resposta confirmação" : "Resposta CancelarCheckin"). " +
-                    "Success: \(response.success), " +
-                    "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
-                    "Message: \(response.message ?? ""), " +
-                    "Pergunta: \(response.content?.question ?? "nil")"
-            )
             guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
             return response
         } catch NextFitHTTPError.unauthorized {
-            print("[NextFit Agenda CANCEL TRACE] Falha de autorização ao cancelar check-in.")
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
         } catch let error as NextFitServiceError {
-            print(
-                "[NextFit Agenda CANCEL TRACE] Falha ao cancelar check-in: \(error.localizedDescription)"
-            )
             throw error
         } catch {
-            print(
-                "[NextFit Agenda CANCEL TRACE] Falha ao cancelar check-in: \(error.localizedDescription)"
-            )
             throw NextFitServiceError.unavailable
         }
     }
@@ -639,20 +597,12 @@ struct NextFitService {
         do {
             (data, response) = try await URLSession.shared.data(for: request)
         } catch {
-            print("[NextFit Agenda TRACE] Erro de transporte em CheckinFila: \(error.localizedDescription)")
             throw error
         }
 
         guard let httpResponse = response as? HTTPURLResponse else {
-            print("[NextFit Agenda TRACE] CheckinFila não retornou uma resposta HTTP.")
             throw NextFitServiceError.unavailable
         }
-
-        print("[NextFit Agenda TRACE] HTTP CheckinFila. StatusCode: \(httpResponse.statusCode)")
-        print(
-            "[NextFit Agenda TRACE] Body bruto CheckinFila:\n" +
-                (String(data: data, encoding: .utf8) ?? "<body não UTF-8: \(data.count) bytes>")
-        )
 
         if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
             throw NextFitHTTPError.unauthorized
@@ -677,42 +627,6 @@ struct NextFitService {
             )
         }
         return .unavailable
-    }
-
-    private func logCheckInAgendaDecodingError(_ error: Error) {
-        let type: String
-        let codingPath: [CodingKey]
-        let description: String
-
-        switch error {
-        case DecodingError.keyNotFound(let key, let context):
-            type = "keyNotFound: \(key.stringValue)"
-            codingPath = context.codingPath
-            description = context.debugDescription
-        case DecodingError.typeMismatch(let expectedType, let context):
-            type = "typeMismatch: \(expectedType)"
-            codingPath = context.codingPath
-            description = context.debugDescription
-        case DecodingError.valueNotFound(let expectedType, let context):
-            type = "valueNotFound: \(expectedType)"
-            codingPath = context.codingPath
-            description = context.debugDescription
-        case DecodingError.dataCorrupted(let context):
-            type = "dataCorrupted"
-            codingPath = context.codingPath
-            description = context.debugDescription
-        default:
-            type = String(describing: Swift.type(of: error))
-            codingPath = []
-            description = error.localizedDescription
-        }
-
-        let path = codingPath.map(\.stringValue).joined(separator: ".")
-        print(
-            "[NextFit Agenda TRACE] Falha ao decodificar CheckinFila. " +
-                "Tipo: \(type), CodingPath: \(path.isEmpty ? "<raiz>" : path), " +
-                "Descrição: \(description)"
-        )
     }
 
     private func clientId(from token: String) -> Int? {

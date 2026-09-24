@@ -345,7 +345,6 @@ final class StudentDashboardViewModel: ObservableObject {
               agenda.canSchedule else {
             return
         }
-        print("[NextFit Agenda TRACE] checkInAgenda executado. CodigoAgenda: \(agenda.id)")
         guard processingAgendaIds.insert(agendaId).inserted else { return }
         agendaActionErrors[agendaId] = nil
         defer { processingAgendaIds.remove(agendaId) }
@@ -354,7 +353,6 @@ final class StudentDashboardViewModel: ObservableObject {
             #if DEBUG
             print("[NextFit Agenda] Iniciando agendamento. CodigoAgenda: \(agendaId)")
             #endif
-            print("[NextFit Agenda TRACE] Iniciando resolveNextFitAgendaContract")
             guard let contract = try await resolveNextFitAgendaContract(for: agendaId) else {
                 agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
                 return
@@ -392,35 +390,20 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     func cancelAgendaCheckIn(_ agendaId: Int) async {
-        print("[NextFit Agenda CANCEL TRACE] Botão Cancelar acionado. CodigoAgenda: \(agendaId)")
-
         guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }) else {
-            print("[NextFit Agenda CANCEL TRACE] Interrompido: agenda não encontrada.")
             return
         }
 
         let currentDate = Date()
         let canCancelCheckIn = canCancelAgendaCheckIn(agendaId)
-        print(
-            "[NextFit Agenda CANCEL TRACE] Estado da agenda. " +
-                "Encontrada: sim, " +
-                "endDate: \(agenda.endDate), " +
-                "Date() atual: \(currentDate), " +
-                "hasCheckIn: \(agenda.hasCheckIn), " +
-                "canCancelCheckIn: \(canCancelCheckIn), " +
-                "processando: \(processingAgendaIds.contains(agendaId) ? "sim" : "não")"
-        )
 
         guard agenda.endDate >= currentDate else {
-            print("[NextFit Agenda CANCEL TRACE] Interrompido: agenda encerrada.")
             return
         }
         guard canCancelCheckIn else {
-            print("[NextFit Agenda CANCEL TRACE] Interrompido: canCancelCheckIn=false.")
             return
         }
         guard processingAgendaIds.insert(agendaId).inserted else {
-            print("[NextFit Agenda CANCEL TRACE] Interrompido: ação já em processamento.")
             return
         }
         agendaActionErrors[agendaId] = nil
@@ -449,16 +432,12 @@ final class StudentDashboardViewModel: ObservableObject {
         guard let confirmation = agendaCancellationConfirmation else { return }
         let agendaId = confirmation.agendaId
         agendaCancellationConfirmation = nil
-
         guard processingAgendaIds.insert(agendaId).inserted else {
-            print("[NextFit Agenda CANCEL TRACE] Interrompido: ação já em processamento.")
             return
         }
         agendaActionErrors[agendaId] = nil
         defer { processingAgendaIds.remove(agendaId) }
-
         do {
-            print("[NextFit Agenda CANCEL TRACE] Usuário confirmou cancelamento. CodigoAgenda: \(agendaId)")
             let response = try await nextFitService.cancelAgendaCheckIn(
                 agendaId: agendaId,
                 confirmation: true,
@@ -676,10 +655,6 @@ final class StudentDashboardViewModel: ObservableObject {
         if let question = response.content?.question?
             .trimmingCharacters(in: .whitespacesAndNewlines),
            !question.isEmpty {
-            print(
-                "[NextFit Agenda CANCEL TRACE] Confirmação solicitada pela API. " +
-                    "CodigoAgenda: \(agendaId)"
-            )
             agendaCancellationConfirmation = StudentDashboardAgendaCancellationConfirmation(
                 agendaId: agendaId,
                 question: question
@@ -697,9 +672,7 @@ final class StudentDashboardViewModel: ObservableObject {
     private func resolveNextFitAgendaContract(
         for agendaId: Int
     ) async throws -> (clientId: Int, contractClientId: Int)? {
-        print("[NextFit Agenda TRACE] resolveNextFitAgendaContract executado")
         let clientId = try nextFitService.clientId(sessionAccount: studentId)
-        print("[NextFit Agenda TRACE] CodigoCliente: \(clientId)")
         let detail: NextFitAgendaDetailDisplay
         if let selectedNextFitAgendaDetail,
            selectedNextFitAgendaDetail.id == agendaId {
@@ -712,52 +685,27 @@ final class StudentDashboardViewModel: ObservableObject {
         }
 
         guard let modalityId = detail.modalityId else {
-            print("[NextFit Agenda TRACE] FALHA: CodigoModalidade não foi localizado. CodigoAgenda: \(agendaId)")
             return nil
         }
-        print("[NextFit Agenda TRACE] CodigoModalidade: \(modalityId)")
 
         if let contractClientId = nextFitContractClientIdsByModality[modalityId] {
-            print(
-                "[NextFit Agenda TRACE] CodigoContratoCliente resolvido: \(contractClientId). " +
-                    "Origem: cache da modalidade \(modalityId)"
-            )
             return (clientId, contractClientId)
         }
 
         let clientData = try await nextFitService.loadClientMainData(sessionAccount: studentId)
         guard clientData.clientId == clientId else {
-            print(
-                "[NextFit Agenda TRACE] FALHA: CodigoCliente da sessão não corresponde aos dados principais."
-            )
             return nil
         }
 
         let activeContracts = clientData.contracts.filter { $0.status == 1 }
-        print("[NextFit Agenda TRACE] Contratos ativos encontrados: \(activeContracts.count)")
-        for contract in activeContracts {
-            print(
-                "[NextFit Agenda TRACE] Contrato candidato: \(contract.id). " +
-                    "Modalidades: \(contract.modalities.map(\.modalityId))"
-            )
-        }
 
         guard let contract = activeContracts.first(
             where: { $0.modalities.contains(where: { $0.modalityId == modalityId }) }
         ) else {
-            print(
-                "[NextFit Agenda TRACE] FALHA: não há contrato ativo compatível com " +
-                    "CodigoModalidade \(modalityId)."
-            )
             return nil
         }
 
         nextFitContractClientIdsByModality[modalityId] = contract.id
-        print(
-            "[NextFit Agenda TRACE] Contrato compatível com modalidade: \(contract.id). " +
-                "CodigoContratoCliente resolvido: \(contract.id). " +
-                "Origem: Cliente/RecuperarDadosPrincipais"
-        )
         return (clientId, contract.id)
     }
 
