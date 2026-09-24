@@ -123,16 +123,18 @@ final class StudentDashboardViewModel: ObservableObject {
 
     func canCancelAgendaCheckIn(_ agendaId: Int) -> Bool {
         if selectedNextFitAgendaDetail?.id == agendaId,
+           let hasCheckIn = selectedNextFitAgendaDetail?.hasCheckIn,
            let canCancelCheckIn = selectedNextFitAgendaDetail?.canCancelCheckIn {
-            return canCancelCheckIn
+            return hasCheckIn && canCancelCheckIn
         }
         return nextFitAgenda.first { $0.id == agendaId }?.canCancelCheckIn == true
     }
 
     func canScheduleAgendaCheckIn(_ agendaId: Int) -> Bool {
         if selectedNextFitAgendaDetail?.id == agendaId,
+           let hasCheckIn = selectedNextFitAgendaDetail?.hasCheckIn,
            let canSchedule = selectedNextFitAgendaDetail?.canSchedule {
-            return canSchedule
+            return !hasCheckIn && canSchedule
         }
         return nextFitAgenda.first { $0.id == agendaId }?.canSchedule == true
     }
