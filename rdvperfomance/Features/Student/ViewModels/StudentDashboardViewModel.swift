@@ -98,7 +98,7 @@ final class StudentDashboardViewModel: ObservableObject {
     private let nextFitService: NextFitService
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
-    private var nextFitContractClientId: Int?
+    private var nextFitContractClientIdsByModality: [Int: Int] = [:]
 
     var nextFitWod: NextFitWodDisplay? {
         guard case let .wod(modalityId)? = selectedNextFitContent else {
@@ -264,7 +264,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 password: password,
                 sessionAccount: studentId
             )
-            nextFitContractClientId = nil
+            nextFitContractClientIdsByModality = [:]
             hasNextFitSession = true
             await loadNextFitWod()
             return true
@@ -330,7 +330,7 @@ final class StudentDashboardViewModel: ObservableObject {
             print("[NextFit Agenda] Iniciando agendamento. CodigoAgenda: \(agendaId)")
             #endif
             print("[NextFit Agenda TRACE] Iniciando resolveNextFitAgendaContract")
-            guard let contract = try await resolveNextFitAgendaContract() else {
+            guard let contract = try await resolveNextFitAgendaContract(for: agendaId) else {
                 agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
                 return
             }
@@ -404,7 +404,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
-        nextFitContractClientId = nil
+        nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
         processingAgendaIds = []
@@ -550,7 +550,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
-        nextFitContractClientId = nil
+        nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
         processingAgendaIds = []
@@ -583,91 +583,71 @@ final class StudentDashboardViewModel: ObservableObject {
         }
     }
 
-    private func resolveNextFitAgendaContract() async throws -> (clientId: Int, contractClientId: Int)? {
+    private func resolveNextFitAgendaContract(
+        for agendaId: Int
+    ) async throws -> (clientId: Int, contractClientId: Int)? {
         print("[NextFit Agenda TRACE] resolveNextFitAgendaContract executado")
         let clientId = try nextFitService.clientId(sessionAccount: studentId)
-        let checkedInAgendaIds = nextFitAgenda
-            .filter(\.hasCheckIn)
-            .map(\.id)
         print("[NextFit Agenda TRACE] CodigoCliente: \(clientId)")
-        print(
-            "[NextFit Agenda TRACE] CodigoContratoCliente cache: " +
-                "\(nextFitContractClientId.map(String.init) ?? "nil")"
-        )
-        print("[NextFit Agenda TRACE] Quantidade agendas do dia: \(nextFitAgenda.count)")
-        print("[NextFit Agenda TRACE] Agendas com hasCheckIn=true: \(checkedInAgendaIds)")
-        print(
-            "[NextFit Agenda TRACE] Existe detalhe selecionado: " +
-                "\(selectedNextFitAgendaDetail == nil ? "não" : "sim")"
-        )
-        if let selectedNextFitAgendaDetail {
-            for participant in selectedNextFitAgendaDetail.participants {
-                print(
-                    "[NextFit Agenda TRACE] Participante do detalhe selecionado. " +
-                        "CodigoCliente: \(participant.clientId.map(String.init) ?? "nil"), " +
-                        "CodigoContratoCliente: \(participant.contractClientId.map(String.init) ?? "nil")"
-                )
-            }
-        }
-
-        if let nextFitContractClientId {
-            print("[NextFit Agenda TRACE] Contrato resolvido pelo cache: \(nextFitContractClientId)")
-            return (clientId, nextFitContractClientId)
-        }
-
-        if let contractClientId = selectedNextFitAgendaDetail?.participants.first(
-            where: { $0.clientId == clientId }
-        )?.contractClientId {
-            print(
-                "[NextFit Agenda TRACE] Contrato resolvido pelo detalhe selecionado: \(contractClientId)"
+        let detail: NextFitAgendaDetailDisplay
+        if let selectedNextFitAgendaDetail,
+           selectedNextFitAgendaDetail.id == agendaId {
+            detail = selectedNextFitAgendaDetail
+        } else {
+            detail = try await nextFitService.loadAgendaDetail(
+                agendaId: agendaId,
+                sessionAccount: studentId
             )
-            nextFitContractClientId = contractClientId
+        }
+
+        guard let modalityId = detail.modalityId else {
+            print("[NextFit Agenda TRACE] FALHA: CodigoModalidade não foi localizado. CodigoAgenda: \(agendaId)")
+            return nil
+        }
+        print("[NextFit Agenda TRACE] CodigoModalidade: \(modalityId)")
+
+        if let contractClientId = nextFitContractClientIdsByModality[modalityId] {
+            print(
+                "[NextFit Agenda TRACE] CodigoContratoCliente resolvido: \(contractClientId). " +
+                    "Origem: cache da modalidade \(modalityId)"
+            )
             return (clientId, contractClientId)
         }
 
-        for agendaId in checkedInAgendaIds {
-            print("[NextFit Agenda TRACE] Procurando contrato na agenda: \(agendaId)")
-            let detail: NextFitAgendaDetailDisplay
-            do {
-                detail = try await nextFitService.loadAgendaDetail(
-                    agendaId: agendaId,
-                    sessionAccount: studentId
-                )
-            } catch {
-                print(
-                    "[NextFit Agenda TRACE] Não foi possível carregar o detalhe da agenda \(agendaId) " +
-                        "ao resolver o contrato: \(error.localizedDescription)"
-                )
-                throw error
-            }
-            let participants = detail.participants.map {
-                "CodigoCliente: \($0.clientId.map(String.init) ?? "nil"), " +
-                    "CodigoContratoCliente: \($0.contractClientId.map(String.init) ?? "nil")"
-            }
+        let clientData = try await nextFitService.loadClientMainData(sessionAccount: studentId)
+        guard clientData.clientId == clientId else {
             print(
-                "[NextFit Agenda TRACE] Participantes/contratos da agenda \(agendaId): " +
-                    "[\(participants.joined(separator: " | "))]"
+                "[NextFit Agenda TRACE] FALHA: CodigoCliente da sessão não corresponde aos dados principais."
             )
-            if let contractClientId = detail.participants.first(
-                where: { $0.clientId == clientId }
-            )?.contractClientId {
-                print(
-                    "[NextFit Agenda TRACE] Contrato resolvido pela agenda \(agendaId): \(contractClientId)"
-                )
-                nextFitContractClientId = contractClientId
-                return (clientId, contractClientId)
-            }
+            return nil
         }
 
+        let activeContracts = clientData.contracts.filter { $0.status == 1 }
+        print("[NextFit Agenda TRACE] Contratos ativos encontrados: \(activeContracts.count)")
+        for contract in activeContracts {
+            print(
+                "[NextFit Agenda TRACE] Contrato candidato: \(contract.id). " +
+                    "Modalidades: \(contract.modalities.map(\.modalityId))"
+            )
+        }
+
+        guard let contract = activeContracts.first(
+            where: { $0.modalities.contains(where: { $0.modalityId == modalityId }) }
+        ) else {
+            print(
+                "[NextFit Agenda TRACE] FALHA: não há contrato ativo compatível com " +
+                    "CodigoModalidade \(modalityId)."
+            )
+            return nil
+        }
+
+        nextFitContractClientIdsByModality[modalityId] = contract.id
         print(
-            "[NextFit Agenda TRACE] FALHA: CodigoContratoCliente não foi localizado. " +
-                "CodigoCliente: \(clientId), " +
-                "CodigoContratoCliente cache: \(nextFitContractClientId.map(String.init) ?? "nil"), " +
-                "Quantidade agendas: \(nextFitAgenda.count), " +
-                "Quantidade agendas com check-in: \(checkedInAgendaIds.count), " +
-                "Existe detalhe selecionado: \(selectedNextFitAgendaDetail == nil ? "não" : "sim")"
+            "[NextFit Agenda TRACE] Contrato compatível com modalidade: \(contract.id). " +
+                "CodigoContratoCliente resolvido: \(contract.id). " +
+                "Origem: Cliente/RecuperarDadosPrincipais"
         )
-        return nil
+        return (clientId, contract.id)
     }
 
     private func isMuralhaUnit(_ unitName: String?) -> Bool {

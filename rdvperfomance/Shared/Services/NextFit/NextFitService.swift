@@ -294,12 +294,10 @@ struct NextFitService {
         }
 
         do {
-            #if DEBUG
             print(
-                "[NextFit Agenda] Executando POST Agenda/CheckinFila. " +
+                "[NextFit Agenda TRACE] Executando POST Agenda/CheckinFila. " +
                     "CodigoAgenda: \(agendaId), CodigoContratoCliente: \(contractClientId), WaitResult: true"
             )
-            #endif
             var request = URLRequest(url: Self.baseURL.appending(path: "Agenda/CheckinFila"))
             request.httpMethod = "POST"
             request.timeoutInterval = 20
@@ -315,20 +313,50 @@ struct NextFitService {
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
-            #if DEBUG
             print(
-                "[NextFit Agenda] Resposta de Agenda/CheckinFila. " +
+                "[NextFit Agenda TRACE] Resposta CheckinFila. " +
                     "Success: \(response.success), " +
                     "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
                     "Message: \(response.message ?? ""), " +
                     "EntrouNaFilaDeEspera: \(response.content?.entrouNaFilaDeEspera.description ?? "nil"), " +
                     "WaitResult: \(response.content?.waitResult.description ?? "nil")"
             )
-            #endif
             guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
             return response.content?.entrouNaFilaDeEspera ?? false
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func loadClientMainData(
+        sessionAccount: String
+    ) async throws -> NextFitClientMainDataResponse.Content {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(
+                url: Self.baseURL.appending(path: "Cliente/RecuperarDadosPrincipais")
+            )
+            request.timeoutInterval = 20
+            applyAuthenticatedHeaders(to: &request, token: token)
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitClientMainDataResponse.self, from: data)
+            guard response.success,
+                  (response.errorCode ?? 0) == 0,
+                  let content = response.content else {
+                throw NextFitServiceError.unavailable
+            }
+            return content
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
@@ -394,6 +422,7 @@ struct NextFitService {
 
             return NextFitAgendaDetailDisplay(
                 id: content.id,
+                modalityId: content.codigoModalidade,
                 dateText: formattedDate(from: startDate),
                 scheduleText: "\(formattedTime(from: startDate)) às \(formattedTime(from: endDate))",
                 capacityText: String(format: "%02d/%02d", content.qtdeAlunos, content.limiteAlunos),

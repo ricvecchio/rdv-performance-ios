@@ -44,6 +44,7 @@ struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
 
 struct NextFitAgendaDetailDisplay: Equatable {
     let id: Int
+    let modalityId: Int?
     let dateText: String
     let scheduleText: String
     let capacityText: String
@@ -108,6 +109,54 @@ struct NextFitTokenResponse: Decodable {
         case accessToken = "AccessToken"
         case expiresIn = "ExpiresIn"
         case tokenType = "TokenType"
+    }
+}
+
+struct NextFitClientMainDataResponse: Decodable {
+    let content: Content?
+    let success: Bool
+    let message: String?
+    let errorCode: Int?
+
+    struct Content: Decodable {
+        let clientId: Int
+        let contracts: [Contract]
+
+        struct Contract: Decodable {
+            let id: Int
+            let status: Int
+            let type: Int
+            let modalities: [Modality]
+
+            struct Modality: Decodable {
+                let id: Int
+                let modalityId: Int
+
+                enum CodingKeys: String, CodingKey {
+                    case id = "Id"
+                    case modalityId = "CodigoModalidade"
+                }
+            }
+
+            enum CodingKeys: String, CodingKey {
+                case id = "Id"
+                case status = "Status"
+                case type = "Tipo"
+                case modalities = "Modalidades"
+            }
+        }
+
+        enum CodingKeys: String, CodingKey {
+            case clientId = "CodigoCliente"
+            case contracts = "Contratos"
+        }
+    }
+
+    enum CodingKeys: String, CodingKey {
+        case content = "Content"
+        case success = "Success"
+        case message = "Message"
+        case errorCode = "ErrorCode"
     }
 }
 
@@ -285,6 +334,7 @@ struct NextFitAgendaDetailResponse: Decodable {
 
     struct Content: Decodable {
         let id: Int
+        let codigoModalidade: Int?
         let dataInicial: String
         let dataFinal: String
         let descricao: String?
@@ -310,6 +360,7 @@ struct NextFitAgendaDetailResponse: Decodable {
 
         enum CodingKeys: String, CodingKey {
             case id = "Id"
+            case codigoModalidade = "CodigoModalidade"
             case dataInicial = "DataInicial"
             case dataFinal = "DataFinal"
             case descricao = "Descricao"
