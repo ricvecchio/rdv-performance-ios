@@ -362,24 +362,9 @@ struct StudentBarbellPersonalRecordsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
-
-                            Spacer()
-
-                            if !historyEntries(for: move.storageKey).isEmpty {
-                                Button {
-                                    beginNewPR()
-                                } label: {
-                                    Label("Novo valor", systemImage: "plus.circle")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.green.opacity(0.90))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
+                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
 
                         HStack(spacing: 10) {
                             TextField("Ex: 90,50", text: $inputValue)
