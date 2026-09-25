@@ -151,7 +151,10 @@ struct TeacherRootView: View {
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)
         case .teacherImportVideos(let category):
-            TeacherImportVideosView(path: destinationPath, category: category)
+            TeacherImportVideosView(
+                path: destinationPath,
+                context: .teacher(category: category)
+            )
         case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
             CreateCrossfitWODView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
         case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):

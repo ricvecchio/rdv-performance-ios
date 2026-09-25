@@ -227,6 +227,12 @@ struct StudentRootView: View {
         case .studentPersonalRecordsCrossfitGames:
             StudentCrossfitGamesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
+        case .studentVideos:
+            TeacherImportVideosView(
+                path: $recordsPath,
+                context: .student(studentId: studentId)
+            )
+
         default:
             EmptyView()
         }
