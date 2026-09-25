@@ -13,7 +13,6 @@ struct TeacherImportVideosView: View {
     let context: TeacherImportVideosContext
     
     private let contentMaxWidth: CGFloat = 380
-    private let repository = FirestoreRepository.shared
     
     @State private var videos: [TeacherYoutubeVideo] = []
     @State private var isLoading: Bool = false
@@ -53,9 +52,7 @@ struct TeacherImportVideosView: View {
                         
                         VStack(alignment: .leading, spacing: 14) {
                             header
-                            if !isStudentContext {
-                                addButtonCard
-                            }
+                            addButtonCard
                             contentCard
                             
                             if let err = errorMessage {
@@ -132,13 +129,6 @@ struct TeacherImportVideosView: View {
         }
     }
 
-    private var isStudentContext: Bool {
-        if case .student(_) = context {
-            return true
-        }
-        return false
-    }
-
     @ViewBuilder
     private var footer: some View {
         switch context {
@@ -168,9 +158,7 @@ struct TeacherImportVideosView: View {
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(isStudentContext
-                 ? "Vídeos enviados pelo seu professor."
-                 : "Salve links do YouTube para consultar depois.")
+            Text("Salve links do YouTube para consultar depois.")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -257,29 +245,29 @@ struct TeacherImportVideosView: View {
             
             Spacer()
             
-            if !isStudentContext {
-                Menu {
+            Menu {
+                if case .teacher(_) = context {
                     Button {
                         openSendToStudent(for: v)
                     } label: {
                         Label("Enviar para aluno", systemImage: "paperplane.fill")
                     }
-
-                    Button(role: .destructive) {
-                        Task { await deleteVideo(videoId: v.id) }
-                    } label: {
-                        Label("Remover", systemImage: "trash.fill")
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
-                        .padding(.vertical, 6)
-                        .padding(.horizontal, 8)
-                        .contentShape(Rectangle())
                 }
-                .buttonStyle(.plain)
+
+                Button(role: .destructive) {
+                    Task { await deleteVideo(videoId: v.id) }
+                } label: {
+                    Label("Remover", systemImage: "trash.fill")
+                }
+            } label: {
+                Image(systemName: "ellipsis")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.55))
+                    .padding(.vertical, 6)
+                    .padding(.horizontal, 8)
+                    .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             
             Button {
                 openLockedPlayer(for: v)
@@ -356,13 +344,11 @@ struct TeacherImportVideosView: View {
     
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text(isStudentContext ? "Nenhum vídeo disponível" : "Nenhum vídeo cadastrado")
+            Text("Nenhum vídeo cadastrado")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
             
-            Text(isStudentContext
-                 ? "Os vídeos enviados pelo seu professor aparecerão aqui."
-                 : "Toque em \"Adicionar Vídeo\" para salvar um link do YouTube.")
+            Text("Toque em \"Adicionar Vídeo\" para salvar um link do YouTube.")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
@@ -415,7 +401,7 @@ struct TeacherImportVideosView: View {
                 }
                 videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
             case .student(let studentId):
-                videos = try await loadStudentVideos(studentId: studentId)
+                videos = try await TeacherYoutubeVideosRepository.loadStudentVideos(studentId: studentId)
             }
         } catch {
             videos = []
@@ -423,85 +409,33 @@ struct TeacherImportVideosView: View {
         }
     }
 
-    private func loadStudentVideos(studentId: String) async throws -> [TeacherYoutubeVideo] {
-        let cleanStudentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanStudentId.isEmpty else {
-            throw FirestoreRepositoryError.missingStudentId
-        }
-
-        let activeTeacherIds = Set(
-            try await repository.getTeacherLinksForStudent(studentId: cleanStudentId)
-                .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
-                .filter { !$0.isEmpty }
-        )
-        let weeks = try await repository.getWeeksForStudent(studentId: cleanStudentId)
-            .filter {
-                activeTeacherIds.contains(
-                    $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-                )
-            }
-        var studentVideos: [TeacherYoutubeVideo] = []
-
-        for week in weeks {
-            let days = try await repository.getDays(for: week)
-            let category = videoCategory(for: week.category)
-
-            for day in days {
-                for block in day.blocks {
-                    let blockName = block.name.trimmingCharacters(in: .whitespacesAndNewlines)
-                    let url = block.details.trimmingCharacters(in: .whitespacesAndNewlines)
-
-                    guard blockName.caseInsensitiveCompare("Vídeo") == .orderedSame,
-                          let videoId = YouTubeVideoImporter.extractYoutubeVideoId(from: url)
-                    else {
-                        continue
-                    }
-
-                    studentVideos.append(
-                        TeacherYoutubeVideo(
-                            id: "\(week.id ?? "")-\(day.id ?? "")-\(block.id)",
-                            title: day.title,
-                            url: url,
-                            videoId: videoId,
-                            category: category
-                        )
-                    )
-                }
-            }
-        }
-
-        return studentVideos
-    }
-
-    private func videoCategory(for category: TreinoTipo) -> TeacherYoutubeVideoCategory {
-        switch category {
-        case .crossfit:
-            return .crossfit
-        case .academia:
-            return .academia
-        case .emCasa:
-            return .treinosEmCasa
-        }
-    }
-    
     private func addVideo(title: String, url: String, videoCategory: TeacherYoutubeVideoCategory) async {
         errorMessage = nil
-        
-        guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
-            return
-        }
         
         isLoading = true
         defer { isLoading = false }
         
         do {
-            try await TeacherYoutubeVideosRepository.addVideo(
-                teacherId: teacherId,
-                title: title,
-                url: url,
-                videoCategory: videoCategory
-            )
+            switch context {
+            case .teacher:
+                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                    errorMessage = "Não foi possível identificar o professor logado."
+                    return
+                }
+                try await TeacherYoutubeVideosRepository.addVideo(
+                    teacherId: teacherId,
+                    title: title,
+                    url: url,
+                    videoCategory: videoCategory
+                )
+            case .student(let studentId):
+                try await TeacherYoutubeVideosRepository.addStudentVideo(
+                    studentId: studentId,
+                    title: title,
+                    url: url,
+                    videoCategory: videoCategory
+                )
+            }
             await loadVideos()
         } catch {
             errorMessage = mapImportPermissionError(error)
@@ -511,16 +445,26 @@ struct TeacherImportVideosView: View {
     private func deleteVideo(videoId: String) async {
         errorMessage = nil
         
-        guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
-            return
-        }
-        
         isLoading = true
         defer { isLoading = false }
         
         do {
-            try await TeacherYoutubeVideosRepository.deleteVideo(teacherId: teacherId, videoId: videoId)
+            switch context {
+            case .teacher:
+                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                    errorMessage = "Não foi possível identificar o professor logado."
+                    return
+                }
+                try await TeacherYoutubeVideosRepository.deleteVideo(
+                    teacherId: teacherId,
+                    videoId: videoId
+                )
+            case .student(let studentId):
+                try await TeacherYoutubeVideosRepository.deleteStudentVideo(
+                    studentId: studentId,
+                    videoId: videoId
+                )
+            }
             await loadVideos()
         } catch {
             errorMessage = mapImportPermissionError(error)
