@@ -1,5 +1,6 @@
 // Tela de perfil com informações do usuário e opções
 import SwiftUI
+import PhotosUI
 import UIKit
 import FirebaseFirestore
 
@@ -47,6 +48,10 @@ struct ProfileView: View {
         return TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
     }
 
+    private var preferredWeightUnit: WeightUnit {
+        WeightUnit(rawValue: preferredWeightUnitRawState) ?? .kg
+    }
+
 
     @State private var showTrocarUnidadeAlert: Bool = false
     @State private var unidadeDraft: String = ""
@@ -56,6 +61,16 @@ struct ProfileView: View {
 
     @State private var showMeusIconesModal: Bool = false
     @State private var copiedIconName: String? = nil
+    @State private var selectedPhotoItem: PhotosPickerItem? = nil
+    @State private var showPhotoActionsSheet: Bool = false
+    @State private var showPhotoPicker: Bool = false
+    @State private var showAvatarPicker: Bool = false
+    @State private var openPhotoPickerAfterSheetDismissal: Bool = false
+    @State private var openAvatarPickerAfterSheetDismissal: Bool = false
+
+    @State private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
+    @State private var draftWeightUnitRawState: String = WeightUnit.kg.rawValue
+    @State private var showWeightUnitSheet: Bool = false
 
     @State private var unreadMessagesCount: Int = 0
     @State private var unreadFeedbacksCount: Int = 0
@@ -63,6 +78,11 @@ struct ProfileView: View {
     @State private var hasAppeared: Bool = false
 
     private let studentActivityCategories: [TreinoTipo] = [.crossfit, .academia, .emCasa]
+    private let preferredWeightUnitKey: String = "preferredWeightUnit"
+
+    private var shouldBlurBackground: Bool {
+        showWeightUnitSheet || showPhotoActionsSheet || showAvatarPicker
+    }
 
     private let treinoIcons = [
         "dumbbell",
@@ -230,6 +250,8 @@ struct ProfileView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: shouldBlurBackground ? 4 : 0)
+        .animation(.easeInOut(duration: 0.20), value: shouldBlurBackground)
         .navigationBarBackButtonHidden(true)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
@@ -295,9 +317,64 @@ struct ProfileView: View {
         .sheet(isPresented: $showMeusIconesModal) {
             meusIconesModal()
         }
+        .sheet(
+            isPresented: $showPhotoActionsSheet,
+            onDismiss: {
+                if openPhotoPickerAfterSheetDismissal {
+                    openPhotoPickerAfterSheetDismissal = false
+                    showPhotoPicker = true
+                } else if openAvatarPickerAfterSheetDismissal {
+                    openAvatarPickerAfterSheetDismissal = false
+                    showAvatarPicker = true
+                }
+            }
+        ) {
+            photoActionsSheet()
+                .presentationDetents([.height(290)])
+        }
+        .photosPicker(
+            isPresented: $showPhotoPicker,
+            selection: $selectedPhotoItem,
+            matching: .images,
+            photoLibrary: .shared()
+        )
+        .onChange(of: selectedPhotoItem) { _, newItem in
+            guard let newItem else { return }
+            Task { await saveSelectedPhoto(from: newItem) }
+        }
+        .sheet(isPresented: $showAvatarPicker) {
+            EditProfileView.AvatarPickerView { image in
+                showAvatarPicker = false
+                Task { await saveProfileAvatar(image) }
+            }
+        }
+        .sheet(isPresented: $showWeightUnitSheet) {
+            WeightUnitSheetView(
+                selectedUnitRaw: $draftWeightUnitRawState,
+                onCancel: {
+                    showWeightUnitSheet = false
+                },
+                onSave: {
+                    preferredWeightUnitRawState = draftWeightUnitRawState
+                    showWeightUnitSheet = false
+                }
+            )
+            .presentationDetents([.fraction(0.50)])
+        }
         .task(id: currentUid) {
+            if session.isStudent || session.isTrainer {
+                preferredWeightUnitRawState = UserDefaults.standard.string(
+                    forKey: preferredWeightUnitKey
+                ) ?? WeightUnit.kg.rawValue
+            }
             await loadUserData()
             await loadProfileActivityCounts()
+        }
+        .onChange(of: preferredWeightUnitRawState) { _, newValue in
+            if session.isStudent || session.isTrainer {
+                UserDefaults.standard.set(newValue, forKey: preferredWeightUnitKey)
+                saveMeasurementUnit(newValue)
+            }
         }
         .onAppear {
             guard hasAppeared else {
@@ -730,13 +807,161 @@ struct ProfileView: View {
         }
     }
 
+    private func saveMeasurementUnit(_ rawValue: String) {
+        guard !currentUid.isEmpty else {
+            #if DEBUG
+            print("[Profile] Não foi possível salvar a unidade de medida sem usuário autenticado.")
+            #endif
+            return
+        }
+
+        Task {
+            do {
+                try await repository.setMeasurementUnit(uid: currentUid, measurementUnit: rawValue)
+                #if DEBUG
+                print("[Profile] Unidade de medida salva remotamente.")
+                #endif
+            } catch {
+                #if DEBUG
+                print("[Profile] Falha ao salvar unidade de medida: \(error.localizedDescription)")
+                #endif
+            }
+        }
+    }
+
+    private func saveSelectedPhoto(from item: PhotosPickerItem) async {
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data)
+            else {
+                errorMessage = "Não foi possível carregar a imagem selecionada."
+                showErrorAlert = true
+                return
+            }
+
+            _ = try await ProfilePhotoService.save(image, userId: currentUid)
+        } catch {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+        }
+    }
+
+    private func saveProfileAvatar(_ image: UIImage) async {
+        do {
+            _ = try await ProfilePhotoService.save(image, userId: currentUid)
+        } catch {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+        }
+    }
+
+    private func removePhoto() async {
+        do {
+            try await ProfilePhotoService.clear(userId: currentUid)
+        } catch {
+            errorMessage = error.localizedDescription
+            showErrorAlert = true
+        }
+    }
+
+    private func photoActionsSheet() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+                Text("Foto de Perfil")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+
+                VStack(spacing: 0) {
+                    Button {
+                        selectedPhotoItem = nil
+                        openPhotoPickerAfterSheetDismissal = true
+                        showPhotoActionsSheet = false
+                    } label: {
+                        photoActionRow(
+                            title: "Escolher foto",
+                            icon: "photo.fill",
+                            color: .green.opacity(0.85)
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    Divider()
+                        .background(Theme.Colors.divider)
+                        .padding(.leading, 56)
+
+                    Button {
+                        openAvatarPickerAfterSheetDismissal = true
+                        showPhotoActionsSheet = false
+                    } label: {
+                        photoActionRow(
+                            title: "Escolher Avatar",
+                            icon: "person.crop.circle",
+                            color: .green.opacity(0.85)
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    Divider()
+                        .background(Theme.Colors.divider)
+                        .padding(.leading, 56)
+
+                    Button {
+                        showPhotoActionsSheet = false
+                        Task { await removePhoto() }
+                    } label: {
+                        photoActionRow(
+                            title: "Remover foto",
+                            icon: "trash.fill",
+                            color: .red.opacity(0.85)
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                )
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+        }
+    }
+
+    private func photoActionRow(title: String, icon: String, color: Color) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 18))
+                .foregroundColor(color)
+                .frame(width: 28)
+
+            Text(title)
+                .font(.system(size: 18, weight: .medium))
+                .foregroundColor(.white.opacity(0.92))
+
+            Spacer()
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+    }
+
 
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
-            HeaderAvatarView(size: 92)
-                .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+            Button {
+                showPhotoActionsSheet = true
+            } label: {
+                HeaderAvatarView(size: 92, isNavigationEnabled: false)
+                    .clipShape(Circle())
+                    .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
 
             Text(userName.isEmpty ? " " : userName)
                 .font(.system(size: 28, weight: .semibold))
@@ -859,6 +1084,27 @@ struct ProfileView: View {
                     path.append(.studentTeachers(studentEmail: studentEmail))
                 }
 
+                divider()
+                optionRow(
+                    icon: "ruler.fill",
+                    title: "Unidade de Medida",
+                    trailing: .textWithChevron(preferredWeightUnit.shortLabel)
+                ) {
+                    draftWeightUnitRawState = preferredWeightUnitRawState
+                    showWeightUnitSheet = true
+                }
+            }
+
+            if session.isTrainer {
+                divider()
+                optionRow(
+                    icon: "ruler.fill",
+                    title: "Unidade de Medida",
+                    trailing: .textWithChevron(preferredWeightUnit.shortLabel)
+                ) {
+                    draftWeightUnitRawState = preferredWeightUnitRawState
+                    showWeightUnitSheet = true
+                }
             }
 
             if session.isAdmin {
@@ -885,6 +1131,7 @@ struct ProfileView: View {
         case badge(String)
         case coloredBadge(String, fg: Color, bg: Color)
         case coloredBadgeWithChevron(String, fg: Color, bg: Color)
+        case textWithChevron(String)
         case settings
     }
 
@@ -988,6 +1235,16 @@ struct ProfileView: View {
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(bg))
+
+                    Image(systemName: "chevron.right")
+                        .foregroundColor(.white.opacity(0.35))
+                }
+
+            case .textWithChevron(let value):
+                HStack(spacing: 10) {
+                    Text(value)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.55))
 
                     Image(systemName: "chevron.right")
                         .foregroundColor(.white.opacity(0.35))
