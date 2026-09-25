@@ -6,17 +6,29 @@ import UIKit
 struct HeaderAvatarView: View {
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.selectStudentMainSection) private var selectStudentMainSection
+    @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     var size: CGFloat = 38
     var showStroke: Bool = true
     var strokeOpacity: Double = 0.15
+    var isNavigationEnabled: Bool = true
 
     // Cache em memória para evitar recarregamentos desnecessários
     @State private var cachedImage: UIImage? = nil
 
     // Gerencia o carregamento e atualização da imagem do perfil
     var body: some View {
-        content
+        Group {
+            if isNavigationEnabled {
+                Button(action: openProfile) {
+                    content
+                }
+                .buttonStyle(.plain)
+            } else {
+                content
+            }
+        }
             .onAppear {
                 reloadImageIfNeeded()
             }
@@ -33,6 +45,14 @@ struct HeaderAvatarView: View {
                     reloadImage(force: true)
                 }
             }
+    }
+
+    private func openProfile() {
+        if session.isStudent {
+            selectStudentMainSection(.profile)
+        } else {
+            selectTeacherMainSection(.profile)
+        }
     }
 
     // Retorna a imagem do usuário ou fallback padrão
@@ -89,4 +109,3 @@ struct HeaderAvatarView: View {
         }
     }
 }
-

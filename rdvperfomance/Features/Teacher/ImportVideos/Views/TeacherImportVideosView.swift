@@ -2,10 +2,15 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
+enum TeacherImportVideosContext {
+    case teacher(category: TreinoTipo)
+    case student(studentId: String)
+}
+
 struct TeacherImportVideosView: View {
     
     @Binding var path: [AppRoute]
-    let category: TreinoTipo
+    let context: TeacherImportVideosContext
     
     private let contentMaxWidth: CGFloat = 380
     
@@ -64,16 +69,7 @@ struct TeacherImportVideosView: View {
                     }
                 }
                 
-                FooterBar(
-                    path: $path,
-                    kind: .teacherHomeAlunosSobrePerfil(
-                        selectedCategory: category,
-                        isHomeSelected: false,
-                        isAlunosSelected: false,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
-                )
+                footer
                 .frame(height: Theme.Layout.footerHeight)
                 .background(Theme.Colors.footerBackground)
             }
@@ -97,7 +93,7 @@ struct TeacherImportVideosView: View {
             }
             
             ToolbarItem(placement: .principal) {
-                Text("Importar Vídeos")
+                Text("Meus Vídeos")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -111,23 +107,51 @@ struct TeacherImportVideosView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadVideos() }
-        .onAppear { Task { await loadVideos() } }
         .sheet(isPresented: $isAddSheetPresented) {
             TeacherAddYoutubeVideoSheet { title, url, videoCategory in
                 Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
             }
         }
         .sheet(item: $activeSheet) { sheet in
-            switch sheet {
-            case .send(let v):
+            switch (context, sheet) {
+            case (.teacher(let category), .send(let v)):
                 TeacherSendYoutubeVideoToStudentSheet(
                     video: v,
                     category: category
                 )
+            case (.student(_), _):
+                EmptyView()
             }
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
+        }
+    }
+
+    @ViewBuilder
+    private var footer: some View {
+        switch context {
+        case .teacher(let category):
+            FooterBar(
+                path: $path,
+                kind: .teacherHomeAlunosSobrePerfil(
+                    selectedCategory: category,
+                    isHomeSelected: false,
+                    isAlunosSelected: false,
+                    isSobreSelected: false,
+                    isPerfilSelected: false
+                )
+            )
+        case .student(_):
+            FooterBar(
+                path: $path,
+                kind: .studentHomeTreinosRecordsProfile(
+                    isHomeSelected: false,
+                    isTreinosSelected: false,
+                    isRecordsSelected: true,
+                    isPerfilSelected: false
+                )
+            )
         }
     }
     
@@ -221,12 +245,14 @@ struct TeacherImportVideosView: View {
             Spacer()
             
             Menu {
-                Button {
-                    openSendToStudent(for: v)
-                } label: {
-                    Label("Enviar para aluno", systemImage: "paperplane.fill")
+                if case .teacher(_) = context {
+                    Button {
+                        openSendToStudent(for: v)
+                    } label: {
+                        Label("Enviar para aluno", systemImage: "paperplane.fill")
+                    }
                 }
-                
+
                 Button(role: .destructive) {
                     Task { await deleteVideo(videoId: v.id) }
                 } label: {
@@ -361,43 +387,91 @@ struct TeacherImportVideosView: View {
     private func loadVideos() async {
         errorMessage = nil
         
-        guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-            videos = []
-            errorMessage = "Não foi possível identificar o professor logado."
-            return
-        }
-        
         isLoading = true
         defer { isLoading = false }
         
         do {
-            videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
+            switch context {
+            case .teacher:
+                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                    videos = []
+                    errorMessage = "Não foi possível identificar o professor logado."
+                    return
+                }
+                videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
+            case .student(let studentId):
+                guard let authenticatedStudentId = validatedStudentId(studentId) else {
+                    videos = []
+                    return
+                }
+#if DEBUG
+                print("[StudentVideos] Auth UID: \(Auth.auth().currentUser?.uid ?? "nil")")
+                print("[StudentVideos] Student ID: \(studentId)")
+                print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
+#endif
+                videos = try await TeacherYoutubeVideosRepository.loadStudentVideos(
+                    studentId: authenticatedStudentId
+                )
+            }
         } catch {
+#if DEBUG
+            if case .student = context {
+                let ns = error as NSError
+                print("[StudentVideos] Firestore error domain: \(ns.domain)")
+                print("[StudentVideos] Firestore error code: \(ns.code)")
+                print("[StudentVideos] Firestore error: \(ns.localizedDescription)")
+            }
+#endif
             videos = []
             errorMessage = mapImportPermissionError(error)
         }
     }
-    
+
     private func addVideo(title: String, url: String, videoCategory: TeacherYoutubeVideoCategory) async {
         errorMessage = nil
-        
-        guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
-            return
-        }
         
         isLoading = true
         defer { isLoading = false }
         
         do {
-            try await TeacherYoutubeVideosRepository.addVideo(
-                teacherId: teacherId,
-                title: title,
-                url: url,
-                videoCategory: videoCategory
-            )
+            switch context {
+            case .teacher:
+                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                    errorMessage = "Não foi possível identificar o professor logado."
+                    return
+                }
+                try await TeacherYoutubeVideosRepository.addVideo(
+                    teacherId: teacherId,
+                    title: title,
+                    url: url,
+                    videoCategory: videoCategory
+                )
+            case .student(let studentId):
+                guard let authenticatedStudentId = validatedStudentId(studentId) else {
+                    return
+                }
+#if DEBUG
+                print("[StudentVideos] Auth UID: \(Auth.auth().currentUser?.uid ?? "nil")")
+                print("[StudentVideos] Student ID: \(studentId)")
+                print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
+#endif
+                try await TeacherYoutubeVideosRepository.addStudentVideo(
+                    studentId: authenticatedStudentId,
+                    title: title,
+                    url: url,
+                    videoCategory: videoCategory
+                )
+            }
             await loadVideos()
         } catch {
+#if DEBUG
+            if case .student = context {
+                let ns = error as NSError
+                print("[StudentVideos] Firestore error domain: \(ns.domain)")
+                print("[StudentVideos] Firestore error code: \(ns.code)")
+                print("[StudentVideos] Firestore error: \(ns.localizedDescription)")
+            }
+#endif
             errorMessage = mapImportPermissionError(error)
         }
     }
@@ -405,20 +479,61 @@ struct TeacherImportVideosView: View {
     private func deleteVideo(videoId: String) async {
         errorMessage = nil
         
-        guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
-            return
-        }
-        
         isLoading = true
         defer { isLoading = false }
         
         do {
-            try await TeacherYoutubeVideosRepository.deleteVideo(teacherId: teacherId, videoId: videoId)
+            switch context {
+            case .teacher:
+                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                    errorMessage = "Não foi possível identificar o professor logado."
+                    return
+                }
+                try await TeacherYoutubeVideosRepository.deleteVideo(
+                    teacherId: teacherId,
+                    videoId: videoId
+                )
+            case .student(let studentId):
+                guard let authenticatedStudentId = validatedStudentId(studentId) else {
+                    return
+                }
+#if DEBUG
+                print("[StudentVideos] Auth UID: \(Auth.auth().currentUser?.uid ?? "nil")")
+                print("[StudentVideos] Student ID: \(studentId)")
+                print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
+#endif
+                try await TeacherYoutubeVideosRepository.deleteStudentVideo(
+                    studentId: authenticatedStudentId,
+                    videoId: videoId
+                )
+            }
             await loadVideos()
         } catch {
+#if DEBUG
+            if case .student = context {
+                let ns = error as NSError
+                print("[StudentVideos] Firestore error domain: \(ns.domain)")
+                print("[StudentVideos] Firestore error code: \(ns.code)")
+                print("[StudentVideos] Firestore error: \(ns.localizedDescription)")
+            }
+#endif
             errorMessage = mapImportPermissionError(error)
         }
+    }
+
+    private func validatedStudentId(_ studentId: String) -> String? {
+        let expectedStudentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let authenticatedStudentId = (Auth.auth().currentUser?.uid ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !expectedStudentId.isEmpty,
+              expectedStudentId == authenticatedStudentId
+        else {
+            errorMessage = "Não foi possível validar sua autenticação para acessar seus vídeos."
+            return nil
+        }
+
+        return authenticatedStudentId
     }
     
     private func mapImportPermissionError(_ error: Error) -> String {
@@ -426,15 +541,24 @@ struct TeacherImportVideosView: View {
         
         if ns.domain == FirestoreErrorDomain,
            ns.code == FirestoreErrorCode.permissionDenied.rawValue {
-            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            return permissionErrorMessage
         }
         
         let msg = error.localizedDescription
         if msg.contains("Missing or insufficient permissions") {
-            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            return permissionErrorMessage
         }
         
         return msg
+    }
+
+    private var permissionErrorMessage: String {
+        switch context {
+        case .teacher:
+            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+        case .student:
+            return "Sem permissão para acessar seus vídeos. Verifique sua autenticação e tente novamente."
+        }
     }
     
     private func pop() {

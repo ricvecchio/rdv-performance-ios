@@ -1,8 +1,8 @@
 import SwiftUI
 import Charts
 
-// Tela do Aluno: Recorde Pessoal > Open (lista fixa + PR em texto)
-struct StudentOpenPersonalRecordsView: View {
+// Tela do Aluno: Recorde Pessoal > Crossfit Games (lista fixa por ano + PR de tempo)
+struct CrossfitGamesPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -12,23 +12,26 @@ struct StudentOpenPersonalRecordsView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    private struct OpenItem: Identifiable, Hashable {
+    private struct GamesWOD: Identifiable, Hashable {
         let id = UUID()
+        let yearTitle: String
         let name: String
         let storageKey: String
+        let descriptionLines: [String]
     }
 
-    private struct OpenWod: Hashable {
-        let titleLine: String
-        let description: String
+    private struct GamesSection: Identifiable, Hashable {
+        let id = UUID()
+        let title: String
+        let items: [GamesWOD]
     }
 
 
-    private struct CustomOpenItem: Identifiable, Hashable, Codable {
+    private struct CustomGamesWOD: Identifiable, Hashable, Codable {
         let id: String
+        let yearTitle: String
         let name: String
         let storageKey: String
-        let titleLine: String
         let description: String
     }
 
@@ -49,564 +52,339 @@ struct StudentOpenPersonalRecordsView: View {
         case higher
     }
 
-    // ✅ Dados fixos conforme solicitado (ordem exata)
-    private let items: [OpenItem] = [
-        .init(name: "Open 11.1", storageKey: "open_11_1"),
-        .init(name: "Open 11.2", storageKey: "open_11_2"),
-        .init(name: "Open 11.3", storageKey: "open_11_3"),
-        .init(name: "Open 12.1", storageKey: "open_12_1"),
-        .init(name: "Open 12.2", storageKey: "open_12_2"),
-        .init(name: "Open 12.3", storageKey: "open_12_3"),
-        .init(name: "Open 12.4", storageKey: "open_12_4"),
-        .init(name: "Open 12.5", storageKey: "open_12_5"),
-        .init(name: "Open 13.1", storageKey: "open_13_1"),
-        .init(name: "Open 13.2", storageKey: "open_13_2"),
-        .init(name: "Open 13.3", storageKey: "open_13_3"),
-        .init(name: "Open 13.4", storageKey: "open_13_4"),
-        .init(name: "Open 13.5", storageKey: "open_13_5"),
-        .init(name: "Open 14.1", storageKey: "open_14_1"),
-        .init(name: "Open 14.2", storageKey: "open_14_2"),
-        .init(name: "Open 14.3", storageKey: "open_14_3"),
-        .init(name: "Open 14.4", storageKey: "open_14_4"),
-        .init(name: "Open 14.5", storageKey: "open_14_5"),
-        .init(name: "Open 15.1", storageKey: "open_15_1"),
-        .init(name: "Open 15.1a", storageKey: "open_15_1a"),
-        .init(name: "Open 15.2", storageKey: "open_15_2"),
-        .init(name: "Open 15.3", storageKey: "open_15_3"),
-        .init(name: "Open 15.4", storageKey: "open_15_4"),
-        .init(name: "Open 15.5", storageKey: "open_15_5"),
-        .init(name: "Open 16.1", storageKey: "open_16_1"),
-        .init(name: "Open 16.2", storageKey: "open_16_2"),
-        .init(name: "Open 16.3", storageKey: "open_16_3"),
-        .init(name: "Open 16.4", storageKey: "open_16_4"),
-        .init(name: "Open 16.5", storageKey: "open_16_5"),
-
-        .init(name: "Open 17.1 RX", storageKey: "open_17_1_rx"),
-        .init(name: "Open 17.1 SCALE", storageKey: "open_17_1_scale"),
-        .init(name: "Open 17.2 RX", storageKey: "open_17_2_rx"),
-        .init(name: "Open 17.2 SCALE", storageKey: "open_17_2_scale"),
-        .init(name: "Open 17.3 RX", storageKey: "open_17_3_rx"),
-        .init(name: "Open 17.3 SCALE", storageKey: "open_17_3_scale"),
-        .init(name: "Open 17.4 RX", storageKey: "open_17_4_rx"),
-        .init(name: "Open 17.4 SCALE", storageKey: "open_17_4_scale"),
-        .init(name: "Open 17.5 RX", storageKey: "open_17_5_rx"),
-        .init(name: "Open 17.5 SCALE", storageKey: "open_17_5_scale"),
-
-        .init(name: "Open 18.1 RX", storageKey: "open_18_1_rx"),
-        .init(name: "Open 18.1 SCALE", storageKey: "open_18_1_scale"),
-        .init(name: "Open 18.2", storageKey: "open_18_2"),
-        .init(name: "Open 18.2a", storageKey: "open_18_2a"),
-        .init(name: "Open 18.3 RX", storageKey: "open_18_3_rx"),
-        .init(name: "Open 18.3 SCALE", storageKey: "open_18_3_scale"),
-        .init(name: "Open 18.4 RX", storageKey: "open_18_4_rx"),
-        .init(name: "Open 18.4 SCALE", storageKey: "open_18_4_scale"),
-        .init(name: "Open 18.5 RX", storageKey: "open_18_5_rx"),
-        .init(name: "Open 18.5 SCALE", storageKey: "open_18_5_scale"),
-
-        .init(name: "Open 19.1 RX", storageKey: "open_19_1_rx"),
-        .init(name: "Open 19.1 SCALE", storageKey: "open_19_1_scale"),
-        .init(name: "Open 19.2 RX", storageKey: "open_19_2_rx"),
-        .init(name: "Open 19.2 SCALE", storageKey: "open_19_2_scale"),
-        .init(name: "Open 19.3 RX", storageKey: "open_19_3_rx"),
-        .init(name: "Open 19.3 SCALE", storageKey: "open_19_3_scale"),
-        .init(name: "Open 19.4 RX", storageKey: "open_19_4_rx"),
-        .init(name: "Open 19.4 SCALE", storageKey: "open_19_4_scale"),
-        .init(name: "Open 19.5 RX", storageKey: "open_19_5_rx"),
-        .init(name: "Open 19.5 SCALE", storageKey: "open_19_5_scale"),
-
-        .init(name: "Open 20.1 RX", storageKey: "open_20_1_rx"),
-        .init(name: "Open 20.1 SCALE", storageKey: "open_20_1_scale"),
-        .init(name: "Open 20.2 RX", storageKey: "open_20_2_rx"),
-        .init(name: "Open 20.2 SCALE", storageKey: "open_20_2_scale"),
-        .init(name: "Open 20.3 RX", storageKey: "open_20_3_rx"),
-        .init(name: "Open 20.3 SCALE", storageKey: "open_20_3_scale"),
-        .init(name: "Open 20.4 RX", storageKey: "open_20_4_rx"),
-        .init(name: "Open 20.4 SCALE", storageKey: "open_20_4_scale"),
-        .init(name: "Open 20.5 RX", storageKey: "open_20_5_rx"),
-        .init(name: "Open 20.5 SCALE", storageKey: "open_20_5_scale"),
-
-        .init(name: "Open 21.1", storageKey: "open_21_1"),
-        .init(name: "Open 21.2", storageKey: "open_21_2"),
-        .init(name: "Open 21.3", storageKey: "open_21_3"),
-        .init(name: "Open 21.4", storageKey: "open_21_4"),
-
-        .init(name: "Open 22.1 RX", storageKey: "open_22_1_rx"),
-        .init(name: "Open 22.1 SCALE", storageKey: "open_22_1_scale"),
-        .init(name: "Open 22.2 RX", storageKey: "open_22_2_rx"),
-        .init(name: "Open 22.2 SCALE", storageKey: "open_22_2_scale"),
-        .init(name: "Open 22.3 RX", storageKey: "open_22_3_rx"),
-        .init(name: "Open 22.3 SCALE", storageKey: "open_22_3_scale"),
-
-        .init(name: "Open 23.1 RX", storageKey: "open_23_1_rx"),
-        .init(name: "Open 23.1 SCALE", storageKey: "open_23_1_scale"),
-        .init(name: "Open 23.2A RX", storageKey: "open_23_2a_rx"),
-        .init(name: "Open 23.2A SCALE", storageKey: "open_23_2a_scale"),
-        .init(name: "Open 23.2B", storageKey: "open_23_2b"),
-        .init(name: "Open 23.3 RX", storageKey: "open_23_3_rx"),
-        .init(name: "Open 23.3 SCALE", storageKey: "open_23_3_scale"),
-
-        .init(name: "Open 24.1 RX", storageKey: "open_24_1_rx"),
-        .init(name: "Open 24.1 SCALE", storageKey: "open_24_1_scale"),
-        .init(name: "Open 24.2 RX", storageKey: "open_24_2_rx"),
-        .init(name: "Open 24.2 SCALE", storageKey: "open_24_2_scale"),
-        .init(name: "Open 24.3 RX", storageKey: "open_24_3_rx"),
-        .init(name: "Open 24.3 SCALE", storageKey: "open_24_3_scale"),
-
-        .init(name: "Open 25.1 RX", storageKey: "open_25_1_rx"),
-        .init(name: "Open 25.1 SCALE", storageKey: "open_25_1_scale"),
-        .init(name: "Open 25.2 RX", storageKey: "open_25_2_rx"),
-        .init(name: "Open 25.2 SCALE", storageKey: "open_25_2_scale"),
-        .init(name: "Open 25.3 RX", storageKey: "open_25_3_rx"),
-        .init(name: "Open 25.3 SCALE", storageKey: "open_25_3_scale")
+    private let sections: [GamesSection] = [
+        .init(
+            title: "CrossFit Games 2023 – Provas Individuais (Elite)",
+            items: [
+                .init(
+                    yearTitle: "2023",
+                    name: "Ride",
+                    storageKey: "cfg_2023_ride",
+                    descriptionLines: [
+                        "Máximo de voltas em 40 min em bicicleta de montanha."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Pig Chipper",
+                    storageKey: "cfg_2023_pig_chipper",
+                    descriptionLines: [
+                        "10 pig flips, 25 chest-to-bar pull-ups, 50 toes-to-bars, 100 wall-ball shots e reverso."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Inverted Medley",
+                    storageKey: "cfg_2023_inverted_medley",
+                    descriptionLines: [
+                        "Sequência complexa de handstand walk, handstand push-ups e passos sobre obstáculos."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "The Alpaca Redux",
+                    storageKey: "cfg_2023_alpaca_redux",
+                    descriptionLines: [
+                        "Sled push e rounds com rope climbs, kettlebell clean & jerks e sled push progressivo."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Ski-Bag",
+                    storageKey: "cfg_2023_ski_bag",
+                    descriptionLines: [
+                        "SkiErg e sandbag squats em sequência."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Helena",
+                    storageKey: "cfg_2023_helena",
+                    descriptionLines: [
+                        "3 rounds:",
+                        "• corrida 400 m",
+                        "• 12 bar muscle-ups",
+                        "• 21 dumbbell snatches"
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Cross-Country 5K",
+                    storageKey: "cfg_2023_cross_country_5k",
+                    descriptionLines: [
+                        "Corrida de 5 km para tempo."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Intervals",
+                    storageKey: "cfg_2023_intervals",
+                    descriptionLines: [
+                        "Intervalos combinados de box jump-overs, remo e burpee box jump-overs."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Olympic Total",
+                    storageKey: "cfg_2023_olympic_total",
+                    descriptionLines: [
+                        "Teste de força com 1RM Snatch e 1RM Clean & Jerk."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Muscle-Up Logs",
+                    storageKey: "cfg_2023_muscle_up_logs",
+                    descriptionLines: [
+                        "5 rounds de muscle-ups e sandbag sobre logs."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Parallel-bar Pull",
+                    storageKey: "cfg_2023_parallel_bar_pull",
+                    descriptionLines: [
+                        "8 rounds de travessia em paralelas + rope double-unders e sled pull."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2023",
+                    name: "Echo Thruster Final",
+                    storageKey: "cfg_2023_echo_thruster_final",
+                    descriptionLines: [
+                        "21-18-15 de Echo Bike calorias com thrusters e overhead walking lunges."
+                    ]
+                )
+            ]
+        ),
+        .init(
+            title: "CrossFit Games 2024 – Provas Individuais (Elite)",
+            items: [
+                .init(
+                    yearTitle: "2024",
+                    name: "Lake Day (Run + Swim)",
+                    storageKey: "cfg_2024_lake_day",
+                    descriptionLines: [
+                        "Corrida de 3.5 milhas seguida de natação 800 m antes de parte do dia ser cancelada."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Midline Climb",
+                    storageKey: "cfg_2024_midline_climb",
+                    descriptionLines: [
+                        "Prova em ginásio com deadlifts, rope climbs, ski erg e GHD sit-ups."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Firestorm",
+                    storageKey: "cfg_2024_firestorm",
+                    descriptionLines: [
+                        "Rounds de Echo-bike e burpees sobre barricada (parte da programação)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Track & Field",
+                    storageKey: "cfg_2024_track_field",
+                    descriptionLines: [
+                        "Corrida 1,600 m seguida por sprints e bag carries."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Chad",
+                    storageKey: "cfg_2024_chad",
+                    descriptionLines: [
+                        "1,000 step-ups com peso."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Clean Ladder",
+                    storageKey: "cfg_2024_clean_ladder",
+                    descriptionLines: [
+                        "Ladder de cleans em rounds progressivos."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Push Pull 2.0",
+                    storageKey: "cfg_2024_push_pull_2",
+                    descriptionLines: [
+                        "Combinação de double-unders, chest-to-bar pull-ups e máximos no Echo-bike."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Dickies Triplet",
+                    storageKey: "cfg_2024_dickies_triplet",
+                    descriptionLines: [
+                        "Sequência de run, toes-to-bars e dumbbell snatches (nome popularizado pela comunidade)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Final 2421",
+                    storageKey: "cfg_2024_final_2421",
+                    descriptionLines: [
+                        "Thrusters + chest-to-bar pull-ups + yoke carry."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2024",
+                    name: "Final 1815",
+                    storageKey: "cfg_2024_final_1815",
+                    descriptionLines: [
+                        "Outra final combinada de thrusters e bar muscle-ups (muitas vezes agrupada com o Final 2421 nos resultados)."
+                    ]
+                )
+            ]
+        ),
+        .init(
+            title: "CrossFit Games 2025 – Provas Individuais (Elite)",
+            items: [
+                .init(
+                    yearTitle: "2025",
+                    name: "Run/Row/Run",
+                    storageKey: "cfg_2025_run_row_run",
+                    descriptionLines: [
+                        "4-mile run → 3000 m row → 2-mile run (prova de resistência)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "All Crossed Up",
+                    storageKey: "cfg_2025_all_crossed_up",
+                    descriptionLines: [
+                        "Sequência de wall walks, dumbbell shoulder-to-overhead, double-under crossovers e toes-to-bars para tempo."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "Climbing Couplet",
+                    storageKey: "cfg_2025_climbing_couplet",
+                    descriptionLines: [
+                        "4-3-2-1 reps pegboard + squat clean + front squat (prova combinada de força e técnica)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "Albany Grip Trip",
+                    storageKey: "cfg_2025_albany_grip_trip",
+                    descriptionLines: [
+                        "5 rodadas de:",
+                        "• 400 m corrida",
+                        "• 12 deadlifts",
+                        "• 100 ft handstand walk",
+                        "(força, corrida e habilidades de equilíbrio)"
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "1RM Back Squat",
+                    storageKey: "cfg_2025_1rm_back_squat",
+                    descriptionLines: [
+                        "Back squat máximo de uma repetição (teste de força absoluta)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "Throttle Up",
+                    storageKey: "cfg_2025_throttle_up",
+                    descriptionLines: [
+                        "35 calorias Ski Erg → 28 chest-to-bar pull-ups → 24 burpee box jump-overs (prova para tempo)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "Hammer Down",
+                    storageKey: "cfg_2025_hammer_down",
+                    descriptionLines: [
+                        "35 calorias no Echo Bike → 28 bar muscle-ups → 24 burpee box jump-overs (segundo teste consecutivo com pouco descanso)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "Going Dark",
+                    storageKey: "cfg_2025_going_dark",
+                    descriptionLines: [
+                        "50/40 calorias no Echo Bike → 100 ft yoke carry → 30 deficit handstand push-ups → repetição (teste de resistência e força)."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "Running Isabel",
+                    storageKey: "cfg_2025_running_isabel",
+                    descriptionLines: [
+                        "5 rodadas de:",
+                        "• 200 ft corrida",
+                        "• 6 snatches (com barra)",
+                        "Para tempo."
+                    ]
+                ),
+                .init(
+                    yearTitle: "2025",
+                    name: "Atlas",
+                    storageKey: "cfg_2025_atlas",
+                    descriptionLines: [
+                        "9/15/21 thrusters",
+                        "3/5/7 rope climbs,",
+                        "seguido de 100 ft overhead walking lunge (teste combinado de força, resistência e técnica)."
+                    ]
+                )
+            ]
+        )
     ]
 
-    // ✅ Descrições exatamente como você enviou
-    private let wodsByKey: [String: OpenWod] = [
+    @AppStorage("student_pr_crossfit_games_values_v1")
+    private var crossfitGamesValuesData: Data = Data()
 
-        // 2011
-        "open_11_1": .init(
-            titleLine: "Open 11.1 — AMRAP 10 min",
-            description:
-"""
-30 Double-unders
+    @AppStorage("student_pr_crossfit_games_history_v1")
+    private var crossfitGamesHistoryData: Data = Data()
 
-15 Power Snatches (34/25 kg)
-"""
-        ),
-        "open_11_2": .init(
-            titleLine: "Open 11.2 — AMRAP 15 min",
-            description:
-"""
-9 Deadlifts (70/47,5 kg)
+    @AppStorage("student_pr_crossfit_games_custom_items_v1")
+    private var customGamesItemsData: Data = Data()
 
-12 Push-ups
-
-15 Box Jumps (61/51 cm)
-"""
-        ),
-        "open_11_3": .init(
-            titleLine: "Open 11.3 — AMRAP 5 min",
-            description:
-"""
-Squat Clean (61/43 kg)
-(reps contínuas)
-"""
-        ),
-
-        // 2012
-        "open_12_1": .init(
-            titleLine: "Open 12.1 — AMRAP 7 min",
-            description:
-"""
-Burpees
-"""
-        ),
-        "open_12_2": .init(
-            titleLine: "Open 12.2 — AMRAP 10 min",
-            description:
-"""
-Snatch (34/25 kg)
-(reps contínuas)
-"""
-        ),
-        "open_12_3": .init(
-            titleLine: "Open 12.3 — AMRAP 18 min",
-            description:
-"""
-15 Box Jumps
-
-12 Push Press (52/34 kg)
-
-9 Toes-to-Bar
-"""
-        ),
-        "open_12_4": .init(
-            titleLine: "Open 12.4 — For Time",
-            description:
-"""
-150 Wall Balls (9/6 kg)
-
-90 Double-unders
-
-30 Muscle-ups
-"""
-        ),
-        "open_12_5": .init(
-            titleLine: "Open 12.5 — For Time",
-            description:
-"""
-7 Muscle-ups
-
-50 Wall Balls
-
-100 Double-unders
-
-50 Wall Balls
-
-7 Muscle-ups
-"""
-        ),
-
-        // 2013
-        "open_13_1": .init(
-            titleLine: "Open 13.1 — AMRAP 17 min",
-            description:
-"""
-40 Burpees
-
-30 Snatches (34/25 kg)
-
-30 Burpees
-
-30 Snatches (61/43 kg)
-
-20 Burpees
-
-30 Snatches (75/52 kg)
-
-10 Burpees
-
-Max Snatches (100/70 kg)
-"""
-        ),
-        "open_13_2": .init(
-            titleLine: "Open 13.2 — AMRAP 10 min",
-            description:
-"""
-5 Shoulder-to-Overhead (52/34 kg)
-
-10 Deadlifts (52/34 kg)
-
-15 Box Jumps
-"""
-        ),
-        "open_13_3": .init(
-            titleLine: "Open 13.3 — AMRAP 12 min",
-            description:
-"""
-150 Wall Balls
-
-90 Double-unders
-
-30 Muscle-ups
-"""
-        ),
-        "open_13_4": .init(
-            titleLine: "Open 13.4 — AMRAP 7 min",
-            description:
-"""
-Clean & Jerk (61/43 kg)
-"""
-        ),
-        "open_13_5": .init(
-            titleLine: "Open 13.5 — For Time",
-            description:
-"""
-15 Thrusters (45/30 kg)
-
-15 Chest-to-Bar Pull-ups
-(aumenta 15 reps por movimento até falhar)
-"""
-        ),
-
-        // 2014
-        "open_14_1": .init(
-            titleLine: "Open 14.1 — AMRAP 10 min",
-            description:
-"""
-30 Double-unders
-
-15 Power Snatches (34/25 kg)
-"""
-        ),
-        "open_14_2": .init(
-            titleLine: "Open 14.2 — AMRAP 9 min",
-            description:
-"""
-10 Toes-to-Bar
-
-10 Deadlifts (52/34 kg)
-
-10 Box Jumps
-(aumenta 2 reps por round)
-"""
-        ),
-        "open_14_3": .init(
-            titleLine: "Open 14.3 — AMRAP 8 min",
-            description:
-"""
-10 Deadlifts (61/43 kg)
-
-15 Box Jumps
-
-15 Wall Balls
-"""
-        ),
-        "open_14_4": .init(
-            titleLine: "Open 14.4 — For Time",
-            description:
-"""
-60 Cal Row
-
-50 Toes-to-Bar
-
-40 Wall Balls
-
-30 Cleans (61/43 kg)
-
-20 Muscle-ups
-"""
-        ),
-        "open_14_5": .init(
-            titleLine: "Open 14.5 — For Time",
-            description:
-"""
-21-18-15-12-9-6-3
-
-Thrusters (43/30 kg)
-
-Bar-Facing Burpees
-"""
-        ),
-
-        // 2015
-        "open_15_1": .init(
-            titleLine: "Open 15.1 — AMRAP 9 min",
-            description:
-"""
-15 Toes-to-Bar
-
-10 Deadlifts (52/34 kg)
-
-5 Snatches (52/34 kg)
-"""
-        ),
-        "open_15_1a": .init(
-            titleLine: "Open 15.1a — For Time",
-            description:
-"""
-1RM Clean & Jerk (6 min)
-"""
-        ),
-        "open_15_2": .init(
-            titleLine: "Open 15.2 — AMRAP 8 min",
-            description:
-"""
-10 Power Cleans (52/34 kg)
-
-5 Front Squats
-
-10 Toes-to-Bar
-"""
-        ),
-        "open_15_3": .init(
-            titleLine: "Open 15.3 — For Time",
-            description:
-"""
-14.5 repeat
-"""
-        ),
-        "open_15_4": .init(
-            titleLine: "Open 15.4 — For Time",
-            description:
-"""
-55 Deadlifts (102/70 kg)
-
-55 Wall Balls
-
-55 Row Calories
-
-55 Handstand Push-ups
-"""
-        ),
-        "open_15_5": .init(
-            titleLine: "Open 15.5 — For Time",
-            description:
-"""
-27-21-15-9
-
-Row (cal)
-
-Thrusters (43/30 kg)
-"""
-        ),
-
-        // 2016
-        "open_16_1": .init(
-            titleLine: "Open 16.1 — AMRAP 20 min",
-            description:
-"""
-25-ft Overhead Lunges
-
-8 Bar-Facing Burpees
-
-25-ft Overhead Lunges
-
-8 Chest-to-Bar Pull-ups
-"""
-        ),
-        "open_16_2": .init(
-            titleLine: "Open 16.2 — AMRAP 20 min",
-            description:
-"""
-Toes-to-Bar
-
-Deadlifts
-
-Squat Cleans
-(carga sobe a cada round)
-"""
-        ),
-        "open_16_3": .init(
-            titleLine: "Open 16.3 — For Time",
-            description:
-"""
-10 Power Snatches (34/25 kg)
-
-3 Bar Muscle-ups
-(aumenta reps)
-"""
-        ),
-        "open_16_4": .init(
-            titleLine: "Open 16.4 — For Time",
-            description:
-"""
-55 Deadlifts
-
-55 Wall Balls
-
-55 Cal Row
-
-55 Handstand Push-ups
-"""
-        ),
-        "open_16_5": .init(
-            titleLine: "Open 16.5 — For Time",
-            description:
-"""
-21-18-15-12-9-6-3
-
-Thrusters
-
-Bar-Facing Burpees
-"""
-        ),
-
-        // 2017–2025 (resumo fiel)
-        "open_17_1_rx": .init(titleLine: "17.1 — RX", description: "Dumbbell Snatches + Burpee Box Jump Overs\n(20 min AMRAP)"),
-        "open_17_1_scale": .init(titleLine: "17.1 — SCALE", description: "Dumbbell Snatches + Burpee Box Jump Overs\n(20 min AMRAP)"),
-        "open_17_2_rx": .init(titleLine: "17.2 — RX", description: "Toes-to-Bar / DB Cleans / Bar Muscle-ups"),
-        "open_17_2_scale": .init(titleLine: "17.2 — SCALE", description: "Toes-to-Bar / DB Cleans / Bar Muscle-ups"),
-        "open_17_3_rx": .init(titleLine: "17.3 — RX", description: "Front Squats / Chest-to-Bar / Bar Muscle-ups"),
-        "open_17_3_scale": .init(titleLine: "17.3 — SCALE", description: "Front Squats / Chest-to-Bar / Bar Muscle-ups"),
-        "open_17_4_rx": .init(titleLine: "17.4 — RX", description: "Deadlifts / HSPU / Handstand Walk"),
-        "open_17_4_scale": .init(titleLine: "17.4 — SCALE", description: "Deadlifts / HSPU / Handstand Walk"),
-        "open_17_5_rx": .init(titleLine: "17.5 — RX", description: "Thrusters + Chest-to-Bar Ladder"),
-        "open_17_5_scale": .init(titleLine: "17.5 — SCALE", description: "Thrusters + Chest-to-Bar Ladder"),
-
-        "open_18_1_rx": .init(titleLine: "18.1 — RX", description: "20 min AMRAP\n\nTTB / DB Cleans / Burpees"),
-        "open_18_1_scale": .init(titleLine: "18.1 — SCALE", description: "20 min AMRAP\n\nTTB / DB Cleans / Burpees"),
-        "open_18_2": .init(titleLine: "18.2", description: "Front Squat / Bar-Facing Burpees"),
-        "open_18_2a": .init(titleLine: "18.2a", description: "1RM Clean"),
-        "open_18_3_rx": .init(titleLine: "18.3 — RX", description: "DB Snatch / Box Jumps / HSPU / Ring MU"),
-        "open_18_3_scale": .init(titleLine: "18.3 — SCALE", description: "DB Snatch / Box Jumps / HSPU / Ring MU"),
-        "open_18_4_rx": .init(titleLine: "18.4 — RX", description: "Deadlifts / HSPU / Handstand Walk"),
-        "open_18_4_scale": .init(titleLine: "18.4 — SCALE", description: "Deadlifts / HSPU / Handstand Walk"),
-        "open_18_5_rx": .init(titleLine: "18.5 — RX", description: "Thrusters / Chest-to-Bar Ladder"),
-        "open_18_5_scale": .init(titleLine: "18.5 — SCALE", description: "Thrusters / Chest-to-Bar Ladder"),
-
-        "open_18_4a": .init(titleLine: "18.4a", description: "1RM Clean & Jerk"),
-
-        "open_19_1_rx": .init(titleLine: "19.1 — RX", description: "Clássicos com:\n\nWall Balls + Row"),
-        "open_19_1_scale": .init(titleLine: "19.1 — SCALE", description: "Clássicos com:\n\nWall Balls + Row"),
-        "open_19_2_rx": .init(titleLine: "19.2 — RX", description: "Clássicos com:\n\nTTB + DB Cleans"),
-        "open_19_2_scale": .init(titleLine: "19.2 — SCALE", description: "Clássicos com:\n\nTTB + DB Cleans"),
-        "open_19_3_rx": .init(titleLine: "19.3 — RX", description: "Clássicos com:\n\nSquats + Ring MU"),
-        "open_19_3_scale": .init(titleLine: "19.3 — SCALE", description: "Clássicos com:\n\nSquats + Ring MU"),
-        "open_19_4_rx": .init(titleLine: "19.4 — RX", description: "Clássicos com:\n\nDeadlifts + HSPU"),
-        "open_19_4_scale": .init(titleLine: "19.4 — SCALE", description: "Clássicos com:\n\nDeadlifts + HSPU"),
-        "open_19_5_rx": .init(titleLine: "19.5 — RX", description: "Clássicos com:\n\nThrusters + C2B"),
-        "open_19_5_scale": .init(titleLine: "19.5 — SCALE", description: "Clássicos com:\n\nThrusters + C2B"),
-
-        "open_20_1_rx": .init(titleLine: "20.1 — RX", description: "Incluem:\n\nGround-to-Overhead + Bar-Facing Burpees"),
-        "open_20_1_scale": .init(titleLine: "20.1 — SCALE", description: "Incluem:\n\nGround-to-Overhead + Bar-Facing Burpees"),
-        "open_20_2_rx": .init(titleLine: "20.2 — RX", description: "Incluem:\n\nDB Step Overs"),
-        "open_20_2_scale": .init(titleLine: "20.2 — SCALE", description: "Incluem:\n\nDB Step Overs"),
-        "open_20_3_rx": .init(titleLine: "20.3 — RX", description: "Incluem:\n\nHeavy Deadlift + HSPU"),
-        "open_20_3_scale": .init(titleLine: "20.3 — SCALE", description: "Incluem:\n\nHeavy Deadlift + HSPU"),
-        "open_20_4_rx": .init(titleLine: "20.4 — RX", description: "Incluem:\n\nBox Jumps + Cleans"),
-        "open_20_4_scale": .init(titleLine: "20.4 — SCALE", description: "Incluem:\n\nBox Jumps + Cleans"),
-        "open_20_5_rx": .init(titleLine: "20.5 — RX", description: "Incluem:\n\nThrusters + Pull-ups"),
-        "open_20_5_scale": .init(titleLine: "20.5 — SCALE", description: "Incluem:\n\nThrusters + Pull-ups"),
-
-        "open_21_1": .init(titleLine: "21.1", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
-        "open_21_2": .init(titleLine: "21.2", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
-        "open_21_3": .init(titleLine: "21.3", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
-        "open_21_4": .init(titleLine: "21.4", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
-
-        "open_22_1_rx": .init(titleLine: "22.1 — RX", description: "Incluem:\n\nDB Snatch + Burpees"),
-        "open_22_1_scale": .init(titleLine: "22.1 — SCALE", description: "Incluem:\n\nDB Snatch + Burpees"),
-        "open_22_2_rx": .init(titleLine: "22.2 — RX", description: "Incluem:\n\nDeadlifts + TTB"),
-        "open_22_2_scale": .init(titleLine: "22.2 — SCALE", description: "Incluem:\n\nDeadlifts + TTB"),
-        "open_22_3_rx": .init(titleLine: "22.3 — RX", description: "Incluem:\n\nPull-ups / Thrusters / Bar MU"),
-        "open_22_3_scale": .init(titleLine: "22.3 — SCALE", description: "Incluem:\n\nPull-ups / Thrusters / Bar MU"),
-
-        "open_23_1_rx": .init(titleLine: "23.1 — RX", description: "Destaques:\n\nTTB + DB Snatch"),
-        "open_23_1_scale": .init(titleLine: "23.1 — SCALE", description: "Destaques:\n\nTTB + DB Snatch"),
-        "open_23_2a_rx": .init(titleLine: "23.2A — RX", description: "Destaques:\n\nShuttle Runs"),
-        "open_23_2a_scale": .init(titleLine: "23.2A — SCALE", description: "Destaques:\n\nShuttle Runs"),
-        "open_23_2b": .init(titleLine: "23.2B", description: "Destaques:\n\nThrusters + Pull-ups"),
-        "open_23_3_rx": .init(titleLine: "23.3 — RX", description: "Destaques:\n\nHeavy Complex"),
-        "open_23_3_scale": .init(titleLine: "23.3 — SCALE", description: "Destaques:\n\nHeavy Complex"),
-
-        "open_24_1_rx": .init(titleLine: "24.1 — RX", description: "Incluem:\n\nDU + Snatch"),
-        "open_24_1_scale": .init(titleLine: "24.1 — SCALE", description: "Incluem:\n\nDU + Snatch"),
-        "open_24_2_rx": .init(titleLine: "24.2 — RX", description: "Incluem:\n\nRow + Deadlift"),
-        "open_24_2_scale": .init(titleLine: "24.2 — SCALE", description: "Incluem:\n\nRow + Deadlift"),
-        "open_24_3_rx": .init(titleLine: "24.3 — RX", description: "Incluem:\n\nThruster / Bar MU Ladder"),
-        "open_24_3_scale": .init(titleLine: "24.3 — SCALE", description: "Incluem:\n\nThruster / Bar MU Ladder"),
-
-        "open_25_1_rx": .init(titleLine: "25.1 — RX", description: "Formato moderno:\n\nGymnastics + Heavy Barbell"),
-        "open_25_1_scale": .init(titleLine: "25.1 — SCALE", description: "Formato moderno:\n\nGymnastics + Heavy Barbell"),
-        "open_25_2_rx": .init(titleLine: "25.2 — RX", description: "Formato moderno:\n\nIntervalos com carga crescente"),
-        "open_25_2_scale": .init(titleLine: "25.2 — SCALE", description: "Formato moderno:\n\nIntervalos com carga crescente"),
-        "open_25_3_rx": .init(titleLine: "25.3 — RX", description: "Formato moderno:\n\nFinal com Lift Máximo"),
-        "open_25_3_scale": .init(titleLine: "25.3 — SCALE", description: "Formato moderno:\n\nFinal com Lift Máximo")
-    ]
-
-    // Persistência simples (UserDefaults via AppStorage)
-    @AppStorage("student_pr_open_values_v1")
-    private var openValuesData: Data = Data()
-
-    @AppStorage("student_pr_open_history_v1")
-    private var openHistoryData: Data = Data()
-
-    @AppStorage("student_pr_open_custom_items_v1")
-    private var customOpenItemsData: Data = Data()
-
-    // ✅ Ajuste do modal: usar o próprio item como gatilho da sheet (igual Heroes)
-    @State private var selectedItem: OpenItem? = nil
+    @State private var selectedWod: GamesWOD? = nil
     @State private var inputValue: String = ""
-    @State private var historyItem: OpenItem?
+    @State private var historyWod: GamesWOD?
     @State private var selectedPRDate: Date = Date()
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+    @State private var historyEntryPendingDeletion: PRHistoryEntry? = nil
+    @State private var showHistoryEntryDeletionAlert: Bool = false
 
     @State private var showAddItemSheet: Bool = false
+    @State private var newItemYear: String = ""
     @State private var newItemName: String = ""
-    @State private var newItemTitle: String = ""
     @State private var newItemDescription: String = ""
     @State private var newItemValue: String = ""
     @State private var addItemErrorMessage: String? = nil
     @State private var showDeleteAlert: Bool = false
 
-    private var allItems: [OpenItem] {
-        items + loadCustomItems().map { OpenItem(name: $0.name, storageKey: $0.storageKey) }
+    private var allSections: [GamesSection] {
+        let customByYear = Dictionary(grouping: loadCustomItems(), by: \.yearTitle)
+        let staticSections = sections.map { section in
+            let year = section.items.first?.yearTitle
+            let customItems = year.flatMap { customByYear[$0] } ?? []
+            return GamesSection(title: section.title, items: section.items + customItems.map {
+                GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
+            })
+        }
+        let existingYears = Set(sections.compactMap { $0.items.first?.yearTitle })
+        let extraSections = customByYear.keys.filter { !existingYears.contains($0) }.sorted().map { year in
+            GamesSection(title: "CrossFit Games \(year) – Provas personalizadas", items: (customByYear[year] ?? []).map {
+                GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
+            })
+        }
+        return staticSections + extraSections
     }
 
     private var canDeleteSelectedItem: Bool {
-        selectedItem?.storageKey.hasPrefix("custom_open_") == true
+        selectedWod?.storageKey.hasPrefix("custom_crossfit_games_") == true
     }
 
     var body: some View {
@@ -630,7 +408,7 @@ Bar-Facing Burpees
                         VStack(alignment: .leading, spacing: 14) {
 
                             HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor resultado por item.")
+                                Text("Adicione seu melhor tempo por prova.")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.55))
 
@@ -638,8 +416,8 @@ Bar-Facing Burpees
 
                                 Button {
                                     addItemErrorMessage = nil
+                                    newItemYear = ""
                                     newItemName = ""
-                                    newItemTitle = ""
                                     newItemDescription = ""
                                     newItemValue = ""
                                     showAddItemSheet = true
@@ -649,7 +427,7 @@ Bar-Facing Burpees
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo item")
+                                .accessibilityLabel("Adicionar nova prova")
                             }
 
                             tableContainer()
@@ -680,7 +458,7 @@ Bar-Facing Burpees
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: (selectedItem != nil || historyItem != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
+        .blur(radius: (selectedWod != nil || historyWod != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -700,7 +478,7 @@ Bar-Facing Burpees
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Open")
+                Text("Crossfit Games")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -711,10 +489,10 @@ Bar-Facing Burpees
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(item: $selectedItem, onDismiss: {
+        .sheet(item: $selectedWod, onDismiss: {
             resetExistingPREditing()
-        }) { item in
-            editSheet(for: item)
+        }) { wod in
+            editSheet(for: wod)
         }
         .sheet(isPresented: $showAddItemSheet) {
             addItemSheet()
@@ -730,17 +508,31 @@ Bar-Facing Burpees
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
 
-            let list = allItems
+            ForEach(Array(allSections.enumerated()), id: \.element.id) { sectionIndex, section in
 
-            ForEach(Array(list.enumerated()), id: \.element.id) { index, item in
+                sectionHeader(title: section.title)
 
-                tableRow(item: item)
+                Rectangle()
+                    .fill(Color.white.opacity(0.08))
+                    .frame(height: 1)
 
-                if index != list.count - 1 {
-                    Rectangle()
-                        .fill(Color.white.opacity(0.08))
-                        .frame(height: 1)
-                        .padding(.leading, 14)
+                ForEach(Array(section.items.enumerated()), id: \.element.id) { itemIndex, wod in
+
+                    tableRow(wod: wod)
+
+                    let isLastItemInSection = itemIndex == section.items.count - 1
+                    let isLastSection = sectionIndex == allSections.count - 1
+
+                    if !isLastItemInSection {
+                        Rectangle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(height: 1)
+                            .padding(.leading, 14)
+                    } else if !isLastSection {
+                        Rectangle()
+                            .fill(Color.white.opacity(0.08))
+                            .frame(height: 1)
+                    }
                 }
             }
         }
@@ -758,13 +550,13 @@ Bar-Facing Burpees
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Open")
+            Text("PROVA")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR")
+            Text("PR (tempo)")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -772,20 +564,35 @@ Bar-Facing Burpees
         .padding(.vertical, 12)
     }
 
-    private func tableRow(item: OpenItem) -> some View {
-        let displayValue = bestDisplayValue(for: item.storageKey, metadata: "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")")
+    private func sectionHeader(title: String) -> some View {
+        HStack {
+            Text(title)
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(.white.opacity(0.75))
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(Color.white.opacity(0.04))
+    }
+
+    private func tableRow(wod: GamesWOD) -> some View {
+        let stored = bestDisplayValue(for: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "))
 
         return Button {
-            selectedItem = item
+            inputValue = ""
+            selectedPRDate = Date()
+            resetExistingPREditing()
+            selectedWod = wod
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "trophy.fill")
+                Image(systemName: "flame.fill")
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 15))
                     .frame(width: 26)
 
-                Text(item.name)
+                Text(wod.name)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -793,12 +600,10 @@ Bar-Facing Burpees
 
                 Spacer()
 
-                if let displayValue, !displayValue.isEmpty {
-                    Text(displayValue)
+                if let stored, !stored.isEmpty {
+                    Text(stored)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
                         .font(.system(size: 14, weight: .bold))
@@ -817,12 +622,8 @@ Bar-Facing Burpees
         .buttonStyle(.plain)
     }
 
-    private func editSheet(for item: OpenItem) -> some View {
-        let wodDetails: OpenWod? = {
-            return wod(for: item.storageKey)
-        }()
-
-        return ZStack {
+    private func editSheet(for wod: GamesWOD) -> some View {
+        ZStack {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
@@ -833,21 +634,16 @@ Bar-Facing Burpees
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text(item.name)
+                Text(wod.name)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
-                    Text("Informe seu melhor resultado. Para remover, deixe vazio.")
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.60))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
-
-                    if let wodDetails {
-                        wodCard(wodDetails)
+                    // Bloco do WOD (card + ícone) com descrição formatada
+                    if !wod.descriptionLines.isEmpty {
+                        wodCard(wod)
                             .padding(.horizontal, 16)
                             .padding(.top, 2)
                             .layoutPriority(1)
@@ -858,22 +654,10 @@ Bar-Facing Burpees
                             Text("Resultado:")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
-
-                            Spacer()
-
-                            if let value = bestDisplayValue(for: item.storageKey, metadata: "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")"), !value.isEmpty {
-                                Button {
-                                    beginEditingExistingPR(for: item)
-                                } label: {
-                                    Label("Editar valor", systemImage: "pencil")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.green.opacity(0.90))
-                                }
-                                .buttonStyle(.plain)
-                            }
                         }
 
-                        TextField("Ex: 7:32 ou 210 reps ou 450 pts", text: $inputValue)
+                        TextField("Ex: 12:34", text: $inputValue)
+                            .keyboardType(.numbersAndPunctuation)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -890,13 +674,13 @@ Bar-Facing Burpees
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
 
-                    dateAndHistorySection(key: item.storageKey, metadata: "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")", historyAction: {
-                        historyItem = item
+                    dateAndHistorySection(key: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "), historyAction: {
+                        historyWod = wod
                     })
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
-                    .sheet(item: $historyItem) { selected in
-                        historySheet(title: selected.name, key: selected.storageKey)
+                    .sheet(item: $historyWod) { selected in
+                        historySheet(title: selected.name, key: selected.storageKey, metadata: selected.descriptionLines.joined(separator: " "))
                     }
                     .sheet(isPresented: $showPRDatePicker) {
                         ZStack {
@@ -924,7 +708,7 @@ Bar-Facing Burpees
 
                     Button {
                         resetExistingPREditing()
-                        selectedItem = nil
+                        selectedWod = nil
                     } label: {
                         Text("Cancelar")
                             .font(.system(size: 15, weight: .bold))
@@ -941,15 +725,11 @@ Bar-Facing Burpees
                     .buttonStyle(.plain)
 
                     Button {
-                        if isEditingExistingPR {
-                            saveExistingPREdit()
-                        } else {
-                            saveCurrentInput(for: item)
-                        }
+                        saveCurrentInput(for: wod)
                         resetExistingPREditing()
-                        selectedItem = nil
+                        selectedWod = nil
                     } label: {
-                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
+                        Text("Salvar")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -967,7 +747,7 @@ Bar-Facing Burpees
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir item")
+                        .accessibilityLabel("Excluir prova")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -982,16 +762,20 @@ Bar-Facing Burpees
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedItem?.name ?? "este item")?")
+            Text("Deseja excluir o registro de \(selectedWod?.name ?? "esta prova")?")
         }
         .onAppear {
-            inputValue = bestDisplayValue(for: item.storageKey, metadata: "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")") ?? ""
+            inputValue = ""
             selectedPRDate = Date()
+            resetExistingPREditing()
         }
     }
 
-    private func wodCard(_ wod: OpenWod) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+    /// Card visual do WOD dentro do modal (mesmo padrão do Notables) + descrição elegante (DE -> PARA)
+    private func wodCard(_ wod: GamesWOD) -> some View {
+        let description = prettyWodDescription(from: wod.descriptionLines)
+
+        return VStack(alignment: .leading, spacing: 10) {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "list.bullet.rectangle")
@@ -1002,22 +786,21 @@ Bar-Facing Burpees
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
-                    Text(wod.titleLine)
+                    Text(wod.name)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(2)
-                        .fixedSize(horizontal: false, vertical: true)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 }
 
                 Spacer()
             }
 
             ScrollView {
-                Text(wod.description)
+                Text(description)
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true)
                     .padding(.top, 2)
             }
             .frame(height: 140)
@@ -1031,23 +814,56 @@ Bar-Facing Burpees
         )
     }
 
-    private func wod(for key: String) -> OpenWod? {
-        if let wod = wodsByKey[key] { return wod }
-        guard let custom = loadCustomItems().first(where: { $0.storageKey == key }) else { return nil }
-        return OpenWod(titleLine: custom.titleLine, description: custom.description)
+    private func prettyWodDescription(from lines: [String]) -> String {
+        let raw = lines
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+
+        if raw.contains("•") {
+            return raw
+        }
+
+        var mainPart = raw
+        var parenthetical: String? = nil
+
+        if let open = raw.lastIndex(of: "("),
+           let close = raw.lastIndex(of: ")"),
+           open < close {
+            let afterOpen = raw.index(after: open)
+            let inside = raw[afterOpen..<close].trimmingCharacters(in: .whitespacesAndNewlines)
+            let before = raw[..<open].trimmingCharacters(in: .whitespacesAndNewlines)
+            if !inside.isEmpty {
+                parenthetical = "(\(inside))"
+                mainPart = String(before)
+            }
+        }
+
+        var text = mainPart
+        text = text.replacingOccurrences(of: "→", with: "\n")
+        text = text.replacingOccurrences(of: " + ", with: "\n")
+        text = text.replacingOccurrences(of: "+", with: "\n")
+        text = text.replacingOccurrences(of: " reps: ", with: " reps\n")
+        text = text.replacingOccurrences(of: " reps ", with: " reps\n")
+
+        var outLines = text
+            .components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+
+        if let parenthetical, !parenthetical.isEmpty {
+            outLines.append(parenthetical)
+        }
+
+        return outLines.joined(separator: "\n")
     }
 
-    private func metadata(for item: OpenItem) -> String {
-        let wod = wod(for: item.storageKey)
-        return "\(wod?.titleLine ?? "") \(wod?.description ?? "")"
-    }
-
-    private func beginEditingExistingPR(for item: OpenItem) {
-        let metadata = "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")"
-        guard let value = bestDisplayValue(for: item.storageKey, metadata: metadata) else { return }
+    private func beginEditingExistingPR(for wod: GamesWOD) {
+        let metadata = wod.descriptionLines.joined(separator: " ")
+        guard let value = bestDisplayValue(for: wod.storageKey, metadata: metadata) else { return }
 
         inputValue = value
-        if let entry = currentPRHistoryEntry(for: item.storageKey, metadata: metadata),
+        if let entry = currentPRHistoryEntry(for: wod.storageKey, metadata: metadata),
            let entryValue = numericValue(entry.value, metadata: metadata),
            let bestValue = numericValue(value, metadata: metadata),
            abs(entryValue - bestValue) < 0.000_001 {
@@ -1060,13 +876,13 @@ Bar-Facing Burpees
     }
 
     private func saveExistingPREdit() {
-        guard let item = selectedItem else { return }
+        guard let wod = selectedWod else { return }
 
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        let key = item.storageKey
-        let metadata = "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")"
+        let key = wod.storageKey
+        let metadata = wod.descriptionLines.joined(separator: " ")
         var history = loadHistoryMap()
         var primaryCandidates: [String]
 
@@ -1128,17 +944,16 @@ Bar-Facing Burpees
         return best.0
     }
 
-    private func saveCurrentInput(for item: OpenItem) {
+    private func saveCurrentInput(for wod: GamesWOD) {
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            removeValue(for: item.storageKey)
             return
         }
-        let metadata = "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")"
-        let shouldSave = shouldUpdatePrimary(trimmed, key: item.storageKey, metadata: metadata)
-        saveHistoryValue(trimmed, for: item.storageKey, date: selectedPRDate)
+        let metadata = wod.descriptionLines.joined(separator: " ")
+        let shouldSave = shouldUpdatePrimary(trimmed, key: wod.storageKey, metadata: metadata)
+        saveHistoryValue(trimmed, for: wod.storageKey, date: selectedPRDate)
         if shouldSave {
-            saveValue(trimmed, for: item.storageKey)
+            saveValue(trimmed, for: wod.storageKey)
         }
     }
 
@@ -1186,8 +1001,9 @@ Bar-Facing Burpees
         }
     }
 
-    private func historySheet(title: String, key: String) -> some View {
+    private func historySheet(title: String, key: String, metadata: String) -> some View {
         let entries = historyEntries(for: key)
+        let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
         return ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
@@ -1207,10 +1023,24 @@ Bar-Facing Burpees
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
+                                    if entry.id == recordID {
+                                        Text("RECORDE")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.45))
+                                    Button {
+                                        historyEntryPendingDeletion = entry
+                                        showHistoryEntryDeletionAlert = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.85))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Excluir registro")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -1230,6 +1060,36 @@ Bar-Facing Burpees
             }
         }
         .presentationDetents([.large])
+        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("Excluir", role: .destructive) {
+                if let entry = historyEntryPendingDeletion {
+                    deleteHistoryEntry(entry, for: key, metadata: metadata)
+                }
+                historyEntryPendingDeletion = nil
+            }
+        } message: {
+            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+        }
+    }
+
+    private func deleteHistoryEntry(_ entry: PRHistoryEntry, for key: String, metadata: String) {
+        var history = loadHistoryMap()
+        var entries = history[key, default: []]
+        entries.removeAll { $0.id == entry.id }
+        if entries.isEmpty {
+            history.removeValue(forKey: key)
+        } else {
+            history[key] = entries
+        }
+
+        var values = loadMap()
+        if let primary = bestValue(from: entries.map(\.value), metadata: metadata) {
+            values[key] = primary
+        } else {
+            values.removeValue(forKey: key)
+        }
+        saveRecords(values: values, history: history, deletedHistoryEntryID: entry.id)
     }
 
     @ViewBuilder
@@ -1345,25 +1205,22 @@ Bar-Facing Burpees
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Novo item Open")
+                    Text("Nova prova CrossFit Games")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie um item e, se quiser, já informe seu resultado inicial.")
+                    Text("Crie uma prova e, se quiser, já informe seu resultado inicial.")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                    addItemField("Nome do item", placeholder: "Ex: Open 26.1", text: $newItemName)
-
-                    addItemField("Título do WOD (opcional)", placeholder: "Ex: AMRAP 12 min", text: $newItemTitle)
-
-                    addItemField("Descrição (opcional)", placeholder: "Ex: 12 burpees", text: $newItemDescription)
-
-                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 150 reps", text: $newItemValue)
+                        addItemField("Ano", placeholder: "Ex: 2026", text: $newItemYear)
+                        addItemField("Nome da prova", placeholder: "Ex: Final", text: $newItemName)
+                        addItemField("Descrição (opcional)", placeholder: "Ex: For Time — 5 rounds", text: $newItemDescription)
+                        addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
@@ -1374,9 +1231,7 @@ Bar-Facing Burpees
                     .padding(.horizontal, 16)
 
                     HStack(spacing: 12) {
-                        Button {
-                            showAddItemSheet = false
-                        } label: {
+                        Button { showAddItemSheet = false } label: {
                             Text("Cancelar")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
@@ -1391,9 +1246,7 @@ Bar-Facing Burpees
                         }
                         .buttonStyle(.plain)
 
-                        Button {
-                            addNewItem()
-                        } label: {
+                        Button { addNewItem() } label: {
                             Text("Adicionar")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
@@ -1414,7 +1267,6 @@ Bar-Facing Burpees
             Text(label)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
-
             TextField(placeholder, text: text)
                 .textInputAutocapitalization(.sentences)
                 .autocorrectionDisabled(true)
@@ -1430,26 +1282,26 @@ Bar-Facing Burpees
 
     private func addNewItem() {
         addItemErrorMessage = nil
+        let year = newItemYear.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do item."
+        guard !year.isEmpty, !cleanName.isEmpty else {
+            addItemErrorMessage = "Informe o ano e o nome da prova."
             return
         }
-
-        let existingNames = allItems.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        let existingNames = allSections.flatMap(\.items).map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este item já existe na sua lista."
+            addItemErrorMessage = "Esta prova já existe na sua lista."
             return
         }
 
         let id = UUID().uuidString
-        let key = "custom_open_\(id)"
-        let customItem = CustomOpenItem(id: id, name: cleanName, storageKey: key, titleLine: newItemTitle.trimmingCharacters(in: .whitespacesAndNewlines), description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        let key = "custom_crossfit_games_\(id)"
+        let customItem = CustomGamesWOD(id: id, yearTitle: year, name: cleanName, storageKey: key, description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
         var list = loadCustomItems()
         list.append(customItem)
         saveCustomItems(list)
 
-        let item = OpenItem(name: customItem.name, storageKey: customItem.storageKey)
+        let item = GamesWOD(yearTitle: year, name: cleanName, storageKey: key, descriptionLines: customItem.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
         let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedValue.isEmpty {
             inputValue = trimmedValue
@@ -1459,34 +1311,33 @@ Bar-Facing Burpees
     }
 
     private func deleteSelectedItem() {
-        guard let item = selectedItem, item.storageKey.hasPrefix("custom_open_") else { return }
+        guard let item = selectedWod, item.storageKey.hasPrefix("custom_crossfit_games_") else { return }
         removeValue(for: item.storageKey)
         removeHistory(for: item.storageKey)
         var list = loadCustomItems()
         list.removeAll { $0.storageKey == item.storageKey }
         saveCustomItems(list)
-        selectedItem = nil
+        selectedWod = nil
     }
 
-    private func loadCustomItems() -> [CustomOpenItem] {
-        guard !customOpenItemsData.isEmpty else { return [] }
-        return (try? JSONDecoder().decode([CustomOpenItem].self, from: customOpenItemsData)) ?? []
+    private func loadCustomItems() -> [CustomGamesWOD] {
+        guard !customGamesItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomGamesWOD].self, from: customGamesItemsData)) ?? []
     }
 
-    private func saveCustomItems(_ list: [CustomOpenItem]) {
-        customOpenItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+    private func saveCustomItems(_ list: [CustomGamesWOD]) {
+        customGamesItemsData = (try? JSONEncoder().encode(list)) ?? Data()
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
 }
 
-// MARK: - Persistência (JSON em Data)
-private extension StudentOpenPersonalRecordsView {
+private extension CrossfitGamesPersonalRecordsView {
 
     func loadMap() -> [String: String] {
-        guard !openValuesData.isEmpty else { return [:] }
+        guard !crossfitGamesValuesData.isEmpty else { return [:] }
         do {
-            return try JSONDecoder().decode([String: String].self, from: openValuesData)
+            return try JSONDecoder().decode([String: String].self, from: crossfitGamesValuesData)
         } catch {
             return [:]
         }
@@ -1494,9 +1345,9 @@ private extension StudentOpenPersonalRecordsView {
 
     func saveMap(_ map: [String: String]) {
         do {
-            openValuesData = try JSONEncoder().encode(map)
+            crossfitGamesValuesData = try JSONEncoder().encode(map)
         } catch {
-            openValuesData = Data()
+            crossfitGamesValuesData = Data()
         }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
@@ -1504,13 +1355,35 @@ private extension StudentOpenPersonalRecordsView {
 
 
     private func loadHistoryMap() -> [String: [PRHistoryEntry]] {
-        guard !openHistoryData.isEmpty else { return [:] }
-        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: openHistoryData) } catch { return [:] }
+        guard !crossfitGamesHistoryData.isEmpty else { return [:] }
+        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: crossfitGamesHistoryData) } catch { return [:] }
     }
 
     private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
-        do { openHistoryData = try JSONEncoder().encode(map) } catch { openHistoryData = Data() }
+        do { crossfitGamesHistoryData = try JSONEncoder().encode(map) } catch { crossfitGamesHistoryData = Data() }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+    private func saveRecords(
+        values: [String: String],
+        history: [String: [PRHistoryEntry]],
+        deletedHistoryEntryID: String? = nil
+    ) {
+        do {
+            crossfitGamesValuesData = try JSONEncoder().encode(values)
+            crossfitGamesHistoryData = try JSONEncoder().encode(history)
+        } catch {
+            crossfitGamesValuesData = Data()
+            crossfitGamesHistoryData = Data()
+        }
+        if let deletedHistoryEntryID {
+            PersonalRecordsSyncService.shared.didDeleteHistoryEntry(
+                id: deletedHistoryEntryID,
+                historyKey: "student_pr_crossfit_games_history_v1"
+            )
+        } else {
+            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+        }
     }
 
     private func historyEntries(for key: String) -> [PRHistoryEntry] {

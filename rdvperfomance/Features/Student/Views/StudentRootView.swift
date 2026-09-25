@@ -201,31 +201,37 @@ struct StudentRootView: View {
         switch route {
 
         case .studentPersonalRecordsBarbell:
-            StudentBarbellPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            BarbellPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsGymnastic:
-            StudentGymnasticPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            GymnasticPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsEndurance:
-            StudentEndurancePersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            EndurancePersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsNotables:
-            StudentNotablesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            NotablesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsGirls:
-            StudentGirlsPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            GirlsPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsOpen:
-            StudentOpenPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            OpenPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsHeroes:
-            StudentHeroesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            HeroesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsCampeonatos:
-            StudentCampeonatosPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            CampeonatosPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentPersonalRecordsCrossfitGames:
-            StudentCrossfitGamesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+            CrossfitGamesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
+
+        case .studentVideos:
+            TeacherImportVideosView(
+                path: $recordsPath,
+                context: .student(studentId: studentId)
+            )
 
         default:
             EmptyView()

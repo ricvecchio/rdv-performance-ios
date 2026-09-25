@@ -34,6 +34,11 @@ struct StudentDashboardNextFitContentOption: Identifiable {
     var id: StudentDashboardNextFitSelection { selection }
 }
 
+struct StudentDashboardAgendaCancellationConfirmation: Equatable {
+    let agendaId: Int
+    let question: String
+}
+
 struct StudentDashboardDayGroup: Identifiable {
     let weekId: String
     let weekTitle: String
@@ -88,6 +93,7 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var nextFitAgendaDetailError: String?
     @Published private(set) var processingAgendaIds: Set<Int> = []
     @Published private(set) var agendaActionErrors: [Int: String] = [:]
+    @Published private(set) var agendaCancellationConfirmation: StudentDashboardAgendaCancellationConfirmation?
     @Published private(set) var isAuthenticatingNextFit = false
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
@@ -98,7 +104,7 @@ final class StudentDashboardViewModel: ObservableObject {
     private let nextFitService: NextFitService
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
-    private var nextFitContractClientId: Int?
+    private var nextFitContractClientIdsByModality: [Int: Int] = [:]
 
     var nextFitWod: NextFitWodDisplay? {
         guard case let .wod(modalityId)? = selectedNextFitContent else {
@@ -115,12 +121,30 @@ final class StudentDashboardViewModel: ObservableObject {
         processingAgendaIds.contains(agendaId)
     }
 
+    func isAgendaWithdrawal(_ agendaId: Int) -> Bool {
+        if selectedNextFitAgendaDetail?.id == agendaId,
+           let statusAgendaParticipante = selectedNextFitAgendaDetail?.statusAgendaParticipante {
+            return statusAgendaParticipante == 8
+        }
+        return nextFitAgenda.first { $0.id == agendaId }?.statusAgendaParticipante == 8
+    }
+
     func canCancelAgendaCheckIn(_ agendaId: Int) -> Bool {
-        nextFitAgenda.first { $0.id == agendaId }?.canCancelCheckIn == true
+        if selectedNextFitAgendaDetail?.id == agendaId,
+           let hasCheckIn = selectedNextFitAgendaDetail?.hasCheckIn,
+           let canCancelCheckIn = selectedNextFitAgendaDetail?.canCancelCheckIn {
+            return hasCheckIn && canCancelCheckIn
+        }
+        return nextFitAgenda.first { $0.id == agendaId }?.canCancelCheckIn == true
     }
 
     func canScheduleAgendaCheckIn(_ agendaId: Int) -> Bool {
-        nextFitAgenda.first { $0.id == agendaId }?.canSchedule == true
+        if selectedNextFitAgendaDetail?.id == agendaId,
+           let hasCheckIn = selectedNextFitAgendaDetail?.hasCheckIn,
+           let canSchedule = selectedNextFitAgendaDetail?.canSchedule {
+            return !hasCheckIn && canSchedule
+        }
+        return nextFitAgenda.first { $0.id == agendaId }?.canSchedule == true
     }
 
     func agendaActionError(for agendaId: Int) -> String? {
@@ -264,7 +288,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 password: password,
                 sessionAccount: studentId
             )
-            nextFitContractClientId = nil
+            nextFitContractClientIdsByModality = [:]
             hasNextFitSession = true
             await loadNextFitWod()
             return true
@@ -316,6 +340,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     func checkInAgenda(_ agendaId: Int) async {
         guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }),
+              !isAgendaWithdrawal(agendaId),
               agenda.endDate >= Date(),
               agenda.canSchedule else {
             return
@@ -325,7 +350,10 @@ final class StudentDashboardViewModel: ObservableObject {
         defer { processingAgendaIds.remove(agendaId) }
 
         do {
-            guard let contract = try await resolveNextFitAgendaContract() else {
+            #if DEBUG
+            print("[NextFit Agenda] Iniciando agendamento. CodigoAgenda: \(agendaId)")
+            #endif
+            guard let contract = try await resolveNextFitAgendaContract(for: agendaId) else {
                 agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
                 return
             }
@@ -351,6 +379,8 @@ final class StudentDashboardViewModel: ObservableObject {
             case .missingSession, .invalidSession:
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
+            case let .agendaCheckInBusinessFailure(_, message):
+                agendaActionErrors[agendaId] = message
             default:
                 agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
             }
@@ -360,24 +390,31 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     func cancelAgendaCheckIn(_ agendaId: Int) async {
-        guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }),
-              agenda.endDate >= Date(),
-              agenda.canCancelCheckIn else {
+        guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }) else {
             return
         }
-        guard processingAgendaIds.insert(agendaId).inserted else { return }
+
+        let currentDate = Date()
+        let canCancelCheckIn = canCancelAgendaCheckIn(agendaId)
+
+        guard agenda.endDate >= currentDate else {
+            return
+        }
+        guard canCancelCheckIn else {
+            return
+        }
+        guard processingAgendaIds.insert(agendaId).inserted else {
+            return
+        }
         agendaActionErrors[agendaId] = nil
         defer { processingAgendaIds.remove(agendaId) }
 
         do {
-            try await nextFitService.cancelAgendaCheckIn(
+            let response = try await nextFitService.cancelAgendaCheckIn(
                 agendaId: agendaId,
                 sessionAccount: studentId
             )
-            await refreshNextFitAgenda(
-                afterActionFor: agendaId,
-                errorMessage: "Não foi possível cancelar o agendamento. Tente novamente."
-            )
+            await handleAgendaCancellationResponse(response, agendaId: agendaId)
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -391,6 +428,39 @@ final class StudentDashboardViewModel: ObservableObject {
         }
     }
 
+    func confirmAgendaCancellation() async {
+        guard let confirmation = agendaCancellationConfirmation else { return }
+        let agendaId = confirmation.agendaId
+        agendaCancellationConfirmation = nil
+        guard processingAgendaIds.insert(agendaId).inserted else {
+            return
+        }
+        agendaActionErrors[agendaId] = nil
+        defer { processingAgendaIds.remove(agendaId) }
+        do {
+            let response = try await nextFitService.cancelAgendaCheckIn(
+                agendaId: agendaId,
+                confirmation: true,
+                sessionAccount: studentId
+            )
+            await handleAgendaCancellationResponse(response, agendaId: agendaId)
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            }
+        } catch {
+            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+        }
+    }
+
+    func dismissAgendaCancellationConfirmation() {
+        agendaCancellationConfirmation = nil
+    }
+
     func clearNextFitAgendaDetail() {
         selectedNextFitAgendaId = nil
         selectedNextFitAgendaDetail = nil
@@ -399,7 +469,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
-        nextFitContractClientId = nil
+        nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
         processingAgendaIds = []
@@ -545,7 +615,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
-        nextFitContractClientId = nil
+        nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
         processingAgendaIds = []
@@ -578,34 +648,65 @@ final class StudentDashboardViewModel: ObservableObject {
         }
     }
 
-    private func resolveNextFitAgendaContract() async throws -> (clientId: Int, contractClientId: Int)? {
+    private func handleAgendaCancellationResponse(
+        _ response: NextFitAgendaCancelCheckInResponse,
+        agendaId: Int
+    ) async {
+        if let question = response.content?.question?
+            .trimmingCharacters(in: .whitespacesAndNewlines),
+           !question.isEmpty {
+            agendaCancellationConfirmation = StudentDashboardAgendaCancellationConfirmation(
+                agendaId: agendaId,
+                question: question
+            )
+            return
+        }
+
+        agendaActionErrors[agendaId] = nil
+        await refreshNextFitAgenda(
+            afterActionFor: agendaId,
+            errorMessage: "Não foi possível cancelar o agendamento. Tente novamente."
+        )
+    }
+
+    private func resolveNextFitAgendaContract(
+        for agendaId: Int
+    ) async throws -> (clientId: Int, contractClientId: Int)? {
         let clientId = try nextFitService.clientId(sessionAccount: studentId)
-
-        if let nextFitContractClientId {
-            return (clientId, nextFitContractClientId)
-        }
-
-        if let contractClientId = selectedNextFitAgendaDetail?.participants.first(
-            where: { $0.clientId == clientId }
-        )?.contractClientId {
-            nextFitContractClientId = contractClientId
-            return (clientId, contractClientId)
-        }
-
-        for agendaId in nextFitAgenda.filter(\.hasCheckIn).map(\.id) {
-            let detail = try await nextFitService.loadAgendaDetail(
+        let detail: NextFitAgendaDetailDisplay
+        if let selectedNextFitAgendaDetail,
+           selectedNextFitAgendaDetail.id == agendaId {
+            detail = selectedNextFitAgendaDetail
+        } else {
+            detail = try await nextFitService.loadAgendaDetail(
                 agendaId: agendaId,
                 sessionAccount: studentId
             )
-            if let contractClientId = detail.participants.first(
-                where: { $0.clientId == clientId }
-            )?.contractClientId {
-                nextFitContractClientId = contractClientId
-                return (clientId, contractClientId)
-            }
         }
 
-        return nil
+        guard let modalityId = detail.modalityId else {
+            return nil
+        }
+
+        if let contractClientId = nextFitContractClientIdsByModality[modalityId] {
+            return (clientId, contractClientId)
+        }
+
+        let clientData = try await nextFitService.loadClientMainData(sessionAccount: studentId)
+        guard clientData.clientId == clientId else {
+            return nil
+        }
+
+        let activeContracts = clientData.contracts.filter { $0.status == 1 }
+
+        guard let contract = activeContracts.first(
+            where: { $0.modalities.contains(where: { $0.modalityId == modalityId }) }
+        ) else {
+            return nil
+        }
+
+        nextFitContractClientIdsByModality[modalityId] = contract.id
+        return (clientId, contract.id)
     }
 
     private func isMuralhaUnit(_ unitName: String?) -> Bool {

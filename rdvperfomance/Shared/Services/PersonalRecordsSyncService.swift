@@ -136,17 +136,49 @@ final class PersonalRecordsSyncService {
         }
     }
 
+    func didDeleteBarbellHistoryEntry(id: String) {
+        didDeleteHistoryEntry(
+            id: id,
+            historyKey: "student_pr_barbell_history_v1"
+        )
+    }
+
+    func didDeleteHistoryEntry(id: String, historyKey: String) {
+        let tombstones = PersonalRecordsPayloadMerger.historyEntryTombstones(
+            for: historyKey,
+            entryIDs: [id]
+        )
+        guard !tombstones.isEmpty else { return }
+
+        let uid = ownerUID
+        if isCurrentAuthenticatedOwner(uid) {
+            persistPendingTombstones(tombstones, for: uid)
+            didMutateLocalRecords()
+            return
+        }
+
+        guard uid.isEmpty,
+              let activeUID,
+              isCurrentAuthenticatedUser(activeUID)
+        else {
+            return
+        }
+
+        persistPendingTombstones(tombstones, for: activeUID)
+        didMutateLocalRecords()
+    }
+
     private func persistCurrentMutation(for uid: String) {
         let snapshot = readSnapshot()
         persistPendingSnapshot(snapshot, for: uid)
 
         let baseline = customBaseline(for: uid)
-        let deletedCustomItems = PersonalRecordsPayloadMerger.customTombstones(
+        let deletedItems = PersonalRecordsPayloadMerger.tombstones(
             from: baseline,
             to: snapshot
         )
-        if !deletedCustomItems.isEmpty {
-            persistPendingTombstones(deletedCustomItems, for: uid)
+        if !deletedItems.isEmpty {
+            persistPendingTombstones(deletedItems, for: uid)
         }
         revisions[uid, default: 0] += 1
         resetRetryState(for: uid)
@@ -223,7 +255,7 @@ final class PersonalRecordsSyncService {
 
         let revision = revisions[uid, default: 0]
         let localSnapshot = trustedLocalSnapshot(for: uid)
-        let inferredTombstones = PersonalRecordsPayloadMerger.customTombstones(
+        let inferredTombstones = PersonalRecordsPayloadMerger.tombstones(
             from: customBaseline(for: uid),
             to: localSnapshot
         )
@@ -285,7 +317,7 @@ final class PersonalRecordsSyncService {
         let pendingSnapshot = pendingSnapshots()[uid] ?? readSnapshot()
         let localTombstones = PersonalRecordsPayloadMerger.mergeTombstones(
             pendingTombstones()[uid] ?? [:],
-            PersonalRecordsPayloadMerger.customTombstones(
+            PersonalRecordsPayloadMerger.tombstones(
                 from: customBaseline(for: uid),
                 to: pendingSnapshot
             )
@@ -438,7 +470,7 @@ final class PersonalRecordsSyncService {
     private func persistCustomBaseline(from snapshot: Snapshot, for uid: String) {
         var baselines = customBaselines()
         baselines[uid] = snapshot.filter {
-            PersonalRecordsPayloadMerger.customPayloadKeys.contains($0.key)
+            PersonalRecordsPayloadMerger.tombstoneBaselinePayloadKeys.contains($0.key)
         }
 
         guard let data = try? JSONEncoder().encode(baselines) else { return }

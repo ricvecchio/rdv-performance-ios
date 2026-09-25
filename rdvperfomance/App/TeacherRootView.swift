@@ -66,47 +66,47 @@ struct TeacherRootView: View {
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsBarbell:
-            StudentBarbellPersonalRecordsView(
+            BarbellPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsGymnastic:
-            StudentGymnasticPersonalRecordsView(
+            GymnasticPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsEndurance:
-            StudentEndurancePersonalRecordsView(
+            EndurancePersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsNotables:
-            StudentNotablesPersonalRecordsView(
+            NotablesPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsGirls:
-            StudentGirlsPersonalRecordsView(
+            GirlsPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsOpen:
-            StudentOpenPersonalRecordsView(
+            OpenPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsHeroes:
-            StudentHeroesPersonalRecordsView(
+            HeroesPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsCampeonatos:
-            StudentCampeonatosPersonalRecordsView(
+            CampeonatosPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
         case .studentPersonalRecordsCrossfitGames:
-            StudentCrossfitGamesPersonalRecordsView(
+            CrossfitGamesPersonalRecordsView(
                 path: destinationPath,
                 navigationContext: .teacher(category: category)
             )
@@ -151,7 +151,10 @@ struct TeacherRootView: View {
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)
         case .teacherImportVideos(let category):
-            TeacherImportVideosView(path: destinationPath, category: category)
+            TeacherImportVideosView(
+                path: destinationPath,
+                context: .teacher(category: category)
+            )
         case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
             CreateCrossfitWODView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
         case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):

@@ -7,6 +7,7 @@ enum NextFitServiceError: LocalizedError {
     case registrationNotFound
     case muralhaRegistrationNotFound
     case invalidCredentials
+    case agendaCheckInBusinessFailure(errorCode: Int?, message: String)
     case unavailable
 
     var errorDescription: String? {
@@ -19,6 +20,8 @@ enum NextFitServiceError: LocalizedError {
             return "Não encontramos um cadastro da Muralha nesta conta NextFit."
         case .invalidCredentials:
             return "Não foi possível entrar no NextFit. Verifique seus dados."
+        case let .agendaCheckInBusinessFailure(_, message):
+            return message
         case .unavailable:
             return "Não foi possível carregar o WOD. Tente novamente."
         }
@@ -258,6 +261,7 @@ struct NextFitService {
                 let hasCheckIn = entry.fezCheckin == true
                 return NextFitAgendaDisplay(
                     id: entry.id,
+                    statusAgendaParticipante: entry.statusAgendaParticipante,
                     startDate: startDate,
                     endDate: endDate,
                     startTime: formattedTime(from: startDate),
@@ -307,18 +311,20 @@ struct NextFitService {
                 )
             )
 
-            let data = try await responseData(for: request)
-            let response = try JSONDecoder().decode(NextFitAgendaCheckInResponse.self, from: data)
-            guard response.success, (response.errorCode ?? 0) == 0 else {
-                #if DEBUG
-                print(
-                    "[NextFit Agenda] Falha no check-in. " +
-                    "Success: \(response.success), " +
-                    "ErrorCode: \(response.errorCode.map(String.init) ?? "nil"), " +
-                    "Message: \(response.message ?? "")"
+            let checkInHTTPResponse = try await checkInAgendaResponseData(for: request)
+            let response: NextFitAgendaCheckInResponse
+            do {
+                response = try JSONDecoder().decode(
+                    NextFitAgendaCheckInResponse.self,
+                    from: checkInHTTPResponse.data
                 )
-                #endif
-                throw NextFitServiceError.unavailable
+            } catch {
+                throw error
+            }
+            guard (200...299).contains(checkInHTTPResponse.statusCode),
+                  response.success,
+                  (response.errorCode ?? 0) == 0 else {
+                throw checkInAgendaBusinessError(from: response)
             }
             return response.content?.entrouNaFilaDeEspera ?? false
         } catch NextFitHTTPError.unauthorized {
@@ -331,10 +337,43 @@ struct NextFitService {
         }
     }
 
+    func loadClientMainData(
+        sessionAccount: String
+    ) async throws -> NextFitClientMainDataResponse.Content {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var request = URLRequest(
+                url: Self.baseURL.appending(path: "Cliente/RecuperarDadosPrincipais")
+            )
+            request.timeoutInterval = 20
+            applyAuthenticatedHeaders(to: &request, token: token)
+
+            let data = try await responseData(for: request)
+            let response = try JSONDecoder().decode(NextFitClientMainDataResponse.self, from: data)
+            guard response.success,
+                  (response.errorCode ?? 0) == 0,
+                  let content = response.content else {
+                throw NextFitServiceError.unavailable
+            }
+            return content
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
     func cancelAgendaCheckIn(
         agendaId: Int,
+        confirmation: Bool? = nil,
         sessionAccount: String
-    ) async throws {
+    ) async throws -> NextFitAgendaCancelCheckInResponse {
         guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
             throw NextFitServiceError.missingSession
         }
@@ -345,13 +384,19 @@ struct NextFitService {
             request.timeoutInterval = 20
             request.setValue("application/json", forHTTPHeaderField: "Content-Type")
             applyAuthenticatedHeaders(to: &request, token: token)
-            request.httpBody = try JSONEncoder().encode(AgendaCancelCheckInRequest(agendaId: agendaId))
+            request.httpBody = try JSONEncoder().encode(
+                AgendaCancelCheckInRequest(
+                    agendaId: agendaId,
+                    confirmation: confirmation
+                )
+            )
 
             let data = try await responseData(for: request)
             let response = try JSONDecoder().decode(NextFitAgendaCancelCheckInResponse.self, from: data)
             guard response.success, (response.errorCode ?? 0) == 0 else {
                 throw NextFitServiceError.unavailable
             }
+            return response
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
             throw NextFitServiceError.invalidSession
@@ -386,6 +431,11 @@ struct NextFitService {
 
             return NextFitAgendaDetailDisplay(
                 id: content.id,
+                statusAgendaParticipante: content.statusAgendaParticipante,
+                modalityId: content.codigoModalidade,
+                hasCheckIn: content.fezCheckin,
+                canSchedule: content.podeAgendar,
+                canCancelCheckIn: content.permiteCancelarCheckin,
                 dateText: formattedDate(from: startDate),
                 scheduleText: "\(formattedTime(from: startDate)) às \(formattedTime(from: endDate))",
                 capacityText: String(format: "%02d/%02d", content.qtdeAlunos, content.limiteAlunos),
@@ -539,6 +589,46 @@ struct NextFitService {
         return data
     }
 
+    private func checkInAgendaResponseData(
+        for request: URLRequest
+    ) async throws -> (data: Data, statusCode: Int) {
+        let data: Data
+        let response: URLResponse
+        do {
+            (data, response) = try await URLSession.shared.data(for: request)
+        } catch {
+            throw error
+        }
+
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw NextFitServiceError.unavailable
+        }
+
+        if httpResponse.statusCode == 401 || httpResponse.statusCode == 403 {
+            throw NextFitHTTPError.unauthorized
+        }
+        return (data, httpResponse.statusCode)
+    }
+
+    private func checkInAgendaBusinessError(
+        from response: NextFitAgendaCheckInResponse
+    ) -> NextFitServiceError {
+        let message = response.message?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !message.isEmpty {
+            return .agendaCheckInBusinessFailure(
+                errorCode: response.errorCode,
+                message: message
+            )
+        }
+        if response.errorCode == 71038 {
+            return .agendaCheckInBusinessFailure(
+                errorCode: response.errorCode,
+                message: "Você está marcado como desistente nessa aula, entre em contato com a recepção caso deseje alterar."
+            )
+        }
+        return .unavailable
+    }
+
     private func clientId(from token: String) -> Int? {
         let components = token.split(separator: ".")
         guard components.count > 1 else {
@@ -658,9 +748,11 @@ private struct AgendaCheckInRequest: Encodable {
 
 private struct AgendaCancelCheckInRequest: Encodable {
     let agendaId: Int
+    let confirmation: Bool?
 
     enum CodingKeys: String, CodingKey {
         case agendaId = "CodigoAgenda"
+        case confirmation = "Confirmacao"
     }
 }
 

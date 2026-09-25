@@ -3,14 +3,6 @@ import SwiftUI
 import PhotosUI
 import UIKit
 
-private enum ProfilePhotoProcessingError: LocalizedError {
-    case unableToProcess
-
-    var errorDescription: String? {
-        "Não foi possível processar a foto selecionada. Escolha outra imagem e tente novamente."
-    }
-}
-
 struct EditProfileView: View {
 
     @Binding var path: [AppRoute]
@@ -51,10 +43,6 @@ struct EditProfileView: View {
     private let contentMaxWidth: CGFloat = 380
 
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
-
-    private static let maxProfilePhotoBase64Bytes = 800_000
-    private static let profilePhotoDimensions: [CGFloat] = [1024, 800, 640]
-    private static let compressionQualities: [CGFloat] = [0.82, 0.72, 0.62, 0.52, 0.42]
 
     private var currentUid: String? { session.currentUid }
     private let repository: FirestoreRepository = .shared
@@ -112,7 +100,6 @@ struct EditProfileView: View {
 
                             avatarCard()
                             formCard()
-                            photoAvatarButton()
                             actionButtons()
 
                             if showError {
@@ -203,17 +190,49 @@ struct EditProfileView: View {
     private func avatarCard() -> some View {
         VStack(spacing: 12) {
 
-            ZStack {
-                avatarView()
-                    .frame(width: 112, height: 112)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+            Menu {
+                Button {
+                    showPhotoPicker = true
+                } label: {
+                    Label("Escolher foto da biblioteca", systemImage: "photo")
+                }
 
-                if isLoadingImage {
-                    ProgressView()
-                        .tint(.white.opacity(0.9))
+                Button {
+                    showAvatarPicker = true
+                } label: {
+                    Label("Escolher Avatar", systemImage: "person.crop.circle")
+                }
+
+                Button(role: .destructive) {
+                    Task { await clearPhotoOnlyAndSync() }
+                } label: {
+                    Label("Remover foto", systemImage: "trash.fill")
+                }
+            } label: {
+                ZStack {
+                    avatarView()
+                        .frame(width: 112, height: 112)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                        .overlay(alignment: .bottomTrailing) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.green)
+                                .frame(width: 28, height: 28)
+                                .background(Theme.Colors.cardBackground)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                                .offset(x: 2, y: 2)
+                        }
+
+                    if isLoadingImage {
+                        ProgressView()
+                            .tint(.white.opacity(0.9))
+                    }
                 }
             }
+            .buttonStyle(.plain)
+            .disabled(isLoadingImage)
 
             Text("Foto de Perfil")
                 .font(.system(size: 16, weight: .semibold))
@@ -289,41 +308,6 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
-    private func photoAvatarButton() -> some View {
-        Menu {
-            Button {
-                showPhotoPicker = true
-            } label: {
-                Label("Escolher foto da biblioteca", systemImage: "photo")
-            }
-            Button {
-                showAvatarPicker = true
-            } label: {
-                Label("Escolher Avatar", systemImage: "person.crop.circle")
-            }
-        } label: {
-            HStack {
-                Spacer()
-                HStack(spacing: 10) {
-                    Image(systemName: "photo.on.rectangle.angled")
-                    Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
-                }
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                Spacer()
-            }
-            .padding(.vertical, 14)
-            .background(Theme.Colors.primaryGreen.opacity(0.18))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.30), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(isLoadingImage)
-    }
-
     private func actionButtons() -> some View {
         VStack(spacing: 10) {
 
@@ -359,17 +343,6 @@ struct EditProfileView: View {
             }
             .buttonStyle(.plain)
             .disabled(!canSave)
-
-            Button {
-                Task { await clearPhotoOnlyAndSync() }
-            } label: {
-                Text("Remover foto")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .underline()
-                    .padding(.top, 2)
-            }
-            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
     }
@@ -574,20 +547,7 @@ struct EditProfileView: View {
 
         guard let previewImage else { return }
 
-        let processedPhoto = Self.makeProfilePhoto(from: previewImage)
-
-        guard let processedPhoto else {
-            throw ProfilePhotoProcessingError.unableToProcess
-        }
-
-        // Persiste exatamente a versão aprovada para o Firestore.
-        LocalProfileStore.shared.setPhotoBase64(processedPhoto.base64, userId: currentUid)
-        self.previewImage = processedPhoto.image
-
-        try await FirestoreRepository.shared.setUserPhotoBase64(
-            uid: uid,
-            photoBase64: processedPhoto.base64
-        )
+        self.previewImage = try await ProfilePhotoService.save(previewImage, userId: uid)
     }
 
     // ✅ Remove foto local + remove do Firestore
@@ -599,10 +559,8 @@ struct EditProfileView: View {
 
         previewImage = nil
         selectedItem = nil
-        LocalProfileStore.shared.clearPhoto(userId: currentUid)
-
         do {
-            try await FirestoreRepository.shared.clearUserPhotoBase64(uid: uid)
+            try await ProfilePhotoService.clear(userId: uid)
             await MainActor.run {
                 showError = false
                 errorMessage = ""
@@ -642,54 +600,6 @@ struct EditProfileView: View {
         }
     }
 
-    private static func makeProfilePhoto(from image: UIImage) -> (image: UIImage, base64: String)? {
-        for dimension in profilePhotoDimensions {
-            guard let resizedImage = normalizedAndResizedImage(image, maximumDimension: dimension) else {
-                return nil
-            }
-
-            for quality in compressionQualities {
-                guard let data = resizedImage.jpegData(compressionQuality: quality) else {
-                    continue
-                }
-
-                let base64 = data.base64EncodedString()
-                if base64.utf8.count <= maxProfilePhotoBase64Bytes {
-                    return (resizedImage, base64)
-                }
-            }
-        }
-
-        return nil
-    }
-
-    private static func normalizedAndResizedImage(
-        _ image: UIImage,
-        maximumDimension: CGFloat
-    ) -> UIImage? {
-        let sourceSize = image.size
-        guard sourceSize.width > 0, sourceSize.height > 0 else {
-            return nil
-        }
-
-        let scale = min(maximumDimension / max(sourceSize.width, sourceSize.height), 1)
-        let targetSize = CGSize(
-            width: (sourceSize.width * scale).rounded(.down),
-            height: (sourceSize.height * scale).rounded(.down)
-        )
-        guard targetSize.width > 0, targetSize.height > 0 else {
-            return nil
-        }
-
-        let format = UIGraphicsImageRendererFormat()
-        format.scale = 1
-        format.opaque = true
-
-        return UIGraphicsImageRenderer(size: targetSize, format: format).image { _ in
-            image.draw(in: CGRect(origin: .zero, size: targetSize))
-        }
-    }
-
     // Remove a última rota da pilha de navegação
     private func pop() {
         guard !path.isEmpty else { return }
@@ -705,7 +615,7 @@ struct EditProfileView: View {
         }
     }
 
-    private struct AvatarPickerView: View {
+    struct AvatarPickerView: View {
         private enum HairStyle {
             case bald
             case short

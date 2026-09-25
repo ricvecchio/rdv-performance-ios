@@ -1,8 +1,8 @@
 import SwiftUI
 import Charts
 
-// Tela do Aluno: Recorde Pessoal > Notables (lista fixa + PR em texto)
-struct StudentNotablesPersonalRecordsView: View {
+// Tela do Aluno: Recorde Pessoal > Endurance (lista fixa + PR em texto)
+struct EndurancePersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -12,26 +12,17 @@ struct StudentNotablesPersonalRecordsView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    private struct NotableMove: Identifiable, Hashable {
+    private struct EnduranceMove: Identifiable, Hashable {
         let id = UUID()
         let name: String
         let storageKey: String
     }
 
-    /// Modelo para representar o WOD que será exibido no modal.
-    private struct NotableWod: Hashable {
-        let title: String
-        let subtitle: String   // Ex: (For Time), (For Load), (Tabata)...
-        let description: String // Texto completo (multilinhas)
-    }
 
-
-    private struct CustomNotableMove: Identifiable, Hashable, Codable {
+    private struct CustomEnduranceMove: Identifiable, Hashable, Codable {
         let id: String
         let name: String
         let storageKey: String
-        let subtitle: String
-        let description: String
     }
 
     private struct PRHistoryEntry: Identifiable, Codable, Hashable {
@@ -52,310 +43,65 @@ struct StudentNotablesPersonalRecordsView: View {
     }
 
     // ✅ Dados fixos conforme solicitado
-    private let moves: [NotableMove] = [
-        .init(name: "Black Jack", storageKey: "black_jack"),
-        .init(name: "Bear Complex", storageKey: "bear_complex"),
-        .init(name: "Broomstick Mile", storageKey: "broomstick_mile"),
-        .init(name: "Circus", storageKey: "circus"),
-        .init(name: "Crossfit Total", storageKey: "crossfit_total"),
-        .init(name: "Death by Pull-Ups", storageKey: "death_by_pull_ups"),
-        .init(name: "Fat Amy", storageKey: "fat_amy"),
-        .init(name: "Fight Gone Bad", storageKey: "fight_gone_bad"),
-        .init(name: "Filthy Fifty", storageKey: "filthy_fifty"),
-        .init(name: "Hope", storageKey: "hope"),
-        .init(name: "Iron Triathlon", storageKey: "iron_triathlon"),
-        .init(name: "Jeremy", storageKey: "jeremy"),
-        .init(name: "King Kong", storageKey: "king_kong"),
-
-        // ✅ Corrigido nome (mantive storageKey igual para não perder PR salvo)
-        .init(name: "Nasty Girls", storageKey: "nasty_gilrs"),
-
-        .init(name: "Tabata Something Else", storageKey: "tabata_something_else"),
-        .init(name: "Tabata This", storageKey: "tabata_this"),
-        .init(name: "The 300", storageKey: "the_300"),
-        .init(name: "The Chief", storageKey: "the_chief")
-    ]
-
-    // ✅ “Banco” local de WODs (por storageKey)
-    private let wodsByKey: [String: NotableWod] = [
-        "black_jack": .init(
-            title: "Black Jack",
-            subtitle: "(For Time)",
-            description:
-"""
-20 Deadlifts (61/43 kg)
-20 Box Jumps (61/51 cm)
-20 Kettlebell Swings (24/16 kg)
-20 Burpees
-20 Wall Balls (9/6 kg)
-20 Push Press (43/30 kg)
-20 Double-unders
-"""
-        ),
-
-        "bear_complex": .init(
-            title: "Bear Complex",
-            subtitle: "(For Load)",
-            description:
-"""
-7 Rounds (sem soltar a barra):
-Cada round:
-- Power Clean
-- Front Squat
-- Push Press
-- Back Squat
-- Push Press
-
-Aumente a carga a cada round.
-"""
-        ),
-
-        "broomstick_mile": .init(
-            title: "Broomstick Mile",
-            subtitle: "(For Time)",
-            description:
-"""
-1 Mile Run
-Segurando um PVC / vassoura acima da cabeça o tempo todo.
-"""
-        ),
-
-        "circus": .init(
-            title: "Circus",
-            subtitle: "(3 Rounds For Time)",
-            description:
-"""
-5 Muscle-ups
-10 Front Squats (61/43 kg)
-15 Ring Dips
-20 Double-unders
-"""
-        ),
-
-        "crossfit_total": .init(
-            title: "CrossFit Total",
-            subtitle: "(For Load)",
-            description:
-"""
-1RM Back Squat
-1RM Shoulder Press
-1RM Deadlift
-
-Score = Soma dos três máximos.
-"""
-        ),
-
-        "death_by_pull_ups": .init(
-            title: "Death by Pull-Ups",
-            subtitle: "(EMOM Progressivo)",
-            description:
-"""
-Minuto 1: 1 Pull-up
-Minuto 2: 2 Pull-ups
-
-Continue adicionando 1 repetição por minuto até falhar.
-"""
-        ),
-
-        "fat_amy": .init(
-            title: "Fat Amy",
-            subtitle: "(For Time)",
-            description:
-"""
-50-40-30-20-10
-- Thrusters (43/30 kg)
-- Pull-ups
-"""
-        ),
-
-        "fight_gone_bad": .init(
-            title: "Fight Gone Bad",
-            subtitle: "(3 Rounds — 1 min por estação)",
-            description:
-"""
-Wall Ball (9/6 kg)
-Sumo Deadlift High Pull (34/25 kg)
-Box Jump (51/41 cm)
-Push Press (34/25 kg)
-Row (calorias)
-
-Descanso: 1 min entre rounds
-Score = Total de reps/calorias
-"""
-        ),
-
-        "filthy_fifty": .init(
-            title: "Filthy Fifty",
-            subtitle: "(For Time)",
-            description:
-"""
-50 Box Jumps (61/51 cm)
-50 Jumping Pull-ups
-50 Kettlebell Swings (24/16 kg)
-50 Walking Lunges
-50 Knees-to-Elbows
-50 Push Press (20/15 kg)
-50 Back Extensions
-50 Wall Balls (9/6 kg)
-50 Burpees
-50 Double-unders
-"""
-        ),
-
-        "hope": .init(
-            title: "Hope",
-            subtitle: "(3 Rounds — 1 min por estação)",
-            description:
-"""
-Burpees
-Power Snatch (34/25 kg)
-Box Jump (51/41 cm)
-Thrusters (34/25 kg)
-Chest-to-Bar Pull-ups
-
-Score = Total de reps
-(1 min descanso entre rounds)
-"""
-        ),
-
-        "iron_triathlon": .init(
-            title: "Iron Triathlon",
-            subtitle: "(For Time)",
-            description:
-"""
-20 Deadlifts (102/70 kg)
-20 Hang Power Cleans (61/43 kg)
-20 Push Jerks (61/43 kg)
-"""
-        ),
-
-        "jeremy": .init(
-            title: "Jeremy",
-            subtitle: "(For Time)",
-            description:
-"""
-21-15-9
-- Overhead Squats (43/30 kg)
-- Pull-ups
-"""
-        ),
-
-        "king_kong": .init(
-            title: "King Kong",
-            subtitle: "(For Time)",
-            description:
-"""
-3 Rounds:
-1 Deadlift (206/147 kg)
-2 Muscle-ups
-3 Squat Cleans (113/79 kg)
-4 Handstand Push-ups
-"""
-        ),
-
-        "nasty_gilrs": .init(
-            title: "Nasty Girls",
-            subtitle: "(3 Rounds For Time)",
-            description:
-"""
-50 Air Squats
-7 Muscle-ups
-10 Hang Power Cleans (61/43 kg)
-"""
-        ),
-
-        "tabata_something_else": .init(
-            title: "Tabata Something Else",
-            subtitle: "(Tabata)",
-            description:
-"""
-20s ON / 10s OFF — 8 Rounds por movimento:
-- Pull-ups
-- Push-ups
-- Sit-ups
-- Air Squats
-
-Score = Menor número de reps em qualquer intervalo.
-"""
-        ),
-
-        "tabata_this": .init(
-            title: "Tabata This",
-            subtitle: "(Tabata)",
-            description:
-"""
-20s ON / 10s OFF — 8 Rounds cada:
-- Air Squats
-- Push-ups
-- Sit-ups
-- Pull-ups
-
-Score = Soma das menores séries de cada exercício.
-"""
-        ),
-
-        "the_300": .init(
-            title: "The 300",
-            subtitle: "(For Time)",
-            description:
-"""
-25 Pull-ups
-50 Deadlifts (61/43 kg)
-50 Push-ups
-50 Box Jumps (61/51 cm)
-50 Floor Wipers (61/43 kg)
-50 Kettlebell Swings (24/16 kg)
-25 Pull-ups
-"""
-        ),
-
-        "the_chief": .init(
-            title: "The Chief",
-            subtitle: "(5 Rounds — AMRAP 3 min)",
-            description:
-"""
-Em cada round (3 min):
-3 Power Cleans (61/43 kg)
-6 Push-ups
-9 Air Squats
-
-Descanso: 1 min entre rounds.
-"""
-        )
+    private let moves: [EnduranceMove] = [
+        .init(name: "Air Bike (100 Cal)", storageKey: "air_bike_100_cal"),
+        .init(name: "Air Bike (50 Cal)", storageKey: "air_bike_50_cal"),
+        .init(name: "Air Bike (Máx Cal 1)", storageKey: "air_bike_max_cal_1"),
+        .init(name: "Row 1 km", storageKey: "row_1_km"),
+        .init(name: "Row 10 km", storageKey: "row_10_km"),
+        .init(name: "Row 100m", storageKey: "row_100_m"),
+        .init(name: "Row 2 km", storageKey: "row_2_km"),
+        .init(name: "Row 21 km", storageKey: "row_21_km"),
+        .init(name: "Row 5 km", storageKey: "row_5_km"),
+        .init(name: "Row 500m", storageKey: "row_500_m"),
+        .init(name: "Run 1.200m", storageKey: "run_1200_m"),
+        .init(name: "Run 10 km", storageKey: "run_10_km"),
+        .init(name: "Run 100m", storageKey: "run_100_m"),
+        .init(name: "Run 15 km", storageKey: "run_15_km"),
+        .init(name: "Run 1600m", storageKey: "run_1600_m"),
+        .init(name: "Run 1km", storageKey: "run_1_km"),
+        .init(name: "Run 2 km", storageKey: "run_2_km"),
+        .init(name: "Run 200m", storageKey: "run_200_m"),
+        .init(name: "Run 300m", storageKey: "run_300_m"),
+        .init(name: "Run 400m", storageKey: "run_400_m"),
+        .init(name: "Run 5 km", storageKey: "run_5_km"),
+        .init(name: "Run 500m", storageKey: "run_500_m"),
+        .init(name: "Run 700m", storageKey: "run_700_m"),
+        .init(name: "Run 800m", storageKey: "run_800_m")
     ]
 
     // Persistência simples (UserDefaults via AppStorage)
-    @AppStorage("student_pr_notables_values_v1")
-    private var notablesValuesData: Data = Data()
+    @AppStorage("student_pr_endurance_values_v1")
+    private var enduranceValuesData: Data = Data()
 
-    @AppStorage("student_pr_notables_history_v1")
-    private var notablesHistoryData: Data = Data()
+    @AppStorage("student_pr_endurance_history_v1")
+    private var enduranceHistoryData: Data = Data()
 
-    @AppStorage("student_pr_notables_custom_items_v1")
-    private var customNotablesItemsData: Data = Data()
+    @AppStorage("student_pr_endurance_custom_items_v1")
+    private var customEnduranceItemsData: Data = Data()
 
-    @State private var selectedMove: NotableMove?
+    @State private var selectedMove: EnduranceMove?
     @State private var inputValue: String = ""
-    @State private var historyMove: NotableMove?
+    @State private var historyMove: EnduranceMove?
     @State private var selectedPRDate: Date = Date()
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+    @State private var historyEntryPendingDeletion: PRHistoryEntry? = nil
+    @State private var showHistoryEntryDeletionAlert: Bool = false
 
     @State private var showAddItemSheet: Bool = false
     @State private var newItemName: String = ""
-    @State private var newItemSubtitle: String = ""
-    @State private var newItemDescription: String = ""
     @State private var newItemValue: String = ""
     @State private var addItemErrorMessage: String? = nil
     @State private var showDeleteAlert: Bool = false
 
-    private var allMoves: [NotableMove] {
-        moves + loadCustomItems().map { NotableMove(name: $0.name, storageKey: $0.storageKey) }
+    private var allMoves: [EnduranceMove] {
+        moves + loadCustomItems().map { EnduranceMove(name: $0.name, storageKey: $0.storageKey) }
     }
 
     private var canDeleteSelectedItem: Bool {
-        selectedMove?.storageKey.hasPrefix("custom_notables_") == true
+        selectedMove?.storageKey.hasPrefix("custom_endurance_") == true
     }
 
     var body: some View {
@@ -388,8 +134,6 @@ Descanso: 1 min entre rounds.
                                 Button {
                                     addItemErrorMessage = nil
                                     newItemName = ""
-                                    newItemSubtitle = ""
-                                    newItemDescription = ""
                                     newItemValue = ""
                                     showAddItemSheet = true
                                 } label: {
@@ -398,7 +142,7 @@ Descanso: 1 min entre rounds.
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo benchmark")
+                                .accessibilityLabel("Adicionar novo item")
                             }
 
                             tableContainer()
@@ -449,7 +193,7 @@ Descanso: 1 min entre rounds.
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Notables")
+                Text("Endurance")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -508,7 +252,7 @@ Descanso: 1 min entre rounds.
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Benchmark")
+            Text("Item")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -522,17 +266,18 @@ Descanso: 1 min entre rounds.
         .padding(.vertical, 12)
     }
 
-    private func tableRow(move: NotableMove) -> some View {
-        let displayValue = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move))
+    private func tableRow(move: EnduranceMove) -> some View {
+        let displayValue = bestDisplayValue(for: move.storageKey, metadata: move.name)
 
         return Button {
-            inputValue = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move)) ?? ""
+            inputValue = ""
             selectedPRDate = Date()
+            resetExistingPREditing()
             selectedMove = move
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "bolt.fill")
+                Image(systemName: "figure.run")
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 15))
                     .frame(width: 26)
@@ -570,14 +315,12 @@ Descanso: 1 min entre rounds.
     }
 
     // MARK: - Sheet (editar PR)
-    private func editSheet(move: NotableMove) -> some View {
-        let wod: NotableWod? = wod(for: move.storageKey)
-
-        return ZStack {
+    private func editSheet(move: EnduranceMove) -> some View {
+        ZStack {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: 14) {
 
                 Capsule()
                     .fill(Color.white.opacity(0.18))
@@ -589,86 +332,61 @@ Descanso: 1 min entre rounds.
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 14) {
-                    Text("Informe seu melhor resultado. Para remover, deixe vazio.")
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.60))
-                        .multilineTextAlignment(.center)
-                        .padding(.horizontal, 16)
-
-                    if let wod {
-                        wodCard(wod)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 2)
-                            .layoutPriority(1)
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Resultado:")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
-
-                            Spacer()
-
-                            if let value = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move)), !value.isEmpty {
-                                Button {
-                                    beginEditingExistingPR(for: move)
-                                } label: {
-                                    Label("Editar valor", systemImage: "pencil")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.green.opacity(0.90))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
-
-                        TextField("Ex: 7:32 ou 210 reps ou 450 pts", text: $inputValue)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                    }
+                Text("Informe seu melhor resultado. Para remover, deixe vazio.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.60))
+                    .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
-                    .padding(.top, 4)
 
-                    dateAndHistorySection(key: move.storageKey, metadata: metadata(for: move), historyAction: {
-                        historyMove = move
-                    })
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .sheet(item: $historyMove) { selected in
-                        historySheet(title: selected.name, key: selected.storageKey)
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Resultado:")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
                     }
-                    .sheet(isPresented: $showPRDatePicker) {
-                        ZStack {
-                            Theme.Colors.headerBackground.ignoresSafeArea()
-                            VStack(spacing: 16) {
-                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
-                                    .datePickerStyle(.graphical)
-                                    .environment(\.locale, Locale(identifier: "pt_BR"))
-                                Button { showPRDatePicker = false } label: {
-                                    Text("Confirmar")
-                                        .frame(maxWidth: .infinity)
-                                        .primaryGreenActionButton()
-                                }
-                                .buttonStyle(.plain)
+
+                    TextField("Ex: 3:45 ou 120 ou 10:32", text: $inputValue)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+
+                dateAndHistorySection(key: move.storageKey, metadata: move.name, historyAction: {
+                    historyMove = move
+                })
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .sheet(item: $historyMove) { selected in
+                    historySheet(title: selected.name, key: selected.storageKey, metadata: selected.name)
+                }
+                .sheet(isPresented: $showPRDatePicker) {
+                    ZStack {
+                        Theme.Colors.headerBackground.ignoresSafeArea()
+                        VStack(spacing: 16) {
+                            DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                .datePickerStyle(.graphical)
+                                .environment(\.locale, Locale(identifier: "pt_BR"))
+                            Button { showPRDatePicker = false } label: {
+                                Text("Confirmar")
+                                    .frame(maxWidth: .infinity)
+                                    .primaryGreenActionButton()
                             }
-                            .padding(16)
+                            .buttonStyle(.plain)
                         }
-                        .presentationDetents([.medium])
+                        .padding(16)
                     }
-
-                    }
+                    .presentationDetents([.medium])
                 }
 
                 HStack(spacing: 12) {
@@ -692,15 +410,11 @@ Descanso: 1 min entre rounds.
                     .buttonStyle(.plain)
 
                     Button {
-                        if isEditingExistingPR {
-                            saveExistingPREdit()
-                        } else {
-                            saveCurrentInput(move: move)
-                        }
+                        saveCurrentInput()
                         resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
+                        Text("Salvar")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -718,88 +432,33 @@ Descanso: 1 min entre rounds.
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir benchmark")
+                        .accessibilityLabel("Excluir item")
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-                .padding(.bottom, 16)
+
+                Spacer()
             }
         }
-        .presentationDetents([.fraction(0.80)])
+        .presentationDetents([.fraction(0.75)])
         .alert("Excluir registro", isPresented: $showDeleteAlert) {
             Button("Cancelar", role: .cancel) { }
             Button("Excluir", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedMove?.name ?? "este benchmark")?")
+            Text("Deseja excluir o registro de \(selectedMove?.name ?? "este item")?")
         }
         .onAppear {
-            inputValue = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move)) ?? ""
+            inputValue = ""
             selectedPRDate = Date()
+            resetExistingPREditing()
         }
     }
 
-    /// Card visual do WOD dentro do modal
-    private func wodCard(_ wod: NotableWod) -> some View {
-        VStack(alignment: .leading, spacing: 10) {
-
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Image(systemName: "list.bullet.rectangle")
-                    .foregroundColor(.green.opacity(0.90))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("WOD")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white.opacity(0.60))
-
-                    Text("\(wod.title) \(wod.subtitle)")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-                }
-
-                Spacer()
-            }
-
-            ScrollView {
-                Text(wod.description)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.78))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 2)
-            }
-            .frame(height: 140)
-        }
-        .padding(14)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
-
-    private func wod(for key: String) -> NotableWod? {
-        if let wod = wodsByKey[key] { return wod }
-        guard let custom = loadCustomItems().first(where: { $0.storageKey == key }) else { return nil }
-        return NotableWod(title: custom.name, subtitle: custom.subtitle, description: custom.description)
-    }
-
-    private func metadata(for move: NotableMove) -> String {
-        if let wod = wodsByKey[move.storageKey] {
-            return wod.subtitle
-        }
-        guard let custom = loadCustomItems().first(where: { $0.storageKey == move.storageKey }) else {
-            return ""
-        }
-        return "\(custom.subtitle) \(custom.description)"
-    }
-
-    private func beginEditingExistingPR(for move: NotableMove) {
-        let metadata = metadata(for: move)
+    private func beginEditingExistingPR(for move: EnduranceMove) {
+        let metadata = move.name
         guard let value = bestDisplayValue(for: move.storageKey, metadata: metadata) else { return }
 
         inputValue = value
@@ -822,7 +481,7 @@ Descanso: 1 min entre rounds.
         guard !trimmed.isEmpty else { return }
 
         let key = move.storageKey
-        let metadata = metadata(for: move)
+        let metadata = move.name
         var history = loadHistoryMap()
         var primaryCandidates: [String]
 
@@ -884,13 +543,13 @@ Descanso: 1 min entre rounds.
         return best.0
     }
 
-    private func saveCurrentInput(move: NotableMove) {
+    private func saveCurrentInput() {
+        guard let move = selectedMove else { return }
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            removeValue(for: move.storageKey)
             return
         }
-        let metadata = metadata(for: move)
+        let metadata = move.name
         let shouldSave = shouldUpdatePrimary(trimmed, key: move.storageKey, metadata: metadata)
         saveHistoryValue(trimmed, for: move.storageKey, date: selectedPRDate)
         if shouldSave {
@@ -902,6 +561,10 @@ Descanso: 1 min entre rounds.
     @ViewBuilder
     private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
+            Text("Data")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
             Button {
                 showPRDatePicker = true
             } label: {
@@ -942,8 +605,9 @@ Descanso: 1 min entre rounds.
         }
     }
 
-    private func historySheet(title: String, key: String) -> some View {
+    private func historySheet(title: String, key: String, metadata: String) -> some View {
         let entries = historyEntries(for: key)
+        let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
         return ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
@@ -963,10 +627,24 @@ Descanso: 1 min entre rounds.
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
+                                    if entry.id == recordID {
+                                        Text("RECORDE")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.45))
+                                    Button {
+                                        historyEntryPendingDeletion = entry
+                                        showHistoryEntryDeletionAlert = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.85))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Excluir registro")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -986,6 +664,36 @@ Descanso: 1 min entre rounds.
             }
         }
         .presentationDetents([.large])
+        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("Excluir", role: .destructive) {
+                if let entry = historyEntryPendingDeletion {
+                    deleteHistoryEntry(entry, for: key, metadata: metadata)
+                }
+                historyEntryPendingDeletion = nil
+            }
+        } message: {
+            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+        }
+    }
+
+    private func deleteHistoryEntry(_ entry: PRHistoryEntry, for key: String, metadata: String) {
+        var history = loadHistoryMap()
+        var entries = history[key, default: []]
+        entries.removeAll { $0.id == entry.id }
+        if entries.isEmpty {
+            history.removeValue(forKey: key)
+        } else {
+            history[key] = entries
+        }
+
+        var values = loadMap()
+        if let primary = bestValue(from: entries.map(\.value), metadata: metadata) {
+            values[key] = primary
+        } else {
+            values.removeValue(forKey: key)
+        }
+        saveRecords(values: values, history: history, deletedHistoryEntryID: entry.id)
     }
 
     @ViewBuilder
@@ -1029,6 +737,9 @@ Descanso: 1 min entre rounds.
     private func metricComparison(for metadata: String) -> PRMetricComparison? {
         let normalized = metadata.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current).lowercased()
         if normalized.contains("for time") || normalized.contains("para tempo") || normalized.contains("por tempo") || normalized.contains("30 reps for time") {
+            return .time
+        }
+        if !normalized.contains("max cal") {
             return .time
         }
         if normalized.contains("max reps") || normalized.contains("max height") || normalized.contains("max distance") || normalized.contains("1 rep max") || normalized.contains("1rm") || normalized.contains("max hold") || normalized.contains("amrap") || normalized.contains("for load") || normalized.contains("max") || normalized.contains("reps") || normalized.contains("score") || normalized.contains("load") {
@@ -1101,25 +812,21 @@ Descanso: 1 min entre rounds.
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Novo benchmark")
+                    Text("Novo item de Endurance")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie um benchmark e, se quiser, já informe seu resultado inicial.")
+                    Text("Crie um item e, se quiser, já informe seu resultado inicial.")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                    addItemField("Nome do benchmark", placeholder: "Ex: Meu benchmark", text: $newItemName)
+                    addItemField("Nome do item", placeholder: "Ex: Corrida 3 km", text: $newItemName)
 
-                    addItemField("Formato (opcional)", placeholder: "Ex: For Time", text: $newItemSubtitle)
-
-                    addItemField("Descrição (opcional)", placeholder: "Ex: 3 rounds", text: $newItemDescription)
-
-                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 150 pts", text: $newItemValue)
+                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 500", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
@@ -1188,34 +895,34 @@ Descanso: 1 min entre rounds.
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do benchmark."
+            addItemErrorMessage = "Informe o nome do item."
             return
         }
 
         let existingNames = allMoves.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este benchmark já existe na sua lista."
+            addItemErrorMessage = "Este item já existe na sua lista."
             return
         }
 
         let id = UUID().uuidString
-        let key = "custom_notables_\(id)"
-        let customItem = CustomNotableMove(id: id, name: cleanName, storageKey: key, subtitle: newItemSubtitle.trimmingCharacters(in: .whitespacesAndNewlines), description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        let key = "custom_endurance_\(id)"
+        let customItem = CustomEnduranceMove(id: id, name: cleanName, storageKey: key)
         var list = loadCustomItems()
         list.append(customItem)
         saveCustomItems(list)
 
-        let item = NotableMove(name: customItem.name, storageKey: customItem.storageKey)
+        let item = EnduranceMove(name: customItem.name, storageKey: customItem.storageKey)
         let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedValue.isEmpty {
-            inputValue = trimmedValue
-            saveCurrentInput(move: item)
+            saveValue(trimmedValue, for: key)
+            saveHistoryValue(trimmedValue, for: key, date: Date())
         }
         showAddItemSheet = false
     }
 
     private func deleteSelectedItem() {
-        guard let item = selectedMove, item.storageKey.hasPrefix("custom_notables_") else { return }
+        guard let item = selectedMove, item.storageKey.hasPrefix("custom_endurance_") else { return }
         removeValue(for: item.storageKey)
         removeHistory(for: item.storageKey)
         var list = loadCustomItems()
@@ -1224,25 +931,25 @@ Descanso: 1 min entre rounds.
         selectedMove = nil
     }
 
-    private func loadCustomItems() -> [CustomNotableMove] {
-        guard !customNotablesItemsData.isEmpty else { return [] }
-        return (try? JSONDecoder().decode([CustomNotableMove].self, from: customNotablesItemsData)) ?? []
+    private func loadCustomItems() -> [CustomEnduranceMove] {
+        guard !customEnduranceItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomEnduranceMove].self, from: customEnduranceItemsData)) ?? []
     }
 
-    private func saveCustomItems(_ list: [CustomNotableMove]) {
-        customNotablesItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+    private func saveCustomItems(_ list: [CustomEnduranceMove]) {
+        customEnduranceItemsData = (try? JSONEncoder().encode(list)) ?? Data()
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
 }
 
 // MARK: - Persistência (JSON em Data)
-private extension StudentNotablesPersonalRecordsView {
+private extension EndurancePersonalRecordsView {
 
     func loadMap() -> [String: String] {
-        guard !notablesValuesData.isEmpty else { return [:] }
+        guard !enduranceValuesData.isEmpty else { return [:] }
         do {
-            return try JSONDecoder().decode([String: String].self, from: notablesValuesData)
+            return try JSONDecoder().decode([String: String].self, from: enduranceValuesData)
         } catch {
             return [:]
         }
@@ -1250,9 +957,9 @@ private extension StudentNotablesPersonalRecordsView {
 
     func saveMap(_ map: [String: String]) {
         do {
-            notablesValuesData = try JSONEncoder().encode(map)
+            enduranceValuesData = try JSONEncoder().encode(map)
         } catch {
-            notablesValuesData = Data()
+            enduranceValuesData = Data()
         }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
@@ -1260,13 +967,35 @@ private extension StudentNotablesPersonalRecordsView {
 
 
     private func loadHistoryMap() -> [String: [PRHistoryEntry]] {
-        guard !notablesHistoryData.isEmpty else { return [:] }
-        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: notablesHistoryData) } catch { return [:] }
+        guard !enduranceHistoryData.isEmpty else { return [:] }
+        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: enduranceHistoryData) } catch { return [:] }
     }
 
     private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
-        do { notablesHistoryData = try JSONEncoder().encode(map) } catch { notablesHistoryData = Data() }
+        do { enduranceHistoryData = try JSONEncoder().encode(map) } catch { enduranceHistoryData = Data() }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+    private func saveRecords(
+        values: [String: String],
+        history: [String: [PRHistoryEntry]],
+        deletedHistoryEntryID: String? = nil
+    ) {
+        do {
+            enduranceValuesData = try JSONEncoder().encode(values)
+            enduranceHistoryData = try JSONEncoder().encode(history)
+        } catch {
+            enduranceValuesData = Data()
+            enduranceHistoryData = Data()
+        }
+        if let deletedHistoryEntryID {
+            PersonalRecordsSyncService.shared.didDeleteHistoryEntry(
+                id: deletedHistoryEntryID,
+                historyKey: "student_pr_endurance_history_v1"
+            )
+        } else {
+            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+        }
     }
 
     private func historyEntries(for key: String) -> [PRHistoryEntry] {

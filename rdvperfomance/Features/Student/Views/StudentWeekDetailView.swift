@@ -523,6 +523,11 @@ struct StudentWeekDetailView: View {
                     }
 
                     Spacer()
+
+                    if !isStudentViewing {
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.white.opacity(0.35))
+                    }
                 }
                 .contentShape(Rectangle())
             }
@@ -548,9 +553,6 @@ struct StudentWeekDetailView: View {
                 }
                 .buttonStyle(.plain)
                 .padding(.trailing, 6)
-            } else {
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
             }
         }
         .padding(.horizontal, 16)

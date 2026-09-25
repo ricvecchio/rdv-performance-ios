@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 // Tela do Aluno: Recorde Pessoal > Barbell (lista fixa de movimentos + carga máxima)
-struct StudentBarbellPersonalRecordsView: View {
+struct BarbellPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -103,6 +103,8 @@ struct StudentBarbellPersonalRecordsView: View {
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+    @State private var historyEntryPendingDeletion: BarbellPRHistoryEntry?
+    @State private var showHistoryEntryDeletionAlert: Bool = false
 
     // ✅ NOVO: adicionar movimento
     @State private var showAddMoveSheet: Bool = false
@@ -297,7 +299,7 @@ struct StudentBarbellPersonalRecordsView: View {
         let displayValue = storedKgValue.map { convertFromStorageKgToPreferredUnit($0) }
 
         return Button {
-            inputValue = displayValue.map { formatNumber($0) } ?? ""
+            inputValue = ""
             selectedPRDate = Date()
             resetExistingPREditing()
             selectedMove = move
@@ -360,24 +362,9 @@ struct StudentBarbellPersonalRecordsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
-
-                            Spacer()
-
-                            if currentPRValueKg(for: move.storageKey) != nil {
-                                Button {
-                                    beginEditingExistingPR(for: move)
-                                } label: {
-                                    Label("Editar valor", systemImage: "pencil")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.green.opacity(0.90))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        }
+                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
 
                         HStack(spacing: 10) {
                             TextField("Ex: 90,50", text: $inputValue)
@@ -495,15 +482,11 @@ struct StudentBarbellPersonalRecordsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        if isEditingExistingPR {
-                            saveExistingPREdit()
-                        } else {
-                            saveCurrentInput()
-                        }
+                        saveCurrentInput()
                         resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
+                        Text("Salvar")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -573,7 +556,9 @@ struct StudentBarbellPersonalRecordsView: View {
 
     private func historySheet(move: BarbellMove) -> some View {
         let entries = historyEntries(for: move.storageKey)
-        let recordID = entries.max(by: { $0.valueKg < $1.valueKg })?.id
+        let recordID = currentPRValueKg(for: move.storageKey).flatMap {
+            currentPRHistoryEntry(for: move.storageKey, valueKg: $0)?.id
+        }
 
         return ZStack {
             Theme.Colors.headerBackground
@@ -633,6 +618,18 @@ struct StudentBarbellPersonalRecordsView: View {
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.45))
+
+                                    Button {
+                                        historyEntryPendingDeletion = entry
+                                        showHistoryEntryDeletionAlert = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .font(.system(size: 14, weight: .semibold))
+                                            .foregroundColor(.red.opacity(0.85))
+                                            .frame(width: 28, height: 28)
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Excluir registro")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -659,6 +656,19 @@ struct StudentBarbellPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
+        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("Cancelar", role: .cancel) {
+                historyEntryPendingDeletion = nil
+            }
+            Button("Excluir", role: .destructive) {
+                if let entry = historyEntryPendingDeletion {
+                    deleteHistoryEntry(entry, for: move.storageKey)
+                }
+                historyEntryPendingDeletion = nil
+            }
+        } message: {
+            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+        }
     }
 
     @ViewBuilder
@@ -866,7 +876,6 @@ struct StudentBarbellPersonalRecordsView: View {
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
 
         if trimmed.isEmpty {
-            removeValue(for: move.storageKey)
             return
         }
 
@@ -888,6 +897,12 @@ struct StudentBarbellPersonalRecordsView: View {
             editingHistoryEntryID = nil
         }
         isEditingExistingPR = true
+    }
+
+    private func beginNewPR() {
+        inputValue = ""
+        selectedPRDate = Date()
+        resetExistingPREditing()
     }
 
     private func saveExistingPREdit() {
@@ -917,7 +932,7 @@ struct StudentBarbellPersonalRecordsView: View {
             )
             history[key] = entries
             var values = loadMap()
-            values[key] = valueKg
+            values[key] = entries.map(\.valueKg).max()
             saveBarbellRecords(values: values, history: history)
         } else {
             var values = loadMap()
@@ -964,7 +979,7 @@ struct StudentBarbellPersonalRecordsView: View {
     }
 
     private func currentPRValueKg(for key: String) -> Double? {
-        historyEntries(for: key).last?.valueKg ?? loadValue(for: key)
+        historyEntries(for: key).map(\.valueKg).max() ?? loadValue(for: key)
     }
 
     private func currentPRHistoryEntry(for key: String, valueKg: Double) -> BarbellPRHistoryEntry? {
@@ -998,7 +1013,7 @@ struct StudentBarbellPersonalRecordsView: View {
 }
 
 // MARK: - Persistência (JSON em Data)
-private extension StudentBarbellPersonalRecordsView {
+private extension BarbellPersonalRecordsView {
 
     func loadMap() -> [String: Double] {
         guard !barbellValuesData.isEmpty else { return [:] }
@@ -1046,15 +1061,6 @@ private extension StudentBarbellPersonalRecordsView {
         var entries = map[key, default: []].sorted { $0.createdAt < $1.createdAt }
         let normalizedDate = Calendar.current.startOfDay(for: date)
 
-        if entries.contains(where: {
-            abs($0.valueKg - valueKg) < 0.000_001 &&
-            Calendar.current.isDate($0.createdAt, inSameDayAs: normalizedDate)
-        }) {
-            values[key] = valueKg
-            saveBarbellRecords(values: values, history: map)
-            return
-        }
-
         entries.append(
             BarbellPRHistoryEntry(
                 id: UUID().uuidString,
@@ -1063,8 +1069,29 @@ private extension StudentBarbellPersonalRecordsView {
             )
         )
         map[key] = entries
-        values[key] = valueKg
+        values[key] = entries.map(\.valueKg).max()
         saveBarbellRecords(values: values, history: map)
+    }
+
+    private func deleteHistoryEntry(_ entry: BarbellPRHistoryEntry, for key: String) {
+        var values = loadMap()
+        var history = loadHistoryMap()
+        var entries = history[key, default: []]
+        entries.removeAll { $0.id == entry.id }
+
+        if entries.isEmpty {
+            history.removeValue(forKey: key)
+            values.removeValue(forKey: key)
+        } else {
+            history[key] = entries
+            values[key] = entries.map(\.valueKg).max()
+        }
+
+        saveBarbellRecords(
+            values: values,
+            history: history,
+            deletedHistoryEntryID: entry.id
+        )
     }
 
     private func removeHistory(for key: String) {
@@ -1080,12 +1107,17 @@ private extension StudentBarbellPersonalRecordsView {
 
     private func saveBarbellRecords(
         values: [String: Double],
-        history: [String: [BarbellPRHistoryEntry]]
+        history: [String: [BarbellPRHistoryEntry]],
+        deletedHistoryEntryID: String? = nil
     ) {
         do {
             barbellValuesData = try JSONEncoder().encode(values)
             barbellHistoryData = try JSONEncoder().encode(history)
-            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+            if let deletedHistoryEntryID {
+                PersonalRecordsSyncService.shared.didDeleteBarbellHistoryEntry(id: deletedHistoryEntryID)
+            } else {
+                PersonalRecordsSyncService.shared.didMutateLocalRecords()
+            }
         } catch {
             #if DEBUG
             print("[BarbellPR] Falha ao preparar valores e histórico: \(error.localizedDescription)")

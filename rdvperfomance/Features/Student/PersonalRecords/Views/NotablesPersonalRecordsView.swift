@@ -1,8 +1,8 @@
 import SwiftUI
 import Charts
 
-// Tela do Aluno: Recorde Pessoal > Campeonatos (lista fixa + PR em texto)
-struct StudentCampeonatosPersonalRecordsView: View {
+// Tela do Aluno: Recorde Pessoal > Notables (lista fixa + PR em texto)
+struct NotablesPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -12,18 +12,25 @@ struct StudentCampeonatosPersonalRecordsView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    private struct CampeonatoWOD: Identifiable, Hashable {
+    private struct NotableMove: Identifiable, Hashable {
         let id = UUID()
         let name: String
         let storageKey: String
-        let descriptionLines: [String]
+    }
+
+    /// Modelo para representar o WOD que será exibido no modal.
+    private struct NotableWod: Hashable {
+        let title: String
+        let subtitle: String   // Ex: (For Time), (For Load), (Tabata)...
+        let description: String // Texto completo (multilinhas)
     }
 
 
-    private struct CustomCampeonatoWOD: Identifiable, Hashable, Codable {
+    private struct CustomNotableMove: Identifiable, Hashable, Codable {
         let id: String
         let name: String
         let storageKey: String
+        let subtitle: String
         let description: String
     }
 
@@ -45,182 +52,312 @@ struct StudentCampeonatosPersonalRecordsView: View {
     }
 
     // ✅ Dados fixos conforme solicitado
-    private let wods: [CampeonatoWOD] = [
-        .init(
-            name: "TCB : ORGULHO",
-            storageKey: "champ_tcb_orgulho",
-            descriptionLines: [
-                "3 séries de:",
-                "• 5/7 ring muscle ups",
-                "• 14 bar facing burpees",
-                "• 28 DB squats",
-                "Time cap: 9’"
-            ]
+    private let moves: [NotableMove] = [
+        .init(name: "Black Jack", storageKey: "black_jack"),
+        .init(name: "Bear Complex", storageKey: "bear_complex"),
+        .init(name: "Broomstick Mile", storageKey: "broomstick_mile"),
+        .init(name: "Circus", storageKey: "circus"),
+        .init(name: "Crossfit Total", storageKey: "crossfit_total"),
+        .init(name: "Death by Pull-Ups", storageKey: "death_by_pull_ups"),
+        .init(name: "Fat Amy", storageKey: "fat_amy"),
+        .init(name: "Fight Gone Bad", storageKey: "fight_gone_bad"),
+        .init(name: "Filthy Fifty", storageKey: "filthy_fifty"),
+        .init(name: "Hope", storageKey: "hope"),
+        .init(name: "Iron Triathlon", storageKey: "iron_triathlon"),
+        .init(name: "Jeremy", storageKey: "jeremy"),
+        .init(name: "King Kong", storageKey: "king_kong"),
+
+        // ✅ Corrigido nome (mantive storageKey igual para não perder PR salvo)
+        .init(name: "Nasty Girls", storageKey: "nasty_gilrs"),
+
+        .init(name: "Tabata Something Else", storageKey: "tabata_something_else"),
+        .init(name: "Tabata This", storageKey: "tabata_this"),
+        .init(name: "The 300", storageKey: "the_300"),
+        .init(name: "The Chief", storageKey: "the_chief")
+    ]
+
+    // ✅ “Banco” local de WODs (por storageKey)
+    private let wodsByKey: [String: NotableWod] = [
+        "black_jack": .init(
+            title: "Black Jack",
+            subtitle: "(For Time)",
+            description:
+"""
+20 Deadlifts (61/43 kg)
+20 Box Jumps (61/51 cm)
+20 Kettlebell Swings (24/16 kg)
+20 Burpees
+20 Wall Balls (9/6 kg)
+20 Push Press (43/30 kg)
+20 Double-unders
+"""
         ),
-        .init(
-            name: "TCB: CONFIANÇA",
-            storageKey: "champ_tcb_confianca",
-            descriptionLines: [
-                "4RM de thruster",
-                "Time cap: 4’"
-            ]
+
+        "bear_complex": .init(
+            title: "Bear Complex",
+            subtitle: "(For Load)",
+            description:
+"""
+7 Rounds (sem soltar a barra):
+Cada round:
+- Power Clean
+- Front Squat
+- Push Press
+- Back Squat
+- Push Press
+
+Aumente a carga a cada round.
+"""
         ),
-        .init(
-            name: "TCB: POPEYE",
-            storageKey: "champ_tcb_popeye",
-            descriptionLines: [
-                "Por tempo:",
-                "• 40 double unders",
-                "• 40 box jumps",
-                "• 40 double unders",
-                "• 30 fat bar deadlift",
-                "• 40 double unders",
-                "• 20 snatches",
-                "• 40 double unders",
-                "• 30 chest to bar",
-                "• 2/3 legless rope climb",
-                "Time cap: 11’"
-            ]
+
+        "broomstick_mile": .init(
+            title: "Broomstick Mile",
+            subtitle: "(For Time)",
+            description:
+"""
+1 Mile Run
+Segurando um PVC / vassoura acima da cabeça o tempo todo.
+"""
         ),
-        .init(
-            name: "TCB: MÃOS AO ALTO",
-            storageKey: "champ_tcb_maos_ao_alto",
-            descriptionLines: [
-                "Por tempo:",
-                "• Buy-in: 50 wall balls",
-                "• 3 séries de: 15 cleans, 10 shoulder to overhead, 5 overhead squats",
-                "• Buy-out: 50 wall balls",
-                "Time cap: 13’"
-            ]
+
+        "circus": .init(
+            title: "Circus",
+            subtitle: "(3 Rounds For Time)",
+            description:
+"""
+5 Muscle-ups
+10 Front Squats (61/43 kg)
+15 Ring Dips
+20 Double-unders
+"""
         ),
-        .init(
-            name: "TCB: VAI OU RACHA",
-            storageKey: "champ_tcb_vai_ou_racha",
-            descriptionLines: [
-                "Por tempo:",
-                "• 7/10 bar muscle ups",
-                "• 15/20 strict HSPU",
-                "• 30 toes to bar",
-                "• 50 pistols",
-                "• (reverso dos movimentos)",
-                "Time cap: 10’"
-            ]
+
+        "crossfit_total": .init(
+            title: "CrossFit Total",
+            subtitle: "(For Load)",
+            description:
+"""
+1RM Back Squat
+1RM Shoulder Press
+1RM Deadlift
+
+Score = Soma dos três máximos.
+"""
         ),
-        .init(
-            name: "Copa Sur: Chipper 22",
-            storageKey: "champ_copasur_chipper_22",
-            descriptionLines: [
-                "For time:",
-                "• 50 wall-ball shots",
-                "• 50 chest-to-bar pull-ups",
-                "• 100 double-unders",
-                "• 50 deadlifts",
-                "Time cap: 12’"
-            ]
+
+        "death_by_pull_ups": .init(
+            title: "Death by Pull-Ups",
+            subtitle: "(EMOM Progressivo)",
+            description:
+"""
+Minuto 1: 1 Pull-up
+Minuto 2: 2 Pull-ups
+
+Continue adicionando 1 repetição por minuto até falhar.
+"""
         ),
-        .init(
-            name: "Copa Sur: Run Swim Run",
-            storageKey: "champ_copasur_run_swim_run",
-            descriptionLines: [
-                "For time: 2,000-m run – 500-m swim – 2,000-m run",
-                "Time cap: 40’"
-            ]
+
+        "fat_amy": .init(
+            title: "Fat Amy",
+            subtitle: "(For Time)",
+            description:
+"""
+50-40-30-20-10
+- Thrusters (43/30 kg)
+- Pull-ups
+"""
         ),
-        .init(
-            name: "Copa Sur: Barbell Complex",
-            storageKey: "champ_copasur_barbell_complex",
-            descriptionLines: [
-                "3 cleans + 2 front squats + 1 jerk (max load attempts)"
-            ]
+
+        "fight_gone_bad": .init(
+            title: "Fight Gone Bad",
+            subtitle: "(3 Rounds — 1 min por estação)",
+            description:
+"""
+Wall Ball (9/6 kg)
+Sumo Deadlift High Pull (34/25 kg)
+Box Jump (51/41 cm)
+Push Press (34/25 kg)
+Row (calorias)
+
+Descanso: 1 min entre rounds
+Score = Total de reps/calorias
+"""
         ),
-        .init(
-            name: "Copa Sur: 2014 Regional Event 5",
-            storageKey: "champ_copasur_2014_regional_event_5",
-            descriptionLines: [
-                "10 rounds: 1 legless rope climb, short run",
-                "Time cap: ~11’"
-            ]
+
+        "filthy_fifty": .init(
+            title: "Filthy Fifty",
+            subtitle: "(For Time)",
+            description:
+"""
+50 Box Jumps (61/51 cm)
+50 Jumping Pull-ups
+50 Kettlebell Swings (24/16 kg)
+50 Walking Lunges
+50 Knees-to-Elbows
+50 Push Press (20/15 kg)
+50 Back Extensions
+50 Wall Balls (9/6 kg)
+50 Burpees
+50 Double-unders
+"""
         ),
-        .init(
-            name: "Copa Sur: Too Many Rings",
-            storageKey: "champ_copasur_too_many_rings",
-            descriptionLines: [
-                "For time: 100 thrusters + intervals of ring muscle-ups"
-            ]
+
+        "hope": .init(
+            title: "Hope",
+            subtitle: "(3 Rounds — 1 min por estação)",
+            description:
+"""
+Burpees
+Power Snatch (34/25 kg)
+Box Jump (51/41 cm)
+Thrusters (34/25 kg)
+Chest-to-Bar Pull-ups
+
+Score = Total de reps
+(1 min descanso entre rounds)
+"""
         ),
-        .init(
-            name: "Copa Sur: Last One Standing 22",
-            storageKey: "champ_copasur_last_one_standing_22",
-            descriptionLines: [
-                "Parte I e Parte II combinadas para eliminação progressiva",
-                "Time caps específicos por parte"
-            ]
+
+        "iron_triathlon": .init(
+            title: "Iron Triathlon",
+            subtitle: "(For Time)",
+            description:
+"""
+20 Deadlifts (102/70 kg)
+20 Hang Power Cleans (61/43 kg)
+20 Push Jerks (61/43 kg)
+"""
         ),
-        .init(
-            name: "MURALHA GAMES 2026 - PROVA 1",
-            storageKey: "champ_muralha_games_2026_prova_1",
-            descriptionLines: [
-                "AMRAP 7'",
-                "• 15 THRUSTERS (115/85) (95/65) (75/45)",
-                "• 15 BJO / BJO / STEP UP",
-                "• 15 PULL UP"
-            ]
+
+        "jeremy": .init(
+            title: "Jeremy",
+            subtitle: "(For Time)",
+            description:
+"""
+21-15-9
+- Overhead Squats (43/30 kg)
+- Pull-ups
+"""
         ),
-        .init(
-            name: "MURALHA GAMES 2026 - PROVA 2",
-            storageKey: "champ_muralha_games_2026_prova_2",
-            descriptionLines: [
-                "FOR TIME - 12'",
-                "21/15/9",
-                "• CLEAN AND JERK (135/95) (115/85) (95/65)",
-                "• BMU/C2B // C2B/PULL UP // PULL UP // RING ROW"
-            ]
+
+        "king_kong": .init(
+            title: "King Kong",
+            subtitle: "(For Time)",
+            description:
+"""
+3 Rounds:
+1 Deadlift (206/147 kg)
+2 Muscle-ups
+3 Squat Cleans (113/79 kg)
+4 Handstand Push-ups
+"""
         ),
-        .init(
-            name: "MURALHA GAMES 2026 - PROVA 3",
-            storageKey: "champ_muralha_games_2026_prova_3",
-            descriptionLines: [
-                "5 ROUNDS FOR TIME",
-                "TIME CAP: 20'",
-                "• 12 SNATCH (115/85)",
-                "• 15 HSPU",
-                "• 20 BOB SINCRO",
-                "• 60 DOUBLE UNDER"
-            ]
+
+        "nasty_gilrs": .init(
+            title: "Nasty Girls",
+            subtitle: "(3 Rounds For Time)",
+            description:
+"""
+50 Air Squats
+7 Muscle-ups
+10 Hang Power Cleans (61/43 kg)
+"""
+        ),
+
+        "tabata_something_else": .init(
+            title: "Tabata Something Else",
+            subtitle: "(Tabata)",
+            description:
+"""
+20s ON / 10s OFF — 8 Rounds por movimento:
+- Pull-ups
+- Push-ups
+- Sit-ups
+- Air Squats
+
+Score = Menor número de reps em qualquer intervalo.
+"""
+        ),
+
+        "tabata_this": .init(
+            title: "Tabata This",
+            subtitle: "(Tabata)",
+            description:
+"""
+20s ON / 10s OFF — 8 Rounds cada:
+- Air Squats
+- Push-ups
+- Sit-ups
+- Pull-ups
+
+Score = Soma das menores séries de cada exercício.
+"""
+        ),
+
+        "the_300": .init(
+            title: "The 300",
+            subtitle: "(For Time)",
+            description:
+"""
+25 Pull-ups
+50 Deadlifts (61/43 kg)
+50 Push-ups
+50 Box Jumps (61/51 cm)
+50 Floor Wipers (61/43 kg)
+50 Kettlebell Swings (24/16 kg)
+25 Pull-ups
+"""
+        ),
+
+        "the_chief": .init(
+            title: "The Chief",
+            subtitle: "(5 Rounds — AMRAP 3 min)",
+            description:
+"""
+Em cada round (3 min):
+3 Power Cleans (61/43 kg)
+6 Push-ups
+9 Air Squats
+
+Descanso: 1 min entre rounds.
+"""
         )
     ]
 
-    // Persistência simples (UserDefaults via AppStorage) — armazenando PR como texto (ex: 12:34)
-    @AppStorage("student_pr_campeonatos_values_v1")
-    private var campeonatosValuesData: Data = Data()
+    // Persistência simples (UserDefaults via AppStorage)
+    @AppStorage("student_pr_notables_values_v1")
+    private var notablesValuesData: Data = Data()
 
-    @AppStorage("student_pr_campeonatos_history_v1")
-    private var campeonatosHistoryData: Data = Data()
+    @AppStorage("student_pr_notables_history_v1")
+    private var notablesHistoryData: Data = Data()
 
-    @AppStorage("student_pr_campeonatos_custom_items_v1")
-    private var customCampeonatosItemsData: Data = Data()
+    @AppStorage("student_pr_notables_custom_items_v1")
+    private var customNotablesItemsData: Data = Data()
 
-    @State private var selectedWod: CampeonatoWOD? = nil
+    @State private var selectedMove: NotableMove?
     @State private var inputValue: String = ""
-    @State private var historyWod: CampeonatoWOD?
+    @State private var historyMove: NotableMove?
     @State private var selectedPRDate: Date = Date()
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+    @State private var historyEntryPendingDeletion: PRHistoryEntry? = nil
+    @State private var showHistoryEntryDeletionAlert: Bool = false
 
     @State private var showAddItemSheet: Bool = false
     @State private var newItemName: String = ""
+    @State private var newItemSubtitle: String = ""
     @State private var newItemDescription: String = ""
     @State private var newItemValue: String = ""
     @State private var addItemErrorMessage: String? = nil
     @State private var showDeleteAlert: Bool = false
 
-    private var allWods: [CampeonatoWOD] {
-        wods + loadCustomItems().map { CampeonatoWOD(name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty }) }
+    private var allMoves: [NotableMove] {
+        moves + loadCustomItems().map { NotableMove(name: $0.name, storageKey: $0.storageKey) }
     }
 
     private var canDeleteSelectedItem: Bool {
-        selectedWod?.storageKey.hasPrefix("custom_campeonatos_") == true
+        selectedMove?.storageKey.hasPrefix("custom_notables_") == true
     }
 
     var body: some View {
@@ -244,7 +381,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor resultado por prova.")
+                                Text("Adicione seu melhor resultado por item.")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.55))
 
@@ -253,6 +390,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
                                 Button {
                                     addItemErrorMessage = nil
                                     newItemName = ""
+                                    newItemSubtitle = ""
                                     newItemDescription = ""
                                     newItemValue = ""
                                     showAddItemSheet = true
@@ -262,7 +400,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo prova")
+                                .accessibilityLabel("Adicionar novo benchmark")
                             }
 
                             tableContainer()
@@ -293,7 +431,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: (selectedWod != nil || historyWod != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
+        .blur(radius: (selectedMove != nil || historyMove != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -313,7 +451,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Campeonatos")
+                Text("Notables")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -324,10 +462,10 @@ struct StudentCampeonatosPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(item: $selectedWod, onDismiss: {
+        .sheet(item: $selectedMove, onDismiss: {
             resetExistingPREditing()
-        }) { wod in
-            editSheet(for: wod)
+        }) { move in
+            editSheet(move: move)
         }
         .sheet(isPresented: $showAddItemSheet) {
             addItemSheet()
@@ -344,11 +482,11 @@ struct StudentCampeonatosPersonalRecordsView: View {
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
 
-            let list = allWods
+            let list = allMoves
 
-            ForEach(Array(list.enumerated()), id: \.element.id) { index, wod in
+            ForEach(Array(list.enumerated()), id: \.element.id) { index, move in
 
-                tableRow(wod: wod)
+                tableRow(move: move)
 
                 if index != list.count - 1 {
                     Rectangle()
@@ -372,13 +510,13 @@ struct StudentCampeonatosPersonalRecordsView: View {
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Prova")
+            Text("Benchmark")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("Resultado:")
+            Text("PR")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -386,20 +524,23 @@ struct StudentCampeonatosPersonalRecordsView: View {
         .padding(.vertical, 12)
     }
 
-    private func tableRow(wod: CampeonatoWOD) -> some View {
-        let stored = bestDisplayValue(for: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "))
+    private func tableRow(move: NotableMove) -> some View {
+        let displayValue = bestDisplayValue(for: move.storageKey, metadata: metadata(for: move))
 
         return Button {
-            selectedWod = wod
+            inputValue = ""
+            selectedPRDate = Date()
+            resetExistingPREditing()
+            selectedMove = move
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "trophy.fill")
+                Image(systemName: "bolt.fill")
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 15))
                     .frame(width: 26)
 
-                Text(wod.name)
+                Text(move.name)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -407,10 +548,12 @@ struct StudentCampeonatosPersonalRecordsView: View {
 
                 Spacer()
 
-                if let stored, !stored.isEmpty {
-                    Text(stored)
+                if let displayValue, !displayValue.isEmpty {
+                    Text(displayValue)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
                         .font(.system(size: 14, weight: .bold))
@@ -430,8 +573,10 @@ struct StudentCampeonatosPersonalRecordsView: View {
     }
 
     // MARK: - Sheet (editar PR)
-    private func editSheet(for wod: CampeonatoWOD) -> some View {
-        ZStack {
+    private func editSheet(move: NotableMove) -> some View {
+        let wod: NotableWod? = wod(for: move.storageKey)
+
+        return ZStack {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
@@ -442,15 +587,20 @@ struct StudentCampeonatosPersonalRecordsView: View {
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text(wod.name)
+                Text(move.name)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
-                    // ✅ Bloco do WOD no mesmo padrão do Notables (card + ícone)
-                    if !wod.descriptionLines.isEmpty {
+                    Text("Informe seu melhor resultado. Para remover, deixe vazio.")
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    if let wod {
                         wodCard(wod)
                             .padding(.horizontal, 16)
                             .padding(.top, 2)
@@ -459,26 +609,12 @@ struct StudentCampeonatosPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("PR (tempo)")
+                            Text("Resultado:")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
-
-                            Spacer()
-
-                            if let value = bestDisplayValue(for: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " ")), !value.isEmpty {
-                                Button {
-                                    beginEditingExistingPR(for: wod)
-                                } label: {
-                                    Label("Editar valor", systemImage: "pencil")
-                                        .font(.system(size: 13, weight: .semibold))
-                                        .foregroundColor(.green.opacity(0.90))
-                                }
-                                .buttonStyle(.plain)
-                            }
                         }
 
-                        TextField("Ex: 12:34", text: $inputValue)
-                            .keyboardType(.numbersAndPunctuation)
+                        TextField("Ex: 7:32 ou 210 reps ou 450 pts", text: $inputValue)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -495,13 +631,13 @@ struct StudentCampeonatosPersonalRecordsView: View {
                     .padding(.horizontal, 16)
                     .padding(.top, 4)
 
-                    dateAndHistorySection(key: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "), historyAction: {
-                        historyWod = wod
+                    dateAndHistorySection(key: move.storageKey, metadata: metadata(for: move), historyAction: {
+                        historyMove = move
                     })
                     .padding(.horizontal, 16)
                     .padding(.top, 8)
-                    .sheet(item: $historyWod) { selected in
-                        historySheet(title: selected.name, key: selected.storageKey)
+                    .sheet(item: $historyMove) { selected in
+                        historySheet(title: selected.name, key: selected.storageKey, metadata: metadata(for: selected))
                     }
                     .sheet(isPresented: $showPRDatePicker) {
                         ZStack {
@@ -529,7 +665,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
 
                     Button {
                         resetExistingPREditing()
-                        selectedWod = nil
+                        selectedMove = nil
                     } label: {
                         Text("Cancelar")
                             .font(.system(size: 15, weight: .bold))
@@ -546,15 +682,11 @@ struct StudentCampeonatosPersonalRecordsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        if isEditingExistingPR {
-                            saveExistingPREdit()
-                        } else {
-                            saveCurrentInput(for: wod)
-                        }
+                        saveCurrentInput(move: move)
                         resetExistingPREditing()
-                        selectedWod = nil
+                        selectedMove = nil
                     } label: {
-                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
+                        Text("Salvar")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -572,7 +704,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir prova")
+                        .accessibilityLabel("Excluir benchmark")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -587,19 +719,18 @@ struct StudentCampeonatosPersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedWod?.name ?? "este prova")?")
+            Text("Deseja excluir o registro de \(selectedMove?.name ?? "este benchmark")?")
         }
         .onAppear {
-            inputValue = bestDisplayValue(for: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " ")) ?? ""
+            inputValue = ""
             selectedPRDate = Date()
+            resetExistingPREditing()
         }
     }
 
-    /// Card visual do WOD dentro do modal (mesmo padrão do Notables)
-    private func wodCard(_ wod: CampeonatoWOD) -> some View {
-        let description = wod.descriptionLines.joined(separator: "\n")
-
-        return VStack(alignment: .leading, spacing: 10) {
+    /// Card visual do WOD dentro do modal
+    private func wodCard(_ wod: NotableWod) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "list.bullet.rectangle")
@@ -610,7 +741,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
-                    Text(wod.name)
+                    Text("\(wod.title) \(wod.subtitle)")
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
@@ -621,7 +752,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
             }
 
             ScrollView {
-                Text(description)
+                Text(wod.description)
                     .font(.system(size: 13, weight: .semibold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -638,12 +769,28 @@ struct StudentCampeonatosPersonalRecordsView: View {
         )
     }
 
-    private func beginEditingExistingPR(for wod: CampeonatoWOD) {
-        let metadata = wod.descriptionLines.joined(separator: " ")
-        guard let value = bestDisplayValue(for: wod.storageKey, metadata: metadata) else { return }
+    private func wod(for key: String) -> NotableWod? {
+        if let wod = wodsByKey[key] { return wod }
+        guard let custom = loadCustomItems().first(where: { $0.storageKey == key }) else { return nil }
+        return NotableWod(title: custom.name, subtitle: custom.subtitle, description: custom.description)
+    }
+
+    private func metadata(for move: NotableMove) -> String {
+        if let wod = wodsByKey[move.storageKey] {
+            return wod.subtitle
+        }
+        guard let custom = loadCustomItems().first(where: { $0.storageKey == move.storageKey }) else {
+            return ""
+        }
+        return "\(custom.subtitle) \(custom.description)"
+    }
+
+    private func beginEditingExistingPR(for move: NotableMove) {
+        let metadata = metadata(for: move)
+        guard let value = bestDisplayValue(for: move.storageKey, metadata: metadata) else { return }
 
         inputValue = value
-        if let entry = currentPRHistoryEntry(for: wod.storageKey, metadata: metadata),
+        if let entry = currentPRHistoryEntry(for: move.storageKey, metadata: metadata),
            let entryValue = numericValue(entry.value, metadata: metadata),
            let bestValue = numericValue(value, metadata: metadata),
            abs(entryValue - bestValue) < 0.000_001 {
@@ -656,13 +803,13 @@ struct StudentCampeonatosPersonalRecordsView: View {
     }
 
     private func saveExistingPREdit() {
-        guard let wod = selectedWod else { return }
+        guard let move = selectedMove else { return }
 
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        let key = wod.storageKey
-        let metadata = wod.descriptionLines.joined(separator: " ")
+        let key = move.storageKey
+        let metadata = metadata(for: move)
         var history = loadHistoryMap()
         var primaryCandidates: [String]
 
@@ -724,17 +871,16 @@ struct StudentCampeonatosPersonalRecordsView: View {
         return best.0
     }
 
-    private func saveCurrentInput(for wod: CampeonatoWOD) {
+    private func saveCurrentInput(move: NotableMove) {
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
-            removeValue(for: wod.storageKey)
             return
         }
-        let metadata = wod.descriptionLines.joined(separator: " ")
-        let shouldSave = shouldUpdatePrimary(trimmed, key: wod.storageKey, metadata: metadata)
-        saveHistoryValue(trimmed, for: wod.storageKey, date: selectedPRDate)
+        let metadata = metadata(for: move)
+        let shouldSave = shouldUpdatePrimary(trimmed, key: move.storageKey, metadata: metadata)
+        saveHistoryValue(trimmed, for: move.storageKey, date: selectedPRDate)
         if shouldSave {
-            saveValue(trimmed, for: wod.storageKey)
+            saveValue(trimmed, for: move.storageKey)
         }
     }
 
@@ -782,8 +928,9 @@ struct StudentCampeonatosPersonalRecordsView: View {
         }
     }
 
-    private func historySheet(title: String, key: String) -> some View {
+    private func historySheet(title: String, key: String, metadata: String) -> some View {
         let entries = historyEntries(for: key)
+        let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
         return ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
@@ -803,10 +950,24 @@ struct StudentCampeonatosPersonalRecordsView: View {
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
+                                    if entry.id == recordID {
+                                        Text("RECORDE")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.45))
+                                    Button {
+                                        historyEntryPendingDeletion = entry
+                                        showHistoryEntryDeletionAlert = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.85))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Excluir registro")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -826,6 +987,36 @@ struct StudentCampeonatosPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
+        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("Excluir", role: .destructive) {
+                if let entry = historyEntryPendingDeletion {
+                    deleteHistoryEntry(entry, for: key, metadata: metadata)
+                }
+                historyEntryPendingDeletion = nil
+            }
+        } message: {
+            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+        }
+    }
+
+    private func deleteHistoryEntry(_ entry: PRHistoryEntry, for key: String, metadata: String) {
+        var history = loadHistoryMap()
+        var entries = history[key, default: []]
+        entries.removeAll { $0.id == entry.id }
+        if entries.isEmpty {
+            history.removeValue(forKey: key)
+        } else {
+            history[key] = entries
+        }
+
+        var values = loadMap()
+        if let primary = bestValue(from: entries.map(\.value), metadata: metadata) {
+            values[key] = primary
+        } else {
+            values.removeValue(forKey: key)
+        }
+        saveRecords(values: values, history: history, deletedHistoryEntryID: entry.id)
     }
 
     @ViewBuilder
@@ -871,7 +1062,7 @@ struct StudentCampeonatosPersonalRecordsView: View {
         if normalized.contains("for time") || normalized.contains("para tempo") || normalized.contains("por tempo") || normalized.contains("30 reps for time") {
             return .time
         }
-        if normalized.contains("max reps") || normalized.contains("max height") || normalized.contains("max distance") || normalized.contains("1 rep max") || normalized.contains("1rm") || normalized.contains("4rm") || normalized.contains("max hold") || normalized.contains("amrap") || normalized.contains("for load") || normalized.contains("max") || normalized.contains("reps") || normalized.contains("score") || normalized.contains("load") {
+        if normalized.contains("max reps") || normalized.contains("max height") || normalized.contains("max distance") || normalized.contains("1 rep max") || normalized.contains("1rm") || normalized.contains("max hold") || normalized.contains("amrap") || normalized.contains("for load") || normalized.contains("max") || normalized.contains("reps") || normalized.contains("score") || normalized.contains("load") {
             return .higher
         }
         return nil
@@ -941,23 +1132,25 @@ struct StudentCampeonatosPersonalRecordsView: View {
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Nova prova de Campeonato")
+                    Text("Novo benchmark")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie um prova e, se quiser, já informe seu resultado inicial.")
+                    Text("Crie um benchmark e, se quiser, já informe seu resultado inicial.")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                    addItemField("Nome da prova", placeholder: "Ex: Prova 1", text: $newItemName)
+                    addItemField("Nome do benchmark", placeholder: "Ex: Meu benchmark", text: $newItemName)
 
-                    addItemField("Descrição (opcional)", placeholder: "Ex: For Time — 3 rounds", text: $newItemDescription)
+                    addItemField("Formato (opcional)", placeholder: "Ex: For Time", text: $newItemSubtitle)
 
-                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34", text: $newItemValue)
+                    addItemField("Descrição (opcional)", placeholder: "Ex: 3 rounds", text: $newItemDescription)
+
+                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 150 pts", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
@@ -1026,61 +1219,61 @@ struct StudentCampeonatosPersonalRecordsView: View {
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do prova."
+            addItemErrorMessage = "Informe o nome do benchmark."
             return
         }
 
-        let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        let existingNames = allMoves.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este prova já existe na sua lista."
+            addItemErrorMessage = "Este benchmark já existe na sua lista."
             return
         }
 
         let id = UUID().uuidString
-        let key = "custom_campeonatos_\(id)"
-        let customItem = CustomCampeonatoWOD(id: id, name: cleanName, storageKey: key, description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        let key = "custom_notables_\(id)"
+        let customItem = CustomNotableMove(id: id, name: cleanName, storageKey: key, subtitle: newItemSubtitle.trimmingCharacters(in: .whitespacesAndNewlines), description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
         var list = loadCustomItems()
         list.append(customItem)
         saveCustomItems(list)
 
-        let item = CampeonatoWOD(name: customItem.name, storageKey: customItem.storageKey, descriptionLines: customItem.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
+        let item = NotableMove(name: customItem.name, storageKey: customItem.storageKey)
         let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedValue.isEmpty {
             inputValue = trimmedValue
-            saveCurrentInput(for: item)
+            saveCurrentInput(move: item)
         }
         showAddItemSheet = false
     }
 
     private func deleteSelectedItem() {
-        guard let item = selectedWod, item.storageKey.hasPrefix("custom_campeonatos_") else { return }
+        guard let item = selectedMove, item.storageKey.hasPrefix("custom_notables_") else { return }
         removeValue(for: item.storageKey)
         removeHistory(for: item.storageKey)
         var list = loadCustomItems()
         list.removeAll { $0.storageKey == item.storageKey }
         saveCustomItems(list)
-        selectedWod = nil
+        selectedMove = nil
     }
 
-    private func loadCustomItems() -> [CustomCampeonatoWOD] {
-        guard !customCampeonatosItemsData.isEmpty else { return [] }
-        return (try? JSONDecoder().decode([CustomCampeonatoWOD].self, from: customCampeonatosItemsData)) ?? []
+    private func loadCustomItems() -> [CustomNotableMove] {
+        guard !customNotablesItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomNotableMove].self, from: customNotablesItemsData)) ?? []
     }
 
-    private func saveCustomItems(_ list: [CustomCampeonatoWOD]) {
-        customCampeonatosItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+    private func saveCustomItems(_ list: [CustomNotableMove]) {
+        customNotablesItemsData = (try? JSONEncoder().encode(list)) ?? Data()
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
 }
 
-// MARK: - Persistência (JSON em Data) — [String: String]
-private extension StudentCampeonatosPersonalRecordsView {
+// MARK: - Persistência (JSON em Data)
+private extension NotablesPersonalRecordsView {
 
     func loadMap() -> [String: String] {
-        guard !campeonatosValuesData.isEmpty else { return [:] }
+        guard !notablesValuesData.isEmpty else { return [:] }
         do {
-            return try JSONDecoder().decode([String: String].self, from: campeonatosValuesData)
+            return try JSONDecoder().decode([String: String].self, from: notablesValuesData)
         } catch {
             return [:]
         }
@@ -1088,9 +1281,9 @@ private extension StudentCampeonatosPersonalRecordsView {
 
     func saveMap(_ map: [String: String]) {
         do {
-            campeonatosValuesData = try JSONEncoder().encode(map)
+            notablesValuesData = try JSONEncoder().encode(map)
         } catch {
-            campeonatosValuesData = Data()
+            notablesValuesData = Data()
         }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
@@ -1098,13 +1291,35 @@ private extension StudentCampeonatosPersonalRecordsView {
 
 
     private func loadHistoryMap() -> [String: [PRHistoryEntry]] {
-        guard !campeonatosHistoryData.isEmpty else { return [:] }
-        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: campeonatosHistoryData) } catch { return [:] }
+        guard !notablesHistoryData.isEmpty else { return [:] }
+        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: notablesHistoryData) } catch { return [:] }
     }
 
     private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
-        do { campeonatosHistoryData = try JSONEncoder().encode(map) } catch { campeonatosHistoryData = Data() }
+        do { notablesHistoryData = try JSONEncoder().encode(map) } catch { notablesHistoryData = Data() }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+    private func saveRecords(
+        values: [String: String],
+        history: [String: [PRHistoryEntry]],
+        deletedHistoryEntryID: String? = nil
+    ) {
+        do {
+            notablesValuesData = try JSONEncoder().encode(values)
+            notablesHistoryData = try JSONEncoder().encode(history)
+        } catch {
+            notablesValuesData = Data()
+            notablesHistoryData = Data()
+        }
+        if let deletedHistoryEntryID {
+            PersonalRecordsSyncService.shared.didDeleteHistoryEntry(
+                id: deletedHistoryEntryID,
+                historyKey: "student_pr_notables_history_v1"
+            )
+        } else {
+            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+        }
     }
 
     private func historyEntries(for key: String) -> [PRHistoryEntry] {

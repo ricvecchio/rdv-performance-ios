@@ -142,6 +142,10 @@ struct StudentPersonalRecordsView: View {
                                         }
                                     }
                                 }
+
+                                actionRow(title: "Meus Vídeos", icon: "video.fill") {
+                                    path.append(.studentVideos)
+                                }
                             }
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
