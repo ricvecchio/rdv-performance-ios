@@ -859,7 +859,9 @@ struct ProfileView: View {
                     path.append(.studentTeachers(studentEmail: studentEmail))
                 }
 
-            } else {
+            }
+
+            if session.isAdmin {
                 divider()
                 optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
                     showMeusIconesModal = true
