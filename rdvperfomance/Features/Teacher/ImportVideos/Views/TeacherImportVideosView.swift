@@ -401,7 +401,13 @@ struct TeacherImportVideosView: View {
                 }
                 videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
             case .student(let studentId):
-                videos = try await TeacherYoutubeVideosRepository.loadStudentVideos(studentId: studentId)
+                guard let authenticatedStudentId = validatedStudentId(studentId) else {
+                    videos = []
+                    return
+                }
+                videos = try await TeacherYoutubeVideosRepository.loadStudentVideos(
+                    studentId: authenticatedStudentId
+                )
             }
         } catch {
             videos = []
@@ -429,8 +435,11 @@ struct TeacherImportVideosView: View {
                     videoCategory: videoCategory
                 )
             case .student(let studentId):
+                guard let authenticatedStudentId = validatedStudentId(studentId) else {
+                    return
+                }
                 try await TeacherYoutubeVideosRepository.addStudentVideo(
-                    studentId: studentId,
+                    studentId: authenticatedStudentId,
                     title: title,
                     url: url,
                     videoCategory: videoCategory
@@ -460,8 +469,11 @@ struct TeacherImportVideosView: View {
                     videoId: videoId
                 )
             case .student(let studentId):
+                guard let authenticatedStudentId = validatedStudentId(studentId) else {
+                    return
+                }
                 try await TeacherYoutubeVideosRepository.deleteStudentVideo(
-                    studentId: studentId,
+                    studentId: authenticatedStudentId,
                     videoId: videoId
                 )
             }
@@ -470,21 +482,45 @@ struct TeacherImportVideosView: View {
             errorMessage = mapImportPermissionError(error)
         }
     }
+
+    private func validatedStudentId(_ studentId: String) -> String? {
+        let expectedStudentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let authenticatedStudentId = (Auth.auth().currentUser?.uid ?? "")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !expectedStudentId.isEmpty,
+              expectedStudentId == authenticatedStudentId
+        else {
+            errorMessage = "Não foi possível validar sua autenticação para acessar seus vídeos."
+            return nil
+        }
+
+        return authenticatedStudentId
+    }
     
     private func mapImportPermissionError(_ error: Error) -> String {
         let ns = error as NSError
         
         if ns.domain == FirestoreErrorDomain,
            ns.code == FirestoreErrorCode.permissionDenied.rawValue {
-            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            return permissionErrorMessage
         }
         
         let msg = error.localizedDescription
         if msg.contains("Missing or insufficient permissions") {
-            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            return permissionErrorMessage
         }
         
         return msg
+    }
+
+    private var permissionErrorMessage: String {
+        switch context {
+        case .teacher:
+            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+        case .student:
+            return "Sem permissão para acessar seus vídeos. Verifique sua autenticação e tente novamente."
+        }
     }
     
     private func pop() {

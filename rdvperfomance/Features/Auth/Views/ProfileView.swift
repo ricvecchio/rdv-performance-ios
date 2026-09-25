@@ -62,11 +62,8 @@ struct ProfileView: View {
     @State private var showMeusIconesModal: Bool = false
     @State private var copiedIconName: String? = nil
     @State private var selectedPhotoItem: PhotosPickerItem? = nil
-    @State private var showPhotoActionsSheet: Bool = false
     @State private var showPhotoPicker: Bool = false
     @State private var showAvatarPicker: Bool = false
-    @State private var openPhotoPickerAfterSheetDismissal: Bool = false
-    @State private var openAvatarPickerAfterSheetDismissal: Bool = false
 
     @State private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
     @State private var draftWeightUnitRawState: String = WeightUnit.kg.rawValue
@@ -81,7 +78,7 @@ struct ProfileView: View {
     private let preferredWeightUnitKey: String = "preferredWeightUnit"
 
     private var shouldBlurBackground: Bool {
-        showWeightUnitSheet || showPhotoActionsSheet || showAvatarPicker
+        showWeightUnitSheet || showAvatarPicker
     }
 
     private let treinoIcons = [
@@ -316,21 +313,6 @@ struct ProfileView: View {
         }
         .sheet(isPresented: $showMeusIconesModal) {
             meusIconesModal()
-        }
-        .sheet(
-            isPresented: $showPhotoActionsSheet,
-            onDismiss: {
-                if openPhotoPickerAfterSheetDismissal {
-                    openPhotoPickerAfterSheetDismissal = false
-                    showPhotoPicker = true
-                } else if openAvatarPickerAfterSheetDismissal {
-                    openAvatarPickerAfterSheetDismissal = false
-                    showAvatarPicker = true
-                }
-            }
-        ) {
-            photoActionsSheet()
-                .presentationDetents([.height(290)])
         }
         .photosPicker(
             isPresented: $showPhotoPicker,
@@ -864,102 +846,42 @@ struct ProfileView: View {
         }
     }
 
-    private func photoActionsSheet() -> some View {
-        ZStack {
-            Theme.Colors.headerBackground
-                .ignoresSafeArea()
-
-            VStack(spacing: 14) {
-                Text("Foto de Perfil")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
-
-                VStack(spacing: 0) {
-                    Button {
-                        selectedPhotoItem = nil
-                        openPhotoPickerAfterSheetDismissal = true
-                        showPhotoActionsSheet = false
-                    } label: {
-                        photoActionRow(
-                            title: "Escolher foto",
-                            icon: "photo.fill",
-                            color: .green.opacity(0.85)
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    Divider()
-                        .background(Theme.Colors.divider)
-                        .padding(.leading, 56)
-
-                    Button {
-                        openAvatarPickerAfterSheetDismissal = true
-                        showPhotoActionsSheet = false
-                    } label: {
-                        photoActionRow(
-                            title: "Escolher Avatar",
-                            icon: "person.crop.circle",
-                            color: .green.opacity(0.85)
-                        )
-                    }
-                    .buttonStyle(.plain)
-
-                    Divider()
-                        .background(Theme.Colors.divider)
-                        .padding(.leading, 56)
-
-                    Button {
-                        showPhotoActionsSheet = false
-                        Task { await removePhoto() }
-                    } label: {
-                        photoActionRow(
-                            title: "Remover foto",
-                            icon: "trash.fill",
-                            color: .red.opacity(0.85)
-                        )
-                    }
-                    .buttonStyle(.plain)
-                }
-                .background(Theme.Colors.cardBackground)
-                .cornerRadius(14)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                )
-            }
-            .padding(.horizontal, 16)
-            .padding(.bottom, 16)
-        }
-    }
-
-    private func photoActionRow(title: String, icon: String, color: Color) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 18))
-                .foregroundColor(color)
-                .frame(width: 28)
-
-            Text(title)
-                .font(.system(size: 18, weight: .medium))
-                .foregroundColor(.white.opacity(0.92))
-
-            Spacer()
-        }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .contentShape(Rectangle())
-    }
-
-
     private func profileCard() -> some View {
         VStack(spacing: 10) {
 
-            Button {
-                showPhotoActionsSheet = true
+            Menu {
+                Button {
+                    selectedPhotoItem = nil
+                    showPhotoPicker = true
+                } label: {
+                    Label("Escolher foto", systemImage: "photo.fill")
+                }
+
+                Button {
+                    showAvatarPicker = true
+                } label: {
+                    Label("Escolher Avatar", systemImage: "person.crop.circle")
+                }
+
+                Button(role: .destructive) {
+                    Task { await removePhoto() }
+                } label: {
+                    Label("Remover foto", systemImage: "trash.fill")
+                }
             } label: {
                 HeaderAvatarView(size: 92, isNavigationEnabled: false)
                     .clipShape(Circle())
                     .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                    .overlay(alignment: .bottomTrailing) {
+                        Image(systemName: "camera.fill")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.green)
+                            .frame(width: 28, height: 28)
+                            .background(Theme.Colors.cardBackground)
+                            .clipShape(Circle())
+                            .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                            .offset(x: 2, y: 2)
+                    }
             }
             .buttonStyle(.plain)
 

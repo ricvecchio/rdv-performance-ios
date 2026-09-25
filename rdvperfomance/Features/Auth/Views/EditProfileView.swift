@@ -100,7 +100,6 @@ struct EditProfileView: View {
 
                             avatarCard()
                             formCard()
-                            photoAvatarButton()
                             actionButtons()
 
                             if showError {
@@ -191,17 +190,49 @@ struct EditProfileView: View {
     private func avatarCard() -> some View {
         VStack(spacing: 12) {
 
-            ZStack {
-                avatarView()
-                    .frame(width: 112, height: 112)
-                    .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+            Menu {
+                Button {
+                    showPhotoPicker = true
+                } label: {
+                    Label("Escolher foto da biblioteca", systemImage: "photo")
+                }
 
-                if isLoadingImage {
-                    ProgressView()
-                        .tint(.white.opacity(0.9))
+                Button {
+                    showAvatarPicker = true
+                } label: {
+                    Label("Escolher Avatar", systemImage: "person.crop.circle")
+                }
+
+                Button(role: .destructive) {
+                    Task { await clearPhotoOnlyAndSync() }
+                } label: {
+                    Label("Remover foto", systemImage: "trash.fill")
+                }
+            } label: {
+                ZStack {
+                    avatarView()
+                        .frame(width: 112, height: 112)
+                        .clipShape(Circle())
+                        .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                        .overlay(alignment: .bottomTrailing) {
+                            Image(systemName: "camera.fill")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.green)
+                                .frame(width: 28, height: 28)
+                                .background(Theme.Colors.cardBackground)
+                                .clipShape(Circle())
+                                .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                                .offset(x: 2, y: 2)
+                        }
+
+                    if isLoadingImage {
+                        ProgressView()
+                            .tint(.white.opacity(0.9))
+                    }
                 }
             }
+            .buttonStyle(.plain)
+            .disabled(isLoadingImage)
 
             Text("Foto de Perfil")
                 .font(.system(size: 16, weight: .semibold))
@@ -277,41 +308,6 @@ struct EditProfileView: View {
         .cornerRadius(14)
     }
 
-    private func photoAvatarButton() -> some View {
-        Menu {
-            Button {
-                showPhotoPicker = true
-            } label: {
-                Label("Escolher foto da biblioteca", systemImage: "photo")
-            }
-            Button {
-                showAvatarPicker = true
-            } label: {
-                Label("Escolher Avatar", systemImage: "person.crop.circle")
-            }
-        } label: {
-            HStack {
-                Spacer()
-                HStack(spacing: 10) {
-                    Image(systemName: "photo.on.rectangle.angled")
-                    Text(isLoadingImage ? "Carregando..." : "Adicionar foto ou Avatar")
-                }
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                Spacer()
-            }
-            .padding(.vertical, 14)
-            .background(Theme.Colors.primaryGreen.opacity(0.18))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.30), lineWidth: 1)
-            )
-        }
-        .buttonStyle(.plain)
-        .disabled(isLoadingImage)
-    }
-
     private func actionButtons() -> some View {
         VStack(spacing: 10) {
 
@@ -347,17 +343,6 @@ struct EditProfileView: View {
             }
             .buttonStyle(.plain)
             .disabled(!canSave)
-
-            Button {
-                Task { await clearPhotoOnlyAndSync() }
-            } label: {
-                Text("Remover foto")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .underline()
-                    .padding(.top, 2)
-            }
-            .buttonStyle(.plain)
         }
         .frame(maxWidth: .infinity)
     }
