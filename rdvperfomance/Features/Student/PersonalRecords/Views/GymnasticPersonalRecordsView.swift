@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 // Tela do Aluno: Recorde Pessoal > Gymnastic (lista fixa + registros)
-struct StudentGymnasticPersonalRecordsView: View {
+struct GymnasticPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -1020,7 +1020,7 @@ struct StudentGymnasticPersonalRecordsView: View {
 }
 
 // MARK: - Persistência (JSON em Data)
-private extension StudentGymnasticPersonalRecordsView {
+private extension GymnasticPersonalRecordsView {
 
     func loadMap() -> [String: String] {
         guard !gymValuesData.isEmpty else { return [:] }

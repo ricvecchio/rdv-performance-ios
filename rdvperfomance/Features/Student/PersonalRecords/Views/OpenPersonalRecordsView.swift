@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 // Tela do Aluno: Recorde Pessoal > Open (lista fixa + PR em texto)
-struct StudentOpenPersonalRecordsView: View {
+struct OpenPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -1514,7 +1514,7 @@ Bar-Facing Burpees
 }
 
 // MARK: - Persistência (JSON em Data)
-private extension StudentOpenPersonalRecordsView {
+private extension OpenPersonalRecordsView {
 
     func loadMap() -> [String: String] {
         guard !openValuesData.isEmpty else { return [:] }

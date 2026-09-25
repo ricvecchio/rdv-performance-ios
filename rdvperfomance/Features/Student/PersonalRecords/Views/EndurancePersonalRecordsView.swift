@@ -1,8 +1,8 @@
 import SwiftUI
 import Charts
 
-// Tela do Aluno: Recorde Pessoal > Crossfit Games (lista fixa por ano + PR de tempo)
-struct StudentCrossfitGamesPersonalRecordsView: View {
+// Tela do Aluno: Recorde Pessoal > Endurance (lista fixa + PR em texto)
+struct EndurancePersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -12,27 +12,17 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
-    private struct GamesWOD: Identifiable, Hashable {
+    private struct EnduranceMove: Identifiable, Hashable {
         let id = UUID()
-        let yearTitle: String
         let name: String
         let storageKey: String
-        let descriptionLines: [String]
-    }
-
-    private struct GamesSection: Identifiable, Hashable {
-        let id = UUID()
-        let title: String
-        let items: [GamesWOD]
     }
 
 
-    private struct CustomGamesWOD: Identifiable, Hashable, Codable {
+    private struct CustomEnduranceMove: Identifiable, Hashable, Codable {
         let id: String
-        let yearTitle: String
         let name: String
         let storageKey: String
-        let description: String
     }
 
     private struct PRHistoryEntry: Identifiable, Codable, Hashable {
@@ -52,304 +42,47 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         case higher
     }
 
-    private let sections: [GamesSection] = [
-        .init(
-            title: "CrossFit Games 2023 – Provas Individuais (Elite)",
-            items: [
-                .init(
-                    yearTitle: "2023",
-                    name: "Ride",
-                    storageKey: "cfg_2023_ride",
-                    descriptionLines: [
-                        "Máximo de voltas em 40 min em bicicleta de montanha."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Pig Chipper",
-                    storageKey: "cfg_2023_pig_chipper",
-                    descriptionLines: [
-                        "10 pig flips, 25 chest-to-bar pull-ups, 50 toes-to-bars, 100 wall-ball shots e reverso."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Inverted Medley",
-                    storageKey: "cfg_2023_inverted_medley",
-                    descriptionLines: [
-                        "Sequência complexa de handstand walk, handstand push-ups e passos sobre obstáculos."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "The Alpaca Redux",
-                    storageKey: "cfg_2023_alpaca_redux",
-                    descriptionLines: [
-                        "Sled push e rounds com rope climbs, kettlebell clean & jerks e sled push progressivo."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Ski-Bag",
-                    storageKey: "cfg_2023_ski_bag",
-                    descriptionLines: [
-                        "SkiErg e sandbag squats em sequência."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Helena",
-                    storageKey: "cfg_2023_helena",
-                    descriptionLines: [
-                        "3 rounds:",
-                        "• corrida 400 m",
-                        "• 12 bar muscle-ups",
-                        "• 21 dumbbell snatches"
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Cross-Country 5K",
-                    storageKey: "cfg_2023_cross_country_5k",
-                    descriptionLines: [
-                        "Corrida de 5 km para tempo."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Intervals",
-                    storageKey: "cfg_2023_intervals",
-                    descriptionLines: [
-                        "Intervalos combinados de box jump-overs, remo e burpee box jump-overs."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Olympic Total",
-                    storageKey: "cfg_2023_olympic_total",
-                    descriptionLines: [
-                        "Teste de força com 1RM Snatch e 1RM Clean & Jerk."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Muscle-Up Logs",
-                    storageKey: "cfg_2023_muscle_up_logs",
-                    descriptionLines: [
-                        "5 rounds de muscle-ups e sandbag sobre logs."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Parallel-bar Pull",
-                    storageKey: "cfg_2023_parallel_bar_pull",
-                    descriptionLines: [
-                        "8 rounds de travessia em paralelas + rope double-unders e sled pull."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2023",
-                    name: "Echo Thruster Final",
-                    storageKey: "cfg_2023_echo_thruster_final",
-                    descriptionLines: [
-                        "21-18-15 de Echo Bike calorias com thrusters e overhead walking lunges."
-                    ]
-                )
-            ]
-        ),
-        .init(
-            title: "CrossFit Games 2024 – Provas Individuais (Elite)",
-            items: [
-                .init(
-                    yearTitle: "2024",
-                    name: "Lake Day (Run + Swim)",
-                    storageKey: "cfg_2024_lake_day",
-                    descriptionLines: [
-                        "Corrida de 3.5 milhas seguida de natação 800 m antes de parte do dia ser cancelada."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Midline Climb",
-                    storageKey: "cfg_2024_midline_climb",
-                    descriptionLines: [
-                        "Prova em ginásio com deadlifts, rope climbs, ski erg e GHD sit-ups."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Firestorm",
-                    storageKey: "cfg_2024_firestorm",
-                    descriptionLines: [
-                        "Rounds de Echo-bike e burpees sobre barricada (parte da programação)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Track & Field",
-                    storageKey: "cfg_2024_track_field",
-                    descriptionLines: [
-                        "Corrida 1,600 m seguida por sprints e bag carries."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Chad",
-                    storageKey: "cfg_2024_chad",
-                    descriptionLines: [
-                        "1,000 step-ups com peso."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Clean Ladder",
-                    storageKey: "cfg_2024_clean_ladder",
-                    descriptionLines: [
-                        "Ladder de cleans em rounds progressivos."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Push Pull 2.0",
-                    storageKey: "cfg_2024_push_pull_2",
-                    descriptionLines: [
-                        "Combinação de double-unders, chest-to-bar pull-ups e máximos no Echo-bike."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Dickies Triplet",
-                    storageKey: "cfg_2024_dickies_triplet",
-                    descriptionLines: [
-                        "Sequência de run, toes-to-bars e dumbbell snatches (nome popularizado pela comunidade)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Final 2421",
-                    storageKey: "cfg_2024_final_2421",
-                    descriptionLines: [
-                        "Thrusters + chest-to-bar pull-ups + yoke carry."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2024",
-                    name: "Final 1815",
-                    storageKey: "cfg_2024_final_1815",
-                    descriptionLines: [
-                        "Outra final combinada de thrusters e bar muscle-ups (muitas vezes agrupada com o Final 2421 nos resultados)."
-                    ]
-                )
-            ]
-        ),
-        .init(
-            title: "CrossFit Games 2025 – Provas Individuais (Elite)",
-            items: [
-                .init(
-                    yearTitle: "2025",
-                    name: "Run/Row/Run",
-                    storageKey: "cfg_2025_run_row_run",
-                    descriptionLines: [
-                        "4-mile run → 3000 m row → 2-mile run (prova de resistência)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "All Crossed Up",
-                    storageKey: "cfg_2025_all_crossed_up",
-                    descriptionLines: [
-                        "Sequência de wall walks, dumbbell shoulder-to-overhead, double-under crossovers e toes-to-bars para tempo."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "Climbing Couplet",
-                    storageKey: "cfg_2025_climbing_couplet",
-                    descriptionLines: [
-                        "4-3-2-1 reps pegboard + squat clean + front squat (prova combinada de força e técnica)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "Albany Grip Trip",
-                    storageKey: "cfg_2025_albany_grip_trip",
-                    descriptionLines: [
-                        "5 rodadas de:",
-                        "• 400 m corrida",
-                        "• 12 deadlifts",
-                        "• 100 ft handstand walk",
-                        "(força, corrida e habilidades de equilíbrio)"
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "1RM Back Squat",
-                    storageKey: "cfg_2025_1rm_back_squat",
-                    descriptionLines: [
-                        "Back squat máximo de uma repetição (teste de força absoluta)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "Throttle Up",
-                    storageKey: "cfg_2025_throttle_up",
-                    descriptionLines: [
-                        "35 calorias Ski Erg → 28 chest-to-bar pull-ups → 24 burpee box jump-overs (prova para tempo)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "Hammer Down",
-                    storageKey: "cfg_2025_hammer_down",
-                    descriptionLines: [
-                        "35 calorias no Echo Bike → 28 bar muscle-ups → 24 burpee box jump-overs (segundo teste consecutivo com pouco descanso)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "Going Dark",
-                    storageKey: "cfg_2025_going_dark",
-                    descriptionLines: [
-                        "50/40 calorias no Echo Bike → 100 ft yoke carry → 30 deficit handstand push-ups → repetição (teste de resistência e força)."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "Running Isabel",
-                    storageKey: "cfg_2025_running_isabel",
-                    descriptionLines: [
-                        "5 rodadas de:",
-                        "• 200 ft corrida",
-                        "• 6 snatches (com barra)",
-                        "Para tempo."
-                    ]
-                ),
-                .init(
-                    yearTitle: "2025",
-                    name: "Atlas",
-                    storageKey: "cfg_2025_atlas",
-                    descriptionLines: [
-                        "9/15/21 thrusters",
-                        "3/5/7 rope climbs,",
-                        "seguido de 100 ft overhead walking lunge (teste combinado de força, resistência e técnica)."
-                    ]
-                )
-            ]
-        )
+    // ✅ Dados fixos conforme solicitado
+    private let moves: [EnduranceMove] = [
+        .init(name: "Air Bike (100 Cal)", storageKey: "air_bike_100_cal"),
+        .init(name: "Air Bike (50 Cal)", storageKey: "air_bike_50_cal"),
+        .init(name: "Air Bike (Máx Cal 1)", storageKey: "air_bike_max_cal_1"),
+        .init(name: "Row 1 km", storageKey: "row_1_km"),
+        .init(name: "Row 10 km", storageKey: "row_10_km"),
+        .init(name: "Row 100m", storageKey: "row_100_m"),
+        .init(name: "Row 2 km", storageKey: "row_2_km"),
+        .init(name: "Row 21 km", storageKey: "row_21_km"),
+        .init(name: "Row 5 km", storageKey: "row_5_km"),
+        .init(name: "Row 500m", storageKey: "row_500_m"),
+        .init(name: "Run 1.200m", storageKey: "run_1200_m"),
+        .init(name: "Run 10 km", storageKey: "run_10_km"),
+        .init(name: "Run 100m", storageKey: "run_100_m"),
+        .init(name: "Run 15 km", storageKey: "run_15_km"),
+        .init(name: "Run 1600m", storageKey: "run_1600_m"),
+        .init(name: "Run 1km", storageKey: "run_1_km"),
+        .init(name: "Run 2 km", storageKey: "run_2_km"),
+        .init(name: "Run 200m", storageKey: "run_200_m"),
+        .init(name: "Run 300m", storageKey: "run_300_m"),
+        .init(name: "Run 400m", storageKey: "run_400_m"),
+        .init(name: "Run 5 km", storageKey: "run_5_km"),
+        .init(name: "Run 500m", storageKey: "run_500_m"),
+        .init(name: "Run 700m", storageKey: "run_700_m"),
+        .init(name: "Run 800m", storageKey: "run_800_m")
     ]
 
-    @AppStorage("student_pr_crossfit_games_values_v1")
-    private var crossfitGamesValuesData: Data = Data()
+    // Persistência simples (UserDefaults via AppStorage)
+    @AppStorage("student_pr_endurance_values_v1")
+    private var enduranceValuesData: Data = Data()
 
-    @AppStorage("student_pr_crossfit_games_history_v1")
-    private var crossfitGamesHistoryData: Data = Data()
+    @AppStorage("student_pr_endurance_history_v1")
+    private var enduranceHistoryData: Data = Data()
 
-    @AppStorage("student_pr_crossfit_games_custom_items_v1")
-    private var customGamesItemsData: Data = Data()
+    @AppStorage("student_pr_endurance_custom_items_v1")
+    private var customEnduranceItemsData: Data = Data()
 
-    @State private var selectedWod: GamesWOD? = nil
+    @State private var selectedMove: EnduranceMove?
     @State private var inputValue: String = ""
-    @State private var historyWod: GamesWOD?
+    @State private var historyMove: EnduranceMove?
     @State private var selectedPRDate: Date = Date()
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
@@ -358,33 +91,17 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
     @State private var showHistoryEntryDeletionAlert: Bool = false
 
     @State private var showAddItemSheet: Bool = false
-    @State private var newItemYear: String = ""
     @State private var newItemName: String = ""
-    @State private var newItemDescription: String = ""
     @State private var newItemValue: String = ""
     @State private var addItemErrorMessage: String? = nil
     @State private var showDeleteAlert: Bool = false
 
-    private var allSections: [GamesSection] {
-        let customByYear = Dictionary(grouping: loadCustomItems(), by: \.yearTitle)
-        let staticSections = sections.map { section in
-            let year = section.items.first?.yearTitle
-            let customItems = year.flatMap { customByYear[$0] } ?? []
-            return GamesSection(title: section.title, items: section.items + customItems.map {
-                GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
-            })
-        }
-        let existingYears = Set(sections.compactMap { $0.items.first?.yearTitle })
-        let extraSections = customByYear.keys.filter { !existingYears.contains($0) }.sorted().map { year in
-            GamesSection(title: "CrossFit Games \(year) – Provas personalizadas", items: (customByYear[year] ?? []).map {
-                GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
-            })
-        }
-        return staticSections + extraSections
+    private var allMoves: [EnduranceMove] {
+        moves + loadCustomItems().map { EnduranceMove(name: $0.name, storageKey: $0.storageKey) }
     }
 
     private var canDeleteSelectedItem: Bool {
-        selectedWod?.storageKey.hasPrefix("custom_crossfit_games_") == true
+        selectedMove?.storageKey.hasPrefix("custom_endurance_") == true
     }
 
     var body: some View {
@@ -408,7 +125,7 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor tempo por prova.")
+                                Text("Adicione seu melhor resultado por item.")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.55))
 
@@ -416,9 +133,7 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
 
                                 Button {
                                     addItemErrorMessage = nil
-                                    newItemYear = ""
                                     newItemName = ""
-                                    newItemDescription = ""
                                     newItemValue = ""
                                     showAddItemSheet = true
                                 } label: {
@@ -427,7 +142,7 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar nova prova")
+                                .accessibilityLabel("Adicionar novo item")
                             }
 
                             tableContainer()
@@ -458,7 +173,7 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-        .blur(radius: (selectedWod != nil || historyWod != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
+        .blur(radius: (selectedMove != nil || historyMove != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -478,7 +193,7 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Crossfit Games")
+                Text("Endurance")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -489,16 +204,17 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .sheet(item: $selectedWod, onDismiss: {
+        .sheet(item: $selectedMove, onDismiss: {
             resetExistingPREditing()
-        }) { wod in
-            editSheet(for: wod)
+        }) { move in
+            editSheet(move: move)
         }
         .sheet(isPresented: $showAddItemSheet) {
             addItemSheet()
         }
     }
 
+    // MARK: - Tabela
     private func tableContainer() -> some View {
         VStack(spacing: 0) {
 
@@ -508,31 +224,17 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                 .fill(Color.white.opacity(0.08))
                 .frame(height: 1)
 
-            ForEach(Array(allSections.enumerated()), id: \.element.id) { sectionIndex, section in
+            let list = allMoves
 
-                sectionHeader(title: section.title)
+            ForEach(Array(list.enumerated()), id: \.element.id) { index, move in
 
-                Rectangle()
-                    .fill(Color.white.opacity(0.08))
-                    .frame(height: 1)
+                tableRow(move: move)
 
-                ForEach(Array(section.items.enumerated()), id: \.element.id) { itemIndex, wod in
-
-                    tableRow(wod: wod)
-
-                    let isLastItemInSection = itemIndex == section.items.count - 1
-                    let isLastSection = sectionIndex == allSections.count - 1
-
-                    if !isLastItemInSection {
-                        Rectangle()
-                            .fill(Color.white.opacity(0.08))
-                            .frame(height: 1)
-                            .padding(.leading, 14)
-                    } else if !isLastSection {
-                        Rectangle()
-                            .fill(Color.white.opacity(0.08))
-                            .frame(height: 1)
-                    }
+                if index != list.count - 1 {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 1)
+                        .padding(.leading, 14)
                 }
             }
         }
@@ -550,13 +252,13 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("PROVA")
+            Text("Item")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR (tempo)")
+            Text("PR")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -564,35 +266,23 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         .padding(.vertical, 12)
     }
 
-    private func sectionHeader(title: String) -> some View {
-        HStack {
-            Text(title)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundColor(.white.opacity(0.75))
-            Spacer()
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(Color.white.opacity(0.04))
-    }
-
-    private func tableRow(wod: GamesWOD) -> some View {
-        let stored = bestDisplayValue(for: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "))
+    private func tableRow(move: EnduranceMove) -> some View {
+        let displayValue = bestDisplayValue(for: move.storageKey, metadata: move.name)
 
         return Button {
             inputValue = ""
             selectedPRDate = Date()
             resetExistingPREditing()
-            selectedWod = wod
+            selectedMove = move
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "flame.fill")
+                Image(systemName: "figure.run")
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 15))
                     .frame(width: 26)
 
-                Text(wod.name)
+                Text(move.name)
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -600,10 +290,12 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
 
                 Spacer()
 
-                if let stored, !stored.isEmpty {
-                    Text(stored)
+                if let displayValue, !displayValue.isEmpty {
+                    Text(displayValue)
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
                         .font(.system(size: 14, weight: .bold))
@@ -622,93 +314,86 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         .buttonStyle(.plain)
     }
 
-    private func editSheet(for wod: GamesWOD) -> some View {
+    // MARK: - Sheet (editar PR)
+    private func editSheet(move: EnduranceMove) -> some View {
         ZStack {
             Theme.Colors.headerBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(spacing: 14) {
 
                 Capsule()
                     .fill(Color.white.opacity(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text(wod.name)
+                Text(move.name)
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 14) {
-                    // Bloco do WOD (card + ícone) com descrição formatada
-                    if !wod.descriptionLines.isEmpty {
-                        wodCard(wod)
-                            .padding(.horizontal, 16)
-                            .padding(.top, 2)
-                            .layoutPriority(1)
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        HStack {
-                            Text("Resultado:")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
-                        }
-
-                        TextField("Ex: 12:34", text: $inputValue)
-                            .keyboardType(.numbersAndPunctuation)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                    }
+                Text("Informe seu melhor resultado. Para remover, deixe vazio.")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.60))
+                    .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
-                    .padding(.top, 4)
 
-                    dateAndHistorySection(key: wod.storageKey, metadata: wod.descriptionLines.joined(separator: " "), historyAction: {
-                        historyWod = wod
-                    })
-                    .padding(.horizontal, 16)
-                    .padding(.top, 8)
-                    .sheet(item: $historyWod) { selected in
-                        historySheet(title: selected.name, key: selected.storageKey, metadata: selected.descriptionLines.joined(separator: " "))
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Text("Resultado:")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
                     }
-                    .sheet(isPresented: $showPRDatePicker) {
-                        ZStack {
-                            Theme.Colors.headerBackground.ignoresSafeArea()
-                            VStack(spacing: 16) {
-                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
-                                    .datePickerStyle(.graphical)
-                                    .environment(\.locale, Locale(identifier: "pt_BR"))
-                                Button { showPRDatePicker = false } label: {
-                                    Text("Confirmar")
-                                        .frame(maxWidth: .infinity)
-                                        .primaryGreenActionButton()
-                                }
-                                .buttonStyle(.plain)
+
+                    TextField("Ex: 3:45 ou 120 ou 10:32", text: $inputValue)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled(true)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 14)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 4)
+
+                dateAndHistorySection(key: move.storageKey, metadata: move.name, historyAction: {
+                    historyMove = move
+                })
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+                .sheet(item: $historyMove) { selected in
+                    historySheet(title: selected.name, key: selected.storageKey, metadata: selected.name)
+                }
+                .sheet(isPresented: $showPRDatePicker) {
+                    ZStack {
+                        Theme.Colors.headerBackground.ignoresSafeArea()
+                        VStack(spacing: 16) {
+                            DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                .datePickerStyle(.graphical)
+                                .environment(\.locale, Locale(identifier: "pt_BR"))
+                            Button { showPRDatePicker = false } label: {
+                                Text("Confirmar")
+                                    .frame(maxWidth: .infinity)
+                                    .primaryGreenActionButton()
                             }
-                            .padding(16)
+                            .buttonStyle(.plain)
                         }
-                        .presentationDetents([.medium])
+                        .padding(16)
                     }
-
-                    }
+                    .presentationDetents([.medium])
                 }
 
                 HStack(spacing: 12) {
 
                     Button {
                         resetExistingPREditing()
-                        selectedWod = nil
+                        selectedMove = nil
                     } label: {
                         Text("Cancelar")
                             .font(.system(size: 15, weight: .bold))
@@ -725,9 +410,9 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        saveCurrentInput(for: wod)
+                        saveCurrentInput()
                         resetExistingPREditing()
-                        selectedWod = nil
+                        selectedMove = nil
                     } label: {
                         Text("Salvar")
                             .frame(maxWidth: .infinity)
@@ -747,22 +432,23 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir prova")
+                        .accessibilityLabel("Excluir item")
                     }
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-                .padding(.bottom, 16)
+
+                Spacer()
             }
         }
-        .presentationDetents([.fraction(0.80)])
+        .presentationDetents([.fraction(0.75)])
         .alert("Excluir registro", isPresented: $showDeleteAlert) {
             Button("Cancelar", role: .cancel) { }
             Button("Excluir", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedWod?.name ?? "esta prova")?")
+            Text("Deseja excluir o registro de \(selectedMove?.name ?? "este item")?")
         }
         .onAppear {
             inputValue = ""
@@ -771,99 +457,12 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         }
     }
 
-    /// Card visual do WOD dentro do modal (mesmo padrão do Notables) + descrição elegante (DE -> PARA)
-    private func wodCard(_ wod: GamesWOD) -> some View {
-        let description = prettyWodDescription(from: wod.descriptionLines)
-
-        return VStack(alignment: .leading, spacing: 10) {
-
-            HStack(alignment: .firstTextBaseline, spacing: 8) {
-                Image(systemName: "list.bullet.rectangle")
-                    .foregroundColor(.green.opacity(0.90))
-
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("WOD")
-                        .font(.system(size: 12, weight: .bold))
-                        .foregroundColor(.white.opacity(0.60))
-
-                    Text(wod.name)
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-                }
-
-                Spacer()
-            }
-
-            ScrollView {
-                Text(description)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.78))
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 2)
-            }
-            .frame(height: 140)
-        }
-        .padding(14)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-        )
-    }
-
-    private func prettyWodDescription(from lines: [String]) -> String {
-        let raw = lines
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-            .joined(separator: "\n")
-
-        if raw.contains("•") {
-            return raw
-        }
-
-        var mainPart = raw
-        var parenthetical: String? = nil
-
-        if let open = raw.lastIndex(of: "("),
-           let close = raw.lastIndex(of: ")"),
-           open < close {
-            let afterOpen = raw.index(after: open)
-            let inside = raw[afterOpen..<close].trimmingCharacters(in: .whitespacesAndNewlines)
-            let before = raw[..<open].trimmingCharacters(in: .whitespacesAndNewlines)
-            if !inside.isEmpty {
-                parenthetical = "(\(inside))"
-                mainPart = String(before)
-            }
-        }
-
-        var text = mainPart
-        text = text.replacingOccurrences(of: "→", with: "\n")
-        text = text.replacingOccurrences(of: " + ", with: "\n")
-        text = text.replacingOccurrences(of: "+", with: "\n")
-        text = text.replacingOccurrences(of: " reps: ", with: " reps\n")
-        text = text.replacingOccurrences(of: " reps ", with: " reps\n")
-
-        var outLines = text
-            .components(separatedBy: .newlines)
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-
-        if let parenthetical, !parenthetical.isEmpty {
-            outLines.append(parenthetical)
-        }
-
-        return outLines.joined(separator: "\n")
-    }
-
-    private func beginEditingExistingPR(for wod: GamesWOD) {
-        let metadata = wod.descriptionLines.joined(separator: " ")
-        guard let value = bestDisplayValue(for: wod.storageKey, metadata: metadata) else { return }
+    private func beginEditingExistingPR(for move: EnduranceMove) {
+        let metadata = move.name
+        guard let value = bestDisplayValue(for: move.storageKey, metadata: metadata) else { return }
 
         inputValue = value
-        if let entry = currentPRHistoryEntry(for: wod.storageKey, metadata: metadata),
+        if let entry = currentPRHistoryEntry(for: move.storageKey, metadata: metadata),
            let entryValue = numericValue(entry.value, metadata: metadata),
            let bestValue = numericValue(value, metadata: metadata),
            abs(entryValue - bestValue) < 0.000_001 {
@@ -876,13 +475,13 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
     }
 
     private func saveExistingPREdit() {
-        guard let wod = selectedWod else { return }
+        guard let move = selectedMove else { return }
 
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else { return }
 
-        let key = wod.storageKey
-        let metadata = wod.descriptionLines.joined(separator: " ")
+        let key = move.storageKey
+        let metadata = move.name
         var history = loadHistoryMap()
         var primaryCandidates: [String]
 
@@ -944,16 +543,17 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         return best.0
     }
 
-    private func saveCurrentInput(for wod: GamesWOD) {
+    private func saveCurrentInput() {
+        guard let move = selectedMove else { return }
         let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty {
             return
         }
-        let metadata = wod.descriptionLines.joined(separator: " ")
-        let shouldSave = shouldUpdatePrimary(trimmed, key: wod.storageKey, metadata: metadata)
-        saveHistoryValue(trimmed, for: wod.storageKey, date: selectedPRDate)
+        let metadata = move.name
+        let shouldSave = shouldUpdatePrimary(trimmed, key: move.storageKey, metadata: metadata)
+        saveHistoryValue(trimmed, for: move.storageKey, date: selectedPRDate)
         if shouldSave {
-            saveValue(trimmed, for: wod.storageKey)
+            saveValue(trimmed, for: move.storageKey)
         }
     }
 
@@ -961,6 +561,10 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
     @ViewBuilder
     private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
+            Text("Data")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
             Button {
                 showPRDatePicker = true
             } label: {
@@ -1135,6 +739,9 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
         if normalized.contains("for time") || normalized.contains("para tempo") || normalized.contains("por tempo") || normalized.contains("30 reps for time") {
             return .time
         }
+        if !normalized.contains("max cal") {
+            return .time
+        }
         if normalized.contains("max reps") || normalized.contains("max height") || normalized.contains("max distance") || normalized.contains("1 rep max") || normalized.contains("1rm") || normalized.contains("max hold") || normalized.contains("amrap") || normalized.contains("for load") || normalized.contains("max") || normalized.contains("reps") || normalized.contains("score") || normalized.contains("load") {
             return .higher
         }
@@ -1205,22 +812,21 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Nova prova CrossFit Games")
+                    Text("Novo item de Endurance")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie uma prova e, se quiser, já informe seu resultado inicial.")
+                    Text("Crie um item e, se quiser, já informe seu resultado inicial.")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                        addItemField("Ano", placeholder: "Ex: 2026", text: $newItemYear)
-                        addItemField("Nome da prova", placeholder: "Ex: Final", text: $newItemName)
-                        addItemField("Descrição (opcional)", placeholder: "Ex: For Time — 5 rounds", text: $newItemDescription)
-                        addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34", text: $newItemValue)
+                    addItemField("Nome do item", placeholder: "Ex: Corrida 3 km", text: $newItemName)
+
+                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 500", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
@@ -1231,7 +837,9 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                     .padding(.horizontal, 16)
 
                     HStack(spacing: 12) {
-                        Button { showAddItemSheet = false } label: {
+                        Button {
+                            showAddItemSheet = false
+                        } label: {
                             Text("Cancelar")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
@@ -1246,7 +854,9 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
                         }
                         .buttonStyle(.plain)
 
-                        Button { addNewItem() } label: {
+                        Button {
+                            addNewItem()
+                        } label: {
                             Text("Adicionar")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
@@ -1267,6 +877,7 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
             Text(label)
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
+
             TextField(placeholder, text: text)
                 .textInputAutocapitalization(.sentences)
                 .autocorrectionDisabled(true)
@@ -1282,62 +893,63 @@ struct StudentCrossfitGamesPersonalRecordsView: View {
 
     private func addNewItem() {
         addItemErrorMessage = nil
-        let year = newItemYear.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !year.isEmpty, !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o ano e o nome da prova."
+        guard !cleanName.isEmpty else {
+            addItemErrorMessage = "Informe o nome do item."
             return
         }
-        let existingNames = allSections.flatMap(\.items).map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+
+        let existingNames = allMoves.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Esta prova já existe na sua lista."
+            addItemErrorMessage = "Este item já existe na sua lista."
             return
         }
 
         let id = UUID().uuidString
-        let key = "custom_crossfit_games_\(id)"
-        let customItem = CustomGamesWOD(id: id, yearTitle: year, name: cleanName, storageKey: key, description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        let key = "custom_endurance_\(id)"
+        let customItem = CustomEnduranceMove(id: id, name: cleanName, storageKey: key)
         var list = loadCustomItems()
         list.append(customItem)
         saveCustomItems(list)
 
-        let item = GamesWOD(yearTitle: year, name: cleanName, storageKey: key, descriptionLines: customItem.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
+        let item = EnduranceMove(name: customItem.name, storageKey: customItem.storageKey)
         let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmedValue.isEmpty {
-            inputValue = trimmedValue
-            saveCurrentInput(for: item)
+            saveValue(trimmedValue, for: key)
+            saveHistoryValue(trimmedValue, for: key, date: Date())
         }
         showAddItemSheet = false
     }
 
     private func deleteSelectedItem() {
-        guard let item = selectedWod, item.storageKey.hasPrefix("custom_crossfit_games_") else { return }
+        guard let item = selectedMove, item.storageKey.hasPrefix("custom_endurance_") else { return }
         removeValue(for: item.storageKey)
         removeHistory(for: item.storageKey)
         var list = loadCustomItems()
         list.removeAll { $0.storageKey == item.storageKey }
         saveCustomItems(list)
-        selectedWod = nil
+        selectedMove = nil
     }
 
-    private func loadCustomItems() -> [CustomGamesWOD] {
-        guard !customGamesItemsData.isEmpty else { return [] }
-        return (try? JSONDecoder().decode([CustomGamesWOD].self, from: customGamesItemsData)) ?? []
+    private func loadCustomItems() -> [CustomEnduranceMove] {
+        guard !customEnduranceItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomEnduranceMove].self, from: customEnduranceItemsData)) ?? []
     }
 
-    private func saveCustomItems(_ list: [CustomGamesWOD]) {
-        customGamesItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+    private func saveCustomItems(_ list: [CustomEnduranceMove]) {
+        customEnduranceItemsData = (try? JSONEncoder().encode(list)) ?? Data()
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
 }
 
-private extension StudentCrossfitGamesPersonalRecordsView {
+// MARK: - Persistência (JSON em Data)
+private extension EndurancePersonalRecordsView {
 
     func loadMap() -> [String: String] {
-        guard !crossfitGamesValuesData.isEmpty else { return [:] }
+        guard !enduranceValuesData.isEmpty else { return [:] }
         do {
-            return try JSONDecoder().decode([String: String].self, from: crossfitGamesValuesData)
+            return try JSONDecoder().decode([String: String].self, from: enduranceValuesData)
         } catch {
             return [:]
         }
@@ -1345,9 +957,9 @@ private extension StudentCrossfitGamesPersonalRecordsView {
 
     func saveMap(_ map: [String: String]) {
         do {
-            crossfitGamesValuesData = try JSONEncoder().encode(map)
+            enduranceValuesData = try JSONEncoder().encode(map)
         } catch {
-            crossfitGamesValuesData = Data()
+            enduranceValuesData = Data()
         }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
@@ -1355,12 +967,12 @@ private extension StudentCrossfitGamesPersonalRecordsView {
 
 
     private func loadHistoryMap() -> [String: [PRHistoryEntry]] {
-        guard !crossfitGamesHistoryData.isEmpty else { return [:] }
-        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: crossfitGamesHistoryData) } catch { return [:] }
+        guard !enduranceHistoryData.isEmpty else { return [:] }
+        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: enduranceHistoryData) } catch { return [:] }
     }
 
     private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
-        do { crossfitGamesHistoryData = try JSONEncoder().encode(map) } catch { crossfitGamesHistoryData = Data() }
+        do { enduranceHistoryData = try JSONEncoder().encode(map) } catch { enduranceHistoryData = Data() }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
     }
 
@@ -1370,16 +982,16 @@ private extension StudentCrossfitGamesPersonalRecordsView {
         deletedHistoryEntryID: String? = nil
     ) {
         do {
-            crossfitGamesValuesData = try JSONEncoder().encode(values)
-            crossfitGamesHistoryData = try JSONEncoder().encode(history)
+            enduranceValuesData = try JSONEncoder().encode(values)
+            enduranceHistoryData = try JSONEncoder().encode(history)
         } catch {
-            crossfitGamesValuesData = Data()
-            crossfitGamesHistoryData = Data()
+            enduranceValuesData = Data()
+            enduranceHistoryData = Data()
         }
         if let deletedHistoryEntryID {
             PersonalRecordsSyncService.shared.didDeleteHistoryEntry(
                 id: deletedHistoryEntryID,
-                historyKey: "student_pr_crossfit_games_history_v1"
+                historyKey: "student_pr_endurance_history_v1"
             )
         } else {
             PersonalRecordsSyncService.shared.didMutateLocalRecords()

@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 // Tela do Aluno: Recorde Pessoal > Barbell (lista fixa de movimentos + carga máxima)
-struct StudentBarbellPersonalRecordsView: View {
+struct BarbellPersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
 
@@ -1013,7 +1013,7 @@ struct StudentBarbellPersonalRecordsView: View {
 }
 
 // MARK: - Persistência (JSON em Data)
-private extension StudentBarbellPersonalRecordsView {
+private extension BarbellPersonalRecordsView {
 
     func loadMap() -> [String: Double] {
         guard !barbellValuesData.isEmpty else { return [:] }
