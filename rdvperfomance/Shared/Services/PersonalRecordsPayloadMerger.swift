@@ -93,6 +93,9 @@ enum PersonalRecordsPayloadMerger {
     ]
 
     static let customPayloadKeys = customPayloadConfigurations.map(\.customKey)
+    static let tombstoneBaselinePayloadKeys = Set(customPayloadKeys + [
+        "student_pr_barbell_history_v1"
+    ])
 
     static func mergeSnapshots(
         _ local: Snapshot,
@@ -172,6 +175,19 @@ enum PersonalRecordsPayloadMerger {
         }
 
         return tombstones
+    }
+
+    static func tombstones(from previous: Snapshot, to current: Snapshot) -> Tombstones {
+        mergeTombstones(
+            customTombstones(from: previous, to: current),
+            barbellHistoryTombstones(from: previous, to: current)
+        )
+    }
+
+    static func barbellHistoryEntryTombstones(for entryIDs: Set<String>) -> Tombstones {
+        let identifiers = Set(entryIDs.filter { !$0.isEmpty }.map { "id:\($0)" })
+        guard !identifiers.isEmpty else { return [:] }
+        return ["student_pr_barbell_history_v1": identifiers]
     }
 
     private static func mergeValues(_ local: Data, _ remote: Data, numeric: Bool) -> Data {
@@ -257,6 +273,38 @@ enum PersonalRecordsPayloadMerger {
         guard !tombstones.isEmpty else { return snapshot }
 
         var result = snapshot
+        let barbellHistoryKey = "student_pr_barbell_history_v1"
+        let barbellValuesKey = "student_pr_barbell_values_v1"
+
+        if let deletedEntryIdentifiers = tombstones[barbellHistoryKey],
+           var history = result[barbellHistoryKey].flatMap(historyMap) {
+            var emptiedHistoryKeys = Set<String>()
+
+            for (key, entries) in history {
+                let remainingEntries = entries.filter {
+                    !deletedEntryIdentifiers.contains(historyEntryIdentifier(for: $0))
+                }
+                if remainingEntries.count != entries.count {
+                    history[key] = remainingEntries
+                    if remainingEntries.isEmpty {
+                        emptiedHistoryKeys.insert(key)
+                    }
+                }
+            }
+
+            if let data = jsonData(from: history) {
+                result[barbellHistoryKey] = data
+            }
+
+            if !emptiedHistoryKeys.isEmpty,
+               var values = result[barbellValuesKey].flatMap(jsonObject) as? [String: Any] {
+                emptiedHistoryKeys.forEach { values.removeValue(forKey: $0) }
+                if let data = jsonData(from: values) {
+                    result[barbellValuesKey] = data
+                }
+            }
+        }
+
         for configuration in customPayloadConfigurations {
             guard let deletedKeys = tombstones[configuration.customKey], !deletedKeys.isEmpty else { continue }
 
@@ -297,9 +345,9 @@ enum PersonalRecordsPayloadMerger {
 
         var didUpdateValues = false
         for (key, entries) in history {
-            guard let latestEntry = entries.sorted(by: historyEntryComesBefore).last,
-                  let entry = latestEntry as? [String: Any],
-                  let valueKg = entry["valueKg"].flatMap(finiteNumber)
+            guard let valueKg = entries
+                .compactMap({ ($0 as? [String: Any])?["valueKg"].flatMap(finiteNumber) })
+                .max()
             else {
                 continue
             }
@@ -317,6 +365,27 @@ enum PersonalRecordsPayloadMerger {
         var reconciled = snapshot
         reconciled[valuesKey] = data
         return reconciled
+    }
+
+    private static func barbellHistoryTombstones(from previous: Snapshot, to current: Snapshot) -> Tombstones {
+        let historyKey = "student_pr_barbell_history_v1"
+        guard let previousHistory = previous[historyKey].flatMap(historyMap) else {
+            return [:]
+        }
+
+        let currentHistory = current[historyKey].flatMap(historyMap) ?? [:]
+        let deletedEntryIdentifiers = previousHistory.reduce(into: Set<String>()) { result, item in
+            let currentEntries = Set((currentHistory[item.key] ?? []).map(historyEntryIdentifier))
+            for entry in item.value {
+                let identifier = historyEntryIdentifier(for: entry)
+                if !currentEntries.contains(identifier) {
+                    result.insert(identifier)
+                }
+            }
+        }
+
+        guard !deletedEntryIdentifiers.isEmpty else { return [:] }
+        return [historyKey: deletedEntryIdentifiers]
     }
 
     private static func customStorageKeys(from data: Data) -> Set<String> {
