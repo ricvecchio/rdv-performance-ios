@@ -107,7 +107,6 @@ struct TeacherImportVideosView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadVideos() }
-        .onAppear { Task { await loadVideos() } }
         .sheet(isPresented: $isAddSheetPresented) {
             TeacherAddYoutubeVideoSheet { title, url, videoCategory in
                 Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
@@ -405,11 +404,24 @@ struct TeacherImportVideosView: View {
                     videos = []
                     return
                 }
+#if DEBUG
+                print("[StudentVideos] Auth UID: \(Auth.auth().currentUser?.uid ?? "nil")")
+                print("[StudentVideos] Student ID: \(studentId)")
+                print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
+#endif
                 videos = try await TeacherYoutubeVideosRepository.loadStudentVideos(
                     studentId: authenticatedStudentId
                 )
             }
         } catch {
+#if DEBUG
+            if case .student = context {
+                let ns = error as NSError
+                print("[StudentVideos] Firestore error domain: \(ns.domain)")
+                print("[StudentVideos] Firestore error code: \(ns.code)")
+                print("[StudentVideos] Firestore error: \(ns.localizedDescription)")
+            }
+#endif
             videos = []
             errorMessage = mapImportPermissionError(error)
         }
@@ -438,6 +450,11 @@ struct TeacherImportVideosView: View {
                 guard let authenticatedStudentId = validatedStudentId(studentId) else {
                     return
                 }
+#if DEBUG
+                print("[StudentVideos] Auth UID: \(Auth.auth().currentUser?.uid ?? "nil")")
+                print("[StudentVideos] Student ID: \(studentId)")
+                print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
+#endif
                 try await TeacherYoutubeVideosRepository.addStudentVideo(
                     studentId: authenticatedStudentId,
                     title: title,
@@ -447,6 +464,14 @@ struct TeacherImportVideosView: View {
             }
             await loadVideos()
         } catch {
+#if DEBUG
+            if case .student = context {
+                let ns = error as NSError
+                print("[StudentVideos] Firestore error domain: \(ns.domain)")
+                print("[StudentVideos] Firestore error code: \(ns.code)")
+                print("[StudentVideos] Firestore error: \(ns.localizedDescription)")
+            }
+#endif
             errorMessage = mapImportPermissionError(error)
         }
     }
@@ -472,6 +497,11 @@ struct TeacherImportVideosView: View {
                 guard let authenticatedStudentId = validatedStudentId(studentId) else {
                     return
                 }
+#if DEBUG
+                print("[StudentVideos] Auth UID: \(Auth.auth().currentUser?.uid ?? "nil")")
+                print("[StudentVideos] Student ID: \(studentId)")
+                print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
+#endif
                 try await TeacherYoutubeVideosRepository.deleteStudentVideo(
                     studentId: authenticatedStudentId,
                     videoId: videoId
@@ -479,6 +509,14 @@ struct TeacherImportVideosView: View {
             }
             await loadVideos()
         } catch {
+#if DEBUG
+            if case .student = context {
+                let ns = error as NSError
+                print("[StudentVideos] Firestore error domain: \(ns.domain)")
+                print("[StudentVideos] Firestore error code: \(ns.code)")
+                print("[StudentVideos] Firestore error: \(ns.localizedDescription)")
+            }
+#endif
             errorMessage = mapImportPermissionError(error)
         }
     }
