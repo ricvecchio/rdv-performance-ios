@@ -100,6 +100,8 @@ struct StudentGirlsPersonalRecordsView: View {
     @State private var showPRDatePicker: Bool = false
     @State private var isEditingExistingPR: Bool = false
     @State private var editingHistoryEntryID: String? = nil
+    @State private var historyEntryPendingDeletion: PRHistoryEntry? = nil
+    @State private var showHistoryEntryDeletionAlert: Bool = false
 
     @State private var showAddItemSheet: Bool = false
     @State private var newItemName: String = ""
@@ -284,7 +286,9 @@ struct StudentGirlsPersonalRecordsView: View {
         let storedValue = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey))
 
         return Button {
-            // ✅ Agora a sheet só abre quando selectedWod já está definido
+            inputValue = ""
+            selectedPRDate = Date()
+            resetExistingPREditing()
             selectedWod = wod
         } label: {
             HStack(spacing: 10) {
@@ -366,19 +370,6 @@ struct StudentGirlsPersonalRecordsView: View {
                                     Text("Tempo / Score:")
                                         .font(.system(size: 13, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.75))
-
-                                    Spacer()
-
-                                    if let value = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey)), !value.isEmpty {
-                                        Button {
-                                            beginEditingExistingPR(for: wod)
-                                        } label: {
-                                            Label("Editar valor", systemImage: "pencil")
-                                                .font(.system(size: 13, weight: .semibold))
-                                                .foregroundColor(.green.opacity(0.90))
-                                        }
-                                        .buttonStyle(.plain)
-                                    }
                                 }
 
                                 TextField("Ex: 12.34", text: $inputValue)
@@ -406,7 +397,7 @@ struct StudentGirlsPersonalRecordsView: View {
                         .padding(.horizontal, 16)
                         .padding(.top, 8)
                         .sheet(item: $historyWod) { selected in
-                            historySheet(title: selected.name, key: selected.storageKey)
+                            historySheet(title: selected.name, key: selected.storageKey, metadata: wodDetailText(for: selected.storageKey))
                         }
                         .sheet(isPresented: $showPRDatePicker) {
                             ZStack {
@@ -450,15 +441,11 @@ struct StudentGirlsPersonalRecordsView: View {
                     .buttonStyle(.plain)
 
                     Button {
-                        if isEditingExistingPR {
-                            saveExistingPREdit()
-                        } else {
-                            saveCurrentInput(for: wod)
-                        }
+                        saveCurrentInput(for: wod)
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text(isEditingExistingPR ? "Salvar edição" : "Salvar")
+                        Text("Salvar")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -494,13 +481,9 @@ struct StudentGirlsPersonalRecordsView: View {
             Text("Deseja excluir o registro de \(selectedWod?.name ?? "este WOD")?")
         }
         .onAppear {
-            // ✅ Garante carregar o score sempre que abrir pela primeira vez (igual ao Heroes)
-            if let stored = loadStoredValue(for: wod.storageKey) {
-                inputValue = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey)) ?? stored
-            } else {
-                inputValue = ""
-            }
+            inputValue = ""
             selectedPRDate = Date()
+            resetExistingPREditing()
         }
     }
 
@@ -626,7 +609,6 @@ struct StudentGirlsPersonalRecordsView: View {
     private func saveCurrentInput(for wod: GirlWOD) {
         let raw = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
         if raw.isEmpty {
-            removeValue(for: wod.storageKey)
             return
         }
         let metadata = wodDetailText(for: wod.storageKey)
@@ -691,8 +673,9 @@ struct StudentGirlsPersonalRecordsView: View {
         }
     }
 
-    private func historySheet(title: String, key: String) -> some View {
+    private func historySheet(title: String, key: String, metadata: String) -> some View {
         let entries = historyEntries(for: key)
+        let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
         return ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
@@ -712,10 +695,24 @@ struct StudentGirlsPersonalRecordsView: View {
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
+                                    if entry.id == recordID {
+                                        Text("RECORDE")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.45))
+                                    Button {
+                                        historyEntryPendingDeletion = entry
+                                        showHistoryEntryDeletionAlert = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.85))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("Excluir registro")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -735,6 +732,36 @@ struct StudentGirlsPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
+        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("Excluir", role: .destructive) {
+                if let entry = historyEntryPendingDeletion {
+                    deleteHistoryEntry(entry, for: key, metadata: metadata)
+                }
+                historyEntryPendingDeletion = nil
+            }
+        } message: {
+            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+        }
+    }
+
+    private func deleteHistoryEntry(_ entry: PRHistoryEntry, for key: String, metadata: String) {
+        var history = loadHistoryMap()
+        var entries = history[key, default: []]
+        entries.removeAll { $0.id == entry.id }
+        if entries.isEmpty {
+            history.removeValue(forKey: key)
+        } else {
+            history[key] = entries
+        }
+
+        var values = loadMap()
+        if let primary = bestValue(from: entries.map(\.value), metadata: metadata) {
+            values[key] = primary
+        } else {
+            values.removeValue(forKey: key)
+        }
+        saveRecords(values: values, history: history, deletedHistoryEntryID: entry.id)
     }
 
     @ViewBuilder
@@ -1321,6 +1348,28 @@ private extension StudentGirlsPersonalRecordsView {
     private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
         do { girlsHistoryData = try JSONEncoder().encode(map) } catch { girlsHistoryData = Data() }
         PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+    private func saveRecords(
+        values: [String: String],
+        history: [String: [PRHistoryEntry]],
+        deletedHistoryEntryID: String? = nil
+    ) {
+        do {
+            girlsValuesData = try JSONEncoder().encode(values)
+            girlsHistoryData = try JSONEncoder().encode(history)
+        } catch {
+            girlsValuesData = Data()
+            girlsHistoryData = Data()
+        }
+        if let deletedHistoryEntryID {
+            PersonalRecordsSyncService.shared.didDeleteHistoryEntry(
+                id: deletedHistoryEntryID,
+                historyKey: "student_pr_girls_history_v1"
+            )
+        } else {
+            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+        }
     }
 
     private func historyEntries(for key: String) -> [PRHistoryEntry] {

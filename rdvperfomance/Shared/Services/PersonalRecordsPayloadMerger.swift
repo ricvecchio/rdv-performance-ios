@@ -93,9 +93,10 @@ enum PersonalRecordsPayloadMerger {
     ]
 
     static let customPayloadKeys = customPayloadConfigurations.map(\.customKey)
-    static let tombstoneBaselinePayloadKeys = Set(customPayloadKeys + [
-        "student_pr_barbell_history_v1"
-    ])
+    private static let historyPayloadKeys = managedPayloadKeys.filter {
+        $0.hasSuffix("_history_v1")
+    }
+    static let tombstoneBaselinePayloadKeys = Set(customPayloadKeys + historyPayloadKeys)
 
     static func mergeSnapshots(
         _ local: Snapshot,
@@ -116,6 +117,12 @@ enum PersonalRecordsPayloadMerger {
                 break
             }
         }
+
+        merged = preservingLocalValuesAfterHistoryDeletions(
+            in: merged,
+            local: local,
+            tombstones: tombstones
+        )
 
         return reconcilingBarbellCurrentValues(
             in: applying(tombstones: tombstones, to: merged)
@@ -180,14 +187,21 @@ enum PersonalRecordsPayloadMerger {
     static func tombstones(from previous: Snapshot, to current: Snapshot) -> Tombstones {
         mergeTombstones(
             customTombstones(from: previous, to: current),
-            barbellHistoryTombstones(from: previous, to: current)
+            historyEntryTombstones(from: previous, to: current)
         )
     }
 
     static func barbellHistoryEntryTombstones(for entryIDs: Set<String>) -> Tombstones {
+        historyEntryTombstones(
+            for: "student_pr_barbell_history_v1",
+            entryIDs: entryIDs
+        )
+    }
+
+    static func historyEntryTombstones(for historyKey: String, entryIDs: Set<String>) -> Tombstones {
         let identifiers = Set(entryIDs.filter { !$0.isEmpty }.map { "id:\($0)" })
-        guard !identifiers.isEmpty else { return [:] }
-        return ["student_pr_barbell_history_v1": identifiers]
+        guard historyPayloadKeys.contains(historyKey), !identifiers.isEmpty else { return [:] }
+        return [historyKey: identifiers]
     }
 
     private static func mergeValues(_ local: Data, _ remote: Data, numeric: Bool) -> Data {
@@ -273,11 +287,14 @@ enum PersonalRecordsPayloadMerger {
         guard !tombstones.isEmpty else { return snapshot }
 
         var result = snapshot
-        let barbellHistoryKey = "student_pr_barbell_history_v1"
-        let barbellValuesKey = "student_pr_barbell_values_v1"
 
-        if let deletedEntryIdentifiers = tombstones[barbellHistoryKey],
-           var history = result[barbellHistoryKey].flatMap(historyMap) {
+        for historyKey in historyPayloadKeys {
+            guard let deletedEntryIdentifiers = tombstones[historyKey],
+                  var history = result[historyKey].flatMap(historyMap)
+            else {
+                continue
+            }
+
             var emptiedHistoryKeys = Set<String>()
 
             for (key, entries) in history {
@@ -293,14 +310,15 @@ enum PersonalRecordsPayloadMerger {
             }
 
             if let data = jsonData(from: history) {
-                result[barbellHistoryKey] = data
+                result[historyKey] = data
             }
 
+            let valuesKey = historyKey.replacingOccurrences(of: "_history_v1", with: "_values_v1")
             if !emptiedHistoryKeys.isEmpty,
-               var values = result[barbellValuesKey].flatMap(jsonObject) as? [String: Any] {
+               var values = result[valuesKey].flatMap(jsonObject) as? [String: Any] {
                 emptiedHistoryKeys.forEach { values.removeValue(forKey: $0) }
                 if let data = jsonData(from: values) {
-                    result[barbellValuesKey] = data
+                    result[valuesKey] = data
                 }
             }
         }
@@ -330,6 +348,49 @@ enum PersonalRecordsPayloadMerger {
                 result[key] = jsonData(from: map) ?? data
             }
         }
+        return result
+    }
+
+    private static func preservingLocalValuesAfterHistoryDeletions(
+        in snapshot: Snapshot,
+        local: Snapshot,
+        tombstones: Tombstones
+    ) -> Snapshot {
+        var result = snapshot
+
+        for historyKey in historyPayloadKeys {
+            guard let deletedEntryIdentifiers = tombstones[historyKey],
+                  let mergedHistory = result[historyKey].flatMap(historyMap),
+                  var values = result[
+                    historyKey.replacingOccurrences(of: "_history_v1", with: "_values_v1")
+                  ].flatMap(jsonObject) as? [String: Any]
+            else {
+                continue
+            }
+
+            let valuesKey = historyKey.replacingOccurrences(of: "_history_v1", with: "_values_v1")
+            let localHistory = local[historyKey].flatMap(historyMap) ?? [:]
+            let localValues = local[valuesKey].flatMap(jsonObject) as? [String: Any] ?? [:]
+            var didUpdateValues = false
+
+            for (key, entries) in mergedHistory where entries.contains(where: {
+                deletedEntryIdentifiers.contains(historyEntryIdentifier(for: $0))
+            }) {
+                if let localEntries = localHistory[key],
+                   !localEntries.isEmpty,
+                   let localValue = localValues[key] {
+                    values[key] = localValue
+                } else {
+                    values.removeValue(forKey: key)
+                }
+                didUpdateValues = true
+            }
+
+            if didUpdateValues, let data = jsonData(from: values) {
+                result[valuesKey] = data
+            }
+        }
+
         return result
     }
 
@@ -367,25 +428,27 @@ enum PersonalRecordsPayloadMerger {
         return reconciled
     }
 
-    private static func barbellHistoryTombstones(from previous: Snapshot, to current: Snapshot) -> Tombstones {
-        let historyKey = "student_pr_barbell_history_v1"
-        guard let previousHistory = previous[historyKey].flatMap(historyMap) else {
-            return [:]
-        }
+    private static func historyEntryTombstones(from previous: Snapshot, to current: Snapshot) -> Tombstones {
+        historyPayloadKeys.reduce(into: Tombstones()) { tombstones, historyKey in
+            guard let previousHistory = previous[historyKey].flatMap(historyMap) else {
+                return
+            }
 
-        let currentHistory = current[historyKey].flatMap(historyMap) ?? [:]
-        let deletedEntryIdentifiers = previousHistory.reduce(into: Set<String>()) { result, item in
-            let currentEntries = Set((currentHistory[item.key] ?? []).map(historyEntryIdentifier))
-            for entry in item.value {
-                let identifier = historyEntryIdentifier(for: entry)
-                if !currentEntries.contains(identifier) {
-                    result.insert(identifier)
+            let currentHistory = current[historyKey].flatMap(historyMap) ?? [:]
+            let deletedEntryIdentifiers = previousHistory.reduce(into: Set<String>()) { result, item in
+                let currentEntries = Set((currentHistory[item.key] ?? []).map(historyEntryIdentifier))
+                for entry in item.value {
+                    let identifier = historyEntryIdentifier(for: entry)
+                    if !currentEntries.contains(identifier) {
+                        result.insert(identifier)
+                    }
                 }
             }
-        }
 
-        guard !deletedEntryIdentifiers.isEmpty else { return [:] }
-        return [historyKey: deletedEntryIdentifiers]
+            if !deletedEntryIdentifiers.isEmpty {
+                tombstones[historyKey] = deletedEntryIdentifiers
+            }
+        }
     }
 
     private static func customStorageKeys(from data: Data) -> Set<String> {

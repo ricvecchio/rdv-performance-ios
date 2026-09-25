@@ -137,8 +137,16 @@ final class PersonalRecordsSyncService {
     }
 
     func didDeleteBarbellHistoryEntry(id: String) {
-        let tombstones = PersonalRecordsPayloadMerger.barbellHistoryEntryTombstones(
-            for: [id]
+        didDeleteHistoryEntry(
+            id: id,
+            historyKey: "student_pr_barbell_history_v1"
+        )
+    }
+
+    func didDeleteHistoryEntry(id: String, historyKey: String) {
+        let tombstones = PersonalRecordsPayloadMerger.historyEntryTombstones(
+            for: historyKey,
+            entryIDs: [id]
         )
         guard !tombstones.isEmpty else { return }
 
