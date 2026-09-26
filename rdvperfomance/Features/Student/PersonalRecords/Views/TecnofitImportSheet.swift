@@ -171,7 +171,7 @@ struct TecnofitImportSheet: View {
                 .padding(.vertical, 14)
                 .background(
                     actionButtonIsEnabled
-                        ? Theme.Colors.primaryGreen
+                        ? Theme.Colors.primaryGreen.opacity(0.24)
                         : Color.white.opacity(0.10)
                 )
                 .cornerRadius(12)
@@ -179,7 +179,7 @@ struct TecnofitImportSheet: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             actionButtonIsEnabled
-                                ? Theme.Colors.primaryGreen
+                                ? Theme.Colors.primaryGreen.opacity(0.36)
                                 : Color.white.opacity(0.12),
                             lineWidth: 1
                         )
@@ -282,6 +282,8 @@ struct TecnofitImportSheet: View {
                     ? "\(imported) recorde(s) importado(s) com sucesso."
                     : "Nenhum recorde foi alterado; os registros existentes foram preservados."
                 onImportCompleted()
+                try? await Task.sleep(for: .seconds(1.5))
+                dismiss()
             } catch {
                 errorMessage = "Não foi possível concluir a importação. Tente novamente."
             }
