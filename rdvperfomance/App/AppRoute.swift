@@ -134,7 +134,11 @@ enum AppRoute: Hashable {
         sectionTitle: String,
         mode: TeacherWorkoutTemplatesMode = .manage
     )
-    case teacherSendWorkout(preselectedStudentID: String? = nil, startsAtWorkout: Bool = false)
+    case teacherSendWorkout(
+        preselectedStudentID: String? = nil,
+        startsAtWorkout: Bool = false,
+        preselectedTemplate: WorkoutTemplateFS? = nil
+    )
     case teacherImportWorkouts(category: TreinoTipo)
     case teacherImportVideos(category: TreinoTipo)
 

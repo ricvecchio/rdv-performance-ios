@@ -99,7 +99,8 @@ struct TeacherSendWorkoutView: View {
         path: Binding<[AppRoute]>,
         category: TreinoTipo,
         preselectedStudentID: String? = nil,
-        startsAtWorkout: Bool = false
+        startsAtWorkout: Bool = false,
+        preselectedTemplate: WorkoutTemplateFS? = nil
     ) {
         self._path = path
         self.category = category
@@ -108,6 +109,9 @@ struct TeacherSendWorkoutView: View {
         self.preselectedStudentID = studentID?.isEmpty == false ? studentID : nil
         self.startsAtWorkout = startsAtWorkout && self.preselectedStudentID != nil
         _selectedStudentIDs = State(initialValue: self.preselectedStudentID.map { [$0] } ?? [])
+        _selectedTemplates = State(
+            initialValue: preselectedTemplate.map { [category: $0] } ?? [:]
+        )
         _step = State(initialValue: self.startsAtWorkout ? .workout : .student)
     }
 

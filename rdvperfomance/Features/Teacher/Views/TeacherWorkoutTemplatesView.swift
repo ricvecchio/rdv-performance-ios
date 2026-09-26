@@ -66,14 +66,11 @@ struct TeacherWorkoutTemplatesView: View {
 
     enum ActiveSheet: Identifiable {
         case detail(WorkoutTemplateFS)
-        case send(WorkoutTemplateFS)
 
         var id: String {
             switch self {
             case .detail(let t):
                 return "detail-\(t.id ?? UUID().uuidString)"
-            case .send(let t):
-                return "send-\(t.id ?? UUID().uuidString)"
             }
         }
     }
@@ -133,7 +130,7 @@ struct TeacherWorkoutTemplatesView: View {
                                     }
                                 },
                                 onSendTemplate: { t in
-                                    activeSheet = .send(t)
+                                    path.append(.teacherSendWorkout(preselectedTemplate: t))
                                 },
                                 onDeleteTemplate: { t in
                                     Task { await deleteTemplate(template: t) }
@@ -209,12 +206,6 @@ struct TeacherWorkoutTemplatesView: View {
             switch sheet {
             case .detail(let t):
                 TeacherWorkoutTemplateDetailSheet(template: t)
-
-            case .send(let t):
-                TeacherSendWorkoutToStudentSheet(
-                    template: t,
-                    category: category
-                )
             }
         }
     }
