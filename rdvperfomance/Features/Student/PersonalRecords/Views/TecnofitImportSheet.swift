@@ -166,11 +166,39 @@ struct TecnofitImportSheet: View {
         } label: {
             Text(preview == nil ? "Buscar recordes" : "Importar")
                 .frame(maxWidth: .infinity)
-                .primaryGreenActionButton()
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(actionButtonIsEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
+                .padding(.vertical, 14)
+                .background(
+                    actionButtonIsEnabled
+                        ? Theme.Colors.primaryGreen.opacity(0.24)
+                        : Color.white.opacity(0.10)
+                )
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            actionButtonIsEnabled
+                                ? Theme.Colors.primaryGreen.opacity(0.36)
+                                : Color.white.opacity(0.12),
+                            lineWidth: 1
+                        )
+                )
         }
         .buttonStyle(.plain)
-        .disabled(isLoading || (preview != nil && preview?.recordsReady == 0))
-        .opacity((isLoading || (preview != nil && preview?.recordsReady == 0)) ? 0.55 : 1)
+        .disabled(!actionButtonIsEnabled)
+        .opacity(actionButtonIsEnabled ? 1 : 0.55)
+    }
+
+    private var actionButtonIsEnabled: Bool {
+        guard !isLoading else { return false }
+
+        if let preview {
+            return preview.recordsReady > 0
+        }
+
+        return !email.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+            && !password.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     private var cancelButton: some View {
@@ -211,7 +239,6 @@ struct TecnofitImportSheet: View {
 
         let submittedEmail = email
         var submittedPassword = password
-        password = ""
         errorMessage = nil
         successMessage = nil
         preview = nil
@@ -255,6 +282,8 @@ struct TecnofitImportSheet: View {
                     ? "\(imported) recorde(s) importado(s) com sucesso."
                     : "Nenhum recorde foi alterado; os registros existentes foram preservados."
                 onImportCompleted()
+                try? await Task.sleep(for: .seconds(1.5))
+                dismiss()
             } catch {
                 errorMessage = "Não foi possível concluir a importação. Tente novamente."
             }
