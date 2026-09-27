@@ -42,6 +42,7 @@ struct StudentWorkoutsView: View {
     @State private var expandedWeekIds = Set<String>()
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
+    @State private var activeLockedPlayer: LockedPlayerItem? = nil
 
     init(
         path: Binding<[AppRoute]>,
@@ -155,6 +156,9 @@ struct StudentWorkoutsView: View {
         }
         .onChange(of: vm.weeks) { _, _ in
             applyInitialExpansionIfNeeded()
+        }
+        .fullScreenCover(item: $activeLockedPlayer) { item in
+            TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
     }
 
@@ -433,7 +437,7 @@ struct StudentWorkoutsView: View {
             } else {
                 VStack(spacing: 10) {
                     if !videos.isEmpty {
-                        videoSection(days: videos, week: week, weekId: weekId)
+                        videoSection(days: videos)
                     }
 
                     ForEach(groups) { group in
@@ -445,7 +449,7 @@ struct StudentWorkoutsView: View {
         }
     }
 
-    private func videoSection(days: [TrainingDayFS], week: TrainingWeekFS, weekId: String) -> some View {
+    private func videoSection(days: [TrainingDayFS]) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "video.fill")
@@ -459,9 +463,11 @@ struct StudentWorkoutsView: View {
             .padding(.vertical, 10)
 
             ForEach(Array(days.enumerated()), id: \.element.id) { index, day in
-                trainingDayRow(day, week: week, weekId: weekId, isVideo: true)
+                if let videoId = youtubeVideoId(for: day) {
+                    videoCard(for: day, videoId: videoId)
+                }
                 if index < days.count - 1 {
-                    innerDivider(leading: 54)
+                    innerDivider(leading: 14)
                 }
             }
         }
@@ -472,6 +478,110 @@ struct StudentWorkoutsView: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private func youtubeVideoId(for day: TrainingDayFS) -> String? {
+        for block in day.blocks {
+            let name = block.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard name.caseInsensitiveCompare("Vídeo") == .orderedSame else { continue }
+
+            let url = block.details.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let videoId = YouTubeVideoImporter.extractYoutubeVideoId(from: url) {
+                return videoId
+            }
+        }
+
+        return nil
+    }
+
+    private func videoCard(for day: TrainingDayFS, videoId: String) -> some View {
+        HStack(spacing: 12) {
+            videoThumbnail(videoId: videoId)
+
+            VStack(alignment: .leading, spacing: 4) {
+                let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                Text(title.isEmpty ? "Vídeo do YouTube" : title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+
+                Text("YouTube")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.55))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Button {
+                openLockedPlayer(for: day, videoId: videoId)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            openLockedPlayer(for: day, videoId: videoId)
+        }
+    }
+
+    private func openLockedPlayer(for day: TrainingDayFS, videoId: String) {
+        let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        activeLockedPlayer = LockedPlayerItem(
+            title: title.isEmpty ? "Vídeo do YouTube" : title,
+            videoId: videoId
+        )
+    }
+
+    private func videoThumbnail(videoId: String) -> some View {
+        let thumbnailURL = "https://img.youtube.com/vi/\(videoId)/hqdefault.jpg"
+
+        return ZStack(alignment: .bottomTrailing) {
+            AsyncImage(url: URL(string: thumbnailURL)) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        Color.white.opacity(0.06)
+                        ProgressView().tint(.white.opacity(0.8))
+                    }
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                case .failure:
+                    ZStack {
+                        Color.white.opacity(0.06)
+                        Image(systemName: "video.fill")
+                            .foregroundColor(.green.opacity(0.85))
+                    }
+                @unknown default:
+                    Color.white.opacity(0.06)
+                }
+            }
+            .frame(width: 66, height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+            )
+
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                Image(systemName: "play.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.95))
+                    .padding(.leading, 1)
+            }
+            .frame(width: 18, height: 18)
+            .overlay(
+                Circle()
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            )
+            .padding(6)
+        }
     }
 
     private func trainingDayGroup(
@@ -525,7 +635,7 @@ struct StudentWorkoutsView: View {
                     innerDivider(leading: 16)
 
                     ForEach(Array(group.days.enumerated()), id: \.element.id) { index, day in
-                        trainingDayRow(day, week: week, weekId: weekId, isVideo: false)
+                        trainingDayRow(day, week: week, weekId: weekId)
                         if index < group.days.count - 1 {
                             innerDivider(leading: 54)
                         }
@@ -548,15 +658,14 @@ struct StudentWorkoutsView: View {
     private func trainingDayRow(
         _ day: TrainingDayFS,
         week: TrainingWeekFS,
-        weekId: String,
-        isVideo: Bool
+        weekId: String
     ) -> some View {
         HStack(spacing: 14) {
             Button {
                 path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: week.weekTitle))
             } label: {
                 HStack(spacing: 14) {
-                    Image(systemName: isVideo ? "video.fill" : "dumbbell.fill")
+                    Image(systemName: "dumbbell.fill")
                         .font(.system(size: 16))
                         .foregroundColor(.green.opacity(0.85))
                         .frame(width: 28)
@@ -565,7 +674,7 @@ struct StudentWorkoutsView: View {
                         Text(day.title)
                             .font(.system(size: 17, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
-                        Text(isVideo ? day.subtitleText : trainingDateSubtitle(for: day.date, fallback: day.subtitleText))
+                        Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText))
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.35))
                     }
@@ -576,7 +685,7 @@ struct StudentWorkoutsView: View {
             }
             .buttonStyle(.plain)
 
-            if !isTeacherViewing, !isVideo, let dayId = day.id, !vm.isUpcoming(week) {
+            if !isTeacherViewing, let dayId = day.id, !vm.isUpcoming(week) {
                 if vm.isOverdue(day, in: weekId) {
                     Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 12, weight: .semibold))
