@@ -77,6 +77,21 @@ struct TeacherYoutubeVideosRepository {
         )
     }
 
+    static func updateVideoTitle(
+        teacherId: String,
+        videoId: String,
+        title: String
+    ) async throws {
+        try await Firestore.firestore()
+            .collection("teachers")
+            .document(teacherId)
+            .collection("youtubeVideos")
+            .document(videoId)
+            .updateData([
+                "title": title.trimmingCharacters(in: .whitespacesAndNewlines)
+            ])
+    }
+
     private static func addVideo(
         ownerCollection: String,
         ownerId: String,
