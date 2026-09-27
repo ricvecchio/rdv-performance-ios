@@ -20,6 +20,7 @@ struct TeacherImportVideosView: View {
     @State private var isAddSheetPresented: Bool = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
     @State private var videoBeingEdited: TeacherYoutubeVideo? = nil
+    @State private var updatedVideoAfterDismissal: TeacherYoutubeVideo? = nil
     
     var body: some View {
         ZStack {
@@ -99,10 +100,19 @@ struct TeacherImportVideosView: View {
                 Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
             }
         }
-        .sheet(item: $videoBeingEdited) { video in
-            TeacherEditYoutubeVideoTitleSheet(video: video) { title in
-                try await updateVideoTitle(video: video, title: title)
-            }
+        .sheet(
+            item: $videoBeingEdited,
+            onDismiss: applyUpdatedVideoAfterDismissal
+        ) { video in
+            TeacherEditYoutubeVideoTitleSheet(
+                video: video,
+                onSave: { title in
+                    try await updateVideoTitle(video: video, title: title)
+                },
+                onSaveSucceeded: { title in
+                    queueUpdatedVideo(video: video, title: title)
+                }
+            )
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
@@ -491,7 +501,25 @@ struct TeacherImportVideosView: View {
             videoId: video.id,
             title: title
         )
-        await loadVideos()
+    }
+
+    private func queueUpdatedVideo(video: TeacherYoutubeVideo, title: String) {
+        updatedVideoAfterDismissal = TeacherYoutubeVideo(
+            id: video.id,
+            title: title,
+            url: video.url,
+            videoId: video.videoId,
+            category: video.category
+        )
+    }
+
+    private func applyUpdatedVideoAfterDismissal() {
+        guard let updatedVideo = updatedVideoAfterDismissal else { return }
+        updatedVideoAfterDismissal = nil
+
+        if let index = videos.firstIndex(where: { $0.id == updatedVideo.id }) {
+            videos[index] = updatedVideo
+        }
     }
     
     private func deleteVideo(videoId: String) async {
@@ -588,6 +616,7 @@ struct TeacherImportVideosView: View {
 private struct TeacherEditYoutubeVideoTitleSheet: View {
     let video: TeacherYoutubeVideo
     let onSave: (String) async throws -> Void
+    let onSaveSucceeded: @MainActor (String) -> Void
 
     @Environment(\.dismiss) private var dismiss
     @State private var title: String
@@ -596,10 +625,12 @@ private struct TeacherEditYoutubeVideoTitleSheet: View {
 
     init(
         video: TeacherYoutubeVideo,
-        onSave: @escaping (String) async throws -> Void
+        onSave: @escaping (String) async throws -> Void,
+        onSaveSucceeded: @escaping @MainActor (String) -> Void
     ) {
         self.video = video
         self.onSave = onSave
+        self.onSaveSucceeded = onSaveSucceeded
         _title = State(initialValue: video.title)
     }
 
@@ -709,11 +740,13 @@ private struct TeacherEditYoutubeVideoTitleSheet: View {
         Task {
             do {
                 try await onSave(cleanedTitle)
+                await onSaveSucceeded(cleanedTitle)
+                isSaving = false
                 dismiss()
             } catch {
                 errorMessage = error.localizedDescription
+                isSaving = false
             }
-            isSaving = false
         }
     }
 }
