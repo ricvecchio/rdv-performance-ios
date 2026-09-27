@@ -71,6 +71,7 @@ struct TeacherSendWorkoutView: View {
     let preselectedStudentID: String?
     let startsAtWorkout: Bool
     let preselectedVideo: TeacherYoutubeVideo?
+    @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     @State private var students: [AppUser] = []
     @State private var studentCategories: [String: [TreinoTipo]] = [:]
@@ -1293,6 +1294,9 @@ struct TeacherSendWorkoutView: View {
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             path.removeAll()
+            if isVideoFlow {
+                selectTeacherMainSection(.workouts)
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
