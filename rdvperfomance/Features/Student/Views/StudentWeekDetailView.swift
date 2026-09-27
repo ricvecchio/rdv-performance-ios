@@ -517,7 +517,7 @@ struct StudentWeekDetailView: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
 
-                        Text(day.subtitleText)
+                        Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText))
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.35))
                     }

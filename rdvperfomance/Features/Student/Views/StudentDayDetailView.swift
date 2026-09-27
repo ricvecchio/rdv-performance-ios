@@ -33,6 +33,16 @@ struct StudentDayDetailView: View {
 
     private var isTeacherViewing: Bool { session.isTrainer }
 
+    private var formattedWeekTitle: String {
+        var title = weekTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if title.hasPrefix("Semana ") {
+            title.removeFirst("Semana ".count)
+        }
+
+        return title.replacingOccurrences(of: " - ", with: " à ")
+    }
+
     // ✅ Player de vídeo (mesmo comportamento da TeacherImportVideosView)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
 
@@ -230,7 +240,7 @@ struct StudentDayDetailView: View {
 
             // ✅ ALTERADO: título do cabeçalho agora é o dia (ex: "Dia 1")
             ToolbarItem(placement: .principal) {
-                Text(day.subtitleText)
+                Text(trainingDateTitle(for: day.date, fallback: day.subtitleText))
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -347,11 +357,20 @@ struct StudentDayDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
 
             // ✅ ALTERADO: manter apenas a semana no corpo (o dia foi para o cabeçalho)
-            Text("Semana: \(weekTitle)")
+            Text("Semana: \(formattedWeekTitle)")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func trainingDateTitle(for date: Date?, fallback: String) -> String {
+        guard let date else { return fallback }
+
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.dateFormat = "EEEE dd/MM"
+        return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
     // Card principal do treino
