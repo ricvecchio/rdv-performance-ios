@@ -125,7 +125,7 @@ struct StudentWorkoutsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Treinos")
+                Text("Treinos da Semana")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -292,35 +292,13 @@ struct StudentWorkoutsView: View {
                 let idx = item.offset
                 let week = item.element
 
-                if isTeacherViewing {
-                    weekNavigationRow(week)
-                } else {
-                    expandableWeekRow(week)
-                }
+                expandableWeekRow(week)
 
                 if idx < weeks.count - 1 {
                     innerDivider(leading: 54)
                 }
             }
         }
-    }
-
-    private func weekNavigationRow(_ week: TrainingWeekFS) -> some View {
-        Button {
-            guard let weekId = week.id, !weekId.isEmpty else {
-                vm.errorMessage = "Não foi possível abrir a semana: weekId está vazio."
-                return
-            }
-
-            path.append(.studentWeekDetail(
-                studentId: studentId,
-                weekId: weekId,
-                weekTitle: week.weekTitle
-            ))
-        } label: {
-            weekHeaderContent(week: week, isExpanded: false)
-        }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -598,7 +576,7 @@ struct StudentWorkoutsView: View {
             }
             .buttonStyle(.plain)
 
-            if !isVideo, let dayId = day.id, !vm.isUpcoming(week) {
+            if !isTeacherViewing, !isVideo, let dayId = day.id, !vm.isUpcoming(week) {
                 if vm.isOverdue(day, in: weekId) {
                     Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 12, weight: .semibold))

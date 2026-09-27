@@ -398,7 +398,13 @@ struct CreateTrainingWeekView: View {
     private func openWeekDays(_ week: TrainingWeekFS) {
         guard let weekId = week.id, !weekId.isEmpty else { return }
         guard let studentId = student.id, !studentId.isEmpty else { return }
-        path.append(.studentWeekDetail(studentId: studentId, weekId: weekId, weekTitle: week.weekTitle))
+        path.append(
+            .studentWorkouts(
+                studentId: studentId,
+                studentName: student.name,
+                initialExpandedWeekId: weekId
+            )
+        )
     }
 
     private func openAddDay(_ week: TrainingWeekFS) {
