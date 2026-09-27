@@ -19,8 +19,11 @@ struct TeacherImportVideosView: View {
     @State private var errorMessage: String? = nil
     @State private var isAddSheetPresented: Bool = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
-    @State private var videoBeingEdited: TeacherYoutubeVideo? = nil
-    @State private var updatedVideoAfterDismissal: TeacherYoutubeVideo? = nil
+    @State private var isEditTitleSheetOpen = false
+    @State private var editingVideo: TeacherYoutubeVideo? = nil
+    @State private var editingVideoTitle = ""
+    @State private var isSavingVideoTitle = false
+    @State private var editTitleErrorMessage: String? = nil
     
     var body: some View {
         ZStack {
@@ -100,19 +103,8 @@ struct TeacherImportVideosView: View {
                 Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
             }
         }
-        .sheet(
-            item: $videoBeingEdited,
-            onDismiss: applyUpdatedVideoAfterDismissal
-        ) { video in
-            TeacherEditYoutubeVideoTitleSheet(
-                video: video,
-                onSave: { title in
-                    try await updateVideoTitle(video: video, title: title)
-                },
-                onSaveSucceeded: { title in
-                    queueUpdatedVideo(video: video, title: title)
-                }
-            )
+        .sheet(isPresented: $isEditTitleSheetOpen) {
+            editVideoTitleSheet
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
@@ -223,7 +215,108 @@ struct TeacherImportVideosView: View {
 
     private func openEditTitle(for video: TeacherYoutubeVideo) {
         errorMessage = nil
-        videoBeingEdited = video
+        editTitleErrorMessage = nil
+        editingVideo = video
+        editingVideoTitle = video.title
+        isEditTitleSheetOpen = true
+    }
+
+    private var editVideoTitleSheet: some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
+
+                        Text("Editar título")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .padding(.top, 4)
+
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Título")
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+
+                            TextField("", text: $editingVideoTitle)
+                                .textInputAutocapitalization(.sentences)
+                                .autocorrectionDisabled(false)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                )
+
+                            if let editTitleErrorMessage {
+                                Text(editTitleErrorMessage)
+                                    .font(.system(size: 13, weight: .semibold))
+                                    .foregroundColor(.yellow.opacity(0.85))
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                    }
+                }
+
+                HStack(spacing: 12) {
+                    Button("Cancelar") {
+                        isEditTitleSheetOpen = false
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.10))
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    )
+                    .disabled(isSavingVideoTitle)
+
+                    Button {
+                        Task { await saveEditedVideoTitle() }
+                    } label: {
+                        HStack(spacing: 10) {
+                            if isSavingVideoTitle {
+                                ProgressView().tint(.white)
+                            } else {
+                                Image(systemName: "checkmark")
+                                Text("Salvar")
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(isSavingVideoTitle)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
+            }
+        }
+        .presentationDetents([.fraction(0.45)])
     }
     
     private func videoRow(video v: TeacherYoutubeVideo) -> some View {
@@ -482,43 +575,43 @@ struct TeacherImportVideosView: View {
         }
     }
 
-    private func updateVideoTitle(
-        video: TeacherYoutubeVideo,
-        title: String
-    ) async throws {
+    @MainActor
+    private func saveEditedVideoTitle() async {
+        editTitleErrorMessage = nil
+
+        guard let video = editingVideo else { return }
+
         guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-            throw NSError(
-                domain: "",
-                code: -1,
-                userInfo: [
-                    NSLocalizedDescriptionKey: "Não foi possível identificar o professor logado."
-                ]
-            )
+            editTitleErrorMessage = "Não foi possível identificar o professor logado."
+            return
         }
 
-        try await TeacherYoutubeVideosRepository.updateVideoTitle(
-            teacherId: teacherId,
-            videoId: video.id,
-            title: title
-        )
-    }
+        let cleanedTitle = editingVideoTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        isSavingVideoTitle = true
+        defer { isSavingVideoTitle = false }
 
-    private func queueUpdatedVideo(video: TeacherYoutubeVideo, title: String) {
-        updatedVideoAfterDismissal = TeacherYoutubeVideo(
-            id: video.id,
-            title: title,
-            url: video.url,
-            videoId: video.videoId,
-            category: video.category
-        )
-    }
+        do {
+            try await TeacherYoutubeVideosRepository.updateVideoTitle(
+                teacherId: teacherId,
+                videoId: video.id,
+                title: cleanedTitle
+            )
 
-    private func applyUpdatedVideoAfterDismissal() {
-        guard let updatedVideo = updatedVideoAfterDismissal else { return }
-        updatedVideoAfterDismissal = nil
+            if let index = videos.firstIndex(where: { $0.id == video.id }) {
+                videos[index] = TeacherYoutubeVideo(
+                    id: video.id,
+                    title: cleanedTitle,
+                    url: video.url,
+                    videoId: video.videoId,
+                    category: video.category
+                )
+            }
 
-        if let index = videos.firstIndex(where: { $0.id == updatedVideo.id }) {
-            videos[index] = updatedVideo
+            isEditTitleSheetOpen = false
+            editingVideo = nil
+            editingVideoTitle = ""
+        } catch {
+            editTitleErrorMessage = error.localizedDescription
         }
     }
     
@@ -610,143 +703,5 @@ struct TeacherImportVideosView: View {
     private func pop() {
         guard !path.isEmpty else { return }
         path.removeLast()
-    }
-}
-
-private struct TeacherEditYoutubeVideoTitleSheet: View {
-    let video: TeacherYoutubeVideo
-    let onSave: (String) async throws -> Void
-    let onSaveSucceeded: @MainActor (String) -> Void
-
-    @Environment(\.dismiss) private var dismiss
-    @State private var title: String
-    @State private var isSaving = false
-    @State private var errorMessage: String?
-
-    init(
-        video: TeacherYoutubeVideo,
-        onSave: @escaping (String) async throws -> Void,
-        onSaveSucceeded: @escaping @MainActor (String) -> Void
-    ) {
-        self.video = video
-        self.onSave = onSave
-        self.onSaveSucceeded = onSaveSucceeded
-        _title = State(initialValue: video.title)
-    }
-
-    var body: some View {
-        ZStack {
-            Theme.Colors.headerBackground
-                .ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 14) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.18))
-                            .frame(width: 44, height: 5)
-                            .padding(.top, 10)
-
-                        Text("Editar título")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.top, 4)
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Título")
-                                .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
-
-                            TextField("", text: $title)
-                                .textInputAutocapitalization(.sentences)
-                                .autocorrectionDisabled(false)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 14)
-                                .background(Color.white.opacity(0.10))
-                                .cornerRadius(14)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                )
-
-                            if let errorMessage {
-                                Text(errorMessage)
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.yellow.opacity(0.85))
-                            }
-                        }
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                        .padding(.horizontal, 16)
-                        .padding(.top, 14)
-                    }
-                }
-
-                HStack(spacing: 12) {
-                    Button("Cancelar") {
-                        dismiss()
-                    }
-                    .buttonStyle(.plain)
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white.opacity(0.85))
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.10))
-                    .cornerRadius(14)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                    )
-                    .disabled(isSaving)
-
-                    Button {
-                        save()
-                    } label: {
-                        HStack(spacing: 10) {
-                            if isSaving {
-                                ProgressView().tint(.white)
-                            } else {
-                                Image(systemName: "checkmark")
-                                Text("Salvar")
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(isSaving)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 6)
-                .padding(.bottom, 16)
-            }
-        }
-        .presentationDetents([.fraction(0.45)])
-    }
-
-    private func save() {
-        errorMessage = nil
-        isSaving = true
-        let cleanedTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        Task {
-            do {
-                try await onSave(cleanedTitle)
-                await onSaveSucceeded(cleanedTitle)
-                isSaving = false
-                dismiss()
-            } catch {
-                errorMessage = error.localizedDescription
-                isSaving = false
-            }
-        }
     }
 }
