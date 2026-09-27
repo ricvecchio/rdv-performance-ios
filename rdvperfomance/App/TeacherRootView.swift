@@ -141,13 +141,19 @@ struct TeacherRootView: View {
                 sectionTitle: sectionTitle,
                 mode: mode
             )
-        case .teacherSendWorkout(let preselectedStudentID, let startsAtWorkout, let preselectedTemplate):
+        case .teacherSendWorkout(
+            let preselectedStudentID,
+            let startsAtWorkout,
+            let preselectedTemplate,
+            let preselectedVideo
+        ):
             TeacherSendWorkoutView(
                 path: destinationPath,
                 category: category,
                 preselectedStudentID: preselectedStudentID,
                 startsAtWorkout: startsAtWorkout,
-                preselectedTemplate: preselectedTemplate
+                preselectedTemplate: preselectedTemplate,
+                preselectedVideo: preselectedVideo?.video
             )
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)

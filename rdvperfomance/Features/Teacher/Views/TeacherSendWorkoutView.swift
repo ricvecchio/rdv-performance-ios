@@ -70,6 +70,7 @@ struct TeacherSendWorkoutView: View {
     let category: TreinoTipo
     let preselectedStudentID: String?
     let startsAtWorkout: Bool
+    let preselectedVideo: TeacherYoutubeVideo?
 
     @State private var students: [AppUser] = []
     @State private var studentCategories: [String: [TreinoTipo]] = [:]
@@ -100,7 +101,8 @@ struct TeacherSendWorkoutView: View {
         category: TreinoTipo,
         preselectedStudentID: String? = nil,
         startsAtWorkout: Bool = false,
-        preselectedTemplate: WorkoutTemplateFS? = nil
+        preselectedTemplate: WorkoutTemplateFS? = nil,
+        preselectedVideo: TeacherYoutubeVideo? = nil
     ) {
         self._path = path
         self.category = category
@@ -108,6 +110,7 @@ struct TeacherSendWorkoutView: View {
             .trimmingCharacters(in: .whitespacesAndNewlines)
         self.preselectedStudentID = studentID?.isEmpty == false ? studentID : nil
         self.startsAtWorkout = startsAtWorkout && self.preselectedStudentID != nil
+        self.preselectedVideo = preselectedVideo
         _selectedStudentIDs = State(initialValue: self.preselectedStudentID.map { [$0] } ?? [])
         _selectedTemplates = State(
             initialValue: preselectedTemplate.map { [category: $0] } ?? [:]
@@ -157,6 +160,19 @@ struct TeacherSendWorkoutView: View {
         [.crossfit, .academia, .emCasa].compactMap { category in
             selectedTemplates[category].map { (category, $0) }
         }
+    }
+
+    private var isVideoFlow: Bool {
+        preselectedVideo != nil
+    }
+
+    private var selectedVideoTitle: String {
+        let title = preselectedVideo?.title.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        return title.isEmpty ? "Vídeo do YouTube" : title
+    }
+
+    private var selectedVideoURL: String {
+        preselectedVideo?.url.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     }
 
     private var availableDays: [AvailableDay] {
@@ -211,13 +227,14 @@ struct TeacherSendWorkoutView: View {
     }
 
     private var canAdvanceFromWorkout: Bool {
-        !selectedStudentIDs.isEmpty && !selectedTemplates.isEmpty
+        guard !selectedStudentIDs.isEmpty else { return false }
+        return isVideoFlow || !selectedTemplates.isEmpty
     }
 
     private var canSend: Bool {
         selectedDay != nil
             && !selectedStudentIDs.isEmpty
-            && !selectedTemplates.isEmpty
+            && (isVideoFlow || !selectedTemplates.isEmpty)
             && !isSending
     }
 
@@ -308,7 +325,12 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 8) {
             stepItem(number: 1, title: "Aluno", isActive: step == .student, isComplete: step != .student)
             Rectangle().fill(Theme.Colors.divider).frame(height: 1)
-            stepItem(number: 2, title: "Treino", isActive: step == .workout, isComplete: step == .day)
+            stepItem(
+                number: 2,
+                title: isVideoFlow ? "Vídeo" : "Treino",
+                isActive: step == .workout,
+                isComplete: step == .day
+            )
             Rectangle().fill(Theme.Colors.divider).frame(height: 1)
             stepItem(number: 3, title: "Dia", isActive: step == .day, isComplete: false)
         }
@@ -387,9 +409,17 @@ struct TeacherSendWorkoutView: View {
 
                     if step == .workout {
                         selectedStudentsSummary
-                        templateSection
+                        if isVideoFlow {
+                            selectedVideoSummary
+                        } else {
+                            templateSection
+                        }
                     } else {
-                        selectedWorkoutsSummary
+                        if isVideoFlow {
+                            selectedVideoSummary
+                        } else {
+                            selectedWorkoutsSummary
+                        }
                         daySection
                     }
 
@@ -815,6 +845,43 @@ struct TeacherSendWorkoutView: View {
         )
     }
 
+    private var selectedVideoSummary: some View {
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 6) {
+                HStack(spacing: 8) {
+                    Image(systemName: "video.fill")
+                        .font(.system(size: 13))
+                        .foregroundColor(.green.opacity(0.85))
+
+                    Text("Vídeo selecionado")
+                        .font(.system(size: 13, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+                }
+
+                Text(selectedVideoTitle)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                if !selectedVideoURL.isEmpty {
+                    Text(selectedVideoURL)
+                        .font(.system(size: 13))
+                        .foregroundColor(.white.opacity(0.55))
+                        .lineLimit(1)
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
     private func selectedWorkoutRow(
         category: TreinoTipo,
         template: WorkoutTemplateFS
@@ -1182,21 +1249,47 @@ struct TeacherSendWorkoutView: View {
                 }
                 let dayName = weekdayTitle(for: selectedDate)
 
-                for (_, template) in selectedTemplatesInOrder {
-                    let blocks = template.blocks ?? []
+                if let video = preselectedVideo {
+                    let titleTrim = video.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let safeTitle = titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim
+                    let urlTrim = video.url.trimmingCharacters(in: .whitespacesAndNewlines)
+                    let blocks: [BlockFS] = [
+                        BlockFS(
+                            id: UUID().uuidString,
+                            name: "Vídeo",
+                            details: urlTrim.isEmpty ? "-" : urlTrim
+                        )
+                    ]
+
                     _ = try await FirestoreRepository.shared.upsertDay(
                         weekId: week.weekId,
                         dayId: nil,
                         dayIndex: dayIndex,
                         dayName: dayName,
                         date: selectedDate,
-                        title: template.title,
-                        description: template.description,
+                        title: safeTitle,
+                        description: urlTrim.isEmpty ? "-" : urlTrim,
                         blocks: blocks
                     )
+                } else {
+                    for (_, template) in selectedTemplatesInOrder {
+                        let blocks = template.blocks ?? []
+                        _ = try await FirestoreRepository.shared.upsertDay(
+                            weekId: week.weekId,
+                            dayId: nil,
+                            dayIndex: dayIndex,
+                            dayName: dayName,
+                            date: selectedDate,
+                            title: template.title,
+                            description: template.description,
+                            blocks: blocks
+                        )
+                    }
                 }
             }
-            successMessage = "Treino enviado com sucesso!"
+            successMessage = isVideoFlow
+                ? "Vídeo enviado com sucesso!"
+                : "Treino enviado com sucesso!"
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             path.removeAll()

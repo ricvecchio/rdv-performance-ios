@@ -20,20 +20,6 @@ struct TeacherImportVideosView: View {
     @State private var isAddSheetPresented: Bool = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
     
-    // ✅ Enviar vídeo para aluno (igual ao fluxo do Girls WODs)
-    @State private var activeSheet: ActiveSheet? = nil
-    
-    private enum ActiveSheet: Identifiable {
-        case send(TeacherYoutubeVideo)
-        
-        var id: String {
-            switch self {
-            case .send(let v):
-                return "send-\(v.id)"
-            }
-        }
-    }
-    
     var body: some View {
         ZStack {
             Image("rdv_fundo")
@@ -110,17 +96,6 @@ struct TeacherImportVideosView: View {
         .sheet(isPresented: $isAddSheetPresented) {
             TeacherAddYoutubeVideoSheet { title, url, videoCategory in
                 Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
-            }
-        }
-        .sheet(item: $activeSheet) { sheet in
-            switch (context, sheet) {
-            case (.teacher(let category), .send(let v)):
-                TeacherSendYoutubeVideoToStudentSheet(
-                    video: v,
-                    category: category
-                )
-            case (.student(_), _):
-                EmptyView()
             }
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
@@ -223,7 +198,11 @@ struct TeacherImportVideosView: View {
     
     private func openSendToStudent(for video: TeacherYoutubeVideo) {
         errorMessage = nil
-        activeSheet = .send(video)
+        path.append(
+            .teacherSendWorkout(
+                preselectedVideo: TeacherSendWorkoutVideo(video: video)
+            )
+        )
     }
     
     private func videoRow(video v: TeacherYoutubeVideo) -> some View {

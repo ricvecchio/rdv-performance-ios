@@ -50,6 +50,36 @@ enum TeacherWorkoutTemplatesMode: Hashable {
     case attach
 }
 
+struct TeacherSendWorkoutVideo: Hashable {
+    let id: String
+    let title: String
+    let url: String
+    let videoId: String
+    let categoryRawValue: String
+
+    init(video: TeacherYoutubeVideo) {
+        id = video.id
+        title = video.title
+        url = video.url
+        videoId = video.videoId
+        categoryRawValue = video.category.rawValue
+    }
+
+    var video: TeacherYoutubeVideo? {
+        guard let category = TeacherYoutubeVideoCategory(rawValue: categoryRawValue) else {
+            return nil
+        }
+
+        return TeacherYoutubeVideo(
+            id: id,
+            title: title,
+            url: url,
+            videoId: videoId,
+            category: category
+        )
+    }
+}
+
 // Representa todas as rotas de navegação disponíveis no aplicativo
 enum AppRoute: Hashable {
 
@@ -137,7 +167,8 @@ enum AppRoute: Hashable {
     case teacherSendWorkout(
         preselectedStudentID: String? = nil,
         startsAtWorkout: Bool = false,
-        preselectedTemplate: WorkoutTemplateFS? = nil
+        preselectedTemplate: WorkoutTemplateFS? = nil,
+        preselectedVideo: TeacherSendWorkoutVideo? = nil
     )
     case teacherImportWorkouts(category: TreinoTipo)
     case teacherImportVideos(category: TreinoTipo)
