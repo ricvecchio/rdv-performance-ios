@@ -22,6 +22,14 @@ final class FirestoreRepository {
         try await userRepository.getUser(uid: uid)
     }
 
+    func getTeacherQuickAccessItems(uid: String) async throws -> [String]? {
+        try await userRepository.getTeacherQuickAccessItems(uid: uid)
+    }
+
+    func setTeacherQuickAccessItems(uid: String, items: [String]) async throws {
+        try await userRepository.setTeacherQuickAccessItems(uid: uid, items: items)
+    }
+
     func getUsers(byIds ids: [String]) async throws -> [String: AppUser] {
         try await userRepository.getUsers(byIds: ids)
     }

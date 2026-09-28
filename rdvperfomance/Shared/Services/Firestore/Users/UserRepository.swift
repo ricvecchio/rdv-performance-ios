@@ -13,6 +13,15 @@ final class UserRepository: FirestoreBaseRepository {
         static let requests = "teacher_student_link_requests"
     }
 
+    private static let supportedTeacherQuickAccessItems: Set<String> = [
+        "sendWorkout",
+        "createWorkout",
+        "workoutLibrary",
+        "importWorkout",
+        "personalRecords",
+        "myVideos"
+    ]
+
     // MARK: - Básico
 
     func getUser(uid: String) async throws -> AppUser? {
@@ -22,6 +31,36 @@ final class UserRepository: FirestoreBaseRepository {
         let snap = try await db.collection(Collections.users).document(cleanUid).getDocument()
         guard snap.exists else { return nil }
         return try snap.data(as: AppUser.self)
+    }
+
+    func getTeacherQuickAccessItems(uid: String) async throws -> [String]? {
+        let cleanUid = clean(uid)
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+
+        let snap = try await db.collection(Collections.users).document(cleanUid).getDocument()
+        guard snap.exists else { return nil }
+        return snap.data()?["teacherQuickAccessItems"] as? [String]
+    }
+
+    func setTeacherQuickAccessItems(uid: String, items: [String]) async throws {
+        let cleanUid = clean(uid)
+
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard items.count == 3,
+              Set(items).count == 3,
+              Set(items).isSubset(of: Self.supportedTeacherQuickAccessItems) else {
+            throw FirestoreRepositoryError.invalidData
+        }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .setData(
+                [
+                    "teacherQuickAccessItems": items,
+                    "updatedAt": FieldValue.serverTimestamp()
+                ],
+                merge: true
+            )
     }
 
     func getUsers(byIds ids: [String]) async throws -> [String: AppUser] {
