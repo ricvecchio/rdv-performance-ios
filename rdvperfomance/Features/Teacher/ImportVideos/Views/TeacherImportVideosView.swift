@@ -338,7 +338,8 @@ struct TeacherImportVideosView: View {
             Spacer()
             
             Menu {
-                if case .teacher(_) = context {
+                switch context {
+                case .teacher:
                     Button {
                         openSendToStudent(for: v)
                     } label: {
@@ -349,6 +350,12 @@ struct TeacherImportVideosView: View {
                         openEditTitle(for: v)
                     } label: {
                         Label("Editar título", systemImage: "pencil")
+                    }
+                case .student:
+                    Button {
+                        openEditTitle(for: v)
+                    } label: {
+                        Label("Editar Vídeo", systemImage: "pencil")
                     }
                 }
 
@@ -581,21 +588,40 @@ struct TeacherImportVideosView: View {
 
         guard let video = editingVideo else { return }
 
-        guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-            editTitleErrorMessage = "Não foi possível identificar o professor logado."
-            return
+        let cleanedTitle = editingVideoTitle.trimmingCharacters(in: .whitespacesAndNewlines)
+        let updateTitle: () async throws -> Void
+        switch context {
+        case .teacher:
+            guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                editTitleErrorMessage = "Não foi possível identificar o professor logado."
+                return
+            }
+            updateTitle = {
+                try await TeacherYoutubeVideosRepository.updateVideoTitle(
+                    teacherId: teacherId,
+                    videoId: video.id,
+                    title: cleanedTitle
+                )
+            }
+        case .student(let studentId):
+            guard let authenticatedStudentId = validatedStudentId(studentId) else {
+                editTitleErrorMessage = errorMessage
+                return
+            }
+            updateTitle = {
+                try await TeacherYoutubeVideosRepository.updateStudentVideoTitle(
+                    studentId: authenticatedStudentId,
+                    videoId: video.id,
+                    title: cleanedTitle
+                )
+            }
         }
 
-        let cleanedTitle = editingVideoTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         isSavingVideoTitle = true
         defer { isSavingVideoTitle = false }
 
         do {
-            try await TeacherYoutubeVideosRepository.updateVideoTitle(
-                teacherId: teacherId,
-                videoId: video.id,
-                title: cleanedTitle
-            )
+            try await updateTitle()
 
             if let index = videos.firstIndex(where: { $0.id == video.id }) {
                 videos[index] = TeacherYoutubeVideo(
@@ -611,7 +637,12 @@ struct TeacherImportVideosView: View {
             editingVideo = nil
             editingVideoTitle = ""
         } catch {
-            editTitleErrorMessage = error.localizedDescription
+            switch context {
+            case .teacher:
+                editTitleErrorMessage = error.localizedDescription
+            case .student:
+                editTitleErrorMessage = mapImportPermissionError(error)
+            }
         }
     }
     

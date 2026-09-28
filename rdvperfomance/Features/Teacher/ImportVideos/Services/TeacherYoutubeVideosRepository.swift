@@ -82,9 +82,36 @@ struct TeacherYoutubeVideosRepository {
         videoId: String,
         title: String
     ) async throws {
+        try await updateVideoTitle(
+            ownerCollection: "teachers",
+            ownerId: teacherId,
+            videoId: videoId,
+            title: title
+        )
+    }
+
+    static func updateStudentVideoTitle(
+        studentId: String,
+        videoId: String,
+        title: String
+    ) async throws {
+        try await updateVideoTitle(
+            ownerCollection: "users",
+            ownerId: studentId,
+            videoId: videoId,
+            title: title
+        )
+    }
+
+    private static func updateVideoTitle(
+        ownerCollection: String,
+        ownerId: String,
+        videoId: String,
+        title: String
+    ) async throws {
         try await Firestore.firestore()
-            .collection("teachers")
-            .document(teacherId)
+            .collection(ownerCollection)
+            .document(ownerId)
             .collection("youtubeVideos")
             .document(videoId)
             .updateData([
