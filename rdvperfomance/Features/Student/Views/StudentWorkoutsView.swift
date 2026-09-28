@@ -43,10 +43,16 @@ struct StudentWorkoutsView: View {
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
-    @State private var pendingReceivedVideoSave: (title: String, url: String, videoId: String)? = nil
+    @State private var pendingReceivedVideoSave: (
+        sourceId: String,
+        title: String,
+        url: String,
+        videoId: String
+    )? = nil
     @State private var isReceivedVideoSaveConfirmationPresented = false
     @State private var isSavingReceivedVideo = false
     @State private var receivedVideoSaveMessage: String? = nil
+    @State private var receivedVideoSaveSuccessSourceId: String? = nil
 
     init(
         path: Binding<[AppRoute]>,
@@ -163,22 +169,6 @@ struct StudentWorkoutsView: View {
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
-        }
-        .confirmationDialog(
-            "Salvar em Meus Vídeos?",
-            isPresented: $isReceivedVideoSaveConfirmationPresented,
-            titleVisibility: .visible
-        ) {
-            Button("Salvar") {
-                guard let video = pendingReceivedVideoSave else { return }
-                pendingReceivedVideoSave = nil
-                Task { await saveReceivedVideoToMyVideos(video) }
-            }
-            Button("Cancelar", role: .cancel) {
-                pendingReceivedVideoSave = nil
-            }
-        } message: {
-            Text("Deseja salvar este vídeo na sua lista de Meus Vídeos?")
         }
         .alert(
             "Meus Vídeos",
@@ -532,6 +522,8 @@ struct StudentWorkoutsView: View {
     }
 
     private func videoCard(for day: TrainingDayFS, videoId: String, videoURL: String) -> some View {
+        let sourceId = day.id ?? "\(day.dayIndex)-\(videoId)"
+
         HStack(spacing: 12) {
             videoThumbnail(videoId: videoId)
 
@@ -555,6 +547,7 @@ struct StudentWorkoutsView: View {
                     Button {
                         let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
                         pendingReceivedVideoSave = (
+                            sourceId: sourceId,
                             title: title.isEmpty ? "Vídeo do YouTube" : title,
                             url: videoURL,
                             videoId: videoId
@@ -573,6 +566,36 @@ struct StudentWorkoutsView: View {
                 }
                 .buttonStyle(.plain)
                 .disabled(isSavingReceivedVideo)
+                .popover(
+                    isPresented: Binding(
+                        get: {
+                            (isReceivedVideoSaveConfirmationPresented
+                                && pendingReceivedVideoSave?.sourceId == sourceId)
+                                || receivedVideoSaveSuccessSourceId == sourceId
+                        },
+                        set: { isPresented in
+                            if !isPresented {
+                                if pendingReceivedVideoSave?.sourceId == sourceId {
+                                    isReceivedVideoSaveConfirmationPresented = false
+                                    pendingReceivedVideoSave = nil
+                                }
+                                if receivedVideoSaveSuccessSourceId == sourceId {
+                                    receivedVideoSaveSuccessSourceId = nil
+                                }
+                            }
+                        }
+                    ),
+                    arrowEdge: .bottom
+                ) {
+                    Group {
+                        if receivedVideoSaveSuccessSourceId == sourceId {
+                            receivedVideoSaveSuccessCard(sourceId: sourceId)
+                        } else {
+                            receivedVideoSaveConfirmationCard
+                        }
+                    }
+                    .presentationCompactAdaptation(.popover)
+                }
             }
 
             Button {
@@ -591,9 +614,50 @@ struct StudentWorkoutsView: View {
         }
     }
 
+    private var receivedVideoSaveConfirmationCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Salvar em Meus Vídeos?")
+                .font(.system(size: 17, weight: .semibold))
+
+            Text("Deseja salvar este vídeo na sua lista de Meus Vídeos?")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+
+            HStack {
+                Button("Cancelar", role: .cancel) {
+                    isReceivedVideoSaveConfirmationPresented = false
+                    pendingReceivedVideoSave = nil
+                }
+
+                Spacer()
+
+                Button("Salvar") {
+                    guard let video = pendingReceivedVideoSave else { return }
+                    isReceivedVideoSaveConfirmationPresented = false
+                    pendingReceivedVideoSave = nil
+                    Task { await saveReceivedVideoToMyVideos(video) }
+                }
+            }
+        }
+        .padding(16)
+        .frame(width: 300, alignment: .leading)
+    }
+
+    private func receivedVideoSaveSuccessCard(sourceId: String) -> some View {
+        Text("Vídeo salvo em Meus Vídeos.")
+            .font(.system(size: 14, weight: .semibold))
+            .padding(16)
+            .frame(width: 240, alignment: .leading)
+            .task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                guard !Task.isCancelled, receivedVideoSaveSuccessSourceId == sourceId else { return }
+                receivedVideoSaveSuccessSourceId = nil
+            }
+    }
+
     @MainActor
     private func saveReceivedVideoToMyVideos(
-        _ video: (title: String, url: String, videoId: String)
+        _ video: (sourceId: String, title: String, url: String, videoId: String)
     ) async {
         guard !isTeacherViewing else { return }
 
@@ -622,7 +686,7 @@ struct StudentWorkoutsView: View {
                 url: video.url,
                 videoCategory: .crossfit
             )
-            receivedVideoSaveMessage = "Vídeo salvo em Meus Vídeos."
+            receivedVideoSaveSuccessSourceId = video.sourceId
         } catch {
             receivedVideoSaveMessage = error.localizedDescription
         }
