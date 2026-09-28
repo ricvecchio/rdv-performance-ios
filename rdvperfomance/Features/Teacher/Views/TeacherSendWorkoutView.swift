@@ -766,7 +766,7 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.white.opacity(0.06))
+        .background(isSelected ? Color.green.opacity(0.14) : Color.white.opacity(0.06))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
