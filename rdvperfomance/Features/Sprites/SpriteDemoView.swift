@@ -112,15 +112,23 @@ struct SpriteDemoView: View {
     private func previewCard() -> some View {
         VStack(spacing: 0) {
 
-            Color.clear.frame(height: 8)
+            Color.clear.frame(height: 12)
 
-            SpriteKitPreviewPanel(metrics: vm.metrics)
-                .frame(height: 420)
-                .frame(maxWidth: .infinity)
-                .clipped()
-                .padding(.horizontal, 2)
+            ZStack {
+                Color.white.opacity(0.06)
 
-            Color.clear.frame(height: 8)
+                SpriteKitPreviewPanel(metrics: vm.metrics)
+            }
+            .frame(height: 480)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .padding(.horizontal, 12)
+
+            Color.clear.frame(height: 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.cardBackground)
@@ -143,14 +151,12 @@ private struct SpriteKitPreviewPanel: View {
 
     let metrics: ProgressMetrics
 
-    @State private var scene: ProgressGameScene = ProgressGameSceneFactory.makeScene(
-        size: CGSize(width: 10, height: 10)
-    )
+    @State private var scene = Self.makePreviewScene()
 
     // Constrói a view do SpriteKit com gerenciamento de tamanho
     var body: some View {
         GeometryReader { geo in
-            SpriteView(scene: scene)
+            SpriteView(scene: scene, options: [.allowsTransparency])
                 .onAppear {
                     applySizeIfNeeded(geo.size)
                     scene.update(with: metrics, animated: false)
@@ -171,5 +177,11 @@ private struct SpriteKitPreviewPanel: View {
         if scene.size != size {
             scene.size = size
         }
+    }
+
+    private static func makePreviewScene() -> ProgressGameScene {
+        let scene = ProgressGameSceneFactory.makeScene(size: CGSize(width: 10, height: 10))
+        scene.configurePreviewBadgeLayout()
+        return scene
     }
 }

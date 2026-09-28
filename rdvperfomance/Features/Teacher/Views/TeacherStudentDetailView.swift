@@ -233,6 +233,7 @@ struct TeacherStudentDetailView: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .foregroundColor(.green.opacity(0.85))
+                    .frame(width: 22, alignment: .center)
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))

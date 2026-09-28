@@ -16,11 +16,12 @@ final class ProgressGameScene: SKScene {
     /// Label que exibe streak e percentual
     private let streakLabel = SKLabelNode(fontNamed: "AvenirNext-Bold")
 
-    /// Container para organizar badges horizontalmente
+    /// Container para organizar badges
     private let badgesContainer = SKNode()
 
     /// Métricas atualmente exibidas na cena
     private var currentMetrics: ProgressMetrics = .empty
+    private var usesPreviewBadgeLayout = false
 
     /// Configura elementos da cena quando adicionada à view
     override func didMove(to view: SKView) {
@@ -40,6 +41,10 @@ final class ProgressGameScene: SKScene {
     func update(with metrics: ProgressMetrics, animated: Bool = true) {
         currentMetrics = metrics
         apply(metrics: metrics, animated: animated)
+    }
+
+    func configurePreviewBadgeLayout() {
+        usesPreviewBadgeLayout = true
     }
 
     /// Configura nós da cena uma única vez evitando duplicação
@@ -84,7 +89,10 @@ final class ProgressGameScene: SKScene {
 
     /// Posiciona todos os elementos na cena baseado no tamanho disponível
     private func layoutNodes() {
-        let center = CGPoint(x: size.width / 2.0, y: size.height * 0.60)
+        let center = CGPoint(
+            x: size.width / 2.0,
+            y: size.height * (usesPreviewBadgeLayout ? 0.68 : 0.60)
+        )
 
         /// Calcula raio adaptativo baseado no menor lado da tela
         let radius = min(size.width, size.height) * 0.18
@@ -107,7 +115,10 @@ final class ProgressGameScene: SKScene {
         subtitleLabel.position = CGPoint(x: center.x, y: center.y + radius + 16)
         streakLabel.position = CGPoint(x: center.x, y: center.y - radius - 26)
 
-        badgesContainer.position = CGPoint(x: size.width / 2.0, y: size.height * 0.22)
+        badgesContainer.position = CGPoint(
+            x: size.width / 2.0,
+            y: size.height * (usesPreviewBadgeLayout ? 0.25 : 0.22)
+        )
     }
 
     /// Aplica métricas fornecidas aos elementos visuais da cena
@@ -144,8 +155,12 @@ final class ProgressGameScene: SKScene {
     private func rebuildBadges(_ badges: [Badge], animated: Bool) {
         badgesContainer.removeAllChildren()
 
+        let displayedBadges = usesPreviewBadgeLayout
+            ? ProgressMetricsMock.beastMode().badges
+            : badges
+
         /// Exibe mensagem quando não há badges conquistadas
-        guard !badges.isEmpty else {
+        guard !displayedBadges.isEmpty else {
             let empty = SKLabelNode(fontNamed: "AvenirNext-Regular")
             empty.text = "Sem badges ainda — continue treinando!"
             empty.fontSize = 12
@@ -156,10 +171,35 @@ final class ProgressGameScene: SKScene {
             return
         }
 
-        /// Calcula layout horizontal para até 4 badges
+        /// Limita a exibição a até 4 badges
         let spacing: CGFloat = 12
-        let maxCount = min(badges.count, 4)
-        let shown = Array(badges.prefix(maxCount))
+        let maxCount = min(displayedBadges.count, 4)
+        let shown = Array(displayedBadges.prefix(maxCount))
+
+        if usesPreviewBadgeLayout {
+            let itemHeight: CGFloat = 48
+            let spacing: CGFloat = 8
+            let itemWidth = min(max(size.width - 40, 180), 320)
+            let totalHeight = (CGFloat(shown.count) * itemHeight)
+                + (CGFloat(shown.count - 1) * spacing)
+            var y = (totalHeight - itemHeight) / 2.0
+
+            for badge in shown {
+                let node = previewBadgeNode(title: badge.title, width: itemWidth)
+                node.position = CGPoint(x: 0, y: y)
+                badgesContainer.addChild(node)
+
+                if animated {
+                    node.setScale(0.01)
+                    node.run(.sequence([
+                        .wait(forDuration: 0.05),
+                        .scale(to: 1.0, duration: 0.22)
+                    ]))
+                }
+                y -= itemHeight + spacing
+            }
+            return
+        }
 
         let itemWidth: CGFloat = 110
         let totalWidth = (CGFloat(shown.count) * itemWidth) + (CGFloat(shown.count - 1) * spacing)
@@ -205,6 +245,37 @@ final class ProgressGameScene: SKScene {
         label.horizontalAlignmentMode = .left
         label.verticalAlignmentMode = .center
         label.position = CGPoint(x: -28, y: 0)
+        container.addChild(label)
+
+        return container
+    }
+
+    private func previewBadgeNode(title: String, width: CGFloat) -> SKNode {
+        let container = SKNode()
+
+        let background = SKShapeNode(
+            rectOf: CGSize(width: width, height: 48),
+            cornerRadius: 12
+        )
+        background.fillColor = UIColor.black.withAlphaComponent(0.65)
+        background.strokeColor = UIColor.white.withAlphaComponent(0.08)
+        background.lineWidth = 1
+        container.addChild(background)
+
+        let icon = SKLabelNode(fontNamed: "AvenirNext-Bold")
+        icon.text = "★"
+        icon.fontSize = 14
+        icon.fontColor = UIColor.systemGreen.withAlphaComponent(0.90)
+        icon.position = CGPoint(x: -(width / 2) + 22, y: -6)
+        container.addChild(icon)
+
+        let label = SKLabelNode(fontNamed: "AvenirNext-Regular")
+        label.text = title
+        label.fontSize = 14
+        label.fontColor = UIColor.white.withAlphaComponent(0.90)
+        label.horizontalAlignmentMode = .left
+        label.verticalAlignmentMode = .center
+        label.position = CGPoint(x: -(width / 2) + 42, y: 0)
         container.addChild(label)
 
         return container
