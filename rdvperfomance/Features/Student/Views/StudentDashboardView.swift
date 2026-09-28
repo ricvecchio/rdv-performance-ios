@@ -584,83 +584,172 @@ struct StudentDashboardView: View {
 
     @ViewBuilder
     private var nextFitAgendaContent: some View {
-        if viewModel.isLoadingNextFitAgendaDetail {
-            ProgressView()
-                .tint(.white)
-        } else if let detail = viewModel.selectedNextFitAgendaDetail {
-            nextFitAgendaDetailContent(detail)
-        } else if let error = viewModel.nextFitAgendaDetailError {
-            nextFitAgendaDetailErrorContent(error)
-        } else if let error = viewModel.nextFitAgendaError {
-            Text(error)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+        VStack(alignment: .leading, spacing: 14) {
+            nextFitAgendaDateSelector
 
-            Button {
-                Task { await viewModel.retryNextFitWod() }
-            } label: {
-                Text("Tentar novamente")
-                    .padding(.horizontal, 14)
-                    .compactPrimaryGreenActionButton()
-            }
-            .buttonStyle(.plain)
-        } else if viewModel.nextFitAgenda.isEmpty {
-            Text("Nenhum horário disponível para hoje.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        } else {
-            VStack(spacing: 10) {
-                ForEach(viewModel.nextFitAgenda) { entry in
-                    VStack(alignment: .leading, spacing: 12) {
-                        Button {
-                            Task { await viewModel.selectNextFitAgenda(entry.id) }
-                        } label: {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
+            if viewModel.isLoadingNextFitAgenda || viewModel.isLoadingNextFitAgendaDetail {
+                ProgressView()
+                    .tint(.white)
+            } else if let detail = viewModel.selectedNextFitAgendaDetail {
+                nextFitAgendaDetailContent(detail)
+            } else if let error = viewModel.nextFitAgendaDetailError {
+                nextFitAgendaDetailErrorContent(error)
+            } else if let error = viewModel.nextFitAgendaError {
+                Text(error)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Button {
+                    Task { await viewModel.selectNextFitAgendaDate(viewModel.selectedNextFitAgendaDate) }
+                } label: {
+                    Text("Tentar novamente")
+                        .padding(.horizontal, 14)
+                        .compactPrimaryGreenActionButton()
+                }
+                .buttonStyle(.plain)
+            } else if viewModel.nextFitAgenda.isEmpty {
+                Text("Nenhum horário disponível para esta data.")
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(viewModel.nextFitAgenda) { entry in
+                        VStack(alignment: .leading, spacing: 12) {
+                            Button {
+                                Task { await viewModel.selectNextFitAgenda(entry.id) }
+                            } label: {
+                                VStack(alignment: .leading, spacing: 12) {
+                                    HStack {
+                                        nextFitAgendaDetailRow(
+                                            icon: "clock",
+                                            text: entry.scheduleText,
+                                            font: .system(size: 14, weight: .medium),
+                                            textColor: .white.opacity(0.92)
+                                        )
+                                        Spacer()
+                                        nextFitAgendaDetailRow(
+                                            icon: "person.2.fill",
+                                            text: entry.capacityText,
+                                            font: .system(size: 14, weight: .medium),
+                                            textColor: .white.opacity(0.92)
+                                        )
+                                    }
                                     nextFitAgendaDetailRow(
-                                        icon: "clock",
-                                        text: entry.scheduleText,
-                                        font: .system(size: 14, weight: .medium),
-                                        textColor: .white.opacity(0.92)
+                                        icon: "dumbbell.fill",
+                                        text: entry.modalityName,
+                                        font: .system(size: 16, weight: .semibold),
+                                        textColor: Theme.Colors.primaryGreen
                                     )
-                                    Spacer()
                                     nextFitAgendaDetailRow(
-                                        icon: "person.2.fill",
-                                        text: entry.capacityText,
-                                        font: .system(size: 14, weight: .medium),
+                                        icon: "person.fill",
+                                        text: entry.instructorName,
                                         textColor: .white.opacity(0.92)
                                     )
                                 }
-                                nextFitAgendaDetailRow(
-                                    icon: "dumbbell.fill",
-                                    text: entry.modalityName,
-                                    font: .system(size: 16, weight: .semibold),
-                                    textColor: Theme.Colors.primaryGreen
-                                )
-                                nextFitAgendaDetailRow(
-                                    icon: "person.fill",
-                                    text: entry.instructorName,
-                                    textColor: .white.opacity(0.92)
-                                )
+                                .frame(maxWidth: .infinity, alignment: .leading)
                             }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
+                            .buttonStyle(.plain)
 
-                        HStack {
-                            nextFitAgendaDetailRow(
-                                icon: "mappin.and.ellipse",
-                                text: entry.locationName,
-                                textColor: .white.opacity(0.55)
-                            )
-                            Spacer()
-                            agendaCheckInButton(for: entry)
+                            HStack {
+                                nextFitAgendaDetailRow(
+                                    icon: "mappin.and.ellipse",
+                                    text: entry.locationName,
+                                    textColor: .white.opacity(0.55)
+                                )
+                                Spacer()
+                                agendaCheckInButton(for: entry)
+                            }
+                            if let error = viewModel.agendaActionError(for: entry.id) {
+                                Text(error)
+                                    .font(.system(size: 13))
+                                    .foregroundColor(.red.opacity(0.9))
+                            }
                         }
-                        if let error = viewModel.agendaActionError(for: entry.id) {
-                            Text(error)
-                                .font(.system(size: 13))
-                                .foregroundColor(.red.opacity(0.9))
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(Color.white.opacity(0.06))
+                        .cornerRadius(12)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        )
+                    }
+                }
+            }
+
+            if viewModel.isTomorrowAgendaSelected {
+                nextFitAgendaWodContent
+            }
+        }
+    }
+
+    private var nextFitAgendaDateSelector: some View {
+        HStack(spacing: 10) {
+            nextFitAgendaDateButton(
+                title: "HOJE",
+                date: viewModel.todayAgendaDate
+            )
+            nextFitAgendaDateButton(
+                title: "AMANHÃ",
+                date: viewModel.tomorrowAgendaDate
+            )
+        }
+    }
+
+    private func nextFitAgendaDateButton(title: String, date: Date) -> some View {
+        let isSelected = Calendar.current.isDate(
+            viewModel.selectedNextFitAgendaDate,
+            inSameDayAs: date
+        )
+        return Button {
+            Task { await viewModel.selectNextFitAgendaDate(date) }
+        } label: {
+            Text("\(title) \(date.formatted(.dateTime.day().month(.twoDigits)))")
+                .font(.system(size: 13, weight: .bold))
+                .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.65))
+                .padding(.horizontal, 12)
+                .padding(.vertical, 9)
+                .background(isSelected ? Color.white.opacity(0.10) : Color.white.opacity(0.04))
+                .cornerRadius(10)
+        }
+        .buttonStyle(.plain)
+    }
+
+    @ViewBuilder
+    private var nextFitAgendaWodContent: some View {
+        if viewModel.isLoadingNextFitAgendaWods {
+            ProgressView()
+                .tint(.white)
+        } else if let error = viewModel.nextFitAgendaWodError {
+            Text(error)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.55))
+        } else if let wod = viewModel.nextFitAgendaWod {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("WOD do dia")
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                if viewModel.nextFitAgendaWods.count > 1 {
+                    Picker("", selection: $viewModel.selectedNextFitAgendaWodModalityId) {
+                        ForEach(viewModel.nextFitAgendaWods) { item in
+                            Text(item.modalityName.uppercased()).tag(Optional(item.modalityId))
                         }
+                    }
+                    .pickerStyle(.segmented)
+                    .tint(Color.white.opacity(0.06))
+                }
+
+                ForEach(wod.activities) { activity in
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text(activity.title)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen)
+
+                        Text(activity.description)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.92))
+                            .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(14)
                     .frame(maxWidth: .infinity, alignment: .leading)

@@ -82,6 +82,12 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isLoadingNextFitWod = false
     @Published private(set) var nextFitWods: [NextFitWodDisplay] = []
     @Published private(set) var nextFitAgenda: [NextFitAgendaDisplay] = []
+    @Published private(set) var selectedNextFitAgendaDate = Calendar.current.startOfDay(for: Date())
+    @Published private(set) var nextFitAgendaWods: [NextFitWodDisplay] = []
+    @Published private(set) var isLoadingNextFitAgenda = false
+    @Published private(set) var isLoadingNextFitAgendaWods = false
+    @Published private(set) var nextFitAgendaWodError: String?
+    @Published var selectedNextFitAgendaWodModalityId: Int?
     @Published private(set) var selectedNextFitAgendaId: Int?
     @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay?
     @Published private(set) var isLoadingNextFitAgendaDetail = false
@@ -115,6 +121,28 @@ final class StudentDashboardViewModel: ObservableObject {
 
     var isNextFitAgendaSelected: Bool {
         selectedNextFitContent == .agenda
+    }
+
+    var isTomorrowAgendaSelected: Bool {
+        Calendar.current.isDate(
+            selectedNextFitAgendaDate,
+            inSameDayAs: tomorrowAgendaDate
+        )
+    }
+
+    var todayAgendaDate: Date {
+        Calendar.current.startOfDay(for: Date())
+    }
+
+    var tomorrowAgendaDate: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: todayAgendaDate) ?? todayAgendaDate
+    }
+
+    var nextFitAgendaWod: NextFitWodDisplay? {
+        guard let modalityId = selectedNextFitAgendaWodModalityId else {
+            return nil
+        }
+        return nextFitAgendaWods.first { $0.modalityId == modalityId }
     }
 
     func isProcessingAgenda(_ agendaId: Int) -> Bool {
@@ -306,6 +334,64 @@ final class StudentDashboardViewModel: ObservableObject {
         await loadNextFitWod()
     }
 
+    func selectNextFitAgendaDate(_ date: Date) async {
+        guard !isLoadingNextFitAgenda, !isLoadingNextFitAgendaWods else { return }
+
+        let calendar = Calendar.current
+        let selectedDate = calendar.startOfDay(for: date)
+        guard calendar.isDate(selectedDate, inSameDayAs: todayAgendaDate)
+                || calendar.isDate(selectedDate, inSameDayAs: tomorrowAgendaDate) else {
+            return
+        }
+
+        selectedNextFitAgendaDate = selectedDate
+        agendaActionErrors = [:]
+        clearNextFitAgendaDetail()
+        nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
+        nextFitAgendaWods = []
+        selectedNextFitAgendaWodModalityId = nil
+        isLoadingNextFitAgenda = true
+        do {
+            nextFitAgenda = try await nextFitService.loadAgenda(
+                for: selectedDate,
+                sessionAccount: studentId
+            )
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+            }
+        } catch {
+            nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+        }
+        isLoadingNextFitAgenda = false
+
+        guard isTomorrowAgendaSelected else { return }
+        isLoadingNextFitAgendaWods = true
+        defer { isLoadingNextFitAgendaWods = false }
+        do {
+            nextFitAgendaWods = try await nextFitService.loadWods(
+                for: selectedDate,
+                sessionAccount: studentId
+            )
+            selectedNextFitAgendaWodModalityId = nextFitAgendaWods.first?.modalityId
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaWodError = "Não foi possível carregar o WOD do dia. Tente novamente."
+            }
+        } catch {
+            nextFitAgendaWodError = "Não foi possível carregar o WOD do dia. Tente novamente."
+        }
+    }
+
     func selectNextFitAgenda(_ agendaId: Int) async {
         guard !isLoadingNextFitAgendaDetail else { return }
 
@@ -472,12 +558,15 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
+        nextFitAgendaWods = []
+        selectedNextFitAgendaWodModalityId = nil
         processingAgendaIds = []
         agendaActionErrors = [:]
         clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         nextFitError = nil
         nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
         nextFitLoginError = nil
         hasNextFitSession = false
         needsNextFitAuthentication = true
@@ -567,8 +656,12 @@ final class StudentDashboardViewModel: ObservableObject {
         hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         nextFitError = nil
         nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
         nextFitWods = []
         nextFitAgenda = []
+        nextFitAgendaWods = []
+        selectedNextFitAgendaWodModalityId = nil
+        selectedNextFitAgendaDate = todayAgendaDate
         processingAgendaIds = []
         agendaActionErrors = [:]
         clearNextFitAgendaDetail()
@@ -618,6 +711,9 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
+        nextFitAgendaWods = []
+        selectedNextFitAgendaWodModalityId = nil
+        selectedNextFitAgendaDate = todayAgendaDate
         processingAgendaIds = []
         agendaActionErrors = [:]
         clearNextFitAgendaDetail()
@@ -626,12 +722,16 @@ final class StudentDashboardViewModel: ObservableObject {
         needsNextFitAuthentication = false
         nextFitError = nil
         nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
         nextFitLoginError = nil
     }
 
     private func refreshNextFitAgenda(afterActionFor agendaId: Int, errorMessage: String) async {
         do {
-            nextFitAgenda = try await nextFitService.loadTodayAgenda(sessionAccount: studentId)
+            nextFitAgenda = try await nextFitService.loadAgenda(
+                for: selectedNextFitAgendaDate,
+                sessionAccount: studentId
+            )
             if selectedNextFitAgendaId == agendaId {
                 await selectNextFitAgenda(agendaId)
             }
