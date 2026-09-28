@@ -524,7 +524,7 @@ struct StudentWorkoutsView: View {
     private func videoCard(for day: TrainingDayFS, videoId: String, videoURL: String) -> some View {
         let sourceId = day.id ?? "\(day.dayIndex)-\(videoId)"
 
-        HStack(spacing: 12) {
+        return HStack(spacing: 12) {
             videoThumbnail(videoId: videoId)
 
             VStack(alignment: .leading, spacing: 4) {
