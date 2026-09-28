@@ -43,6 +43,10 @@ struct StudentWorkoutsView: View {
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
+    @State private var pendingReceivedVideoSave: (title: String, url: String, videoId: String)? = nil
+    @State private var isReceivedVideoSaveConfirmationPresented = false
+    @State private var isSavingReceivedVideo = false
+    @State private var receivedVideoSaveMessage: String? = nil
 
     init(
         path: Binding<[AppRoute]>,
@@ -159,6 +163,39 @@ struct StudentWorkoutsView: View {
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
+        }
+        .confirmationDialog(
+            "Salvar em Meus Vídeos?",
+            isPresented: $isReceivedVideoSaveConfirmationPresented,
+            titleVisibility: .visible
+        ) {
+            Button("Salvar") {
+                guard let video = pendingReceivedVideoSave else { return }
+                pendingReceivedVideoSave = nil
+                Task { await saveReceivedVideoToMyVideos(video) }
+            }
+            Button("Cancelar", role: .cancel) {
+                pendingReceivedVideoSave = nil
+            }
+        } message: {
+            Text("Deseja salvar este vídeo na sua lista de Meus Vídeos?")
+        }
+        .alert(
+            "Meus Vídeos",
+            isPresented: Binding(
+                get: { receivedVideoSaveMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        receivedVideoSaveMessage = nil
+                    }
+                }
+            )
+        ) {
+            Button("OK", role: .cancel) {
+                receivedVideoSaveMessage = nil
+            }
+        } message: {
+            Text(receivedVideoSaveMessage ?? "")
         }
     }
 
@@ -463,8 +500,8 @@ struct StudentWorkoutsView: View {
             .padding(.vertical, 10)
 
             ForEach(Array(days.enumerated()), id: \.element.id) { index, day in
-                if let videoId = youtubeVideoId(for: day) {
-                    videoCard(for: day, videoId: videoId)
+                if let video = youtubeVideoInfo(for: day) {
+                    videoCard(for: day, videoId: video.videoId, videoURL: video.url)
                 }
                 if index < days.count - 1 {
                     innerDivider(leading: 14)
@@ -480,21 +517,21 @@ struct StudentWorkoutsView: View {
         )
     }
 
-    private func youtubeVideoId(for day: TrainingDayFS) -> String? {
+    private func youtubeVideoInfo(for day: TrainingDayFS) -> (videoId: String, url: String)? {
         for block in day.blocks {
             let name = block.name.trimmingCharacters(in: .whitespacesAndNewlines)
             guard name.caseInsensitiveCompare("Vídeo") == .orderedSame else { continue }
 
             let url = block.details.trimmingCharacters(in: .whitespacesAndNewlines)
             if let videoId = YouTubeVideoImporter.extractYoutubeVideoId(from: url) {
-                return videoId
+                return (videoId, url)
             }
         }
 
         return nil
     }
 
-    private func videoCard(for day: TrainingDayFS, videoId: String) -> some View {
+    private func videoCard(for day: TrainingDayFS, videoId: String, videoURL: String) -> some View {
         HStack(spacing: 12) {
             videoThumbnail(videoId: videoId)
 
@@ -513,6 +550,31 @@ struct StudentWorkoutsView: View {
 
             Spacer()
 
+            if !isTeacherViewing {
+                Menu {
+                    Button {
+                        let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                        pendingReceivedVideoSave = (
+                            title: title.isEmpty ? "Vídeo do YouTube" : title,
+                            url: videoURL,
+                            videoId: videoId
+                        )
+                        isReceivedVideoSaveConfirmationPresented = true
+                    } label: {
+                        Label("Salvar em Meus Vídeos?", systemImage: "bookmark")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 8)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(isSavingReceivedVideo)
+            }
+
             Button {
                 openLockedPlayer(for: day, videoId: videoId)
             } label: {
@@ -526,6 +588,43 @@ struct StudentWorkoutsView: View {
         .contentShape(Rectangle())
         .onTapGesture {
             openLockedPlayer(for: day, videoId: videoId)
+        }
+    }
+
+    @MainActor
+    private func saveReceivedVideoToMyVideos(
+        _ video: (title: String, url: String, videoId: String)
+    ) async {
+        guard !isTeacherViewing else { return }
+
+        let expectedStudentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let authenticatedStudentId = (session.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !expectedStudentId.isEmpty, expectedStudentId == authenticatedStudentId else {
+            receivedVideoSaveMessage = "Não foi possível validar sua autenticação para salvar este vídeo."
+            return
+        }
+
+        isSavingReceivedVideo = true
+        defer { isSavingReceivedVideo = false }
+
+        do {
+            let savedVideos = try await TeacherYoutubeVideosRepository.loadStudentVideos(
+                studentId: authenticatedStudentId
+            )
+            guard !savedVideos.contains(where: { $0.videoId == video.videoId }) else {
+                receivedVideoSaveMessage = "Este vídeo já está em Meus Vídeos."
+                return
+            }
+
+            try await TeacherYoutubeVideosRepository.addStudentVideo(
+                studentId: authenticatedStudentId,
+                title: video.title,
+                url: video.url,
+                videoCategory: .crossfit
+            )
+            receivedVideoSaveMessage = "Vídeo salvo em Meus Vídeos."
+        } catch {
+            receivedVideoSaveMessage = error.localizedDescription
         }
     }
 
