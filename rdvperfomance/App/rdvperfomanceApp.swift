@@ -8,6 +8,7 @@ struct rdvperfomanceApp: App {
 
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
     @StateObject private var session = AppSession()
+    @AppStorage("selectedAppLanguage") private var selectedAppLanguage = AppLanguage.portugueseBrazil.rawValue
     private let persistenceController = PersistenceController.shared
 
     // Define a janela principal do aplicativo com injeção de dependências
@@ -16,6 +17,7 @@ struct rdvperfomanceApp: App {
             AppRouter()
                 .environmentObject(session)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
+                .environment(\.locale, Locale(identifier: selectedAppLanguage))
         }
     }
 }
@@ -31,4 +33,3 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         return true
     }
 }
-

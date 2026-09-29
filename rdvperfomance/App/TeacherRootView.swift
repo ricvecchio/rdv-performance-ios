@@ -185,6 +185,8 @@ struct TeacherRootView: View {
             StudentDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
         case .configuracoes:
             SettingsView(path: destinationPath)
+        case .idioma:
+            LanguageSettingsView()
         case .editarPerfil:
             EditProfileView(path: destinationPath)
         case .alterarSenha:

@@ -249,6 +249,9 @@ struct StudentRootView: View {
         case .configuracoes:
             SettingsView(path: $profilePath)
 
+        case .idioma:
+            LanguageSettingsView()
+
         case .editarPerfil:
             EditProfileView(path: $profilePath)
 

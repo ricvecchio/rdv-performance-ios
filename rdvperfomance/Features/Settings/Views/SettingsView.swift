@@ -41,6 +41,9 @@ struct SettingsView: View {
                             sectionTitle("CONTA")
                             accountCard()
 
+                            sectionTitle("PREFERÊNCIAS")
+                            preferencesCard()
+
                             sectionTitle("SUPORTE & LEGAL")
                             supportLegalCard()
 
@@ -126,7 +129,7 @@ struct SettingsView: View {
         dismiss()
     }
 
-    private func sectionTitle(_ text: String) -> some View {
+    private func sectionTitle(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
             .foregroundColor(.white.opacity(0.35))
@@ -145,6 +148,14 @@ struct SettingsView: View {
             divider()
             cardRow(icon: "trash.fill", title: "Excluir Conta") {
                 path.append(.excluirConta)
+            }
+        }
+    }
+
+    private func preferencesCard() -> some View {
+        card {
+            cardRow(icon: "globe", title: "Idioma") {
+                path.append(.idioma)
             }
         }
     }
@@ -191,7 +202,7 @@ struct SettingsView: View {
             .padding(.leading, 54)
     }
 
-    private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
+    private func cardRow(icon: String, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
 
