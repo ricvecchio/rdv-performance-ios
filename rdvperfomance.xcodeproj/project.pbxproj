@@ -103,10 +103,12 @@
 				};
 			};
 			buildConfigurationList = 0C9DDCAE2EFAE51300E9988D /* Build configuration list for PBXProject "rdvperfomance" */;
-			developmentRegion = en;
+			developmentRegion = "pt-BR";
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				es,
+				"pt-BR",
 				Base,
 			);
 			mainGroup = 0C9DDCAA2EFAE51300E9988D;
