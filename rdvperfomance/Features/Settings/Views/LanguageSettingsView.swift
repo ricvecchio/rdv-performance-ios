@@ -7,6 +7,17 @@ enum AppLanguage: String, CaseIterable, Identifiable {
 
     var id: String { rawValue }
 
+    var flagAssetName: String {
+        switch self {
+        case .portugueseBrazil:
+            "flag_br"
+        case .english:
+            "flag_us"
+        case .spanish:
+            "flag_es"
+        }
+    }
+
     var localizedName: LocalizedStringKey {
         switch self {
         case .portugueseBrazil:
@@ -110,10 +121,11 @@ struct LanguageSettingsView: View {
             selectedAppLanguage = language.rawValue
         } label: {
             HStack(spacing: 14) {
-                Image(systemName: "globe")
-                    .font(.system(size: 18))
-                    .foregroundColor(.green.opacity(0.85))
-                    .frame(width: 28)
+                Image(language.flagAssetName)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: 42, height: 28)
+                    .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
 
                 Text(language.localizedName)
                     .font(.system(size: 18, weight: .medium))
