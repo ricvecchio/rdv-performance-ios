@@ -356,7 +356,12 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
-    func sendInviteByEmail(teacherId: String, studentEmail: String, category: TreinoTipo) async {
+    func sendInviteByEmail(
+        teacherId: String,
+        studentEmail: String,
+        category: TreinoTipo,
+        locale: Locale
+    ) async {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard activeTeacherId == teacherId else { return }
         let generation = teacherGeneration
@@ -432,7 +437,8 @@ final class TeacherStudentsListViewModel: ObservableObject {
             )
 
             guard isActiveTeacher(teacherId, generation: generation) else { return }
-            inviteSuccessMessage = "Convite enviado para \(email)."
+            let format = String(localized: "Convite enviado para %@.", locale: locale)
+            inviteSuccessMessage = String(format: format, locale: locale, arguments: [email])
             showInviteSuccessAlert = true
 
             await loadInvites(teacherId: teacherId, force: true)
@@ -673,12 +679,12 @@ final class TeacherStudentsListViewModel: ObservableObject {
         await loadPendingLinkRequests(teacherId: teacherId, force: true)
     }
 
-    func statusText(_ raw: String) -> String {
+    func statusText(_ raw: String, locale: Locale) -> String {
         let v = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         if v == "pending" { return "Pendente" }
-        if v == "accepted" { return "Aceito" }
+        if v == "accepted" { return String(localized: "Aceito", locale: locale) }
         if v == "declined" { return "Recusado" }
-        if v == "cancelled" { return "Cancelado" }
+        if v == "cancelled" { return String(localized: "Cancelado", locale: locale) }
         return raw.isEmpty ? "—" : raw
     }
 

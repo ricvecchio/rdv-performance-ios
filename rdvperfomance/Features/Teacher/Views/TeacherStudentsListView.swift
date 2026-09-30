@@ -10,6 +10,7 @@ struct TeacherStudentsListView: View {
     let onBack: () -> Void
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
     @StateObject private var vm: TeacherStudentsListViewModel
 
     @State private var filter: TreinoTipo? = nil
@@ -259,8 +260,17 @@ struct TeacherStudentsListView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func sectionTitle(_ title: String) -> some View {
-        Text(title)
+    private func sectionTitle(
+        _ title: String,
+        localizedTitle: LocalizedStringKey? = nil
+    ) -> some View {
+        Group {
+            if let localizedTitle {
+                Text(localizedTitle)
+            } else {
+                Text(title)
+            }
+        }
             .font(.system(size: 14, weight: .medium))
             .foregroundColor(.white.opacity(0.35))
             .padding(.horizontal, 16)
@@ -270,14 +280,18 @@ struct TeacherStudentsListView: View {
     private var filterRow: some View {
         HStack(spacing: 6) {
             filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
-            filterChip(title: TreinoTipo.crossfit.displayName, isSelected: filter == .crossfit) { filter = .crossfit }
-            filterChip(title: TreinoTipo.academia.displayName, isSelected: filter == .academia) { filter = .academia }
+            filterChip(title: "Crossfit", isSelected: filter == .crossfit) { filter = .crossfit }
+            filterChip(title: "Academia", isSelected: filter == .academia) { filter = .academia }
             filterChip(title: "Em Casa", isSelected: filter == .emCasa) { filter = .emCasa }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func filterChip(title: String, isSelected: Bool, action: @escaping () -> Void) -> some View {
+    private func filterChip(
+        title: LocalizedStringKey,
+        isSelected: Bool,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
@@ -299,7 +313,7 @@ struct TeacherStudentsListView: View {
 
     private var contentCard: some View {
         VStack(spacing: 0) {
-            sectionTitle("ALUNOS VINCULADOS")
+            sectionTitle("ALUNOS VINCULADOS", localizedTitle: "ALUNOS VINCULADOS")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -565,7 +579,7 @@ struct TeacherStudentsListView: View {
 
     private var pendingLinkRequestsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle("CONVITES RECEBIDOS")
+            sectionTitle("CONVITES RECEBIDOS", localizedTitle: "CONVITES RECEBIDOS")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -801,8 +815,12 @@ struct TeacherStudentsListView: View {
             }
         }
 
-        private func title(for category: TreinoTipo) -> String {
-            category == .emCasa ? "Em Casa" : category.displayName
+        private func title(for category: TreinoTipo) -> LocalizedStringKey {
+            switch category {
+            case .crossfit: "Crossfit"
+            case .academia: "Academia"
+            case .emCasa: "Em Casa"
+            }
         }
     }
 
@@ -821,8 +839,19 @@ struct TeacherStudentsListView: View {
         guard !categories.isEmpty else { return "—" }
 
         return categories
-            .map { $0 == .emCasa ? "Em Casa" : $0.displayName }
+            .map(localizedCategoryTitle)
             .joined(separator: " / ")
+    }
+
+    private func localizedCategoryTitle(_ category: TreinoTipo) -> String {
+        switch category {
+        case .crossfit:
+            String(localized: "Crossfit", locale: locale)
+        case .academia:
+            String(localized: "Academia", locale: locale)
+        case .emCasa:
+            String(localized: "Em Casa", locale: locale)
+        }
     }
 
     private func categoryFromStudentProfile(_ student: AppUser) -> TreinoTipo? {
@@ -889,7 +918,7 @@ struct TeacherStudentsListView: View {
         case invite = 0
         case sent = 1
 
-        var title: String {
+        var title: LocalizedStringKey {
             switch self {
             case .invite: return "Convidar"
             case .sent: return "Convites"
@@ -955,7 +984,12 @@ struct TeacherStudentsListView: View {
                                 vm.setInviteError("Não foi possível identificar o professor logado.")
                                 return
                             }
-                            await vm.sendInviteByEmail(teacherId: teacherId, studentEmail: inviteEmail, category: selectedCategory)
+                            await vm.sendInviteByEmail(
+                                teacherId: teacherId,
+                                studentEmail: inviteEmail,
+                                category: selectedCategory,
+                                locale: locale
+                            )
                         }
                     } label: {
                         HStack(spacing: 10) {
@@ -1100,7 +1134,7 @@ struct TeacherStudentsListView: View {
     }
 
     private func inviteRow(_ inv: TeacherStudentInviteFS) -> some View {
-        let statusText = vm.statusText(inv.status)
+        let statusText = vm.statusText(inv.status, locale: locale)
 
         return HStack(spacing: 12) {
             Image(systemName: "envelope")
