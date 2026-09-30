@@ -250,7 +250,7 @@ struct DeleteAccountView: View {
     }
 
     // Retorna campo seguro com linha inferior
-    private func secureUnderlineField(title: String, text: Binding<String>) -> some View {
+    private func secureUnderlineField(title: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
             Text(title)

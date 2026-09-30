@@ -101,11 +101,7 @@ struct ChangePasswordView: View {
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            secureUnderlineField(
-                title: "Senha atual",
-                localizedTitle: "Senha atual",
-                text: $currentPassword
-            )
+            secureUnderlineField(title: "Senha atual", text: $currentPassword)
             secureUnderlineField(title: "Nova senha", text: $newPassword)
             secureUnderlineField(title: "Confirmar nova senha", text: $confirmNewPassword)
         }
@@ -206,19 +202,12 @@ struct ChangePasswordView: View {
 
     // Retorna campo seguro com linha inferior
     private func secureUnderlineField(
-        title: String,
-        localizedTitle: String? = nil,
+        title: LocalizedStringKey,
         text: Binding<String>
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Group {
-                if let localizedTitle {
-                    Text(LocalizedStringKey(localizedTitle))
-                } else {
-                    Text(title)
-                }
-            }
+            Text(title)
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 
