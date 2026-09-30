@@ -229,7 +229,7 @@ struct StudentTeachersView: View {
                 loadingView(String(localized: "Carregando professores...", locale: locale))
             } else if linkedTeachers.isEmpty {
                 emptyView(
-                    title: String(localized: "Nenhum professor vinculado", locale: locale),
+                    title: "Nenhum professor vinculado",
                     message: "Convide ou aceite um professor para aparecer aqui."
                 )
             } else {
@@ -249,7 +249,7 @@ struct StudentTeachersView: View {
                 loadingView(String(localized: "Carregando convites...", locale: locale))
             } else if sentRequests.isEmpty {
                 emptyView(
-                    title: String(localized: "Nenhum convite enviado", locale: locale),
+                    title: "Nenhum convite enviado",
                     message: "Convide um professor para iniciar um vínculo."
                 )
             } else {
@@ -269,7 +269,7 @@ struct StudentTeachersView: View {
                 loadingView(String(localized: "Carregando convites...", locale: locale))
             } else if receivedInvites.isEmpty {
                 emptyView(
-                    title: String(localized: "Nenhum convite pendente", locale: locale),
+                    title: "Nenhum convite pendente",
                     message: "Convites de professores aparecerão aqui."
                 )
             } else {
@@ -549,7 +549,7 @@ struct StudentTeachersView: View {
         .padding(.vertical, 18)
     }
 
-    private func emptyView(title: String, message: LocalizedStringKey) -> some View {
+    private func emptyView(title: LocalizedStringKey, message: LocalizedStringKey) -> some View {
         VStack(spacing: 12) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
