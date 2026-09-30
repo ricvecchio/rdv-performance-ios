@@ -509,7 +509,7 @@ struct TeacherStudentsListView: View {
     private var pendingInvitesCard: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            sectionTitle("CONVITES ENVIADOS")
+            sectionTitle("CONVITES ENVIADOS", localizedTitle: "CONVITES ENVIADOS")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -1079,7 +1079,7 @@ struct TeacherStudentsListView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("CONVITES ENVIADOS")
+                Text(LocalizedStringKey("CONVITES ENVIADOS"))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 
