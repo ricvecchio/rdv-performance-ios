@@ -4,6 +4,7 @@ import SwiftUI
 struct CrossfitMenuView: View {
 
     @Binding var path: [AppRoute]
+    @Environment(\.locale) private var locale
 
     var body: some View {
         ZStack {
@@ -23,11 +24,31 @@ struct CrossfitMenuView: View {
                     let tileHeight = proxy.size.height / 5
 
                     VStack(spacing: 0) {
-                        menuTile(title: "WOD", imageName: "rdv_crossfit_wod_horizontal", height: tileHeight)
-                        menuTile(title: "BENCHMARK", imageName: "rdv_crossfit_benchmark_horizontal", height: tileHeight)
-                        menuTile(title: "MEUS RECORDES", imageName: "rdv_crossfit_meusrecordes_horizontal", height: tileHeight)
-                        menuTile(title: "PROGRESSOS", imageName: "rdv_crossfit_progressos_horizontal", height: tileHeight)
-                        menuTile(title: "MONTE SEU TREINO", imageName: "rdv_crossfit_monteseutreino_horizontal", height: tileHeight)
+                        menuTile(
+                            title: String(localized: "WOD", locale: locale),
+                            imageName: "rdv_crossfit_wod_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: String(localized: "BENCHMARK", locale: locale),
+                            imageName: "rdv_crossfit_benchmark_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: String(localized: "MEUS RECORDES", locale: locale),
+                            imageName: "rdv_crossfit_meusrecordes_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: String(localized: "PROGRESSOS", locale: locale),
+                            imageName: "rdv_crossfit_progressos_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: String(localized: "MONTE SEU TREINO", locale: locale),
+                            imageName: "rdv_crossfit_monteseutreino_horizontal",
+                            height: tileHeight
+                        )
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }

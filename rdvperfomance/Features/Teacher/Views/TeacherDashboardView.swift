@@ -62,6 +62,7 @@ struct TeacherDashboardView: View {
     let category: TreinoTipo
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var todaySummary: TodaySummary?
     @State private var isLoadingSummary = true
@@ -468,8 +469,8 @@ struct TeacherDashboardView: View {
 
     private var todayText: String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE, dd/MM"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
         let date = formatter.string(from: Date())
         guard let first = date.first else { return date }
         return first.uppercased() + String(date.dropFirst())

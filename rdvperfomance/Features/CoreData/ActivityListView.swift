@@ -5,6 +5,7 @@ import CoreData
 struct ActivityListView: View {
     /// Contexto do Core Data injetado pelo ambiente
     @Environment(\.managedObjectContext) private var viewContext
+    @Environment(\.locale) private var locale
     /// Request de busca que retorna atividades ordenadas por data decrescente
     @FetchRequest(entity: UserActivity.entity(), sortDescriptors: [NSSortDescriptor(keyPath: \UserActivity.date, ascending: false)]) private var activities: FetchedResults<UserActivity>
 
@@ -16,7 +17,7 @@ struct ActivityListView: View {
                         Text(activity.title ?? "(sem título)")
                             .font(.headline)
                         if let d = activity.date {
-                            Text(DateFormatter.localizedString(from: d, dateStyle: .short, timeStyle: .short))
+                            Text(d.formatted(.dateTime.year().month().day().hour().minute().locale(locale)))
                                 .font(.caption)
                                 .foregroundColor(.secondary)
                         }

@@ -15,6 +15,7 @@ struct StudentDayDetailView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -368,8 +369,8 @@ struct StudentDayDetailView: View {
         guard let date else { return fallback }
 
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE dd/MM"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
@@ -435,7 +436,7 @@ struct StudentDayDetailView: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.55))
 
-                            Text(selectedMovementName ?? "Selecionar")
+                            Text(selectedMovementName ?? String(localized: "Selecionar", locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .lineLimit(1)
@@ -770,7 +771,9 @@ struct StudentDayDetailView: View {
 
     private func openLockedPlayer(item: VideoDayItem) {
         let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeTitle = titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim
+        let safeTitle = titleTrim.isEmpty
+            ? String(localized: "Vídeo do YouTube", locale: locale)
+            : titleTrim
 
         activeLockedPlayer = LockedPlayerItem(
             title: safeTitle,
@@ -791,7 +794,11 @@ struct StudentDayDetailView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                Text(titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim)
+                Text(
+                    titleTrim.isEmpty
+                        ? String(localized: "Vídeo do YouTube", locale: locale)
+                        : titleTrim
+                )
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -886,7 +893,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = String(localized: "Dia inválido: id não encontrado.", locale: locale)
             return
         }
 
@@ -990,7 +997,7 @@ struct StudentDayDetailView: View {
     private func formattedDate(_ date: Date?) -> String? {
         guard let date else { return nil }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
+        f.locale = locale
         f.dateStyle = .medium
         return f.string(from: date)
     }
@@ -1126,13 +1133,13 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = String(localized: "Dia inválido: id não encontrado.", locale: locale)
             return
         }
 
         let t = editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else {
-            errorMessage = "Informe o título do dia."
+            errorMessage = String(localized: "Informe o título do dia.", locale: locale)
             return
         }
 
@@ -1165,7 +1172,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = String(localized: "Dia inválido: id não encontrado.", locale: locale)
             return
         }
 

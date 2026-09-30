@@ -17,6 +17,8 @@ struct TeacherWorkoutTemplatesView: View {
     let sectionTitle: String
     let mode: TeacherWorkoutTemplatesMode
 
+    @Environment(\.locale) private var locale
+
     @State private var templates: [WorkoutTemplateFS] = []
     @State private var isLoading: Bool = true
     @State private var hasLoadedInitialData: Bool = false
@@ -52,14 +54,16 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private var addButtonTitle: String {
-        isCrossfitCategory ? "Adicionar WOD" : "Adicionar Treino"
+        isCrossfitCategory
+            ? String(localized: "Adicionar WOD", locale: locale)
+            : String(localized: "Adicionar Treino", locale: locale)
     }
 
     private var descriptionText: String {
         if isAcademiaOrEmCasaCategory {
-            return "Cadastre e gerencie os treinos desta seção."
+            return String(localized: "Cadastre e gerencie os treinos desta seção.", locale: locale)
         }
-        return "Cadastre e gerencie os WODs desta seção."
+        return String(localized: "Cadastre e gerencie os WODs desta seção.", locale: locale)
     }
 
     @State private var activeSheet: ActiveSheet? = nil
@@ -237,7 +241,7 @@ struct TeacherWorkoutTemplatesView: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             templates = []
             isLoading = false
             hasLoadedInitialData = true
@@ -317,7 +321,12 @@ struct TeacherWorkoutTemplatesView: View {
             }
 
         } catch {
-            errorMessage = "Falha ao inserir treinos padrão: \(error.localizedDescription)"
+            let format = String(localized: "Falha ao inserir treinos padrão: %@", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
 
         #if DEBUG
@@ -330,13 +339,13 @@ struct TeacherWorkoutTemplatesView: View {
 
         guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !templateId.isEmpty else {
-            errorMessage = "Não foi possível remover: id do treino inválido."
+            errorMessage = String(localized: "Não foi possível remover: id do treino inválido.", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -350,7 +359,12 @@ struct TeacherWorkoutTemplatesView: View {
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
 
         } catch {
-            errorMessage = "Falha ao remover o treino: \(error.localizedDescription)"
+            let format = String(localized: "Falha ao remover o treino: %@", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
     }
 

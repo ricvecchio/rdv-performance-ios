@@ -28,7 +28,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
     var hasLoadedWeeks: Bool { hasLoadedWeeksAndMeta }
 
-    private var weekRangeText: [String: String] = [:]
+    private var weekDateRanges: [String: (start: Date, end: Date)] = [:]
     @Published private(set) var weekProgressPercent: [String: Int] = [:]
     private var weekEndDate: [String: Date] = [:]
 
@@ -117,7 +117,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
             hasLoadedWeeksAndMeta = true
             hasLoadedWeekMetadata = visibleWeeks.isEmpty
             isLoading = false
-            weekRangeText = [:]
+            weekDateRanges = [:]
             weekProgressPercent = [:]
             weekEndDate = [:]
 
@@ -219,8 +219,8 @@ final class StudentWorkoutsViewModel: ObservableObject {
             return
         }
 
-        if let range = Self.computeRangeTextStatic(startDate: week.startDate, endDate: week.endDate) {
-            weekRangeText[weekId] = range
+        if let startDate = week.startDate, let endDate = week.endDate {
+            weekDateRanges[weekId] = (startDate, endDate)
         }
         if let endDate = week.endDate {
             weekEndDate[weekId] = endDate
@@ -237,12 +237,20 @@ final class StudentWorkoutsViewModel: ObservableObject {
         )
     }
 
-    func subtitleForWeek(_ week: TrainingWeekFS) -> String {
-        guard let weekId = week.id else { return "Treinos da semana" }
+    func subtitleForWeek(_ week: TrainingWeekFS, locale: Locale) -> String {
+        guard let weekId = week.id, let range = weekDateRanges[weekId] else {
+            return String(localized: "Treinos da semana", locale: locale)
+        }
 
-        let range = weekRangeText[weekId] ?? "Treinos da semana"
-
-        return range
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("ddMMyyyy")
+        let format = String(localized: "%@ - %@", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [formatter.string(from: range.start), formatter.string(from: range.end)]
+        )
     }
 
     func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
@@ -423,13 +431,4 @@ final class StudentWorkoutsViewModel: ObservableObject {
         return Int(v.rounded())
     }
 
-    nonisolated static func computeRangeTextStatic(startDate: Date?, endDate: Date?) -> String? {
-        guard let startDate, let endDate else { return nil }
-
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy"
-
-        return "\(f.string(from: startDate)) a \(f.string(from: endDate))"
-    }
 }

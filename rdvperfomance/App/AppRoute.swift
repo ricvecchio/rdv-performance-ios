@@ -21,23 +21,30 @@ enum CrossfitLibrarySection: String, Hashable, CaseIterable {
     var title: String {
         switch self {
         case .benchmarks:
-            return "Girls WODs"
+            return String(localized: "Girls WODs", locale: Self.localizationLocale)
         case .heroTributeWorkouts:
-            return "Hero & Tribute Workouts"
+            return String(localized: "Hero & Tribute Workouts", locale: Self.localizationLocale)
         case .competicoesOficiais:
-            return "Competições Oficiais"
+            return String(localized: "Competições Oficiais", locale: Self.localizationLocale)
         case .formatosWod:
-            return "Formatos de WOD"
+            return String(localized: "Formatos de WOD", locale: Self.localizationLocale)
         case .formatoSocial:
-            return "Formato Social"
+            return String(localized: "Formato Social", locale: Self.localizationLocale)
         case .opens:
-            return "Open’s"
+            return String(localized: "Open’s", locale: Self.localizationLocale)
         case .meusTreinos:
-            return "Meus Treinos"
+            return String(localized: "Meus Treinos", locale: Self.localizationLocale)
         }
     }
 
     var firestoreKey: String { rawValue }
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 }
 
 enum TeacherWorkoutsMode: Hashable {

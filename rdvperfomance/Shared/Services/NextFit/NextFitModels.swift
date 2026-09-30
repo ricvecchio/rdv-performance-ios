@@ -32,7 +32,14 @@ struct NextFitAgendaDisplay: Equatable, Identifiable {
     let canCancelCheckIn: Bool
     let hasCheckIn: Bool
 
-    var scheduleText: String { "\(startTime) às \(endTime)" }
+    func scheduleText(locale: Locale) -> String {
+        let format = String(localized: "%@ às %@", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [startTime, endTime]
+        )
+    }
     var capacityText: String { String(format: "%02d/%02d", enrolledStudents, studentLimit) }
 }
 

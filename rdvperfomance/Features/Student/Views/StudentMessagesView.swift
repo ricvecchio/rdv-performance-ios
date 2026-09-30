@@ -11,6 +11,7 @@ struct StudentMessagesView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
@@ -184,7 +185,7 @@ struct StudentMessagesView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(teachersById[msg.teacherId]?.name ?? "Professor")
+                Text(teachersById[msg.teacherId]?.name ?? String(localized: "Professor", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -225,12 +226,12 @@ struct StudentMessagesView: View {
         errorMessage = nil
 
         guard session.isLoggedIn && session.isStudent else {
-            errorMessage = "Apenas aluno pode acessar mensagens."
+            errorMessage = String(localized: "Apenas aluno pode acessar mensagens.", locale: locale)
             return
         }
 
         guard let sid = Auth.auth().currentUser?.uid, !sid.isEmpty else {
-            errorMessage = "Não foi possível identificar o aluno logado."
+            errorMessage = String(localized: "Não foi possível identificar o aluno logado.", locale: locale)
             return
         }
 
@@ -255,8 +256,8 @@ struct StudentMessagesView: View {
     // Formata data para exibição
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy HH:mm"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyyHHmm")
         return f.string(from: date)
     }
 

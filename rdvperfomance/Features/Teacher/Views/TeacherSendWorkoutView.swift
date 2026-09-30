@@ -39,6 +39,7 @@ private struct WorkoutPickerLabel: View {
 }
 
 struct TeacherSendWorkoutView: View {
+    @Environment(\.locale) private var locale
 
     private enum Step: Equatable {
         case student
@@ -1120,15 +1121,15 @@ struct TeacherSendWorkoutView: View {
 
     private func weekdayTitle(for date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEE")
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
     private func dateTitle(for date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd/MM"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("ddMM")
         return formatter.string(from: date)
     }
 

@@ -13,18 +13,25 @@ enum NextFitServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingSession, .invalidSession:
-            return "Conecte sua conta NextFit para consultar o treino de hoje."
+            return String(localized: "Conecte sua conta NextFit para consultar o treino de hoje.", locale: Self.localizationLocale)
         case .registrationNotFound:
-            return "Não encontramos este cadastro no NextFit."
+            return String(localized: "Não encontramos este cadastro no NextFit.", locale: Self.localizationLocale)
         case .muralhaRegistrationNotFound:
-            return "Não encontramos um cadastro da Muralha nesta conta NextFit."
+            return String(localized: "Não encontramos um cadastro da Muralha nesta conta NextFit.", locale: Self.localizationLocale)
         case .invalidCredentials:
-            return "Não foi possível entrar no NextFit. Verifique seus dados."
+            return String(localized: "Não foi possível entrar no NextFit. Verifique seus dados.", locale: Self.localizationLocale)
         case let .agendaCheckInBusinessFailure(_, message):
             return message
         case .unavailable:
-            return "Não foi possível carregar o WOD. Tente novamente."
+            return String(localized: "Não foi possível carregar o WOD. Tente novamente.", locale: Self.localizationLocale)
         }
+    }
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
     }
 }
 
@@ -33,6 +40,13 @@ struct NextFitService {
     private static let muralhaUnitCode = 30299
     private static let crossFitModalityCode = 262777
     private static let agendaPageLimit = 10
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 
     func authenticate(email: String, password: String, sessionAccount: String) async throws {
         let registration = try await recoverRegistration(email: email)
@@ -168,11 +182,20 @@ struct NextFitService {
                 let dailyModalityName = wod.descricaoModalidade?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 let studentModalityName = studentModalityNames[modalityId] ?? ""
+                let modalityFallbackFormat = String(
+                    localized: "Modalidade %@",
+                    locale: Self.localizationLocale
+                )
+                let modalityFallback = String(
+                    format: modalityFallbackFormat,
+                    locale: Self.localizationLocale,
+                    arguments: [String(modalityId)]
+                )
                 let modalityName = !apiModalityName.isEmpty
                     ? apiModalityName
                     : (!dailyModalityName.isEmpty
                         ? dailyModalityName
-                        : (!studentModalityName.isEmpty ? studentModalityName : "Modalidade \(modalityId)"))
+                        : (!studentModalityName.isEmpty ? studentModalityName : modalityFallback))
                 debugLog(
                     "Detalhe - Wod Id: \(wod.id), CodigoModalidade: \(wod.codigoModalidade), "
                         + "Modalidade.Id: \(content.modalidade?.id.description ?? "ausente"), "
@@ -481,7 +504,7 @@ struct NextFitService {
                 canSchedule: content.podeAgendar,
                 canCancelCheckIn: content.permiteCancelarCheckin,
                 dateText: formattedDate(from: startDate),
-                scheduleText: "\(formattedTime(from: startDate)) às \(formattedTime(from: endDate))",
+                scheduleText: localizedScheduleText(startDate: startDate, endDate: endDate),
                 capacityText: String(format: "%02d/%02d", content.qtdeAlunos, content.limiteAlunos),
                 modalityName: content.descricao?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
                 instructorName: content.nomeInstrutor?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
@@ -753,7 +776,10 @@ struct NextFitService {
         if response.errorCode == 71038 {
             return .agendaCheckInBusinessFailure(
                 errorCode: response.errorCode,
-                message: "Você está marcado como desistente nessa aula, entre em contato com a recepção caso deseje alterar."
+                message: String(
+                    localized: "Você está marcado como desistente nessa aula, entre em contato com a recepção caso deseje alterar.",
+                    locale: Self.localizationLocale
+                )
             )
         }
         return .unavailable
@@ -834,11 +860,23 @@ struct NextFitService {
 
     private func formattedTime(from date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.locale = Self.localizationLocale
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.timeZone = .current
-        formatter.dateFormat = "HH:mm"
+        formatter.setLocalizedDateFormatFromTemplate("jm")
         return formatter.string(from: date)
+    }
+
+    private func localizedScheduleText(startDate: Date, endDate: Date) -> String {
+        let format = String(localized: "%@ às %@", locale: Self.localizationLocale)
+        return String(
+            format: format,
+            locale: Self.localizationLocale,
+            arguments: [
+                formattedTime(from: startDate),
+                formattedTime(from: endDate)
+            ]
+        )
     }
 
     private func debugLog(_ message: String) {

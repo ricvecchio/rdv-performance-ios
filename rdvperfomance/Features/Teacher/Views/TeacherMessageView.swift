@@ -9,6 +9,7 @@ struct TeacherMessageView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var message: String = ""
 
@@ -200,7 +201,7 @@ struct TeacherMessageView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.userName ?? "Professor")
+                Text(session.userName ?? String(localized: "Professor", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -297,7 +298,10 @@ struct TeacherMessageView: View {
     private func friendlyFirestoreError(_ error: Error) -> String {
         let msg = (error as NSError).localizedDescription
         if msg.lowercased().contains("missing or insufficient permissions") {
-            return "Sem permissão para acessar as mensagens desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/messages."
+            return String(
+                localized: "Sem permissão para acessar as mensagens desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/messages.",
+                locale: locale
+            )
         }
         return msg
     }
@@ -308,17 +312,17 @@ struct TeacherMessageView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode acessar mensagens."
+            errorMessage = String(localized: "Apenas professor pode acessar mensagens.", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -345,23 +349,23 @@ struct TeacherMessageView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode enviar mensagens."
+            errorMessage = String(localized: "Apenas professor pode enviar mensagens.", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
         let bodyTrim = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !bodyTrim.isEmpty else {
-            errorMessage = "Digite uma mensagem antes de enviar."
+            errorMessage = String(localized: "Digite uma mensagem antes de enviar.", locale: locale)
             return
         }
 
@@ -391,7 +395,7 @@ struct TeacherMessageView: View {
             messages.insert(local, at: 0)
 
             message = ""
-            successMessage = "Mensagem enviada com sucesso."
+            successMessage = String(localized: "Mensagem enviada com sucesso.", locale: locale)
 
             // ✅ Sincroniza com Firestore
             await loadMessages()
@@ -403,8 +407,8 @@ struct TeacherMessageView: View {
 
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy HH:mm"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyyHHmm")
         return f.string(from: date)
     }
 

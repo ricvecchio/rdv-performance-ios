@@ -10,16 +10,23 @@ enum TecnofitImportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .credentialsRequired:
-            return "Informe seu e-mail e senha do Tecnofit para continuar."
+            return String(localized: "Informe seu e-mail e senha do Tecnofit para continuar.", locale: Self.localizationLocale)
         case .invalidCredentials:
-            return "Não foi possível entrar no Tecnofit. Verifique seus dados."
+            return String(localized: "Não foi possível entrar no Tecnofit. Verifique seus dados.", locale: Self.localizationLocale)
         case .companySelectionRequired:
-            return "Não foi possível identificar com segurança sua unidade CrossFit no Tecnofit."
+            return String(localized: "Não foi possível identificar com segurança sua unidade CrossFit no Tecnofit.", locale: Self.localizationLocale)
         case .noRecords:
-            return "Não encontramos recordes pessoais no Tecnofit para importar."
+            return String(localized: "Não encontramos recordes pessoais no Tecnofit para importar.", locale: Self.localizationLocale)
         case .unavailable:
-            return "Não foi possível consultar o Tecnofit agora. Tente novamente."
+            return String(localized: "Não foi possível consultar o Tecnofit agora. Tente novamente.", locale: Self.localizationLocale)
         }
+    }
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
     }
 }
 

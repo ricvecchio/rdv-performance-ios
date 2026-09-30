@@ -33,6 +33,7 @@ struct StudentDashboardView: View {
     let onSelectWorkout: (String, String) -> Void
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
     @StateObject private var viewModel: StudentDashboardViewModel
     @State private var isTeacherLinkIconPulsing = false
     @State private var isRequestLinkSheetPresented = false
@@ -622,7 +623,7 @@ struct StudentDashboardView: View {
                                     HStack {
                                         nextFitAgendaDetailRow(
                                             icon: "clock",
-                                            text: entry.scheduleText,
+                                            text: entry.scheduleText(locale: locale),
                                             font: .system(size: 14, weight: .medium),
                                             textColor: .white.opacity(0.92)
                                         )
@@ -704,7 +705,7 @@ struct StudentDashboardView: View {
         return Button {
             Task { await viewModel.selectNextFitAgendaDate(date) }
         } label: {
-            Text("\(title) \(date.formatted(.dateTime.day().month(.twoDigits)))")
+            Text("\(title) \(date.formatted(.dateTime.day().month(.twoDigits).locale(locale)))")
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.65))
                 .padding(.horizontal, 12)
@@ -1191,16 +1192,16 @@ struct StudentDashboardView: View {
     private func weekdayAbbreviation(for date: Date?) -> String {
         guard let date else { return "" }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEE"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter.string(from: date).replacingOccurrences(of: ".", with: "").capitalized
     }
 
     private func dateTitle(for date: Date?) -> String {
         guard let date else { return "" }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE dd/MM"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 }

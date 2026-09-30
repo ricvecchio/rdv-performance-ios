@@ -7,6 +7,7 @@ struct TeacherImportWorkoutsView: View {
     
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    @Environment(\.locale) private var locale
     
     private let contentMaxWidth: CGFloat = 380
     
@@ -47,11 +48,11 @@ struct TeacherImportWorkoutsView: View {
         case academia
         case emCasa
         
-        var title: String {
+        func title(locale: Locale) -> String {
             switch self {
-            case .crossfit: return "Treinos Crossfit"
-            case .academia: return "Treinos Academia"
-            case .emCasa:   return "Treinos em Casa"
+            case .crossfit: return String(localized: "Treinos Crossfit", locale: locale)
+            case .academia: return String(localized: "Treinos Academia", locale: locale)
+            case .emCasa:   return String(localized: "Treinos em Casa", locale: locale)
             }
         }
         
@@ -99,11 +100,17 @@ struct TeacherImportWorkoutsView: View {
                             contentCard
                             
                             if isImporting {
-                                messageCard(text: "Importando planilha... aguarde.", isError: false)
+                                messageCard(
+                                    text: String(localized: "Importando planilha... aguarde.", locale: locale),
+                                    isError: false
+                                )
                             }
                             
                             if isSendingToWorkouts {
-                                messageCard(text: "Enviando treino... aguarde.", isError: false)
+                                messageCard(
+                                    text: String(localized: "Enviando treino... aguarde.", locale: locale),
+                                    isError: false
+                                )
                             }
                             
                             if let ok = successMessage {
@@ -209,13 +216,13 @@ struct TeacherImportWorkoutsView: View {
             isPresented: $isSendToWorkoutsDialogPresented,
             titleVisibility: .visible
         ) {
-            Button(SendDestination.crossfit.title) {
+            Button(SendDestination.crossfit.title(locale: locale)) {
                 Task { await confirmSend(destination: .crossfit) }
             }
-            Button(SendDestination.academia.title) {
+            Button(SendDestination.academia.title(locale: locale)) {
                 Task { await confirmSend(destination: .academia) }
             }
-            Button(SendDestination.emCasa.title) {
+            Button(SendDestination.emCasa.title(locale: locale)) {
                 Task { await confirmSend(destination: .emCasa) }
             }
             Button("Cancelar", role: .cancel) { }
@@ -320,7 +327,7 @@ struct TeacherImportWorkoutsView: View {
                 .frame(width: 26)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(w.title.isEmpty ? "Treino" : w.title)
+                Text(w.title.isEmpty ? String(localized: "Treino", locale: locale) : w.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -432,7 +439,7 @@ struct TeacherImportWorkoutsView: View {
         successMessage = nil
         
         guard let workout = workoutPendingSend else {
-            errorMessage = "Não foi possível enviar: treino inválido."
+            errorMessage = String(localized: "Não foi possível enviar: treino inválido.", locale: locale)
             return
         }
         
@@ -441,7 +448,7 @@ struct TeacherImportWorkoutsView: View {
     
     private func sendImportedWorkoutToWorkouts(workout: TeacherImportedWorkout, destination: SendDestination) async {
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
         
@@ -470,11 +477,21 @@ struct TeacherImportWorkoutsView: View {
                 blocks: blocks
             )
             
-            successMessage = "Treino enviado com sucesso para \(destination.title)!"
+            let format = String(localized: "Treino enviado com sucesso para %@!", locale: locale)
+            successMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [destination.title(locale: locale)]
+            )
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
             
         } catch {
-            errorMessage = "Falha ao enviar o treino: \(error.localizedDescription)"
+            let format = String(localized: "Falha ao enviar o treino: %@", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
     }
     
@@ -513,12 +530,12 @@ struct TeacherImportWorkoutsView: View {
         templateShareItem = nil
 
         guard let sourceURL = resolveTemplateURL() else {
-            errorMessage = "Não foi possível localizar o modelo da planilha no aplicativo."
+            errorMessage = String(localized: "Não foi possível localizar o modelo da planilha no aplicativo.", locale: locale)
             return
         }
 
         guard FileManager.default.fileExists(atPath: sourceURL.path) else {
-            errorMessage = "Não foi possível localizar o modelo da planilha no aplicativo."
+            errorMessage = String(localized: "Não foi possível localizar o modelo da planilha no aplicativo.", locale: locale)
             return
         }
 
@@ -531,13 +548,24 @@ struct TeacherImportWorkoutsView: View {
             try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
 
             guard FileManager.default.fileExists(atPath: destinationURL.path) else {
-                errorMessage = "Não foi possível preparar a planilha para download: a cópia temporária não foi encontrada."
+                errorMessage = String(
+                    localized: "Não foi possível preparar a planilha para download: a cópia temporária não foi encontrada.",
+                    locale: locale
+                )
                 return
             }
 
             templateShareItem = TemplateShareItem(url: destinationURL)
         } catch {
-            errorMessage = "Não foi possível preparar a planilha para download: \(error.localizedDescription)"
+            let format = String(
+                localized: "Não foi possível preparar a planilha para download: %@",
+                locale: locale
+            )
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
     }
 
@@ -561,12 +589,10 @@ struct TeacherImportWorkoutsView: View {
         
         let ext = url.pathExtension.lowercased()
         guard ext == "xlsx" else {
-            errorMessage = """
-            O arquivo selecionado não é um .xlsx.
-
-            Se você editou no Numbers, ele salva como .numbers.
-            Faça: ••• → Exportar → Excel (.xlsx) e selecione o arquivo exportado.
-            """
+            errorMessage = String(
+                localized: "O arquivo selecionado não é um .xlsx.\n\nSe você editou no Numbers, ele salva como .numbers.\nFaça: ••• → Exportar → Excel (.xlsx) e selecione o arquivo exportado.",
+                locale: locale
+            )
             return
         }
         
@@ -580,14 +606,14 @@ struct TeacherImportWorkoutsView: View {
         
         do {
             guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-                errorMessage = "Não foi possível identificar o professor logado."
+                errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
                 return
             }
             
             let parsed = try ExcelWorkoutImporter.parseWorkouts(fromXLSX: url)
             
             guard !parsed.isEmpty else {
-                errorMessage = "Não foi encontrado nenhum treino válido na planilha."
+                errorMessage = String(localized: "Não foi encontrado nenhum treino válido na planilha.", locale: locale)
                 return
             }
             
@@ -597,26 +623,32 @@ struct TeacherImportWorkoutsView: View {
             let ns = error as NSError
             if ns.domain == FirestoreErrorDomain,
                ns.code == FirestoreErrorCode.permissionDenied.rawValue {
-                errorMessage = "Sem permissão para importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                errorMessage = String(
+                    localized: "Sem permissão para importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                    locale: locale
+                )
                 return
             }
             
             let msg = error.localizedDescription
             if msg.contains("Missing or insufficient permissions") {
-                errorMessage = "Sem permissão para importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                errorMessage = String(
+                    localized: "Sem permissão para importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                    locale: locale
+                )
                 return
             }
             
             if msg.contains("CoreXLSX") || msg.contains("CoreXLSXError") {
-                errorMessage = """
-                Não foi possível ler o arquivo .xlsx.
-
-                Dica: se você abriu no Numbers, use:
-                ••• → Exportar → Excel (.xlsx)
-
-                Detalhe técnico:
-                \(msg)
-                """
+                let format = String(
+                    localized: "Não foi possível ler o arquivo .xlsx.\n\nDica: se você abriu no Numbers, use:\n••• → Exportar → Excel (.xlsx)\n\nDetalhe técnico:\n%@",
+                    locale: locale
+                )
+                errorMessage = String(
+                    format: format,
+                    locale: locale,
+                    arguments: [msg]
+                )
             } else {
                 errorMessage = msg
             }
@@ -624,7 +656,10 @@ struct TeacherImportWorkoutsView: View {
     }
     
     private func sendImportedWorkoutToStudent(workout: TeacherImportedWorkout) {
-        errorMessage = "Enviar para aluno: selecione o fluxo de alunos que você já usa (me diga a rota que abre a lista)."
+        errorMessage = String(
+            localized: "Enviar para aluno: selecione o fluxo de alunos que você já usa (me diga a rota que abre a lista).",
+            locale: locale
+        )
     }
     
     private func loadWorkouts() async {
@@ -632,7 +667,7 @@ struct TeacherImportWorkoutsView: View {
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
             workouts = []
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
         
@@ -646,11 +681,17 @@ struct TeacherImportWorkoutsView: View {
             let ns = error as NSError
             if ns.domain == FirestoreErrorDomain,
                ns.code == FirestoreErrorCode.permissionDenied.rawValue {
-                errorMessage = "Sem permissão para acessar/importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                errorMessage = String(
+                    localized: "Sem permissão para acessar/importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                    locale: locale
+                )
             } else {
                 let msg = error.localizedDescription
                 if msg.contains("Missing or insufficient permissions") {
-                    errorMessage = "Sem permissão para acessar/importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                    errorMessage = String(
+                        localized: "Sem permissão para acessar/importar treinos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                        locale: locale
+                    )
                 } else {
                     errorMessage = msg
                 }
@@ -662,7 +703,7 @@ struct TeacherImportWorkoutsView: View {
         errorMessage = nil
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
         
@@ -676,11 +717,17 @@ struct TeacherImportWorkoutsView: View {
             let ns = error as NSError
             if ns.domain == FirestoreErrorDomain,
                ns.code == FirestoreErrorCode.permissionDenied.rawValue {
-                errorMessage = "Sem permissão para salvar treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                errorMessage = String(
+                    localized: "Sem permissão para salvar treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                    locale: locale
+                )
             } else {
                 let msg = error.localizedDescription
                 if msg.contains("Missing or insufficient permissions") {
-                    errorMessage = "Sem permissão para salvar treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                    errorMessage = String(
+                        localized: "Sem permissão para salvar treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                        locale: locale
+                    )
                 } else {
                     errorMessage = msg
                 }
@@ -692,7 +739,7 @@ struct TeacherImportWorkoutsView: View {
         errorMessage = nil
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
         
@@ -706,11 +753,17 @@ struct TeacherImportWorkoutsView: View {
             let ns = error as NSError
             if ns.domain == FirestoreErrorDomain,
                ns.code == FirestoreErrorCode.permissionDenied.rawValue {
-                errorMessage = "Sem permissão para remover treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                errorMessage = String(
+                    localized: "Sem permissão para remover treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                    locale: locale
+                )
             } else {
                 let msg = error.localizedDescription
                 if msg.contains("Missing or insufficient permissions") {
-                    errorMessage = "Sem permissão para remover treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+                    errorMessage = String(
+                        localized: "Sem permissão para remover treinos importados. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                        locale: locale
+                    )
                 } else {
                     errorMessage = msg
                 }

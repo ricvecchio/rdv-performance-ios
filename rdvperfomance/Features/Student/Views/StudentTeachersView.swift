@@ -8,6 +8,7 @@ struct StudentTeachersView: View {
     let onSelectSection: (StudentMainSection) -> Void
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
     private let repository: FirestoreRepository
@@ -218,18 +219,18 @@ struct StudentTeachersView: View {
         )) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(actionErrorMessage ?? "Ocorreu um erro.")
+            Text(actionErrorMessage ?? String(localized: "Ocorreu um erro.", locale: locale))
         }
     }
 
     private var linkedTeachersCard: some View {
-        card(title: "PROFESSORES VINCULADOS") {
+        card(title: String(localized: "PROFESSORES VINCULADOS", locale: locale)) {
             if isLoadingData {
-                loadingView("Carregando professores...")
+                loadingView(String(localized: "Carregando professores...", locale: locale))
             } else if linkedTeachers.isEmpty {
                 emptyView(
-                    title: "Nenhum professor vinculado",
-                    message: "Convide ou aceite um professor para aparecer aqui."
+                    title: String(localized: "Nenhum professor vinculado", locale: locale),
+                    message: String(localized: "Convide ou aceite um professor para aparecer aqui.", locale: locale)
                 )
             } else {
                 ForEach(linkedTeachers, id: \.id) { teacher in
@@ -243,11 +244,14 @@ struct StudentTeachersView: View {
     }
 
     private var sentRequestsCard: some View {
-        card(title: "CONVITES ENVIADOS") {
+        card(title: String(localized: "CONVITES ENVIADOS", locale: locale)) {
             if isLoadingData {
-                loadingView("Carregando convites...")
+                loadingView(String(localized: "Carregando convites...", locale: locale))
             } else if sentRequests.isEmpty {
-                emptyView(title: "Nenhum convite enviado", message: "Convide um professor para iniciar um vínculo.")
+                emptyView(
+                    title: String(localized: "Nenhum convite enviado", locale: locale),
+                    message: String(localized: "Convide um professor para iniciar um vínculo.", locale: locale)
+                )
             } else {
                 ForEach(sentRequests, id: \.id) { request in
                     sentRequestRow(request)
@@ -260,11 +264,14 @@ struct StudentTeachersView: View {
     }
 
     private var receivedInvitesCard: some View {
-        card(title: "CONVITES RECEBIDOS") {
+        card(title: String(localized: "CONVITES RECEBIDOS", locale: locale)) {
             if isLoadingData {
-                loadingView("Carregando convites...")
+                loadingView(String(localized: "Carregando convites...", locale: locale))
             } else if receivedInvites.isEmpty {
-                emptyView(title: "Nenhum convite pendente", message: "Convites de professores aparecerão aqui.")
+                emptyView(
+                    title: String(localized: "Nenhum convite pendente", locale: locale),
+                    message: String(localized: "Convites de professores aparecerão aqui.", locale: locale)
+                )
             } else {
                 ForEach(receivedInvites, id: \.id) { invite in
                     receivedInviteRow(invite)
@@ -433,7 +440,7 @@ struct StudentTeachersView: View {
 
     private func openTeacherDetails(_ teacher: AppUser?) {
         guard let teacher else {
-            actionErrorMessage = "Não foi possível carregar os dados do professor."
+            actionErrorMessage = String(localized: "Não foi possível carregar os dados do professor.", locale: locale)
             return
         }
         selectedTeacher = teacher
@@ -461,8 +468,8 @@ struct StudentTeachersView: View {
 
                     if teacherHasDetails(teacher) {
                         VStack(alignment: .leading, spacing: 14) {
-                            teacherDetailsField(title: "CREF", value: teacher.cref)
-                            teacherDetailsField(title: "Biografia", value: teacher.bio)
+                            teacherDetailsField(title: String(localized: "CREF", locale: locale), value: teacher.cref)
+                            teacherDetailsField(title: String(localized: "Biografia", locale: locale), value: teacher.bio)
                         }
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -803,7 +810,7 @@ struct StudentTeachersView: View {
               let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !requestId.isEmpty else {
             requestPendingCancellation = nil
-            actionErrorMessage = "Não foi possível identificar o convite."
+            actionErrorMessage = String(localized: "Não foi possível identificar o convite.", locale: locale)
             return
         }
 
@@ -820,7 +827,7 @@ struct StudentTeachersView: View {
     private func acceptInvite(_ invite: TeacherStudentInviteFS) async {
         let uid = currentUid
         guard !uid.isEmpty else {
-            actionErrorMessage = "Não foi possível identificar o aluno."
+            actionErrorMessage = String(localized: "Não foi possível identificar o aluno.", locale: locale)
             return
         }
 
@@ -853,14 +860,14 @@ struct StudentTeachersView: View {
               let teacherId = teacher.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !teacherId.isEmpty else {
             teacherPendingUnlink = nil
-            actionErrorMessage = "Não foi possível identificar o professor."
+            actionErrorMessage = String(localized: "Não foi possível identificar o professor.", locale: locale)
             return
         }
 
         let studentId = currentUid
         guard !studentId.isEmpty else {
             teacherPendingUnlink = nil
-            actionErrorMessage = "Não foi possível identificar o aluno."
+            actionErrorMessage = String(localized: "Não foi possível identificar o aluno.", locale: locale)
             return
         }
 
@@ -884,14 +891,14 @@ struct StudentTeachersView: View {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         guard email.contains("@"), email.contains(".") else {
-            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessage = String(localized: "Informe um e-mail válido.", locale: locale)
             linkActionMessageIsError = true
             return false
         }
 
         let uid = currentUid
         guard !uid.isEmpty else {
-            linkActionMessage = "Não foi possível identificar o aluno."
+            linkActionMessage = String(localized: "Não foi possível identificar o aluno.", locale: locale)
             linkActionMessageIsError = true
             return false
         }
@@ -899,7 +906,7 @@ struct StudentTeachersView: View {
         await loadStudentEmailIfNeeded()
         let currentStudentEmail = effectiveStudentEmail
         if currentStudentEmail.isEmpty {
-            linkActionMessage = "Não foi possível identificar o e-mail do aluno."
+            linkActionMessage = String(localized: "Não foi possível identificar o e-mail do aluno.", locale: locale)
             linkActionMessageIsError = true
             return false
         }
@@ -912,14 +919,14 @@ struct StudentTeachersView: View {
         do {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherIdRaw = teacher.id else {
-                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessage = String(localized: "Não encontrei um professor com esse e-mail.", locale: locale)
                 linkActionMessageIsError = true
                 return false
             }
 
             let teacherId = teacherIdRaw.trimmingCharacters(in: .whitespacesAndNewlines)
             if teacherId.isEmpty {
-                linkActionMessage = "Não foi possível identificar o professor."
+                linkActionMessage = String(localized: "Não foi possível identificar o professor.", locale: locale)
                 linkActionMessageIsError = true
                 return false
             }
@@ -927,7 +934,7 @@ struct StudentTeachersView: View {
             await loadLinkedTeachers()
 
             if linkedTeacherIds.contains(teacherId) {
-                linkActionMessage = "Esse professor já está vinculado."
+                linkActionMessage = String(localized: "Esse professor já está vinculado.", locale: locale)
                 linkActionMessageIsError = true
                 return false
             }
@@ -940,7 +947,7 @@ struct StudentTeachersView: View {
                     return requestTeacherId == teacherId && status == "pending"
                 }
                 if hasPendingSameTeacher {
-                    linkActionMessage = "Já existe uma solicitação pendente para esse professor."
+                    linkActionMessage = String(localized: "Já existe uma solicitação pendente para esse professor.", locale: locale)
                     linkActionMessageIsError = true
                     return false
                 }
@@ -954,7 +961,7 @@ struct StudentTeachersView: View {
                 teacherEmail: email
             )
 
-            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessage = String(localized: "Solicitação enviada com sucesso.", locale: locale)
             linkActionMessageIsError = false
 
             await refreshData()
@@ -963,7 +970,10 @@ struct StudentTeachersView: View {
             let nsError = error as NSError
             if nsError.domain == FirestoreErrorDomain,
                nsError.code == FirestoreErrorCode.permissionDenied.rawValue {
-                linkActionMessage = "Sem permissão para solicitar vínculo. Ajuste as regras do Firestore para permitir localizar professores."
+                linkActionMessage = String(
+                    localized: "Sem permissão para solicitar vínculo. Ajuste as regras do Firestore para permitir localizar professores.",
+                    locale: locale
+                )
                 linkActionMessageIsError = true
                 return false
             }

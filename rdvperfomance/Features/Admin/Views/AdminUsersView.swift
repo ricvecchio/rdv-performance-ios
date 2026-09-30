@@ -239,6 +239,7 @@ struct AdminUsersView: View {
 
 private struct AdminStudentDetailView: View {
     let user: AppUser
+    @Environment(\.locale) private var locale
 
     @StateObject private var viewModel = AdminStudentDetailViewModel()
 
@@ -296,12 +297,17 @@ private struct AdminStudentDetailView: View {
 
     private func weekRange(for week: TrainingWeekFS) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd/MM/yyyy"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("ddMMyyyy")
         guard let start = week.startDate, let end = week.endDate else {
             return week.categoryRaw
         }
-        return "\(formatter.string(from: start)) a \(formatter.string(from: end))"
+        let format = String(localized: "%@ - %@", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [formatter.string(from: start), formatter.string(from: end)]
+        )
     }
 }
 

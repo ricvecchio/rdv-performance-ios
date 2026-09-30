@@ -12,6 +12,7 @@ struct CreateTrainingWeekView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var weekTitle: String = ""
     @State private var showPasswordDummy: Bool = false
@@ -594,9 +595,14 @@ struct CreateTrainingWeekView: View {
     private func weekDateRangeText(_ week: TrainingWeekFS) -> String? {
         guard let s = week.startDate, let e = week.endDate else { return nil }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy"
-        return "\(f.string(from: s)) a \(f.string(from: e))"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyy")
+        let format = String(localized: "%@ - %@", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [f.string(from: s), f.string(from: e)]
+        )
     }
 
     private func pop() {

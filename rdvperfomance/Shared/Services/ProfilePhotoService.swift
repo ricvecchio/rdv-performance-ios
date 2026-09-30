@@ -4,7 +4,17 @@ enum ProfilePhotoProcessingError: LocalizedError {
     case unableToProcess
 
     var errorDescription: String? {
-        "Não foi possível processar a foto selecionada. Escolha outra imagem e tente novamente."
+        String(
+            localized: "Não foi possível processar a foto selecionada. Escolha outra imagem e tente novamente.",
+            locale: Self.localizationLocale
+        )
+    }
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
     }
 }
 

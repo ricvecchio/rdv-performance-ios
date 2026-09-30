@@ -3,6 +3,7 @@ import Charts
 
 // Tela do Aluno: Recorde Pessoal > Crossfit Games (lista fixa por ano + PR de tempo)
 struct CrossfitGamesPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
 
@@ -688,7 +689,6 @@ struct CrossfitGamesPersonalRecordsView: View {
                             VStack(spacing: 16) {
                                 DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
-                                    .environment(\.locale, Locale(identifier: "pt_BR"))
                                 Button { showPRDatePicker = false } label: {
                                     Text("Confirmar")
                                         .frame(maxWidth: .infinity)
@@ -1029,7 +1029,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                                             .foregroundColor(.green)
                                     }
                                     Spacer()
-                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.45))
                                     Button {
@@ -1125,8 +1125,8 @@ struct CrossfitGamesPersonalRecordsView: View {
 
     private func formatPRDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd 'de' MMMM, yyyy"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
         return formatter.string(from: date)
     }
 

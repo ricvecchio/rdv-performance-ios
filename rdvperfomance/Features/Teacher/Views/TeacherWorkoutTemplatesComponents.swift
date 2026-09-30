@@ -171,14 +171,23 @@ struct TeacherWorkoutTemplatesLoadingView: View {
 struct TeacherWorkoutTemplatesEmptyView: View {
 
     let isCrossfitCategory: Bool
+    @Environment(\.locale) private var locale
 
     var body: some View {
         VStack(spacing: 10) {
-            Text(isCrossfitCategory ? "Nenhum WOD cadastrado" : "Nenhum treino cadastrado")
+            Text(
+                isCrossfitCategory
+                    ? String(localized: "Nenhum WOD cadastrado", locale: locale)
+                    : String(localized: "Nenhum treino cadastrado", locale: locale)
+            )
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text(isCrossfitCategory ? "Toque em \"Adicionar WOD\" para começar." : "Cadastre templates para aparecerem aqui.")
+            Text(
+                isCrossfitCategory
+                    ? String(localized: "Toque em \"Adicionar WOD\" para começar.", locale: locale)
+                    : String(localized: "Cadastre templates para aparecerem aqui.", locale: locale)
+            )
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)

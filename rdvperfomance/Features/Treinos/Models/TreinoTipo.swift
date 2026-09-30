@@ -10,9 +10,9 @@ enum TreinoTipo: String, Hashable {
     /// Retorna o nome de exibição do tipo de treino
     var displayName: String {
         switch self {
-        case .crossfit: return "Crossfit"
-        case .academia: return "Academia"
-        case .emCasa:   return "Treinos em Casa"
+        case .crossfit: return String(localized: "Crossfit", locale: Self.localizationLocale)
+        case .academia: return String(localized: "Academia", locale: Self.localizationLocale)
+        case .emCasa:   return String(localized: "Treinos em Casa", locale: Self.localizationLocale)
         }
     }
 
@@ -46,9 +46,9 @@ enum TreinoTipo: String, Hashable {
     /// Retorna o título completo usado no cabeçalho das telas
     var titulo: String {
         switch self {
-        case .crossfit: return "Treinos Crossfit"
-        case .academia: return "Treinos Academia"
-        case .emCasa:   return "Treinos em Casa"
+        case .crossfit: return String(localized: "Treinos Crossfit", locale: Self.localizationLocale)
+        case .academia: return String(localized: "Treinos Academia", locale: Self.localizationLocale)
+        case .emCasa:   return String(localized: "Treinos em Casa", locale: Self.localizationLocale)
         }
     }
 
@@ -64,6 +64,13 @@ enum TreinoTipo: String, Hashable {
         case .academia: return "rdv_treino2_vertical"
         case .emCasa:   return "rdv_treino3_vertical"
         }
+    }
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
     }
 
     /// Retorna o ícone customizado usado no rodapé da tela

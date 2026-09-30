@@ -19,6 +19,7 @@ struct StudentWorkoutsView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
@@ -375,7 +376,7 @@ struct StudentWorkoutsView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 HStack(spacing: 8) {
-                    Text(vm.subtitleForWeek(week))
+                    Text(vm.subtitleForWeek(week, locale: locale))
                         .font(.system(size: 18, weight: .medium))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
@@ -924,8 +925,8 @@ struct StudentWorkoutsView: View {
     private func trainingDateSubtitle(for date: Date?, fallback: String) -> String {
         guard let date else { return fallback }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE dd/MM"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 

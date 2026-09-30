@@ -3,6 +3,7 @@ import Charts
 
 // Tela do Aluno: Recorde Pessoal > Barbell (lista fixa de movimentos + carga máxima)
 struct BarbellPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
 
@@ -537,7 +538,6 @@ struct BarbellPersonalRecordsView: View {
                         displayedComponents: .date
                     )
                     .datePickerStyle(.graphical)
-                    .environment(\.locale, Locale(identifier: "pt_BR"))
 
                     Button {
                         showPRDatePicker = false
@@ -615,7 +615,7 @@ struct BarbellPersonalRecordsView: View {
 
                                     Spacer()
 
-                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
                                         .font(.system(size: 13))
                                         .foregroundColor(.white.opacity(0.45))
 
@@ -973,8 +973,8 @@ struct BarbellPersonalRecordsView: View {
 
     private func formatPRDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd 'de' MMMM, yyyy"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
         return formatter.string(from: date)
     }
 

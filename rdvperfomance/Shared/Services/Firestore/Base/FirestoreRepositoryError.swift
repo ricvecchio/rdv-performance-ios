@@ -14,23 +14,35 @@ enum FirestoreRepositoryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingWeekId:
-            return "Não foi possível carregar/salvar: weekId está vazio ou nulo."
+            return String(localized: "Não foi possível carregar/salvar: weekId está vazio ou nulo.", locale: Self.localizationLocale)
         case .missingUserId:
-            return "Não foi possível identificar o usuário (uid vazio)."
+            return String(localized: "Não foi possível identificar o usuário (uid vazio).", locale: Self.localizationLocale)
         case .missingStudentId:
-            return "Não foi possível identificar o aluno (studentId vazio)."
+            return String(localized: "Não foi possível identificar o aluno (studentId vazio).", locale: Self.localizationLocale)
         case .missingTeacherId:
-            return "Não foi possível identificar o professor (teacherId vazio)."
+            return String(localized: "Não foi possível identificar o professor (teacherId vazio).", locale: Self.localizationLocale)
         case .invalidData:
-            return "Dados inválidos para operação no Firestore."
+            return String(localized: "Dados inválidos para operação no Firestore.", locale: Self.localizationLocale)
         case .writeFailed:
-            return "Não foi possível salvar os dados no Firestore."
+            return String(localized: "Não foi possível salvar os dados no Firestore.", locale: Self.localizationLocale)
         case .notFound:
-            return "Registro não encontrado no Firestore."
+            return String(localized: "Registro não encontrado no Firestore.", locale: Self.localizationLocale)
         case .weekNotStarted:
-            return "Esta semana ainda não começou e não pode receber conclusões."
+            return String(localized: "Esta semana ainda não começou e não pode receber conclusões.", locale: Self.localizationLocale)
         case .deleteFailed(let details):
-            return "Falha ao excluir: \(details)"
+            let format = String(localized: "Falha ao excluir: %@", locale: Self.localizationLocale)
+            return String(
+                format: format,
+                locale: Self.localizationLocale,
+                arguments: [details]
+            )
         }
+    }
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
     }
 }

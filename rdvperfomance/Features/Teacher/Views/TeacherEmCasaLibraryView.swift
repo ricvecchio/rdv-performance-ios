@@ -5,6 +5,7 @@ struct TeacherEmCasaLibraryView: View {
     @Binding var path: [AppRoute]
     let mode: TeacherWorkoutsMode
     let templateMode: TeacherWorkoutTemplatesMode
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -14,16 +15,18 @@ struct TeacherEmCasaLibraryView: View {
         let sectionKey: String
     }
 
-    private let menuItems: [MenuItem] = [
-        .init(title: "Peito", sectionKey: "peito"),
-        .init(title: "Costas", sectionKey: "costas"),
-        .init(title: "Pernas", sectionKey: "pernas"),
-        .init(title: "Ombros", sectionKey: "ombros"),
-        .init(title: "Braços", sectionKey: "bracos"),
-        .init(title: "Core / Abdômen", sectionKey: "core"),
-        .init(title: "Full Body", sectionKey: "fullBody"),
-        .init(title: "Meus Treinos", sectionKey: "meusTreinos")
-    ]
+    private var menuItems: [MenuItem] {
+        [
+            .init(title: String(localized: "Peito", locale: locale), sectionKey: "peito"),
+            .init(title: String(localized: "Costas", locale: locale), sectionKey: "costas"),
+            .init(title: String(localized: "Pernas", locale: locale), sectionKey: "pernas"),
+            .init(title: String(localized: "Ombros", locale: locale), sectionKey: "ombros"),
+            .init(title: String(localized: "Braços", locale: locale), sectionKey: "bracos"),
+            .init(title: String(localized: "Core / Abdômen", locale: locale), sectionKey: "core"),
+            .init(title: String(localized: "Full Body", locale: locale), sectionKey: "fullBody"),
+            .init(title: String(localized: "Meus Treinos", locale: locale), sectionKey: "meusTreinos")
+        ]
+    }
 
     var body: some View {
         ZStack {

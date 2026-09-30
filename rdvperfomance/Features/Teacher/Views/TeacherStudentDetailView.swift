@@ -9,6 +9,7 @@ struct TeacherStudentDetailView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @StateObject private var studentsViewModel: TeacherStudentsListViewModel
 
@@ -188,35 +189,35 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            actionButton(title: "Treinos", icon: "calendar") {
+            actionButton(title: String(localized: "Treinos", locale: locale), icon: "calendar") {
                 openWorkouts()
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Mensagens", icon: "paperplane.fill") {
+            actionButton(title: String(localized: "Mensagens", locale: locale), icon: "paperplane.fill") {
                 path.append(.teacherMessage(student: student, category: category))
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
+            actionButton(title: String(localized: "Feedbacks", locale: locale), icon: "text.bubble.fill") {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
+            actionButton(title: String(localized: "Preview do Progresso", locale: locale), icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Desvincular", icon: "person.badge.minus") {
+            actionButton(title: String(localized: "Desvincular", locale: locale), icon: "person.badge.minus") {
                 showUnlinkConfirm = true
             }
         }
