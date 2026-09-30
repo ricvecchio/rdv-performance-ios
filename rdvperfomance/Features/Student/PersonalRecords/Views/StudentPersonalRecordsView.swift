@@ -57,7 +57,14 @@ struct StudentPersonalRecordsView: View {
     private struct PRMenuItem: Identifiable, Hashable {
         let id = UUID()
         let title: String
+        let localizedTitle: String?
         let sectionKey: String
+
+        init(title: String, localizedTitle: String? = nil, sectionKey: String) {
+            self.title = title
+            self.localizedTitle = localizedTitle
+            self.sectionKey = sectionKey
+        }
     }
 
     // Itens fixos conforme solicitado (ordem + nomes)
@@ -69,8 +76,8 @@ struct StudentPersonalRecordsView: View {
         .init(title: "Girls", sectionKey: "girls"),
         .init(title: "Open", sectionKey: "open"),
         .init(title: "The Heroes", sectionKey: "theHeroes"),
-        .init(title: "Campeonatos", sectionKey: "campeonatos"),
-        .init(title: "Crossfit Games", sectionKey: "crossfitGames")
+        .init(title: "Campeonatos", localizedTitle: "Campeonatos", sectionKey: "campeonatos"),
+        .init(title: "Crossfit Games", localizedTitle: "Crossfit Games", sectionKey: "crossfitGames")
     ]
 
     var body: some View {
@@ -103,7 +110,11 @@ struct StudentPersonalRecordsView: View {
 
                             VStack(spacing: 12) {
                                 ForEach(menuItems) { item in
-                                    actionRow(title: item.title, icon: "folder.fill") {
+                                    actionRow(
+                                        title: item.title,
+                                        localizedTitle: item.localizedTitle,
+                                        icon: "folder.fill"
+                                    ) {
 
                                         if item.sectionKey == "barbell" {
                                             path.append(.studentPersonalRecordsBarbell)
@@ -143,7 +154,11 @@ struct StudentPersonalRecordsView: View {
                                     }
                                 }
 
-                                actionRow(title: "Meus Vídeos", icon: "video.fill") {
+                                actionRow(
+                                    title: "Meus Vídeos",
+                                    localizedTitle: "Meus Vídeos",
+                                    icon: "video.fill"
+                                ) {
                                     path.append(.studentVideos)
                                 }
                             }
@@ -214,7 +229,12 @@ struct StudentPersonalRecordsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func actionRow(
+        title: String,
+        localizedTitle: String? = nil,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
@@ -222,9 +242,15 @@ struct StudentPersonalRecordsView: View {
                     .font(.system(size: 16))
                     .frame(width: 26)
 
-                Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                Group {
+                    if let localizedTitle {
+                        Text(LocalizedStringKey(localizedTitle))
+                    } else {
+                        Text(title)
+                    }
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
 
                 Spacer()
 
