@@ -464,7 +464,12 @@ struct TeacherDashboardView: View {
 
     private var greeting: String {
         let name = session.userName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return name.isEmpty ? "Olá, Professor!" : "Olá, \(name)!"
+        guard !name.isEmpty else {
+            return String(localized: "Olá, Professor!", locale: locale)
+        }
+
+        let format = String(localized: "Olá, %@!", locale: locale)
+        return String(format: format, locale: locale, arguments: [name])
     }
 
     private var todayText: String {
