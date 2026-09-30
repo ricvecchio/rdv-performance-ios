@@ -224,13 +224,13 @@ struct StudentTeachersView: View {
     }
 
     private var linkedTeachersCard: some View {
-        card(title: String(localized: "PROFESSORES VINCULADOS", locale: locale)) {
+        card(title: "PROFESSORES VINCULADOS") {
             if isLoadingData {
                 loadingView(String(localized: "Carregando professores...", locale: locale))
             } else if linkedTeachers.isEmpty {
                 emptyView(
                     title: String(localized: "Nenhum professor vinculado", locale: locale),
-                    message: String(localized: "Convide ou aceite um professor para aparecer aqui.", locale: locale)
+                    message: "Convide ou aceite um professor para aparecer aqui."
                 )
             } else {
                 ForEach(linkedTeachers, id: \.id) { teacher in
@@ -244,13 +244,13 @@ struct StudentTeachersView: View {
     }
 
     private var sentRequestsCard: some View {
-        card(title: String(localized: "CONVITES ENVIADOS", locale: locale)) {
+        card(title: "CONVITES ENVIADOS") {
             if isLoadingData {
                 loadingView(String(localized: "Carregando convites...", locale: locale))
             } else if sentRequests.isEmpty {
                 emptyView(
                     title: String(localized: "Nenhum convite enviado", locale: locale),
-                    message: String(localized: "Convide um professor para iniciar um vínculo.", locale: locale)
+                    message: "Convide um professor para iniciar um vínculo."
                 )
             } else {
                 ForEach(sentRequests, id: \.id) { request in
@@ -264,13 +264,13 @@ struct StudentTeachersView: View {
     }
 
     private var receivedInvitesCard: some View {
-        card(title: String(localized: "CONVITES RECEBIDOS", locale: locale)) {
+        card(title: "CONVITES RECEBIDOS") {
             if isLoadingData {
                 loadingView(String(localized: "Carregando convites...", locale: locale))
             } else if receivedInvites.isEmpty {
                 emptyView(
                     title: String(localized: "Nenhum convite pendente", locale: locale),
-                    message: String(localized: "Convites de professores aparecerão aqui.", locale: locale)
+                    message: "Convites de professores aparecerão aqui."
                 )
             } else {
                 ForEach(receivedInvites, id: \.id) { invite in
@@ -283,7 +283,7 @@ struct StudentTeachersView: View {
         }
     }
 
-    private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func card<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
@@ -549,7 +549,7 @@ struct StudentTeachersView: View {
         .padding(.vertical, 18)
     }
 
-    private func emptyView(title: String, message: String) -> some View {
+    private func emptyView(title: String, message: LocalizedStringKey) -> some View {
         VStack(spacing: 12) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))

@@ -11597,7 +11597,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "INVITATIONS RECEIVED"
+            "value": "RECEIVED INVITATIONS"
           }
         },
         "es": {
@@ -11729,7 +11729,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invite or accept a trainer to show them here."
+            "value": "Invite or accept a coach to appear here."
           }
         },
         "es": {
@@ -11751,7 +11751,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Invite a trainer to start a connection."
+            "value": "Invite a coach to start a link."
           }
         },
         "es": {
@@ -11773,7 +11773,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "Trainer invitations will appear here."
+            "value": "Coach invitations will appear here."
           }
         },
         "es": {
@@ -13159,7 +13159,7 @@
         "en": {
           "stringUnit": {
             "state": "translated",
-            "value": "LINKED TRAINERS"
+            "value": "LINKED COACHES"
           }
         },
         "es": {
