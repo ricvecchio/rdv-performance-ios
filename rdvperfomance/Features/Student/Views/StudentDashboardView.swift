@@ -210,12 +210,19 @@ struct StudentDashboardView: View {
 
     private var inviteNoticeMessage: String {
         let count = viewModel.pendingTeacherInvites.count
-        return count == 1
-            ? "Você possui um convite pendente"
-            : "Você possui \(count) convites pendentes"
+        if count == 1 {
+            return String(localized: "Você possui um convite pendente", locale: locale)
+        }
+
+        let format = String(localized: "Você possui %lld convites pendentes", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 
-    private func noticeRow(icon: String, title: String, message: String) -> some View {
+    private func noticeRow(
+        icon: String,
+        title: LocalizedStringKey,
+        message: String
+    ) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 18))
@@ -1186,7 +1193,12 @@ struct StudentDashboardView: View {
 
     private var greeting: String {
         let name = session.userName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return name.isEmpty ? "Olá, Aluno!" : "Olá, \(name)!"
+        guard !name.isEmpty else {
+            return String(localized: "Olá, Aluno!", locale: locale)
+        }
+
+        let format = String(localized: "Olá, %@!", locale: locale)
+        return String(format: format, locale: locale, arguments: [name])
     }
 
     private func weekdayAbbreviation(for date: Date?) -> String {
