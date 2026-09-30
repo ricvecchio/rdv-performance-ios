@@ -261,7 +261,7 @@ struct StudentWorkoutsView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func filterChip(title: String, filter: WorkoutsFilter) -> some View {
+    private func filterChip(title: LocalizedStringKey, filter: WorkoutsFilter) -> some View {
         Button {
             selectedFilter = filter
         } label: {
@@ -482,7 +482,7 @@ struct StudentWorkoutsView: View {
             HStack(spacing: 10) {
                 Image(systemName: "video.fill")
                     .font(.system(size: 13, weight: .semibold))
-                Text("Vídeos")
+                Text(LocalizedStringKey("Vídeos"))
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
             }

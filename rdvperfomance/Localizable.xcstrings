@@ -1497,6 +1497,23 @@
         }
       }
     },
+    "Atuais": {
+      "comment": "A filter label for the user's current workouts.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Current"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Atuais"
+          }
+        }
+      }
+    },
     "ATUALIZAR AGORA": {
       "localizations": {
         "en": {
@@ -2487,6 +2504,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Concluído"
+          }
+        }
+      }
+    },
+    "Concluídos": {
+      "comment": "A filter label for the user's completed workouts.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Completed"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Concluídos"
           }
         }
       }
@@ -8417,6 +8451,23 @@
           "stringUnit": {
             "state": "translated",
             "value": "Próximo"
+          }
+        }
+      }
+    },
+    "Próximos": {
+      "comment": "A filter label for the user's upcoming workouts.",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Upcoming"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Próximos"
           }
         }
       }
