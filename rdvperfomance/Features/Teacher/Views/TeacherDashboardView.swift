@@ -478,7 +478,7 @@ struct TeacherDashboardView: View {
 
     private func summaryItem(
         value: Int?,
-        title: String,
+        title: LocalizedStringKey,
         icon: String,
         iconColor: Color = .green.opacity(0.85)
     ) -> some View {
