@@ -16,7 +16,7 @@ enum TeacherQuickAccessItem: String, CaseIterable, Codable, Hashable, Identifiab
         .myVideos
     ]
 
-    var title: String {
+    var title: LocalizedStringKey {
         switch self {
         case .sendWorkout: "Enviar treino"
         case .createWorkout: "Criar treino"
@@ -27,7 +27,7 @@ enum TeacherQuickAccessItem: String, CaseIterable, Codable, Hashable, Identifiab
         }
     }
 
-    var subtitle: String {
+    var subtitle: LocalizedStringKey {
         switch self {
         case .sendWorkout: "Envie um treino para seus alunos"
         case .createWorkout: "Monte um novo treino"
@@ -633,8 +633,8 @@ struct TeacherDashboardView: View {
     }
 
     private func quickAccessItem(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         icon: String,
         action: @escaping () -> Void
     ) -> some View {

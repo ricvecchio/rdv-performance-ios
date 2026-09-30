@@ -5735,6 +5735,22 @@
         }
       }
     },
+    "De competições ou bibliotecas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "From competitions or libraries"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "De competições ou bibliotecas"
+          }
+        }
+      }
+    },
     "Monte um novo treino" : {
       "localizations" : {
         "en" : {
@@ -8326,6 +8342,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Meus Vídeos"
+          }
+        }
+      }
+    },
+    "Organize seus vídeos de movimentos" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organize your movement videos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Organize seus vídeos de movimentos"
           }
         }
       }
