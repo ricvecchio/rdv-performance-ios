@@ -282,6 +282,7 @@ struct EditProfileView: View {
 
             pickerRow(
                 title: "Área de foco",
+                localizedTitle: "Área de foco",
                 selection: $focusAreaDraft,
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
@@ -809,13 +810,20 @@ struct EditProfileView: View {
     // Retorna picker estilizado com underline
     private func pickerRow<T: RawRepresentable & CaseIterable>(
         title: String,
+        localizedTitle: String? = nil,
         selection: Binding<T>,
         options: [T],
         displayText: ((T) -> String)? = nil
     ) -> some View where T.RawValue == String {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text(title)
+            Group {
+                if let localizedTitle {
+                    Text(LocalizedStringKey(localizedTitle))
+                } else {
+                    Text(title)
+                }
+            }
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 
