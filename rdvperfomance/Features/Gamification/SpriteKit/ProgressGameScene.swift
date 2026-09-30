@@ -253,7 +253,25 @@ final class ProgressGameScene: SKScene {
     }
 
     private func localized(_ key: String) -> String {
-        String(localized: String.LocalizationValue(key), locale: currentLocale)
+        let identifiers = [
+            currentLocale.identifier,
+            currentLocale.language.languageCode?.identifier
+        ].compactMap { $0 }
+
+        for identifier in identifiers {
+            guard let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
+                  let bundle = Bundle(path: path)
+            else {
+                continue
+            }
+
+            let value = bundle.localizedString(forKey: key, value: key, table: "Localizable")
+            if value != key {
+                return value
+            }
+        }
+
+        return key
     }
 
     private func previewBadgeNode(title: String, width: CGFloat) -> SKNode {
