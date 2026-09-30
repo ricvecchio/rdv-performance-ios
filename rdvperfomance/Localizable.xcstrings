@@ -9329,7 +9329,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No invitation sent"
+            "value" : "No invitations sent"
           }
         },
         "es" : {
@@ -9375,7 +9375,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No pending invitation"
+            "value" : "No pending invitations"
           }
         },
         "es" : {
@@ -9515,7 +9515,7 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "No linked trainer"
+            "value" : "No linked coaches"
           }
         },
         "es" : {
