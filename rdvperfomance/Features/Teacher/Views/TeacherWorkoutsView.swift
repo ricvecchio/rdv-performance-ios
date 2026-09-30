@@ -142,8 +142,8 @@ struct TeacherWorkoutsView: View {
     }
 
     private func quickAccessCard(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         icon: String,
         action: @escaping () -> Void
     ) -> some View {
