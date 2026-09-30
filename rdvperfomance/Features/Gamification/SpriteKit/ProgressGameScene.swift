@@ -21,6 +21,7 @@ final class ProgressGameScene: SKScene {
 
     /// Métricas atualmente exibidas na cena
     private var currentMetrics: ProgressMetrics = .empty
+    private var currentLocale = Locale.current
     private var usesPreviewBadgeLayout = false
 
     /// Configura elementos da cena quando adicionada à view
@@ -38,8 +39,9 @@ final class ProgressGameScene: SKScene {
     }
 
     /// Atualiza métricas exibidas na cena com opção de animação
-    func update(with metrics: ProgressMetrics, animated: Bool = true) {
+    func update(with metrics: ProgressMetrics, locale: Locale = .current, animated: Bool = true) {
         currentMetrics = metrics
+        currentLocale = locale
         apply(metrics: metrics, animated: animated)
     }
 
@@ -126,11 +128,11 @@ final class ProgressGameScene: SKScene {
 
         /// Define textos dos labels com dados das métricas
         let name = (metrics.displayName?.isEmpty == false) ? metrics.displayName! : "Progresso"
-        titleLabel.text = name
-        subtitleLabel.text = metrics.weekLabel ?? "Semana"
+        titleLabel.text = localized(name)
+        subtitleLabel.text = localized(metrics.weekLabel ?? "Semana")
 
         let percent = Int((max(0.0, min(1.0, metrics.weeklyCompletion)) * 100.0).rounded())
-        streakLabel.text = "🔥 Streak: \(metrics.streakDays) dias • \(percent)%"
+        streakLabel.text = "🔥 Streak: \(metrics.streakDays) \(localized("dias")) • \(percent)%"
 
         /// Desenha arco de progresso baseado no percentual de conclusão
         let clamped = max(0.0, min(1.0, metrics.weeklyCompletion))
@@ -185,7 +187,7 @@ final class ProgressGameScene: SKScene {
             var y = (totalHeight - itemHeight) / 2.0
 
             for badge in shown {
-                let node = previewBadgeNode(title: badge.title, width: itemWidth)
+                let node = previewBadgeNode(title: localized(badge.title), width: itemWidth)
                 node.position = CGPoint(x: 0, y: y)
                 badgesContainer.addChild(node)
 
@@ -206,7 +208,7 @@ final class ProgressGameScene: SKScene {
         var x = -totalWidth / 2
 
         for b in shown {
-            let node = badgeNode(title: b.title, systemImageName: b.systemImageName)
+            let node = badgeNode(title: localized(b.title), systemImageName: b.systemImageName)
             node.position = CGPoint(x: x + itemWidth / 2, y: 0)
             badgesContainer.addChild(node)
 
@@ -248,6 +250,10 @@ final class ProgressGameScene: SKScene {
         container.addChild(label)
 
         return container
+    }
+
+    private func localized(_ key: String) -> String {
+        String(localized: String.LocalizationValue(key), locale: currentLocale)
     }
 
     private func previewBadgeNode(title: String, width: CGFloat) -> SKNode {

@@ -150,6 +150,7 @@ struct SpriteDemoView: View {
 private struct SpriteKitPreviewPanel: View {
 
     let metrics: ProgressMetrics
+    @Environment(\.locale) private var locale
 
     @State private var scene = Self.makePreviewScene()
 
@@ -159,13 +160,16 @@ private struct SpriteKitPreviewPanel: View {
             SpriteView(scene: scene, options: [.allowsTransparency])
                 .onAppear {
                     applySizeIfNeeded(geo.size)
-                    scene.update(with: metrics, animated: false)
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
                 .onChange(of: geo.size) { _, newSize in
                     applySizeIfNeeded(newSize)
                 }
                 .onChange(of: metrics) { _, newValue in
-                    scene.update(with: newValue, animated: true)
+                    scene.update(with: newValue, locale: locale, animated: true)
+                }
+                .onChange(of: locale.identifier) { _, _ in
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
         }
         .clipped()
