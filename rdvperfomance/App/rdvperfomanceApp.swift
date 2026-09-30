@@ -14,7 +14,7 @@ struct rdvperfomanceApp: App {
     // Define a janela principal do aplicativo com injeção de dependências
     var body: some Scene {
         WindowGroup {
-            AppRouter()
+            AppUpdateGateView()
                 .environmentObject(session)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environment(\.locale, Locale(identifier: selectedAppLanguage))
