@@ -3021,6 +3021,54 @@
         }
       }
     },
+    "Crie treinos personalizados para seus alunos": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Create personalized workouts for your students"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Crie treinos personalizados para seus alunos"
+          }
+        }
+      }
+    },
+    "Acompanhe a evolução de cada aluno baseado no programa selecionado": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Track each student's progress based on the selected program"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Acompanhe a evolução de cada aluno baseado no programa selecionado"
+          }
+        }
+      }
+    },
+    "Tudo em um só lugar com interface intuitiva e prática": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Everything in one place with an intuitive and practical interface"
+          }
+        },
+        "pt-BR": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tudo em um só lugar com interface intuitiva e prática"
+          }
+        }
+      }
+    },
     "Crie treinos em “Meus Treinos” do professor.": {
       "localizations": {
         "en": {

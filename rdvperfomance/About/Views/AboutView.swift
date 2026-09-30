@@ -122,7 +122,7 @@ struct AboutView: View {
     }
 
     // Retorna uma linha com ícone de check e texto descritivo
-    private func featureItem(_ text: String) -> some View {
+    private func featureItem(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(.green)
