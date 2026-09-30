@@ -25,7 +25,7 @@ struct AppUpdateGateView: View {
             }
 
             Task {
-                await viewModel.checkForUpdate()
+                await viewModel.revalidate()
             }
         }
     }
@@ -39,6 +39,10 @@ private final class AppUpdateViewModel: ObservableObject {
 
     func checkForUpdate() async {
         state = .checking
+        state = await service.updateState()
+    }
+
+    func revalidate() async {
         state = await service.updateState()
     }
 }
