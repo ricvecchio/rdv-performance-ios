@@ -292,7 +292,7 @@ struct ProfileView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Trocar unidade", isPresented: $showTrocarUnidadeAlert) {
+        .alert(LocalizedStringKey("Trocar unidade"), isPresented: $showTrocarUnidadeAlert) {
             TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
 
             Button("Cancelar", role: .cancel) { }
@@ -968,7 +968,12 @@ struct ProfileView: View {
                 divider()
             }
 
-            optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron) {
+            optionRow(
+                icon: "ruler",
+                title: "Trocar unidade",
+                localizedTitle: "Trocar unidade",
+                trailing: .chevron
+            ) {
                 openTrocarUnidade()
             }
 
@@ -977,6 +982,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "envelope.fill",
                     title: "Mensagens",
+                    localizedTitle: "Mensagens",
                     trailing: .chevron,
                     activityBadgeCount: unreadMessagesCount
                 ) {
@@ -988,6 +994,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "text.bubble.fill",
                     title: "Feedbacks",
+                    localizedTitle: "Feedbacks",
                     trailing: .chevron,
                     activityBadgeCount: unreadFeedbacksCount
                 ) {
@@ -999,6 +1006,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "person.2.fill",
                     title: "Meus professores",
+                    localizedTitle: "Meus professores",
                     trailing: .chevron,
                     activityBadgeCount: teacherActivitiesCount
                 ) {
@@ -1010,6 +1018,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "ruler.fill",
                     title: "Unidade de Medida",
+                    localizedTitle: "Unidade de Medida",
                     trailing: .textWithChevron(preferredWeightUnit.shortLabel)
                 ) {
                     draftWeightUnitRawState = preferredWeightUnitRawState
@@ -1022,6 +1031,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "ruler.fill",
                     title: "Unidade de Medida",
+                    localizedTitle: "Unidade de Medida",
                     trailing: .textWithChevron(preferredWeightUnit.shortLabel)
                 ) {
                     draftWeightUnitRawState = preferredWeightUnitRawState
@@ -1031,7 +1041,12 @@ struct ProfileView: View {
 
             if session.isAdmin {
                 divider()
-                optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
+                optionRow(
+                    icon: "square.grid.2x2.fill",
+                    title: "Meus Ícones",
+                    localizedTitle: "Meus Ícones",
+                    trailing: .chevron
+                ) {
                     showMeusIconesModal = true
                 }
             }
@@ -1060,6 +1075,7 @@ struct ProfileView: View {
     private func optionRow(
         icon: String,
         title: String,
+        localizedTitle: String? = nil,
         trailing: Trailing,
         activityBadgeCount: Int = 0,
         iconColor: Color = .green.opacity(0.85),
@@ -1072,6 +1088,7 @@ struct ProfileView: View {
                     optionRowContent(
                         icon: icon,
                         title: title,
+                        localizedTitle: localizedTitle,
                         trailing: trailing,
                         activityBadgeCount: activityBadgeCount,
                         iconColor: iconColor,
@@ -1083,6 +1100,7 @@ struct ProfileView: View {
                 optionRowContent(
                     icon: icon,
                     title: title,
+                    localizedTitle: localizedTitle,
                     trailing: trailing,
                     activityBadgeCount: activityBadgeCount,
                     iconColor: iconColor,
@@ -1095,6 +1113,7 @@ struct ProfileView: View {
     private func optionRowContent(
         icon: String,
         title: String,
+        localizedTitle: String?,
         trailing: Trailing,
         activityBadgeCount: Int,
         iconColor: Color,
@@ -1118,7 +1137,13 @@ struct ProfileView: View {
                     }
                 }
 
-            Text(title)
+            Group {
+                if let localizedTitle {
+                    Text(LocalizedStringKey(localizedTitle))
+                } else {
+                    Text(title)
+                }
+            }
                 .font(.system(size: 18, weight: .medium))
                 .foregroundColor(titleColor)
 
@@ -1284,7 +1309,7 @@ struct ProfileView: View {
                     .animation(.easeInOut(duration: 0.18), value: copiedIconName)
                 }
             }
-            .navigationTitle("Meus Ícones")
+            .navigationTitle(LocalizedStringKey("Meus Ícones"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
