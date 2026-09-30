@@ -10,6 +10,7 @@ private struct WorkoutSectionOption: Identifiable, Hashable {
 
 private struct WorkoutPickerLabel: View {
     let title: String
+    let localizedTitle: LocalizedStringKey?
     let isSelected: Bool
 
     var body: some View {
@@ -18,10 +19,16 @@ private struct WorkoutPickerLabel: View {
             : Color.white.opacity(0.08)
 
         HStack {
-            Text(title)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                .lineLimit(1)
+            Group {
+                if let localizedTitle {
+                    Text(localizedTitle)
+                } else {
+                    Text(title)
+                }
+            }
+            .font(.system(size: 16, weight: .semibold))
+            .foregroundColor(.white.opacity(0.92))
+            .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
@@ -51,12 +58,12 @@ struct TeacherSendWorkoutView: View {
         case currentWeek = 0
         case upcomingWeeks = 1
 
-        var title: String {
+        var title: LocalizedStringKey {
             switch self {
             case .currentWeek:
-                return "Semana atual"
+                "Semana atual"
             case .upcomingWeeks:
-                return "Próximas semanas"
+                "Próximas semanas"
             }
         }
     }
@@ -325,20 +332,39 @@ struct TeacherSendWorkoutView: View {
 
     private var stepIndicator: some View {
         HStack(spacing: 8) {
-            stepItem(number: 1, title: "Aluno", isActive: step == .student, isComplete: step != .student)
+            stepItem(
+                number: 1,
+                title: "Aluno",
+                localizedTitle: "Aluno",
+                isActive: step == .student,
+                isComplete: step != .student
+            )
             Rectangle().fill(Theme.Colors.divider).frame(height: 1)
             stepItem(
                 number: 2,
                 title: isVideoFlow ? "Vídeo" : "Treino",
+                localizedTitle: isVideoFlow ? nil : "Treino",
                 isActive: step == .workout,
                 isComplete: step == .day
             )
             Rectangle().fill(Theme.Colors.divider).frame(height: 1)
-            stepItem(number: 3, title: "Dia", isActive: step == .day, isComplete: false)
+            stepItem(
+                number: 3,
+                title: "Dia",
+                localizedTitle: "Dia",
+                isActive: step == .day,
+                isComplete: false
+            )
         }
     }
 
-    private func stepItem(number: Int, title: String, isActive: Bool, isComplete: Bool) -> some View {
+    private func stepItem(
+        number: Int,
+        title: String,
+        localizedTitle: LocalizedStringKey? = nil,
+        isActive: Bool,
+        isComplete: Bool
+    ) -> some View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
@@ -348,9 +374,15 @@ struct TeacherSendWorkoutView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor((isActive || isComplete) ? .green : .white.opacity(0.55))
             }
-            Text(title)
-                .font(.system(size: 11, weight: .medium))
-                .foregroundColor((isActive || isComplete) ? .white.opacity(0.92) : .white.opacity(0.55))
+            Group {
+                if let localizedTitle {
+                    Text(localizedTitle)
+                } else {
+                    Text(title)
+                }
+            }
+            .font(.system(size: 11, weight: .medium))
+            .foregroundColor((isActive || isComplete) ? .white.opacity(0.92) : .white.opacity(0.55))
         }
     }
 
@@ -486,10 +518,10 @@ struct TeacherSendWorkoutView: View {
             studentFilterChip(title: "Todos", isSelected: studentFilter == nil) {
                 studentFilter = nil
             }
-            studentFilterChip(title: TreinoTipo.crossfit.displayName, isSelected: studentFilter == .crossfit) {
+            studentFilterChip(title: "Crossfit", isSelected: studentFilter == .crossfit) {
                 studentFilter = .crossfit
             }
-            studentFilterChip(title: TreinoTipo.academia.displayName, isSelected: studentFilter == .academia) {
+            studentFilterChip(title: "Academia", isSelected: studentFilter == .academia) {
                 studentFilter = .academia
             }
             studentFilterChip(title: "Em Casa", isSelected: studentFilter == .emCasa) {
@@ -500,7 +532,7 @@ struct TeacherSendWorkoutView: View {
     }
 
     private func studentFilterChip(
-        title: String,
+        title: LocalizedStringKey,
         isSelected: Bool,
         action: @escaping () -> Void
     ) -> some View {
@@ -578,7 +610,8 @@ struct TeacherSendWorkoutView: View {
             emptyRow(
                 searchText.isEmpty
                     ? "Nenhum aluno vinculado."
-                    : "Nenhum aluno encontrado."
+                    : "Nenhum aluno encontrado.",
+                localizedTitle: searchText.isEmpty ? "Nenhum aluno vinculado" : nil
             )
         } else {
             studentsList
@@ -747,6 +780,7 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 templatePickerLabel(
                     title: selection?.title ?? "Selecionar treino",
+                    localizedTitle: selection == nil ? "Selecionar treino" : nil,
                     isSelected: selection != nil
                 )
             }
@@ -754,12 +788,22 @@ struct TeacherSendWorkoutView: View {
         }
     }
 
-    private func templatePickerLabel(title: String, isSelected: Bool) -> some View {
+    private func templatePickerLabel(
+        title: String,
+        localizedTitle: LocalizedStringKey? = nil,
+        isSelected: Bool
+    ) -> some View {
         HStack {
-            Text(title)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-                .lineLimit(1)
+            Group {
+                if let localizedTitle {
+                    Text(localizedTitle)
+                } else {
+                    Text(title)
+                }
+            }
+            .font(.system(size: 15, weight: .semibold))
+            .foregroundColor(.white.opacity(0.92))
+            .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
@@ -1063,13 +1107,13 @@ struct TeacherSendWorkoutView: View {
         .primaryGreenActionButton()
     }
 
-    private func sectionTitle(_ title: String) -> some View {
+    private func sectionTitle(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.system(size: 16, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
     }
 
-    private func cardSectionTitle(_ title: String) -> some View {
+    private func cardSectionTitle(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.system(size: 14, weight: .medium))
             .foregroundColor(.white.opacity(0.35))
@@ -1100,12 +1144,21 @@ struct TeacherSendWorkoutView: View {
         .padding(.vertical, 10)
     }
 
-    private func emptyRow(_ title: String) -> some View {
-        Text(title)
-            .font(.system(size: 14))
-            .foregroundColor(.white.opacity(0.55))
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.vertical, 10)
+    private func emptyRow(
+        _ title: String,
+        localizedTitle: LocalizedStringKey? = nil
+    ) -> some View {
+        Group {
+            if let localizedTitle {
+                Text(localizedTitle)
+            } else {
+                Text(title)
+            }
+        }
+        .font(.system(size: 14))
+        .foregroundColor(.white.opacity(0.55))
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.vertical, 10)
     }
 
     private func studentCategoryText(_ student: AppUser) -> String {
@@ -1291,7 +1344,7 @@ struct TeacherSendWorkoutView: View {
             }
             successMessage = isVideoFlow
                 ? "Vídeo enviado com sucesso!"
-                : "Treino enviado com sucesso!"
+                : String(localized: "Treino enviado com sucesso", locale: locale)
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             path.removeAll()
@@ -1368,6 +1421,17 @@ private struct WorkoutTemplateSelectionSheet: View {
         return selectedTemplate?.title ?? "Selecionar treino"
     }
 
+    private var templatePickerLocalizedTitle: LocalizedStringKey? {
+        guard selectedSectionKey != nil,
+              !isLoading,
+              !isLoadingSectionTemplates,
+              hasLoadedSectionTemplates,
+              selectedTemplate == nil else {
+            return nil
+        }
+        return "Selecionar treino"
+    }
+
     private var canConfirmSelection: Bool {
         selectedSectionKey != nil && pendingSelectedTemplate != nil
     }
@@ -1392,7 +1456,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
-                        selectionField(title: "SEÇÃO") {
+                        selectionField(title: "SEÇÃO", localizedTitle: "SEÇÃO") {
                             sectionPickerField
                         }
 
@@ -1435,12 +1499,19 @@ private struct WorkoutTemplateSelectionSheet: View {
 
     private func selectionField<Content: View>(
         title: String,
+        localizedTitle: LocalizedStringKey? = nil,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+            Group {
+                if let localizedTitle {
+                    Text(localizedTitle)
+                } else {
+                    Text(title)
+                }
+            }
+            .font(.system(size: 13, weight: .semibold))
+            .foregroundColor(.white.opacity(0.75))
             content()
         }
     }
@@ -1451,6 +1522,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         } label: {
             WorkoutPickerLabel(
                 title: selectedSectionTitle ?? "Selecionar seção",
+                localizedTitle: selectedSectionTitle == nil ? "Selecionar seção" : nil,
                 isSelected: selectedSectionKey != nil
             )
         }
@@ -1468,6 +1540,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         } label: {
             WorkoutPickerLabel(
                 title: templatePickerTitle,
+                localizedTitle: templatePickerLocalizedTitle,
                 isSelected: selectedTemplate != nil
             )
         }
