@@ -85,7 +85,7 @@ struct InfoLegalView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text(kind.screenTitle)
+                Text(LocalizedStringKey(kind.screenTitle))
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -111,14 +111,14 @@ struct InfoLegalView: View {
             ForEach(kind.sections, id: \.self) { section in
 
                 if let title = section.title {
-                    Text(title)
+                    Text(LocalizedStringKey(title))
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
                 }
 
                 if let intro = section.introText {
-                    Text(intro)
+                    Text(LocalizedStringKey(intro))
                         .font(.system(size: 15))
                         .foregroundColor(.white.opacity(0.82))
                         .fixedSize(horizontal: false, vertical: true)
@@ -130,7 +130,7 @@ struct InfoLegalView: View {
                             HStack(alignment: .top, spacing: 8) {
                                 Text("•")
                                     .foregroundColor(.white.opacity(0.78))
-                                Text(b)
+                                Text(LocalizedStringKey(b))
                                     .font(.system(size: 15))
                                     .foregroundColor(.white.opacity(0.78))
                                     .fixedSize(horizontal: false, vertical: true)
