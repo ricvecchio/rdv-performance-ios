@@ -122,7 +122,11 @@ struct StudentDashboardView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
+            logDashboardLocalization()
             Task { await viewModel.load() }
+        }
+        .onChange(of: locale.identifier) { _, _ in
+            logDashboardLocalization()
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -1228,6 +1232,14 @@ struct StudentDashboardView: View {
             name: session.userName,
             audience: .student,
             locale: locale
+        )
+    }
+
+    private func logDashboardLocalization() {
+        DashboardLocalizationDiagnostics.dashboardAppeared(
+            screen: "student-dashboard",
+            locale: locale,
+            hasUserName: !(session.userName?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
         )
     }
 

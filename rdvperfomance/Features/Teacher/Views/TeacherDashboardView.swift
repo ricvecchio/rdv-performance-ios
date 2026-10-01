@@ -148,8 +148,12 @@ struct TeacherDashboardView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
+            logDashboardLocalization()
             Task { await loadTodaySummary() }
             Task { await loadQuickAccessItems() }
+        }
+        .onChange(of: locale.identifier) { _, _ in
+            logDashboardLocalization()
         }
         .sheet(isPresented: $isQuickAccessEditorPresented) {
             quickAccessEditorSheet
@@ -473,6 +477,14 @@ struct TeacherDashboardView: View {
             name: session.userName,
             audience: .teacher,
             locale: locale
+        )
+    }
+
+    private func logDashboardLocalization() {
+        DashboardLocalizationDiagnostics.dashboardAppeared(
+            screen: "teacher-dashboard",
+            locale: locale,
+            hasUserName: !(session.userName?.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ?? true)
         )
     }
 
