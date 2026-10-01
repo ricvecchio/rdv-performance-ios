@@ -27,11 +27,20 @@ enum StudentDashboardNextFitSelection: Hashable {
     case agenda
 }
 
-struct StudentDashboardNextFitContentOption: Identifiable {
-    let selection: StudentDashboardNextFitSelection
-    let title: String
+enum StudentDashboardNextFitContentOption: Identifiable {
+    case wod(id: Int, title: String)
+    case agenda
 
     var id: StudentDashboardNextFitSelection { selection }
+
+    var selection: StudentDashboardNextFitSelection {
+        switch self {
+        case .wod(let id, _):
+            .wod(id)
+        case .agenda:
+            .agenda
+        }
+    }
 }
 
 struct StudentDashboardAgendaCancellationConfirmation: Equatable {
@@ -196,12 +205,9 @@ final class StudentDashboardViewModel: ObservableObject {
 
     var nextFitContentOptions: [StudentDashboardNextFitContentOption] {
         nextFitModalityOptions.map {
-            StudentDashboardNextFitContentOption(selection: .wod($0.id), title: $0.title)
+            .wod(id: $0.id, title: $0.title)
         } + [
-            StudentDashboardNextFitContentOption(
-                selection: .agenda,
-                title: String(localized: "Agenda", locale: Self.localizationLocale)
-            )
+            .agenda
         ]
     }
 

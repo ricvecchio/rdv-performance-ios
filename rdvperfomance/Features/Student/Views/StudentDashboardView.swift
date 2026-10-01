@@ -544,7 +544,7 @@ struct StudentDashboardView: View {
                 if viewModel.nextFitContentOptions.count > 1 {
                     Picker("", selection: $viewModel.selectedNextFitContent) {
                         ForEach(viewModel.nextFitContentOptions) { option in
-                            Text(option.title.uppercased())
+                            nextFitContentOptionLabel(option)
                                 .tag(Optional(option.selection))
                         }
                     }
@@ -700,21 +700,34 @@ struct StudentDashboardView: View {
     private var nextFitAgendaDateSelector: some View {
         HStack(spacing: 10) {
             nextFitAgendaDateButton(
-                title: String(localized: "HOJE", locale: locale),
+                day: .today,
                 date: viewModel.todayAgendaDate
             )
             nextFitAgendaDateButton(
-                title: String(localized: "AMANHÃ", locale: locale),
+                day: .tomorrow,
                 date: viewModel.tomorrowAgendaDate
             )
         }
     }
 
-    private func nextFitAgendaDateButton(title: String, date: Date) -> some View {
+    @ViewBuilder
+    private func nextFitContentOptionLabel(
+        _ option: StudentDashboardNextFitContentOption
+    ) -> some View {
+        switch option {
+        case .wod(_, let title):
+            Text(verbatim: title.uppercased())
+        case .agenda:
+            Text(DashboardSection.agenda.localizedTitle)
+        }
+    }
+
+    private func nextFitAgendaDateButton(day: DashboardAgendaDay, date: Date) -> some View {
         let isSelected = Calendar.current.isDate(
             viewModel.selectedNextFitAgendaDate,
             inSameDayAs: date
         )
+        let title = day.title(locale: locale)
         return Button {
             Task { await viewModel.selectNextFitAgendaDate(date) }
         } label: {
@@ -1211,13 +1224,11 @@ struct StudentDashboardView: View {
     }
 
     private var greeting: String {
-        let name = session.userName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !name.isEmpty else {
-            return String(localized: "Olá, Aluno!", locale: locale)
-        }
-
-        let format = String(localized: "Olá, %@!", locale: locale)
-        return String(format: format, locale: locale, arguments: [name])
+        DashboardGreeting.text(
+            name: session.userName,
+            audience: .student,
+            locale: locale
+        )
     }
 
     private func weekdayAbbreviation(for date: Date?) -> String {

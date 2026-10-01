@@ -19019,6 +19019,144 @@
         }
       }
     },
+    "dashboard.day.today" : {
+      "comment" : "Title for the current-day filter in a dashboard agenda.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TODAY"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HOY"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HOJE"
+          }
+        }
+      }
+    },
+    "dashboard.day.tomorrow" : {
+      "comment" : "Title for the next-day filter in a dashboard agenda.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TOMORROW"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MAÑANA"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AMANHÃ"
+          }
+        }
+      }
+    },
+    "dashboard.greeting.named" : {
+      "comment" : "Dashboard greeting with the signed-in user's name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hello, %@!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Hola, %@!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olá, %@!"
+          }
+        }
+      }
+    },
+    "dashboard.greeting.student" : {
+      "comment" : "Dashboard greeting when the student name is unavailable.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hello, Student!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Hola, alumno!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olá, Aluno!"
+          }
+        }
+      }
+    },
+    "dashboard.greeting.teacher" : {
+      "comment" : "Dashboard greeting when the teacher name is unavailable.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hello, Coach!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Hola, entrenador!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olá, Professor!"
+          }
+        }
+      }
+    },
+    "dashboard.section.agenda" : {
+      "comment" : "Title for the agenda section of a dashboard.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SCHEDULE"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AGENDA"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AGENDA"
+          }
+        }
+      }
+    },
     "video.category.crossfit" : {
       "comment" : "Display title for the CrossFit video category.",
       "localizations" : {

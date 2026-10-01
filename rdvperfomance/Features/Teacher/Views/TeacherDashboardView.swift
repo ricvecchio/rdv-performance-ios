@@ -469,13 +469,11 @@ struct TeacherDashboardView: View {
     }
 
     private var greeting: String {
-        let name = session.userName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        guard !name.isEmpty else {
-            return String(localized: "Olá, Professor!", locale: locale)
-        }
-
-        let format = String(localized: "Olá, %@!", locale: locale)
-        return String(format: format, locale: locale, arguments: [name])
+        DashboardGreeting.text(
+            name: session.userName,
+            audience: .teacher,
+            locale: locale
+        )
     }
 
     private var todayText: String {
