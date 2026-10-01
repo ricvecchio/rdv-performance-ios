@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct TeacherWorkoutTemplatesListView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
@@ -252,7 +253,7 @@ struct TeacherWorkoutTemplatesListView: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             items = []
             return
         }

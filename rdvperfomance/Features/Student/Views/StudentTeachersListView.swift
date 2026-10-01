@@ -6,6 +6,7 @@ struct StudentTeachersListView: View {
     let studentEmail: String
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
     @StateObject private var vm = StudentTeachersListViewModel()
     @State private var showInviteSheet = false
     @State private var teacherEmail = ""
@@ -234,7 +235,10 @@ struct StudentTeachersListView: View {
         }
     }
 
-    private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func card<Content: View>(
+        title: LocalizedStringKey,
+        @ViewBuilder content: () -> Content
+    ) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
@@ -320,7 +324,7 @@ struct StudentTeachersListView: View {
         .padding(.vertical, 14)
     }
 
-    private func loading(_ text: String) -> some View {
+    private func loading(_ text: LocalizedStringKey) -> some View {
         HStack(spacing: 10) {
             ProgressView()
             Text(text).font(.system(size: 13)).foregroundColor(.white.opacity(0.55))
@@ -329,7 +333,7 @@ struct StudentTeachersListView: View {
         .padding(.bottom, 14)
     }
 
-    private func empty(_ text: String) -> some View {
+    private func empty(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 13))
             .foregroundColor(.white.opacity(0.55))
@@ -418,7 +422,13 @@ struct StudentTeachersListView: View {
 
     private func load() async {
         guard let studentId = session.uid, !studentId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o aluno logado."
+            vm.errorMessage = String(
+                localized: "Não foi possível identificar o aluno logado.",
+                locale: Locale(
+                    identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                        ?? AppLanguage.portugueseBrazil.rawValue
+                )
+            )
             return
         }
         await vm.load(studentId: studentId, studentEmail: studentEmail)
@@ -471,9 +481,12 @@ struct StudentTeachersListView: View {
                     .foregroundColor(.white.opacity(0.92))
 
                 VStack(alignment: .leading, spacing: 8) {
-                    teacherDetailRow("WhatsApp", BrazilianPhoneFormatter.format(teacher.phone ?? ""))
-                    teacherDetailRow("CREF", teacher.cref ?? "")
-                    teacherDetailRow("Biografia", teacher.bio ?? "")
+                    teacherDetailRow(
+                        String(localized: "WhatsApp", locale: locale),
+                        BrazilianPhoneFormatter.format(teacher.phone ?? "")
+                    )
+                    teacherDetailRow(String(localized: "CREF", locale: locale), teacher.cref ?? "")
+                    teacherDetailRow(String(localized: "Biografia", locale: locale), teacher.bio ?? "")
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -494,7 +507,8 @@ struct StudentTeachersListView: View {
     private func teacherDetailRow(_ title: String, _ value: String) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            Text("\(title): \(trimmed)")
+            let format = String(localized: "%@: %@", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [title, trimmed]))
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.65))
         }

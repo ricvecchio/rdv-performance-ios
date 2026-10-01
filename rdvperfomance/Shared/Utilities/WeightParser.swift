@@ -4,7 +4,7 @@ import Foundation
 ///
 /// - Aceita vírgula ou ponto como separador decimal.
 /// - Valida máximo de 2 casas decimais, valor não negativo e ausência de letras.
-/// - Exibe com convenção brasileira: vírgula decimal, 2 casas fixas, seguido da unidade.
+/// - Exibe com o separador decimal do idioma selecionado, 2 casas fixas e a unidade.
 struct WeightParser {
 
     // MARK: - Parsing
@@ -48,26 +48,29 @@ struct WeightParser {
 
     // MARK: - Formatação
 
-    /// Formata `Double` no padrão brasileiro com 2 casas decimais + unidade.
+    /// Formata `Double` com duas casas decimais + unidade no idioma selecionado.
     ///
     /// Exemplos:
-    /// - `display(183.7, unit: "kg")` → `"183,70 kg"`
-    /// - `display(405.0, unit: "lb")` → `"405,00 lb"`
+    /// - `display(183.7, unit: "kg")` → `"183,70 kg"` em português
+    /// - `display(405.0, unit: "lb")` → `"405.00 lb"` em inglês
     static func display(_ value: Double, unit: String) -> String {
         "\(brazilianFormat(value)) \(unit)"
     }
 
-    /// Formata `Double` no padrão brasileiro com 2 casas decimais.
+    /// Formata `Double` com duas casas decimais no idioma selecionado no app.
     ///
-    /// Exemplo: `brazilianFormat(183.7)` → `"183,70"`
+    /// Exemplo: `brazilianFormat(183.7)` → `"183,70"` em português.
     static func brazilianFormat(_ value: Double) -> String {
         let fmt = NumberFormatter()
         fmt.numberStyle = .decimal
         fmt.minimumFractionDigits = 2
         fmt.maximumFractionDigits = 2
-        fmt.decimalSeparator = ","
-        fmt.groupingSeparator = "."
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+        fmt.locale = locale
         return fmt.string(from: NSNumber(value: value))
-            ?? String(format: "%.2f", value).replacingOccurrences(of: ".", with: ",")
+            ?? String(format: "%.2f", locale: locale, value)
     }
 }

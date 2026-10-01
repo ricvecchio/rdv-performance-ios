@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct TeacherSendWorkoutToStudentSheet: View {
+    @Environment(\.locale) private var locale
 
     let template: WorkoutTemplateFS
     let category: TreinoTipo
@@ -180,7 +181,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
         }
     }
 
-    private func weekMenuDisabledPlaceholder(text: String) -> some View {
+    private func weekMenuDisabledPlaceholder(text: LocalizedStringKey) -> some View {
         HStack {
             Text(text)
                 .foregroundColor(.white.opacity(0.35))
@@ -200,7 +201,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var weekMenuEmptyButton: some View {
         Button {
-            errorMessage = "O aluno deve ter uma semana cadastrada."
+            errorMessage = String(localized: "O aluno deve ter uma semana cadastrada.", locale: locale)
             successMessage = nil
         } label: {
             HStack {
@@ -302,7 +303,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -352,7 +353,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
         guard let student = selectedStudent, let sid = student.id, !sid.isEmpty else { return }
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -377,7 +378,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
         successMessage = nil
 
         guard let weekId = selectedWeek?.id, !weekId.isEmpty else {
-            errorMessage = "Selecione uma semana válida."
+            errorMessage = String(localized: "Selecione uma semana válida.", locale: locale)
             return
         }
 
@@ -401,7 +402,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 blocks: blocks
             )
 
-            successMessage = "Treino enviado com sucesso!"
+            successMessage = String(localized: "Treino enviado com sucesso!", locale: locale)
         } catch {
             errorMessage = error.localizedDescription
         }

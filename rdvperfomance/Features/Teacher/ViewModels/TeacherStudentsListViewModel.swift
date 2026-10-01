@@ -681,9 +681,9 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     func statusText(_ raw: String, locale: Locale) -> String {
         let v = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if v == "pending" { return "Pendente" }
+        if v == "pending" { return String(localized: "Pendente", locale: locale) }
         if v == "accepted" { return String(localized: "Aceito", locale: locale) }
-        if v == "declined" { return "Recusado" }
+        if v == "declined" { return String(localized: "Recusado", locale: locale) }
         if v == "cancelled" { return String(localized: "Cancelado", locale: locale) }
         return raw.isEmpty ? "—" : raw
     }

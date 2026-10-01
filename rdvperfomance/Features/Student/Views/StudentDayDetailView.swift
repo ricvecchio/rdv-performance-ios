@@ -358,7 +358,13 @@ struct StudentDayDetailView: View {
         VStack(alignment: .leading, spacing: 6) {
 
             // ✅ ALTERADO: manter apenas a semana no corpo (o dia foi para o cabeçalho)
-            Text("Semana: \(formattedWeekTitle)")
+            Text(
+                String(
+                    format: String(localized: "Semana: %@", locale: locale),
+                    locale: locale,
+                    arguments: [formattedWeekTitle]
+                )
+            )
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -673,7 +679,7 @@ struct StudentDayDetailView: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 0
-        formatter.decimalSeparator = "."
+        formatter.locale = locale
         return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 

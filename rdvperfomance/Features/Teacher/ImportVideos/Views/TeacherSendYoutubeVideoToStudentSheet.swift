@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct TeacherSendYoutubeVideoToStudentSheet: View {
+    @Environment(\.locale) private var locale
 
     let video: TeacherYoutubeVideo
     let category: TreinoTipo
@@ -63,7 +64,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
     private var header: some View {
         let title = video.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeTitle = title.isEmpty ? "Vídeo do YouTube" : title
+        let safeTitle = title.isEmpty ? String(localized: "Vídeo do YouTube", locale: locale) : title
 
         return VStack(alignment: .leading, spacing: 8) {
             Text(safeTitle)
@@ -183,7 +184,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         }
     }
 
-    private func weekMenuDisabledPlaceholder(text: String) -> some View {
+    private func weekMenuDisabledPlaceholder(text: LocalizedStringKey) -> some View {
         HStack {
             Text(text)
                 .foregroundColor(.white.opacity(0.35))
@@ -203,7 +204,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
     private var weekMenuEmptyButton: some View {
         Button {
-            errorMessage = "O aluno deve ter uma semana cadastrada."
+            errorMessage = String(localized: "O aluno deve ter uma semana cadastrada.", locale: locale)
             successMessage = nil
         } label: {
             HStack {
@@ -305,7 +306,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -330,7 +331,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         guard let student = selectedStudent, let sid = student.id, !sid.isEmpty else { return }
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -355,7 +356,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         successMessage = nil
 
         guard let weekId = selectedWeek?.id, !weekId.isEmpty else {
-            errorMessage = "Selecione uma semana válida."
+            errorMessage = String(localized: "Selecione uma semana válida.", locale: locale)
             return
         }
 
@@ -364,7 +365,9 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         let dayName = "Dia \(selectedDayIndex + 1)"
 
         let titleTrim = video.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeTitle = titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim
+        let safeTitle = titleTrim.isEmpty
+            ? String(localized: "Vídeo do YouTube", locale: locale)
+            : titleTrim
         let urlTrim = video.url.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // ✅ Mantém padrão por blocos e evita "sem blocos cadastrados" em telas que renderizam blocos.
@@ -391,7 +394,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
                 blocks: blocks
             )
 
-            successMessage = "Vídeo enviado com sucesso!"
+            successMessage = String(localized: "Vídeo enviado com sucesso!", locale: locale)
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -762,7 +762,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedWod?.name ?? "esta prova")?")
+            let recordName = selectedWod?.name ?? String(localized: "esta prova", locale: locale)
+            let format = String(localized: "Deseja excluir o registro de %@?", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
             inputValue = ""
@@ -1262,7 +1264,7 @@ struct CrossfitGamesPersonalRecordsView: View {
         .presentationDetents([.medium])
     }
 
-    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+    private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 13, weight: .semibold))

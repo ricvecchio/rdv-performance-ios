@@ -970,7 +970,9 @@ Bar-Facing Burpees
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedItem?.name ?? "este item")?")
+            let recordName = selectedItem?.name ?? String(localized: "este item", locale: locale)
+            let format = String(localized: "Deseja excluir o registro de %@?", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
             inputValue = ""
@@ -1442,7 +1444,7 @@ Bar-Facing Burpees
         .presentationDetents([.medium])
     }
 
-    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+    private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 13, weight: .semibold))

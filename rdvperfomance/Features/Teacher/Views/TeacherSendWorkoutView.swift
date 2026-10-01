@@ -177,7 +177,7 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedVideoTitle: String {
         let title = preselectedVideo?.title.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return title.isEmpty ? "Vídeo do YouTube" : title
+        return title.isEmpty ? String(localized: "Vídeo do YouTube", locale: locale) : title
     }
 
     private var selectedVideoURL: String {
@@ -569,9 +569,15 @@ struct TeacherSendWorkoutView: View {
             HStack(spacing: 10) {
                 Spacer()
 
-                Text(areAllVisibleStudentsSelected ? "Desmarcar todos" : "Selecionar todos")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.75))
+                if areAllVisibleStudentsSelected {
+                    Text("Desmarcar todos")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.green)
+                } else {
+                    Text("Selecionar todos")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.75))
+                }
 
                 Image(systemName: areAllVisibleStudentsSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
@@ -733,7 +739,7 @@ struct TeacherSendWorkoutView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func templatePicker(category: TreinoTipo, title: String) -> some View {
+    private func templatePicker(category: TreinoTipo, title: LocalizedStringKey) -> some View {
         let selection = selectedTemplates[category]
 
         return VStack(alignment: .leading, spacing: 6) {
@@ -755,7 +761,7 @@ struct TeacherSendWorkoutView: View {
             .padding(.vertical, 4)
     }
 
-    private func categoryHeader(category: TreinoTipo, title: String) -> some View {
+    private func categoryHeader(category: TreinoTipo, title: LocalizedStringKey) -> some View {
         HStack(spacing: 8) {
             Image(systemName: categoryIcon(for: category))
                 .font(.system(size: 14))
@@ -773,7 +779,11 @@ struct TeacherSendWorkoutView: View {
         selection: WorkoutTemplateFS?
     ) -> some View {
         if isLoadingInitialData {
-            templatePickerLabel(title: "Carregando treinos...", isSelected: false)
+            templatePickerLabel(
+                title: "",
+                localizedTitle: "Carregando treinos...",
+                isSelected: false
+            )
         } else {
             Button {
                 openWorkoutSelector(for: category)
@@ -1134,7 +1144,7 @@ struct TeacherSendWorkoutView: View {
         }
     }
 
-    private func loadingRow(_ title: String) -> some View {
+    private func loadingRow(_ title: LocalizedStringKey) -> some View {
         HStack(spacing: 10) {
             ProgressView()
             Text(title)
@@ -1230,7 +1240,7 @@ struct TeacherSendWorkoutView: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -1281,7 +1291,7 @@ struct TeacherSendWorkoutView: View {
         do {
             let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             guard !teacherId.isEmpty else {
-                errorMessage = "Não foi possível identificar o professor logado."
+                errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
                 return
             }
 
@@ -1391,6 +1401,7 @@ private struct WorkoutTemplateSelectionSheet: View {
     let onSelectTemplate: (WorkoutTemplateFS) -> Void
 
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     @State private var expandedPicker: ExpandedPicker?
     @State private var pendingSelectedTemplate: WorkoutTemplateFS?
     @State private var loadedSectionTemplates: [WorkoutTemplateFS] = []
@@ -1413,10 +1424,10 @@ private struct WorkoutTemplateSelectionSheet: View {
 
     private var templatePickerTitle: String {
         guard selectedSectionKey != nil else {
-            return "Selecione uma seção primeiro"
+            return String(localized: "Selecione uma seção primeiro", locale: locale)
         }
         if isLoading || isLoadingSectionTemplates || !hasLoadedSectionTemplates {
-            return "Carregando treinos..."
+            return String(localized: "Carregando treinos...", locale: locale)
         }
         return selectedTemplate?.title ?? "Selecionar treino"
     }

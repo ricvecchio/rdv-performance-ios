@@ -5,8 +5,6 @@ struct ForceUpdateView: View {
 
     @Environment(\.openURL) private var openURL
 
-    private let defaultMessage = "Uma nova versão do RDV Performance está disponível. Atualize o aplicativo para continuar."
-
     var body: some View {
         ZStack {
             Image("rdv_fundo")
@@ -26,10 +24,17 @@ struct ForceUpdateView: View {
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
 
-                    Text(config.message ?? defaultMessage)
-                        .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.82))
-                        .multilineTextAlignment(.center)
+                    if let message = config.message {
+                        Text(message)
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.82))
+                            .multilineTextAlignment(.center)
+                    } else {
+                        Text("Uma nova versão do RDV Performance está disponível. Atualize o aplicativo para continuar.")
+                            .font(.system(size: 16))
+                            .foregroundColor(.white.opacity(0.82))
+                            .multilineTextAlignment(.center)
+                    }
                 }
 
                 Button("ATUALIZAR AGORA") {

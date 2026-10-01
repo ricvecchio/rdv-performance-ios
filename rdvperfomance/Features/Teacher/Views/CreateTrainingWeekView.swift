@@ -170,7 +170,8 @@ struct CreateTrainingWeekView: View {
     // Header com contexto do aluno e categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aluno: \(student.name)")
+            let format = String(localized: "Aluno: %@", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [student.name]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
@@ -247,9 +248,15 @@ struct CreateTrainingWeekView: View {
                             .foregroundColor(.white.opacity(0.45))
                     }
 
-                    Text(week.isPublished ? "Publicada" : "Rascunho")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(week.isPublished ? .green.opacity(0.85) : .white.opacity(0.45))
+                    Group {
+                        if week.isPublished {
+                            Text("Publicada")
+                        } else {
+                            Text("Rascunho")
+                        }
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(week.isPublished ? .green.opacity(0.85) : .white.opacity(0.45))
                 }
 
                 Spacer()
@@ -381,11 +388,11 @@ struct CreateTrainingWeekView: View {
         successMessage = nil
 
         guard let studentId = student.id, !studentId.isEmpty else {
-            vm.errorMessage = "Aluno inválido: id não encontrado."
+            vm.errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
             return
         }
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o professor logado."
+            vm.errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -478,7 +485,7 @@ struct CreateTrainingWeekView: View {
 
         guard let week = editingWeek, let weekId = week.id, !weekId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             await MainActor.run {
-                errorMessage = "Não foi possível editar: semana inválida."
+                errorMessage = String(localized: "Não foi possível editar: semana inválida.", locale: locale)
             }
             return
         }
@@ -486,7 +493,7 @@ struct CreateTrainingWeekView: View {
         let trimmed = editingTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
-                errorMessage = "Informe um título válido."
+                errorMessage = String(localized: "Informe um título válido.", locale: locale)
             }
             return
         }
@@ -504,7 +511,7 @@ struct CreateTrainingWeekView: View {
             try await FirestoreRepository.shared.updateWeekTitle(weekId: weekId, newTitle: trimmed)
 
             await MainActor.run {
-                successMessage = "Título atualizado com sucesso."
+                successMessage = String(localized: "Título atualizado com sucesso.", locale: locale)
                 isEditSheetOpen = false
                 editingWeek = nil
             }
@@ -519,8 +526,14 @@ struct CreateTrainingWeekView: View {
     }
 
     private func deleteWeekMessageText() -> String {
-        guard let w = weekPendingDelete else { return "Tem certeza que deseja excluir esta semana?" }
-        return "A semana \"\(w.weekTitle)\" será excluída (dias e progresso também)."
+        guard let w = weekPendingDelete else {
+            return String(localized: "Tem certeza que deseja excluir esta semana?", locale: locale)
+        }
+        let format = String(
+            localized: "A semana \"%@\" será excluída (dias e progresso também).",
+            locale: locale
+        )
+        return String(format: format, locale: locale, arguments: [w.weekTitle])
     }
 
     private func confirmDeleteWeek() async {
@@ -535,7 +548,7 @@ struct CreateTrainingWeekView: View {
 
         do {
             try await FirestoreRepository.shared.deleteTrainingWeekCascade(weekId: weekId)
-            successMessage = "Semana excluída com sucesso."
+            successMessage = String(localized: "Semana excluída com sucesso.", locale: locale)
             weekPendingDelete = nil
             await loadWeeks()
         } catch {
@@ -552,18 +565,18 @@ struct CreateTrainingWeekView: View {
         guard !isSaving else { return }
 
         guard let studentId = student.id, !studentId.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
             return
         }
 
         let trimmedTitle = weekTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
-            errorMessage = "Informe o título da semana."
+            errorMessage = String(localized: "Informe o título da semana.", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -584,7 +597,7 @@ struct CreateTrainingWeekView: View {
             )
 
             weekTitle = ""
-            successMessage = "Semana publicada com sucesso."
+            successMessage = String(localized: "Semana publicada com sucesso.", locale: locale)
             await loadWeeks()
 
         } catch {

@@ -478,7 +478,16 @@ struct GirlsPersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedWod?.name ?? "este WOD")?")
+            Text(
+                String(
+                    format: String(localized: "Deseja excluir o registro de %@?", locale: locale),
+                    locale: locale,
+                    arguments: [
+                        selectedWod?.name
+                            ?? String(localized: "este WOD", locale: locale)
+                    ]
+                )
+            )
         }
         .onAppear {
             inputValue = ""
@@ -625,7 +634,7 @@ struct GirlsPersonalRecordsView: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 0
-        formatter.decimalSeparator = "."
+        formatter.locale = locale
         return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
@@ -1244,7 +1253,11 @@ Jasmine (AMRAP 20 min)
         .presentationDetents([.medium])
     }
 
-    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+    private func addItemField(
+        _ label: LocalizedStringKey,
+        placeholder: LocalizedStringKey,
+        text: Binding<String>
+    ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 13, weight: .semibold))
@@ -1267,13 +1280,13 @@ Jasmine (AMRAP 20 min)
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do WOD."
+            addItemErrorMessage = String(localized: "Informe o nome do WOD.", locale: locale)
             return
         }
 
         let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este WOD já existe na sua lista."
+            addItemErrorMessage = String(localized: "Este WOD já existe na sua lista.", locale: locale)
             return
         }
 

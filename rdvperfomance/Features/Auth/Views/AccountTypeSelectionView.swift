@@ -86,7 +86,11 @@ struct AccountTypeSelectionView: View {
     }
 
     // Retorna botão estilizado para seleção de tipo de usuário
-    private func selectionButton(title: String, subtitle: String, action: @escaping () -> Void) -> some View {
+    private func selectionButton(
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Text(title)

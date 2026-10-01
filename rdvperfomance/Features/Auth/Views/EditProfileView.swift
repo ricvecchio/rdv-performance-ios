@@ -7,6 +7,7 @@ struct EditProfileView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var previewImage: UIImage? = nil
@@ -282,7 +283,6 @@ struct EditProfileView: View {
 
             pickerRow(
                 title: "Área de foco",
-                localizedTitle: "Área de foco",
                 selection: $focusAreaDraft,
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
@@ -366,7 +366,7 @@ struct EditProfileView: View {
         }
     }
 
-    private func readOnlyRow(title: String, value: String) -> some View {
+    private func readOnlyRow(title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 14))
@@ -554,7 +554,12 @@ struct EditProfileView: View {
     // ✅ Remove foto local + remove do Firestore
     private func clearPhotoOnlyAndSync() async {
         guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
-            presentError("Não foi possível identificar o usuário para remover a foto.")
+            presentError(
+                String(
+                    localized: "Não foi possível identificar o usuário para remover a foto.",
+                    locale: locale
+                )
+            )
             return
         }
 
@@ -586,10 +591,22 @@ struct EditProfileView: View {
                     self.errorMessage = ""
                 }
             } else {
-                presentError("Não foi possível carregar a imagem selecionada.")
+                presentError(
+                    String(
+                        localized: "Não foi possível carregar a imagem selecionada.",
+                        locale: locale
+                    )
+                )
             }
         } catch {
-            presentError("Erro ao carregar imagem: \(error.localizedDescription)")
+            let format = String(localized: "Erro ao carregar imagem: %@", locale: locale)
+            presentError(
+                String(
+                    format: format,
+                    locale: locale,
+                    arguments: [error.localizedDescription]
+                )
+            )
         }
     }
 
@@ -609,10 +626,14 @@ struct EditProfileView: View {
 
     // Converte FocusAreaDTO em texto amigável
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
         switch opt {
-        case .CROSSFIT: return "Crossfit"
-        case .GYM: return "Academia"
-        case .HOME: return "Em Casa"
+        case .CROSSFIT: return String(localized: "Crossfit", locale: locale)
+        case .GYM: return String(localized: "Academia", locale: locale)
+        case .HOME: return String(localized: "Em Casa", locale: locale)
         }
     }
 
@@ -809,21 +830,14 @@ struct EditProfileView: View {
 
     // Retorna picker estilizado com underline
     private func pickerRow<T: RawRepresentable & CaseIterable>(
-        title: String,
-        localizedTitle: String? = nil,
+        title: LocalizedStringKey,
         selection: Binding<T>,
         options: [T],
         displayText: ((T) -> String)? = nil
     ) -> some View where T.RawValue == String {
         VStack(alignment: .leading, spacing: 8) {
 
-            Group {
-                if let localizedTitle {
-                    Text(LocalizedStringKey(localizedTitle))
-                } else {
-                    Text(title)
-                }
-            }
+            Text(title)
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 

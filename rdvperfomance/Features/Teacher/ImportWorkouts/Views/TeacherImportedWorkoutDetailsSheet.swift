@@ -2,6 +2,7 @@ import SwiftUI
 import FirebaseAuth
 
 struct TeacherImportedWorkoutDetailsSheet: View {
+    @Environment(\.locale) private var locale
     
     let workout: TeacherImportedWorkout
     let onSendToStudent: () -> Void
@@ -128,7 +129,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(workout.title.isEmpty ? "Treino" : workout.title)
+            Text(workout.title.isEmpty ? String(localized: "Treino", locale: locale) : workout.title)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
                 .lineLimit(2)
@@ -184,7 +185,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         )
     }
     
-    private func blockEditor(title: String, text: Binding<String>) -> some View {
+    private func blockEditor(title: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
@@ -205,7 +206,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    private func blockCard(title: String, value: String) -> some View {
+    private func blockCard(title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
@@ -261,13 +262,13 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         successMessage = nil
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
         
         let workoutId = workout.id.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !workoutId.isEmpty else {
-            errorMessage = "Não foi possível salvar: id do treino inválido."
+            errorMessage = String(localized: "Não foi possível salvar: id do treino inválido.", locale: locale)
             return
         }
         
@@ -287,7 +288,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
                 ]
             )
             
-            successMessage = "Alterações salvas com sucesso!"
+            successMessage = String(localized: "Alterações salvas com sucesso!", locale: locale)
             isEditing = false
         } catch {
             errorMessage = error.localizedDescription

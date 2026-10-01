@@ -3,6 +3,7 @@ import FirebaseAuth
 
 /// Tela para criar um WOD (template) — semelhante ao CreateTrainingDayView, porém sem Data/Ordem/Nome do dia
 struct CreateCrossfitWODView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
@@ -134,11 +135,7 @@ struct CreateCrossfitWODView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             (
-                Text("Crie um novo ")
-                    .foregroundColor(.white.opacity(0.55))
-                + Text("WOD")
-                    .foregroundColor(.green.opacity(0.85))
-                + Text(" para esta seção.")
+                Text("Crie um novo \(Text("WOD").foregroundColor(.green.opacity(0.85))) para esta seção.")
                     .foregroundColor(.white.opacity(0.55))
             )
                 .font(.system(size: 14))
@@ -337,19 +334,19 @@ struct CreateCrossfitWODView: View {
         successMessage = nil
 
         guard session.isTrainer else {
-            errorMessage = "Apenas professor pode adicionar WODs."
+            errorMessage = String(localized: "Apenas professor pode adicionar WODs.", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = "Informe o título do WOD."
+            errorMessage = String(localized: "Informe o título do WOD.", locale: locale)
             return
         }
 

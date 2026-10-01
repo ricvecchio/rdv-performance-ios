@@ -5,9 +5,13 @@ enum WeightUnit: String, CaseIterable {
     case lbs
 
     var title: String {
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
         switch self {
-        case .kg: return "⚖️ kg (quilograma)"
-        case .lbs: return "⚖️ lbs (libra)"
+        case .kg: return String(localized: "⚖️ kg (quilograma)", locale: locale)
+        case .lbs: return String(localized: "⚖️ lbs (libra)", locale: locale)
         }
     }
 

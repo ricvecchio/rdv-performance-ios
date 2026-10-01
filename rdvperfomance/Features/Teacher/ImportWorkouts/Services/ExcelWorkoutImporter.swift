@@ -13,20 +13,29 @@ enum ExcelWorkoutImporter {
         var errorDescription: String? {
             switch self {
             case .fileUnreadable:
-                return "Não foi possível ler o arquivo Excel selecionado."
+                return String(localized: "Não foi possível ler o arquivo Excel selecionado.", locale: ExcelWorkoutImporter.localizationLocale)
             case .workbookInvalid:
-                return "Planilha inválida. Verifique se é um arquivo .xlsx."
+                return String(localized: "Planilha inválida. Verifique se é um arquivo .xlsx.", locale: ExcelWorkoutImporter.localizationLocale)
             case .worksheetNotFound:
-                return "Não foi possível localizar uma aba de dados na planilha."
+                return String(localized: "Não foi possível localizar uma aba de dados na planilha.", locale: ExcelWorkoutImporter.localizationLocale)
             case .headerNotFound:
-                return "Não foi possível identificar o cabeçalho na planilha. Verifique se a aba IMPORT_TREINOS existe e contém a linha de títulos."
+                return String(localized: "Não foi possível identificar o cabeçalho na planilha. Verifique se a aba IMPORT_TREINOS existe e contém a linha de títulos.", locale: ExcelWorkoutImporter.localizationLocale)
             case .missingRequiredColumn(let name):
-                return "Coluna obrigatória não encontrada: \(name)."
+                return String(
+                    localized: "Coluna obrigatória não encontrada: \(name).",
+                    locale: ExcelWorkoutImporter.localizationLocale
+                )
             }
         }
     }
 
     private static let preferredSheetName = "IMPORT_TREINOS"
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 
     static func parseWorkouts(fromXLSX url: URL) throws -> [ImportedWorkoutPayload] {
         guard let file = XLSXFile(filepath: url.path) else {

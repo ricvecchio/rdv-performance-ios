@@ -8,6 +8,7 @@ enum TeacherImportVideosContext {
 }
 
 struct TeacherImportVideosView: View {
+    @Environment(\.locale) private var locale
     
     @Binding var path: [AppRoute]
     let context: TeacherImportVideosContext
@@ -199,7 +200,9 @@ struct TeacherImportVideosView: View {
     
     private func openLockedPlayer(for video: TeacherYoutubeVideo) {
         activeLockedPlayer = LockedPlayerItem(
-            title: video.title.isEmpty ? "Vídeo do YouTube" : video.title,
+            title: video.title.isEmpty
+                ? String(localized: "Vídeo do YouTube", locale: locale)
+                : video.title,
             videoId: video.videoId
         )
     }
@@ -324,7 +327,7 @@ struct TeacherImportVideosView: View {
             thumbnailView(videoId: v.videoId)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(v.title.isEmpty ? "Vídeo do YouTube" : v.title)
+                Text(v.title.isEmpty ? String(localized: "Vídeo do YouTube", locale: locale) : v.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -501,7 +504,7 @@ struct TeacherImportVideosView: View {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
                     videos = []
-                    errorMessage = "Não foi possível identificar o professor logado."
+                    errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
                     return
                 }
                 videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
@@ -543,7 +546,7 @@ struct TeacherImportVideosView: View {
             switch context {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                    errorMessage = "Não foi possível identificar o professor logado."
+                    errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
                     return
                 }
                 try await TeacherYoutubeVideosRepository.addVideo(
@@ -593,7 +596,7 @@ struct TeacherImportVideosView: View {
         switch context {
         case .teacher:
             guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                editTitleErrorMessage = "Não foi possível identificar o professor logado."
+                editTitleErrorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
                 return
             }
             updateTitle = {
@@ -656,7 +659,7 @@ struct TeacherImportVideosView: View {
             switch context {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                    errorMessage = "Não foi possível identificar o professor logado."
+                    errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
                     return
                 }
                 try await TeacherYoutubeVideosRepository.deleteVideo(
@@ -699,7 +702,7 @@ struct TeacherImportVideosView: View {
         guard !expectedStudentId.isEmpty,
               expectedStudentId == authenticatedStudentId
         else {
-            errorMessage = "Não foi possível validar sua autenticação para acessar seus vídeos."
+            errorMessage = String(localized: "Não foi possível validar sua autenticação para acessar seus vídeos.", locale: locale)
             return nil
         }
 
@@ -725,9 +728,15 @@ struct TeacherImportVideosView: View {
     private var permissionErrorMessage: String {
         switch context {
         case .teacher:
-            return "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER)."
+            return String(
+                localized: "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                locale: locale
+            )
         case .student:
-            return "Sem permissão para acessar seus vídeos. Verifique sua autenticação e tente novamente."
+            return String(
+                localized: "Sem permissão para acessar seus vídeos. Verifique sua autenticação e tente novamente.",
+                locale: locale
+            )
         }
     }
     

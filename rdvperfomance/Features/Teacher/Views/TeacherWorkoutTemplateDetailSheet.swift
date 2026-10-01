@@ -3,6 +3,7 @@ import FirebaseFirestore
 import UIKit
 
 struct TeacherWorkoutTemplateDetailSheet: View {
+    @Environment(\.locale) private var locale
 
     let template: WorkoutTemplateFS
     @Environment(\.dismiss) private var dismiss
@@ -150,7 +151,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                     ForEach(blocks.indices, id: \.self) { i in
                         let b = blocks[i]
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(b.name.isEmpty ? "Bloco" : b.name)
+                            Text(b.name.isEmpty ? String(localized: "Bloco", locale: locale) : b.name)
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
 
@@ -286,7 +287,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
         guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !templateId.isEmpty else {
-            errorMessage = "Não foi possível salvar: templateId inválido."
+            errorMessage = String(localized: "Não foi possível salvar: templateId inválido.", locale: locale)
             return
         }
 
@@ -299,7 +300,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 blocks: draftBlocks
             )
 
-            successMessage = "Alterações salvas com sucesso!"
+            successMessage = String(localized: "Alterações salvas com sucesso!", locale: locale)
             isEditing = false
 
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)

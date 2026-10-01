@@ -3,6 +3,7 @@ import FirebaseAuth
 
 /// Tela para criar ou editar um dia de treino dentro de uma semana
 struct CreateTrainingDayView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
     let weekId: String
@@ -154,7 +155,8 @@ struct CreateTrainingDayView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Categoria: \(category.displayName)")
+            let format = String(localized: "Categoria: %@", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [category.displayName]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
 
@@ -199,7 +201,27 @@ struct CreateTrainingDayView: View {
                 Picker("Ordem do dia", selection: $dayIndex) {
                     ForEach(0..<7, id: \.self) { i in
                         let exists = existingDaysByIndex[i] != nil
-                        Text(exists ? "Dia \(i + 1) ✓" : "Dia \(i + 1)").tag(i)
+                        if exists {
+                            let format = String(localized: "Dia %lld ✓", locale: locale)
+                            Text(
+                                String(
+                                    format: format,
+                                    locale: locale,
+                                    arguments: [Int64(i + 1)]
+                                )
+                            )
+                            .tag(i)
+                        } else {
+                            let format = String(localized: "Dia %lld", locale: locale)
+                            Text(
+                                String(
+                                    format: format,
+                                    locale: locale,
+                                    arguments: [Int64(i + 1)]
+                                )
+                            )
+                            .tag(i)
+                        }
                     }
                 }
                 .pickerStyle(.segmented)
@@ -311,7 +333,7 @@ struct CreateTrainingDayView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text(b.name.isEmpty ? "Sem nome" : b.name)
+                        Text(b.name.isEmpty ? String(localized: "Sem nome", locale: locale) : b.name)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.70))
 
@@ -386,8 +408,10 @@ struct CreateTrainingDayView: View {
                 Spacer()
                 if isSaving {
                     ProgressView().tint(.white)
+                } else if currentEditingDayId == nil {
+                    Text("Salvar Dia")
                 } else {
-                    Text(currentEditingDayId == nil ? "Salvar Dia" : "Salvar Alterações")
+                    Text("Salvar Alterações")
                 }
                 Spacer()
             }
@@ -483,7 +507,7 @@ struct CreateTrainingDayView: View {
         errorMessage = nil
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -584,25 +608,25 @@ struct CreateTrainingDayView: View {
         successMessage = nil
 
         guard session.isTrainer else {
-            errorMessage = "Apenas professor pode adicionar dias."
+            errorMessage = String(localized: "Apenas professor pode adicionar dias.", locale: locale)
             return
         }
 
         let cleanWeekId = weekId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanWeekId.isEmpty else {
-            errorMessage = "weekId inválido."
+            errorMessage = String(localized: "weekId inválido.", locale: locale)
             return
         }
 
         let cleanDayName = dayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanDayName.isEmpty else {
-            errorMessage = "Informe o nome do dia."
+            errorMessage = String(localized: "Informe o nome do dia.", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = "Informe o título do treino."
+            errorMessage = String(localized: "Informe o título do treino.", locale: locale)
             return
         }
 

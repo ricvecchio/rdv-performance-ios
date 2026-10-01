@@ -9,6 +9,7 @@ struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
 
     @State private var showPassword: Bool = false
+    @Environment(\.locale) private var locale
 
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
@@ -149,7 +150,10 @@ struct LoginView: View {
         await session.refreshProfile()
 
         guard session.isLoggedIn else {
-            vm.errorMessage = "Seu perfil não foi encontrado no Firestore (users/{uid})."
+            vm.errorMessage = String(
+                localized: "Seu perfil não foi encontrado no Firestore (users/{uid}).",
+                locale: locale
+            )
             return
         }
 

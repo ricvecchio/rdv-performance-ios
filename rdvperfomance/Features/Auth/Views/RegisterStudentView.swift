@@ -207,16 +207,20 @@ struct RegisterStudentView: View {
 
     // Converte FocusAreaDTO em texto amigável para exibição
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
         switch opt {
-        case .CROSSFIT: return "Crossfit"
-        case .GYM: return "Academia"
-        case .HOME: return "Em Casa"
+        case .CROSSFIT: return String(localized: "Crossfit", locale: locale)
+        case .GYM: return String(localized: "Academia", locale: locale)
+        case .HOME: return String(localized: "Em Casa", locale: locale)
         }
     }
 
     // Retorna picker com menu dropdown estilizado
     private func pickerRow<T: RawRepresentable & CaseIterable>(
-        title: String,
+        title: LocalizedStringKey,
         selection: Binding<T>,
         options: [T],
         displayText: ((T) -> String)? = nil

@@ -10,6 +10,7 @@ struct ProfileView: View {
     let onBack: () -> Void
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -816,7 +817,10 @@ struct ProfileView: View {
             guard let data = try await item.loadTransferable(type: Data.self),
                   let image = UIImage(data: data)
             else {
-                errorMessage = "Não foi possível carregar a imagem selecionada."
+                errorMessage = String(
+                    localized: "Não foi possível carregar a imagem selecionada.",
+                    locale: locale
+                )
                 showErrorAlert = true
                 return
             }
@@ -959,6 +963,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "person.3.fill",
                     title: "Trocar perfil (Admin)",
+                    localizedTitle: "Trocar perfil (Admin)",
                     trailing: .chevron,
                     iconColor: .red.opacity(0.85),
                     titleColor: .red.opacity(0.95)
@@ -1291,7 +1296,13 @@ struct ProfileView: View {
                 if let copied = copiedIconName {
                     VStack {
                         Spacer()
-                        Text("Copiado: \(copied)")
+                        Text(
+                            String(
+                                format: String(localized: "Copiado: %@", locale: locale),
+                                locale: locale,
+                                arguments: [copied]
+                            )
+                        )
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)

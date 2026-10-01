@@ -8,6 +8,12 @@ final class AccountSecurityService {
 
     static let shared = AccountSecurityService()
     private init() {}
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 
     // Erros específicos do serviço de segurança
     enum ServiceError: LocalizedError {
@@ -22,17 +28,17 @@ final class AccountSecurityService {
         var errorDescription: String? {
             switch self {
             case .notLoggedIn:
-                return "Você precisa estar logado para realizar esta ação."
+                return String(localized: "Você precisa estar logado para realizar esta ação.", locale: AccountSecurityService.localizationLocale)
             case .missingEmail:
-                return "Não foi possível identificar o e-mail do usuário logado."
+                return String(localized: "Não foi possível identificar o e-mail do usuário logado.", locale: AccountSecurityService.localizationLocale)
             case .weakPassword:
-                return "A nova senha é muito fraca. Use pelo menos 6 caracteres."
+                return String(localized: "A nova senha é muito fraca. Use pelo menos 6 caracteres.", locale: AccountSecurityService.localizationLocale)
             case .passwordMismatch:
-                return "As senhas não conferem."
+                return String(localized: "As senhas não conferem.", locale: AccountSecurityService.localizationLocale)
             case .requiresRecentLogin:
-                return "Por segurança, faça login novamente e tente de novo."
+                return String(localized: "Por segurança, faça login novamente e tente de novo.", locale: AccountSecurityService.localizationLocale)
             case .invalidCredential:
-                return "Senha atual inválida."
+                return String(localized: "Senha atual inválida.", locale: AccountSecurityService.localizationLocale)
             case .unknown(let msg):
                 return msg
             }

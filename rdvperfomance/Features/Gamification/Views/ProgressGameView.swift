@@ -1,8 +1,10 @@
 import SwiftUI
 import SpriteKit
+import Foundation
 
 /// Tela reutilizável para exibição de progresso gamificado para aluno ou professor
 struct ProgressGameView: View {
+    @Environment(\.locale) private var locale
 
     /// Path de navegação para controle de stack
     @Binding var path: [AppRoute]
@@ -101,16 +103,23 @@ struct ProgressGameView: View {
     private var fallbackCard: some View {
         let percent = Int((vm.metrics.weeklyCompletion * 100).rounded())
         return VStack(alignment: .leading, spacing: 8) {
-            Text(vm.metrics.displayName ?? "Progresso do aluno")
+            Text(vm.metrics.displayName ?? String(localized: "Progresso do aluno", locale: locale))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Conclusão: \(percent)% • Streak: \(vm.metrics.streakDays) dias")
+            Text(progressSummary(percent: percent, streakDays: vm.metrics.streakDays))
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
 
             if !vm.metrics.badges.isEmpty {
-                Text("Badges: \(vm.metrics.badges.map(\.title).joined(separator: ", "))")
+                let format = String(localized: "Badges: %@", locale: locale)
+                Text(
+                    String(
+                        format: format,
+                        locale: locale,
+                        arguments: [localizedBadgeList]
+                    )
+                )
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.45))
             } else {
@@ -128,6 +137,27 @@ struct ProgressGameView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Color.white.opacity(0.08), lineWidth: 1)
         )
+    }
+
+    private func progressSummary(percent: Int, streakDays: Int) -> String {
+        let format = String(
+            localized: streakDays == 1
+                ? "Conclusão: %lld%% • Streak: %lld dia"
+                : "Conclusão: %lld%% • Streak: %lld dias",
+            locale: locale
+        )
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [Int64(percent), Int64(streakDays)]
+        )
+    }
+
+    private var localizedBadgeList: String {
+        let titles = vm.metrics.badges.map(\.title)
+        let formatter = ListFormatter()
+        formatter.locale = locale
+        return formatter.string(from: titles) ?? titles.joined(separator: ", ")
     }
 
     /// Remove última rota da pilha de navegação

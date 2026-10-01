@@ -19,6 +19,7 @@ struct ChangePasswordView: View {
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
     private let contentMaxWidth: CGFloat = 380
+    @Environment(\.locale) private var locale
 
     // Constrói a interface da tela de alteração de senha
     var body: some View {
@@ -50,7 +51,10 @@ struct ChangePasswordView: View {
                             }
 
                             if showSuccess {
-                                feedbackCard(text: "Senha alterada com sucesso.", isError: false)
+                                feedbackCard(
+                                    text: String(localized: "Senha alterada com sucesso.", locale: locale),
+                                    isError: false
+                                )
                             }
 
                             Color.clear.frame(height: 18)
@@ -153,22 +157,22 @@ struct ChangePasswordView: View {
         let cn = confirmNewPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard session.isLoggedIn else {
-            presentError("Você precisa estar logado.")
+            presentError(String(localized: "Você precisa estar logado.", locale: locale))
             return
         }
 
         guard !cp.isEmpty, !np.isEmpty, !cn.isEmpty else {
-            presentError("Preencha todos os campos.")
+            presentError(String(localized: "Preencha todos os campos.", locale: locale))
             return
         }
 
         guard np.count >= 6 else {
-            presentError("A nova senha deve ter pelo menos 6 caracteres.")
+            presentError(String(localized: "A nova senha deve ter pelo menos 6 caracteres.", locale: locale))
             return
         }
 
         guard np == cn else {
-            presentError("A confirmação da nova senha não confere.")
+            presentError(String(localized: "A confirmação da nova senha não confere.", locale: locale))
             return
         }
 

@@ -6,7 +6,7 @@ struct AdminUsersView: View {
         case students
         case trainers
 
-        var title: String {
+        var title: LocalizedStringKey {
             switch self {
             case .all: return "Todos"
             case .students: return "Alunos"
@@ -104,7 +104,7 @@ struct AdminUsersView: View {
 
     private var filterRow: some View {
         HStack(spacing: 8) {
-            ForEach(UserFilter.allCases, id: \.title) { filter in
+            ForEach(UserFilter.allCases, id: \.self) { filter in
                 Button {
                     selectedFilter = filter
                 } label: {
@@ -114,14 +114,14 @@ struct AdminUsersView: View {
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
                         .background(
-                            selectedFilter.title == filter.title
+                            selectedFilter == filter
                                 ? Theme.Colors.primaryGreen.opacity(0.18)
                                 : Color.white.opacity(0.10)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
-                                    selectedFilter.title == filter.title
+                                    selectedFilter == filter
                                         ? Theme.Colors.primaryGreen.opacity(0.30)
                                         : Color.white.opacity(0.12),
                                     lineWidth: 1
@@ -206,7 +206,11 @@ struct AdminUsersView: View {
                         Text(user.email)
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.55))
-                        Text(user.isStudentProfile ? "Aluno" : "Professor")
+                        Text(
+                            user.isStudentProfile
+                                ? LocalizedStringKey("Aluno")
+                                : LocalizedStringKey("Professor")
+                        )
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
                     }
@@ -351,7 +355,7 @@ private struct AdminTeacherDetailView: View {
 }
 
 private struct AdminDetailContainer<Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -391,7 +395,11 @@ private struct AdminUserSummary: View {
             Text(user.email)
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
-            Text(user.isStudentProfile ? "Aluno" : "Professor")
+            Text(
+                user.isStudentProfile
+                    ? LocalizedStringKey("Aluno")
+                    : LocalizedStringKey("Professor")
+            )
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -403,7 +411,7 @@ private struct AdminUserSummary: View {
 }
 
 private struct AdminSection<Content: View>: View {
-    let title: String
+    let title: LocalizedStringKey
     @ViewBuilder let content: Content
 
     var body: some View {
@@ -440,7 +448,7 @@ private struct AdminUserListRow: View {
 }
 
 private struct AdminEmptyRow: View {
-    let title: String
+    let title: LocalizedStringKey
 
     var body: some View {
         Text(title)

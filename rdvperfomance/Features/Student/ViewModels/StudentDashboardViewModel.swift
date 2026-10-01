@@ -71,6 +71,12 @@ enum StudentDashboardTeacherLinkState: Equatable {
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
     private static let primaryNextFitModalityCode = 262777
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 
     @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
     @Published private(set) var upcomingDayGroups: [StudentDashboardDayGroup] = []
@@ -192,7 +198,10 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitModalityOptions.map {
             StudentDashboardNextFitContentOption(selection: .wod($0.id), title: $0.title)
         } + [
-            StudentDashboardNextFitContentOption(selection: .agenda, title: "Agenda")
+            StudentDashboardNextFitContentOption(
+                selection: .agenda,
+                title: String(localized: "Agenda", locale: Self.localizationLocale)
+            )
         ]
     }
 
@@ -302,7 +311,10 @@ final class StudentDashboardViewModel: ObservableObject {
     func authenticateNextFit(email: String, password: String) async -> Bool {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedEmail.isEmpty, !password.isEmpty else {
-            nextFitLoginError = "Informe seu e-mail e senha do NextFit."
+            nextFitLoginError = String(
+                localized: "Informe seu e-mail e senha do NextFit.",
+                locale: Self.localizationLocale
+            )
             return false
         }
 
@@ -324,7 +336,10 @@ final class StudentDashboardViewModel: ObservableObject {
             nextFitLoginError = error.localizedDescription
             return false
         } catch {
-            nextFitLoginError = "Não foi possível entrar no NextFit. Tente novamente."
+            nextFitLoginError = String(
+                localized: "Não foi possível entrar no NextFit. Tente novamente.",
+                locale: Self.localizationLocale
+            )
             return false
         }
     }
@@ -363,10 +378,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+                nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
             }
         } catch {
-            nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+            nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
         }
         isLoadingNextFitAgenda = false
 
@@ -385,10 +400,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaWodError = "Não foi possível carregar o WOD do dia. Tente novamente."
+                nextFitAgendaWodError = String(localized: "Não foi possível carregar o WOD do dia. Tente novamente.", locale: Self.localizationLocale)
             }
         } catch {
-            nextFitAgendaWodError = "Não foi possível carregar o WOD do dia. Tente novamente."
+            nextFitAgendaWodError = String(localized: "Não foi possível carregar o WOD do dia. Tente novamente.", locale: Self.localizationLocale)
         }
     }
 
@@ -412,10 +427,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+                nextFitAgendaDetailError = String(localized: "Não foi possível carregar os detalhes da AGENDA. Tente novamente.", locale: Self.localizationLocale)
             }
         } catch {
-            nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+            nextFitAgendaDetailError = String(localized: "Não foi possível carregar os detalhes da AGENDA. Tente novamente.", locale: Self.localizationLocale)
         }
     }
 
@@ -440,7 +455,7 @@ final class StudentDashboardViewModel: ObservableObject {
             print("[NextFit Agenda] Iniciando agendamento. CodigoAgenda: \(agendaId)")
             #endif
             guard let contract = try await resolveNextFitAgendaContract(for: agendaId) else {
-                agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = String(localized: "Não foi possível realizar o agendamento. Tente novamente.", locale: Self.localizationLocale)
                 return
             }
             #if DEBUG
@@ -458,7 +473,7 @@ final class StudentDashboardViewModel: ObservableObject {
             )
             await refreshNextFitAgenda(
                 afterActionFor: agendaId,
-                errorMessage: "Não foi possível realizar o agendamento. Tente novamente."
+                errorMessage: String(localized: "Não foi possível realizar o agendamento. Tente novamente.", locale: Self.localizationLocale)
             )
         } catch let error as NextFitServiceError {
             switch error {
@@ -468,10 +483,10 @@ final class StudentDashboardViewModel: ObservableObject {
             case let .agendaCheckInBusinessFailure(_, message):
                 agendaActionErrors[agendaId] = message
             default:
-                agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = String(localized: "Não foi possível realizar o agendamento. Tente novamente.", locale: Self.localizationLocale)
             }
         } catch {
-            agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+            agendaActionErrors[agendaId] = String(localized: "Não foi possível realizar o agendamento. Tente novamente.", locale: Self.localizationLocale)
         }
     }
 
@@ -507,10 +522,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = String(localized: "Não foi possível cancelar o agendamento. Tente novamente.", locale: Self.localizationLocale)
             }
         } catch {
-            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            agendaActionErrors[agendaId] = String(localized: "Não foi possível cancelar o agendamento. Tente novamente.", locale: Self.localizationLocale)
         }
     }
 
@@ -536,10 +551,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = String(localized: "Não foi possível cancelar o agendamento. Tente novamente.", locale: Self.localizationLocale)
             }
         } catch {
-            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            agendaActionErrors[agendaId] = String(localized: "Não foi possível cancelar o agendamento. Tente novamente.", locale: Self.localizationLocale)
         }
     }
 
@@ -576,7 +591,7 @@ final class StudentDashboardViewModel: ObservableObject {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         guard email.contains("@"), email.contains(".") else {
-            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessage = String(localized: "Informe um e-mail válido.", locale: Self.localizationLocale)
             linkActionMessageIsError = true
             return false
         }
@@ -589,7 +604,7 @@ final class StudentDashboardViewModel: ObservableObject {
         do {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherId = teacher.id else {
-                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessage = String(localized: "Não encontrei um professor com esse e-mail.", locale: Self.localizationLocale)
                 linkActionMessageIsError = true
                 return false
             }
@@ -609,7 +624,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 teacherEmail: email
             )
 
-            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessage = String(localized: "Solicitação enviada com sucesso.", locale: Self.localizationLocale)
             linkActionMessageIsError = false
             await load()
             return true
@@ -687,7 +702,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 nextFitError = error.localizedDescription
             }
         } catch {
-            nextFitError = "Não foi possível carregar o WOD. Tente novamente."
+            nextFitError = String(localized: "Não foi possível carregar o WOD. Tente novamente.", locale: Self.localizationLocale)
             return
         }
 
@@ -699,10 +714,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+                nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
             }
         } catch {
-            nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+            nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
         }
     }
 
@@ -765,7 +780,7 @@ final class StudentDashboardViewModel: ObservableObject {
         agendaActionErrors[agendaId] = nil
         await refreshNextFitAgenda(
             afterActionFor: agendaId,
-            errorMessage: "Não foi possível cancelar o agendamento. Tente novamente."
+            errorMessage: String(localized: "Não foi possível cancelar o agendamento. Tente novamente.", locale: Self.localizationLocale)
         )
     }
 

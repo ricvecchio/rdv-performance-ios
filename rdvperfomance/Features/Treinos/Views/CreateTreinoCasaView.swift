@@ -3,6 +3,7 @@ import FirebaseAuth
 
 /// Tela para criar um Treino (Em Casa) — layout idêntico ao "Adicionar WOD"
 struct CreateTreinoCasaView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
@@ -133,11 +134,7 @@ struct CreateTreinoCasaView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             (
-                Text("Crie um novo ")
-                    .foregroundColor(.white.opacity(0.55))
-                + Text("treino em casa")
-                    .foregroundColor(.green.opacity(0.85))
-                + Text(" para esta seção.")
+                Text("Crie um novo \(Text("treino em casa").foregroundColor(.green.opacity(0.85))) para esta seção.")
                     .foregroundColor(.white.opacity(0.55))
             )
                 .font(.system(size: 14))
@@ -329,19 +326,19 @@ struct CreateTreinoCasaView: View {
         successMessage = nil
 
         guard session.isTrainer else {
-            errorMessage = "Apenas professor pode adicionar treinos."
+            errorMessage = String(localized: "Apenas professor pode adicionar treinos.", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = "Informe o título do treino."
+            errorMessage = String(localized: "Informe o título do treino.", locale: locale)
             return
         }
 

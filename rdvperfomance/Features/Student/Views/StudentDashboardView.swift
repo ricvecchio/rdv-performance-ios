@@ -412,7 +412,13 @@ struct StudentDashboardView: View {
                 ProgressView()
                     .tint(.white)
             } else {
-                Text("\(completed) de \(total) dias concluídos")
+                Text(
+                    String(
+                        format: String(localized: "%lld de %lld dias concluídos", locale: locale),
+                        locale: locale,
+                        arguments: [Int64(completed), Int64(total)]
+                    )
+                )
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
                 HStack(spacing: 10) {
@@ -694,11 +700,11 @@ struct StudentDashboardView: View {
     private var nextFitAgendaDateSelector: some View {
         HStack(spacing: 10) {
             nextFitAgendaDateButton(
-                title: "HOJE",
+                title: String(localized: "HOJE", locale: locale),
                 date: viewModel.todayAgendaDate
             )
             nextFitAgendaDateButton(
-                title: "AMANHÃ",
+                title: String(localized: "AMANHÃ", locale: locale),
                 date: viewModel.tomorrowAgendaDate
             )
         }
@@ -981,7 +987,11 @@ struct StudentDashboardView: View {
 
     private var nextFitWodTitle: String {
         let unitName = viewModel.studentUnitName
-        return unitName.isEmpty ? "WOD do dia" : "WOD do dia (\(unitName))"
+        guard !unitName.isEmpty else {
+            return String(localized: "WOD do dia", locale: locale)
+        }
+        let format = String(localized: "WOD do dia (%@)", locale: locale)
+        return String(format: format, locale: locale, arguments: [unitName])
     }
 
     private var upcomingWorkoutsCard: some View {
@@ -1176,7 +1186,16 @@ struct StudentDashboardView: View {
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Theme.Colors.primaryGreen)
                 }
-                Text("\(item.completedCount) de \(item.totalCount) \(item.totalCount == 1 ? "treino concluído" : "treinos concluídos")")
+                let completionFormat = item.totalCount == 1
+                    ? String(localized: "%lld de %lld treino concluído", locale: locale)
+                    : String(localized: "%lld de %lld treinos concluídos", locale: locale)
+                Text(
+                    String(
+                        format: completionFormat,
+                        locale: locale,
+                        arguments: [Int64(item.completedCount), Int64(item.totalCount)]
+                    )
+                )
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
                 ProgressView(value: item.progress)

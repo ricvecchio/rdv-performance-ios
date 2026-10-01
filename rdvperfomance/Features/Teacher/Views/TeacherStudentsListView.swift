@@ -151,12 +151,12 @@ struct TeacherStudentsListView: View {
         .alert("Erro", isPresented: $vm.showLinkErrorAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(vm.linkErrorMessage ?? "Ocorreu um erro.")
+            Text(vm.linkErrorMessage ?? String(localized: "Ocorreu um erro.", locale: locale))
         }
         .alert("Sucesso", isPresented: $vm.showLinkSuccessAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(vm.linkSuccessMessage ?? "Aluno vinculado.")
+            Text(vm.linkSuccessMessage ?? String(localized: "Aluno vinculado.", locale: locale))
         }
         .sheet(isPresented: $showCategoryDialog, onDismiss: {
             studentPendingLink = nil
@@ -260,17 +260,8 @@ struct TeacherStudentsListView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func sectionTitle(
-        _ title: String,
-        localizedTitle: LocalizedStringKey? = nil
-    ) -> some View {
-        Group {
-            if let localizedTitle {
-                Text(localizedTitle)
-            } else {
-                Text(title)
-            }
-        }
+    private func sectionTitle(_ title: LocalizedStringKey) -> some View {
+        Text(title)
             .font(.system(size: 14, weight: .medium))
             .foregroundColor(.white.opacity(0.35))
             .padding(.horizontal, 16)
@@ -313,7 +304,7 @@ struct TeacherStudentsListView: View {
 
     private var contentCard: some View {
         VStack(spacing: 0) {
-            sectionTitle("ALUNOS VINCULADOS", localizedTitle: "ALUNOS VINCULADOS")
+            sectionTitle("ALUNOS VINCULADOS")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -384,7 +375,7 @@ struct TeacherStudentsListView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     guard let sid = student.id, !sid.isEmpty else {
-                        vm.errorMessage = "Aluno inválido: id não encontrado."
+                        vm.errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
                         return
                     }
 
@@ -461,7 +452,7 @@ struct TeacherStudentsListView: View {
 
     private func loadAllStudents() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o professor logado."
+            vm.errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
         await vm.loadStudents(teacherId: teacherId, force: true)
@@ -470,7 +461,7 @@ struct TeacherStudentsListView: View {
     private func loadInitialData() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.clearActiveTeacherData()
-            vm.errorMessage = "Não foi possível identificar o professor logado."
+            vm.errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -485,14 +476,14 @@ struct TeacherStudentsListView: View {
 
     private func confirmCategoryChange(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.setLinkError("Não foi possível identificar o professor logado.")
+            vm.setLinkError(String(localized: "Não foi possível identificar o professor logado.", locale: locale))
             return
         }
         guard let student = studentPendingCategoryChange,
               let studentId = student.id,
               !studentId.isEmpty
         else {
-            vm.setLinkError("Não foi possível identificar o aluno para alterar a categoria.")
+            vm.setLinkError(String(localized: "Não foi possível identificar o aluno para alterar a categoria.", locale: locale))
             return
         }
 
@@ -509,7 +500,7 @@ struct TeacherStudentsListView: View {
     private var pendingInvitesCard: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            sectionTitle("CONVITES ENVIADOS", localizedTitle: "CONVITES ENVIADOS")
+            sectionTitle("CONVITES ENVIADOS")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -579,7 +570,7 @@ struct TeacherStudentsListView: View {
 
     private var pendingLinkRequestsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle("CONVITES RECEBIDOS", localizedTitle: "CONVITES RECEBIDOS")
+            sectionTitle("CONVITES RECEBIDOS")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -693,7 +684,7 @@ struct TeacherStudentsListView: View {
 
     private func confirmLink(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.setLinkError("Não foi possível identificar o professor logado.")
+            vm.setLinkError(String(localized: "Não foi possível identificar o professor logado.", locale: locale))
             return
         }
         guard let item = studentPendingLink else { return }
@@ -981,7 +972,7 @@ struct TeacherStudentsListView: View {
                     Button {
                         Task {
                             guard let teacherId = session.uid, !teacherId.isEmpty else {
-                                vm.setInviteError("Não foi possível identificar o professor logado.")
+                                vm.setInviteError(String(localized: "Não foi possível identificar o professor logado.", locale: locale))
                                 return
                             }
                             await vm.sendInviteByEmail(
@@ -1021,7 +1012,7 @@ struct TeacherStudentsListView: View {
         .alert("Erro", isPresented: $vm.showInviteErrorAlert) {
             Button("OK", role: .cancel) {}
         } message: {
-            Text(vm.inviteErrorMessage ?? "Ocorreu um erro.")
+            Text(vm.inviteErrorMessage ?? String(localized: "Ocorreu um erro.", locale: locale))
         }
         .alert("Sucesso", isPresented: $vm.showInviteSuccessAlert) {
             // ✅ OK fecha o modal e limpa o campo — o onDismiss da sheet recarrega dados
@@ -1030,7 +1021,7 @@ struct TeacherStudentsListView: View {
                 showInviteSheet = false
             }
         } message: {
-            Text(vm.inviteSuccessMessage ?? "Convite enviado.")
+            Text(vm.inviteSuccessMessage ?? String(localized: "Convite enviado.", locale: locale))
         }
     }
 

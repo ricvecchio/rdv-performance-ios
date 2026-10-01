@@ -135,7 +135,8 @@ struct TeacherFeedbacksView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aluno: \(student.name)")
+            let format = String(localized: "Aluno: %@", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [student.name]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
@@ -202,7 +203,7 @@ struct TeacherFeedbacksView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.userName ?? "Professor")
+                Text(session.userName ?? String(localized: "Professor", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -298,7 +299,10 @@ struct TeacherFeedbacksView: View {
     private func friendlyFirestoreError(_ error: Error) -> String {
         let msg = (error as NSError).localizedDescription
         if msg.lowercased().contains("missing or insufficient permissions") {
-            return "Sem permissão para acessar os feedbacks desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/feedbacks."
+            return String(
+                localized: "Sem permissão para acessar os feedbacks desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/feedbacks.",
+                locale: locale
+            )
         }
         return msg
     }
@@ -309,17 +313,17 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode acessar feedbacks."
+            errorMessage = String(localized: "Apenas professor pode acessar feedbacks.", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
@@ -346,23 +350,23 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode salvar feedback."
+            errorMessage = String(localized: "Apenas professor pode salvar feedback.", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
             return
         }
 
         let textTrim = newFeedbackText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !textTrim.isEmpty else {
-            errorMessage = "Digite um feedback antes de salvar."
+            errorMessage = String(localized: "Digite um feedback antes de salvar.", locale: locale)
             return
         }
 
@@ -379,7 +383,7 @@ struct TeacherFeedbacksView: View {
             )
 
             newFeedbackText = ""
-            successMessage = "Feedback salvo com sucesso."
+            successMessage = String(localized: "Feedback salvo com sucesso.", locale: locale)
             await loadFeedbacks()
 
         } catch {

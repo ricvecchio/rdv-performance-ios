@@ -3,6 +3,7 @@ import SwiftUI
 struct TecnofitImportSheet: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     let onImportCompleted: () -> Void
 
     @State private var email = ""
@@ -114,7 +115,7 @@ struct TecnofitImportSheet: View {
         }
     }
 
-    private func credentialField(title: String, field: AnyView) -> some View {
+    private func credentialField(title: LocalizedStringKey, field: AnyView) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
@@ -140,9 +141,21 @@ struct TecnofitImportSheet: View {
             Text("Resumo da importação")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.white)
-            summaryLine("\(preview.recordsReady) recorde(s) pronto(s) para importar", icon: "checkmark.circle.fill", color: .green)
-            summaryLine("\(preview.conflictsPreserved) recorde(s) existente(s) preservado(s)", icon: "shield.fill", color: .orange)
-            summaryLine("\(preview.unmatchedSkipped) item(ns) sem mapeamento compatível ignorado(s)", icon: "arrow.uturn.forward.circle", color: .white.opacity(0.65))
+            summaryLine(
+                recordsReadyText(preview.recordsReady),
+                icon: "checkmark.circle.fill",
+                color: .green
+            )
+            summaryLine(
+                conflictsPreservedText(preview.conflictsPreserved),
+                icon: "shield.fill",
+                color: .orange
+            )
+            summaryLine(
+                unmatchedSkippedText(preview.unmatchedSkipped),
+                icon: "arrow.uturn.forward.circle",
+                color: .white.opacity(0.65)
+            )
         }
     }
 
@@ -233,7 +246,10 @@ struct TecnofitImportSheet: View {
 
     private func fetchRecords() {
         guard let uid = session.currentUid, !uid.isEmpty else {
-            errorMessage = "Sua sessão não está disponível para importar recordes."
+            errorMessage = String(
+                localized: "Sua sessão não está disponível para importar recordes.",
+                locale: locale
+            )
             return
         }
 
@@ -268,7 +284,10 @@ struct TecnofitImportSheet: View {
               let uid = session.currentUid,
               !uid.isEmpty
         else {
-            errorMessage = "Sua sessão não está disponível para importar recordes."
+            errorMessage = String(
+                localized: "Sua sessão não está disponível para importar recordes.",
+                locale: locale
+            )
             return
         }
 
@@ -279,13 +298,19 @@ struct TecnofitImportSheet: View {
             do {
                 try await repository.markTecnofitImportCompleted(uid: uid)
                 successMessage = imported > 0
-                    ? "\(imported) recorde(s) importado(s) com sucesso."
-                    : "Nenhum recorde foi alterado; os registros existentes foram preservados."
+                    ? importedRecordsText(imported)
+                    : String(
+                        localized: "Nenhum recorde foi alterado; os registros existentes foram preservados.",
+                        locale: locale
+                    )
                 onImportCompleted()
                 try? await Task.sleep(for: .seconds(1.5))
                 dismiss()
             } catch {
-                errorMessage = "Não foi possível concluir a importação. Tente novamente."
+                errorMessage = String(
+                    localized: "Não foi possível concluir a importação. Tente novamente.",
+                    locale: locale
+                )
             }
         }
     }
@@ -293,4 +318,33 @@ struct TecnofitImportSheet: View {
     private func clearPassword() {
         password = ""
     }
+
+    private func recordsReadyText(_ count: Int) -> String {
+        let format = count == 1
+            ? String(localized: "%lld recorde pronto para importar", locale: locale)
+            : String(localized: "%lld recordes prontos para importar", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
+    private func conflictsPreservedText(_ count: Int) -> String {
+        let format = count == 1
+            ? String(localized: "%lld recorde existente preservado", locale: locale)
+            : String(localized: "%lld recordes existentes preservados", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
+    private func unmatchedSkippedText(_ count: Int) -> String {
+        let format = count == 1
+            ? String(localized: "%lld item sem mapeamento compatível ignorado", locale: locale)
+            : String(localized: "%lld itens sem mapeamento compatível ignorados", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
+    private func importedRecordsText(_ count: Int) -> String {
+        let format = count == 1
+            ? String(localized: "%lld recorde importado com sucesso.", locale: locale)
+            : String(localized: "%lld recordes importados com sucesso.", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
 }

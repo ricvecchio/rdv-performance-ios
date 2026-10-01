@@ -9,6 +9,12 @@ enum StudentWorkoutDayStatus {
 
 @MainActor
 final class StudentWorkoutsViewModel: ObservableObject {
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
@@ -254,24 +260,28 @@ final class StudentWorkoutsViewModel: ObservableObject {
     }
 
     func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
+        let locale = Self.localizationLocale
+        let format = String(localized: "Professor: %@", locale: locale)
         let explicitName = (week.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitName.isEmpty {
-            return "Professor: \(explicitName)"
+            return String(format: format, locale: locale, arguments: [explicitName])
         }
 
         let explicitEmail = (week.teacherEmail ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitEmail.isEmpty {
-            return "Professor: \(explicitEmail)"
+            return String(format: format, locale: locale, arguments: [explicitEmail])
         }
 
         let teacherId = week.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !teacherId.isEmpty else { return "Professor: —" }
-
-        if let name = teacherNameById[teacherId], !name.isEmpty {
-            return "Professor: \(name)"
+        guard !teacherId.isEmpty else {
+            return String(localized: "Professor: —", locale: locale)
         }
 
-        return "Professor: ..."
+        if let name = teacherNameById[teacherId], !name.isEmpty {
+            return String(format: format, locale: locale, arguments: [name])
+        }
+
+        return String(localized: "Professor: ...", locale: locale)
     }
 
     func progressPercent(for week: TrainingWeekFS) -> Int {
@@ -387,7 +397,10 @@ final class StudentWorkoutsViewModel: ObservableObject {
     func toggleCompleted(dayId: String, in weekId: String) async {
         guard let week = weeks.first(where: { $0.id == weekId }),
               let startDate = week.startDate else {
-            weekDaysErrorByWeekId[weekId] = "Não foi possível validar o início desta semana."
+            weekDaysErrorByWeekId[weekId] = String(
+                localized: "Não foi possível validar o início desta semana.",
+                locale: Self.localizationLocale
+            )
             return
         }
         guard Calendar.current.startOfDay(for: Date()) >= Calendar.current.startOfDay(for: startDate) else {

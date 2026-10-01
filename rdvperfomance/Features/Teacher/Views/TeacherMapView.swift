@@ -2,6 +2,7 @@ import SwiftUI
 import MapKit
 
 struct TeacherMapView: View {
+    @Environment(\.locale) private var locale
     @EnvironmentObject private var session: AppSession
     @StateObject private var vm = MapViewModel()
     @State private var showSavedToggle: Bool = true
@@ -15,12 +16,23 @@ struct TeacherMapView: View {
     }
 
     private var displayCoordinateText: String {
+        let format: String
         if let coord = academyCoordinate {
-            return String(format: "Academia: %.5f, %.5f", coord.latitude, coord.longitude)
+            format = String(localized: "Academia: %.5f, %.5f", locale: locale)
+            return String(
+                format: format,
+                locale: locale,
+                arguments: [coord.latitude, coord.longitude]
+            )
         } else if let last = vm.lastLocation {
-            return String(format: "Última: %.5f, %.5f", last.coordinate.latitude, last.coordinate.longitude)
+            format = String(localized: "Última: %.5f, %.5f", locale: locale)
+            return String(
+                format: format,
+                locale: locale,
+                arguments: [last.coordinate.latitude, last.coordinate.longitude]
+            )
         } else {
-            return "Localização: —"
+            return String(localized: "Localização: —", locale: locale)
         }
     }
 
@@ -197,8 +209,9 @@ private struct EditLocationView: View {
     init(initialCoordinate: CLLocationCoordinate2D?, onSave: @escaping (CLLocationCoordinate2D) -> Void) {
         self.onSave = onSave
         if let c = initialCoordinate {
-            _latText = State(initialValue: String(format: "%.6f", c.latitude))
-            _lonText = State(initialValue: String(format: "%.6f", c.longitude))
+            let numberLocale = Locale(identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage") ?? AppLanguage.portugueseBrazil.rawValue)
+            _latText = State(initialValue: String(format: "%.6f", locale: numberLocale, c.latitude))
+            _lonText = State(initialValue: String(format: "%.6f", locale: numberLocale, c.longitude))
         } else {
             _latText = State(initialValue: "")
             _lonText = State(initialValue: "")
@@ -258,4 +271,3 @@ struct TeacherMapView_Previews: PreviewProvider {
             .environmentObject(AppSession())
     }
 }
-
