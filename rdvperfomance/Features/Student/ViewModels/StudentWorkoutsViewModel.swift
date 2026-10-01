@@ -261,7 +261,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
     func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
         let locale = Self.localizationLocale
-        let format = String(localized: "Professor: %@", locale: locale)
+        let format = String(localized: "workout.teacher.named", locale: locale)
         let explicitName = (week.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitName.isEmpty {
             return String(format: format, locale: locale, arguments: [explicitName])
@@ -274,14 +274,14 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
         let teacherId = week.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            return String(localized: "Professor: —", locale: locale)
+            return String(localized: "workout.teacher.unavailable", locale: locale)
         }
 
         if let name = teacherNameById[teacherId], !name.isEmpty {
             return String(format: format, locale: locale, arguments: [name])
         }
 
-        return String(localized: "Professor: ...", locale: locale)
+        return String(localized: "workout.teacher.loading", locale: locale)
     }
 
     func progressPercent(for week: TrainingWeekFS) -> Int {

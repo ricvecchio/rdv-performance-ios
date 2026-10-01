@@ -54,27 +54,3 @@ enum DashboardAgendaDay {
         }
     }
 }
-
-enum DashboardLocalizationDiagnostics {
-    static func appLanguageChanged(_ identifier: String) {
-        #if DEBUG
-        print("[Localization] appLanguage=\(identifier) environmentLocale=\(Locale(identifier: identifier).identifier)")
-        #endif
-    }
-
-    static func dashboardAppeared(
-        screen: String,
-        locale: Locale,
-        hasUserName: Bool
-    ) {
-        #if DEBUG
-        print(
-            "[Localization] screen=\(screen) locale=\(locale.identifier) " +
-            "hasUserName=\(hasUserName) " +
-            "agenda=\(String(localized: "dashboard.mode.agenda", locale: locale)) " +
-            "today=\(DashboardAgendaDay.today.title(locale: locale)) " +
-            "tomorrow=\(DashboardAgendaDay.tomorrow.title(locale: locale))"
-        )
-        #endif
-    }
-}

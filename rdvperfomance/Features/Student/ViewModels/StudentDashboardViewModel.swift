@@ -384,10 +384,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
+                nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: Self.localizationLocale)
             }
         } catch {
-            nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
+            nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: Self.localizationLocale)
         }
         isLoadingNextFitAgenda = false
 
@@ -433,10 +433,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaDetailError = String(localized: "Não foi possível carregar os detalhes da AGENDA. Tente novamente.", locale: Self.localizationLocale)
+                nextFitAgendaDetailError = String(localized: "dashboard.agenda.detail_load_error", locale: Self.localizationLocale)
             }
         } catch {
-            nextFitAgendaDetailError = String(localized: "Não foi possível carregar os detalhes da AGENDA. Tente novamente.", locale: Self.localizationLocale)
+            nextFitAgendaDetailError = String(localized: "dashboard.agenda.detail_load_error", locale: Self.localizationLocale)
         }
     }
 
@@ -720,10 +720,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
+                nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: Self.localizationLocale)
             }
         } catch {
-            nextFitAgendaError = String(localized: "Não foi possível carregar a AGENDA. Tente novamente.", locale: Self.localizationLocale)
+            nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: Self.localizationLocale)
         }
     }
 

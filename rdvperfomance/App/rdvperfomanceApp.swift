@@ -18,12 +18,6 @@ struct rdvperfomanceApp: App {
                 .environmentObject(session)
                 .environment(\.managedObjectContext, persistenceController.container.viewContext)
                 .environment(\.locale, Locale(identifier: selectedAppLanguage))
-                .onAppear {
-                    DashboardLocalizationDiagnostics.appLanguageChanged(selectedAppLanguage)
-                }
-                .onChange(of: selectedAppLanguage) { _, language in
-                    DashboardLocalizationDiagnostics.appLanguageChanged(language)
-                }
         }
     }
 }
