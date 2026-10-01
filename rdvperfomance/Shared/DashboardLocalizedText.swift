@@ -50,28 +50,28 @@ enum DashboardAgendaDay {
             String(localized: "dashboard.day.tomorrow", locale: locale)
         }
     }
+}
 
-    enum DashboardLocalizationDiagnostics {
-        static func appLanguageChanged(_ identifier: String) {
-            #if DEBUG
-            print("[Localization] appLanguage=\(identifier) environmentLocale=\(Locale(identifier: identifier).identifier)")
-            #endif
-        }
+enum DashboardLocalizationDiagnostics {
+    static func appLanguageChanged(_ identifier: String) {
+        #if DEBUG
+        print("[Localization] appLanguage=\(identifier) environmentLocale=\(Locale(identifier: identifier).identifier)")
+        #endif
+    }
 
-        static func dashboardAppeared(
-            screen: String,
-            locale: Locale,
-            hasUserName: Bool
-        ) {
-            #if DEBUG
-            print(
-                "[Localization] screen=\(screen) locale=\(locale.identifier) " +
-                "hasUserName=\(hasUserName) " +
-                "agenda=\(String(localized: "dashboard.section.agenda", locale: locale)) " +
-                "today=\(DashboardAgendaDay.today.title(locale: locale)) " +
-                "tomorrow=\(DashboardAgendaDay.tomorrow.title(locale: locale))"
-            )
-            #endif
-        }
+    static func dashboardAppeared(
+        screen: String,
+        locale: Locale,
+        hasUserName: Bool
+    ) {
+        #if DEBUG
+        print(
+            "[Localization] screen=\(screen) locale=\(locale.identifier) " +
+            "hasUserName=\(hasUserName) " +
+            "agenda=\(String(localized: "dashboard.section.agenda", locale: locale)) " +
+            "today=\(DashboardAgendaDay.today.title(locale: locale)) " +
+            "tomorrow=\(DashboardAgendaDay.tomorrow.title(locale: locale))"
+        )
+        #endif
     }
 }
