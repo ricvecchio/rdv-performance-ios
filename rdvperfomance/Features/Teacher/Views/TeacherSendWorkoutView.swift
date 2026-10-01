@@ -1352,9 +1352,12 @@ struct TeacherSendWorkoutView: View {
                     }
                 }
             }
-            successMessage = isVideoFlow
-                ? "Vídeo enviado com sucesso!"
-                : String(localized: "Treino enviado com sucesso", locale: locale)
+            successMessage = String(
+                localized: isVideoFlow
+                    ? "Vídeo enviado com sucesso!"
+                    : "Treino enviado com sucesso",
+                locale: locale
+            )
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             path.removeAll()
@@ -1423,22 +1426,16 @@ private struct WorkoutTemplateSelectionSheet: View {
     }
 
     private var templatePickerTitle: String {
-        guard selectedSectionKey != nil else {
-            return String(localized: "Selecione uma seção primeiro", locale: locale)
-        }
-        if isLoading || isLoadingSectionTemplates || !hasLoadedSectionTemplates {
-            return String(localized: "Carregando treinos...", locale: locale)
-        }
-        return selectedTemplate?.title ?? "Selecionar treino"
+        selectedTemplate?.title ?? ""
     }
 
     private var templatePickerLocalizedTitle: LocalizedStringKey? {
-        guard selectedSectionKey != nil,
-              !isLoading,
-              !isLoadingSectionTemplates,
-              hasLoadedSectionTemplates,
-              selectedTemplate == nil else {
-            return nil
+        guard selectedTemplate == nil else { return nil }
+        guard selectedSectionKey != nil else {
+            return "Selecione uma seção primeiro"
+        }
+        if isLoading || isLoadingSectionTemplates || !hasLoadedSectionTemplates {
+            return "Carregando treinos..."
         }
         return "Selecionar treino"
     }

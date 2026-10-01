@@ -428,12 +428,18 @@ struct TeacherDashboardView: View {
     private func saveQuickAccessItems() async {
         guard let teacherId = session.uid?.trimmingCharacters(in: .whitespacesAndNewlines),
               !teacherId.isEmpty else {
-            quickAccessEditorError = "Não foi possível identificar o professor logado."
+            quickAccessEditorError = String(
+                localized: "Não foi possível identificar o professor logado.",
+                locale: locale
+            )
             return
         }
         guard editableQuickAccessItems.count == 3,
               Set(editableQuickAccessItems).count == 3 else {
-            quickAccessEditorError = "Selecione exatamente 3 atalhos."
+            quickAccessEditorError = String(
+                localized: "Selecione exatamente 3 atalhos.",
+                locale: locale
+            )
             return
         }
 

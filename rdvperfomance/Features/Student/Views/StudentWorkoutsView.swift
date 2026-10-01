@@ -1022,7 +1022,7 @@ struct StudentWorkoutsView: View {
     }
 
     private var filteredEmptyView: some View {
-        let content: (title: String, message: String) = switch selectedFilter {
+        let content: (title: LocalizedStringKey, message: LocalizedStringKey) = switch selectedFilter {
         case .active:
             ("Nenhum treino ativo", "Você não possui treinos pendentes a partir de hoje.")
         case .upcoming:
