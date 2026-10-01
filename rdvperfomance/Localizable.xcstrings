@@ -18389,75 +18389,6 @@
             "value" : "CrossFit"
           }
         },
-        "workout.teacher.loading" : {
-          "comment" : "Teacher label shown while the teacher name is loading.",
-          "localizations" : {
-            "en" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Coach: ..."
-              }
-            },
-            "es" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Entrenador: ..."
-              }
-            },
-            "pt-BR" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Professor: ..."
-              }
-            }
-          }
-        },
-        "workout.teacher.named" : {
-          "comment" : "Teacher label with a dynamic teacher name or email.",
-          "localizations" : {
-            "en" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Coach: %@"
-              }
-            },
-            "es" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Entrenador: %@"
-              }
-            },
-            "pt-BR" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Professor: %@"
-              }
-            }
-          }
-        },
-        "workout.teacher.unavailable" : {
-          "comment" : "Teacher label shown when no teacher is available.",
-          "localizations" : {
-            "en" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Coach: —"
-              }
-            },
-            "es" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Entrenador: —"
-              }
-            },
-            "pt-BR" : {
-              "stringUnit" : {
-                "state" : "translated",
-                "value" : "Professor: —"
-              }
-            }
-          }
-        },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
@@ -18468,6 +18399,75 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crossfit"
+          }
+        }
+      }
+    },
+    "workout.teacher.loading" : {
+      "comment" : "Teacher label shown while the teacher name is loading.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach: ..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenador: ..."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professor: ..."
+          }
+        }
+      }
+    },
+    "workout.teacher.named" : {
+      "comment" : "Teacher label with a dynamic teacher name or email.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenador: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professor: %@"
+          }
+        }
+      }
+    },
+    "workout.teacher.unavailable" : {
+      "comment" : "Teacher label shown when no teacher is available.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach: —"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenador: —"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professor: —"
           }
         }
       }
