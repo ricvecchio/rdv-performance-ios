@@ -221,8 +221,8 @@ struct CreateCrossfitWODView: View {
                             TextField(
                                 "Novo bloco",
                                 text: Binding(
-                                    get: { b.wrappedValue.displayedName(locale: locale) },
-                                    set: { b.wrappedValue.setDisplayedName($0) }
+                                    get: { b.displayedName(locale: locale) },
+                                    set: { b.setDisplayedName($0) }
                                 )
                             )
                                 .foregroundColor(.white.opacity(0.92))

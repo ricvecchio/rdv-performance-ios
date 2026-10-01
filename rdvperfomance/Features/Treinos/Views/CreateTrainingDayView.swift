@@ -334,9 +334,9 @@ struct CreateTrainingDayView: View {
 
                     HStack {
                         Text(
-                            b.wrappedValue.name.isEmpty
+                            b.name.isEmpty
                                 ? String(localized: "Sem nome", locale: locale)
-                                : b.wrappedValue.displayedName(locale: locale)
+                                : b.displayedName(locale: locale)
                         )
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.70))
@@ -357,8 +357,8 @@ struct CreateTrainingDayView: View {
                     UnderlineTextField(
                         title: "",
                         text: Binding(
-                            get: { b.wrappedValue.displayedName(locale: locale) },
-                            set: { b.wrappedValue.setDisplayedName($0) }
+                            get: { b.displayedName(locale: locale) },
+                            set: { b.setDisplayedName($0) }
                         ),
                         isSecure: false,
                         showPassword: $showPasswordDummy,
