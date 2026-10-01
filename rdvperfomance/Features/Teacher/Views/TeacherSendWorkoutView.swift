@@ -9,8 +9,7 @@ private struct WorkoutSectionOption: Identifiable, Hashable {
 }
 
 private struct WorkoutPickerLabel: View {
-    let title: String
-    let localizedTitle: LocalizedStringKey?
+    let title: DisplayText
     let isSelected: Bool
 
     var body: some View {
@@ -19,14 +18,8 @@ private struct WorkoutPickerLabel: View {
             : Color.white.opacity(0.08)
 
         HStack {
-            Group {
-                if let localizedTitle {
-                    Text(localizedTitle)
-                } else {
-                    Text(title)
-                }
-            }
-            .font(.system(size: 16, weight: .semibold))
+            title.view()
+                .font(.system(size: 16, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
             .lineLimit(1)
             Spacer()
@@ -101,7 +94,7 @@ struct TeacherSendWorkoutView: View {
     @State private var isLoadingInitialData = false
     @State private var isSending = false
     @State private var errorMessage: String?
-    @State private var successMessage: String?
+    @State private var successMessage: LocalizedStringKey?
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -334,24 +327,21 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 8) {
             stepItem(
                 number: 1,
-                title: "Aluno",
-                localizedTitle: "Aluno",
+                title: .localized("Aluno"),
                 isActive: step == .student,
                 isComplete: step != .student
             )
             Rectangle().fill(Theme.Colors.divider).frame(height: 1)
             stepItem(
                 number: 2,
-                title: isVideoFlow ? "Vídeo" : "Treino",
-                localizedTitle: isVideoFlow ? nil : "Treino",
+                title: .localized(isVideoFlow ? "Vídeo" : "Treino"),
                 isActive: step == .workout,
                 isComplete: step == .day
             )
             Rectangle().fill(Theme.Colors.divider).frame(height: 1)
             stepItem(
                 number: 3,
-                title: "Dia",
-                localizedTitle: "Dia",
+                title: .localized("Dia"),
                 isActive: step == .day,
                 isComplete: false
             )
@@ -360,8 +350,7 @@ struct TeacherSendWorkoutView: View {
 
     private func stepItem(
         number: Int,
-        title: String,
-        localizedTitle: LocalizedStringKey? = nil,
+        title: DisplayText,
         isActive: Bool,
         isComplete: Bool
     ) -> some View {
@@ -374,14 +363,8 @@ struct TeacherSendWorkoutView: View {
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor((isActive || isComplete) ? .green : .white.opacity(0.55))
             }
-            Group {
-                if let localizedTitle {
-                    Text(localizedTitle)
-                } else {
-                    Text(title)
-                }
-            }
-            .font(.system(size: 11, weight: .medium))
+            title.view()
+                .font(.system(size: 11, weight: .medium))
             .foregroundColor((isActive || isComplete) ? .white.opacity(0.92) : .white.opacity(0.55))
         }
     }
@@ -462,7 +445,7 @@ struct TeacherSendWorkoutView: View {
                     }
 
                     if let successMessage {
-                        TeacherWorkoutTemplatesMessageCard(text: successMessage, isError: false)
+                        localizedMessageCard(text: successMessage, isError: false)
                     }
                 }
                 .frame(maxWidth: contentMaxWidth)
@@ -615,9 +598,8 @@ struct TeacherSendWorkoutView: View {
         } else if filteredStudents.isEmpty {
             emptyRow(
                 searchText.isEmpty
-                    ? "Nenhum aluno vinculado."
-                    : "Nenhum aluno encontrado.",
-                localizedTitle: searchText.isEmpty ? "Nenhum aluno vinculado" : nil
+                    ? .localized("Nenhum aluno vinculado.")
+                    : .localized("Nenhum aluno encontrado.")
             )
         } else {
             studentsList
@@ -780,8 +762,7 @@ struct TeacherSendWorkoutView: View {
     ) -> some View {
         if isLoadingInitialData {
             templatePickerLabel(
-                title: "",
-                localizedTitle: "Carregando treinos...",
+                title: .localized("Carregando treinos..."),
                 isSelected: false
             )
         } else {
@@ -789,8 +770,7 @@ struct TeacherSendWorkoutView: View {
                 openWorkoutSelector(for: category)
             } label: {
                 templatePickerLabel(
-                    title: selection?.title ?? "Selecionar treino",
-                    localizedTitle: selection == nil ? "Selecionar treino" : nil,
+                    title: selection.map { .verbatim($0.title) } ?? .localized("Selecionar treino"),
                     isSelected: selection != nil
                 )
             }
@@ -799,19 +779,12 @@ struct TeacherSendWorkoutView: View {
     }
 
     private func templatePickerLabel(
-        title: String,
-        localizedTitle: LocalizedStringKey? = nil,
+        title: DisplayText,
         isSelected: Bool
     ) -> some View {
         HStack {
-            Group {
-                if let localizedTitle {
-                    Text(localizedTitle)
-                } else {
-                    Text(title)
-                }
-            }
-            .font(.system(size: 15, weight: .semibold))
+            title.view()
+                .font(.system(size: 15, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
             .lineLimit(1)
             Spacer()
@@ -1155,16 +1128,9 @@ struct TeacherSendWorkoutView: View {
     }
 
     private func emptyRow(
-        _ title: String,
-        localizedTitle: LocalizedStringKey? = nil
+        _ title: DisplayText
     ) -> some View {
-        Group {
-            if let localizedTitle {
-                Text(localizedTitle)
-            } else {
-                Text(title)
-            }
-        }
+        title.view()
         .font(.system(size: 14))
         .foregroundColor(.white.opacity(0.55))
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1352,12 +1318,9 @@ struct TeacherSendWorkoutView: View {
                     }
                 }
             }
-            successMessage = String(
-                localized: isVideoFlow
-                    ? "Vídeo enviado com sucesso!"
-                    : "Treino enviado com sucesso",
-                locale: locale
-            )
+            successMessage = isVideoFlow
+                ? "Vídeo enviado com sucesso!"
+                : "Treino enviado com sucesso"
             try? await Task.sleep(for: .seconds(1))
             guard !Task.isCancelled else { return }
             path.removeAll()
@@ -1372,6 +1335,30 @@ struct TeacherSendWorkoutView: View {
     private func clearMessages() {
         errorMessage = nil
         successMessage = nil
+    }
+
+    private func localizedMessageCard(
+        text: LocalizedStringKey,
+        isError: Bool
+    ) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
+                .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
+
+            Text(text)
+                .font(.system(size: 13))
+                .foregroundColor(.white.opacity(0.75))
+
+            Spacer()
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+        .background(Color.black.opacity(0.35))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
     }
 
     private func goBack() {
@@ -1470,7 +1457,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
-                        selectionField(title: "SEÇÃO", localizedTitle: "SEÇÃO") {
+                        selectionField(title: "SEÇÃO") {
                             sectionPickerField
                         }
 
@@ -1512,19 +1499,12 @@ private struct WorkoutTemplateSelectionSheet: View {
     }
 
     private func selectionField<Content: View>(
-        title: String,
-        localizedTitle: LocalizedStringKey? = nil,
+        title: LocalizedStringKey,
         @ViewBuilder content: () -> Content
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Group {
-                if let localizedTitle {
-                    Text(localizedTitle)
-                } else {
-                    Text(title)
-                }
-            }
-            .font(.system(size: 13, weight: .semibold))
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
             .foregroundColor(.white.opacity(0.75))
             content()
         }
@@ -1535,8 +1515,7 @@ private struct WorkoutTemplateSelectionSheet: View {
             togglePicker(.section)
         } label: {
             WorkoutPickerLabel(
-                title: selectedSectionTitle ?? "Selecionar seção",
-                localizedTitle: selectedSectionTitle == nil ? "Selecionar seção" : nil,
+                title: selectedSectionTitle.map(DisplayText.verbatim) ?? .localized("Selecionar seção"),
                 isSelected: selectedSectionKey != nil
             )
         }
@@ -1553,8 +1532,8 @@ private struct WorkoutTemplateSelectionSheet: View {
             togglePicker(.template)
         } label: {
             WorkoutPickerLabel(
-                title: templatePickerTitle,
-                localizedTitle: templatePickerLocalizedTitle,
+                title: templatePickerLocalizedTitle.map(DisplayText.localized)
+                    ?? .verbatim(templatePickerTitle),
                 isSelected: selectedTemplate != nil
             )
         }
