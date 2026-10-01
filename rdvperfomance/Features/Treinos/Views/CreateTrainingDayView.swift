@@ -21,10 +21,10 @@ struct CreateTrainingDayView: View {
 
     // ✅ ALTERADO: adiciona "Cargas / Movimentos" abaixo do WOD
     @State private var blocks: [BlockDraft] = [
-        BlockDraft(name: "Aquecimento", details: ""),
-        BlockDraft(name: "Técnica", details: ""),
-        BlockDraft(name: "WOD", details: ""),
-        BlockDraft(name: "Cargas / Movimentos", details: "")
+        BlockDraft(defaultBlock: .warmup),
+        BlockDraft(defaultBlock: .technique),
+        BlockDraft(defaultBlock: .wod),
+        BlockDraft(defaultBlock: .loadsAndMovements)
     ]
 
     @State private var showPasswordDummy: Bool = false
@@ -333,7 +333,11 @@ struct CreateTrainingDayView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text(b.name.isEmpty ? String(localized: "Sem nome", locale: locale) : b.name)
+                        Text(
+                            b.wrappedValue.name.isEmpty
+                                ? String(localized: "Sem nome", locale: locale)
+                                : b.wrappedValue.displayedName(locale: locale)
+                        )
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.70))
 
@@ -352,7 +356,10 @@ struct CreateTrainingDayView: View {
 
                     UnderlineTextField(
                         title: "",
-                        text: $b.name,
+                        text: Binding(
+                            get: { b.wrappedValue.displayedName(locale: locale) },
+                            set: { b.wrappedValue.setDisplayedName($0) }
+                        ),
                         isSecure: false,
                         showPassword: $showPasswordDummy,
                         lineColor: Theme.Colors.divider,
@@ -586,10 +593,10 @@ struct CreateTrainingDayView: View {
 
         // ✅ ALTERADO: adiciona "Cargas / Movimentos" abaixo do WOD no reset
         blocks = [
-            BlockDraft(name: "Aquecimento", details: ""),
-            BlockDraft(name: "Técnica", details: ""),
-            BlockDraft(name: "WOD", details: ""),
-            BlockDraft(name: "Cargas / Movimentos", details: "")
+            BlockDraft(defaultBlock: .warmup),
+            BlockDraft(defaultBlock: .technique),
+            BlockDraft(defaultBlock: .wod),
+            BlockDraft(defaultBlock: .loadsAndMovements)
         ]
 
         dayName = ""

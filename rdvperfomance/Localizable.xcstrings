@@ -12132,7 +12132,26 @@
       }
     },
     "Nenhum treino ativo" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No active workouts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay entrenamientos activos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum treino ativo"
+          }
+        }
+      }
     },
     "Nenhum treino cadastrado" : {
       "comment" : "A message displayed when a teacher has no workouts imported.",
@@ -12183,7 +12202,26 @@
       }
     },
     "Nenhum treino concluído" : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No completed workouts"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No hay entrenamientos completados"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nenhum treino concluído"
+          }
+        }
+      }
     },
     "Nenhum treino encontrado" : {
       "comment" : "A message displayed when a user has no training templates available.",
@@ -16021,7 +16059,26 @@
       }
     },
     "Selecione exatamente 3 atalhos." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Select exactly 3 shortcuts."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecciona exactamente 3 accesos directos."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Selecione exatamente 3 atalhos."
+          }
+        }
+      }
     },
     "Selecione o destino do treino." : {
       "comment" : "A message displayed when the user tries to send a workout but hasn't selected a destination.",
@@ -17825,7 +17882,26 @@
       }
     },
     "Treinos concluídos ou com período encerrado aparecerão aqui." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Completed or expired workouts will appear here."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Los entrenamientos completados o finalizados aparecerán aquí."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treinos concluídos ou com período encerrado aparecerão aqui."
+          }
+        }
+      }
     },
     "Treinos Crossfit" : {
       "localizations" : {
@@ -18497,7 +18573,26 @@
       }
     },
     "Você não possui treinos pendentes a partir de hoje." : {
-
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You have no pending workouts starting today."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No tienes entrenamientos pendientes a partir de hoy."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você não possui treinos pendentes a partir de hoje."
+          }
+        }
+      }
     },
     "Você não possui treinos programados para as próximas semanas." : {
       "localizations" : {

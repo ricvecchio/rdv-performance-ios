@@ -9,11 +9,7 @@ enum TreinoTipo: String, Hashable {
 
     /// Retorna o nome de exibição do tipo de treino
     var displayName: String {
-        switch self {
-        case .crossfit: return String(localized: "Crossfit", locale: Self.localizationLocale)
-        case .academia: return String(localized: "Academia", locale: Self.localizationLocale)
-        case .emCasa:   return String(localized: "Treinos em Casa", locale: Self.localizationLocale)
-        }
+        localizedDisplayName(locale: Self.localizationLocale)
     }
 
     /// Retorna a chave usada para armazenar o tipo no Firestore
@@ -45,10 +41,22 @@ enum TreinoTipo: String, Hashable {
 
     /// Retorna o título completo usado no cabeçalho das telas
     var titulo: String {
+        localizedTitle(locale: Self.localizationLocale)
+    }
+
+    func localizedDisplayName(locale: Locale) -> String {
         switch self {
-        case .crossfit: return String(localized: "Treinos Crossfit", locale: Self.localizationLocale)
-        case .academia: return String(localized: "Treinos Academia", locale: Self.localizationLocale)
-        case .emCasa:   return String(localized: "Treinos em Casa", locale: Self.localizationLocale)
+        case .crossfit: return String(localized: "Crossfit", locale: locale)
+        case .academia: return String(localized: "Academia", locale: locale)
+        case .emCasa: return String(localized: "Treinos em Casa", locale: locale)
+        }
+    }
+
+    func localizedTitle(locale: Locale) -> String {
+        switch self {
+        case .crossfit: return String(localized: "Treinos Crossfit", locale: locale)
+        case .academia: return String(localized: "Treinos Academia", locale: locale)
+        case .emCasa: return String(localized: "Treinos em Casa", locale: locale)
         }
     }
 

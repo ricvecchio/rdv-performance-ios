@@ -136,7 +136,7 @@ struct TeacherMyWorkoutsView: View {
     private func programaTile(
         imageName: String,
         height: CGFloat,
-        badgeText: String,
+        badgeText: LocalizedStringKey,
         badgeIcon: String,
         action: @escaping () -> Void
     ) -> some View {
@@ -161,7 +161,7 @@ struct TeacherMyWorkoutsView: View {
     private func tileLayout(
         imageName: String,
         height: CGFloat,
-        badgeText: String,
+        badgeText: LocalizedStringKey,
         badgeIcon: String
     ) -> some View {
 
@@ -232,7 +232,7 @@ struct TeacherMyWorkoutsView: View {
         .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
     }
 
-    private func badgeView(text: String, icon: String) -> some View {
+    private func badgeView(text: LocalizedStringKey, icon: String) -> some View {
         HStack(spacing: 10) {
             Image(systemName: icon)
                 .font(.system(size: 16, weight: .semibold))

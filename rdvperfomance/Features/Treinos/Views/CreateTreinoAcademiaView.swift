@@ -17,10 +17,10 @@ struct CreateTreinoAcademiaView: View {
 
     // ✅ mesmos blocos do "Criar WOD"
     @State private var blocks: [BlockDraft] = [
-        BlockDraft(name: "Aquecimento", details: ""),
-        BlockDraft(name: "Técnica", details: ""),
-        BlockDraft(name: "Treino", details: ""),
-        BlockDraft(name: "Cargas / Movimentos", details: "")
+        BlockDraft(defaultBlock: .warmup),
+        BlockDraft(defaultBlock: .technique),
+        BlockDraft(defaultBlock: .workout),
+        BlockDraft(defaultBlock: .loadsAndMovements)
     ]
 
     @State private var showPasswordDummy: Bool = false
@@ -212,7 +212,13 @@ struct CreateTreinoAcademiaView: View {
 
                     HStack {
                         VStack(alignment: .leading, spacing: 6) {
-                            TextField("Novo bloco", text: $b.name)
+                            TextField(
+                                "Novo bloco",
+                                text: Binding(
+                                    get: { b.wrappedValue.displayedName(locale: locale) },
+                                    set: { b.wrappedValue.setDisplayedName($0) }
+                                )
+                            )
                                 .foregroundColor(.white.opacity(0.92))
                                 .font(.system(size: 16))
                                 .textInputAutocapitalization(.never)

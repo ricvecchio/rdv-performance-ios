@@ -948,7 +948,7 @@ struct TeacherSendWorkoutView: View {
                     .font(.system(size: 13))
                     .foregroundColor(.green.opacity(0.85))
 
-                Text(category.displayName)
+                Text(category.localizedDisplayName(locale: locale))
                     .font(.system(size: 13, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
             }
@@ -1456,7 +1456,13 @@ private struct WorkoutTemplateSelectionSheet: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, 10)
 
-                Text("Selecionar treino - \(category.displayName)")
+                Text(
+                    String(
+                        format: String(localized: "Selecionar treino - %@", locale: locale),
+                        locale: locale,
+                        arguments: [category.localizedDisplayName(locale: locale)]
+                    )
+                )
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .lineLimit(1)
