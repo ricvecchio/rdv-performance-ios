@@ -2247,6 +2247,7 @@
       }
     },
     "AMANHÃ" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -5446,6 +5447,144 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Dados inválidos para operação no Firestore."
+          }
+        }
+      }
+    },
+    "dashboard.day.today" : {
+      "comment" : "Title for the current-day filter in a dashboard agenda.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TODAY"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HOY"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "HOJE"
+          }
+        }
+      }
+    },
+    "dashboard.day.tomorrow" : {
+      "comment" : "Title for the next-day filter in a dashboard agenda.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TOMORROW"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MAÑANA"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AMANHÃ"
+          }
+        }
+      }
+    },
+    "dashboard.greeting.named" : {
+      "comment" : "Dashboard greeting with the signed-in user's name.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hello, %@!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Hola, %@!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olá, %@!"
+          }
+        }
+      }
+    },
+    "dashboard.greeting.student" : {
+      "comment" : "Dashboard greeting when the student name is unavailable.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hello, Student!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Hola, alumno!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olá, Aluno!"
+          }
+        }
+      }
+    },
+    "dashboard.greeting.teacher" : {
+      "comment" : "Dashboard greeting when the teacher name is unavailable.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hello, Coach!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¡Hola, entrenador!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Olá, Professor!"
+          }
+        }
+      }
+    },
+    "dashboard.section.agenda" : {
+      "comment" : "Title for the agenda section of a dashboard.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "SCHEDULE"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AGENDA"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "AGENDA"
           }
         }
       }
@@ -9384,6 +9523,7 @@
       }
     },
     "HOJE" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13443,6 +13583,7 @@
       }
     },
     "Olá, %@!" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13465,6 +13606,7 @@
       }
     },
     "Olá, Aluno!" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -13487,6 +13629,7 @@
       }
     },
     "Olá, Professor!" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -18393,6 +18536,121 @@
         }
       }
     },
+    "video.category.crossfit" : {
+      "comment" : "Display title for the CrossFit video category.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Crossfit"
+          }
+        }
+      }
+    },
+    "video.category.gym" : {
+      "comment" : "Display title for the gym video category.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gym"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gimnasio"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Academia"
+          }
+        }
+      }
+    },
+    "video.category.home" : {
+      "comment" : "Display title for the at-home video category.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "At Home"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "En Casa"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Em Casa"
+          }
+        }
+      }
+    },
+    "video.link.pasted" : {
+      "comment" : "Confirmation displayed after a valid YouTube link is pasted from the clipboard.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YouTube link pasted from the clipboard."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enlace de YouTube pegado desde el portapapeles."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Link do YouTube colado da área de transferência."
+          }
+        }
+      }
+    },
+    "video.youtube.opened" : {
+      "comment" : "Instruction displayed after opening YouTube so the user can copy a video link.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YouTube opened. Copy the video link and return here to paste it."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YouTube se abrió. Copia el enlace del video y vuelve aquí para pegarlo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "YouTube aberto. Copie o link do vídeo e volte para colar aqui."
+          }
+        }
+      }
+    },
     "Vídeos" : {
       "comment" : "A label displayed above the list of videos.",
       "isCommentAutoGenerated" : true,
@@ -19015,259 +19273,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "WOD do dia (%@)"
-          }
-        }
-      }
-    },
-    "dashboard.day.today" : {
-      "comment" : "Title for the current-day filter in a dashboard agenda.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "TODAY"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HOY"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "HOJE"
-          }
-        }
-      }
-    },
-    "dashboard.day.tomorrow" : {
-      "comment" : "Title for the next-day filter in a dashboard agenda.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "TOMORROW"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "MAÑANA"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AMANHÃ"
-          }
-        }
-      }
-    },
-    "dashboard.greeting.named" : {
-      "comment" : "Dashboard greeting with the signed-in user's name.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hello, %@!"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "¡Hola, %@!"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Olá, %@!"
-          }
-        }
-      }
-    },
-    "dashboard.greeting.student" : {
-      "comment" : "Dashboard greeting when the student name is unavailable.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hello, Student!"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "¡Hola, alumno!"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Olá, Aluno!"
-          }
-        }
-      }
-    },
-    "dashboard.greeting.teacher" : {
-      "comment" : "Dashboard greeting when the teacher name is unavailable.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Hello, Coach!"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "¡Hola, entrenador!"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Olá, Professor!"
-          }
-        }
-      }
-    },
-    "dashboard.section.agenda" : {
-      "comment" : "Title for the agenda section of a dashboard.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "SCHEDULE"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AGENDA"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "AGENDA"
-          }
-        }
-      }
-    },
-    "video.category.crossfit" : {
-      "comment" : "Display title for the CrossFit video category.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CrossFit"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CrossFit"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Crossfit"
-          }
-        }
-      }
-    },
-    "video.category.gym" : {
-      "comment" : "Display title for the gym video category.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gym"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Gimnasio"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Academia"
-          }
-        }
-      }
-    },
-    "video.category.home" : {
-      "comment" : "Display title for the at-home video category.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "At Home"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "En Casa"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Em Casa"
-          }
-        }
-      }
-    },
-    "video.link.pasted" : {
-      "comment" : "Confirmation displayed after a valid YouTube link is pasted from the clipboard.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "YouTube link pasted from the clipboard."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enlace de YouTube pegado desde el portapapeles."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Link do YouTube colado da área de transferência."
-          }
-        }
-      }
-    },
-    "video.youtube.opened" : {
-      "comment" : "Instruction displayed after opening YouTube so the user can copy a video link.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "YouTube opened. Copy the video link and return here to paste it."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "YouTube se abrió. Copia el enlace del video y vuelve aquí para pegarlo."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "YouTube aberto. Copie o link do vídeo e volte para colar aqui."
           }
         }
       }
