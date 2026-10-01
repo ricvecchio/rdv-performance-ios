@@ -722,7 +722,7 @@ struct StudentDashboardView: View {
         case .wod(_, let title):
             Text(verbatim: title.uppercased())
         case .agenda:
-            Text(DashboardSection.agenda.localizedTitle)
+            Text(DashboardMode.agenda.localizedTitle)
         }
     }
 

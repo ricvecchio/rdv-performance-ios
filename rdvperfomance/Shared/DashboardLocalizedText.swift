@@ -16,9 +16,9 @@ enum DashboardGreeting {
         guard !trimmedName.isEmpty else {
             switch audience {
             case .student:
-                return String(localized: "dashboard.greeting.student", locale: locale)
+                return String(localized: "dashboard.greeting.student_fallback", locale: locale)
             case .teacher:
-                return String(localized: "dashboard.greeting.teacher", locale: locale)
+                return String(localized: "dashboard.greeting.teacher_fallback", locale: locale)
             }
         }
 
@@ -27,13 +27,16 @@ enum DashboardGreeting {
     }
 }
 
-enum DashboardSection {
+enum DashboardMode {
+    case crossfit
     case agenda
 
     var localizedTitle: LocalizedStringKey {
         switch self {
+        case .crossfit:
+            "dashboard.mode.crossfit"
         case .agenda:
-            "dashboard.section.agenda"
+            "dashboard.mode.agenda"
         }
     }
 }
@@ -68,7 +71,7 @@ enum DashboardLocalizationDiagnostics {
         print(
             "[Localization] screen=\(screen) locale=\(locale.identifier) " +
             "hasUserName=\(hasUserName) " +
-            "agenda=\(String(localized: "dashboard.section.agenda", locale: locale)) " +
+            "agenda=\(String(localized: "dashboard.mode.agenda", locale: locale)) " +
             "today=\(DashboardAgendaDay.today.title(locale: locale)) " +
             "tomorrow=\(DashboardAgendaDay.tomorrow.title(locale: locale))"
         )

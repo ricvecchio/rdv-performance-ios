@@ -5520,7 +5520,7 @@
         }
       }
     },
-    "dashboard.greeting.student" : {
+    "dashboard.greeting.student_fallback" : {
       "comment" : "Dashboard greeting when the student name is unavailable.",
       "localizations" : {
         "en" : {
@@ -5543,7 +5543,7 @@
         }
       }
     },
-    "dashboard.greeting.teacher" : {
+    "dashboard.greeting.teacher_fallback" : {
       "comment" : "Dashboard greeting when the teacher name is unavailable.",
       "localizations" : {
         "en" : {
@@ -5566,7 +5566,7 @@
         }
       }
     },
-    "dashboard.section.agenda" : {
+    "dashboard.mode.agenda" : {
       "comment" : "Title for the agenda section of a dashboard.",
       "localizations" : {
         "en" : {
@@ -18532,6 +18532,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Vídeo selecionado"
+          }
+        }
+      }
+    },
+    "dashboard.mode.crossfit" : {
+      "comment" : "Title for the static CrossFit dashboard mode.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CROSSFIT"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CROSSFIT"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CROSSFIT"
           }
         }
       }
