@@ -332,7 +332,7 @@ struct TeacherImportVideosView: View {
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                 
-                Text(v.category.rawValue)
+                Text(v.category.localizedTitle)
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)

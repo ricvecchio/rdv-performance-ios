@@ -7,7 +7,7 @@ struct TeacherAddYoutubeVideoSheet: View {
     @State private var title: String = ""
     @State private var url: String = ""
     @State private var selectedCategory: TeacherYoutubeVideoCategory = .crossfit
-    @State private var sheetMessage: String? = nil
+    @State private var sheetMessage: LocalizedStringKey? = nil
     @State private var sheetMessageIsError: Bool = false
 
     let onSave: (_ title: String, _ url: String, _ category: TeacherYoutubeVideoCategory) -> Void
@@ -153,7 +153,7 @@ struct TeacherAddYoutubeVideoSheet: View {
                 
                 Picker("", selection: $selectedCategory) {
                     ForEach(TeacherYoutubeVideoCategory.allCases) { c in
-                        Text(c == .treinosEmCasa ? "Em Casa" : c.rawValue).tag(c)
+                        Text(c.localizedTitle).tag(c)
                     }
                 }
                 .pickerStyle(.segmented)
@@ -168,7 +168,7 @@ struct TeacherAddYoutubeVideoSheet: View {
         }
     }
     
-    private func sheetMessageCard(text: String, isError: Bool) -> some View {
+    private func sheetMessageCard(text: LocalizedStringKey, isError: Bool) -> some View {
         Text(text)
             .font(.system(size: 13, weight: .semibold))
             .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
@@ -183,13 +183,13 @@ struct TeacherAddYoutubeVideoSheet: View {
         
         if YouTubeVideoImporter.isValidYoutubeUrl(clipboard) {
             url = clipboard
-            sheetMessage = "Link do YouTube colado do clipboard."
+            sheetMessage = "video.link.pasted"
             sheetMessageIsError = false
             return
         }
         
         openYoutubeExternal()
-        sheetMessage = "YouTube aberto. Copie o link do vídeo e volte para colar aqui."
+        sheetMessage = "video.youtube.opened"
         sheetMessageIsError = false
     }
     
