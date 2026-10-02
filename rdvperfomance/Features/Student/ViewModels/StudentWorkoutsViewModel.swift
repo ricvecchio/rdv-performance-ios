@@ -259,8 +259,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
         )
     }
 
-    func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
-        let locale = Self.localizationLocale
+    func teacherLineForWeek(_ week: TrainingWeekFS, locale: Locale) -> String {
         let format = String(localized: "workout.teacher.named", locale: locale)
         let explicitName = (week.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitName.isEmpty {

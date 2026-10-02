@@ -57,7 +57,14 @@ struct CrossfitGamesPersonalRecordsView: View {
 
         func localizedTitle(locale: Locale) -> String {
             guard isAppProvided else { return title }
-            return String(localized: String.LocalizationValue(title), locale: locale)
+            guard let year = items.first?.yearTitle else {
+                return String(localized: String.LocalizationValue(title), locale: locale)
+            }
+            let format = String(
+                localized: "crossfit_games.individual_elite.title",
+                locale: locale
+            )
+            return String(format: format, locale: locale, arguments: [year])
         }
     }
 

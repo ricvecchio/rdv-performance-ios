@@ -593,11 +593,11 @@ final class StudentDashboardViewModel: ObservableObject {
         needsNextFitAuthentication = true
     }
 
-    func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
+    func requestLinkByTeacherEmail(teacherEmail: String, locale: Locale) async -> Bool {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         guard email.contains("@"), email.contains(".") else {
-            linkActionMessage = String(localized: "Informe um e-mail válido.", locale: Self.localizationLocale)
+            linkActionMessage = String(localized: "Informe um e-mail válido.", locale: locale)
             linkActionMessageIsError = true
             return false
         }
@@ -610,7 +610,7 @@ final class StudentDashboardViewModel: ObservableObject {
         do {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherId = teacher.id else {
-                linkActionMessage = String(localized: "Não encontrei um professor com esse e-mail.", locale: Self.localizationLocale)
+                linkActionMessage = String(localized: "Não encontrei um professor com esse e-mail.", locale: locale)
                 linkActionMessageIsError = true
                 return false
             }
@@ -630,7 +630,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 teacherEmail: email
             )
 
-            linkActionMessage = String(localized: "Solicitação enviada com sucesso.", locale: Self.localizationLocale)
+            linkActionMessage = String(localized: "Solicitação enviada com sucesso.", locale: locale)
             linkActionMessageIsError = false
             await load()
             return true

@@ -373,7 +373,10 @@ struct StudentDashboardView: View {
 
                     Button {
                         Task {
-                            let ok = await viewModel.requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                            let ok = await viewModel.requestLinkByTeacherEmail(
+                                teacherEmail: teacherEmailInput,
+                                locale: locale
+                            )
                             if ok {
                                 isRequestLinkSheetPresented = false
                             }

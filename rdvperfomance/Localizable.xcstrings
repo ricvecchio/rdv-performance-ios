@@ -19511,6 +19511,13 @@
           }
         }
       }
+    },
+    "crossfit_games.individual_elite.title" : {
+      "localizations" : {
+        "en" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games %@ – Individual Events (Elite)" } },
+        "es" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games %@ – Pruebas Individuales (Élite)" } },
+        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games %@ – Provas Individuais (Elite)" } }
+      }
     }
   },
   "version" : "1.1"

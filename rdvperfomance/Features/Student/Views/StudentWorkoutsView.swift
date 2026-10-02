@@ -390,7 +390,7 @@ struct StudentWorkoutsView: View {
                 }
 
                 HStack(spacing: 8) {
-                    Text(vm.teacherLineForWeek(week))
+                    Text(vm.teacherLineForWeek(week, locale: locale))
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(1)
