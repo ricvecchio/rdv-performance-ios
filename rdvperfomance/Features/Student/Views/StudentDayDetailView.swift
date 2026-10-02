@@ -944,7 +944,7 @@ struct StudentDayDetailView: View {
                     ForEach(Array(nonVideoBlocks.enumerated()), id: \.offset) { idx, block in
                         VStack(alignment: .leading, spacing: 6) {
 
-                            Text(block.name)
+                            Text(block.displayedName(locale: locale))
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1107,7 +1107,7 @@ struct StudentDayDetailView: View {
                         ForEach(editBlocks.indices, id: \.self) { i in
                             VStack(alignment: .leading, spacing: 8) {
 
-                                Text(editBlocks[i].name)
+                                Text(editBlocks[i].displayedName(locale: locale))
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
 

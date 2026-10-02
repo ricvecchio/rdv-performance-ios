@@ -151,7 +151,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                     ForEach(blocks.indices, id: \.self) { i in
                         let b = blocks[i]
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(b.name.isEmpty ? String(localized: "Bloco", locale: locale) : b.name)
+                            Text(b.name.isEmpty ? String(localized: "Bloco", locale: locale) : b.displayedName(locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
 
@@ -189,15 +189,15 @@ struct TeacherWorkoutTemplateDetailSheet: View {
     private var editableBlocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            blockEditor(title: warmupTitle, text: bindingForBlockDetails(title: warmupTitle))
+            blockEditor(title: DefaultWorkoutBlock.warmup.localizedName(locale: locale), text: bindingForBlockDetails(title: warmupTitle))
 
             Divider().background(Theme.Colors.divider)
 
-            blockEditor(title: techniqueTitle, text: bindingForBlockDetails(title: techniqueTitle))
+            blockEditor(title: DefaultWorkoutBlock.technique.localizedName(locale: locale), text: bindingForBlockDetails(title: techniqueTitle))
 
             Divider().background(Theme.Colors.divider)
 
-            blockEditor(title: loadsTitle, text: bindingForBlockDetails(title: loadsTitle))
+            blockEditor(title: DefaultWorkoutBlock.loadsAndMovements.localizedName(locale: locale), text: bindingForBlockDetails(title: loadsTitle))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)

@@ -132,7 +132,12 @@ final class ProgressGameScene: SKScene {
         subtitleLabel.text = localized(metrics.weekLabel ?? "Semana")
 
         let percent = Int((max(0.0, min(1.0, metrics.weeklyCompletion)) * 100.0).rounded())
-        streakLabel.text = "🔥 Streak: \(metrics.streakDays) \(localized("dias")) • \(percent)%"
+        let format = localized("🔥 Streak: %lld %@ • %lld%%")
+        streakLabel.text = String(
+            format: format,
+            locale: currentLocale,
+            arguments: [Int64(metrics.streakDays), localized("dias"), Int64(percent)]
+        )
 
         /// Desenha arco de progresso baseado no percentual de conclusão
         let clamped = max(0.0, min(1.0, metrics.weeklyCompletion))
@@ -164,7 +169,7 @@ final class ProgressGameScene: SKScene {
         /// Exibe mensagem quando não há badges conquistadas
         guard !displayedBadges.isEmpty else {
             let empty = SKLabelNode(fontNamed: "AvenirNext-Regular")
-            empty.text = "Sem badges ainda — continue treinando!"
+            empty.text = localized("Sem badges ainda — continue treinando!")
             empty.fontSize = 12
             empty.fontColor = UIColor.white.withAlphaComponent(0.55)
             empty.horizontalAlignmentMode = .center
@@ -253,25 +258,7 @@ final class ProgressGameScene: SKScene {
     }
 
     private func localized(_ key: String) -> String {
-        let identifiers = [
-            currentLocale.identifier,
-            currentLocale.language.languageCode?.identifier
-        ].compactMap { $0 }
-
-        for identifier in identifiers {
-            guard let path = Bundle.main.path(forResource: identifier, ofType: "lproj"),
-                  let bundle = Bundle(path: path)
-            else {
-                continue
-            }
-
-            let value = bundle.localizedString(forKey: key, value: key, table: "Localizable")
-            if value != key {
-                return value
-            }
-        }
-
-        return key
+        String(localized: String.LocalizationValue(key), locale: currentLocale)
     }
 
     private func previewBadgeNode(title: String, width: CGFloat) -> SKNode {

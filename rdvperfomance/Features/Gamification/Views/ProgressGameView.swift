@@ -84,7 +84,7 @@ struct ProgressGameView: View {
             }
 
             /// Painel SpriteKit com clipping para evitar overflow visual
-            SpriteKitPanel(metrics: vm.metrics)
+            SpriteKitPanel(metrics: vm.metrics, locale: locale)
                 .frame(height: 340)
                 .padding(.horizontal, 2)
                 .background(Theme.Colors.cardBackground)
@@ -154,7 +154,9 @@ struct ProgressGameView: View {
     }
 
     private var localizedBadgeList: String {
-        let titles = vm.metrics.badges.map(\.title)
+        let titles = vm.metrics.badges.map {
+            String(localized: String.LocalizationValue($0.title), locale: locale)
+        }
         let formatter = ListFormatter()
         formatter.locale = locale
         return formatter.string(from: titles) ?? titles.joined(separator: ", ")
@@ -171,6 +173,7 @@ struct ProgressGameView: View {
 private struct SpriteKitPanel: View {
 
     let metrics: ProgressMetrics
+    let locale: Locale
 
     /// Cena criada uma única vez e redimensionada pelo container real
     @State private var scene: ProgressGameScene = ProgressGameSceneFactory.makeScene(
@@ -182,13 +185,16 @@ private struct SpriteKitPanel: View {
             SpriteView(scene: scene)
                 .onAppear {
                     applySizeIfNeeded(geo.size)
-                    scene.update(with: metrics, animated: false)
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
                 .onChange(of: geo.size) { _, newSize in
                     applySizeIfNeeded(newSize)
                 }
                 .onChange(of: metrics) { _, newValue in
-                    scene.update(with: newValue, animated: true)
+                    scene.update(with: newValue, locale: locale, animated: true)
+                }
+                .onChange(of: locale) { _, newLocale in
+                    scene.update(with: metrics, locale: newLocale, animated: false)
                 }
         }
         .clipped()

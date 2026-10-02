@@ -55,11 +55,26 @@ struct BlockDraft: Identifiable, Hashable {
     }
 
     func displayedName(locale: Locale) -> String {
-        defaultBlock?.localizedName(locale: locale) ?? name
+        (defaultBlock ?? DefaultWorkoutBlock(persistedName: name))?.localizedName(locale: locale) ?? name
     }
 
     mutating func setDisplayedName(_ name: String) {
         self.name = name
         defaultBlock = nil
+    }
+}
+
+extension DefaultWorkoutBlock: CaseIterable {
+    init?(persistedName: String) {
+        guard let block = Self.allCases.first(where: { $0.persistedName == persistedName }) else {
+            return nil
+        }
+        self = block
+    }
+}
+
+extension BlockFS {
+    func displayedName(locale: Locale) -> String {
+        DefaultWorkoutBlock(persistedName: name)?.localizedName(locale: locale) ?? name
     }
 }

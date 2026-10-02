@@ -122,7 +122,8 @@ struct TeacherStudentDetailView: View {
                 Task { await confirmUnlink() }
             }
         } message: {
-            Text("O aluno \"\(student.name)\" será desvinculado da categoria \(category.displayName).")
+            let format = String(localized: "O aluno \"%@\" será desvinculado da categoria %@.", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [student.name, category.localizedDisplayName(locale: locale)]))
         }
     }
 

@@ -104,7 +104,7 @@ struct TeacherWorkoutTemplatesView: View {
                             } else if isAcademiaOrEmCasaCategory {
                                 EmptyView()
                             } else {
-                                Text("\(category.displayName) • \(sectionTitle)")
+                                Text("\(category.localizedDisplayName(locale: locale)) • \(sectionTitle)")
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
                             }

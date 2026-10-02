@@ -146,33 +146,33 @@ struct TeacherImportedWorkoutDetailsSheet: View {
     
     private var readOnlyBlocks: some View {
         VStack(spacing: 12) {
-            blockCard(title: "Descrição", value: workout.description)
-            blockCard(title: "Aquecimento", value: workout.aquecimento)
-            blockCard(title: "Técnica", value: workout.tecnica)
-            blockCard(title: "WOD", value: workout.wod)
-            blockCard(title: "Cargas / Movimentos", value: workout.cargasMovimentos)
+            blockCard(title: String(localized: "Descrição", locale: locale), value: workout.description)
+            blockCard(title: DefaultWorkoutBlock.warmup.localizedName(locale: locale), value: workout.aquecimento)
+            blockCard(title: DefaultWorkoutBlock.technique.localizedName(locale: locale), value: workout.tecnica)
+            blockCard(title: DefaultWorkoutBlock.wod.localizedName(locale: locale), value: workout.wod)
+            blockCard(title: DefaultWorkoutBlock.loadsAndMovements.localizedName(locale: locale), value: workout.cargasMovimentos)
         }
     }
     
     private var editableBlocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            blockEditor(title: "Descrição", text: $draftDescription)
+            blockEditor(title: String(localized: "Descrição", locale: locale), text: $draftDescription)
             
             Divider().background(Theme.Colors.divider)
             
-            blockEditor(title: "Aquecimento", text: $draftAquecimento)
+            blockEditor(title: DefaultWorkoutBlock.warmup.localizedName(locale: locale), text: $draftAquecimento)
             
             Divider().background(Theme.Colors.divider)
             
-            blockEditor(title: "Técnica", text: $draftTecnica)
+            blockEditor(title: DefaultWorkoutBlock.technique.localizedName(locale: locale), text: $draftTecnica)
             
             Divider().background(Theme.Colors.divider)
             
-            blockEditor(title: "WOD", text: $draftWod)
+            blockEditor(title: DefaultWorkoutBlock.wod.localizedName(locale: locale), text: $draftWod)
             
             Divider().background(Theme.Colors.divider)
             
-            blockEditor(title: "Cargas / Movimentos", text: $draftCargasMovimentos)
+            blockEditor(title: DefaultWorkoutBlock.loadsAndMovements.localizedName(locale: locale), text: $draftCargasMovimentos)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
@@ -185,7 +185,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         )
     }
     
-    private func blockEditor(title: LocalizedStringKey, text: Binding<String>) -> some View {
+    private func blockEditor(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))
@@ -206,7 +206,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    private func blockCard(title: LocalizedStringKey, value: String) -> some View {
+    private func blockCard(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 14, weight: .semibold))

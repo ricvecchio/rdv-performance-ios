@@ -19,12 +19,46 @@ struct CrossfitGamesPersonalRecordsView: View {
         let name: String
         let storageKey: String
         let descriptionLines: [String]
+        let isAppProvided: Bool
+
+        init(
+            yearTitle: String,
+            name: String,
+            storageKey: String,
+            descriptionLines: [String],
+            isAppProvided: Bool = true
+        ) {
+            self.yearTitle = yearTitle
+            self.name = name
+            self.storageKey = storageKey
+            self.descriptionLines = descriptionLines
+            self.isAppProvided = isAppProvided
+        }
+
+        func localizedDescriptionLines(locale: Locale) -> [String] {
+            guard isAppProvided else { return descriptionLines }
+            return descriptionLines.map {
+                String(localized: String.LocalizationValue($0), locale: locale)
+            }
+        }
     }
 
     private struct GamesSection: Identifiable, Hashable {
         let id = UUID()
         let title: String
         let items: [GamesWOD]
+        let isAppProvided: Bool
+
+        init(title: String, items: [GamesWOD], isAppProvided: Bool = true) {
+            self.title = title
+            self.items = items
+            self.isAppProvided = isAppProvided
+        }
+
+        func localizedTitle(locale: Locale) -> String {
+            guard isAppProvided else { return title }
+            return String(localized: String.LocalizationValue(title), locale: locale)
+        }
     }
 
 
@@ -372,14 +406,19 @@ struct CrossfitGamesPersonalRecordsView: View {
             let year = section.items.first?.yearTitle
             let customItems = year.flatMap { customByYear[$0] } ?? []
             return GamesSection(title: section.title, items: section.items + customItems.map {
-                GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
+                GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty }, isAppProvided: false)
             })
         }
         let existingYears = Set(sections.compactMap { $0.items.first?.yearTitle })
         let extraSections = customByYear.keys.filter { !existingYears.contains($0) }.sorted().map { year in
-            GamesSection(title: "CrossFit Games \(year) – Provas personalizadas", items: (customByYear[year] ?? []).map {
-                GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty })
-            })
+            let format = String(localized: "CrossFit Games %@ – Provas personalizadas", locale: locale)
+            return GamesSection(
+                title: String(format: format, locale: locale, arguments: [year]),
+                items: (customByYear[year] ?? []).map {
+                    GamesWOD(yearTitle: $0.yearTitle, name: $0.name, storageKey: $0.storageKey, descriptionLines: $0.description.components(separatedBy: .newlines).filter { !$0.isEmpty }, isAppProvided: false)
+                },
+                isAppProvided: false
+            )
         }
         return staticSections + extraSections
     }
@@ -511,7 +550,7 @@ struct CrossfitGamesPersonalRecordsView: View {
 
             ForEach(Array(allSections.enumerated()), id: \.element.id) { sectionIndex, section in
 
-                sectionHeader(title: section.title)
+                sectionHeader(title: section.localizedTitle(locale: locale))
 
                 Rectangle()
                     .fill(Color.white.opacity(0.08))
@@ -775,7 +814,7 @@ struct CrossfitGamesPersonalRecordsView: View {
 
     /// Card visual do WOD dentro do modal (mesmo padrão do Notables) + descrição elegante (DE -> PARA)
     private func wodCard(_ wod: GamesWOD) -> some View {
-        let description = prettyWodDescription(from: wod.descriptionLines)
+        let description = prettyWodDescription(from: wod.localizedDescriptionLines(locale: locale))
 
         return VStack(alignment: .leading, spacing: 10) {
 

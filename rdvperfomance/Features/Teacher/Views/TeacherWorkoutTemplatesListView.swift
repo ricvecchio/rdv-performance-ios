@@ -124,7 +124,8 @@ struct TeacherWorkoutTemplatesListView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Categoria: \(category.displayName)")
+            let format = String(localized: "Categoria: %@", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [category.localizedDisplayName(locale: locale)]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
 
