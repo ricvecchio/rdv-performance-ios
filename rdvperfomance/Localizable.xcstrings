@@ -603,6 +603,29 @@
         }
       }
     },
+    "• corrida 400 m" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 400 m run"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• carrera de 400 m"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• corrida 400 m"
+          }
+        }
+      }
+    },
     "⚖️ kg (quilograma)" : {
       "localizations" : {
         "en" : {
@@ -900,6 +923,29 @@
         }
       }
     },
+    "🔥 Streak: %lld %@ • %lld%%" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 Streak: %lld %@ • %lld%%"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 Racha: %lld %@ • %lld%%"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "🔥 Streak: %lld %@ • %lld%%"
+          }
+        }
+      }
+    },
     "🧾 Consentimento" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -942,6 +988,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "🚫 Uso Indevido"
+          }
+        }
+      }
+    },
+    "3 rounds:" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 rounds:"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 rondas:"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "3 rounds:"
           }
         }
       }
@@ -2084,6 +2153,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Aluno (preview)"
+          }
+        }
+      }
+    },
+    "Aluno consistente" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Consistent student"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alumno constante"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aluno consistente"
           }
         }
       }
@@ -4924,6 +5016,29 @@
         }
       }
     },
+    "Corrida de 5 km para tempo." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "5 km run for time."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Carrera de 5 km por tiempo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Corrida de 5 km para tempo."
+          }
+        }
+      }
+    },
     "Costas" : {
       "localizations" : {
         "en" : {
@@ -5383,6 +5498,97 @@
         }
       }
     },
+    "CrossFit Games %@ – Provas personalizadas" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games %@ – Custom events"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games %@ – Pruebas personalizadas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games %@ – Provas personalizadas"
+          }
+        }
+      }
+    },
+    "CrossFit Games 2023 – Provas Individuais (Elite)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2023 – Individual Events (Elite)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2023 – Pruebas individuales (Élite)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2023 – Provas Individuais (Elite)"
+          }
+        }
+      }
+    },
+    "CrossFit Games 2024 – Provas Individuais (Elite)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2024 – Individual Events (Elite)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2024 – Pruebas individuales (Élite)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2024 – Provas Individuais (Elite)"
+          }
+        }
+      }
+    },
+    "CrossFit Games 2025 – Provas Individuais (Elite)" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2025 – Individual Events (Elite)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2025 – Pruebas individuales (Élite)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CrossFit Games 2025 – Provas Individuais (Elite)"
+          }
+        }
+      }
+    },
     "Dados de treino" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -5608,6 +5814,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "AGENDA"
+          }
+        }
+      }
+    },
+    "dashboard.mode.crossfit" : {
+      "comment" : "Title for the static CrossFit dashboard mode.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CROSSFIT"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CROSSFIT"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CROSSFIT"
           }
         }
       }
@@ -10454,6 +10683,29 @@
         }
       }
     },
+    "Máximo de voltas em 40 min em bicicleta de montanha." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Maximum rounds in 40 min on a mountain bike."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máximo de vueltas en 40 min en bicicleta de montaña."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Máximo de voltas em 40 min em bicicleta de montanha."
+          }
+        }
+      }
+    },
     "Melhorar funcionalidades e desempenho do aplicativo." : {
       "extractionState" : "stale",
       "localizations" : {
@@ -10727,6 +10979,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "MODO ADMINISTRADOR"
+          }
+        }
+      }
+    },
+    "Modo monstro" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Beast mode"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo bestia"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Modo monstro"
           }
         }
       }
@@ -16258,6 +16533,29 @@
         }
       }
     },
+    "Sem badges ainda — continue treinando!" : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No badges yet — keep training!"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aún no hay insignias — ¡sigue entrenando!"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem badges ainda — continue treinando!"
+          }
+        }
+      }
+    },
     "Sem blocos cadastrados" : {
       "comment" : "A message displayed when a workout template has no blocks.",
       "isCommentAutoGenerated" : true,
@@ -17270,6 +17568,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Termos de Uso"
+          }
+        }
+      }
+    },
+    "Teste de força com 1RM Snatch e 1RM Clean & Jerk." : {
+      "extractionState" : "stale",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Strength test with a 1RM Snatch and 1RM Clean & Jerk."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prueba de fuerza con 1RM Snatch y 1RM Clean & Jerk."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Teste de força com 1RM Snatch e 1RM Clean & Jerk."
           }
         }
       }
@@ -18357,29 +18678,6 @@
         }
       }
     },
-    "dashboard.mode.crossfit" : {
-      "comment" : "Title for the static CrossFit dashboard mode.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CROSSFIT"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CROSSFIT"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "CROSSFIT"
-          }
-        }
-      }
-    },
     "video.category.crossfit" : {
       "comment" : "Display title for the CrossFit video category.",
       "localizations" : {
@@ -18399,75 +18697,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Crossfit"
-          }
-        }
-      }
-    },
-    "workout.teacher.loading" : {
-      "comment" : "Teacher label shown while the teacher name is loading.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Coach: ..."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrenador: ..."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Professor: ..."
-          }
-        }
-      }
-    },
-    "workout.teacher.named" : {
-      "comment" : "Teacher label with a dynamic teacher name or email.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Coach: %@"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrenador: %@"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Professor: %@"
-          }
-        }
-      }
-    },
-    "workout.teacher.unavailable" : {
-      "comment" : "Teacher label shown when no teacher is available.",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Coach: —"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Entrenador: —"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Professor: —"
           }
         }
       }
@@ -19190,6 +19419,75 @@
         }
       }
     },
+    "workout.teacher.loading" : {
+      "comment" : "Teacher label shown while the teacher name is loading.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach: ..."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenador: ..."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professor: ..."
+          }
+        }
+      }
+    },
+    "workout.teacher.named" : {
+      "comment" : "Teacher label with a dynamic teacher name or email.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach: %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenador: %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professor: %@"
+          }
+        }
+      }
+    },
+    "workout.teacher.unavailable" : {
+      "comment" : "Teacher label shown when no teacher is available.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach: —"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenador: —"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professor: —"
+          }
+        }
+      }
+    },
     "YouTube" : {
       "comment" : "The platform name for YouTube.",
       "isCommentAutoGenerated" : true,
@@ -19212,97 +19510,6 @@
             "value" : "YouTube"
           }
         }
-      }
-    },
-    "🔥 Streak: %lld %@ • %lld%%" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "🔥 Streak: %lld %@ • %lld%%" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "🔥 Racha: %lld %@ • %lld%%" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "🔥 Streak: %lld %@ • %lld%%" } }
-      }
-    },
-    "Aluno consistente" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Consistent student" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Alumno constante" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Aluno consistente" } }
-      }
-    },
-    "Modo monstro" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Beast mode" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Modo bestia" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Modo monstro" } }
-      }
-    },
-    "Sem badges ainda — continue treinando!" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "No badges yet — keep training!" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Aún no hay insignias — ¡sigue entrenando!" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Sem badges ainda — continue treinando!" } }
-      }
-    },
-    "CrossFit Games 2023 – Provas Individuais (Elite)" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2023 – Individual Events (Elite)" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2023 – Pruebas individuales (Élite)" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2023 – Provas Individuais (Elite)" } }
-      }
-    },
-    "CrossFit Games 2024 – Provas Individuais (Elite)" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2024 – Individual Events (Elite)" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2024 – Pruebas individuales (Élite)" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2024 – Provas Individuais (Elite)" } }
-      }
-    },
-    "CrossFit Games 2025 – Provas Individuais (Elite)" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2025 – Individual Events (Elite)" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2025 – Pruebas individuales (Élite)" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games 2025 – Provas Individuais (Elite)" } }
-      }
-    },
-    "CrossFit Games %@ – Provas personalizadas" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games %@ – Custom events" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games %@ – Pruebas personalizadas" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "CrossFit Games %@ – Provas personalizadas" } }
-      }
-    },
-    "Máximo de voltas em 40 min em bicicleta de montanha." : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Maximum rounds in 40 min on a mountain bike." } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Máximo de vueltas en 40 min en bicicleta de montaña." } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Máximo de voltas em 40 min em bicicleta de montanha." } }
-      }
-    },
-    "3 rounds:" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "3 rounds:" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "3 rondas:" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "3 rounds:" } }
-      }
-    },
-    "• corrida 400 m" : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "• 400 m run" } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "• carrera de 400 m" } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "• corrida 400 m" } }
-      }
-    },
-    "Corrida de 5 km para tempo." : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "5 km run for time." } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Carrera de 5 km por tiempo." } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Corrida de 5 km para tempo." } }
-      }
-    },
-    "Teste de força com 1RM Snatch e 1RM Clean & Jerk." : {
-      "localizations" : {
-        "en" : { "stringUnit" : { "state" : "translated", "value" : "Strength test with a 1RM Snatch and 1RM Clean & Jerk." } },
-        "es" : { "stringUnit" : { "state" : "translated", "value" : "Prueba de fuerza con 1RM Snatch y 1RM Clean & Jerk." } },
-        "pt-BR" : { "stringUnit" : { "state" : "translated", "value" : "Teste de força com 1RM Snatch e 1RM Clean & Jerk." } }
       }
     }
   },
