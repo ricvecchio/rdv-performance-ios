@@ -924,7 +924,10 @@ struct StudentTeachersView: View {
         guard email.contains("@"), email.contains(".") else {
             linkActionMessage = localizedLinkActionMessage(
                 key: "student_teachers.link_request.invalid_email",
-                value: String(localized: "student_teachers.link_request.invalid_email", locale: locale)
+                value: AppLocalization.string(
+                    "student_teachers.link_request.invalid_email",
+                    locale: locale
+                )
             )
             linkActionMessageIsError = true
             return false

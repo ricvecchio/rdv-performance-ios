@@ -49,7 +49,10 @@ final class StudentTeachersListViewModel: ObservableObject {
     func sendRequest(studentId: String, studentEmail: String, teacherEmail: String, locale: Locale) async -> String? {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
         guard email.contains("@"), email.contains(".") else {
-            return String(localized: "student_teachers.link_request.invalid_email", locale: locale)
+            return AppLocalization.string(
+                "student_teachers.link_request.invalid_email",
+                locale: locale
+            )
         }
 
         do {

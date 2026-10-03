@@ -1257,7 +1257,7 @@ struct StudentDashboardView: View {
     }
 
     private func weeklyProgressText(completed: Int, total: Int) -> String {
-        let format = String(localized: "dashboard.weekly_progress", locale: locale)
+        let format = AppLocalization.string("dashboard.weekly_progress", locale: locale)
         let value = String(
             format: format,
             locale: locale,

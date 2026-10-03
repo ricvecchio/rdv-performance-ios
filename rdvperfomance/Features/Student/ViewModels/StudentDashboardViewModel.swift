@@ -591,7 +591,10 @@ final class StudentDashboardViewModel: ObservableObject {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         guard email.contains("@"), email.contains(".") else {
-            linkActionMessage = String(localized: "student_teachers.link_request.invalid_email", locale: locale)
+            linkActionMessage = AppLocalization.string(
+                "student_teachers.link_request.invalid_email",
+                locale: locale
+            )
             linkActionMessageIsError = true
             return false
         }

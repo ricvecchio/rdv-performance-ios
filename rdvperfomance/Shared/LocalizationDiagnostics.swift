@@ -44,24 +44,24 @@ enum LocalizationDiagnostics {
         let currentLocaleValues = [
             (
                 key: "dashboard.greeting.named",
-                value: String(localized: "dashboard.greeting.named", locale: locale)
+                value: AppLocalization.string("dashboard.greeting.named", locale: locale)
             ),
             (
                 key: "dashboard.day.today",
-                value: String(localized: "dashboard.day.today", locale: locale)
+                value: AppLocalization.string("dashboard.day.today", locale: locale)
             ),
             (
                 key: "dashboard.day.tomorrow",
-                value: String(localized: "dashboard.day.tomorrow", locale: locale)
+                value: AppLocalization.string("dashboard.day.tomorrow", locale: locale)
             ),
             (
                 key: "dashboard.weekly_progress",
-                value: String(localized: "dashboard.weekly_progress", locale: locale)
+                value: AppLocalization.string("dashboard.weekly_progress", locale: locale)
             ),
             (
                 key: "student_teachers.link_request.invalid_email",
-                value: String(
-                    localized: "student_teachers.link_request.invalid_email",
+                value: AppLocalization.string(
+                    "student_teachers.link_request.invalid_email",
                     locale: locale
                 )
             )
@@ -79,24 +79,36 @@ enum LocalizationDiagnostics {
         let englishControlValues = [
             (
                 key: "dashboard.greeting.named",
-                value: String(localized: "dashboard.greeting.named", locale: englishLocale)
+                value: AppLocalization.string(
+                    "dashboard.greeting.named",
+                    locale: englishLocale
+                )
             ),
             (
                 key: "dashboard.day.today",
-                value: String(localized: "dashboard.day.today", locale: englishLocale)
+                value: AppLocalization.string(
+                    "dashboard.day.today",
+                    locale: englishLocale
+                )
             ),
             (
                 key: "dashboard.day.tomorrow",
-                value: String(localized: "dashboard.day.tomorrow", locale: englishLocale)
+                value: AppLocalization.string(
+                    "dashboard.day.tomorrow",
+                    locale: englishLocale
+                )
             ),
             (
                 key: "dashboard.weekly_progress",
-                value: String(localized: "dashboard.weekly_progress", locale: englishLocale)
+                value: AppLocalization.string(
+                    "dashboard.weekly_progress",
+                    locale: englishLocale
+                )
             ),
             (
                 key: "student_teachers.link_request.invalid_email",
-                value: String(
-                    localized: "student_teachers.link_request.invalid_email",
+                value: AppLocalization.string(
+                    "student_teachers.link_request.invalid_email",
                     locale: englishLocale
                 )
             )

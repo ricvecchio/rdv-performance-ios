@@ -16,7 +16,10 @@ enum DashboardGreeting {
         guard !trimmedName.isEmpty else {
             switch audience {
             case .student:
-                let value = String(localized: "dashboard.greeting.student_fallback", locale: locale)
+                let value = AppLocalization.string(
+                    "dashboard.greeting.student_fallback",
+                    locale: locale
+                )
                 LocalizationDiagnostics.resolved(
                     context: "DashboardGreeting.studentFallback",
                     locale: locale,
@@ -25,7 +28,10 @@ enum DashboardGreeting {
                 )
                 return value
             case .teacher:
-                let value = String(localized: "dashboard.greeting.teacher_fallback", locale: locale)
+                let value = AppLocalization.string(
+                    "dashboard.greeting.teacher_fallback",
+                    locale: locale
+                )
                 LocalizationDiagnostics.resolved(
                     context: "DashboardGreeting.teacherFallback",
                     locale: locale,
@@ -36,7 +42,7 @@ enum DashboardGreeting {
             }
         }
 
-        let format = String(localized: "dashboard.greeting.named", locale: locale)
+        let format = AppLocalization.string("dashboard.greeting.named", locale: locale)
         LocalizationDiagnostics.resolved(
             context: "DashboardGreeting.named",
             locale: locale,
@@ -71,10 +77,10 @@ enum DashboardAgendaDay {
         switch self {
         case .today:
             key = "dashboard.day.today"
-            value = String(localized: "dashboard.day.today", locale: locale)
+            value = AppLocalization.string("dashboard.day.today", locale: locale)
         case .tomorrow:
             key = "dashboard.day.tomorrow"
-            value = String(localized: "dashboard.day.tomorrow", locale: locale)
+            value = AppLocalization.string("dashboard.day.tomorrow", locale: locale)
         }
         LocalizationDiagnostics.resolved(
             context: "DashboardAgendaDay",
