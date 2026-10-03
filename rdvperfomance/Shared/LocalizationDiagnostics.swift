@@ -25,15 +25,93 @@ enum LocalizationDiagnostics {
     }
 
     static func catalogAvailability(locale: Locale) {
-        let localization = locale.identifier
-        let hasStringTable = Bundle.main.url(
-            forResource: "Localizable",
-            withExtension: "strings",
-            subdirectory: nil,
-            localization: localization
-        ) != nil
+        let selectedAppLanguage = UserDefaults.standard.string(forKey: "selectedAppLanguage") ?? "<unset>"
         let availableLocalizations = Bundle.main.localizations.sorted().joined(separator: ",")
-        let message = "[i18n] context=LocalizationCatalog locale=\(localization) key=Localizable.strings value=present:\(hasStringTable) available:\(availableLocalizations)"
+        let preferredLocalizations = Bundle.main.preferredLocalizations.joined(separator: ",")
+        let developmentLocalization = Bundle.main.developmentLocalization ?? "<unset>"
+
+        emit(
+            "[i18n] selectedAppLanguage=\(selectedAppLanguage) environmentLocale=\(locale.identifier)"
+        )
+        emit(
+            "[i18n] bundle.localizations=[\(availableLocalizations)] bundle.preferredLocalizations=[\(preferredLocalizations)] bundle.developmentLocalization=\(developmentLocalization)"
+        )
+    }
+
+    static func runtimeSnapshot(context: String, locale: Locale) {
+        catalogAvailability(locale: locale)
+
+        let currentLocaleValues = [
+            (
+                key: "dashboard.greeting.named",
+                value: String(localized: "dashboard.greeting.named", locale: locale)
+            ),
+            (
+                key: "dashboard.day.today",
+                value: String(localized: "dashboard.day.today", locale: locale)
+            ),
+            (
+                key: "dashboard.day.tomorrow",
+                value: String(localized: "dashboard.day.tomorrow", locale: locale)
+            ),
+            (
+                key: "dashboard.weekly_progress",
+                value: String(localized: "dashboard.weekly_progress", locale: locale)
+            ),
+            (
+                key: "student_teachers.link_request.invalid_email",
+                value: String(
+                    localized: "student_teachers.link_request.invalid_email",
+                    locale: locale
+                )
+            )
+        ]
+        for localizedValue in currentLocaleValues {
+            resolved(
+                context: "\(context).environment",
+                locale: locale,
+                key: localizedValue.key,
+                value: localizedValue.value
+            )
+        }
+
+        let englishLocale = Locale(identifier: "en")
+        let englishControlValues = [
+            (
+                key: "dashboard.greeting.named",
+                value: String(localized: "dashboard.greeting.named", locale: englishLocale)
+            ),
+            (
+                key: "dashboard.day.today",
+                value: String(localized: "dashboard.day.today", locale: englishLocale)
+            ),
+            (
+                key: "dashboard.day.tomorrow",
+                value: String(localized: "dashboard.day.tomorrow", locale: englishLocale)
+            ),
+            (
+                key: "dashboard.weekly_progress",
+                value: String(localized: "dashboard.weekly_progress", locale: englishLocale)
+            ),
+            (
+                key: "student_teachers.link_request.invalid_email",
+                value: String(
+                    localized: "student_teachers.link_request.invalid_email",
+                    locale: englishLocale
+                )
+            )
+        ]
+        for localizedValue in englishControlValues {
+            resolved(
+                context: "\(context).englishControl",
+                locale: englishLocale,
+                key: localizedValue.key,
+                value: localizedValue.value
+            )
+        }
+    }
+
+    private static func emit(_ message: String) {
         guard register(message) else { return }
         logger.notice("\(message, privacy: .public)")
         print(message)
@@ -54,5 +132,7 @@ enum LocalizationDiagnostics {
     ) {}
 
     static func catalogAvailability(locale: Locale) {}
+
+    static func runtimeSnapshot(context: String, locale: Locale) {}
 #endif
 }

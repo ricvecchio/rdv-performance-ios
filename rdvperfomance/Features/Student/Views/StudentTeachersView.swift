@@ -189,6 +189,18 @@ struct StudentTeachersView: View {
             await loadStudentEmailIfNeeded()
             await refreshData()
         }
+        .onAppear {
+            LocalizationDiagnostics.runtimeSnapshot(
+                context: "StudentTeachersView",
+                locale: locale
+            )
+        }
+        .onChange(of: locale.identifier) { _, _ in
+            LocalizationDiagnostics.runtimeSnapshot(
+                context: "StudentTeachersView",
+                locale: locale
+            )
+        }
         .alert("student_teachers.cancel_invitation_confirmation_title", isPresented: $showRequestCancellationConfirmation) {
             Button("common.cancel", role: .cancel) { requestPendingCancellation = nil }
             Button("student_teachers.confirm_cancellation", role: .destructive) {

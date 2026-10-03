@@ -1272,7 +1272,10 @@ struct StudentDashboardView: View {
     private func logLocalizationSnapshot() {
         let completed = viewModel.currentWeekDaySummaries.filter(\.isCompleted).count
         let total = viewModel.currentWeekDaySummaries.count
-        LocalizationDiagnostics.catalogAvailability(locale: locale)
+        LocalizationDiagnostics.runtimeSnapshot(
+            context: "StudentDashboardView",
+            locale: locale
+        )
         _ = greeting
         _ = weeklyProgressText(completed: completed, total: total)
         _ = DashboardAgendaDay.today.title(locale: locale)
