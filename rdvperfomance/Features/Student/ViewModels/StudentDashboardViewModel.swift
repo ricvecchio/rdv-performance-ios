@@ -607,7 +607,10 @@ final class StudentDashboardViewModel: ObservableObject {
         do {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherId = teacher.id else {
-                linkActionMessage = String(localized: "student_teachers.link_request.teacher_not_found", locale: locale)
+                linkActionMessage = AppLocalization.string(
+                    "student_teachers.link_request.teacher_not_found",
+                    locale: locale
+                )
                 linkActionMessageIsError = true
                 return false
             }
@@ -627,7 +630,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 teacherEmail: email
             )
 
-            linkActionMessage = String(localized: "student_teachers.link_request.success", locale: locale)
+            linkActionMessage = AppLocalization.string(
+                "student_teachers.link_request.success",
+                locale: locale
+            )
             linkActionMessageIsError = false
             await load(locale: locale)
             return true

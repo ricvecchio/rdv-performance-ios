@@ -943,7 +943,10 @@ struct StudentTeachersView: View {
         await loadStudentEmailIfNeeded()
         let currentStudentEmail = effectiveStudentEmail
         if currentStudentEmail.isEmpty {
-            linkActionMessage = String(localized: "student_teachers.link_request.student_email_missing", locale: locale)
+            linkActionMessage = AppLocalization.string(
+                "student_teachers.link_request.student_email_missing",
+                locale: locale
+            )
             linkActionMessageIsError = true
             return false
         }
@@ -958,8 +961,8 @@ struct StudentTeachersView: View {
                   let teacherIdRaw = teacher.id else {
                 linkActionMessage = localizedLinkActionMessage(
                     key: "student_teachers.link_request.teacher_not_found",
-                    value: String(
-                        localized: "student_teachers.link_request.teacher_not_found",
+                    value: AppLocalization.string(
+                        "student_teachers.link_request.teacher_not_found",
                         locale: locale
                     )
                 )
@@ -977,7 +980,10 @@ struct StudentTeachersView: View {
             await loadLinkedTeachers()
 
             if linkedTeacherIds.contains(teacherId) {
-                linkActionMessage = String(localized: "student_teachers.link_request.already_linked", locale: locale)
+                linkActionMessage = AppLocalization.string(
+                    "student_teachers.link_request.already_linked",
+                    locale: locale
+                )
                 linkActionMessageIsError = true
                 return false
             }
@@ -992,8 +998,8 @@ struct StudentTeachersView: View {
                 if hasPendingSameTeacher {
                     linkActionMessage = localizedLinkActionMessage(
                         key: "student_teachers.link_request.pending",
-                        value: String(
-                            localized: "student_teachers.link_request.pending",
+                        value: AppLocalization.string(
+                            "student_teachers.link_request.pending",
                             locale: locale
                         )
                     )
@@ -1012,7 +1018,10 @@ struct StudentTeachersView: View {
 
             linkActionMessage = localizedLinkActionMessage(
                 key: "student_teachers.link_request.success",
-                value: String(localized: "student_teachers.link_request.success", locale: locale)
+                value: AppLocalization.string(
+                    "student_teachers.link_request.success",
+                    locale: locale
+                )
             )
             linkActionMessageIsError = false
 
@@ -1022,8 +1031,8 @@ struct StudentTeachersView: View {
             let nsError = error as NSError
             if nsError.domain == FirestoreErrorDomain,
                nsError.code == FirestoreErrorCode.permissionDenied.rawValue {
-                linkActionMessage = String(
-                    localized: "student_teachers.link_request.permission_denied",
+                linkActionMessage = AppLocalization.string(
+                    "student_teachers.link_request.permission_denied",
                     locale: locale
                 )
                 linkActionMessageIsError = true

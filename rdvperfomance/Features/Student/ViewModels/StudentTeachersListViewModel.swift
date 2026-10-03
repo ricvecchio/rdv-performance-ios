@@ -59,13 +59,22 @@ final class StudentTeachersListViewModel: ObservableObject {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherId = teacher.id?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !teacherId.isEmpty else {
-                return String(localized: "student_teachers.link_request.teacher_not_found", locale: locale)
+                return AppLocalization.string(
+                    "student_teachers.link_request.teacher_not_found",
+                    locale: locale
+                )
             }
             if linkedTeachers.contains(where: { $0.id == teacherId }) {
-                return String(localized: "student_teachers.link_request.already_linked", locale: locale)
+                return AppLocalization.string(
+                    "student_teachers.link_request.already_linked",
+                    locale: locale
+                )
             }
             if sentRequests.contains(where: { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) == teacherId }) {
-                return String(localized: "student_teachers.link_request.pending", locale: locale)
+                return AppLocalization.string(
+                    "student_teachers.link_request.pending",
+                    locale: locale
+                )
             }
             try await repository.createLinkRequest(
                 studentId: studentId,
