@@ -499,7 +499,7 @@ struct HeroesPersonalRecordsView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor tempo por WOD.")
+                                Text("personal_records_heroes.add_your_best_time_for_each_wod")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.55))
 
@@ -517,7 +517,7 @@ struct HeroesPersonalRecordsView: View {
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo WOD")
+                                .accessibilityLabel("personal_records_girls.add_new_wod")
                             }
 
                             tableContainer()
@@ -568,7 +568,7 @@ struct HeroesPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("The Heroes")
+                Text("personal_records_heroes.the_heroes")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -627,13 +627,13 @@ struct HeroesPersonalRecordsView: View {
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("WOD")
+            Text("personal_records_campeonatos.wod")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR (tempo)")
+            Text("personal_records_campeonatos.pr_time")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -717,12 +717,12 @@ struct HeroesPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Resultado:")
+                            Text("personal_records.result_field_label")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
                         }
 
-                        TextField("Ex: 12:34", text: $inputValue)
+                        TextField("personal_records_campeonatos.e_g_12_34", text: $inputValue)
                             .keyboardType(.numbersAndPunctuation)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
@@ -752,10 +752,10 @@ struct HeroesPersonalRecordsView: View {
                         ZStack {
                             Theme.Colors.headerBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
-                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
                                 Button { showPRDatePicker = false } label: {
-                                    Text("Confirmar")
+                                    Text("common.confirm")
                                         .frame(maxWidth: .infinity)
                                         .primaryGreenActionButton()
                                 }
@@ -775,7 +775,7 @@ struct HeroesPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -794,7 +794,7 @@ struct HeroesPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -812,7 +812,7 @@ struct HeroesPersonalRecordsView: View {
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir WOD")
+                        .accessibilityLabel("personal_records_girls.delete_wod")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -821,14 +821,14 @@ struct HeroesPersonalRecordsView: View {
             }
         }
         .presentationDetents([.fraction(0.80)])
-        .alert("Excluir registro", isPresented: $showDeleteAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            let recordName = selectedWod?.name ?? String(localized: "este WOD", locale: locale)
-            let format = String(localized: "Deseja excluir o registro de %@?", locale: locale)
+            let recordName = selectedWod?.name ?? String(localized: "personal_records.wod_fallback", locale: locale)
+            let format = String(localized: "personal_records.delete_record_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
@@ -849,7 +849,7 @@ struct HeroesPersonalRecordsView: View {
                     .foregroundColor(.green.opacity(0.90))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("WOD")
+                    Text("personal_records_campeonatos.wod")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
@@ -1009,12 +1009,12 @@ struct HeroesPersonalRecordsView: View {
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("Evolução", systemImage: "chart.line.uptrend.xyaxis")
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label("Histórico", systemImage: "clock.arrow.circlepath")
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
@@ -1036,7 +1036,7 @@ struct HeroesPersonalRecordsView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
-                        Text("Nenhum histórico de evolução registrado ainda.")
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.60))
                     } else {
@@ -1047,7 +1047,7 @@ struct HeroesPersonalRecordsView: View {
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
                                     if entry.id == recordID {
-                                        Text("RECORDE")
+                                        Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.green)
                                     }
@@ -1063,7 +1063,7 @@ struct HeroesPersonalRecordsView: View {
                                             .foregroundColor(.red.opacity(0.85))
                                     }
                                     .buttonStyle(.plain)
-                                    .accessibilityLabel("Excluir registro")
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -1083,16 +1083,16 @@ struct HeroesPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
-        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
-            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
                 if let entry = historyEntryPendingDeletion {
                     deleteHistoryEntry(entry, for: key, metadata: metadata)
                 }
                 historyEntryPendingDeletion = nil
             }
         } message: {
-            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
         }
     }
 
@@ -1228,23 +1228,23 @@ struct HeroesPersonalRecordsView: View {
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Novo Hero WOD")
+                    Text("personal_records_heroes.new_hero_wod")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie um WOD e, se quiser, já informe seu resultado inicial.")
+                    Text("personal_records_girls.create_a_wod_and_if_you_want_enter_your_initial_result_now")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                    addItemField("Nome do WOD", placeholder: "Ex: Meu Hero WOD", text: $newItemName)
+                    addItemField("personal_records.heroes.wod_name_field", placeholder: "personal_records.placeholder.hero_wod_name", text: $newItemName)
 
-                    addItemField("Descrição (opcional)", placeholder: "Ex: For Time — 5 rounds", text: $newItemDescription)
+                    addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.for_time_five_rounds", text: $newItemDescription)
 
-                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34", text: $newItemValue)
+                    addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
@@ -1258,7 +1258,7 @@ struct HeroesPersonalRecordsView: View {
                         Button {
                             showAddItemSheet = false
                         } label: {
-                            Text("Cancelar")
+                            Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
                                 .frame(maxWidth: .infinity)
@@ -1275,7 +1275,7 @@ struct HeroesPersonalRecordsView: View {
                         Button {
                             addNewItem()
                         } label: {
-                            Text("Adicionar")
+                            Text("common.add")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
                         }
@@ -1313,13 +1313,13 @@ struct HeroesPersonalRecordsView: View {
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do WOD."
+            addItemErrorMessage = String(localized: "personal_records.heroes.wod_name_required", locale: locale)
             return
         }
 
         let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este WOD já existe na sua lista."
+            addItemErrorMessage = String(localized: "personal_records.heroes.duplicate_wod", locale: locale)
             return
         }
 

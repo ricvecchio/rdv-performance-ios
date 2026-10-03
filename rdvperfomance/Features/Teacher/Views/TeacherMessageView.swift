@@ -101,7 +101,7 @@ struct TeacherMessageView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Mensagens")
+                Text("ui.messages")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -134,11 +134,17 @@ struct TeacherMessageView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aluno: \(student.name)")
+            Text(
+                String(
+                    format: String(localized: "ui.student_value", locale: locale),
+                    locale: locale,
+                    arguments: [student.name]
+                )
+            )
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
-            Text("Envie orientações, avisos e recados para o aluno.")
+            Text("ui.send_guidance_notices_and_messages_to_the_student")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -149,7 +155,7 @@ struct TeacherMessageView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("HISTÓRICO")
+                Text("ui.history")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 
@@ -161,7 +167,7 @@ struct TeacherMessageView: View {
             }
 
             if messages.isEmpty {
-                Text("Nenhuma mensagem enviada ainda.")
+                Text("ui.no_message_has_been_sent_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -201,7 +207,7 @@ struct TeacherMessageView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.userName ?? String(localized: "Professor", locale: locale))
+                Text(session.userName ?? String(localized: "common.trainer", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -223,7 +229,7 @@ struct TeacherMessageView: View {
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 14))
 
-                Text("MENSAGEM")
+                Text("ui.message")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
             }
@@ -250,7 +256,7 @@ struct TeacherMessageView: View {
                     if isSending {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Enviar")
+                        Text("ui.send")
                     }
                     Spacer()
                 }
@@ -299,7 +305,7 @@ struct TeacherMessageView: View {
         let msg = (error as NSError).localizedDescription
         if msg.lowercased().contains("missing or insufficient permissions") {
             return String(
-                localized: "Sem permissão para acessar as mensagens desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/messages.",
+                localized: "ui.you_do_not_have_permission_to_access_this_students_messages_confirm_that_you_are_signed_in_as_a_trainer_and_that_firestore_rules_allow_users_alunoid_messages",
                 locale: locale
             )
         }
@@ -312,17 +318,17 @@ struct TeacherMessageView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "Apenas professor pode acessar mensagens.", locale: locale)
+            errorMessage = String(localized: "ui.only_trainers_can_access_messages", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
+            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -349,23 +355,23 @@ struct TeacherMessageView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "Apenas professor pode enviar mensagens.", locale: locale)
+            errorMessage = String(localized: "ui.only_trainers_can_send_messages", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
+            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
         let bodyTrim = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !bodyTrim.isEmpty else {
-            errorMessage = String(localized: "Digite uma mensagem antes de enviar.", locale: locale)
+            errorMessage = String(localized: "ui.enter_a_message_before_sending", locale: locale)
             return
         }
 
@@ -395,7 +401,7 @@ struct TeacherMessageView: View {
             messages.insert(local, at: 0)
 
             message = ""
-            successMessage = String(localized: "Mensagem enviada com sucesso.", locale: locale)
+            successMessage = String(localized: "ui.message_sent_successfully", locale: locale)
 
             // ✅ Sincroniza com Firestore
             await loadMessages()

@@ -41,7 +41,7 @@ struct SpriteDemoView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Visualize um preview interativo de evolução/consistência.")
+                            Text("sprites.preview.description")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -53,7 +53,7 @@ struct SpriteDemoView: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "shuffle")
-                                    Text("Randomizar cenário")
+                                    Text("gamification.preview.randomize")
                                 }
                                 .padding(.horizontal, 14)
                                 .primaryGreenActionButton()
@@ -94,7 +94,7 @@ struct SpriteDemoView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Preview do Progresso")
+                Text("sprites.preview.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }

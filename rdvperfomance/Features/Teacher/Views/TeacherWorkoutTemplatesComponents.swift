@@ -127,13 +127,13 @@ struct TeacherWorkoutTemplateRow: View {
                     Button {
                         onSend()
                     } label: {
-                        Label("Enviar para aluno", systemImage: "paperplane.fill")
+                        Label(LocalizedStringKey("ui.send_to_student"), systemImage: "paperplane.fill")
                     }
 
                     Button(role: .destructive) {
                         onDelete()
                     } label: {
-                        Label("Remover", systemImage: "trash.fill")
+                        Label(LocalizedStringKey("ui.remove"), systemImage: "trash.fill")
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -159,7 +159,7 @@ struct TeacherWorkoutTemplatesLoadingView: View {
     var body: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando...")
+            Text("ui.loading")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -177,16 +177,16 @@ struct TeacherWorkoutTemplatesEmptyView: View {
         VStack(spacing: 10) {
             Text(
                 isCrossfitCategory
-                    ? String(localized: "Nenhum WOD cadastrado", locale: locale)
-                    : String(localized: "Nenhum treino cadastrado", locale: locale)
+                    ? String(localized: "ui.no_wod_registered", locale: locale)
+                    : String(localized: "ui.no_workout_registered", locale: locale)
             )
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text(
                 isCrossfitCategory
-                    ? String(localized: "Toque em \"Adicionar WOD\" para começar.", locale: locale)
-                    : String(localized: "Cadastre templates para aparecerem aqui.", locale: locale)
+                    ? String(localized: "ui.tap_add_wod_to_start", locale: locale)
+                    : String(localized: "ui.create_templates_for_them_to_appear_here", locale: locale)
             )
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))

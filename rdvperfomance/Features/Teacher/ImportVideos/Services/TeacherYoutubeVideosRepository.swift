@@ -128,7 +128,7 @@ struct TeacherYoutubeVideosRepository {
     ) async throws {
         let cleanedUrl = url.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let videoId = YouTubeVideoImporter.extractYoutubeVideoId(from: cleanedUrl) else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Link inválido. Cole um link do YouTube (youtu.be/ ou youtube.com/watch)."])
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "ui.invalid_youtube_link")])
         }
         
         let payload: [String: Any] = [

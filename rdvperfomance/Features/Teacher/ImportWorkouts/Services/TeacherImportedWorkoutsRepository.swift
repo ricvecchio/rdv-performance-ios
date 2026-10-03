@@ -75,7 +75,7 @@ struct TeacherImportedWorkoutsRepository {
     static func addWorkout(teacherId: String, title: String) async throws {
         let cleanedTitle = title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !cleanedTitle.isEmpty else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Informe um título para o treino."])
+            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "ui.enter_the_workout_title")])
         }
         
         let payload: [String: Any] = [

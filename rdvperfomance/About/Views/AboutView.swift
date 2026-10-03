@@ -78,7 +78,7 @@ struct AboutView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Sobre")
+                Text("about.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -100,18 +100,18 @@ struct AboutView: View {
     // Retorna o card com informações do app
     private func contentCard() -> some View {
         VStack(spacing: 14) {
-            Text("GERENCIE SEUS ALUNOS E PERSONALIZE TREINOS COM FACILIDADE")
+            Text("about.headline")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 12) {
-                featureItem("Crie treinos personalizados para seus alunos")
-                featureItem("Acompanhe a evolução de cada aluno baseado no programa selecionado")
-                featureItem("Tudo em um só lugar com interface intuitiva e prática")
+                featureItem("about.feature.create_workouts")
+                featureItem("about.feature.track_progress")
+                featureItem("about.feature.all_in_one")
             }
 
-            Text("Sua ferramenta para otimizar o acompanhamento dos seus alunos e seus treinos!")
+            Text("about.description")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.92))
                 .multilineTextAlignment(.center)

@@ -85,7 +85,7 @@ struct TeacherImportVideosView: View {
             }
             
             ToolbarItem(placement: .principal) {
-                Text("Meus Vídeos")
+                Text("workout.my_videos")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -141,7 +141,7 @@ struct TeacherImportVideosView: View {
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Salve links do YouTube para consultar depois.")
+            Text("ui.save_youtube_links_to_view_later")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -155,7 +155,7 @@ struct TeacherImportVideosView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
-                Text("Adicionar Vídeo")
+                Text("ui.add_video")
             }
             .padding(.horizontal, 14)
             .compactPrimaryGreenActionButton()
@@ -201,7 +201,7 @@ struct TeacherImportVideosView: View {
     private func openLockedPlayer(for video: TeacherYoutubeVideo) {
         activeLockedPlayer = LockedPlayerItem(
             title: video.title.isEmpty
-                ? String(localized: "Vídeo do YouTube", locale: locale)
+                ? String(localized: "workout.youtube_video", locale: locale)
                 : video.title,
             videoId: video.videoId
         )
@@ -237,13 +237,13 @@ struct TeacherImportVideosView: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Editar título")
+                        Text("ui.edit_title")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
-                            Text("Título")
+                            Text("ui.title")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
 
@@ -281,7 +281,7 @@ struct TeacherImportVideosView: View {
                 }
 
                 HStack(spacing: 12) {
-                    Button("Cancelar") {
+                    Button("common.cancel") {
                         isEditTitleSheetOpen = false
                     }
                     .buttonStyle(.plain)
@@ -305,7 +305,7 @@ struct TeacherImportVideosView: View {
                                 ProgressView().tint(.white)
                             } else {
                                 Image(systemName: "checkmark")
-                                Text("Salvar")
+                                Text("common.save")
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -327,7 +327,7 @@ struct TeacherImportVideosView: View {
             thumbnailView(videoId: v.videoId)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(v.title.isEmpty ? String(localized: "Vídeo do YouTube", locale: locale) : v.title)
+                Text(v.title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : v.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -346,26 +346,26 @@ struct TeacherImportVideosView: View {
                     Button {
                         openSendToStudent(for: v)
                     } label: {
-                        Label("Enviar para aluno", systemImage: "paperplane.fill")
+                        Label(LocalizedStringKey("ui.send_to_student"), systemImage: "paperplane.fill")
                     }
 
                     Button {
                         openEditTitle(for: v)
                     } label: {
-                        Label("Editar título", systemImage: "pencil")
+                        Label(LocalizedStringKey("ui.edit_title"), systemImage: "pencil")
                     }
                 case .student:
                     Button {
                         openEditTitle(for: v)
                     } label: {
-                        Label("Editar Vídeo", systemImage: "pencil")
+                        Label(LocalizedStringKey("ui.edit_video"), systemImage: "pencil")
                     }
                 }
 
                 Button(role: .destructive) {
                     Task { await deleteVideo(videoId: v.id) }
                 } label: {
-                    Label("Remover", systemImage: "trash.fill")
+                    Label(LocalizedStringKey("ui.remove"), systemImage: "trash.fill")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -442,7 +442,7 @@ struct TeacherImportVideosView: View {
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando...")
+            Text("ui.loading")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -452,11 +452,11 @@ struct TeacherImportVideosView: View {
     
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text("Nenhum vídeo cadastrado")
+            Text("ui.no_video_registered")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
             
-            Text("Toque em \"Adicionar Vídeo\" para salvar um link do YouTube.")
+            Text("ui.tap_add_video_to_save_youtube_link")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
@@ -504,7 +504,7 @@ struct TeacherImportVideosView: View {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
                     videos = []
-                    errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+                    errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
                 videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
@@ -546,7 +546,7 @@ struct TeacherImportVideosView: View {
             switch context {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                    errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+                    errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
                 try await TeacherYoutubeVideosRepository.addVideo(
@@ -596,7 +596,7 @@ struct TeacherImportVideosView: View {
         switch context {
         case .teacher:
             guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                editTitleErrorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+                editTitleErrorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                 return
             }
             updateTitle = {
@@ -659,7 +659,7 @@ struct TeacherImportVideosView: View {
             switch context {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                    errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+                    errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
                 try await TeacherYoutubeVideosRepository.deleteVideo(
@@ -702,7 +702,7 @@ struct TeacherImportVideosView: View {
         guard !expectedStudentId.isEmpty,
               expectedStudentId == authenticatedStudentId
         else {
-            errorMessage = String(localized: "Não foi possível validar sua autenticação para acessar seus vídeos.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_validate_your_authentication_to_access_your_videos", locale: locale)
             return nil
         }
 
@@ -729,12 +729,12 @@ struct TeacherImportVideosView: View {
         switch context {
         case .teacher:
             return String(
-                localized: "Sem permissão para acessar/importar vídeos. Verifique se você está logado e se seu usuário é do tipo PROFESSOR (TRAINER).",
+                localized: "ui.no_permission_to_access_import_videos_verify_that_you_are_signed_in_and_that_your_user_type_is_coach_trainer",
                 locale: locale
             )
         case .student:
             return String(
-                localized: "Sem permissão para acessar seus vídeos. Verifique sua autenticação e tente novamente.",
+                localized: "ui.no_permission_to_access_your_videos_verify_your_authentication_and_try_again",
                 locale: locale
             )
         }

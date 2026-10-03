@@ -27,12 +27,12 @@ final class LoginViewModel: ObservableObject {
         let passTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !emailTrim.isEmpty else {
-            errorMessage = String(localized: "Informe seu e-mail.", locale: Self.localizationLocale)
+            errorMessage = String(localized: "auth.validation.email_required", locale: Self.localizationLocale)
             return false
         }
 
         guard !passTrim.isEmpty else {
-            errorMessage = String(localized: "Informe sua senha.", locale: Self.localizationLocale)
+            errorMessage = String(localized: "auth.validation.password_required", locale: Self.localizationLocale)
             return false
         }
 
@@ -43,7 +43,7 @@ final class LoginViewModel: ObservableObject {
             _ = try await service.login(email: emailTrim, password: passTrim)
             return true
         } catch {
-            errorMessage = String(localized: "E-mail ou senha inválidos.", locale: Self.localizationLocale)
+            errorMessage = String(localized: "auth.login.invalid_credentials", locale: Self.localizationLocale)
             return false
         }
     }

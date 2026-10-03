@@ -21,11 +21,11 @@ enum AppLanguage: String, CaseIterable, Identifiable {
     var localizedName: LocalizedStringKey {
         switch self {
         case .portugueseBrazil:
-            "Português (Brasil)"
+            "settings.language.portuguese_brazil"
         case .english:
-            "Inglês"
+            "settings.language.english"
         case .spanish:
-            "Espanhol"
+            "settings.language.spanish"
         }
     }
 }
@@ -87,7 +87,7 @@ struct LanguageSettingsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Idioma")
+                Text("settings.language.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }

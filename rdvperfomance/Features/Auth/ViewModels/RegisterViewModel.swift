@@ -49,11 +49,11 @@ final class RegisterViewModel: ObservableObject {
         let bioTrim = bio.trimmingCharacters(in: .whitespacesAndNewlines)
         let gymNameTrim = gymName.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        guard !nameTrim.isEmpty else { errorMessage = String(localized: "Informe seu nome.", locale: Self.localizationLocale); return }
-        guard !emailTrim.isEmpty else { errorMessage = String(localized: "Informe seu e-mail.", locale: Self.localizationLocale); return }
-        guard !passTrim.isEmpty else { errorMessage = String(localized: "Informe sua senha.", locale: Self.localizationLocale); return }
+        guard !nameTrim.isEmpty else { errorMessage = String(localized: "auth.validation.name_required", locale: Self.localizationLocale); return }
+        guard !emailTrim.isEmpty else { errorMessage = String(localized: "auth.validation.email_required", locale: Self.localizationLocale); return }
+        guard !passTrim.isEmpty else { errorMessage = String(localized: "auth.validation.password_required", locale: Self.localizationLocale); return }
         guard BrazilianPhoneFormatter.isValidMobile(phoneTrim) else {
-            errorMessage = String(localized: "Informe um WhatsApp com 11 dígitos.", locale: Self.localizationLocale)
+            errorMessage = String(localized: "auth.validation.whatsapp_invalid", locale: Self.localizationLocale)
             return
         }
 
@@ -89,11 +89,11 @@ final class RegisterViewModel: ObservableObject {
                     uid: createdUid,
                     form: form
                 )
-                successMessage = String(localized: "Cadastro realizado com sucesso.", locale: Self.localizationLocale)
+                successMessage = String(localized: "auth.registration.success", locale: Self.localizationLocale)
             } catch {
                 let msg = (error as NSError).localizedDescription
                 let format = String(
-                    localized: "Usuário criado no Auth, mas falhou ao salvar no Firestore.\nMotivo: %@\nVerifique as regras do Firestore.",
+                    localized: "auth.registration.firestore_profile_save_failed",
                     locale: Self.localizationLocale
                 )
                 errorMessage = String(format: format, locale: Self.localizationLocale, arguments: [msg])
@@ -101,7 +101,7 @@ final class RegisterViewModel: ObservableObject {
 
         } catch {
             let ns = error as NSError
-            let format = String(localized: "Falha ao cadastrar no Auth. Motivo: %@", locale: Self.localizationLocale)
+            let format = String(localized: "auth.registration.authentication_failed", locale: Self.localizationLocale)
             errorMessage = String(
                 format: format,
                 locale: Self.localizationLocale,

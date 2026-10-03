@@ -14,8 +14,13 @@ struct ActivityListView: View {
             List {
                 ForEach(activities, id: \.objectID) { activity in
                     VStack(alignment: .leading) {
-                        Text(activity.title ?? "(sem título)")
-                            .font(.headline)
+                        if let title = activity.title {
+                            Text(title)
+                                .font(.headline)
+                        } else {
+                            Text("core_data.activity.untitled")
+                                .font(.headline)
+                        }
                         if let d = activity.date {
                             Text(d.formatted(.dateTime.year().month().day().hour().minute().locale(locale)))
                                 .font(.caption)
@@ -25,7 +30,7 @@ struct ActivityListView: View {
                 }
                 .onDelete(perform: delete)
             }
-            .navigationTitle("Atividades")
+            .navigationTitle("core_data.activities.title")
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button(action: add) {
@@ -40,7 +45,8 @@ struct ActivityListView: View {
     private func add() {
         let newItem = UserActivity(context: viewContext)
         newItem.id = UUID()
-        newItem.title = "Atividade \(Int.random(in: 1...1000))"
+        let format = String(localized: "core_data.activity.generated_title", locale: locale)
+        newItem.title = String(format: format, locale: locale, arguments: [Int64.random(in: 1...1000)])
         newItem.date = Date()
 
         do {

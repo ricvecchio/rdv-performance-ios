@@ -69,15 +69,15 @@ struct StudentPersonalRecordsView: View {
 
     // Itens fixos conforme solicitado (ordem + nomes)
     private let menuItems: [PRMenuItem] = [
-        .init(title: "Barbell", sectionKey: "barbell"),
-        .init(title: "Gymnastic", sectionKey: "gymnastic"),
-        .init(title: "Endurance", sectionKey: "endurance"),
-        .init(title: "Notables", sectionKey: "notables"),
-        .init(title: "Girls", sectionKey: "girls"),
-        .init(title: "Open", sectionKey: "open"),
-        .init(title: "The Heroes", sectionKey: "theHeroes"),
-        .init(title: "Campeonatos", localizedTitle: "Campeonatos", sectionKey: "campeonatos"),
-        .init(title: "Crossfit Games", localizedTitle: "Crossfit Games", sectionKey: "crossfitGames")
+        .init(title: "Barbell", localizedTitle: "personal_records_barbell.barbell", sectionKey: "barbell"),
+        .init(title: "Gymnastic", localizedTitle: "personal_records_gymnastic.gymnastic", sectionKey: "gymnastic"),
+        .init(title: "Endurance", localizedTitle: "personal_records_endurance.endurance", sectionKey: "endurance"),
+        .init(title: "Notables", localizedTitle: "personal_records_notables.notables", sectionKey: "notables"),
+        .init(title: "Girls", localizedTitle: "personal_records_girls.girls", sectionKey: "girls"),
+        .init(title: "Open", localizedTitle: "personal_records_open.open", sectionKey: "open"),
+        .init(title: "The Heroes", localizedTitle: "personal_records_heroes.the_heroes", sectionKey: "theHeroes"),
+        .init(title: "Campeonatos", localizedTitle: "personal_records_campeonatos.championships", sectionKey: "campeonatos"),
+        .init(title: "Crossfit Games", localizedTitle: "personal_records_crossfit_games.crossfit_games", sectionKey: "crossfitGames")
     ]
 
     var body: some View {
@@ -100,7 +100,7 @@ struct StudentPersonalRecordsView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Selecione uma seção.")
+                            Text("personal_records.select_a_section")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
 
@@ -156,7 +156,7 @@ struct StudentPersonalRecordsView: View {
 
                                 actionRow(
                                     title: "Meus Vídeos",
-                                    localizedTitle: "Meus Vídeos",
+                                    localizedTitle: "workout.my_videos",
                                     icon: "video.fill"
                                 ) {
                                     path.append(.studentVideos)
@@ -215,7 +215,7 @@ struct StudentPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Recorde Pessoal")
+                Text("personal_records.personal_record")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -275,7 +275,7 @@ struct StudentPersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
-                Text("Importar do Tecnofit")
+                Text("personal_records.import_from_tecnofit")
             }
             .padding(.horizontal, 14)
             .compactPrimaryGreenActionButton()

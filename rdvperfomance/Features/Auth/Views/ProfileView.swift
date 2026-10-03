@@ -267,7 +267,7 @@ struct ProfileView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Perfil")
+                Text("common.profile")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -293,19 +293,19 @@ struct ProfileView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
-        .alert(LocalizedStringKey("Trocar unidade"), isPresented: $showTrocarUnidadeAlert) {
-            TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
+        .alert(LocalizedStringKey("profile.unit.change_title"), isPresented: $showTrocarUnidadeAlert) {
+            TextField("profile.unit.placeholder", text: $unidadeDraft)
 
-            Button("Cancelar", role: .cancel) { }
+            Button("common.cancel", role: .cancel) { }
 
-            Button("Salvar") {
+            Button("common.save") {
                 Task { await salvarUnidade() }
             }
         } message: {
-            Text("Digite a unidade onde você treina. Se deixar em branco, a unidade será removida do perfil.")
+            Text("profile.unit.change_message")
         }
-        .alert("Erro", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) {
+        .alert("common.error", isPresented: $showErrorAlert) {
+            Button("common.ok", role: .cancel) {
                 showErrorAlert = false
                 errorMessage = nil
             }
@@ -818,7 +818,7 @@ struct ProfileView: View {
                   let image = UIImage(data: data)
             else {
                 errorMessage = String(
-                    localized: "Não foi possível carregar a imagem selecionada.",
+                    localized: "auth.profile_photo.load_failed",
                     locale: locale
                 )
                 showErrorAlert = true
@@ -858,19 +858,19 @@ struct ProfileView: View {
                     selectedPhotoItem = nil
                     showPhotoPicker = true
                 } label: {
-                    Label("Escolher foto", systemImage: "photo.fill")
+                    Label(LocalizedStringKey("auth.profile_photo.choose"), systemImage: "photo.fill")
                 }
 
                 Button {
                     showAvatarPicker = true
                 } label: {
-                    Label("Escolher Avatar", systemImage: "person.crop.circle")
+                    Label(LocalizedStringKey("auth.profile_photo.choose_avatar"), systemImage: "person.crop.circle")
                 }
 
                 Button(role: .destructive) {
                     Task { await removePhoto() }
                 } label: {
-                    Label("Remover foto", systemImage: "trash.fill")
+                    Label(LocalizedStringKey("auth.profile_photo.remove"), systemImage: "trash.fill")
                 }
             } label: {
                 HeaderAvatarView(size: 92, isNavigationEnabled: false)
@@ -975,8 +975,8 @@ struct ProfileView: View {
 
             optionRow(
                 icon: "ruler",
-                title: "Trocar unidade",
-                localizedTitle: "Trocar unidade",
+                title: "profile.unit.change_title",
+                localizedTitle: "profile.unit.change_title",
                 trailing: .chevron
             ) {
                 openTrocarUnidade()
@@ -1022,8 +1022,8 @@ struct ProfileView: View {
                 divider()
                 optionRow(
                     icon: "ruler.fill",
-                    title: "Unidade de Medida",
-                    localizedTitle: "Unidade de Medida",
+                    title: "settings.weight_unit.title",
+                    localizedTitle: "settings.weight_unit.title",
                     trailing: .textWithChevron(preferredWeightUnit.shortLabel)
                 ) {
                     draftWeightUnitRawState = preferredWeightUnitRawState
@@ -1035,8 +1035,8 @@ struct ProfileView: View {
                 divider()
                 optionRow(
                     icon: "ruler.fill",
-                    title: "Unidade de Medida",
-                    localizedTitle: "Unidade de Medida",
+                    title: "settings.weight_unit.title",
+                    localizedTitle: "settings.weight_unit.title",
                     trailing: .textWithChevron(preferredWeightUnit.shortLabel)
                 ) {
                     draftWeightUnitRawState = preferredWeightUnitRawState
@@ -1048,8 +1048,8 @@ struct ProfileView: View {
                 divider()
                 optionRow(
                     icon: "square.grid.2x2.fill",
-                    title: "Meus Ícones",
-                    localizedTitle: "Meus Ícones",
+                    title: "profile.icons.title",
+                    localizedTitle: "profile.icons.title",
                     trailing: .chevron
                 ) {
                     showMeusIconesModal = true
@@ -1219,7 +1219,7 @@ struct ProfileView: View {
         } label: {
             HStack {
                 Spacer()
-                Text("Sair")
+                Text("auth.logout")
                 Spacer()
             }
             .primaryGreenActionButton()
@@ -1239,7 +1239,7 @@ struct ProfileView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Toque em um ícone para copiar o nome.")
+                            Text("profile.icons.instructions")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white.opacity(0.65))
                                 .padding(.top, 12)
@@ -1298,7 +1298,7 @@ struct ProfileView: View {
                         Spacer()
                         Text(
                             String(
-                                format: String(localized: "Copiado: %@", locale: locale),
+                                format: String(localized: "profile.icons.copied", locale: locale),
                                 locale: locale,
                                 arguments: [copied]
                             )
@@ -1320,11 +1320,11 @@ struct ProfileView: View {
                     .animation(.easeInOut(duration: 0.18), value: copiedIconName)
                 }
             }
-            .navigationTitle(LocalizedStringKey("Meus Ícones"))
+            .navigationTitle(LocalizedStringKey("profile.icons.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fechar") {
+                    Button("common.close") {
                         showMeusIconesModal = false
                     }
                     .foregroundColor(.green)

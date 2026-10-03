@@ -108,28 +108,34 @@ struct TeacherWorkoutTemplatesListView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await load() }
-        .alert("Novo treino", isPresented: $showCreateDialog) {
-            TextField("Título", text: $newTitle)
-            TextField("Descrição (opcional)", text: $newDesc)
+        .alert("ui.new_workout", isPresented: $showCreateDialog) {
+            TextField("ui.title", text: $newTitle)
+            TextField("ui.description_optional", text: $newDesc)
 
-            Button("Cancelar", role: .cancel) { }
+            Button("common.cancel", role: .cancel) { }
 
-            Button("Salvar") {
+            Button("common.save") {
                 Task { await createTemplate() }
             }
         } message: {
-            Text("Este treino ficará disponível em “Meus Treinos” para anexar nos dias/semanas.")
+            Text("ui.this_workout_will_be_available_in_my_workouts_to_attach_to_days_weeks")
         }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let format = String(localized: "Categoria: %@", locale: locale)
+            let format = String(localized: "ui.category_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [category.localizedDisplayName(locale: locale)]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
 
-            Text("Seção: \(sectionTitle)")
+            Text(
+                String(
+                    format: String(localized: "ui.section_value", locale: locale),
+                    locale: locale,
+                    arguments: [sectionTitle]
+                )
+            )
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -198,7 +204,7 @@ struct TeacherWorkoutTemplatesListView: View {
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando treinos...")
+            Text("ui.loading_workouts")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -208,7 +214,7 @@ struct TeacherWorkoutTemplatesListView: View {
 
     private func errorView(_ msg: String) -> some View {
         VStack(spacing: 10) {
-            Text("Ops! Não foi possível carregar.")
+            Text("workout.oops_unable_to_load")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
@@ -220,7 +226,7 @@ struct TeacherWorkoutTemplatesListView: View {
             Button {
                 Task { await load() }
             } label: {
-                Text("Tentar novamente")
+                Text("ui.try_again")
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
             }
@@ -233,11 +239,11 @@ struct TeacherWorkoutTemplatesListView: View {
 
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text("Nenhum treino cadastrado")
+            Text("ui.no_workout_registered")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Toque em + para criar seu primeiro treino.")
+            Text("ui.tap_to_create_your_first_workout")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
@@ -254,7 +260,7 @@ struct TeacherWorkoutTemplatesListView: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             items = []
             return
         }

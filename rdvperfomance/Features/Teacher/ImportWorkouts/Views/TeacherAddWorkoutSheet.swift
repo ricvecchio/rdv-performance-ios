@@ -3,6 +3,7 @@ import SwiftUI
 struct TeacherAddWorkoutSheet: View {
     
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     
     @State private var title: String = ""
     @State private var sheetMessage: String? = nil
@@ -30,7 +31,7 @@ struct TeacherAddWorkoutSheet: View {
                             Spacer(minLength: 0)
                             
                             VStack(alignment: .leading, spacing: 14) {
-                                Text("Digite um título para o treino.")
+                                Text("ui.enter_a_workout_title")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.65))
                                 
@@ -40,7 +41,10 @@ struct TeacherAddWorkoutSheet: View {
                                     Button {
                                         let t = title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                                         if t.isEmpty {
-                                            sheetMessage = "Informe um título para o treino."
+                                            sheetMessage = String(
+                                                localized: "ui.enter_the_workout_title",
+                                                locale: locale
+                                            )
                                             sheetMessageIsError = true
                                             return
                                         }
@@ -50,7 +54,7 @@ struct TeacherAddWorkoutSheet: View {
                                     } label: {
                                         HStack(spacing: 10) {
                                             Image(systemName: "checkmark")
-                                            Text("Salvar")
+                                            Text("common.save")
                                         }
                                         .padding(.horizontal, 14)
                                         .primaryGreenActionButton()
@@ -76,11 +80,11 @@ struct TeacherAddWorkoutSheet: View {
                 }
                 .ignoresSafeArea(.container, edges: [.bottom])
             }
-            .navigationTitle("Adicionar Treino")
+            .navigationTitle("ui.add_workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+                    Button("common.close") { dismiss() }
                 }
             }
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -92,13 +96,13 @@ struct TeacherAddWorkoutSheet: View {
     private var formCard: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Título do treino")
+                Text("ui.workout_title")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
                 
                 ZStack(alignment: .leading) {
                     if title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty {
-                        Text("Ex: Treino A - Peito e tríceps")
+                        Text("ui.e_g_workout_a_chest_and_triceps")
                             .foregroundColor(.white.opacity(0.45))
                             .padding(.horizontal, 12)
                     }

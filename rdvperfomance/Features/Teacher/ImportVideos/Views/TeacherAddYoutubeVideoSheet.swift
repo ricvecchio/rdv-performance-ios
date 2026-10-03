@@ -25,13 +25,13 @@ struct TeacherAddYoutubeVideoSheet: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Adicionar Vídeo")
+                        Text("ui.add_video")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Cole o link do YouTube e adicione um título para facilitar a busca.")
+                            Text("ui.paste_the_youtube_link_and_add_a_title_to_make_it_easier_to_find")
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.45))
 
@@ -60,7 +60,7 @@ struct TeacherAddYoutubeVideoSheet: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "doc.on.doc")
-                            Text("Abrir YouTube")
+                            Text("ui.open_youtube")
                         }
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.85))
@@ -83,7 +83,7 @@ struct TeacherAddYoutubeVideoSheet: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark")
-                            Text("Salvar")
+                            Text("common.save")
                         }
                         .frame(maxWidth: .infinity)
                         .primaryGreenActionButton()
@@ -102,7 +102,7 @@ struct TeacherAddYoutubeVideoSheet: View {
     private var formFields: some View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 8) {
-                Text("Título (opcional)")
+                Text("ui.title_optional")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 
@@ -124,7 +124,7 @@ struct TeacherAddYoutubeVideoSheet: View {
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                Text("Link do YouTube")
+                Text("ui.youtube_link")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 
@@ -147,7 +147,7 @@ struct TeacherAddYoutubeVideoSheet: View {
             }
             
             VStack(alignment: .leading, spacing: 8) {
-                Text("Categoria do vídeo")
+                Text("ui.video_category")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 

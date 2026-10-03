@@ -193,12 +193,13 @@ final class TeacherStudentsListViewModel: ObservableObject {
         teacherId: String,
         studentId: String,
         currentCategory: TreinoTipo,
-        newCategory: TreinoTipo
+        newCategory: TreinoTipo,
+        locale: Locale
     ) async {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty, !studentId.isEmpty else {
-            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            setLinkError(String(localized: "ui.unable_to_identify_student_link", locale: locale))
             return
         }
         activateTeacher(teacherId)
@@ -229,12 +230,13 @@ final class TeacherStudentsListViewModel: ObservableObject {
     func ensureStudentCategories(
         teacherId: String,
         studentId: String,
-        categories: [TreinoTipo]
+        categories: [TreinoTipo],
+        locale: Locale
     ) async {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty, !studentId.isEmpty else {
-            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            setLinkError(String(localized: "ui.unable_to_identify_student_link", locale: locale))
             return
         }
 
@@ -265,12 +267,13 @@ final class TeacherStudentsListViewModel: ObservableObject {
     func setStudentCategories(
         teacherId: String,
         studentId: String,
-        categories: [TreinoTipo]
+        categories: [TreinoTipo],
+        locale: Locale
     ) async -> Bool {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         let studentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty, !studentId.isEmpty, !categories.isEmpty else {
-            setLinkError("Não foi possível identificar o vínculo do aluno.")
+            setLinkError(String(localized: "ui.unable_to_identify_student_link", locale: locale))
             return false
         }
         activateTeacher(teacherId)
@@ -369,7 +372,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             .trimmingCharacters(in: .whitespacesAndNewlines)
             .lowercased()
         guard !email.isEmpty else {
-            setInviteError("Informe o e-mail do aluno.")
+            setInviteError(String(localized: "ui.enter_student_email", locale: locale))
             return
         }
 
@@ -388,7 +391,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             let teacherEmail = teacher?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
             if teacherEmail.isEmpty {
-                setInviteError("Não foi possível identificar o e-mail do professor.")
+                setInviteError(String(localized: "ui.unable_to_identify_teacher_email", locale: locale))
                 return
             }
 
@@ -409,7 +412,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
                         .lowercased() == email
                 }
             if isStudentLinked {
-                setInviteError("Esse aluno já esta vinculado.")
+                setInviteError(String(localized: "ui.student_already_linked", locale: locale))
                 return
             }
 
@@ -422,7 +425,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
                         .lowercased() == "pending"
             }
             if hasPendingInvite {
-                setInviteError("Já existe uma solicitação pendente para esse aluno.")
+                setInviteError(String(localized: "ui.pending_request_for_student_exists", locale: locale))
                 return
             }
 
@@ -437,7 +440,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             )
 
             guard isActiveTeacher(teacherId, generation: generation) else { return }
-            let format = String(localized: "Convite enviado para %@.", locale: locale)
+            let format = String(localized: "ui.invitation_sent_to_value", locale: locale)
             inviteSuccessMessage = String(format: format, locale: locale, arguments: [email])
             showInviteSuccessAlert = true
 
@@ -570,7 +573,9 @@ final class TeacherStudentsListViewModel: ObservableObject {
                 let email = (user?.email ?? request.studentEmail)
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                 let name = user?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-                let displayName = name.isEmpty ? (email.isEmpty ? "Aluno" : email) : name
+                let displayName = name.isEmpty
+                    ? (email.isEmpty ? String(localized: "common.student", locale: .autoupdatingCurrent) : email)
+                    : name
 
                 return StudentLinkItem(
                     requestId: requestId,
@@ -607,7 +612,8 @@ final class TeacherStudentsListViewModel: ObservableObject {
         teacherId: String,
         requestId: String,
         studentId: String,
-        categories: [TreinoTipo]
+        categories: [TreinoTipo],
+        locale: Locale
     ) async -> Bool {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard activeTeacherId == teacherId else { return false }
@@ -615,7 +621,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
         let sid = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !id.isEmpty, !sid.isEmpty, !categories.isEmpty else {
-            setLinkError("Não foi possível identificar a solicitação de vínculo.")
+            setLinkError(String(localized: "ui.unable_to_identify_link_request", locale: locale))
             return false
         }
 
@@ -639,7 +645,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             await loadStudents(teacherId: teacherId, force: true)
             await loadPendingLinkRequests(teacherId: teacherId, force: true)
             guard isActiveTeacher(teacherId, generation: generation) else { return false }
-            linkSuccessMessage = "Aluno vinculado com sucesso."
+            linkSuccessMessage = String(localized: "ui.student_linked_successfully", locale: locale)
             showLinkSuccessAlert = true
             return true
         } catch {
@@ -650,13 +656,13 @@ final class TeacherStudentsListViewModel: ObservableObject {
         }
     }
 
-    func declineLinkRequest(teacherId: String, requestId: String) async {
+    func declineLinkRequest(teacherId: String, requestId: String, locale: Locale) async {
         let teacherId = teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard activeTeacherId == teacherId else { return }
         let generation = teacherGeneration
         let id = requestId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !id.isEmpty else {
-            setLinkError("Não foi possível identificar a solicitação de vínculo.")
+            setLinkError(String(localized: "ui.unable_to_identify_link_request", locale: locale))
             return
         }
 
@@ -681,10 +687,10 @@ final class TeacherStudentsListViewModel: ObservableObject {
 
     func statusText(_ raw: String, locale: Locale) -> String {
         let v = raw.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        if v == "pending" { return String(localized: "Pendente", locale: locale) }
-        if v == "accepted" { return String(localized: "Aceito", locale: locale) }
-        if v == "declined" { return String(localized: "Recusado", locale: locale) }
-        if v == "cancelled" { return String(localized: "Cancelado", locale: locale) }
+        if v == "pending" { return String(localized: "ui.pending", locale: locale) }
+        if v == "accepted" { return String(localized: "ui.accepted", locale: locale) }
+        if v == "declined" { return String(localized: "ui.declined", locale: locale) }
+        if v == "cancelled" { return String(localized: "ui.cancelled", locale: locale) }
         return raw.isEmpty ? "—" : raw
     }
 

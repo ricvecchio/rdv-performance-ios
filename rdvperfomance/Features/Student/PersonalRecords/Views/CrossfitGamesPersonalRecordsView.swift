@@ -19,6 +19,7 @@ struct CrossfitGamesPersonalRecordsView: View {
         let name: String
         let storageKey: String
         let descriptionLines: [String]
+        let descriptionLocalizationKeys: [String.LocalizationValue]
         let isAppProvided: Bool
 
         init(
@@ -26,20 +27,36 @@ struct CrossfitGamesPersonalRecordsView: View {
             name: String,
             storageKey: String,
             descriptionLines: [String],
+            descriptionLocalizationKeys: [String.LocalizationValue] = [],
             isAppProvided: Bool = true
         ) {
             self.yearTitle = yearTitle
             self.name = name
             self.storageKey = storageKey
             self.descriptionLines = descriptionLines
+            self.descriptionLocalizationKeys = descriptionLocalizationKeys
             self.isAppProvided = isAppProvided
         }
 
         func localizedDescriptionLines(locale: Locale) -> [String] {
             guard isAppProvided else { return descriptionLines }
-            return descriptionLines.map {
-                String(localized: String.LocalizationValue($0), locale: locale)
+            return descriptionLines.enumerated().map { index, line in
+                guard descriptionLocalizationKeys.indices.contains(index) else {
+                    return line
+                }
+                return String(
+                    localized: descriptionLocalizationKeys[index],
+                    locale: locale
+                )
             }
+        }
+
+        static func == (lhs: GamesWOD, rhs: GamesWOD) -> Bool {
+            lhs.id == rhs.id
+        }
+
+        func hash(into hasher: inout Hasher) {
+            hasher.combine(id)
         }
     }
 
@@ -58,7 +75,7 @@ struct CrossfitGamesPersonalRecordsView: View {
         func localizedTitle(locale: Locale) -> String {
             guard isAppProvided else { return title }
             guard let year = items.first?.yearTitle else {
-                return String(localized: String.LocalizationValue(title), locale: locale)
+                return title
             }
             let format = String(
                 localized: "crossfit_games.individual_elite.title",
@@ -104,6 +121,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_ride",
                     descriptionLines: [
                         "Máximo de voltas em 40 min em bicicleta de montanha."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.ride.description.1"
                     ]
                 ),
                 .init(
@@ -112,6 +132,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_pig_chipper",
                     descriptionLines: [
                         "10 pig flips, 25 chest-to-bar pull-ups, 50 toes-to-bars, 100 wall-ball shots e reverso."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.pig_chipper.description.1"
                     ]
                 ),
                 .init(
@@ -120,6 +143,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_inverted_medley",
                     descriptionLines: [
                         "Sequência complexa de handstand walk, handstand push-ups e passos sobre obstáculos."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.inverted_medley.description.1"
                     ]
                 ),
                 .init(
@@ -128,6 +154,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_alpaca_redux",
                     descriptionLines: [
                         "Sled push e rounds com rope climbs, kettlebell clean & jerks e sled push progressivo."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.alpaca_redux.description.1"
                     ]
                 ),
                 .init(
@@ -136,6 +165,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_ski_bag",
                     descriptionLines: [
                         "SkiErg e sandbag squats em sequência."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.ski_bag.description.1"
                     ]
                 ),
                 .init(
@@ -147,6 +179,12 @@ struct CrossfitGamesPersonalRecordsView: View {
                         "• corrida 400 m",
                         "• 12 bar muscle-ups",
                         "• 21 dumbbell snatches"
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.helena.description.1",
+                        "crossfit_games.wod.2023.helena.description.2",
+                        "crossfit_games.wod.2023.helena.description.3",
+                        "crossfit_games.wod.2023.helena.description.4"
                     ]
                 ),
                 .init(
@@ -155,6 +193,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_cross_country_5k",
                     descriptionLines: [
                         "Corrida de 5 km para tempo."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.cross_country_5k.description.1"
                     ]
                 ),
                 .init(
@@ -163,6 +204,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_intervals",
                     descriptionLines: [
                         "Intervalos combinados de box jump-overs, remo e burpee box jump-overs."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.intervals.description.1"
                     ]
                 ),
                 .init(
@@ -171,6 +215,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_olympic_total",
                     descriptionLines: [
                         "Teste de força com 1RM Snatch e 1RM Clean & Jerk."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.olympic_total.description.1"
                     ]
                 ),
                 .init(
@@ -179,6 +226,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_muscle_up_logs",
                     descriptionLines: [
                         "5 rounds de muscle-ups e sandbag sobre logs."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.muscle_up_logs.description.1"
                     ]
                 ),
                 .init(
@@ -187,6 +237,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_parallel_bar_pull",
                     descriptionLines: [
                         "8 rounds de travessia em paralelas + rope double-unders e sled pull."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.parallel_bar_pull.description.1"
                     ]
                 ),
                 .init(
@@ -195,6 +248,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2023_echo_thruster_final",
                     descriptionLines: [
                         "21-18-15 de Echo Bike calorias com thrusters e overhead walking lunges."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2023.echo_thruster_final.description.1"
                     ]
                 )
             ]
@@ -208,6 +264,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_lake_day",
                     descriptionLines: [
                         "Corrida de 3.5 milhas seguida de natação 800 m antes de parte do dia ser cancelada."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.lake_day.description.1"
                     ]
                 ),
                 .init(
@@ -216,6 +275,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_midline_climb",
                     descriptionLines: [
                         "Prova em ginásio com deadlifts, rope climbs, ski erg e GHD sit-ups."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.midline_climb.description.1"
                     ]
                 ),
                 .init(
@@ -224,6 +286,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_firestorm",
                     descriptionLines: [
                         "Rounds de Echo-bike e burpees sobre barricada (parte da programação)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.firestorm.description.1"
                     ]
                 ),
                 .init(
@@ -232,6 +297,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_track_field",
                     descriptionLines: [
                         "Corrida 1,600 m seguida por sprints e bag carries."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.track_field.description.1"
                     ]
                 ),
                 .init(
@@ -240,6 +308,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_chad",
                     descriptionLines: [
                         "1,000 step-ups com peso."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.chad.description.1"
                     ]
                 ),
                 .init(
@@ -248,6 +319,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_clean_ladder",
                     descriptionLines: [
                         "Ladder de cleans em rounds progressivos."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.clean_ladder.description.1"
                     ]
                 ),
                 .init(
@@ -256,6 +330,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_push_pull_2",
                     descriptionLines: [
                         "Combinação de double-unders, chest-to-bar pull-ups e máximos no Echo-bike."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.push_pull_2.description.1"
                     ]
                 ),
                 .init(
@@ -264,6 +341,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_dickies_triplet",
                     descriptionLines: [
                         "Sequência de run, toes-to-bars e dumbbell snatches (nome popularizado pela comunidade)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.dickies_triplet.description.1"
                     ]
                 ),
                 .init(
@@ -272,6 +352,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_final_2421",
                     descriptionLines: [
                         "Thrusters + chest-to-bar pull-ups + yoke carry."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.final_2421.description.1"
                     ]
                 ),
                 .init(
@@ -280,6 +363,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2024_final_1815",
                     descriptionLines: [
                         "Outra final combinada de thrusters e bar muscle-ups (muitas vezes agrupada com o Final 2421 nos resultados)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2024.final_1815.description.1"
                     ]
                 )
             ]
@@ -293,6 +379,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2025_run_row_run",
                     descriptionLines: [
                         "4-mile run → 3000 m row → 2-mile run (prova de resistência)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.run_row_run.description.1"
                     ]
                 ),
                 .init(
@@ -301,6 +390,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2025_all_crossed_up",
                     descriptionLines: [
                         "Sequência de wall walks, dumbbell shoulder-to-overhead, double-under crossovers e toes-to-bars para tempo."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.all_crossed_up.description.1"
                     ]
                 ),
                 .init(
@@ -309,6 +401,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2025_climbing_couplet",
                     descriptionLines: [
                         "4-3-2-1 reps pegboard + squat clean + front squat (prova combinada de força e técnica)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.climbing_couplet.description.1"
                     ]
                 ),
                 .init(
@@ -321,6 +416,13 @@ struct CrossfitGamesPersonalRecordsView: View {
                         "• 12 deadlifts",
                         "• 100 ft handstand walk",
                         "(força, corrida e habilidades de equilíbrio)"
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.albany_grip_trip.description.1",
+                        "crossfit_games.wod.2025.albany_grip_trip.description.2",
+                        "crossfit_games.wod.2025.albany_grip_trip.description.3",
+                        "crossfit_games.wod.2025.albany_grip_trip.description.4",
+                        "crossfit_games.wod.2025.albany_grip_trip.description.5"
                     ]
                 ),
                 .init(
@@ -329,6 +431,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2025_1rm_back_squat",
                     descriptionLines: [
                         "Back squat máximo de uma repetição (teste de força absoluta)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.back_squat.description.1"
                     ]
                 ),
                 .init(
@@ -337,6 +442,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2025_throttle_up",
                     descriptionLines: [
                         "35 calorias Ski Erg → 28 chest-to-bar pull-ups → 24 burpee box jump-overs (prova para tempo)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.throttle_up.description.1"
                     ]
                 ),
                 .init(
@@ -345,6 +453,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2025_hammer_down",
                     descriptionLines: [
                         "35 calorias no Echo Bike → 28 bar muscle-ups → 24 burpee box jump-overs (segundo teste consecutivo com pouco descanso)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.hammer_down.description.1"
                     ]
                 ),
                 .init(
@@ -353,6 +464,9 @@ struct CrossfitGamesPersonalRecordsView: View {
                     storageKey: "cfg_2025_going_dark",
                     descriptionLines: [
                         "50/40 calorias no Echo Bike → 100 ft yoke carry → 30 deficit handstand push-ups → repetição (teste de resistência e força)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.going_dark.description.1"
                     ]
                 ),
                 .init(
@@ -364,6 +478,12 @@ struct CrossfitGamesPersonalRecordsView: View {
                         "• 200 ft corrida",
                         "• 6 snatches (com barra)",
                         "Para tempo."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.running_isabel.description.1",
+                        "crossfit_games.wod.2025.running_isabel.description.2",
+                        "crossfit_games.wod.2025.running_isabel.description.3",
+                        "crossfit_games.wod.2025.running_isabel.description.4"
                     ]
                 ),
                 .init(
@@ -374,6 +494,11 @@ struct CrossfitGamesPersonalRecordsView: View {
                         "9/15/21 thrusters",
                         "3/5/7 rope climbs,",
                         "seguido de 100 ft overhead walking lunge (teste combinado de força, resistência e técnica)."
+                    ],
+                    descriptionLocalizationKeys: [
+                        "crossfit_games.wod.2025.atlas.description.1",
+                        "crossfit_games.wod.2025.atlas.description.2",
+                        "crossfit_games.wod.2025.atlas.description.3"
                     ]
                 )
             ]
@@ -418,7 +543,7 @@ struct CrossfitGamesPersonalRecordsView: View {
         }
         let existingYears = Set(sections.compactMap { $0.items.first?.yearTitle })
         let extraSections = customByYear.keys.filter { !existingYears.contains($0) }.sorted().map { year in
-            let format = String(localized: "CrossFit Games %@ – Provas personalizadas", locale: locale)
+            let format = String(localized: "personal_records.crossfit_games.custom_events_title", locale: locale)
             return GamesSection(
                 title: String(format: format, locale: locale, arguments: [year]),
                 items: (customByYear[year] ?? []).map {
@@ -455,7 +580,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor tempo por prova.")
+                                Text("personal_records_crossfit_games.add_your_best_time_for_each_event")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.55))
 
@@ -474,7 +599,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar nova prova")
+                                .accessibilityLabel("personal_records_crossfit_games.add_new_event")
                             }
 
                             tableContainer()
@@ -525,7 +650,7 @@ struct CrossfitGamesPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Crossfit Games")
+                Text("personal_records_crossfit_games.crossfit_games")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -597,13 +722,13 @@ struct CrossfitGamesPersonalRecordsView: View {
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("PROVA")
+            Text("personal_records_crossfit_games.event")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR (tempo)")
+            Text("personal_records_campeonatos.pr_time")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -698,12 +823,12 @@ struct CrossfitGamesPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Resultado:")
+                            Text("personal_records.result_field_label")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
                         }
 
-                        TextField("Ex: 12:34", text: $inputValue)
+                        TextField("personal_records_campeonatos.e_g_12_34", text: $inputValue)
                             .keyboardType(.numbersAndPunctuation)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
@@ -733,10 +858,10 @@ struct CrossfitGamesPersonalRecordsView: View {
                         ZStack {
                             Theme.Colors.headerBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
-                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
                                 Button { showPRDatePicker = false } label: {
-                                    Text("Confirmar")
+                                    Text("common.confirm")
                                         .frame(maxWidth: .infinity)
                                         .primaryGreenActionButton()
                                 }
@@ -756,7 +881,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -775,7 +900,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -793,7 +918,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir prova")
+                        .accessibilityLabel("personal_records_campeonatos.delete_event")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -802,14 +927,14 @@ struct CrossfitGamesPersonalRecordsView: View {
             }
         }
         .presentationDetents([.fraction(0.80)])
-        .alert("Excluir registro", isPresented: $showDeleteAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            let recordName = selectedWod?.name ?? String(localized: "esta prova", locale: locale)
-            let format = String(localized: "Deseja excluir o registro de %@?", locale: locale)
+            let recordName = selectedWod?.name ?? String(localized: "personal_records.event_fallback_feminine", locale: locale)
+            let format = String(localized: "personal_records.delete_record_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
@@ -830,7 +955,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                     .foregroundColor(.green.opacity(0.90))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("WOD")
+                    Text("personal_records_campeonatos.wod")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
@@ -1034,12 +1159,12 @@ struct CrossfitGamesPersonalRecordsView: View {
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("Evolução", systemImage: "chart.line.uptrend.xyaxis")
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label("Histórico", systemImage: "clock.arrow.circlepath")
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
@@ -1061,7 +1186,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
-                        Text("Nenhum histórico de evolução registrado ainda.")
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.60))
                     } else {
@@ -1072,7 +1197,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
                                     if entry.id == recordID {
-                                        Text("RECORDE")
+                                        Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.green)
                                     }
@@ -1088,7 +1213,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                                             .foregroundColor(.red.opacity(0.85))
                                     }
                                     .buttonStyle(.plain)
-                                    .accessibilityLabel("Excluir registro")
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -1108,16 +1233,16 @@ struct CrossfitGamesPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
-        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
-            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
                 if let entry = historyEntryPendingDeletion {
                     deleteHistoryEntry(entry, for: key, metadata: metadata)
                 }
                 historyEntryPendingDeletion = nil
             }
         } message: {
-            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
         }
     }
 
@@ -1253,22 +1378,22 @@ struct CrossfitGamesPersonalRecordsView: View {
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Nova prova CrossFit Games")
+                    Text("personal_records_crossfit_games.new_crossfit_games_event")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie uma prova e, se quiser, já informe seu resultado inicial.")
+                    Text("personal_records_crossfit_games.create_an_event_and_if_you_want_enter_your_initial_result_now")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                        addItemField("Ano", placeholder: "Ex: 2026", text: $newItemYear)
-                        addItemField("Nome da prova", placeholder: "Ex: Final", text: $newItemName)
-                        addItemField("Descrição (opcional)", placeholder: "Ex: For Time — 5 rounds", text: $newItemDescription)
-                        addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34", text: $newItemValue)
+                        addItemField("personal_records.crossfit_games.year_field", placeholder: "personal_records.placeholder.year", text: $newItemYear)
+                        addItemField("personal_records.crossfit_games.event_name_field", placeholder: "personal_records.placeholder.final", text: $newItemName)
+                        addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.for_time_five_rounds", text: $newItemDescription)
+                        addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
@@ -1280,7 +1405,7 @@ struct CrossfitGamesPersonalRecordsView: View {
 
                     HStack(spacing: 12) {
                         Button { showAddItemSheet = false } label: {
-                            Text("Cancelar")
+                            Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
                                 .frame(maxWidth: .infinity)
@@ -1295,7 +1420,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                         .buttonStyle(.plain)
 
                         Button { addNewItem() } label: {
-                            Text("Adicionar")
+                            Text("common.add")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
                         }
@@ -1333,12 +1458,12 @@ struct CrossfitGamesPersonalRecordsView: View {
         let year = newItemYear.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !year.isEmpty, !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o ano e o nome da prova."
+            addItemErrorMessage = String(localized: "personal_records.crossfit_games.year_and_event_required", locale: locale)
             return
         }
         let existingNames = allSections.flatMap(\.items).map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Esta prova já existe na sua lista."
+            addItemErrorMessage = String(localized: "personal_records.crossfit_games.duplicate_event", locale: locale)
             return
         }
 

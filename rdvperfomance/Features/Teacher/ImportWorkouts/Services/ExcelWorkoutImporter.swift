@@ -8,33 +8,27 @@ enum ExcelWorkoutImporter {
         case workbookInvalid
         case worksheetNotFound
         case headerNotFound
-        case missingRequiredColumn(String)
+        case missingRequiredColumn
 
         var errorDescription: String? {
             switch self {
             case .fileUnreadable:
-                return String(localized: "Não foi possível ler o arquivo Excel selecionado.", locale: ExcelWorkoutImporter.localizationLocale)
+                return String(localized: "ui.unable_to_read_the_selected_excel_file", locale: ExcelWorkoutImporter.localizationLocale)
             case .workbookInvalid:
-                return String(localized: "Planilha inválida. Verifique se é um arquivo .xlsx.", locale: ExcelWorkoutImporter.localizationLocale)
+                return String(localized: "ui.invalid_spreadsheet_check_that_it_is_an_xlsx_file", locale: ExcelWorkoutImporter.localizationLocale)
             case .worksheetNotFound:
-                return String(localized: "Não foi possível localizar uma aba de dados na planilha.", locale: ExcelWorkoutImporter.localizationLocale)
+                return String(localized: "ui.unable_to_find_a_data_tab_in_the_spreadsheet", locale: ExcelWorkoutImporter.localizationLocale)
             case .headerNotFound:
-                return String(localized: "Não foi possível identificar o cabeçalho na planilha. Verifique se a aba IMPORT_TREINOS existe e contém a linha de títulos.", locale: ExcelWorkoutImporter.localizationLocale)
-            case .missingRequiredColumn(let name):
-                return String(
-                    localized: "Coluna obrigatória não encontrada: \(name).",
-                    locale: ExcelWorkoutImporter.localizationLocale
-                )
+                return String(localized: "ui.unable_to_identify_the_spreadsheet_header_check_that_the_import_treinos_tab_exists_and_contains_the_title_row", locale: ExcelWorkoutImporter.localizationLocale)
+            case .missingRequiredColumn:
+                return String(localized: "ui.required_column_not_found_title", locale: ExcelWorkoutImporter.localizationLocale)
             }
         }
     }
 
     private static let preferredSheetName = "IMPORT_TREINOS"
     private static var localizationLocale: Locale {
-        Locale(
-            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
-                ?? AppLanguage.portugueseBrazil.rawValue
-        )
+        .autoupdatingCurrent
     }
 
     static func parseWorkouts(fromXLSX url: URL) throws -> [ImportedWorkoutPayload] {
@@ -86,7 +80,7 @@ enum ExcelWorkoutImporter {
 
         let colTitulo: Int
         do {
-            colTitulo = try requireColumn("titulo", in: headerIndexByName, display: "Título")
+            colTitulo = try requireColumn("titulo", in: headerIndexByName)
         } catch {
             return nil
         }
@@ -157,9 +151,9 @@ enum ExcelWorkoutImporter {
         return map
     }
 
-    private static func requireColumn(_ normalized: String, in map: [String: Int], display: String) throws -> Int {
+    private static func requireColumn(_ normalized: String, in map: [String: Int]) throws -> Int {
         guard let idx = map[normalized] else {
-            throw ImportError.missingRequiredColumn(display)
+            throw ImportError.missingRequiredColumn
         }
         return idx
     }

@@ -8,9 +8,9 @@ struct AdminUsersView: View {
 
         var title: LocalizedStringKey {
             switch self {
-            case .all: return "Todos"
-            case .students: return "Alunos"
-            case .trainers: return "Professores"
+            case .all: return "common.all"
+            case .students: return "common.students"
+            case .trainers: return "common.trainers"
             }
         }
     }
@@ -43,11 +43,11 @@ struct AdminUsersView: View {
                     .padding(.vertical, 16)
                 }
             }
-            .navigationTitle("Usuários")
+            .navigationTitle("admin.users.title")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .principal) {
-                    Text("Administração")
+                    Text("admin.users.toolbar_title")
                         .font(Theme.Fonts.headerTitle())
                         .foregroundColor(.white)
                 }
@@ -68,27 +68,27 @@ struct AdminUsersView: View {
         .task {
             await viewModel.loadUsers()
         }
-        .alert("Excluir usuário?", isPresented: $showDeletionConfirmation) {
-            Button("Cancelar", role: .cancel) {
+        .alert("admin.users.delete.confirmation_title", isPresented: $showDeletionConfirmation) {
+            Button("common.cancel", role: .cancel) {
                 pendingDeletion = nil
             }
-            Button("Excluir", role: .destructive) {
+            Button("common.delete", role: .destructive) {
                 showDeletionUnavailable = true
             }
         } message: {
-            Text("Esta ação removerá permanentemente o usuário e seus dados relacionados. Esta operação não poderá ser desfeita.")
+            Text("admin.users.delete.confirmation_message")
         }
-        .alert("Exclusão indisponível", isPresented: $showDeletionUnavailable) {
-            Button("OK", role: .cancel) {
+        .alert("admin.users.delete.unavailable_title", isPresented: $showDeletionUnavailable) {
+            Button("common.ok", role: .cancel) {
                 pendingDeletion = nil
             }
         } message: {
-            Text("A exclusão de outra conta exige uma operação administrativa segura no servidor para também remover o usuário do Firebase Authentication.")
+            Text("admin.users.delete.unavailable_message")
         }
     }
 
     private var administratorIndicator: some View {
-        Label("MODO ADMINISTRADOR", systemImage: "exclamationmark.shield.fill")
+        Label(LocalizedStringKey("admin.mode_indicator"), systemImage: "exclamationmark.shield.fill")
             .font(.system(size: 13, weight: .bold))
             .foregroundColor(.red.opacity(0.95))
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -149,7 +149,7 @@ struct AdminUsersView: View {
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
         } else if filteredUsers.isEmpty {
-            Text("Nenhum usuário encontrado.")
+            Text("admin.users.empty")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .frame(maxWidth: .infinity)
@@ -208,8 +208,8 @@ struct AdminUsersView: View {
                             .foregroundColor(.white.opacity(0.55))
                         Text(
                             user.isStudentProfile
-                                ? LocalizedStringKey("Aluno")
-                                : LocalizedStringKey("Professor")
+                                ? LocalizedStringKey("common.student")
+                                : LocalizedStringKey("common.trainer")
                         )
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
@@ -248,12 +248,12 @@ private struct AdminStudentDetailView: View {
     @StateObject private var viewModel = AdminStudentDetailViewModel()
 
     var body: some View {
-        AdminDetailContainer(title: "Aluno") {
+        AdminDetailContainer(title: "common.student") {
             AdminUserSummary(user: user)
 
-            AdminSection(title: "Professores vinculados") {
+            AdminSection(title: "admin.student.linked_trainers") {
                 if viewModel.teachers.isEmpty {
-                    AdminEmptyRow(title: "Nenhum professor vinculado.")
+                    AdminEmptyRow(title: "admin.student.no_linked_trainers")
                 } else {
                     ForEach(viewModel.teachers) { teacher in
                         AdminUserListRow(user: teacher)
@@ -261,9 +261,9 @@ private struct AdminStudentDetailView: View {
                 }
             }
 
-            AdminSection(title: "Treinos do aluno") {
+            AdminSection(title: "admin.student.workouts") {
                 if viewModel.weeks.isEmpty {
-                    AdminEmptyRow(title: "Nenhum treino cadastrado.")
+                    AdminEmptyRow(title: "admin.student.no_workouts")
                 } else {
                     ForEach(viewModel.weeks) { week in
                         VStack(alignment: .leading, spacing: 3) {
@@ -289,11 +289,11 @@ private struct AdminStudentDetailView: View {
                 ProgressView().tint(.white)
             }
         }
-        .alert("Erro", isPresented: Binding(
+        .alert("common.error", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
             set: { if !$0 { viewModel.errorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) { viewModel.errorMessage = nil }
+            Button("common.ok", role: .cancel) { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
@@ -306,7 +306,7 @@ private struct AdminStudentDetailView: View {
         guard let start = week.startDate, let end = week.endDate else {
             return week.categoryRaw
         }
-        let format = String(localized: "%@ - %@", locale: locale)
+        let format = String(localized: "common.date_range", locale: locale)
         return String(
             format: format,
             locale: locale,
@@ -321,12 +321,12 @@ private struct AdminTeacherDetailView: View {
     @StateObject private var viewModel = AdminTeacherDetailViewModel()
 
     var body: some View {
-        AdminDetailContainer(title: "Professor") {
+        AdminDetailContainer(title: "common.trainer") {
             AdminUserSummary(user: user)
 
-            AdminSection(title: "Alunos vinculados") {
+            AdminSection(title: "admin.trainer.linked_students") {
                 if viewModel.students.isEmpty {
-                    AdminEmptyRow(title: "Nenhum aluno vinculado.")
+                    AdminEmptyRow(title: "admin.trainer.no_linked_students")
                 } else {
                     ForEach(viewModel.students) { student in
                         AdminUserListRow(user: student)
@@ -343,11 +343,11 @@ private struct AdminTeacherDetailView: View {
                 ProgressView().tint(.white)
             }
         }
-        .alert("Erro", isPresented: Binding(
+        .alert("common.error", isPresented: Binding(
             get: { viewModel.errorMessage != nil },
             set: { if !$0 { viewModel.errorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) { viewModel.errorMessage = nil }
+            Button("common.ok", role: .cancel) { viewModel.errorMessage = nil }
         } message: {
             Text(viewModel.errorMessage ?? "")
         }
@@ -367,7 +367,7 @@ private struct AdminDetailContainer<Content: View>: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
-                    Label("MODO ADMINISTRADOR", systemImage: "exclamationmark.shield.fill")
+                    Label(LocalizedStringKey("admin.mode_indicator"), systemImage: "exclamationmark.shield.fill")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundColor(.red.opacity(0.95))
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -397,8 +397,8 @@ private struct AdminUserSummary: View {
                 .foregroundColor(.white.opacity(0.55))
             Text(
                 user.isStudentProfile
-                    ? LocalizedStringKey("Aluno")
-                    : LocalizedStringKey("Professor")
+                    ? LocalizedStringKey("common.student")
+                    : LocalizedStringKey("common.trainer")
             )
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.55))

@@ -382,7 +382,7 @@ Descanso: 1 min entre rounds.
                         VStack(alignment: .leading, spacing: 14) {
 
                             HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor resultado por item.")
+                                Text("personal_records_endurance.add_your_best_result_for_each_item")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.55))
 
@@ -401,7 +401,7 @@ Descanso: 1 min entre rounds.
                                         .font(.system(size: 18, weight: .semibold))
                                 }
                                 .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo benchmark")
+                                .accessibilityLabel("personal_records_notables.add_new_benchmark")
                             }
 
                             tableContainer()
@@ -452,7 +452,7 @@ Descanso: 1 min entre rounds.
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Notables")
+                Text("personal_records_notables.notables")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -511,13 +511,13 @@ Descanso: 1 min entre rounds.
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Benchmark")
+            Text("personal_records_notables.benchmark")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR")
+            Text("personal_records.pr_label")
                 .font(.system(size: 12, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -595,7 +595,7 @@ Descanso: 1 min entre rounds.
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
-                    Text("Informe seu melhor resultado. Para remover, deixe vazio.")
+                    Text("personal_records_endurance.enter_your_best_result_leave_it_blank_to_remove_it")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
@@ -610,12 +610,12 @@ Descanso: 1 min entre rounds.
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Resultado:")
+                            Text("personal_records.result_field_label")
                                 .font(.system(size: 13, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
                         }
 
-                        TextField("Ex: 7:32 ou 210 reps ou 450 pts", text: $inputValue)
+                        TextField("personal_records_notables.e_g_7_32_210_reps_or_450_pts", text: $inputValue)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -644,10 +644,10 @@ Descanso: 1 min entre rounds.
                         ZStack {
                             Theme.Colors.headerBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
-                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
                                 Button { showPRDatePicker = false } label: {
-                                    Text("Confirmar")
+                                    Text("common.confirm")
                                         .frame(maxWidth: .infinity)
                                         .primaryGreenActionButton()
                                 }
@@ -667,7 +667,7 @@ Descanso: 1 min entre rounds.
                         resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -686,7 +686,7 @@ Descanso: 1 min entre rounds.
                         resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -704,7 +704,7 @@ Descanso: 1 min entre rounds.
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir benchmark")
+                        .accessibilityLabel("personal_records_notables.delete_benchmark")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -713,14 +713,14 @@ Descanso: 1 min entre rounds.
             }
         }
         .presentationDetents([.fraction(0.80)])
-        .alert("Excluir registro", isPresented: $showDeleteAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            let recordName = selectedMove?.name ?? String(localized: "este benchmark", locale: locale)
-            let format = String(localized: "Deseja excluir o registro de %@?", locale: locale)
+            let recordName = selectedMove?.name ?? String(localized: "personal_records.benchmark_fallback", locale: locale)
+            let format = String(localized: "personal_records.delete_record_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
@@ -739,11 +739,20 @@ Descanso: 1 min entre rounds.
                     .foregroundColor(.green.opacity(0.90))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("WOD")
+                    Text("personal_records_campeonatos.wod")
                         .font(.system(size: 12, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
-                    Text("\(wod.title) \(wod.subtitle)")
+                    Text(
+                        String(
+                            format: String(
+                                localized: "personal_records.notables.title_subtitle",
+                                locale: locale
+                            ),
+                            locale: locale,
+                            arguments: [wod.title, wod.subtitle]
+                        )
+                    )
                         .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
@@ -915,12 +924,12 @@ Descanso: 1 min entre rounds.
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("Evolução", systemImage: "chart.line.uptrend.xyaxis")
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 13, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label("Histórico", systemImage: "clock.arrow.circlepath")
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
@@ -942,7 +951,7 @@ Descanso: 1 min entre rounds.
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
-                        Text("Nenhum histórico de evolução registrado ainda.")
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.60))
                     } else {
@@ -953,7 +962,7 @@ Descanso: 1 min entre rounds.
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
                                     if entry.id == recordID {
-                                        Text("RECORDE")
+                                        Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.green)
                                     }
@@ -969,7 +978,7 @@ Descanso: 1 min entre rounds.
                                             .foregroundColor(.red.opacity(0.85))
                                     }
                                     .buttonStyle(.plain)
-                                    .accessibilityLabel("Excluir registro")
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -989,16 +998,16 @@ Descanso: 1 min entre rounds.
             }
         }
         .presentationDetents([.large])
-        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
-            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
                 if let entry = historyEntryPendingDeletion {
                     deleteHistoryEntry(entry, for: key, metadata: metadata)
                 }
                 historyEntryPendingDeletion = nil
             }
         } message: {
-            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
         }
     }
 
@@ -1134,25 +1143,25 @@ Descanso: 1 min entre rounds.
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Novo benchmark")
+                    Text("personal_records_notables.new_benchmark")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie um benchmark e, se quiser, já informe seu resultado inicial.")
+                    Text("personal_records_notables.create_a_benchmark_and_if_you_want_enter_your_initial_result_now")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                    addItemField("Nome do benchmark", placeholder: "Ex: Meu benchmark", text: $newItemName)
+                    addItemField("personal_records.notables.name_field", placeholder: "personal_records.placeholder.benchmark_name", text: $newItemName)
 
-                    addItemField("Formato (opcional)", placeholder: "Ex: For Time", text: $newItemSubtitle)
+                    addItemField("personal_records.notables.format_optional", placeholder: "personal_records.placeholder.for_time", text: $newItemSubtitle)
 
-                    addItemField("Descrição (opcional)", placeholder: "Ex: 3 rounds", text: $newItemDescription)
+                    addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.rounds", text: $newItemDescription)
 
-                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 150 pts", text: $newItemValue)
+                    addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time_or_points", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
@@ -1166,7 +1175,7 @@ Descanso: 1 min entre rounds.
                         Button {
                             showAddItemSheet = false
                         } label: {
-                            Text("Cancelar")
+                            Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
                                 .frame(maxWidth: .infinity)
@@ -1183,7 +1192,7 @@ Descanso: 1 min entre rounds.
                         Button {
                             addNewItem()
                         } label: {
-                            Text("Adicionar")
+                            Text("common.add")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
                         }
@@ -1221,13 +1230,13 @@ Descanso: 1 min entre rounds.
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do benchmark."
+            addItemErrorMessage = String(localized: "personal_records.notables.benchmark_name_required", locale: locale)
             return
         }
 
         let existingNames = allMoves.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este benchmark já existe na sua lista."
+            addItemErrorMessage = String(localized: "personal_records.notables.duplicate_benchmark", locale: locale)
             return
         }
 

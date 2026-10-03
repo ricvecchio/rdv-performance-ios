@@ -74,7 +74,7 @@ struct RegisterStudentView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Cadastro Aluno")
+                Text("auth.register_student.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -95,7 +95,7 @@ struct RegisterStudentView: View {
         VStack(spacing: 18) {
 
             UnderlineTextField(
-                title: "Nome",
+                title: "common.name",
                 text: $vm.name,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -105,7 +105,7 @@ struct RegisterStudentView: View {
             )
 
             UnderlineTextField(
-                title: "E-mail",
+                title: "common.email",
                 text: $vm.email,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -116,7 +116,7 @@ struct RegisterStudentView: View {
             )
 
             UnderlineTextField(
-                title: "Senha",
+                title: "common.password",
                 text: $vm.password,
                 isSecure: true,
                 showPassword: $showPassword,
@@ -127,7 +127,7 @@ struct RegisterStudentView: View {
 
             // ✅ Campo de telefone com máscara brasileira centralizada
             PhoneTextField(
-                title: "WhatsApp (opcional)",
+                title: "auth.fields.whatsapp_optional",
                 digits: $vm.phone,
                 lineColor: lineColor,
                 textColor: .white,
@@ -135,7 +135,7 @@ struct RegisterStudentView: View {
             )
 
             pickerRow(
-                title: "Área de foco",
+                title: "auth.fields.focus_area",
                 selection: $vm.focusArea,
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
@@ -183,7 +183,11 @@ struct RegisterStudentView: View {
                             .tint(.white.opacity(0.9))
                     }
 
-                    Text(vm.isLoading ? "Criando..." : "Criar Conta")
+                    Text(
+                        vm.isLoading
+                            ? LocalizedStringKey("auth.registration.loading")
+                            : LocalizedStringKey("auth.registration.submit")
+                    )
                 }
                 .frame(maxWidth: .infinity)
                 .primaryGreenActionButton()
@@ -194,7 +198,7 @@ struct RegisterStudentView: View {
             Button {
                 path.removeAll()
             } label: {
-                Text("Já tenho conta — Voltar ao Login")
+                Text("auth.registration.back_to_login")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
                     .underline()
@@ -212,9 +216,9 @@ struct RegisterStudentView: View {
                 ?? AppLanguage.portugueseBrazil.rawValue
         )
         switch opt {
-        case .CROSSFIT: return String(localized: "Crossfit", locale: locale)
-        case .GYM: return String(localized: "Academia", locale: locale)
-        case .HOME: return String(localized: "Em Casa", locale: locale)
+        case .CROSSFIT: return String(localized: "auth.focus_area.crossfit", locale: locale)
+        case .GYM: return String(localized: "auth.focus_area.gym", locale: locale)
+        case .HOME: return String(localized: "auth.focus_area.home", locale: locale)
         }
     }
 

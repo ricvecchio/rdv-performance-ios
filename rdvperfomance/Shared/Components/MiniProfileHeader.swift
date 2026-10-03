@@ -17,6 +17,6 @@ struct MiniProfileHeader: View {
             .clipped()
             .frame(width: size, height: size)
             .contentShape(Circle())
-            .accessibilityLabel("Perfil")
+            .accessibilityLabel("common.profile")
     }
 }

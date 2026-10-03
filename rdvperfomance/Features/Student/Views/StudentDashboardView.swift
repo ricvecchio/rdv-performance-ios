@@ -110,7 +110,7 @@ struct StudentDashboardView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("Área do Aluno")
+                Text("dashboard.student_area")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -122,7 +122,11 @@ struct StudentDashboardView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
-            Task { await viewModel.load() }
+            logLocalizationSnapshot()
+            Task { await viewModel.load(locale: locale) }
+        }
+        .onChange(of: locale.identifier) { _, _ in
+            logLocalizationSnapshot()
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -132,10 +136,10 @@ struct StudentDashboardView: View {
             nextFitLoginSheet
                 .presentationDetents([.fraction(0.50)])
         }
-        .alert("Não foi possível desconectar do NextFit.", isPresented: $isNextFitLogoutErrorPresented) {
-            Button("OK", role: .cancel) { }
+        .alert("dashboard.could_not_disconnect_from_nextfit", isPresented: $isNextFitLogoutErrorPresented) {
+            Button("common.ok", role: .cancel) { }
         } message: {
-            Text("Tente novamente.")
+            Text("dashboard.try_again_message")
         }
     }
 
@@ -144,7 +148,7 @@ struct StudentDashboardView: View {
             Text(greeting)
                 .font(.system(size: 26, weight: .bold))
                 .foregroundColor(.white)
-            Text("Disciplina hoje, resultado amanhã! 💪")
+            Text("dashboard.discipline_today_results_tomorrow")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -183,7 +187,7 @@ struct StudentDashboardView: View {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.yellow.opacity(0.85))
-                Text("Avisos")
+                Text("dashboard.notices")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
             }
@@ -195,7 +199,7 @@ struct StudentDashboardView: View {
             } label: {
                 noticeRow(
                     icon: "person.crop.circle.badge.checkmark",
-                    title: "Convite de professor",
+                    title: "dashboard.teacher_invitation.title",
                     message: inviteNoticeMessage
                 )
             }
@@ -211,10 +215,10 @@ struct StudentDashboardView: View {
     private var inviteNoticeMessage: String {
         let count = viewModel.pendingTeacherInvites.count
         if count == 1 {
-            return String(localized: "Você possui um convite pendente", locale: locale)
+            return String(localized: "dashboard.teacher_invitation.pending_single", locale: locale)
         }
 
-        let format = String(localized: "Você possui %lld convites pendentes", locale: locale)
+        let format = String(localized: "dashboard.teacher_invitation.pending_multiple", locale: locale)
         return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 
@@ -258,11 +262,11 @@ struct StudentDashboardView: View {
                     value: isTeacherLinkIconPulsing
                 )
 
-            Text("Você ainda não tem um professor vinculado")
+            Text("dashboard.you_do_not_have_a_linked_coach_yet")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Vincule-se a um professor para receber treinos e acompanhar sua evolução.")
+            Text("dashboard.link_with_a_coach_to_receive_workouts_and_track_your_progress")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -273,7 +277,7 @@ struct StudentDashboardView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "person.badge.plus")
 
-                    Text("Convidar professor")
+                    Text("dashboard.invite_coach")
                 }
                 .padding(.horizontal, 14)
                 .compactPrimaryGreenActionButton()
@@ -302,22 +306,22 @@ struct StudentDashboardView: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Solicitar vínculo")
+                        Text("dashboard.request_link")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Digite o e-mail do professor para enviar a solicitação.")
+                            Text("dashboard.enter_the_coach_s_email_to_send_the_request")
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.45))
 
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("E-mail do professor")
+                                Text("dashboard.coach_email")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
 
-                                TextField("professor@email.com", text: $teacherEmailInput)
+                                TextField("dashboard.coach_email_placeholder", text: $teacherEmailInput)
                                     .textInputAutocapitalization(.never)
                                     .keyboardType(.emailAddress)
                                     .autocorrectionDisabled(true)
@@ -356,7 +360,7 @@ struct StudentDashboardView: View {
                     Button {
                         isRequestLinkSheetPresented = false
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -383,7 +387,7 @@ struct StudentDashboardView: View {
                         }
                     } label: {
                         HStack(spacing: 10) {
-                            Text("Enviar solicitação")
+                            Text("dashboard.send_request")
 
                             if viewModel.isProcessingLinkAction {
                                 ProgressView()
@@ -408,31 +412,31 @@ struct StudentDashboardView: View {
         let progress = total == 0 ? 0 : Double(completed) / Double(total)
 
         return VStack(alignment: .leading, spacing: 14) {
-            Text("Progresso da semana")
+            Text("dashboard.weekly_progress_title")
                 .font(.system(size: 18, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
             if viewModel.isLoading {
                 ProgressView()
                     .tint(.white)
             } else {
-                Text(
-                    String(
-                        format: String(localized: "%lld de %lld dias concluídos", locale: locale),
-                        locale: locale,
-                        arguments: [Int64(completed), Int64(total)]
-                    )
-                )
+                Text(weeklyProgressText(completed: completed, total: total))
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
                 HStack(spacing: 10) {
                     ProgressView(value: progress)
                         .tint(Theme.Colors.primaryGreen)
-                    Text("\(Int((progress * 100).rounded()))%")
+                    Text(
+                        String(
+                            format: String(localized: "dashboard.progress_percentage", locale: locale),
+                            locale: locale,
+                            arguments: [Int64((progress * 100).rounded())]
+                        )
+                    )
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                 }
                 if total == 0 {
-                    Text("Você não possui treinos programados para esta semana.")
+                    Text("dashboard.you_do_not_have_workouts_scheduled_for_this_week")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                 } else {
@@ -479,22 +483,22 @@ struct StudentDashboardView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isLoadingNextFitWod)
-                    .accessibilityLabel("Desconectar NextFit")
+                    .accessibilityLabel("dashboard.disconnect_nextfit")
                     .confirmationDialog(
-                        "Desconectar NextFit?",
+                        "dashboard.disconnect_nextfit_confirmation_title",
                         isPresented: $isNextFitLogoutConfirmationPresented,
                         titleVisibility: .visible
                     ) {
-                        Button("Desconectar", role: .destructive) {
+                        Button("dashboard.disconnect", role: .destructive) {
                             do {
                                 try viewModel.logoutNextFit()
                             } catch {
                                 isNextFitLogoutErrorPresented = true
                             }
                         }
-                        Button("Cancelar", role: .cancel) { }
+                        Button("common.cancel", role: .cancel) { }
                     } message: {
-                        Text("Você precisará entrar novamente para consultar o WOD do dia.")
+                        Text("dashboard.you_will_need_to_sign_in_again_to_view_today_s_wod")
                     }
                 }
             }
@@ -503,7 +507,7 @@ struct StudentDashboardView: View {
                 ProgressView()
                     .tint(.white)
             } else if viewModel.needsNextFitAuthentication {
-                Text("Conecte sua conta NextFit para consultar o treino de hoje.")
+                Text("dashboard.connect_your_nextfit_account_to_view_today_s_workout")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
@@ -516,14 +520,14 @@ struct StudentDashboardView: View {
                         HStack(spacing: 10) {
                             Image(systemName: "person.badge.plus")
 
-                            Text("Convidar professor")
+                            Text("dashboard.invite_coach")
                         }
                         .hidden()
 
                         HStack(spacing: 10) {
                             Image(systemName: "link")
 
-                            Text("Conectar NextFit")
+                            Text("dashboard.connect_nextfit")
                         }
                     }
                     .padding(.horizontal, 14)
@@ -536,9 +540,9 @@ struct StudentDashboardView: View {
                     .foregroundColor(.white.opacity(0.55))
 
                 Button {
-                    Task { await viewModel.retryNextFitWod() }
+                    Task { await viewModel.retryNextFitWod(locale: locale) }
                 } label: {
-                    Text("Tentar novamente")
+                    Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
                 }
@@ -586,7 +590,7 @@ struct StudentDashboardView: View {
                         }
                     }
                 } else {
-                    Text("Nenhum WOD disponível para hoje.")
+                    Text("dashboard.no_wod_available_for_today")
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                 }
@@ -617,15 +621,15 @@ struct StudentDashboardView: View {
                     .foregroundColor(.white.opacity(0.55))
 
                 Button {
-                    Task { await viewModel.selectNextFitAgendaDate(viewModel.selectedNextFitAgendaDate) }
+                    Task { await viewModel.selectNextFitAgendaDate(viewModel.selectedNextFitAgendaDate, locale: locale) }
                 } label: {
-                    Text("Tentar novamente")
+                    Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
             } else if viewModel.nextFitAgenda.isEmpty {
-                Text("Nenhum horário disponível para esta data.")
+                Text("dashboard.no_time_available_for_this_date")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -633,7 +637,7 @@ struct StudentDashboardView: View {
                     ForEach(viewModel.nextFitAgenda) { entry in
                         VStack(alignment: .leading, spacing: 12) {
                             Button {
-                                Task { await viewModel.selectNextFitAgenda(entry.id) }
+                                Task { await viewModel.selectNextFitAgenda(entry.id, locale: locale) }
                             } label: {
                                 VStack(alignment: .leading, spacing: 12) {
                                     HStack {
@@ -732,9 +736,18 @@ struct StudentDashboardView: View {
         )
         let title = day.title(locale: locale)
         return Button {
-            Task { await viewModel.selectNextFitAgendaDate(date) }
+            Task { await viewModel.selectNextFitAgendaDate(date, locale: locale) }
         } label: {
-            Text("\(title) \(date.formatted(.dateTime.day().month(.twoDigits).locale(locale)))")
+            Text(
+                String(
+                    format: String(localized: "dashboard.agenda.date_label", locale: locale),
+                    locale: locale,
+                    arguments: [
+                        title,
+                        date.formatted(.dateTime.day().month(.twoDigits).locale(locale))
+                    ]
+                )
+            )
                 .font(.system(size: 13, weight: .bold))
                 .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.65))
                 .padding(.horizontal, 12)
@@ -756,7 +769,7 @@ struct StudentDashboardView: View {
                 .foregroundColor(.white.opacity(0.55))
         } else if let wod = viewModel.nextFitAgendaWod {
             VStack(alignment: .leading, spacing: 10) {
-                Text("WOD do dia")
+                Text("dashboard.wod_of_the_day")
                     .font(.system(size: 16, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -799,7 +812,7 @@ struct StudentDashboardView: View {
             Button {
                 viewModel.clearNextFitAgendaDetail()
             } label: {
-                Label("Voltar à agenda", systemImage: "chevron.left")
+                Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Theme.Colors.primaryGreen)
             }
@@ -822,12 +835,12 @@ struct StudentDashboardView: View {
             .cornerRadius(12)
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08), lineWidth: 1))
 
-            Text("PARTICIPANTES")
+            Text("dashboard.participants")
                 .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
 
             if detail.participants.isEmpty {
-                Text("Nenhum participante neste horário.")
+                Text("dashboard.no_participant_at_this_time")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -858,7 +871,7 @@ struct StudentDashboardView: View {
             Button {
                 viewModel.clearNextFitAgendaDetail()
             } label: {
-                Label("Voltar à agenda", systemImage: "chevron.left")
+                Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(Theme.Colors.primaryGreen)
             }
@@ -869,9 +882,9 @@ struct StudentDashboardView: View {
                 .foregroundColor(.white.opacity(0.55))
 
             Button {
-                Task { await viewModel.retryNextFitAgendaDetail() }
+                Task { await viewModel.retryNextFitAgendaDetail(locale: locale) }
             } label: {
-                Text("Tentar novamente")
+                Text("dashboard.try_again_action")
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
             }
@@ -901,16 +914,16 @@ struct StudentDashboardView: View {
         if viewModel.isAgendaWithdrawal(entry.id) {
             HStack(spacing: 10) {
                 Image(systemName: "xmark.circle")
-                Text("Desistente")
+                Text("dashboard.withdrawn")
             }
             .padding(.horizontal, 14)
             .compactDestructiveAgendaActionButton()
-            .accessibilityLabel("Desistente")
+            .accessibilityLabel("dashboard.withdrawn")
         } else if entry.endDate < Date() {
             Button { } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "clock.badge.xmark")
-                    Text("Encerrado")
+                    Text("dashboard.closed")
                 }
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
@@ -927,7 +940,7 @@ struct StudentDashboardView: View {
         let isProcessing = viewModel.isProcessingAgenda(agendaId)
         if viewModel.canCancelAgendaCheckIn(agendaId) {
             Button {
-                Task { await viewModel.cancelAgendaCheckIn(agendaId) }
+                Task { await viewModel.cancelAgendaCheckIn(agendaId, locale: locale) }
             } label: {
                 HStack(spacing: 10) {
                     if isProcessing {
@@ -935,7 +948,7 @@ struct StudentDashboardView: View {
                     } else {
                         Image(systemName: "xmark.circle")
                     }
-                    Text("Cancelar")
+                    Text("common.cancel")
                 }
                 .padding(.horizontal, 14)
                 .compactDestructiveAgendaActionButton()
@@ -958,7 +971,7 @@ struct StudentDashboardView: View {
             }
         } else {
             Button {
-                Task { await viewModel.checkInAgenda(agendaId) }
+                Task { await viewModel.checkInAgenda(agendaId, locale: locale) }
             } label: {
                 HStack(spacing: 10) {
                     if isProcessing {
@@ -966,7 +979,7 @@ struct StudentDashboardView: View {
                     } else {
                         Image(systemName: "calendar.badge.plus")
                     }
-                    Text("Agendar")
+                    Text("dashboard.schedule")
                 }
                 .padding(.horizontal, 14)
                 .compactPrimaryGreenActionButton()
@@ -978,7 +991,7 @@ struct StudentDashboardView: View {
 
     private var agendaCancellationConfirmationCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Confirmar Cancelamento?")
+            Text("dashboard.confirm_cancellation")
                 .font(.system(size: 17, weight: .semibold))
 
             Text(viewModel.agendaCancellationConfirmation?.question ?? "")
@@ -986,14 +999,14 @@ struct StudentDashboardView: View {
                 .foregroundColor(.secondary)
 
             HStack {
-                Button("Cancelar", role: .cancel) {
+                Button("common.cancel", role: .cancel) {
                     viewModel.dismissAgendaCancellationConfirmation()
                 }
 
                 Spacer()
 
-                Button("Confirmar", role: .destructive) {
-                    Task { await viewModel.confirmAgendaCancellation() }
+                Button("common.confirm", role: .destructive) {
+                    Task { await viewModel.confirmAgendaCancellation(locale: locale) }
                 }
             }
         }
@@ -1004,20 +1017,20 @@ struct StudentDashboardView: View {
     private var nextFitWodTitle: String {
         let unitName = viewModel.studentUnitName
         guard !unitName.isEmpty else {
-            return String(localized: "WOD do dia", locale: locale)
+            return String(localized: "dashboard.wod.title", locale: locale)
         }
-        let format = String(localized: "WOD do dia (%@)", locale: locale)
+        let format = String(localized: "dashboard.wod.title_with_modality", locale: locale)
         return String(format: format, locale: locale, arguments: [unitName])
     }
 
     private var upcomingWorkoutsCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Próximos treinos")
+                Text("dashboard.upcoming_workouts")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
-                Button("Ver todos") {
+                Button("dashboard.view_all") {
                     onSelectSection(.agenda)
                 }
                 .font(.system(size: 14, weight: .semibold))
@@ -1028,7 +1041,7 @@ struct StudentDashboardView: View {
             if viewModel.isLoading {
                 ProgressView().tint(.white)
             } else if viewModel.upcomingDayGroups.isEmpty {
-                Text("Nenhum treino programado.")
+                Text("dashboard.no_workout_scheduled")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -1065,18 +1078,18 @@ struct StudentDashboardView: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Entrar no NextFit")
+                        Text("dashboard.sign_in_to_nextfit")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("E-mail")
+                                Text("common.email")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
 
-                                TextField("seu@email.com", text: $nextFitEmailInput)
+                                TextField("dashboard.nextfit.email_placeholder", text: $nextFitEmailInput)
                                     .textInputAutocapitalization(.never)
                                     .keyboardType(.emailAddress)
                                     .autocorrectionDisabled(true)
@@ -1093,11 +1106,11 @@ struct StudentDashboardView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Senha")
+                                Text("common.password")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
 
-                                SecureField("Sua senha", text: $nextFitPasswordInput)
+                                SecureField("dashboard.your_password", text: $nextFitPasswordInput)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled(true)
                                     .font(.system(size: 16, weight: .semibold))
@@ -1135,7 +1148,7 @@ struct StudentDashboardView: View {
                     Button {
                         isNextFitLoginSheetPresented = false
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -1156,13 +1169,13 @@ struct StudentDashboardView: View {
                         nextFitPasswordInput = ""
 
                         Task {
-                            if await viewModel.authenticateNextFit(email: email, password: password) {
+                            if await viewModel.authenticateNextFit(email: email, password: password, locale: locale) {
                                 isNextFitLoginSheetPresented = false
                             }
                         }
                     } label: {
                         HStack(spacing: 10) {
-                            Text("Entrar")
+                            Text("dashboard.sign_in")
 
                             if viewModel.isAuthenticatingNextFit {
                                 ProgressView()
@@ -1198,13 +1211,19 @@ struct StudentDashboardView: View {
                         .font(.system(size: 16, weight: .medium))
                         .foregroundColor(.white.opacity(0.92))
                     Spacer()
-                    Text("\(Int((item.progress * 100).rounded()))%")
+                    Text(
+                        String(
+                            format: String(localized: "dashboard.progress_percentage", locale: locale),
+                            locale: locale,
+                            arguments: [Int64((item.progress * 100).rounded())]
+                        )
+                    )
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Theme.Colors.primaryGreen)
                 }
                 let completionFormat = item.totalCount == 1
-                    ? String(localized: "%lld de %lld treino concluído", locale: locale)
-                    : String(localized: "%lld de %lld treinos concluídos", locale: locale)
+                    ? String(localized: "dashboard.upcoming_workouts.progress_singular", locale: locale)
+                    : String(localized: "dashboard.upcoming_workouts.progress_plural", locale: locale)
                 Text(
                     String(
                         format: completionFormat,
@@ -1232,6 +1251,32 @@ struct StudentDashboardView: View {
             audience: .student,
             locale: locale
         )
+    }
+
+    private func weeklyProgressText(completed: Int, total: Int) -> String {
+        let format = String(localized: "dashboard.weekly_progress", locale: locale)
+        let value = String(
+            format: format,
+            locale: locale,
+            arguments: [Int64(completed), Int64(total)]
+        )
+        LocalizationDiagnostics.resolved(
+            context: "StudentDashboard.weeklyProgress",
+            locale: locale,
+            key: "dashboard.weekly_progress",
+            value: value
+        )
+        return value
+    }
+
+    private func logLocalizationSnapshot() {
+        let completed = viewModel.currentWeekDaySummaries.filter(\.isCompleted).count
+        let total = viewModel.currentWeekDaySummaries.count
+        LocalizationDiagnostics.catalogAvailability(locale: locale)
+        _ = greeting
+        _ = weeklyProgressText(completed: completed, total: total)
+        _ = DashboardAgendaDay.today.title(locale: locale)
+        _ = DashboardAgendaDay.tomorrow.title(locale: locale)
     }
 
     private func weekdayAbbreviation(for date: Date?) -> String {

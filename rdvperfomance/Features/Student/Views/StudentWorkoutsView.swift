@@ -137,7 +137,7 @@ struct StudentWorkoutsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Treinos da Semana")
+                Text("workout.workouts_this_week")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -172,7 +172,7 @@ struct StudentWorkoutsView: View {
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
         .alert(
-            "Meus Vídeos",
+            "workout.my_videos",
             isPresented: Binding(
                 get: { receivedVideoSaveMessage != nil },
                 set: { isPresented in
@@ -182,7 +182,7 @@ struct StudentWorkoutsView: View {
                 }
             )
         ) {
-            Button("OK", role: .cancel) {
+            Button("common.ok", role: .cancel) {
                 receivedVideoSaveMessage = nil
             }
         } message: {
@@ -226,7 +226,7 @@ struct StudentWorkoutsView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 6) {
 
-            Text("Selecione uma semana para ver os dias.")
+            Text("workout.select_a_week_to_view_the_days")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -244,7 +244,7 @@ struct StudentWorkoutsView: View {
         } label: {
             HStack {
                 Spacer()
-                Text("Publicar Treino")
+                Text("workout.publish_workout")
                 Spacer()
             }
             .primaryGreenActionButton()
@@ -254,9 +254,9 @@ struct StudentWorkoutsView: View {
 
     private var filterRow: some View {
         HStack(spacing: 8) {
-            filterChip(title: "Atuais", filter: .active)
-            filterChip(title: "Próximos", filter: .upcoming)
-            filterChip(title: "Concluídos", filter: .completed)
+            filterChip(title: "workout.filter.active", filter: .active)
+            filterChip(title: "workout.filter.upcoming", filter: .upcoming)
+            filterChip(title: "workout.filter.completed", filter: .completed)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -384,7 +384,13 @@ struct StudentWorkoutsView: View {
 
                     Spacer(minLength: 4)
 
-                    Text("\(vm.progressPercent(for: week))%")
+                    Text(
+                        String(
+                            format: String(localized: "workout.progress_percentage", locale: locale),
+                            locale: locale,
+                            arguments: [Int64(vm.progressPercent(for: week))]
+                        )
+                    )
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.55))
                 }
@@ -398,7 +404,7 @@ struct StudentWorkoutsView: View {
                     Spacer(minLength: 4)
 
                     if vm.isUpcoming(week) {
-                        Label("Em breve", systemImage: "clock.fill")
+                        Label(LocalizedStringKey("workout.coming_soon"), systemImage: "clock.fill")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
                             .labelStyle(.titleAndIcon)
@@ -440,7 +446,7 @@ struct StudentWorkoutsView: View {
                     .foregroundColor(.white.opacity(0.55))
                     .multilineTextAlignment(.center)
 
-                Button("Tentar novamente") {
+                Button("dashboard.try_again_action") {
                     Task { await vm.loadDaysAndStatus(for: weekId, force: true) }
                 }
                 .font(.system(size: 14, weight: .semibold))
@@ -456,7 +462,7 @@ struct StudentWorkoutsView: View {
             let groups = trainingDayGroups(from: days)
 
             if days.isEmpty {
-                Text("O professor ainda não adicionou dias para esta semana.")
+                Text("workout.the_coach_has_not_added_days_for_this_week_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -482,7 +488,7 @@ struct StudentWorkoutsView: View {
             HStack(spacing: 10) {
                 Image(systemName: "video.fill")
                     .font(.system(size: 13, weight: .semibold))
-                Text(LocalizedStringKey("Vídeos"))
+                Text("workout.videos")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
             }
@@ -530,12 +536,12 @@ struct StudentWorkoutsView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                Text(title.isEmpty ? "Vídeo do YouTube" : title)
+                Text(title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
 
-                Text("YouTube")
+                Text("workout.youtube")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
@@ -549,13 +555,13 @@ struct StudentWorkoutsView: View {
                         let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
                         pendingReceivedVideoSave = (
                             sourceId: sourceId,
-                            title: title.isEmpty ? "Vídeo do YouTube" : title,
+                            title: title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : title,
                             url: videoURL,
                             videoId: videoId
                         )
                         isReceivedVideoSaveConfirmationPresented = true
                     } label: {
-                        Label("Salvar em Meus Vídeos?", systemImage: "bookmark")
+                        Label(LocalizedStringKey("workout.save_to_my_videos"), systemImage: "bookmark")
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -617,22 +623,22 @@ struct StudentWorkoutsView: View {
 
     private var receivedVideoSaveConfirmationCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Salvar em Meus Vídeos?")
+            Text("workout.save_to_my_videos")
                 .font(.system(size: 17, weight: .semibold))
 
-            Text("Deseja salvar este vídeo na sua lista de Meus Vídeos?")
+            Text("workout.do_you_want_to_save_this_video_to_your_my_videos_list")
                 .font(.system(size: 14))
                 .foregroundColor(.secondary)
 
             HStack {
-                Button("Cancelar", role: .cancel) {
+                Button("common.cancel", role: .cancel) {
                     isReceivedVideoSaveConfirmationPresented = false
                     pendingReceivedVideoSave = nil
                 }
 
                 Spacer()
 
-                Button("Salvar") {
+                Button("common.save") {
                     guard let video = pendingReceivedVideoSave else { return }
                     isReceivedVideoSaveConfirmationPresented = false
                     pendingReceivedVideoSave = nil
@@ -645,7 +651,7 @@ struct StudentWorkoutsView: View {
     }
 
     private func receivedVideoSaveSuccessCard(sourceId: String) -> some View {
-        Text("Vídeo salvo em Meus Vídeos.")
+        Text("workout.video_saved_to_my_videos")
             .font(.system(size: 14, weight: .semibold))
             .padding(16)
             .frame(width: 240, alignment: .leading)
@@ -665,7 +671,7 @@ struct StudentWorkoutsView: View {
         let expectedStudentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         let authenticatedStudentId = (session.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !expectedStudentId.isEmpty, expectedStudentId == authenticatedStudentId else {
-            receivedVideoSaveMessage = "Não foi possível validar sua autenticação para salvar este vídeo."
+            receivedVideoSaveMessage = String(localized: "workout.video_save_authentication_error", locale: locale)
             return
         }
 
@@ -677,7 +683,7 @@ struct StudentWorkoutsView: View {
                 studentId: authenticatedStudentId
             )
             guard !savedVideos.contains(where: { $0.videoId == video.videoId }) else {
-                receivedVideoSaveMessage = "Este vídeo já está em Meus Vídeos."
+                receivedVideoSaveMessage = String(localized: "workout.video_already_saved", locale: locale)
                 return
             }
 
@@ -696,7 +702,7 @@ struct StudentWorkoutsView: View {
     private func openLockedPlayer(for day: TrainingDayFS, videoId: String) {
         let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
         activeLockedPlayer = LockedPlayerItem(
-            title: title.isEmpty ? "Vídeo do YouTube" : title,
+            title: title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : title,
             videoId: videoId
         )
     }
@@ -851,14 +857,14 @@ struct StudentWorkoutsView: View {
 
             if !isTeacherViewing, let dayId = day.id, !vm.isUpcoming(week) {
                 if vm.isOverdue(day, in: weekId) {
-                    Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
+                    Label(LocalizedStringKey("workout.overdue"), systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.red.opacity(0.9))
                         .labelStyle(.titleAndIcon)
                 }
 
                 Button {
-                    Task { await vm.toggleCompleted(dayId: dayId, in: weekId) }
+                    Task { await vm.toggleCompleted(dayId: dayId, in: weekId, locale: locale) }
                 } label: {
                     Image(systemName: completionIcon(isCompleted: vm.isCompleted(dayId: dayId, in: weekId)))
                         .font(.system(size: 20))
@@ -876,12 +882,12 @@ struct StudentWorkoutsView: View {
     private func dayStatusIndicator(_ status: StudentWorkoutDayStatus) -> some View {
         switch status {
         case .completed:
-            Label("Concluído", systemImage: "checkmark.circle.fill")
+            Label(LocalizedStringKey("common.done"), systemImage: "checkmark.circle.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(Theme.Colors.primaryGreen)
                 .labelStyle(.titleAndIcon)
         case .overdue:
-            Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
+            Label(LocalizedStringKey("workout.overdue"), systemImage: "exclamationmark.triangle.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.red.opacity(0.9))
                 .labelStyle(.titleAndIcon)
@@ -966,7 +972,7 @@ struct StudentWorkoutsView: View {
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando semanas...")
+            Text("workout.loading_weeks")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -976,7 +982,7 @@ struct StudentWorkoutsView: View {
 
     private func errorView(message: String) -> some View {
         VStack(spacing: 10) {
-            Text("Ops! Não foi possível carregar.")
+            Text("workout.oops_unable_to_load")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
@@ -994,7 +1000,7 @@ struct StudentWorkoutsView: View {
                     )
                 }
             } label: {
-                Text("Tentar novamente")
+                Text("dashboard.try_again_action")
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
             }
@@ -1007,11 +1013,11 @@ struct StudentWorkoutsView: View {
 
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text("Nenhuma semana cadastrada")
+            Text("workout.no_week_registered")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("O professor ainda não publicou treinos para este aluno.")
+            Text("workout.the_coach_has_not_published_workouts_for_this_student_yet")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
@@ -1024,11 +1030,11 @@ struct StudentWorkoutsView: View {
     private var filteredEmptyView: some View {
         let content: (title: LocalizedStringKey, message: LocalizedStringKey) = switch selectedFilter {
         case .active:
-            ("Nenhum treino ativo", "Você não possui treinos pendentes a partir de hoje.")
+            ("workout.empty.active.title", "workout.empty.active.message")
         case .upcoming:
-            ("Nenhum treino futuro", "Você não possui treinos programados para as próximas semanas.")
+            ("workout.empty.upcoming.title", "workout.empty.upcoming.message")
         case .completed:
-            ("Nenhum treino concluído", "Treinos concluídos ou com período encerrado aparecerão aqui.")
+            ("workout.empty.completed.title", "workout.empty.completed.message")
         }
 
         return VStack(spacing: 10) {

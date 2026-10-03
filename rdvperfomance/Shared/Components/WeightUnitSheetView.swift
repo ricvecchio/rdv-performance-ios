@@ -10,8 +10,8 @@ enum WeightUnit: String, CaseIterable {
                 ?? AppLanguage.portugueseBrazil.rawValue
         )
         switch self {
-        case .kg: return String(localized: "⚖️ kg (quilograma)", locale: locale)
-        case .lbs: return String(localized: "⚖️ lbs (libra)", locale: locale)
+        case .kg: return String(localized: "settings.weight_unit.kilograms", locale: locale)
+        case .lbs: return String(localized: "settings.weight_unit.pounds", locale: locale)
         }
     }
 
@@ -46,7 +46,7 @@ struct WeightUnitSheetView: View {
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text("Unidade de Medida")
+                Text("settings.weight_unit.title")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
@@ -96,7 +96,7 @@ struct WeightUnitSheetView: View {
                             .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
 
-                    Text("Essa preferência será usada para exibir cargas e referências de treino.")
+                    Text("settings.weight_unit.description")
                         .font(.system(size: 13, weight: .regular))
                         .foregroundColor(.white.opacity(0.45))
                         .padding(.horizontal, 6)
@@ -107,7 +107,7 @@ struct WeightUnitSheetView: View {
 
                 HStack(spacing: 12) {
                     Button(action: onCancel) {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -122,7 +122,7 @@ struct WeightUnitSheetView: View {
                     .buttonStyle(.plain)
 
                     Button(action: onSave) {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }

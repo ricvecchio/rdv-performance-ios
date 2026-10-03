@@ -8,7 +8,7 @@ struct WorkoutTemplateAttachmentButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: "paperclip")
-                Text("Anexar de Meus Treinos")
+                Text("workouts.attach_from_my_workouts")
             }
             .padding(.horizontal, 12)
             .compactPrimaryGreenActionButton()
@@ -31,7 +31,7 @@ struct WorkoutTemplateAttachmentSheet: View {
                 if isLoading {
                     ProgressView().tint(.white)
                 } else if templates.isEmpty {
-                    Text("Nenhum treino encontrado")
+                    Text("workouts.empty")
                         .font(.system(size: 16, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                 } else {
@@ -54,10 +54,10 @@ struct WorkoutTemplateAttachmentSheet: View {
                     .scrollContentBackground(.hidden)
                 }
             }
-            .navigationTitle("Meus Treinos")
+            .navigationTitle("workouts.my_workouts")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar", action: onClose)
+                    Button("common.close", action: onClose)
                 }
             }
         }

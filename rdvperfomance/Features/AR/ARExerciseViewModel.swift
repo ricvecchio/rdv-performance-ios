@@ -35,7 +35,10 @@ final class ARExerciseViewModel: ObservableObject {
         let pts = storage.loadCorrectionPoints(weekId: weekId, dayId: dayId)
         correctionPoints = pts
         if pts.isEmpty {
-            errorMessage = String(localized: "Falha ao carregar pontos de correção", locale: Self.localizationLocale)
+            errorMessage = String(
+                localized: "ar.correction_points.load_failed",
+                locale: Self.localizationLocale
+            )
         }
     }
 
@@ -44,7 +47,10 @@ final class ARExerciseViewModel: ObservableObject {
         do {
             try storage.saveCorrectionPoints(correctionPoints, weekId: weekId, dayId: dayId)
         } catch {
-            errorMessage = String(localized: "Falha ao salvar pontos de correção", locale: Self.localizationLocale)
+            errorMessage = String(
+                localized: "ar.correction_points.save_failed",
+                locale: Self.localizationLocale
+            )
         }
     }
 

@@ -9,10 +9,12 @@ enum ProgressMetricsMock {
             weeklyCompletion: 0.20,
             streakDays: 1,
             badges: [
-                Badge(id: "b1", title: "Primeiro treino", systemImageName: "sparkles")
+                Badge(id: "b1", systemImageName: "sparkles")
             ],
-            displayName: "Aluno (preview)",
-            weekLabel: "Semana atual"
+            displayName: nil,
+            displayNameCopy: .previewStudent,
+            weekLabel: nil,
+            weekLabelCopy: .currentWeek
         )
     }
 
@@ -22,11 +24,13 @@ enum ProgressMetricsMock {
             weeklyCompletion: 0.75,
             streakDays: 6,
             badges: [
-                Badge(id: "b1", title: "Primeiro treino", systemImageName: "sparkles"),
-                Badge(id: "b2", title: "3 treinos/semana", systemImageName: "dumbbell.fill")
+                Badge(id: "b1", systemImageName: "sparkles"),
+                Badge(id: "b2", systemImageName: "dumbbell.fill")
             ],
-            displayName: "Aluno consistente",
-            weekLabel: "Semana atual"
+            displayName: nil,
+            displayNameCopy: .consistentStudent,
+            weekLabel: nil,
+            weekLabelCopy: .currentWeek
         )
     }
 
@@ -36,12 +40,14 @@ enum ProgressMetricsMock {
             weeklyCompletion: 1.0,
             streakDays: 14,
             badges: [
-                Badge(id: "b1", title: "Primeiro treino", systemImageName: "sparkles"),
-                Badge(id: "b2", title: "3 treinos/semana", systemImageName: "dumbbell.fill"),
-                Badge(id: "b3", title: "Semana completa", systemImageName: "checkmark.seal.fill")
+                Badge(id: "b1", systemImageName: "sparkles"),
+                Badge(id: "b2", systemImageName: "dumbbell.fill"),
+                Badge(id: "b3", systemImageName: "checkmark.seal.fill")
             ],
-            displayName: "Modo monstro",
-            weekLabel: "Semana atual"
+            displayName: nil,
+            displayNameCopy: .beastMode,
+            weekLabel: nil,
+            weekLabelCopy: .currentWeek
         )
     }
 

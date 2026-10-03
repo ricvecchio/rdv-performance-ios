@@ -18,21 +18,21 @@ struct TeacherMapView: View {
     private var displayCoordinateText: String {
         let format: String
         if let coord = academyCoordinate {
-            format = String(localized: "Academia: %.5f, %.5f", locale: locale)
+            format = String(localized: "ui.gym_5f_5f", locale: locale)
             return String(
                 format: format,
                 locale: locale,
                 arguments: [coord.latitude, coord.longitude]
             )
         } else if let last = vm.lastLocation {
-            format = String(localized: "Última: %.5f, %.5f", locale: locale)
+            format = String(localized: "ui.last_5f_5f", locale: locale)
             return String(
                 format: format,
                 locale: locale,
                 arguments: [last.coordinate.latitude, last.coordinate.longitude]
             )
         } else {
-            return String(localized: "Localização: —", locale: locale)
+            return String(localized: "ui.location", locale: locale)
         }
     }
 
@@ -75,12 +75,12 @@ struct TeacherMapView: View {
                 // Se permissão negada, mostra card explicativo acima dos controles
                 if vm.authorizationStatus == .denied || vm.authorizationStatus == .restricted {
                     VStack(spacing: 12) {
-                        Text("Permissão de localização negada. Habilite em Ajustes para ver a posição da sua academia.")
+                        Text("ui.location_permission_denied_enable_it_in_settings_to_see_your_gym_s_position")
                             .multilineTextAlignment(.center)
                             .padding(.horizontal)
 
                         Button(action: openSettings) {
-                            Text("Abrir Ajustes")
+                            Text("ui.open_settings")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.borderedProminent)
@@ -101,12 +101,12 @@ struct TeacherMapView: View {
                             // ✅ garante que o map acompanhe o vm.region após centralizar
                             cameraPosition = .region(vm.region)
                         }) {
-                            Label("Centrar", systemImage: "location.fill")
+                            Label(LocalizedStringKey("ui.center"), systemImage: "location.fill")
                         }
                         .buttonStyle(.bordered)
 
                         Toggle(isOn: $showSavedToggle) {
-                            Text("Salvar última localização")
+                            Text("ui.save_last_location")
                         }
                         .onChange(of: showSavedToggle) { _, newValue in
                             profileStore.setMapDemoEnabled(newValue, userId: session.currentUid)
@@ -120,7 +120,7 @@ struct TeacherMapView: View {
 
                     HStack(spacing: 12) {
                         Button(action: { showEditLocationSheet = true }) {
-                            Label("Editar localização", systemImage: "pencil")
+                            Label(LocalizedStringKey("ui.edit_location_2"), systemImage: "pencil")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
@@ -129,7 +129,7 @@ struct TeacherMapView: View {
                             profileStore.setLastSeenCoordinate(nil, userId: session.currentUid)
                             setupAnnotations()
                         }) {
-                            Text("Remover localização")
+                            Text("ui.remove_location")
                                 .frame(maxWidth: .infinity)
                         }
                         .buttonStyle(.bordered)
@@ -142,7 +142,7 @@ struct TeacherMapView: View {
                 .padding()
             }
         }
-        .navigationTitle("Mapa da Academia")
+        .navigationTitle("ui.gym_map")
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(.hidden, for: .navigationBar)
         .onAppear {
@@ -152,6 +152,7 @@ struct TeacherMapView: View {
         .sheet(isPresented: $showEditLocationSheet) {
             EditLocationView(
                 initialCoordinate: academyCoordinate ?? vm.lastLocation?.coordinate,
+                locale: locale,
                 onSave: { coord in
                     profileStore.setLastSeenCoordinate(coord, userId: session.currentUid)
                     setupAnnotations()
@@ -204,14 +205,19 @@ private struct EditLocationView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var latText: String
     @State private var lonText: String
+    let locale: Locale
     var onSave: (CLLocationCoordinate2D) -> Void
 
-    init(initialCoordinate: CLLocationCoordinate2D?, onSave: @escaping (CLLocationCoordinate2D) -> Void) {
+    init(
+        initialCoordinate: CLLocationCoordinate2D?,
+        locale: Locale,
+        onSave: @escaping (CLLocationCoordinate2D) -> Void
+    ) {
+        self.locale = locale
         self.onSave = onSave
         if let c = initialCoordinate {
-            let numberLocale = Locale(identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage") ?? AppLanguage.portugueseBrazil.rawValue)
-            _latText = State(initialValue: String(format: "%.6f", locale: numberLocale, c.latitude))
-            _lonText = State(initialValue: String(format: "%.6f", locale: numberLocale, c.longitude))
+            _latText = State(initialValue: String(format: "%.6f", locale: locale, c.latitude))
+            _lonText = State(initialValue: String(format: "%.6f", locale: locale, c.longitude))
         } else {
             _latText = State(initialValue: "")
             _lonText = State(initialValue: "")
@@ -221,15 +227,15 @@ private struct EditLocationView: View {
     var body: some View {
         NavigationView {
             Form {
-                Section(header: Text("Coordenadas da Academia")) {
-                    TextField("Latitude", text: $latText)
+                Section(header: Text("ui.gym_coordinates")) {
+                    TextField("ui.latitude", text: $latText)
                         .keyboardType(.numbersAndPunctuation)
-                    TextField("Longitude", text: $lonText)
+                    TextField("ui.longitude", text: $lonText)
                         .keyboardType(.numbersAndPunctuation)
                 }
 
                 Section {
-                    Button("Salvar") {
+                    Button("common.save") {
                         guard let lat = Double(latText.replacingOccurrences(of: ",", with: ".")),
                               let lon = Double(lonText.replacingOccurrences(of: ",", with: ".")) else {
                             return
@@ -241,10 +247,10 @@ private struct EditLocationView: View {
                     .disabled(latText.isEmpty || lonText.isEmpty)
                 }
             }
-            .navigationTitle("Editar Localização")
+            .navigationTitle("ui.edit_location")
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Fechar") { dismiss() }
+                    Button("common.close") { dismiss() }
                 }
             }
         }

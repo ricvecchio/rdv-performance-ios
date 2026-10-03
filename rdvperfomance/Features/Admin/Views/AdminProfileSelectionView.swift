@@ -21,7 +21,7 @@ struct AdminProfileSelectionView: View {
                     .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
                     .padding(.top, 20)
 
-                Text("Escolha seu perfil de Administração")
+                Text("admin.profile_selection.prompt")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white)
                     .padding(.top, 10)
@@ -29,29 +29,29 @@ struct AdminProfileSelectionView: View {
 
                 VStack(spacing: 14) {
                     selectionButton(
-                        title: "Perfil Administrador",
-                        subtitle: "Gerencie usuários, vínculos e treinos"
+                        title: "admin.profile_selection.administrator.title",
+                        subtitle: "admin.profile_selection.administrator.subtitle"
                     ) {
                         session.selectAdminProfile(.administrator)
                     }
 
                     selectionButton(
-                        title: "Perfil Aluno",
-                        subtitle: "Visualize o aplicativo como aluno"
+                        title: "admin.profile_selection.student.title",
+                        subtitle: "admin.profile_selection.student.subtitle"
                     ) {
                         session.selectAdminProfile(.student)
                     }
 
                     selectionButton(
-                        title: "Perfil Professor",
-                        subtitle: "Visualize o aplicativo como professor"
+                        title: "admin.profile_selection.trainer.title",
+                        subtitle: "admin.profile_selection.trainer.subtitle"
                     ) {
                         session.selectAdminProfile(.trainer)
                     }
                 }
                 .frame(width: 300)
 
-                Text("Você pode trocar de perfil nas configurações.")
+                Text("admin.profile_selection.change_note")
                     .font(.system(size: 13))
                     .foregroundColor(textSecondary)
                     .padding(.top, 18)

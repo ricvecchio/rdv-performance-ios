@@ -6,6 +6,7 @@ struct TeacherCrossfitLibraryView: View {
     let section: CrossfitLibrarySection
     let mode: TeacherWorkoutsMode
     let templateMode: TeacherWorkoutTemplatesMode
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -18,14 +19,16 @@ struct TeacherCrossfitLibraryView: View {
 
     // ✅ Chaves estáveis para o Firestore (mantidas como strings para não depender do enum)
     // Importante: se suas keys reais no Firestore forem diferentes, ajuste SOMENTE os valores abaixo.
-    private let menuItems: [CrossfitMenuItem] = [
-        .init(title: "Girls WODs", sectionKey: "girlsWods"),
-        .init(title: "Hero & Tribute Workouts", sectionKey: "heroTributeWorkouts"),
-        .init(title: "Open WODs", sectionKey: "openWods"),
-        .init(title: "WODs Nomeados", sectionKey: "wodsNomeados"),
-        .init(title: "Qualifiers / WODs de Competições", sectionKey: "qualifiersCompeticoes"),
-        .init(title: "Meus Treinos", sectionKey: "meusTreinos")
-    ]
+    private var menuItems: [CrossfitMenuItem] {
+        [
+            .init(title: String(localized: "library.crossfit.girls_wods", locale: locale), sectionKey: "girlsWods"),
+            .init(title: String(localized: "library.crossfit.hero_tribute_workouts", locale: locale), sectionKey: "heroTributeWorkouts"),
+            .init(title: String(localized: "library.crossfit.open_wods", locale: locale), sectionKey: "openWods"),
+            .init(title: String(localized: "library.crossfit.named_wods", locale: locale), sectionKey: "wodsNomeados"),
+            .init(title: String(localized: "library.crossfit.qualifier_competition_wods", locale: locale), sectionKey: "qualifiersCompeticoes"),
+            .init(title: String(localized: "ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
+        ]
+    }
 
     var body: some View {
         ZStack {
@@ -49,7 +52,7 @@ struct TeacherCrossfitLibraryView: View {
 
                             // ✅ Removido: Text("Biblioteca Crossfit")
 
-                            Text("Selecione uma seção.")
+                            Text("ui.select_a_section")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
 
@@ -127,7 +130,7 @@ struct TeacherCrossfitLibraryView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Crossfit")
+                Text("video.category.crossfit")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }

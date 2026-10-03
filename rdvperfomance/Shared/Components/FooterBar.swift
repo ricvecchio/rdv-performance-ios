@@ -129,7 +129,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goPerfilBasic() } label: {
-                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
                 }
                 .buttonStyle(.plain)
             }
@@ -154,7 +154,7 @@ struct FooterBar: View {
                 FooterItem(icon: .custom(treinoIcon), verbatimTitle: treinoTitle, isSelected: isTreinoSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
 
                 Button { goPerfilBasic() } label: {
-                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
             }
@@ -173,7 +173,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goPerfilStudent() } label: {
-                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil)
                 }
                 .buttonStyle(.plain)
             }
@@ -197,7 +197,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goPerfilStudent() } label: {
-                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
             }
@@ -225,7 +225,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goPerfilStudent() } label: {
-                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
             }
@@ -249,7 +249,7 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goTeacherPerfil(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
             }
@@ -263,12 +263,12 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goTeacherAlunos(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person"), title: "Aluno", isSelected: isAlunoSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person"), title: "common.student", isSelected: isAlunoSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
 
                 Button { goTeacherPerfil(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person.fill"), title: "Perfil", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person.fill"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
                 }
                 .buttonStyle(.plain)
             }
@@ -353,7 +353,7 @@ struct FooterBar: View {
                     }
                 }
 
-            Text("Alunos")
+            Text("common.students")
                 .font(Theme.Fonts.footerTitle())
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)

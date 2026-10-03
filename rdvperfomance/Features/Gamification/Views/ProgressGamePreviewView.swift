@@ -22,7 +22,7 @@ struct ProgressGamePreviewView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
 
-                        Text("Preview interativo do progresso gamificado.")
+                        Text("gamification.preview.description")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.55))
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -35,7 +35,7 @@ struct ProgressGamePreviewView: View {
                         } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "shuffle")
-                                Text("Randomizar cenário")
+                                Text("gamification.preview.randomize")
                             }
                             .padding(.horizontal, 14)
                             .primaryGreenActionButton()

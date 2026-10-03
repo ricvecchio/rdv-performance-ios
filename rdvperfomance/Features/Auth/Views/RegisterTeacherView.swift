@@ -73,7 +73,7 @@ struct RegisterTeacherView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Cadastro Professor")
+                Text("auth.register_teacher.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -94,7 +94,7 @@ struct RegisterTeacherView: View {
         VStack(spacing: 18) {
 
             UnderlineTextField(
-                title: "Nome",
+                title: "common.name",
                 text: $vm.name,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -104,7 +104,7 @@ struct RegisterTeacherView: View {
             )
 
             UnderlineTextField(
-                title: "E-mail",
+                title: "common.email",
                 text: $vm.email,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -115,7 +115,7 @@ struct RegisterTeacherView: View {
             )
 
             UnderlineTextField(
-                title: "Senha",
+                title: "common.password",
                 text: $vm.password,
                 isSecure: true,
                 showPassword: $showPassword,
@@ -126,7 +126,7 @@ struct RegisterTeacherView: View {
 
             // ✅ Campo de telefone com máscara brasileira centralizada
             PhoneTextField(
-                title: "WhatsApp (opcional)",
+                title: "auth.fields.whatsapp_optional",
                 digits: $vm.phone,
                 lineColor: lineColor,
                 textColor: .white,
@@ -134,7 +134,7 @@ struct RegisterTeacherView: View {
             )
 
             UnderlineTextField(
-                title: "CREF (opcional)",
+                title: "auth.fields.cref_optional",
                 text: $vm.cref,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -144,7 +144,7 @@ struct RegisterTeacherView: View {
             )
 
             UnderlineTextField(
-                title: "Nome da academia (opcional)",
+                title: "auth.fields.gym_name_optional",
                 text: $vm.gymName,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -156,7 +156,7 @@ struct RegisterTeacherView: View {
             multilineBioField()
 
             pickerRow(
-                title: "Área de foco",
+                title: "auth.fields.focus_area",
                 selection: $vm.focusArea,
                 options: FocusAreaDTO.allCases,
                 displayText: displayTextForFocusArea
@@ -173,7 +173,7 @@ struct RegisterTeacherView: View {
     private func multilineBioField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text("Bio (opcional)")
+            Text("auth.fields.bio_optional")
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 
@@ -227,7 +227,11 @@ struct RegisterTeacherView: View {
                             .tint(.white.opacity(0.9))
                     }
 
-                    Text(vm.isLoading ? "Criando..." : "Criar Conta")
+                    Text(
+                        vm.isLoading
+                            ? LocalizedStringKey("auth.registration.loading")
+                            : LocalizedStringKey("auth.registration.submit")
+                    )
                 }
                 .frame(maxWidth: .infinity)
                 .primaryGreenActionButton()
@@ -238,7 +242,7 @@ struct RegisterTeacherView: View {
             Button {
                 path.removeAll()
             } label: {
-                Text("Já tenho conta — Voltar ao Login")
+                Text("auth.registration.back_to_login")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
                     .underline()
@@ -255,9 +259,9 @@ struct RegisterTeacherView: View {
                 ?? AppLanguage.portugueseBrazil.rawValue
         )
         switch opt {
-        case .CROSSFIT: return String(localized: "Crossfit", locale: locale)
-        case .GYM: return String(localized: "Academia", locale: locale)
-        case .HOME: return String(localized: "Em Casa", locale: locale)
+        case .CROSSFIT: return String(localized: "auth.focus_area.crossfit", locale: locale)
+        case .GYM: return String(localized: "auth.focus_area.gym", locale: locale)
+        case .HOME: return String(localized: "auth.focus_area.home", locale: locale)
         }
     }
 

@@ -70,19 +70,19 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 }
                 .ignoresSafeArea(.container, edges: [.bottom])
             }
-            .navigationTitle("Treino")
+            .navigationTitle("ui.workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
 
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+                    Button("common.close") { dismiss() }
                         .disabled(isSaving)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
                     if isEditing {
                         HStack(spacing: 12) {
-                            Button("Cancelar") {
+                            Button("common.cancel") {
                                 errorMessage = nil
                                 successMessage = nil
                                 isEditing = false
@@ -96,13 +96,13 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                                 if isSaving {
                                     ProgressView().tint(.white)
                                 } else {
-                                    Text("Salvar")
+                                    Text("common.save")
                                 }
                             }
                             .disabled(isSaving)
                         }
                     } else {
-                        Button("Editar") {
+                        Button("ui.edit") {
                             errorMessage = nil
                             successMessage = nil
                             isEditing = true
@@ -151,7 +151,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                     ForEach(blocks.indices, id: \.self) { i in
                         let b = blocks[i]
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(b.name.isEmpty ? String(localized: "Bloco", locale: locale) : b.displayedName(locale: locale))
+                            Text(b.name.isEmpty ? String(localized: "ui.block", locale: locale) : b.displayedName(locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
 
@@ -173,11 +173,11 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Sem blocos cadastrados")
+                    Text("ui.no_blocks_registered")
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
 
-                    Text("Este WOD ainda não possui Aquecimento/Técnica/WOD/Blocos.")
+                    Text("ui.this_wod_does_not_yet_have_warm_up_technique_wod_blocks")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                 }
@@ -287,7 +287,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
         guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !templateId.isEmpty else {
-            errorMessage = String(localized: "Não foi possível salvar: templateId inválido.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_save_invalid_templateid", locale: locale)
             return
         }
 
@@ -300,7 +300,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 blocks: draftBlocks
             )
 
-            successMessage = String(localized: "Alterações salvas com sucesso!", locale: locale)
+            successMessage = String(localized: "ui.changes_saved_successfully", locale: locale)
             isEditing = false
 
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)

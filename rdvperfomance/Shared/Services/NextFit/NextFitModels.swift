@@ -33,7 +33,7 @@ struct NextFitAgendaDisplay: Equatable, Identifiable {
     let hasCheckIn: Bool
 
     func scheduleText(locale: Locale) -> String {
-        let format = String(localized: "%@ às %@", locale: locale)
+        let format = String(localized: "common.time_range", locale: locale)
         return String(
             format: format,
             locale: locale,

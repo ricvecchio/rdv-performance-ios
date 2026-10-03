@@ -26,7 +26,7 @@ struct AccountTypeSelectionView: View {
                     .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
                     .padding(.top, 20)
 
-                Text("Escolha seu perfil")
+                Text("auth.account_type.prompt")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white)
                     .padding(.top, 10)
@@ -35,22 +35,22 @@ struct AccountTypeSelectionView: View {
                 VStack(spacing: 14) {
 
                     selectionButton(
-                        title: "Sou Aluno",
-                        subtitle: "Acompanhe seus treinos e progresso"
+                        title: "auth.account_type.student.title",
+                        subtitle: "auth.account_type.student.subtitle"
                     ) {
                         path.append(.registerStudent)
                     }
 
                     selectionButton(
-                        title: "Sou Professor",
-                        subtitle: "Envie treinos e acompanhe alunos"
+                        title: "auth.account_type.trainer.title",
+                        subtitle: "auth.account_type.trainer.subtitle"
                     ) {
                         path.append(.registerTrainer)
                     }
                 }
                 .frame(width: 300)
 
-                Text("Você pode trocar depois nas configurações.")
+                Text("auth.account_type.change_note")
                     .font(.system(size: 13))
                     .foregroundColor(textSecondary)
                     .padding(.top, 18)
@@ -76,7 +76,7 @@ struct AccountTypeSelectionView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Cadastro")
+                Text("auth.registration.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }

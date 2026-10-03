@@ -20,7 +20,7 @@ struct ForceUpdateView: View {
                     .opacity(0.9)
 
                 VStack(spacing: 12) {
-                    Text("Atualização necessária")
+                    Text("update.required.title")
                         .font(.system(size: 24, weight: .bold))
                         .foregroundColor(.white)
 
@@ -30,14 +30,14 @@ struct ForceUpdateView: View {
                             .foregroundColor(.white.opacity(0.82))
                             .multilineTextAlignment(.center)
                     } else {
-                        Text("Uma nova versão do RDV Performance está disponível. Atualize o aplicativo para continuar.")
+                        Text("update.required.message")
                             .font(.system(size: 16))
                             .foregroundColor(.white.opacity(0.82))
                             .multilineTextAlignment(.center)
                     }
                 }
 
-                Button("ATUALIZAR AGORA") {
+                Button("update.required.action") {
                     openAppStore()
                 }
                 .frame(maxWidth: .infinity)

@@ -20,15 +20,15 @@ enum DefaultWorkoutBlock: Hashable {
     func localizedName(locale: Locale) -> String {
         switch self {
         case .warmup:
-            String(localized: "Aquecimento", locale: locale)
+            String(localized: "workout_block.warmup", locale: locale)
         case .technique:
-            String(localized: "Técnica", locale: locale)
+            String(localized: "workout_block.technique", locale: locale)
         case .wod:
-            String(localized: "WOD", locale: locale)
+            String(localized: "workout_block.wod", locale: locale)
         case .workout:
-            String(localized: "Treino", locale: locale)
+            String(localized: "workout_block.workout", locale: locale)
         case .loadsAndMovements:
-            String(localized: "Cargas / Movimentos", locale: locale)
+            String(localized: "workout_block.loads_and_movements", locale: locale)
         }
     }
 }

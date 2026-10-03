@@ -18,23 +18,23 @@ enum TeacherQuickAccessItem: String, CaseIterable, Codable, Hashable, Identifiab
 
     var title: LocalizedStringKey {
         switch self {
-        case .sendWorkout: "Enviar treino"
-        case .createWorkout: "Criar treino"
-        case .workoutLibrary: "Biblioteca de Treinos"
-        case .importWorkout: "Importar"
-        case .personalRecords: "Meus Recordes"
-        case .myVideos: "Meus Vídeos"
+        case .sendWorkout: "ui.send_workout"
+        case .createWorkout: "ui.create_workout"
+        case .workoutLibrary: "ui.workout_library"
+        case .importWorkout: "tecnofit_import.import_action"
+        case .personalRecords: "ui.my_records"
+        case .myVideos: "workout.my_videos"
         }
     }
 
     var subtitle: LocalizedStringKey {
         switch self {
-        case .sendWorkout: "Envie um treino para seus alunos"
-        case .createWorkout: "Monte um novo treino"
-        case .workoutLibrary: "Use modelos prontos"
-        case .importWorkout: "De competições ou bibliotecas"
-        case .personalRecords: "Acompanhe e registre seus resultados"
-        case .myVideos: "Organize seus vídeos de movimentos"
+        case .sendWorkout: "ui.send_a_workout_to_your_students"
+        case .createWorkout: "ui.create_a_new_workout"
+        case .workoutLibrary: "ui.use_ready_made_templates"
+        case .importWorkout: "ui.from_competitions_or_libraries"
+        case .personalRecords: "ui.track_and_record_your_results"
+        case .myVideos: "ui.organize_your_movement_videos"
         }
     }
 
@@ -135,7 +135,7 @@ struct TeacherDashboardView: View {
         .toolbar {
 
             ToolbarItem(placement: .principal) {
-                Text("Área do Professor")
+                Text("ui.coach_area")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -162,7 +162,7 @@ struct TeacherDashboardView: View {
                 .font(.system(size: 26, weight: .bold))
                 .foregroundColor(.white)
 
-            Text("Acompanhando a evolução da sua turma.")
+            Text("ui.tracking_your_class_s_progress")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -172,7 +172,7 @@ struct TeacherDashboardView: View {
     private var summaryCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
-                Text("Resumo de hoje")
+                Text("ui.today_s_summary")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -186,17 +186,17 @@ struct TeacherDashboardView: View {
             LazyVGrid(columns: summaryColumns, spacing: 8) {
                 summaryItem(
                     value: todaySummary?.studentsWithWorkout,
-                    title: "Treinos hoje",
+                    title: "ui.workouts_today",
                     icon: "person.3.fill"
                 )
                 summaryItem(
                     value: todaySummary?.completedStudents,
-                    title: "Concluídos",
+                    title: "workout.filter.completed",
                     icon: "checkmark.circle.fill"
                 )
                 summaryItem(
                     value: todaySummary?.studentsWithoutWorkout,
-                    title: "Sem treino",
+                    title: "ui.no_workout",
                     icon: "exclamationmark.triangle.fill",
                     iconColor: .red.opacity(0.9)
                 )
@@ -214,7 +214,7 @@ struct TeacherDashboardView: View {
     private var quickAccessCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
-                Text("Acesso rápido")
+                Text("ui.quick_access")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -231,7 +231,7 @@ struct TeacherDashboardView: View {
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(.plain)
-                .accessibilityLabel("Personalizar Acesso rápido")
+                .accessibilityLabel("ui.customize_quick_access")
                 .disabled(isLoadingQuickAccessItems)
             }
 
@@ -270,16 +270,16 @@ struct TeacherDashboardView: View {
                             .frame(maxWidth: .infinity)
                             .padding(.top, 10)
 
-                        Text("Personalizar Acesso rápido")
+                        Text("ui.customize_quick_access")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity, alignment: .center)
 
-                        Text("Escolha 3 atalhos para exibir na Área do Professor.")
+                        Text("ui.choose_3_shortcuts_to_show_in_the_coach_area")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.55))
 
-                        Text("Selecione 3 atalhos.")
+                        Text("ui.select_3_shortcuts")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
@@ -300,7 +300,7 @@ struct TeacherDashboardView: View {
                 }
 
                 HStack(spacing: 12) {
-                    Button("Cancelar") {
+                    Button("common.cancel") {
                         isQuickAccessEditorPresented = false
                     }
                     .buttonStyle(.plain)
@@ -323,7 +323,7 @@ struct TeacherDashboardView: View {
                             if isSavingQuickAccessItems {
                                 ProgressView().tint(.white)
                             } else {
-                                Text("Salvar")
+                                Text("common.save")
                             }
                         }
                         .frame(maxWidth: .infinity)
@@ -429,7 +429,7 @@ struct TeacherDashboardView: View {
         guard let teacherId = session.uid?.trimmingCharacters(in: .whitespacesAndNewlines),
               !teacherId.isEmpty else {
             quickAccessEditorError = String(
-                localized: "Não foi possível identificar o professor logado.",
+                localized: "ui.unable_to_identify_the_signed_in_trainer",
                 locale: locale
             )
             return
@@ -437,7 +437,7 @@ struct TeacherDashboardView: View {
         guard editableQuickAccessItems.count == 3,
               Set(editableQuickAccessItems).count == 3 else {
             quickAccessEditorError = String(
-                localized: "Selecione exatamente 3 atalhos.",
+                localized: "ui.select_exactly_3_shortcuts",
                 locale: locale
             )
             return

@@ -25,27 +25,27 @@ struct CrossfitMenuView: View {
 
                     VStack(spacing: 0) {
                         menuTile(
-                            title: String(localized: "WOD", locale: locale),
+                            title: String(localized: "ui.wod", locale: locale),
                             imageName: "rdv_crossfit_wod_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "BENCHMARK", locale: locale),
+                            title: String(localized: "ui.benchmark", locale: locale),
                             imageName: "rdv_crossfit_benchmark_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "MEUS RECORDES", locale: locale),
+                            title: String(localized: "ui.my_personal_records", locale: locale),
                             imageName: "rdv_crossfit_meusrecordes_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "PROGRESSOS", locale: locale),
+                            title: String(localized: "ui.progress", locale: locale),
                             imageName: "rdv_crossfit_progressos_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "MONTE SEU TREINO", locale: locale),
+                            title: String(localized: "ui.build_your_workout", locale: locale),
                             imageName: "rdv_crossfit_monteseutreino_horizontal",
                             height: tileHeight
                         )
@@ -56,7 +56,7 @@ struct CrossfitMenuView: View {
                 FooterBar(
                     path: $path,
                     kind: .treinosComPerfil(
-                        treinoTitle: TreinoTipo.crossfit.titulo,
+                        treinoTitle: TreinoTipo.crossfit.localizedTitle(locale: locale),
                         treinoIcon: AnyView(TreinoTipo.crossfit.iconeRodapeTreinos),
                         isHomeSelected: false,
                         isTreinoSelected: true,

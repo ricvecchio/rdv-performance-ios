@@ -2,11 +2,20 @@ import SpriteKit
 
 // Cena simples de demonstração do SpriteKit
 class GameScene: SKScene {
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
+
     // Configura a cena quando é apresentada na view
     override func didMove(to view: SKView) {
         backgroundColor = .white
 
-        let label = SKLabelNode(text: "Olá SpriteKit")
+        let label = SKLabelNode(
+            text: String(localized: "sprites.greeting", locale: Self.localizationLocale)
+        )
         label.fontSize = 28
         label.fontColor = .black
         label.position = CGPoint(x: size.width / 2, y: size.height / 2)

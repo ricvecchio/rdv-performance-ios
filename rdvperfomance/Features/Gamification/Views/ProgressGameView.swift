@@ -59,7 +59,7 @@ struct ProgressGameView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Progresso")
+                Text("gamification.progress.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -103,7 +103,7 @@ struct ProgressGameView: View {
     private var fallbackCard: some View {
         let percent = Int((vm.metrics.weeklyCompletion * 100).rounded())
         return VStack(alignment: .leading, spacing: 8) {
-            Text(vm.metrics.displayName ?? String(localized: "Progresso do aluno", locale: locale))
+            Text(vm.metrics.displayName ?? String(localized: "gamification.progress.student_title", locale: locale))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
@@ -112,7 +112,7 @@ struct ProgressGameView: View {
                 .foregroundColor(.white.opacity(0.55))
 
             if !vm.metrics.badges.isEmpty {
-                let format = String(localized: "Badges: %@", locale: locale)
+                let format = String(localized: "gamification.badges.summary", locale: locale)
                 Text(
                     String(
                         format: format,
@@ -123,7 +123,7 @@ struct ProgressGameView: View {
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.45))
             } else {
-                Text("Badges: —")
+                Text("gamification.badges.empty_summary")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.45))
             }
@@ -142,8 +142,8 @@ struct ProgressGameView: View {
     private func progressSummary(percent: Int, streakDays: Int) -> String {
         let format = String(
             localized: streakDays == 1
-                ? "Conclusão: %lld%% • Streak: %lld dia"
-                : "Conclusão: %lld%% • Streak: %lld dias",
+                ? "gamification.progress.summary.one_day"
+                : "gamification.progress.summary.other_days",
             locale: locale
         )
         return String(
@@ -154,9 +154,7 @@ struct ProgressGameView: View {
     }
 
     private var localizedBadgeList: String {
-        let titles = vm.metrics.badges.map {
-            String(localized: String.LocalizationValue($0.title), locale: locale)
-        }
+        let titles = vm.metrics.badges.map { $0.localizedTitle(locale: locale) }
         let formatter = ListFormatter()
         formatter.locale = locale
         return formatter.string(from: titles) ?? titles.joined(separator: ", ")

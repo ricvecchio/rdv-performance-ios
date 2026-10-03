@@ -46,17 +46,17 @@ enum TreinoTipo: String, Hashable {
 
     func localizedDisplayName(locale: Locale) -> String {
         switch self {
-        case .crossfit: return String(localized: "Crossfit", locale: locale)
-        case .academia: return String(localized: "Academia", locale: locale)
-        case .emCasa: return String(localized: "Treinos em Casa", locale: locale)
+        case .crossfit: return String(localized: "video.category.crossfit", locale: locale)
+        case .academia: return String(localized: "video.category.gym", locale: locale)
+        case .emCasa: return String(localized: "ui.home_workouts", locale: locale)
         }
     }
 
     func localizedTitle(locale: Locale) -> String {
         switch self {
-        case .crossfit: return String(localized: "Treinos Crossfit", locale: locale)
-        case .academia: return String(localized: "Treinos Academia", locale: locale)
-        case .emCasa: return String(localized: "Treinos em Casa", locale: locale)
+        case .crossfit: return String(localized: "ui.crossfit_workouts", locale: locale)
+        case .academia: return String(localized: "ui.gym_workouts", locale: locale)
+        case .emCasa: return String(localized: "ui.home_workouts", locale: locale)
         }
     }
 
@@ -75,10 +75,7 @@ enum TreinoTipo: String, Hashable {
     }
 
     private static var localizationLocale: Locale {
-        Locale(
-            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
-                ?? AppLanguage.portugueseBrazil.rawValue
-        )
+        .autoupdatingCurrent
     }
 
     /// Retorna o ícone customizado usado no rodapé da tela

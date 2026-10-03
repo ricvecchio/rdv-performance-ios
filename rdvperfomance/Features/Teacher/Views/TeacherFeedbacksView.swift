@@ -102,7 +102,7 @@ struct TeacherFeedbacksView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Feedbacks")
+                Text("ui.feedbacks")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -135,12 +135,12 @@ struct TeacherFeedbacksView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let format = String(localized: "Aluno: %@", locale: locale)
+            let format = String(localized: "ui.student_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [student.name]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
-            Text("Registre feedbacks e acompanhe o histórico.")
+            Text("ui.record_feedback_and_track_the_history")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -151,7 +151,7 @@ struct TeacherFeedbacksView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("HISTÓRICO")
+                Text("ui.history")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 
@@ -163,7 +163,7 @@ struct TeacherFeedbacksView: View {
             }
 
             if feedbacks.isEmpty {
-                Text("Nenhum feedback registrado ainda.")
+                Text("ui.no_feedback_recorded_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -203,7 +203,7 @@ struct TeacherFeedbacksView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.userName ?? String(localized: "Professor", locale: locale))
+                Text(session.userName ?? String(localized: "common.trainer", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -224,7 +224,7 @@ struct TeacherFeedbacksView: View {
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 14))
 
-                Text("FEEDBACK")
+                Text("ui.feedback")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
             }
@@ -251,7 +251,7 @@ struct TeacherFeedbacksView: View {
                     if isSaving {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Salvar")
+                        Text("common.save")
                     }
                     Spacer()
                 }
@@ -300,7 +300,7 @@ struct TeacherFeedbacksView: View {
         let msg = (error as NSError).localizedDescription
         if msg.lowercased().contains("missing or insufficient permissions") {
             return String(
-                localized: "Sem permissão para acessar os feedbacks desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/feedbacks.",
+                localized: "ui.no_permission_to_access_this_student_s_feedback_verify_that_you_are_signed_in_as_a_coach_and_that_the_firestore_rules_allow_users_alunoid_feedbacks",
                 locale: locale
             )
         }
@@ -313,17 +313,17 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "Apenas professor pode acessar feedbacks.", locale: locale)
+            errorMessage = String(localized: "ui.only_coaches_can_access_feedback", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
+            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -350,23 +350,23 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "Apenas professor pode salvar feedback.", locale: locale)
+            errorMessage = String(localized: "ui.only_coaches_can_save_feedback", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
+            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
         let textTrim = newFeedbackText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !textTrim.isEmpty else {
-            errorMessage = String(localized: "Digite um feedback antes de salvar.", locale: locale)
+            errorMessage = String(localized: "ui.enter_feedback_before_saving", locale: locale)
             return
         }
 
@@ -383,7 +383,7 @@ struct TeacherFeedbacksView: View {
             )
 
             newFeedbackText = ""
-            successMessage = String(localized: "Feedback salvo com sucesso.", locale: locale)
+            successMessage = String(localized: "ui.feedback_saved_successfully", locale: locale)
             await loadFeedbacks()
 
         } catch {

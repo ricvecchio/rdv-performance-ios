@@ -93,7 +93,7 @@ struct StudentFeedbacksView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Feedbacks")
+                Text("student_feedbacks.feedbacks")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -116,7 +116,7 @@ struct StudentFeedbacksView: View {
     // Header de contexto com categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aqui você vê os feedbacks enviados pelo seu treinador.")
+            Text("student_feedbacks.here_you_can_see_feedback_sent_by_your_coach")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -128,7 +128,7 @@ struct StudentFeedbacksView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("HISTÓRICO")
+                Text("student_feedbacks.history")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 
@@ -140,7 +140,7 @@ struct StudentFeedbacksView: View {
             }
 
             if feedbacks.isEmpty {
-                Text("Nenhum feedback recebido ainda.")
+                Text("student_feedbacks.no_feedback_received_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -185,7 +185,7 @@ struct StudentFeedbacksView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(teachersById[fb.teacherId]?.name ?? String(localized: "Professor", locale: locale))
+                Text(teachersById[fb.teacherId]?.name ?? String(localized: "common.trainer", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -225,12 +225,12 @@ struct StudentFeedbacksView: View {
         errorMessage = nil
 
         guard session.isLoggedIn && session.isStudent else {
-            errorMessage = String(localized: "Apenas aluno pode acessar feedbacks.", locale: locale)
+            errorMessage = String(localized: "student_feedbacks.student_only", locale: locale)
             return
         }
 
         guard let sid = Auth.auth().currentUser?.uid, !sid.isEmpty else {
-            errorMessage = String(localized: "Não foi possível identificar o aluno logado.", locale: locale)
+            errorMessage = String(localized: "student_shared.logged_student_not_found", locale: locale)
             return
         }
 

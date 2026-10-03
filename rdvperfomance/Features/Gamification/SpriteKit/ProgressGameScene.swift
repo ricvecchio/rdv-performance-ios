@@ -127,16 +127,24 @@ final class ProgressGameScene: SKScene {
     private func apply(metrics: ProgressMetrics, animated: Bool) {
 
         /// Define textos dos labels com dados das métricas
-        let name = (metrics.displayName?.isEmpty == false) ? metrics.displayName! : "Progresso"
-        titleLabel.text = localized(name)
-        subtitleLabel.text = localized(metrics.weekLabel ?? "Semana")
+        titleLabel.text = metrics.displayName?.isEmpty == false
+            ? metrics.displayName
+            : metrics.displayNameCopy?.localized(locale: currentLocale)
+                ?? String(localized: "gamification.progress.title", locale: currentLocale)
+        subtitleLabel.text = metrics.weekLabel
+            ?? metrics.weekLabelCopy?.localized(locale: currentLocale)
+            ?? String(localized: "gamification.week.default", locale: currentLocale)
 
         let percent = Int((max(0.0, min(1.0, metrics.weeklyCompletion)) * 100.0).rounded())
-        let format = localized("🔥 Streak: %lld %@ • %lld%%")
+        let format = String(localized: "gamification.streak.summary", locale: currentLocale)
         streakLabel.text = String(
             format: format,
             locale: currentLocale,
-            arguments: [Int64(metrics.streakDays), localized("dias"), Int64(percent)]
+            arguments: [
+                Int64(metrics.streakDays),
+                String(localized: "gamification.streak.days", locale: currentLocale),
+                Int64(percent)
+            ]
         )
 
         /// Desenha arco de progresso baseado no percentual de conclusão
@@ -169,7 +177,10 @@ final class ProgressGameScene: SKScene {
         /// Exibe mensagem quando não há badges conquistadas
         guard !displayedBadges.isEmpty else {
             let empty = SKLabelNode(fontNamed: "AvenirNext-Regular")
-            empty.text = localized("Sem badges ainda — continue treinando!")
+            empty.text = String(
+                localized: "gamification.badges.empty_message",
+                locale: currentLocale
+            )
             empty.fontSize = 12
             empty.fontColor = UIColor.white.withAlphaComponent(0.55)
             empty.horizontalAlignmentMode = .center
@@ -192,7 +203,10 @@ final class ProgressGameScene: SKScene {
             var y = (totalHeight - itemHeight) / 2.0
 
             for badge in shown {
-                let node = previewBadgeNode(title: localized(badge.title), width: itemWidth)
+                let node = previewBadgeNode(
+                    title: badge.localizedTitle(locale: currentLocale),
+                    width: itemWidth
+                )
                 node.position = CGPoint(x: 0, y: y)
                 badgesContainer.addChild(node)
 
@@ -213,7 +227,10 @@ final class ProgressGameScene: SKScene {
         var x = -totalWidth / 2
 
         for b in shown {
-            let node = badgeNode(title: localized(b.title), systemImageName: b.systemImageName)
+            let node = badgeNode(
+                title: b.localizedTitle(locale: currentLocale),
+                systemImageName: b.systemImageName
+            )
             node.position = CGPoint(x: x + itemWidth / 2, y: 0)
             badgesContainer.addChild(node)
 
@@ -255,10 +272,6 @@ final class ProgressGameScene: SKScene {
         container.addChild(label)
 
         return container
-    }
-
-    private func localized(_ key: String) -> String {
-        String(localized: String.LocalizationValue(key), locale: currentLocale)
     }
 
     private func previewBadgeNode(title: String, width: CGFloat) -> SKNode {

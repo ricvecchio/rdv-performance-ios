@@ -111,7 +111,7 @@ struct CreateTreinoAcademiaView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Adicionar Treino")
+                Text("ui.add_workout")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -135,9 +135,11 @@ struct CreateTreinoAcademiaView: View {
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
             (
-                Text("Crie um novo \(Text("treino de academia").foregroundColor(.green.opacity(0.85))) para esta seção.")
-                    .foregroundColor(.white.opacity(0.55))
+                Text("ui.create_a_new")
+                + Text("ui.gym_workout_type").foregroundColor(.green.opacity(0.85))
+                + Text("ui.for_this_section")
             )
+            .foregroundColor(.white.opacity(0.55))
                 .font(.system(size: 14))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -147,7 +149,7 @@ struct CreateTreinoAcademiaView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             UnderlineTextField(
-                title: "Título do Treino",
+                title: "ui.workout_title_2",
                 text: $title,
                 isSecure: false,
                 showPassword: $showPasswordDummy,
@@ -159,7 +161,7 @@ struct CreateTreinoAcademiaView: View {
             Divider().background(Theme.Colors.divider)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Descrição")
+                Text("ui.description")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
@@ -213,7 +215,7 @@ struct CreateTreinoAcademiaView: View {
                     HStack {
                         VStack(alignment: .leading, spacing: 6) {
                             TextField(
-                                "Novo bloco",
+                                "ui.new_block",
                                 text: Binding(
                                     get: { b.displayedName(locale: locale) },
                                     set: { b.setDisplayedName($0) }
@@ -263,7 +265,7 @@ struct CreateTreinoAcademiaView: View {
             }
 
             if blocks.isEmpty {
-                Text("Nenhum bloco adicionado.")
+                Text("ui.no_block_added")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             }
@@ -288,7 +290,7 @@ struct CreateTreinoAcademiaView: View {
                 if isSaving {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Salvar Treino")
+                    Text("ui.save_workout")
                 }
                 Spacer()
             }
@@ -333,19 +335,19 @@ struct CreateTreinoAcademiaView: View {
         successMessage = nil
 
         guard session.isTrainer else {
-            errorMessage = String(localized: "Apenas professor pode adicionar treinos.", locale: locale)
+            errorMessage = String(localized: "ui.only_coaches_can_add_workouts", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = String(localized: "Informe o título do treino.", locale: locale)
+            errorMessage = String(localized: "ui.enter_the_workout_title", locale: locale)
             return
         }
 

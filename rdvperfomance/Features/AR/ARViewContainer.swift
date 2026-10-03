@@ -11,6 +11,13 @@ struct ARContainerView: UIViewRepresentable {
     var onArViewCreated: ((ARView) -> Void)?
     var onTap: ((CGPoint) -> Void)? = nil
 
+    fileprivate static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
+
     // Coordenador que gerencia delegados da sessão AR e eventos de toque
     class Coordinator: NSObject, ARSessionDelegate {
         weak var statusLabel: UILabel?
@@ -26,15 +33,38 @@ struct ARContainerView: UIViewRepresentable {
                 case .normal: break
                 case .notAvailable:
                     label.isHidden = false
-                    label.text = "Câmera ou sensores indisponíveis"
+                    label.text = String(
+                        localized: "ar.status.camera_unavailable",
+                        locale: ARContainerView.localizationLocale
+                    )
                 case .limited(let reason):
                     label.isHidden = false
                     switch reason {
-                    case .initializing: label.text = "Tracking: inicializando"
-                    case .excessiveMotion: label.text = "Tracking: movimento excessivo"
-                    case .insufficientFeatures: label.text = "Tracking: poucas feições visuais"
-                    case .relocalizing: label.text = "Tracking: relocalizando"
-                    @unknown default: label.text = "Tracking: desconhecido"
+                    case .initializing:
+                        label.text = String(
+                            localized: "ar.status.tracking_initializing",
+                            locale: ARContainerView.localizationLocale
+                        )
+                    case .excessiveMotion:
+                        label.text = String(
+                            localized: "ar.status.tracking_excessive_motion",
+                            locale: ARContainerView.localizationLocale
+                        )
+                    case .insufficientFeatures:
+                        label.text = String(
+                            localized: "ar.status.tracking_insufficient_features",
+                            locale: ARContainerView.localizationLocale
+                        )
+                    case .relocalizing:
+                        label.text = String(
+                            localized: "ar.status.tracking_relocalizing",
+                            locale: ARContainerView.localizationLocale
+                        )
+                    @unknown default:
+                        label.text = String(
+                            localized: "ar.status.tracking_unknown",
+                            locale: ARContainerView.localizationLocale
+                        )
                     }
                 }
             }
@@ -44,7 +74,10 @@ struct ARContainerView: UIViewRepresentable {
         func session(_ session: ARSession, didFailWithError error: Error) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
-                self.statusLabel?.text = "Falha na sessão AR"
+                self.statusLabel?.text = String(
+                    localized: "ar.status.session_failed",
+                    locale: ARContainerView.localizationLocale
+                )
             }
         }
 
@@ -52,7 +85,10 @@ struct ARContainerView: UIViewRepresentable {
         func sessionWasInterrupted(_ session: ARSession) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
-                self.statusLabel?.text = "Sessão AR interrompida"
+                self.statusLabel?.text = String(
+                    localized: "ar.status.session_interrupted",
+                    locale: ARContainerView.localizationLocale
+                )
             }
         }
 
@@ -60,7 +96,10 @@ struct ARContainerView: UIViewRepresentable {
         func sessionInterruptionEnded(_ session: ARSession) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
-                self.statusLabel?.text = "Sessão AR reiniciada"
+                self.statusLabel?.text = String(
+                    localized: "ar.status.session_restarted",
+                    locale: ARContainerView.localizationLocale
+                )
             }
         }
 
@@ -94,7 +133,10 @@ struct ARContainerView: UIViewRepresentable {
 
         let statusLabel = UILabel()
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.text = "Aguardando câmera..."
+        statusLabel.text = String(
+            localized: "ar.status.waiting_for_camera",
+            locale: Self.localizationLocale
+        )
         statusLabel.textColor = .white
         statusLabel.numberOfLines = 0
         statusLabel.textAlignment = .center
@@ -161,7 +203,7 @@ struct ARDemoView: View {
             })
             .edgesIgnoringSafeArea(.all)
         }
-        .navigationTitle("AR Demo")
+        .navigationTitle("ar.demo.title")
         .onDisappear { if let ar = arViewRef { ar.session.pause() } }
         .onAppear {
             let status = AVCaptureDevice.authorizationStatus(for: .video)

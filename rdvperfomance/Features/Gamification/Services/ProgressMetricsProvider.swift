@@ -31,7 +31,9 @@ final class ProgressMetricsProvider {
                 streakDays: streak,
                 badges: badges,
                 displayName: displayName,
-                weekLabel: "Progresso geral"
+                displayNameCopy: nil,
+                weekLabel: nil,
+                weekLabelCopy: .generalProgress
             )
         } catch {
             /// Retorna métricas vazias em caso de erro para garantir falha segura
@@ -40,7 +42,9 @@ final class ProgressMetricsProvider {
                 streakDays: 0,
                 badges: [],
                 displayName: displayName,
-                weekLabel: "Progresso geral"
+                displayNameCopy: nil,
+                weekLabel: nil,
+                weekLabelCopy: .generalProgress
             )
         }
     }
@@ -75,16 +79,16 @@ final class ProgressMetricsProvider {
         var list: [Badge] = []
 
         if percent > 0 {
-            list.append(Badge(id: "b1", title: "Primeiro treino", systemImageName: "sparkles"))
+            list.append(Badge(id: "b1", systemImageName: "sparkles"))
         }
         if percent >= 40 {
-            list.append(Badge(id: "b2", title: "3 treinos/semana", systemImageName: "dumbbell.fill"))
+            list.append(Badge(id: "b2", systemImageName: "dumbbell.fill"))
         }
         if percent >= 80 {
-            list.append(Badge(id: "b3", title: "Consistência", systemImageName: "bolt.fill"))
+            list.append(Badge(id: "b3", systemImageName: "bolt.fill"))
         }
         if percent >= 100 {
-            list.append(Badge(id: "b4", title: "Semana completa", systemImageName: "checkmark.seal.fill"))
+            list.append(Badge(id: "b4", systemImageName: "checkmark.seal.fill"))
         }
 
         return list

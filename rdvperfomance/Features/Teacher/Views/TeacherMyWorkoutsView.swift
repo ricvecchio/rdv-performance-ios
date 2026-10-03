@@ -5,6 +5,7 @@ struct TeacherMyWorkoutsView: View {
     @Binding var path: [AppRoute]
     let category: TreinoTipo
     let mode: TeacherWorkoutsMode
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -31,7 +32,7 @@ struct TeacherMyWorkoutsView: View {
                         programaTile(
                             imageName: "rdv_programa_crossfit_horizontal",
                             height: tileHeight,
-                            badgeText: "Treinos Crossfit",
+                            badgeText: "ui.crossfit_workouts",
                             badgeIcon: "figure.strengthtraining.traditional"
                         ) {
                             switch mode {
@@ -41,7 +42,7 @@ struct TeacherMyWorkoutsView: View {
                                 path.append(.createCrossfitWOD(
                                     category: .crossfit,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: "Meus Treinos"
+                                    sectionTitle: String(localized: "ui.my_workouts", locale: locale)
                                 ))
                             }
                         }
@@ -49,7 +50,7 @@ struct TeacherMyWorkoutsView: View {
                         programaTile(
                             imageName: "rdv_programa_academia_horizontal",
                             height: tileHeight,
-                            badgeText: "Treinos Academia",
+                            badgeText: "ui.gym_workouts",
                             badgeIcon: "dumbbell"
                         ) {
                             switch mode {
@@ -59,7 +60,7 @@ struct TeacherMyWorkoutsView: View {
                                 path.append(.createTreinoAcademia(
                                     category: .academia,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: "Meus Treinos"
+                                    sectionTitle: String(localized: "ui.my_workouts", locale: locale)
                                 ))
                             }
                         }
@@ -67,7 +68,7 @@ struct TeacherMyWorkoutsView: View {
                         programaTile(
                             imageName: "rdv_programa_treinos_em_casa_horizontal",
                             height: tileHeight,
-                            badgeText: "Treinos em Casa",
+                            badgeText: "ui.home_workouts",
                             badgeIcon: "house.fill"
                         ) {
                             switch mode {
@@ -77,7 +78,7 @@ struct TeacherMyWorkoutsView: View {
                                 path.append(.createTreinoCasa(
                                     category: .emCasa,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: "Meus Treinos"
+                                    sectionTitle: String(localized: "ui.my_workouts", locale: locale)
                                 ))
                             }
                         }
@@ -118,7 +119,7 @@ struct TeacherMyWorkoutsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Biblioteca de Treinos")
+                Text("ui.workout_library")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }

@@ -17,14 +17,14 @@ struct TeacherEmCasaLibraryView: View {
 
     private var menuItems: [MenuItem] {
         [
-            .init(title: String(localized: "Peito", locale: locale), sectionKey: "peito"),
-            .init(title: String(localized: "Costas", locale: locale), sectionKey: "costas"),
-            .init(title: String(localized: "Pernas", locale: locale), sectionKey: "pernas"),
-            .init(title: String(localized: "Ombros", locale: locale), sectionKey: "ombros"),
-            .init(title: String(localized: "Braços", locale: locale), sectionKey: "bracos"),
-            .init(title: String(localized: "Core / Abdômen", locale: locale), sectionKey: "core"),
-            .init(title: String(localized: "Full Body", locale: locale), sectionKey: "fullBody"),
-            .init(title: String(localized: "Meus Treinos", locale: locale), sectionKey: "meusTreinos")
+            .init(title: String(localized: "ui.chest", locale: locale), sectionKey: "peito"),
+            .init(title: String(localized: "ui.back", locale: locale), sectionKey: "costas"),
+            .init(title: String(localized: "ui.legs", locale: locale), sectionKey: "pernas"),
+            .init(title: String(localized: "ui.shoulders", locale: locale), sectionKey: "ombros"),
+            .init(title: String(localized: "ui.arms", locale: locale), sectionKey: "bracos"),
+            .init(title: String(localized: "ui.core_abs", locale: locale), sectionKey: "core"),
+            .init(title: String(localized: "ui.full_body", locale: locale), sectionKey: "fullBody"),
+            .init(title: String(localized: "ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
         ]
     }
 
@@ -48,7 +48,7 @@ struct TeacherEmCasaLibraryView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Selecione uma seção.")
+                            Text("ui.select_a_section")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
 
@@ -126,7 +126,7 @@ struct TeacherEmCasaLibraryView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Treinos em Casa")
+                Text("ui.home_workouts")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }

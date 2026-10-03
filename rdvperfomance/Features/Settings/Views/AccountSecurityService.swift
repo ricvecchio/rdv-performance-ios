@@ -28,17 +28,17 @@ final class AccountSecurityService {
         var errorDescription: String? {
             switch self {
             case .notLoggedIn:
-                return String(localized: "Você precisa estar logado para realizar esta ação.", locale: AccountSecurityService.localizationLocale)
+                return String(localized: "account_security.errors.login_required", locale: AccountSecurityService.localizationLocale)
             case .missingEmail:
-                return String(localized: "Não foi possível identificar o e-mail do usuário logado.", locale: AccountSecurityService.localizationLocale)
+                return String(localized: "account_security.errors.email_missing", locale: AccountSecurityService.localizationLocale)
             case .weakPassword:
-                return String(localized: "A nova senha é muito fraca. Use pelo menos 6 caracteres.", locale: AccountSecurityService.localizationLocale)
+                return String(localized: "account_security.errors.weak_password", locale: AccountSecurityService.localizationLocale)
             case .passwordMismatch:
-                return String(localized: "As senhas não conferem.", locale: AccountSecurityService.localizationLocale)
+                return String(localized: "account_security.errors.password_mismatch", locale: AccountSecurityService.localizationLocale)
             case .requiresRecentLogin:
-                return String(localized: "Por segurança, faça login novamente e tente de novo.", locale: AccountSecurityService.localizationLocale)
+                return String(localized: "account_security.errors.reauthentication_required", locale: AccountSecurityService.localizationLocale)
             case .invalidCredential:
-                return String(localized: "Senha atual inválida.", locale: AccountSecurityService.localizationLocale)
+                return String(localized: "account_security.errors.invalid_current_password", locale: AccountSecurityService.localizationLocale)
             case .unknown(let msg):
                 return msg
             }

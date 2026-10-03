@@ -32,12 +32,12 @@ struct MapDemoView: View {
         VStack(spacing: 0) {
             if vm.authorizationStatus == .denied || vm.authorizationStatus == .restricted {
                 VStack(spacing: 12) {
-                    Text("Permissão de localização negada. Habilite em Ajustes para ver sua posição no mapa.")
+                    Text("map.location_permission_denied")
                         .multilineTextAlignment(.center)
                         .padding(.horizontal)
 
                     Button(action: openSettings) {
-                        Text("Abrir Ajustes")
+                        Text("map.open_settings")
                             .frame(maxWidth: .infinity)
                     }
                     .buttonStyle(.borderedProminent)
@@ -56,12 +56,12 @@ struct MapDemoView: View {
                         // ✅ Mantém o mapa sincronizado quando o app altera vm.region (centrar)
                         cameraPosition = .region(vm.region)
                     }) {
-                        Label("Centrar", systemImage: "location.fill")
+                        Label(LocalizedStringKey("map.center"), systemImage: "location.fill")
                     }
                     .buttonStyle(.bordered)
 
                     Toggle(isOn: $showSavedToggle) {
-                        Text("Salvar última localização")
+                        Text("map.save_last_location")
                     }
                     .onChange(of: showSavedToggle) { _, newValue in
                         profileStore.setMapDemoEnabled(newValue, userId: session.currentUid)
@@ -78,7 +78,7 @@ struct MapDemoView: View {
                 .padding()
             }
         }
-        .navigationTitle("Mapa (demo)")
+        .navigationTitle("map.demo.title")
         .onAppear {
             vm.requestPermissionIfNeeded()
             showSavedToggle = profileStore.getMapDemoEnabled(userId: session.currentUid)
@@ -166,4 +166,3 @@ struct MapDemoView_Previews: PreviewProvider {
             .environmentObject(AppSession())
     }
 }
-

@@ -91,7 +91,7 @@ struct TeacherStudentsListView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Alunos")
+                Text("common.students")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -110,7 +110,7 @@ struct TeacherStudentsListView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "paperplane.fill")
-                            Text("Convidar")
+                            Text("ui.invite")
                         }
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
@@ -128,35 +128,44 @@ struct TeacherStudentsListView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
         // ✅ Cancelamento de convite pendente com confirmação
-        .alert("Cancelar convite?", isPresented: $showCancelInviteConfirm) {
-            Button("Cancelar", role: .cancel) { invitePendingCancel = nil }
-            Button("Confirmar cancelamento", role: .destructive) {
+        .alert("ui.cancel_invitation_2", isPresented: $showCancelInviteConfirm) {
+            Button("common.cancel", role: .cancel) { invitePendingCancel = nil }
+            Button("ui.confirm_cancellation", role: .destructive) {
                 Task { await confirmCancelInvite() }
             }
         } message: {
             if let inv = invitePendingCancel {
-                Text("O convite enviado para \(inv.studentEmail) será cancelado.")
+                Text(
+                    String(
+                        format: String(
+                            localized: "ui.invitation_to_value_will_be_cancelled",
+                            locale: locale
+                        ),
+                        locale: locale,
+                        arguments: [inv.studentEmail]
+                    )
+                )
             } else {
-                Text("O convite será cancelado.")
+                Text("ui.the_invitation_will_be_canceled")
             }
         }
-        .alert("Recusar convite?", isPresented: $showDeclineLinkRequestConfirm) {
-            Button("Cancelar", role: .cancel) { linkRequestPendingDecline = nil }
-            Button("Recusar", role: .destructive) {
+        .alert("ui.decline_invitation_2", isPresented: $showDeclineLinkRequestConfirm) {
+            Button("common.cancel", role: .cancel) { linkRequestPendingDecline = nil }
+            Button("ui.decline", role: .destructive) {
                 Task { await confirmDeclineLinkRequest() }
             }
         } message: {
-            Text("Deseja recusar esta solicitação de vínculo?")
+            Text("ui.do_you_want_to_decline_this_link_request")
         }
-        .alert("Erro", isPresented: $vm.showLinkErrorAlert) {
-            Button("OK", role: .cancel) {}
+        .alert("common.error", isPresented: $vm.showLinkErrorAlert) {
+            Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.linkErrorMessage ?? String(localized: "Ocorreu um erro.", locale: locale))
+            Text(vm.linkErrorMessage ?? String(localized: "common.unexpected_error", locale: locale))
         }
-        .alert("Sucesso", isPresented: $vm.showLinkSuccessAlert) {
-            Button("OK", role: .cancel) {}
+        .alert("ui.success", isPresented: $vm.showLinkSuccessAlert) {
+            Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.linkSuccessMessage ?? String(localized: "Aluno vinculado.", locale: locale))
+            Text(vm.linkSuccessMessage ?? String(localized: "ui.student_linked", locale: locale))
         }
         .sheet(isPresented: $showCategoryDialog, onDismiss: {
             studentPendingLink = nil
@@ -253,7 +262,7 @@ struct TeacherStudentsListView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Selecione um aluno para ver detalhes e criar treinos.")
+            Text("ui.select_a_student_to_view_details_and_create_workouts")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -270,10 +279,10 @@ struct TeacherStudentsListView: View {
 
     private var filterRow: some View {
         HStack(spacing: 6) {
-            filterChip(title: "Todos", isSelected: filter == nil) { filter = nil }
-            filterChip(title: "Crossfit", isSelected: filter == .crossfit) { filter = .crossfit }
-            filterChip(title: "Academia", isSelected: filter == .academia) { filter = .academia }
-            filterChip(title: "Em Casa", isSelected: filter == .emCasa) { filter = .emCasa }
+            filterChip(title: "common.all", isSelected: filter == nil) { filter = nil }
+            filterChip(title: "video.category.crossfit", isSelected: filter == .crossfit) { filter = .crossfit }
+            filterChip(title: "video.category.gym", isSelected: filter == .academia) { filter = .academia }
+            filterChip(title: "video.category.home", isSelected: filter == .emCasa) { filter = .emCasa }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -304,7 +313,7 @@ struct TeacherStudentsListView: View {
 
     private var contentCard: some View {
         VStack(spacing: 0) {
-            sectionTitle("ALUNOS VINCULADOS")
+            sectionTitle("ui.linked_students")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -339,7 +348,13 @@ struct TeacherStudentsListView: View {
                             .font(.system(size: 18, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
 
-                        Text("Categoria: \(combinedCategoryText(student))")
+                        Text(
+                            String(
+                                format: String(localized: "ui.category_value", locale: locale),
+                                locale: locale,
+                                arguments: [combinedCategoryText(student)]
+                            )
+                        )
                             .font(.system(size: 13, weight: .medium))
                             .foregroundColor(.white.opacity(0.55))
                     }
@@ -354,7 +369,7 @@ struct TeacherStudentsListView: View {
                             )
                             showCategoryChangeDialog = true
                         } label: {
-                            Label("Alterar categoria", systemImage: "arrow.triangle.2.circlepath")
+                            Label(LocalizedStringKey("ui.change_category"), systemImage: "arrow.triangle.2.circlepath")
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -375,7 +390,7 @@ struct TeacherStudentsListView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     guard let sid = student.id, !sid.isEmpty else {
-                        vm.errorMessage = String(localized: "Aluno inválido: id não encontrado.", locale: locale)
+                        vm.errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
                         return
                     }
 
@@ -395,7 +410,7 @@ struct TeacherStudentsListView: View {
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando alunos...")
+            Text("ui.loading_students")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -405,7 +420,7 @@ struct TeacherStudentsListView: View {
 
     private func errorView(message: String) -> some View {
         VStack(spacing: 10) {
-            Text("Ops! Não foi possível carregar.")
+            Text("workout.oops_unable_to_load")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
@@ -417,7 +432,7 @@ struct TeacherStudentsListView: View {
             Button {
                 Task { await loadAllStudents() }
             } label: {
-                Text("Tentar novamente")
+                Text("ui.try_again")
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
             }
@@ -430,11 +445,11 @@ struct TeacherStudentsListView: View {
 
     private var emptyView: some View {
         VStack(spacing: 12) {
-            Text("Nenhum aluno encontrado")
+            Text("ui.no_student_found")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Vincule alunos ao seu perfil para aparecerem aqui.")
+            Text("ui.link_students_to_your_profile_for_them_to_appear_here")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
@@ -452,7 +467,7 @@ struct TeacherStudentsListView: View {
 
     private func loadAllStudents() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            vm.errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
         await vm.loadStudents(teacherId: teacherId, force: true)
@@ -461,7 +476,7 @@ struct TeacherStudentsListView: View {
     private func loadInitialData() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.clearActiveTeacherData()
-            vm.errorMessage = String(localized: "Não foi possível identificar o professor logado.", locale: locale)
+            vm.errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -476,21 +491,22 @@ struct TeacherStudentsListView: View {
 
     private func confirmCategoryChange(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.setLinkError(String(localized: "Não foi possível identificar o professor logado.", locale: locale))
+            vm.setLinkError(String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale))
             return
         }
         guard let student = studentPendingCategoryChange,
               let studentId = student.id,
               !studentId.isEmpty
         else {
-            vm.setLinkError(String(localized: "Não foi possível identificar o aluno para alterar a categoria.", locale: locale))
+            vm.setLinkError(String(localized: "ui.unable_to_identify_the_student_to_change_the_category", locale: locale))
             return
         }
 
         let didSave = await vm.setStudentCategories(
             teacherId: teacherId,
             studentId: studentId,
-            categories: Array(categories)
+            categories: Array(categories),
+            locale: locale
         )
         if didSave {
             showCategoryChangeDialog = false
@@ -500,7 +516,7 @@ struct TeacherStudentsListView: View {
     private var pendingInvitesCard: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            sectionTitle("CONVITES ENVIADOS")
+            sectionTitle("student_teachers.sent_invitations_section")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -521,7 +537,7 @@ struct TeacherStudentsListView: View {
                             .lineLimit(1)
 
                         HStack(spacing: 6) {
-                            Text("Pendente")
+                            Text("ui.pending")
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.yellow.opacity(0.85))
                                 .padding(.horizontal, 8)
@@ -537,7 +553,7 @@ struct TeacherStudentsListView: View {
                             invitePendingCancel = inv
                             showCancelInviteConfirm = true
                         } label: {
-                            Label("Cancelar convite", systemImage: "xmark.circle")
+                            Label(LocalizedStringKey("ui.cancel_invitation"), systemImage: "xmark.circle")
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -570,21 +586,21 @@ struct TeacherStudentsListView: View {
 
     private var pendingLinkRequestsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle("CONVITES RECEBIDOS")
+            sectionTitle("student_teachers.received_invitations_section")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
             if vm.isLinkRequestsLoading {
                 HStack(spacing: 10) {
                     ProgressView()
-                    Text("Carregando solicitações...")
+                    Text("ui.loading_requests")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 14)
             } else if vm.pendingLinkRequests.isEmpty {
-                Text("Nenhuma solicitação pendente")
+                Text("ui.no_pending_request")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
                     .padding(.horizontal, 16)
@@ -633,14 +649,14 @@ struct TeacherStudentsListView: View {
                     selectedLinkCategories = []
                     showCategoryDialog = true
                 } label: {
-                    Label("Aceitar vínculo", systemImage: "checkmark")
+                    Label(LocalizedStringKey("ui.accept_link"), systemImage: "checkmark")
                 }
 
                 Button(role: .destructive) {
                     linkRequestPendingDecline = item
                     showDeclineLinkRequestConfirm = true
                 } label: {
-                    Label("Recusar convite", systemImage: "xmark.circle")
+                    Label(LocalizedStringKey("ui.decline_invitation"), systemImage: "xmark.circle")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -678,13 +694,17 @@ struct TeacherStudentsListView: View {
             return
         }
 
-        await vm.declineLinkRequest(teacherId: teacherId, requestId: request.requestId)
+        await vm.declineLinkRequest(
+            teacherId: teacherId,
+            requestId: request.requestId,
+            locale: locale
+        )
         linkRequestPendingDecline = nil
     }
 
     private func confirmLink(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.setLinkError(String(localized: "Não foi possível identificar o professor logado.", locale: locale))
+            vm.setLinkError(String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale))
             return
         }
         guard let item = studentPendingLink else { return }
@@ -693,7 +713,8 @@ struct TeacherStudentsListView: View {
             teacherId: teacherId,
             requestId: item.requestId,
             studentId: item.studentId,
-            categories: Array(categories)
+            categories: Array(categories),
+            locale: locale
         )
         if didSave {
             showCategoryDialog = false
@@ -719,7 +740,7 @@ struct TeacherStudentsListView: View {
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Selecione a categoria do vínculo")
+                    Text("ui.select_link_category")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
@@ -771,7 +792,7 @@ struct TeacherStudentsListView: View {
 
                     HStack(spacing: 12) {
                         Button(action: onCancel) {
-                            Text("Cancelar")
+                            Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
                                 .frame(maxWidth: .infinity)
@@ -783,7 +804,7 @@ struct TeacherStudentsListView: View {
                         .disabled(isSaving)
 
                         Button(action: onSave) {
-                            Text("Salvar")
+                            Text("common.save")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
                         }
@@ -808,9 +829,9 @@ struct TeacherStudentsListView: View {
 
         private func title(for category: TreinoTipo) -> LocalizedStringKey {
             switch category {
-            case .crossfit: "Crossfit"
-            case .academia: "Academia"
-            case .emCasa: "Em Casa"
+            case .crossfit: "video.category.crossfit"
+            case .academia: "video.category.gym"
+            case .emCasa: "video.category.home"
             }
         }
     }
@@ -837,11 +858,11 @@ struct TeacherStudentsListView: View {
     private func localizedCategoryTitle(_ category: TreinoTipo) -> String {
         switch category {
         case .crossfit:
-            String(localized: "Crossfit", locale: locale)
+            String(localized: "video.category.crossfit", locale: locale)
         case .academia:
-            String(localized: "Academia", locale: locale)
+            String(localized: "video.category.gym", locale: locale)
         case .emCasa:
-            String(localized: "Em Casa", locale: locale)
+            String(localized: "video.category.home", locale: locale)
         }
     }
 
@@ -932,7 +953,7 @@ struct TeacherStudentsListView: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Convidar aluno")
+                        Text("ui.invite_student")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
@@ -972,7 +993,7 @@ struct TeacherStudentsListView: View {
                     Button {
                         Task {
                             guard let teacherId = session.uid, !teacherId.isEmpty else {
-                                vm.setInviteError(String(localized: "Não foi possível identificar o professor logado.", locale: locale))
+                                vm.setInviteError(String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale))
                                 return
                             }
                             await vm.sendInviteByEmail(
@@ -989,7 +1010,7 @@ struct TeacherStudentsListView: View {
                                 ProgressView()
                             } else {
                                 Image(systemName: "paperplane.fill")
-                                Text("Enviar convite")
+                                Text("ui.send_invitation")
                             }
                             Spacer()
                         }
@@ -1009,26 +1030,26 @@ struct TeacherStudentsListView: View {
         .onAppear {
             Task { await loadInvitesIfPossible() }
         }
-        .alert("Erro", isPresented: $vm.showInviteErrorAlert) {
-            Button("OK", role: .cancel) {}
+        .alert("common.error", isPresented: $vm.showInviteErrorAlert) {
+            Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.inviteErrorMessage ?? String(localized: "Ocorreu um erro.", locale: locale))
+            Text(vm.inviteErrorMessage ?? String(localized: "common.unexpected_error", locale: locale))
         }
-        .alert("Sucesso", isPresented: $vm.showInviteSuccessAlert) {
+        .alert("ui.success", isPresented: $vm.showInviteSuccessAlert) {
             // ✅ OK fecha o modal e limpa o campo — o onDismiss da sheet recarrega dados
-            Button("OK") {
+            Button("common.ok") {
                 inviteEmail = ""
                 showInviteSheet = false
             }
         } message: {
-            Text(vm.inviteSuccessMessage ?? String(localized: "Convite enviado.", locale: locale))
+            Text(vm.inviteSuccessMessage ?? String(localized: "ui.invitation_sent", locale: locale))
         }
     }
 
     private var inviteByEmailCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("CONVIDAR POR E-MAIL")
+            Text("ui.invite_by_email")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.35))
 
@@ -1036,7 +1057,7 @@ struct TeacherStudentsListView: View {
                 Image(systemName: "envelope.fill")
                     .foregroundColor(.white.opacity(0.35))
 
-                TextField("E-mail do aluno", text: $inviteEmail)
+                TextField("ui.student_email", text: $inviteEmail)
                     .foregroundColor(.white.opacity(0.92))
                     .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
@@ -1060,7 +1081,7 @@ struct TeacherStudentsListView: View {
                     .stroke(Color.white.opacity(0.10), lineWidth: 1)
             )
 
-            Text("O aluno só aparecerá na sua lista após aceitar o convite no app.")
+            Text("ui.the_student_will_only_appear_in_your_list_after_accepting_the_app_invitation")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -1089,7 +1110,7 @@ struct TeacherStudentsListView: View {
             if vm.isInvitesLoading {
                 HStack(spacing: 10) {
                     ProgressView()
-                    Text("Carregando convites...")
+                    Text("ui.loading_invitations")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                 }
@@ -1100,7 +1121,7 @@ struct TeacherStudentsListView: View {
                     .foregroundColor(.white.opacity(0.55))
                     .multilineTextAlignment(.leading)
             } else if vm.invites.isEmpty {
-                Text("Nenhum convite enviado ainda.")
+                Text("ui.no_invitation_has_been_sent_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -1152,7 +1173,7 @@ struct TeacherStudentsListView: View {
                         await vm.cancelInvite(inviteId: id, teacherId: teacherId)
                     }
                 } label: {
-                    Text("Cancelar")
+                    Text("common.cancel")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.90))
                         .padding(.horizontal, 10)

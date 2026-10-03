@@ -96,7 +96,7 @@ struct DeleteAccountView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Excluir Conta")
+                Text("settings.delete.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -114,13 +114,13 @@ struct DeleteAccountView: View {
             HStack(spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.red.opacity(0.9))
-                Text("Atenção")
+                Text("common.warning")
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
 
-            Text("Esta ação é permanente. Seu acesso será removido e você será deslogado do aplicativo.")
+            Text("settings.delete.warning_message")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.60))
                 .multilineTextAlignment(.leading)
@@ -137,13 +137,13 @@ struct DeleteAccountView: View {
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            secureUnderlineField(title: "Senha atual", text: $currentPassword)
+            secureUnderlineField(title: "settings.password.current", text: $currentPassword)
 
             underlineField(
                 title: (
-                    Text("Digite ").foregroundColor(textSecondary)
+                    Text("settings.delete.confirm_prefix").foregroundColor(textSecondary)
                     + Text("EXCLUIR").bold().foregroundColor(.white.opacity(0.92))
-                    + Text(" para confirmar").foregroundColor(textSecondary)
+                    + Text("settings.delete.confirm_suffix").foregroundColor(textSecondary)
                 )
                 .font(.system(size: 14)),
                 text: $confirmText
@@ -167,7 +167,11 @@ struct DeleteAccountView: View {
                 Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "trash.fill")
-                    Text(isLoading ? "Excluindo..." : "Excluir minha conta")
+                    Text(
+                        isLoading
+                            ? LocalizedStringKey("settings.delete.loading")
+                            : LocalizedStringKey("settings.delete.submit")
+                    )
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
@@ -191,18 +195,18 @@ struct DeleteAccountView: View {
         errorMessage = ""
 
         guard session.isLoggedIn else {
-            presentError("Você precisa estar logado.")
+            presentError("auth.errors.login_required")
             return
         }
 
         let pw = currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !pw.isEmpty else {
-            presentError("Informe sua senha atual.")
+            presentError("settings.delete.current_password_required")
             return
         }
 
         guard confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR" else {
-            presentError("Digite EXCLUIR para confirmar.")
+            presentError("settings.delete.confirmation_required")
             return
         }
 

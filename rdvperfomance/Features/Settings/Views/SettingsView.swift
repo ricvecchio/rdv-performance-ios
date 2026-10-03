@@ -38,13 +38,13 @@ struct SettingsView: View {
 
                         VStack(alignment: .leading, spacing: 16) {
 
-                            sectionTitle("CONTA")
+                            sectionTitle("settings.section.account")
                             accountCard()
 
-                            sectionTitle("PREFERÊNCIAS")
+                            sectionTitle("settings.section.preferences")
                             preferencesCard()
 
-                            sectionTitle("SUPORTE & LEGAL")
+                            sectionTitle("settings.section.support_legal")
                             supportLegalCard()
 
                             Color.clear.frame(height: 16)
@@ -83,7 +83,7 @@ struct SettingsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Configurações")
+                Text("settings.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -138,15 +138,15 @@ struct SettingsView: View {
 
     private func accountCard() -> some View {
         card {
-            cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
+            cardRow(icon: "person.crop.circle", title: "auth.edit_profile.title") {
                 path.append(.editarPerfil)
             }
             divider()
-            cardRow(icon: "key.fill", title: "Alterar Senha") {
+            cardRow(icon: "key.fill", title: "settings.password.title") {
                 path.append(.alterarSenha)
             }
             divider()
-            cardRow(icon: "trash.fill", title: "Excluir Conta") {
+            cardRow(icon: "trash.fill", title: "settings.delete.title") {
                 path.append(.excluirConta)
             }
         }
@@ -154,7 +154,7 @@ struct SettingsView: View {
 
     private func preferencesCard() -> some View {
         card {
-            cardRow(icon: "globe", title: "Idioma") {
+            cardRow(icon: "globe", title: "settings.language.title") {
                 path.append(.idioma)
             }
         }
@@ -163,26 +163,26 @@ struct SettingsView: View {
     private func supportLegalCard() -> some View {
         card {
 
-            cardRow(icon: "info.circle.fill", title: "Sobre") {
+            cardRow(icon: "info.circle.fill", title: "settings.about") {
                 path.append(.sobre)
             }
 
             divider()
 
-            cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
+            cardRow(icon: "questionmark.circle.fill", title: "settings.help_center") {
                 path.append(.infoLegal(.helpCenter))
             }
             divider()
-            cardRow(icon: "hand.raised.fill", title: "Políticas de Privacidade") {
+            cardRow(icon: "hand.raised.fill", title: "settings.privacy_policy") {
                 path.append(.infoLegal(.privacyPolicy))
             }
             divider()
-            cardRow(icon: "doc.text.fill", title: "Termos de Uso") {
+            cardRow(icon: "doc.text.fill", title: "settings.terms_of_use") {
                 path.append(.infoLegal(.termsOfUse))
             }
             divider()
 
-            cardRow(icon: "gamecontroller.fill", title: "Preview do Progresso") {
+            cardRow(icon: "gamecontroller.fill", title: "settings.progress_preview") {
                 path.append(.spriteDemo)
             }
         }

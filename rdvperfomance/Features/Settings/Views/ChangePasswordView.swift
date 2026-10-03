@@ -52,7 +52,7 @@ struct ChangePasswordView: View {
 
                             if showSuccess {
                                 feedbackCard(
-                                    text: String(localized: "Senha alterada com sucesso.", locale: locale),
+                                    text: String(localized: "settings.password.changed_success", locale: locale),
                                     isError: false
                                 )
                             }
@@ -90,7 +90,7 @@ struct ChangePasswordView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Alterar Senha")
+                Text("settings.password.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -105,9 +105,9 @@ struct ChangePasswordView: View {
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            secureUnderlineField(title: "Senha atual", text: $currentPassword)
-            secureUnderlineField(title: "Nova senha", text: $newPassword)
-            secureUnderlineField(title: "Confirmar nova senha", text: $confirmNewPassword)
+            secureUnderlineField(title: "settings.password.current", text: $currentPassword)
+            secureUnderlineField(title: "settings.password.new", text: $newPassword)
+            secureUnderlineField(title: "settings.password.confirm", text: $confirmNewPassword)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
@@ -124,7 +124,11 @@ struct ChangePasswordView: View {
                 Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "key.fill")
-                    Text(isLoading ? "Salvando..." : "Salvar nova senha")
+                    Text(
+                        isLoading
+                            ? LocalizedStringKey("common.saving")
+                            : LocalizedStringKey("settings.password.save")
+                    )
                 }
                 Spacer()
             }
@@ -157,22 +161,22 @@ struct ChangePasswordView: View {
         let cn = confirmNewPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard session.isLoggedIn else {
-            presentError(String(localized: "Você precisa estar logado.", locale: locale))
+            presentError(String(localized: "auth.errors.login_required", locale: locale))
             return
         }
 
         guard !cp.isEmpty, !np.isEmpty, !cn.isEmpty else {
-            presentError(String(localized: "Preencha todos os campos.", locale: locale))
+            presentError(String(localized: "settings.password.fill_all", locale: locale))
             return
         }
 
         guard np.count >= 6 else {
-            presentError(String(localized: "A nova senha deve ter pelo menos 6 caracteres.", locale: locale))
+            presentError(String(localized: "settings.password.min_length", locale: locale))
             return
         }
 
         guard np == cn else {
-            presentError(String(localized: "A confirmação da nova senha não confere.", locale: locale))
+            presentError(String(localized: "settings.password.confirmation_mismatch", locale: locale))
             return
         }
 

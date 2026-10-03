@@ -157,18 +157,18 @@ private extension InfoLegalKind {
     // Retorna o título da tela
     var screenTitle: String {
         switch self {
-        case .helpCenter: return "Central de Ajuda"
-        case .privacyPolicy: return "Políticas de Privacidade"
-        case .termsOfUse: return "Termos de Uso"
+        case .helpCenter: return "settings.help_center"
+        case .privacyPolicy: return "settings.privacy_policy"
+        case .termsOfUse: return "settings.terms_of_use"
         }
     }
 
     // Retorna o título do corpo do conteúdo
     var bodyTitle: String {
         switch self {
-        case .helpCenter: return "Central de Ajuda"
-        case .privacyPolicy: return "Política de Privacidade"
-        case .termsOfUse: return "Termos de Uso"
+        case .helpCenter: return "settings.help_center"
+        case .privacyPolicy: return "settings.legal.privacy.body_title"
+        case .termsOfUse: return "settings.terms_of_use"
         }
     }
 
@@ -181,38 +181,36 @@ private extension InfoLegalKind {
                 .init(
                     title: nil,
                     introText: """
-Bem-vindo à Central de Ajuda.
-Este aplicativo foi desenvolvido para facilitar o acompanhamento de treinos físicos entre alunos e treinadores, de forma simples e organizada. Aqui você encontra orientações básicas sobre o uso do app.
+settings.legal.help.introduction
 """,
                     bullets: nil
                 ),
-                .init(title: "👤 Para Alunos", introText: nil, bullets: [
-                    "Visualize os treinos enviados pelo seu treinador.",
-                    "Marque a conclusão dos exercícios realizados.",
-                    "Acompanhe sua evolução ao longo do tempo.",
-                    "Registre seu progresso de forma prática."
+                .init(title: "settings.legal.help.students.title", introText: nil, bullets: [
+                    "settings.legal.help.students.view_workouts",
+                    "settings.legal.help.students.complete_exercises",
+                    "settings.legal.help.students.track_progress",
+                    "settings.legal.help.students.record_progress"
                 ]),
-                .init(title: "🏋️‍♂️ Para Treinadores", introText: nil, bullets: [
-                    "Cadastre e envie treinos personalizados para seus alunos.",
-                    "Acompanhe a evolução e o progresso de cada aluno.",
-                    "Utilize o aplicativo como apoio no acompanhamento físico."
+                .init(title: "settings.legal.help.trainers.title", introText: nil, bullets: [
+                    "settings.legal.help.trainers.create_workouts",
+                    "settings.legal.help.trainers.track_students",
+                    "settings.legal.help.trainers.support_training"
                 ]),
                 .init(
-                    title: "❓ Dúvidas Frequentes",
+                    title: "settings.legal.help.faq.title",
                     introText: """
-Caso tenha dificuldades para acessar suas informações ou utilizar alguma funcionalidade, verifique se:
+settings.legal.help.faq.introduction
 """,
                     bullets: [
-                        "Você está conectado à sua conta corretamente.",
-                        "Possui conexão com a internet.",
-                        "Está utilizando a versão mais recente do aplicativo."
+                        "settings.legal.help.faq.account_connected",
+                        "settings.legal.help.faq.internet_connection",
+                        "settings.legal.help.faq.latest_version"
                     ]
                 ),
                 .init(
-                    title: "📬 Suporte",
+                    title: "settings.legal.help.support.title",
                     introText: """
-Se ainda precisar de ajuda, entre em contato pelo e-mail:
-suporte@rdvperfomance.com
+settings.legal.help.support.contact
 """,
                     bullets: nil
                 )
@@ -223,37 +221,36 @@ suporte@rdvperfomance.com
                 .init(
                     title: nil,
                     introText: """
-Sua privacidade é importante para nós.
-Este aplicativo tem como objetivo auxiliar no acompanhamento de treinos físicos entre alunos e treinadores, respeitando a segurança e a confidencialidade das informações.
+settings.legal.privacy.introduction
 """,
                     bullets: nil
                 ),
                 .init(
-                    title: "🔒 Coleta de Informações",
-                    introText: "Podemos coletar informações básicas fornecidas pelo usuário, como:",
+                    title: "settings.legal.privacy.collection.title",
+                    introText: "settings.legal.privacy.collection.introduction",
                     bullets: [
-                        "Nome",
-                        "Dados de treino",
-                        "Registros de progresso"
+                        "common.name",
+                        "settings.legal.privacy.collection.workout_data",
+                        "settings.legal.privacy.collection.progress_records"
                     ]
                 ),
                 .init(
-                    title: "📊 Uso das Informações",
-                    introText: "As informações coletadas são usadas para:",
+                    title: "settings.legal.privacy.usage.title",
+                    introText: "settings.legal.privacy.usage.introduction",
                     bullets: [
-                        "Exibir treinos e progresso do aluno.",
-                        "Permitir que treinadores acompanhem a evolução dos alunos.",
-                        "Melhorar funcionalidades e desempenho do aplicativo."
+                        "settings.legal.privacy.usage.display_progress",
+                        "settings.legal.privacy.usage.trainer_progress",
+                        "settings.legal.privacy.usage.improve_app"
                     ]
                 ),
                 .init(
-                    title: "🔐 Armazenamento e Segurança",
-                    introText: "Os dados são armazenados de forma segura e não são compartilhados com terceiros sem autorização, exceto quando exigido por lei.",
+                    title: "settings.legal.privacy.storage.title",
+                    introText: "settings.legal.privacy.storage.description",
                     bullets: nil
                 ),
                 .init(
-                    title: "🧾 Consentimento",
-                    introText: "Ao utilizar este aplicativo, você concorda com esta Política de Privacidade.",
+                    title: "settings.legal.privacy.consent.title",
+                    introText: "settings.legal.privacy.consent.description",
                     bullets: nil
                 )
             ]
@@ -262,36 +259,36 @@ Este aplicativo tem como objetivo auxiliar no acompanhamento de treinos físicos
             return [
                 .init(
                     title: nil,
-                    introText: "Ao utilizar este aplicativo, você concorda com os termos descritos abaixo.",
+                    introText: "settings.legal.terms.introduction",
                     bullets: nil
                 ),
                 .init(
-                    title: "📱 Uso do Aplicativo",
-                    introText: "Este aplicativo é destinado ao acompanhamento de treinos físicos entre alunos e treinadores. Ele não substitui orientação médica ou profissional presencial.",
+                    title: "settings.legal.terms.usage.title",
+                    introText: "settings.legal.terms.usage.description",
                     bullets: nil
                 ),
                 .init(
-                    title: "⚠️ Responsabilidade",
+                    title: "settings.legal.terms.responsibility.title",
                     introText: nil,
                     bullets: [
-                        "O aluno é responsável por realizar os exercícios respeitando seus limites físicos.",
-                        "O treinador é responsável pelas orientações de treino fornecidas.",
-                        "O aplicativo atua apenas como uma ferramenta de apoio e registro."
+                        "settings.legal.terms.responsibility.student",
+                        "settings.legal.terms.responsibility.trainer",
+                        "settings.legal.terms.responsibility.app"
                     ]
                 ),
                 .init(
-                    title: "🚫 Uso Indevido",
-                    introText: "É proibido utilizar o aplicativo para fins ilegais, ofensivos ou que prejudiquem outros usuários.",
+                    title: "settings.legal.terms.misuse.title",
+                    introText: "settings.legal.terms.misuse.description",
                     bullets: nil
                 ),
                 .init(
-                    title: "🔄 Alterações",
-                    introText: "Os termos podem ser atualizados a qualquer momento para melhorias ou adequações legais. Recomendamos a leitura periódica.",
+                    title: "settings.legal.terms.changes.title",
+                    introText: "settings.legal.terms.changes.description",
                     bullets: nil
                 ),
                 .init(
-                    title: "✅ Aceitação",
-                    introText: "Ao acessar e utilizar o aplicativo, você declara estar de acordo com estes Termos de Uso.",
+                    title: "settings.legal.terms.acceptance.title",
+                    introText: "settings.legal.terms.acceptance.description",
                     bullets: nil
                 )
             ]

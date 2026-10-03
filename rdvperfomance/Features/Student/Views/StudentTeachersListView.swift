@@ -76,7 +76,7 @@ struct StudentTeachersListView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Professores")
+                Text("common.trainers")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -90,7 +90,7 @@ struct StudentTeachersListView: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "paperplane.fill")
-                            Text("Convidar")
+                            Text("student_teachers.invite")
                         }
                         .padding(.horizontal, 10)
                         .primaryGreenActionButton()
@@ -112,50 +112,50 @@ struct StudentTeachersListView: View {
                 .presentationContentInteraction(.scrolls)
                 .presentationDragIndicator(.hidden)
         }
-        .alert("Recusar convite?", isPresented: $showDeclineConfirmation) {
-            Button("Cancelar", role: .cancel) { inviteToDecline = nil }
-            Button("Recusar", role: .destructive) {
+        .alert("student_teachers.decline_invitation_confirmation_title", isPresented: $showDeclineConfirmation) {
+            Button("common.cancel", role: .cancel) { inviteToDecline = nil }
+            Button("student_teachers.decline", role: .destructive) {
                 Task { await declineInvite() }
             }
         } message: {
-            Text("Deseja recusar este convite de vínculo?")
+            Text("student_teachers.do_you_want_to_decline_this_link_invitation")
         }
-        .alert("Cancelar convite?", isPresented: $showCancelConfirmation) {
-            Button("Cancelar", role: .cancel) { requestToCancel = nil }
-            Button("Confirmar cancelamento", role: .destructive) {
+        .alert("student_teachers.cancel_invitation_confirmation_title", isPresented: $showCancelConfirmation) {
+            Button("common.cancel", role: .cancel) { requestToCancel = nil }
+            Button("student_teachers.confirm_cancellation", role: .destructive) {
                 Task { await cancelRequest() }
             }
         } message: {
-            Text("Deseja cancelar este convite enviado ao professor?")
+            Text("student_teachers.do_you_want_to_cancel_this_invitation_sent_to_the_coach")
         }
         .sheet(item: $selectedTeacher) { teacher in
             teacherDetail(teacher)
                 .presentationDetents([.medium])
                 .presentationDragIndicator(.visible)
         }
-        .alert("Erro", isPresented: Binding(
+        .alert("common.error", isPresented: Binding(
             get: { vm.errorMessage != nil },
             set: { if !$0 { vm.errorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) {}
+            Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.errorMessage ?? "Ocorreu um erro.")
+            Text(vm.errorMessage ?? String(localized: "common.unexpected_error", locale: locale))
         }
     }
 
     private var header: some View {
-        Text("Gerencie seus professores vinculados e convites.")
+        Text("student_teachers.manage_your_linked_coaches_and_invitations")
             .font(.system(size: 14))
             .foregroundColor(.white.opacity(0.35))
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var linkedTeachersCard: some View {
-        card(title: "PROFESSORES VINCULADOS") {
+        card(title: "student_teachers.linked_coaches_section") {
             if vm.isLoading {
-                loading("Carregando professores...")
+                loading("student_teachers.loading_teachers")
             } else if vm.linkedTeachers.isEmpty {
-                empty("Nenhum professor vinculado")
+                empty("student_teachers.no_linked_coach")
             } else {
                 ForEach(Array(vm.linkedTeachers.enumerated()), id: \.offset) { index, teacher in
                     teacherRow(teacher)
@@ -168,11 +168,11 @@ struct StudentTeachersListView: View {
     }
 
     private var sentRequestsCard: some View {
-        card(title: "CONVITES ENVIADOS") {
+        card(title: "student_teachers.sent_invitations_section") {
             if vm.isLoading {
-                loading("Carregando convites...")
+                loading("student_teachers.loading_invitations")
             } else if vm.sentRequests.isEmpty {
-                empty("Nenhum convite enviado ainda.")
+                empty("student_teachers.no_sent_invitations_yet")
             } else {
                 ForEach(Array(vm.sentRequests.enumerated()), id: \.offset) { index, request in
                     HStack(spacing: 12) {
@@ -184,7 +184,7 @@ struct StudentTeachersListView: View {
                             Text(request.teacherEmail)
                                 .font(.system(size: 15, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
-                            Text("Pendente")
+                            Text("student_teachers.pending")
                                 .font(.system(size: 12, weight: .semibold))
                                 .foregroundColor(.yellow.opacity(0.85))
                                 .padding(.horizontal, 8)
@@ -197,7 +197,7 @@ struct StudentTeachersListView: View {
                                 requestToCancel = request
                                 showCancelConfirmation = true
                             } label: {
-                                Label("Cancelar convite", systemImage: "xmark.circle")
+                                Label(LocalizedStringKey("student_teachers.cancel_invitation_action"), systemImage: "xmark.circle")
                             }
                         } label: {
                             Image(systemName: "ellipsis")
@@ -219,11 +219,11 @@ struct StudentTeachersListView: View {
     }
 
     private var receivedInvitesCard: some View {
-        card(title: "CONVITES RECEBIDOS") {
+        card(title: "student_teachers.received_invitations_section") {
             if vm.isLoading {
-                loading("Carregando convites...")
+                loading("student_teachers.loading_invitations")
             } else if vm.receivedInvites.isEmpty {
-                empty("Nenhum convite pendente")
+                empty("student_teachers.no_pending_invitation")
             } else {
                 ForEach(Array(vm.receivedInvites.enumerated()), id: \.offset) { index, invite in
                     inviteRow(invite)
@@ -291,7 +291,7 @@ struct StudentTeachersListView: View {
                 Text(invite.teacherEmail)
                     .font(.system(size: 18, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
-                Text("Pendente")
+                Text("student_teachers.pending")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundColor(.yellow.opacity(0.85))
                     .padding(.horizontal, 8)
@@ -303,13 +303,13 @@ struct StudentTeachersListView: View {
                 Button {
                     Task { await acceptInvite(invite) }
                 } label: {
-                    Label("Aceitar vínculo", systemImage: "checkmark")
+                    Label(LocalizedStringKey("student_teachers.accept_link"), systemImage: "checkmark")
                 }
                 Button(role: .destructive) {
                     inviteToDecline = invite
                     showDeclineConfirmation = true
                 } label: {
-                    Label("Recusar convite", systemImage: "xmark.circle")
+                    Label(LocalizedStringKey("student_teachers.decline_invitation_action"), systemImage: "xmark.circle")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -355,24 +355,24 @@ struct StudentTeachersListView: View {
                         .frame(width: 48, height: 6)
                         .padding(.top, 10)
 
-                    Text("Convidar professor")
+                    Text("dashboard.invite_coach")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .padding(.top, 2)
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("CONVIDAR POR E-MAIL")
+                        Text("student_teachers.invite_by_email")
                             .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.35))
 
-                        Text("Digite o e-mail do professor para enviar o convite.")
+                        Text("student_teachers.enter_the_coach_s_email_to_send_the_invitation")
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.55))
 
                         HStack(spacing: 10) {
                             Image(systemName: "envelope.fill")
                                 .foregroundColor(.white.opacity(0.35))
-                            TextField("E-mail do professor", text: $teacherEmail)
+                            TextField("dashboard.coach_email", text: $teacherEmail)
                                 .foregroundColor(.white.opacity(0.92))
                                 .autocorrectionDisabled(true)
                                 .textInputAutocapitalization(.never)
@@ -397,7 +397,7 @@ struct StudentTeachersListView: View {
                             HStack(spacing: 10) {
                                 Spacer()
                                 Image(systemName: "paperplane.fill")
-                                Text("Enviar convite")
+                                Text("student_teachers.send_invitation")
                                 Spacer()
                             }
                             .primaryGreenActionButton()
@@ -423,11 +423,8 @@ struct StudentTeachersListView: View {
     private func load() async {
         guard let studentId = session.uid, !studentId.isEmpty else {
             vm.errorMessage = String(
-                localized: "Não foi possível identificar o aluno logado.",
-                locale: Locale(
-                    identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
-                        ?? AppLanguage.portugueseBrazil.rawValue
-                )
+                localized: "student_shared.logged_student_not_found",
+                locale: locale
             )
             return
         }
@@ -439,7 +436,8 @@ struct StudentTeachersListView: View {
         inviteError = await vm.sendRequest(
             studentId: studentId,
             studentEmail: studentEmail,
-            teacherEmail: teacherEmail
+            teacherEmail: teacherEmail,
+            locale: locale
         )
         if inviteError == nil {
             showInviteSheet = false
@@ -463,7 +461,7 @@ struct StudentTeachersListView: View {
         guard let request = requestToCancel,
               let studentId = session.uid,
               !studentId.isEmpty else { return }
-        await vm.cancel(request: request, studentId: studentId, studentEmail: studentEmail)
+        await vm.cancel(request: request, studentId: studentId, studentEmail: studentEmail, locale: locale)
         requestToCancel = nil
     }
 
@@ -471,7 +469,7 @@ struct StudentTeachersListView: View {
         ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
             VStack(spacing: 14) {
-                Text("Professor")
+                Text("common.trainer")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
 
@@ -482,18 +480,18 @@ struct StudentTeachersListView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     teacherDetailRow(
-                        String(localized: "WhatsApp", locale: locale),
+                        String(localized: "student_teachers.whatsapp", locale: locale),
                         BrazilianPhoneFormatter.format(teacher.phone ?? "")
                     )
-                    teacherDetailRow(String(localized: "CREF", locale: locale), teacher.cref ?? "")
-                    teacherDetailRow(String(localized: "Biografia", locale: locale), teacher.bio ?? "")
+                    teacherDetailRow(String(localized: "student_teachers.cref", locale: locale), teacher.cref ?? "")
+                    teacherDetailRow(String(localized: "student_teachers.biography", locale: locale), teacher.bio ?? "")
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
 
-                Button("Fechar") { selectedTeacher = nil }
+                Button("common.close") { selectedTeacher = nil }
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
                     .buttonStyle(.plain)
@@ -507,7 +505,7 @@ struct StudentTeachersListView: View {
     private func teacherDetailRow(_ title: String, _ value: String) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            let format = String(localized: "%@: %@", locale: locale)
+            let format = String(localized: "common.label_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [title, trimmed]))
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.65))

@@ -89,12 +89,18 @@ struct ARExerciseView: View {
                     }
                     Spacer()
                     Button(action: { placingPoint.toggle() }) {
-                        Text(placingPoint ? "Cancelar" : "Adicionar ponto")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white)
-                            .padding(8)
-                            .background(Color.black.opacity(0.35))
-                            .cornerRadius(8)
+                        Group {
+                            if placingPoint {
+                                Text("ar.common.cancel")
+                            } else {
+                                Text("ar.correction_points.add")
+                            }
+                        }
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white)
+                        .padding(8)
+                        .background(Color.black.opacity(0.35))
+                        .cornerRadius(8)
                     }
                 }
                 .padding(.horizontal, 14)
@@ -106,7 +112,7 @@ struct ARExerciseView: View {
                     Spacer()
                     VStack(alignment: .trailing, spacing: 8) {
                         Button(action: { Task { await vm.saveCorrectionPoints() } }) {
-                            Text("Salvar pontos")
+                            Text("ar.correction_points.save")
                                 .padding(.horizontal, 10)
                                 .primaryGreenActionButton()
                         }
@@ -115,7 +121,7 @@ struct ARExerciseView: View {
                         Button(action: {
                             // marca execução rápida — para futuro integrar com Student progress
                         }) {
-                            Text("Marcar execução")
+                            Text("ar.execution.mark")
                                 .padding(.horizontal, 10)
                                 .primaryGreenActionButton()
                         }
@@ -129,7 +135,7 @@ struct ARExerciseView: View {
             if isModelLoading {
                 Color.black.opacity(0.4).ignoresSafeArea()
                 VStack {
-                    ProgressView("Carregando modelo...")
+                    ProgressView("ar.model.loading")
                         .progressViewStyle(CircularProgressViewStyle(tint: .white))
                         .foregroundColor(.white)
                         .padding(12)
@@ -142,12 +148,12 @@ struct ARExerciseView: View {
             ZStack {
                 Color.black.opacity(0.95).ignoresSafeArea()
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Novo Ponto de Correção")
+                    Text("ar.correction_points.new")
                         .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white)
 
                     UnderlineTextField(
-                        title: "Título (curto)",
+                        title: "ar.correction_points.title_short",
                         text: $newPointTitle,
                         isSecure: false,
                         showPassword: .constant(false),
@@ -157,7 +163,7 @@ struct ARExerciseView: View {
                     )
 
                     UnderlineTextField(
-                        title: "Observação (opcional)",
+                        title: "ar.correction_points.note_optional",
                         text: $newPointNote,
                         isSecure: false,
                         showPassword: .constant(false),
@@ -167,9 +173,9 @@ struct ARExerciseView: View {
                     )
 
                     HStack {
-                        Button("Cancelar") { showAddPointSheet = false }
+                        Button("ar.common.cancel") { showAddPointSheet = false }
                         Spacer()
-                        Button("Salvar") {
+                        Button("ar.common.save") {
                             // Atualiza o último ponto temporário com título/nota
                             if let lastIdx = vm.correctionPoints.indices.last {
                                 var p = vm.correctionPoints[lastIdx]
@@ -197,7 +203,7 @@ struct ARExerciseView: View {
             let status = AVCaptureDevice.authorizationStatus(for: .video)
             if status == .notDetermined { AVCaptureDevice.requestAccess(for: .video) { _ in } }
         }
-        .navigationTitle("AR")
+        .navigationTitle("ar.exercise.title")
     }
 
     // Remove a última rota da pilha de navegação
