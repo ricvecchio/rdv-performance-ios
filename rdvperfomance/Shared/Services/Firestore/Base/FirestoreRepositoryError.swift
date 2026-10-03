@@ -14,23 +14,50 @@ enum FirestoreRepositoryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingWeekId:
-            return String(localized: "firestore_repository.errors.missing_week_id", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_week_id",
+                locale: Self.localizationLocale
+            )
         case .missingUserId:
-            return String(localized: "firestore_repository.errors.missing_user_id", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_user_id",
+                locale: Self.localizationLocale
+            )
         case .missingStudentId:
-            return String(localized: "firestore_repository.errors.missing_student_id", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_student_id",
+                locale: Self.localizationLocale
+            )
         case .missingTeacherId:
-            return String(localized: "firestore_repository.errors.missing_teacher_id", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_teacher_id",
+                locale: Self.localizationLocale
+            )
         case .invalidData:
-            return String(localized: "firestore_repository.errors.invalid_data", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.invalid_data",
+                locale: Self.localizationLocale
+            )
         case .writeFailed:
-            return String(localized: "firestore_repository.errors.write_failed", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.write_failed",
+                locale: Self.localizationLocale
+            )
         case .notFound:
-            return String(localized: "firestore_repository.errors.not_found", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.not_found",
+                locale: Self.localizationLocale
+            )
         case .weekNotStarted:
-            return String(localized: "firestore_repository.errors.week_not_started", locale: Self.localizationLocale)
+            return AppLocalization.string(
+                "firestore_repository.errors.week_not_started",
+                locale: Self.localizationLocale
+            )
         case .deleteFailed(let details):
-            let format = String(localized: "firestore_repository.errors.delete_failed", locale: Self.localizationLocale)
+            let format = AppLocalization.string(
+                "firestore_repository.errors.delete_failed",
+                locale: Self.localizationLocale
+            )
             return String(
                 format: format,
                 locale: Self.localizationLocale,
