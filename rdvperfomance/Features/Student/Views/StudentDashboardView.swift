@@ -122,6 +122,9 @@ struct StudentDashboardView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
+#if DEBUG
+            print("[i18n] StudentDashboardView DEBUG diagnostic executed")
+#endif
             logLocalizationSnapshot()
             Task { await viewModel.load(locale: locale) }
         }

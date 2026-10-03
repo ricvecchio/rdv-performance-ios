@@ -190,6 +190,9 @@ struct StudentTeachersView: View {
             await refreshData()
         }
         .onAppear {
+#if DEBUG
+            print("[i18n] StudentTeachersView DEBUG diagnostic executed")
+#endif
             LocalizationDiagnostics.runtimeSnapshot(
                 context: "StudentTeachersView",
                 locale: locale
