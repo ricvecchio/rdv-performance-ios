@@ -680,7 +680,7 @@ final class FirestoreRepository {
         teacherId: String,
         categoryRaw: String,
         sectionKey: String,
-        items: [(title: String, description: String, blocks: [BlockFS])]
+        items: [(title: String, description: String, blocks: [BlockFS], defaultKey: String?)]
     ) async throws {
         try await workoutTemplateRepository.createWorkoutTemplatesBatch(
             teacherId: teacherId,

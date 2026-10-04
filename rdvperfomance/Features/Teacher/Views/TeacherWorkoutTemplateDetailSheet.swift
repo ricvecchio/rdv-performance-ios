@@ -12,6 +12,8 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
     @State private var isEditing: Bool = false
     @State private var draftBlocks: [BlockFS] = []
+    @State private var draftOriginalDetails: [String: String] = [:]
+    @State private var savedTemplate: WorkoutTemplateFS?
 
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
@@ -20,6 +22,14 @@ struct TeacherWorkoutTemplateDetailSheet: View {
     private let warmupTitle = "Aquecimento"
     private let techniqueTitle = "Técnica"
     private let loadsTitle = "Cargas / Movimentos"
+
+    private var currentTemplate: WorkoutTemplateFS {
+        savedTemplate ?? template
+    }
+
+    private var presentation: WorkoutTemplateFS {
+        DefaultWorkoutLocalization.presentation(for: currentTemplate, locale: locale)
+    }
 
     var body: some View {
         NavigationStack {
@@ -106,6 +116,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                             errorMessage = nil
                             successMessage = nil
                             isEditing = true
+                            resetDraftFromTemplate()
                             ensureEditableBlocksExist()
                         }
                     }
@@ -130,11 +141,11 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(template.title)
+            Text(presentation.title)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            let desc = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            let desc = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
             if !desc.isEmpty {
                 Text(desc)
                     .font(.system(size: 14))
@@ -146,7 +157,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
     private var readOnlyBlocks: some View {
         Group {
-            if let blocks = template.blocks, !blocks.isEmpty {
+            if let blocks = presentation.blocks, !blocks.isEmpty {
                 VStack(spacing: 12) {
                     ForEach(blocks.indices, id: \.self) { i in
                         let b = blocks[i]
@@ -232,7 +243,13 @@ struct TeacherWorkoutTemplateDetailSheet: View {
     }
 
     private func resetDraftFromTemplate() {
-        draftBlocks = template.blocks ?? []
+        let displayedBlocks = presentation.blocks ?? []
+        draftBlocks = (currentTemplate.blocks ?? []).map { block in
+            var draft = block
+            draft.details = displayedBlocks.first(where: { $0.id == block.id })?.details ?? block.details
+            return draft
+        }
+        draftOriginalDetails = draftBlocks.reduce(into: [:]) { $0[$1.id] = $1.details }
     }
 
     private func normalize(_ s: String) -> String {
@@ -295,11 +312,24 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         defer { isSaving = false }
 
         do {
+            // Unchanged editor translations stay presentation-only, not persisted user edits.
+            let blocksToSave = draftBlocks.map { block in
+                var persisted = block
+                if block.details == draftOriginalDetails[block.id],
+                   let original = currentTemplate.blocks?.first(where: { $0.id == block.id }) {
+                    persisted.details = original.details
+                }
+                return persisted
+            }
             try await FirestoreRepository.shared.updateWorkoutTemplateBlocks(
                 templateId: templateId,
-                blocks: draftBlocks
+                blocks: blocksToSave
             )
 
+            var updatedTemplate = currentTemplate
+            updatedTemplate.blocks = blocksToSave
+            savedTemplate = updatedTemplate
+            resetDraftFromTemplate()
             successMessage = AppLocalization.string("ui.changes_saved_successfully", locale: locale)
             isEditing = false
 

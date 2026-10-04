@@ -57,7 +57,7 @@ final class WorkoutTemplateRepository: FirestoreBaseRepository {
         teacherId: String,
         categoryRaw: String,
         sectionKey: String,
-        items: [(title: String, description: String, blocks: [BlockFS])]
+        items: [(title: String, description: String, blocks: [BlockFS], defaultKey: String?)]
     ) async throws {
         guard !items.isEmpty else { return }
 
@@ -90,6 +90,9 @@ final class WorkoutTemplateRepository: FirestoreBaseRepository {
 
                 if !item.blocks.isEmpty {
                     payload["blocks"] = item.blocks.map { ["id": $0.id, "name": $0.name, "details": $0.details] }
+                }
+                if let defaultKey = item.defaultKey {
+                    payload["defaultKey"] = defaultKey
                 }
 
                 let ref = db.collection(Collections.workoutTemplates).document()

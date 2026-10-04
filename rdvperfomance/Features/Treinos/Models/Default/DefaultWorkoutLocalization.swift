@@ -1,0 +1,97 @@
+import Foundation
+
+enum DefaultWorkoutLocalization {
+    private static let sections = [
+        "girlsWods", "heroTributeWorkouts", "openWods",
+        "wodsNomeados", "qualifiersCompeticoes"
+    ]
+
+    private struct Entry {
+        let key: String
+        let seed: DefaultWorkoutSeed
+    }
+
+    private static let entriesBySection: [String: [Entry]] = Dictionary(
+        uniqueKeysWithValues: sections.map { section in
+            (section, DefaultWorkoutsCrossfit.defaults(sectionKey: section).map {
+                Entry(key: defaultKey(for: $0, sectionKey: section), seed: $0)
+            })
+        }
+    )
+
+    // Identity uses the benchmark's proper name, never its translated presentation.
+    static func defaultKey(for seed: DefaultWorkoutSeed, sectionKey: String) -> String {
+        let slug = seed.name.lowercased().unicodeScalars.map {
+            CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789").contains($0)
+                ? String($0) : "_"
+        }.joined().split(separator: "_").joined(separator: "_")
+        return "default_workout.crossfit.\(sectionKey).\(slug)"
+    }
+
+    static func persistedDescription(for seed: DefaultWorkoutSeed) -> String {
+        [seed.title, seed.description]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+            .joined(separator: "\n")
+    }
+
+    static func resolvedKey(for template: WorkoutTemplateFS) -> String? {
+        entry(for: template)?.key
+    }
+
+    static func presentation(for template: WorkoutTemplateFS, locale: Locale) -> WorkoutTemplateFS {
+        guard let entry = entry(for: template) else { return template }
+        let seed = entry.seed
+        var result = template
+        if template.title == seed.name.trimmingCharacters(in: .whitespacesAndNewlines) {
+            result.title = localized("\(entry.key).name", fallback: template.title, locale: locale)
+        }
+        if template.description == persistedDescription(for: seed) {
+            result.description = [
+                localized("\(entry.key).title", fallback: seed.title, locale: locale),
+                localized("\(entry.key).description", fallback: seed.description, locale: locale)
+            ].filter { !$0.isEmpty }.joined(separator: "\n")
+        }
+        result.blocks = template.blocks?.map { block in
+            // A default marker identifies origin, not permission to overwrite custom edits.
+            guard let original = seed.blocks.first(where: { $0.title == block.name }) else {
+                return block
+            }
+            var localizedBlock = block
+            localizedBlock.name = localized(
+                "\(entry.key).block.\(original.order).name", fallback: block.name, locale: locale
+            )
+            if block.details == original.text {
+                localizedBlock.details = localized(
+                    "\(entry.key).block.\(original.order).details", fallback: block.details, locale: locale
+                )
+            }
+            return localizedBlock
+        }
+        return result
+    }
+
+    private static func entry(for template: WorkoutTemplateFS) -> Entry? {
+        guard template.categoryRaw == TreinoTipo.crossfit.rawValue,
+              let entries = entriesBySection[template.sectionKey] else { return nil }
+        if let key = template.defaultKey {
+            return entries.first { $0.key == key }
+        }
+        // Legacy documents have random IDs. Match every persisted field, ignoring only block IDs.
+        return entries.first { entry in
+            let seed = entry.seed
+            guard template.title == seed.name.trimmingCharacters(in: .whitespacesAndNewlines),
+                  template.description == persistedDescription(for: seed),
+                  let blocks = template.blocks else { return false }
+            let originals = seed.blocks.sorted { $0.order < $1.order }
+            return blocks.count == originals.count && zip(blocks, originals).allSatisfy {
+                $0.0.name == $0.1.title && $0.0.details == $0.1.text
+            }
+        }
+    }
+
+    private static func localized(_ key: String, fallback: String, locale: Locale) -> String {
+        let value = AppLocalization.string(String.LocalizationValue(key), locale: locale)
+        return value == key ? fallback : value
+    }
+}

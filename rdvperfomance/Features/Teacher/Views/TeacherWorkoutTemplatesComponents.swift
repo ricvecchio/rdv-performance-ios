@@ -92,6 +92,7 @@ struct TeacherWorkoutTemplatesList: View {
 }
 
 struct TeacherWorkoutTemplateRow: View {
+    @Environment(\.locale) private var locale
 
     let template: WorkoutTemplateFS
     let showsTemplateActions: Bool
@@ -99,6 +100,7 @@ struct TeacherWorkoutTemplateRow: View {
     let onDelete: () -> Void
 
     var body: some View {
+        let presentation = DefaultWorkoutLocalization.presentation(for: template, locale: locale)
         HStack(spacing: 12) {
 
             Image(systemName: "dumbbell.fill")
@@ -107,11 +109,11 @@ struct TeacherWorkoutTemplateRow: View {
                 .frame(width: 26)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(template.title)
+                Text(presentation.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
-                let sub = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
+                let sub = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !sub.isEmpty {
                     Text(sub)
                         .font(.system(size: 13))
