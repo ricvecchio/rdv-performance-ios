@@ -673,7 +673,7 @@ struct TeacherDashboardView: View {
 
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
-                    .font(.system(size: 12, weight: .semibold))
+                    .frame(height: 34)
             }
             .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
             .padding(.horizontal, 12)
