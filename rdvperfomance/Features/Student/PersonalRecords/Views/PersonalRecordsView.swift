@@ -100,13 +100,13 @@ struct PersonalRecordsView: View {
                     HStack {
                         Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 8) {
 
                             if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
                                 tecnofitImportButton
                             }
 
-                            VStack(spacing: 12) {
+                            VStack(spacing: 6) {
                                 ForEach(menuItems) { item in
                                     actionRow(
                                         title: item.title,
@@ -167,7 +167,7 @@ struct PersonalRecordsView: View {
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
-                        .padding(.top, 16)
+                        .padding(.top, 8)
 
                         Spacer(minLength: 0)
                     }
@@ -263,9 +263,9 @@ struct PersonalRecordsView: View {
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
-            .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
-            .padding(.vertical, 8)
+            .padding(.vertical, 4)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
             .overlay(
