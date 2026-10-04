@@ -552,7 +552,8 @@ struct StudentDashboardView: View {
                         }
                     }
                     .pickerStyle(.segmented)
-                    .tint(Color.white.opacity(0.06))
+                    .tint(.white)
+                    .environment(\.colorScheme, .dark)
                     .onChange(of: viewModel.selectedNextFitContent) { _, selection in
                         if selection != .agenda {
                             viewModel.clearNextFitAgendaDetail()
