@@ -40,7 +40,6 @@ struct StudentWorkoutsView: View {
     }
 
     @State private var selectedFilter: WorkoutsFilter = .active
-    @State private var hasAppeared = false
     @State private var expandedWeekIds = Set<String>()
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
@@ -154,11 +153,9 @@ struct StudentWorkoutsView: View {
         .navigationBarTitleDisplayMode(.inline)
 
         .onAppear {
-            let shouldForceReload = hasAppeared
-            hasAppeared = true
+            guard !vm.hasLoadedWeeks else { return }
             Task {
                 await vm.loadWeeksAndMeta(
-                    force: shouldForceReload,
                     filterByActiveTeacherLinks: !isTeacherViewing,
                     viewingTeacherId: viewingTeacherId
                 )
@@ -1078,17 +1075,4 @@ struct StudentWorkoutsView: View {
         }
     }
 
-    private func loadInitialData() async {
-        if isTeacherViewing {
-            await vm.loadWeeksAndMeta(
-                filterByActiveTeacherLinks: false,
-                viewingTeacherId: viewingTeacherId
-            )
-        } else {
-            await vm.loadWeeksAndMeta(
-                filterByActiveTeacherLinks: true,
-                viewingTeacherId: viewingTeacherId
-            )
-        }
-    }
 }
