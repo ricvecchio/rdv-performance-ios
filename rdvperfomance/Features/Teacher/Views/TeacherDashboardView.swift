@@ -647,10 +647,15 @@ struct TeacherDashboardView: View {
     ) -> some View {
         Button(action: action) {
             HStack(alignment: .top, spacing: 10) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 22)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: icon)
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
