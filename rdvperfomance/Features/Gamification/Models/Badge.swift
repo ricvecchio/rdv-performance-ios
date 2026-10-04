@@ -18,13 +18,13 @@ struct Badge: Identifiable, Hashable, Codable {
     func localizedTitle(locale: Locale) -> String {
         switch id {
         case "b1":
-            return String(localized: "gamification.badges.first_workout", locale: locale)
+            return AppLocalization.string("gamification.badges.first_workout", locale: locale)
         case "b2":
-            return String(localized: "gamification.badges.three_workouts", locale: locale)
+            return AppLocalization.string("gamification.badges.three_workouts", locale: locale)
         case "b3":
-            return String(localized: "gamification.badges.consistency", locale: locale)
+            return AppLocalization.string("gamification.badges.consistency", locale: locale)
         case "b4":
-            return String(localized: "gamification.badges.complete_week", locale: locale)
+            return AppLocalization.string("gamification.badges.complete_week", locale: locale)
         default:
             return title ?? id
         }

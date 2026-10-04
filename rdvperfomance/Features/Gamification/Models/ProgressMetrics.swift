@@ -10,15 +10,18 @@ enum ProgressGameCopy: String, Codable, Hashable {
     func localized(locale: Locale) -> String {
         switch self {
         case .generalProgress:
-            return String(localized: "gamification.week.general_progress", locale: locale)
+            return AppLocalization.string("gamification.week.general_progress", locale: locale)
         case .currentWeek:
-            return String(localized: "gamification.week.current", locale: locale)
+            return AppLocalization.string("gamification.week.current", locale: locale)
         case .previewStudent:
-            return String(localized: "gamification.preview.student", locale: locale)
+            return AppLocalization.string("gamification.preview.student", locale: locale)
         case .consistentStudent:
-            return String(localized: "gamification.preview.consistent_student", locale: locale)
+            return AppLocalization.string(
+                "gamification.preview.consistent_student",
+                locale: locale
+            )
         case .beastMode:
-            return String(localized: "gamification.preview.beast_mode", locale: locale)
+            return AppLocalization.string("gamification.preview.beast_mode", locale: locale)
         }
     }
 }

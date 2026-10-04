@@ -130,19 +130,19 @@ final class ProgressGameScene: SKScene {
         titleLabel.text = metrics.displayName?.isEmpty == false
             ? metrics.displayName
             : metrics.displayNameCopy?.localized(locale: currentLocale)
-                ?? String(localized: "gamification.progress.title", locale: currentLocale)
+                ?? AppLocalization.string("gamification.progress.title", locale: currentLocale)
         subtitleLabel.text = metrics.weekLabel
             ?? metrics.weekLabelCopy?.localized(locale: currentLocale)
-            ?? String(localized: "gamification.week.default", locale: currentLocale)
+            ?? AppLocalization.string("gamification.week.default", locale: currentLocale)
 
         let percent = Int((max(0.0, min(1.0, metrics.weeklyCompletion)) * 100.0).rounded())
-        let format = String(localized: "gamification.streak.summary", locale: currentLocale)
+        let format = AppLocalization.string("gamification.streak.summary", locale: currentLocale)
         streakLabel.text = String(
             format: format,
             locale: currentLocale,
             arguments: [
                 Int64(metrics.streakDays),
-                String(localized: "gamification.streak.days", locale: currentLocale),
+                AppLocalization.string("gamification.streak.days", locale: currentLocale),
                 Int64(percent)
             ]
         )
@@ -177,8 +177,8 @@ final class ProgressGameScene: SKScene {
         /// Exibe mensagem quando não há badges conquistadas
         guard !displayedBadges.isEmpty else {
             let empty = SKLabelNode(fontNamed: "AvenirNext-Regular")
-            empty.text = String(
-                localized: "gamification.badges.empty_message",
+            empty.text = AppLocalization.string(
+                "gamification.badges.empty_message",
                 locale: currentLocale
             )
             empty.fontSize = 12
