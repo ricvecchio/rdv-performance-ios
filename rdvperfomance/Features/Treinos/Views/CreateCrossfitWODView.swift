@@ -330,9 +330,10 @@ struct CreateCrossfitWODView: View {
     }
 
     private func applyTemplate(_ template: WorkoutTemplateFS) {
-        title = template.title
-        description = template.description
-        blocks = (template.blocks ?? []).map {
+        let localizedTemplate = DefaultWorkoutLocalization.presentation(for: template, locale: locale)
+        title = localizedTemplate.title
+        description = localizedTemplate.description
+        blocks = (localizedTemplate.blocks ?? []).map {
             BlockDraft(name: $0.name, details: $0.details)
         }
     }
