@@ -67142,6 +67142,3479 @@
         }
       }
     },
+    "default_workout.academia.bracos.bracos_padrao.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 3–5 min of light cardio\n• 2x15 Barbell Curls (very light)\n• 2x15 Cable Triceps Pushdowns (very light)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 3–5 min de cardio suave\n• 2x15 Curl con Barra (muy ligero)\n• 2x15 Extensión de Tríceps en Polea (muy ligera)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 3–5 min de cardio leve\n• 2x15 Rosca direta (muito leve)\n• 2x15 Tríceps polia (muito leve)"
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Perform supersets (A1 + A2) to increase workout density. Focus on perfect execution."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Haz superseries (A1 + A2) para aumentar la densidad del entrenamiento. Céntrate en una ejecución perfecta."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Faça superséries (A1 + A2) para aumentar densidade do treino. Foque em execução perfeita."
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes"
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A1) Barbell Curl — 4x8–12\nA2) Cable Triceps Pushdown (straight bar) — 4x10–15\n\nB1) Alternating Curl (dumbbell) — 3x10–12\nB2) French Press (dumbbell) — 3x10–12\n\nC1) Hammer Curl — 3x10–12\nC2) Bench Dip — 3xAMRAP (good technique)\nRest: 45–60s between supersets"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A1) Curl con Barra — 4x8–12\nA2) Extensión de Tríceps en Polea (barra recta) — 4x10–15\n\nB1) Curl Alterno (mancuerna) — 3x10–12\nB2) Press Francés (mancuerna) — 3x10–12\n\nC1) Curl Martillo — 3x10–12\nC2) Fondos en Banco — 3xAMRAP (buena técnica)\nDescanso: 45–60s entre superseries"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A1) Rosca Direta (barra) — 4x8–12\nA2) Tríceps na Polia (barra reta) — 4x10–15\n\nB1) Rosca Alternada (halter) — 3x10–12\nB2) Tríceps Francês (halter) — 3x10–12\n\nC1) Rosca Martelo — 3x10–12\nC2) Mergulho no banco — 3xAMRAP (técnica boa)\nDescanso: 45–60s entre superséries"
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classic hypertrophy workout with supersets (standard gym routine)."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento clásico de hipertrofia con superseries (rutina estándar de gimnasio)."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino clássico para hipertrofia com superséries (padrão de academia)."
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard Arms"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brazos Estándar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BRACOS_PADRAO"
+          }
+        }
+      }
+    },
+    "default_workout.academia.bracos.bracos_padrao.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arms – Biceps and Triceps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brazos – Bíceps y Tríceps"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braços – Bíceps e Tríceps"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Diaphragmatic breathing: 6–8 cycles\n• Cat-camel: 8 reps\n• Easy plank: 20–30s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Respiración diafragmática: 6–8 ciclos\n• Cat-camel: 8 rep\n• Plancha suave: 20–30s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Respiração diafragmática: 6–8 ciclos\n• Cat-camel: 8 rep\n• Prancha leve: 20–30s"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Ribs “down”, abs engaged\n• Neutral spine (avoid hyperextension)\n• Full control, no rushing"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Costillas “hacia abajo”, abdomen activo\n• Columna neutra (evita la hiperextensión)\n• Control total, sin prisas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Costelas “para baixo”, abdômen ativo\n• Coluna neutra (evite hiperextensão)\n• Controle total, sem pressa"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Plank — 3x30–60s\n2) Dead Bug — 3x10 each side\n3) Pallof Press (cable/resistance band) — 3x12 each side\n4) Side Plank — 3x30–45s each side\n5) Farmer Carry (if a dumbbell is available) — 4x20–40m\nRest: 30–45s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Plancha — 3x30–60s\n2) Dead Bug — 3x10 cada lado\n3) Pallof Press (cable/banda elástica) — 3x12 cada lado\n4) Plancha Lateral — 3x30–45s cada lado\n5) Farmer Carry (si hay una mancuerna disponible) — 4x20–40m\nDescanso: 30–45s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Prancha — 3x30–60s\n2) Dead Bug — 3x10 cada lado\n3) Pallof Press (cabo/elástico) — 3x12 cada lado\n4) Prancha lateral — 3x30–45s cada lado\n5) Farmer Carry (se houver halter) — 4x20–40m\nDescanso: 30–45s"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard routine to strengthen the core without excessive spinal flexion, focusing on stability."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rutina estándar para fortalecer el core sin un exceso de flexión de columna, centrada en la estabilidad."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotina padrão para fortalecer core sem excesso de flexão de coluna, focando estabilidade."
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core Stability"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Estabilidad del Core"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CORE_ESTABILIDADE"
+          }
+        }
+      }
+    },
+    "default_workout.academia.core.core_estabilidade.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core – Stability and Lower Back Protection"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core – Estabilidad y Protección Lumbar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core – Estabilidade e Proteção Lombar"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min of light cardio (bike/treadmill)\n• Thoracic mobility: 8 rotations per side\n• Activation: 2x12 Face Pull (light)\n• 1–2 light sets of cable pulldowns"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min de cardio suave (bicicleta/cinta)\n• Movilidad torácica: 8 rotaciones por lado\n• Activación: 2x12 Face Pull (ligero)\n• 1–2 series ligeras de jalón en polea"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min de cardio leve (bike/esteira)\n• Mobilidade torácica: 8 rotações por lado\n• Ativação: 2x12 Face Pull (leve)\n• 1–2 séries leves de puxada na polia"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioritize full range of motion and control during the eccentric phase (lowering). Short rests for accessory exercises."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Prioriza el rango completo de movimiento y el control en la fase excéntrica (bajada). Descansos cortos en los ejercicios accesorios."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Priorize amplitude completa e controle na fase excêntrica (descida). Pausas curtas nos acessórios."
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Shoulders “down and back” before pulling\n• Do not “cheat” with your lower back\n• Controlled eccentric phase (2–3s)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Hombros “hacia abajo y hacia atrás” antes de tirar\n• No hagas “trampas” con la zona lumbar\n• Fase excéntrica controlada (2–3s)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Ombros “para baixo e para trás” antes de puxar\n• Não “roubar” com lombar\n• Excêntrica controlada (2–3s)"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.4.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Bar Pulldown (or Pull-down) — 4x8–12\n2) Bent-Over Row (barbell/dumbbell) — 4x6–10\n3) Seated Row (cable) — 3x10–12\n4) Cable Pullover — 3x12–15\n5) Face Pull — 3x12–20\nRest: 60–90s (exercises 1–3), 45–60s (4–5)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Jalón con Barra (o Pull-down) — 4x8–12\n2) Remo Inclinado (barra/mancuerna) — 4x6–10\n3) Remo Sentado (cable) — 3x10–12\n4) Pullover en cable — 3x12–15\n5) Face Pull — 3x12–20\nDescanso: 60–90s (ejercicios 1–3), 45–60s (4–5)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Puxada na Barra (ou Pull-down) — 4x8–12\n2) Remada Curvada (barra/halter) — 4x6–10\n3) Remada Baixa (cabo) — 3x10–12\n4) Pullover no cabo — 3x12–15\n5) Face Pull — 3x12–20\nDescanso: 60–90s (exercícios 1–3), 45–60s (4–5)"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.block.4.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classic workout to build the lats (latissimus dorsi) and improve scapular stability."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento clásico para desarrollar los dorsales (dorsales anchos) y mejorar la estabilidad escapular."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino clássico para construir dorsais (latíssimos) e melhorar estabilidade escapular."
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back A"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espalda A"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COSTAS_A"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_a.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back A – Width and Control"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espalda A – Amplitud y Control"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Costas A – Largura e Controle"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min of light cardio\n• 2x10 Scapular Pull-ups (or on the cable machine)\n• 2x12 light Single-Arm Rows"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min de cardio suave\n• 2x10 Scapular Pull-ups (o en polea)\n• 2x12 Remo Unilateral ligero"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min de cardio leve\n• 2x10 Scapular Pull-ups (ou na polia)\n• 2x12 Remada unilateral leve"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Keep your torso firm and abs engaged\n• Keep elbows close to your body during rows\n• Avoid shrugging your shoulders at the top"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Tronco firme y abdomen activo\n• Codos cerca del cuerpo en los remos\n• Evita encoger los hombros en la parte superior"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Tronco firme e abdômen ativo\n• Cotovelos próximos ao corpo nas remadas\n• Evite encolher ombros no topo"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) T-Bar Row — 5x5–8\n2) Pull-up (or Pull-down) — 4x6–10\n3) Single-Arm Row (dumbbell) — 3x8–12 each side\n4) Shrug (dumbbell/barbell) — 3x10–15\n5) Back Extension (machine/bench) — 3x12–15 (controlled)\nRest: 90s (1), 60–90s (2–3), 45–60s (4–5)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Remo en T (T-Bar) — 5x5–8\n2) Dominadas (o Pull-down) — 4x6–10\n3) Remo Unilateral (mancuerna) — 3x8–12 cada lado\n4) Encogimiento de Hombros (mancuerna/barra) — 3x10–15\n5) Extensión Lumbar (máquina/banco) — 3x12–15 (control)\nDescanso: 90s (1), 60–90s (2–3), 45–60s (4–5)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Remada Cavalinho (T-Bar) — 5x5–8\n2) Barra Fixa (ou Pull-down) — 4x6–10\n3) Remada Unilateral (halter) — 3x8–12 cada lado\n4) Encolhimento (halter/barra) — 3x10–15\n5) Extensão Lombar (máquina/banco) — 3x12–15 (controle)\nDescanso: 90s (1), 60–90s (2–3), 45–60s (4–5)"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Focus on heavy rows and recruitment of the middle/lower trapezius for density."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enfoque en remos pesados y activación del trapecio medio/inferior para aumentar la densidad muscular."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Foco em remadas pesadas e recrutamento de trapézio médio/inferior para densidade."
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back B"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espalda B"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COSTAS_B"
+          }
+        }
+      }
+    },
+    "default_workout.academia.costas.costas_b.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back B – Thickness and Strength"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espalda B – Grosor y Fuerza"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Costas B – Espessura e Força"
+          }
+        }
+      }
+    },
+    "default_workout.academia.fullBody.fullbody_academia.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min of light cardio\n• Mobility: hip/ankle/shoulder (3–5 min)\n• 1 light set of each main exercise"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min de cardio suave\n• Movilidad: cadera/tobillo/hombro (3–5 min)\n• 1 serie ligera de cada ejercicio principal"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min cardio leve\n• Mobilidade: quadril/tornozelo/ombro (3–5 min)\n• 1 série leve de cada exercício principal"
+          }
+        }
+      }
+    },
+    "default_workout.academia.fullBody.fullbody_academia.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.fullBody.fullbody_academia.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Squat (free weight or Smith machine) — 4x6–10\n2) Bench Press (barbell/dumbbell) — 4x6–10\n3) Row (cable/dumbbell) — 4x8–12\n4) Shoulder Press (dumbbell) — 3x8–12\n5) Calf Raise — 3x12–20\n6) Core (plank) — 3x30–60s\nRest: 60–90s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Sentadilla (libre o en máquina Smith) — 4x6–10\n2) Press de Banca (barra/mancuerna) — 4x6–10\n3) Remo (cable/mancuerna) — 4x8–12\n4) Press de Hombros (mancuerna) — 3x8–12\n5) Elevación de Talones — 3x12–20\n6) Core (plancha) — 3x30–60s\nDescanso: 60–90s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Agachamento (livre ou smith) — 4x6–10\n2) Supino (barra/halter) — 4x6–10\n3) Remada (cabo/halter) — 4x8–12\n4) Desenvolvimento (halter) — 3x8–12\n5) Panturrilha — 3x12–20\n6) Core (prancha) — 3x30–60s\nDescanso: 60–90s"
+          }
+        }
+      }
+    },
+    "default_workout.academia.fullBody.fullbody_academia.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.fullBody.fullbody_academia.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Complete workout with basic exercises for those who need a well-balanced general routine."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento completo con ejercicios básicos para quien necesita una rutina general bien equilibrada."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino completo com básicos para quem precisa de um treino geral bem equilibrado."
+          }
+        }
+      }
+    },
+    "default_workout.academia.fullBody.fullbody_academia.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Body – Gym"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuerpo Completo – Gimnasio"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FULLBODY_ACADEMIA"
+          }
+        }
+      }
+    },
+    "default_workout.academia.fullBody.fullbody_academia.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Body – Standard Gym Workout"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuerpo Completo – Rutina Estándar de Gimnasio"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Body – Padrão de Academia"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Shoulder mobility (circles): 10 in each direction\n• 2x12 light External Rotations (resistance band)\n• 2x12 light Lateral Raises"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Movilidad de hombros (círculos): 10 en cada dirección\n• 2x12 Rotación Externa (banda elástica) ligera\n• 2x12 Elevación Lateral ligera"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Mobilidade de ombro (círculos): 10 para cada lado\n• 2x12 Rotação externa (elástico) leve\n• 2x12 Elevação lateral leve"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Avoid raising your shoulders (trapezius) during lateral raises\n• Control and range of motion without pain\n• Prioritize the rear deltoids for balance"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Evita elevar los hombros (trapecio) en las elevaciones laterales\n• Control y rango de movimiento sin dolor\n• Prioriza el deltoides posterior para el equilibrio"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Evite elevar ombros (trapézio) nas laterais\n• Controle e amplitude sem dor\n• Priorize deltoide posterior para equilíbrio"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Shoulder Press (dumbbell/barbell) — 4x6–10\n2) Lateral Raise — 4x12–15\n3) Front Raise (dumbbell) — 3x10–12\n4) Reverse Fly (machine/cable) — 4x12–20\n5) Face Pull — 3x12–20\nRest: 45–75s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Press de Hombros (mancuerna/barra) — 4x6–10\n2) Elevación Lateral — 4x12–15\n3) Elevación Frontal (mancuerna) — 3x10–12\n4) Aperturas Inversas (máquina/cable) — 4x12–20\n5) Face Pull — 3x12–20\nDescanso: 45–75s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Desenvolvimento (halter/barra) — 4x6–10\n2) Elevação Lateral — 4x12–15\n3) Elevação Frontal (halter) — 3x10–12\n4) Crucifixo Inverso (máquina/cabo) — 4x12–20\n5) Face Pull — 3x12–20\nDescanso: 45–75s"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard workout for the anterior/lateral/posterior deltoids, promoting shoulder stability and health."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento estándar para los deltoides anterior/lateral/posterior, con estabilidad y salud del hombro."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino padrão para deltoide anterior/lateral/posterior com estabilidade e saúde do ombro."
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard Shoulders"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hombros Estándar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OMBROS_PADRAO"
+          }
+        }
+      }
+    },
+    "default_workout.academia.ombros.ombros_padrao.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shoulders – Complete Deltoid Workout"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hombros – Deltoides Completos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombros – Deltoides Completos"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min of light cardio\n• Shoulder/chest mobility (doorway): 30s per side\n• 2x12 light External Rotations (resistance band)\n• 2 progressive bench press sets (light)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min de cardio suave\n• Movilidad de hombros/pectoral (marco de puerta): 30s por lado\n• 2x12 Rotación Externa (banda elástica) ligera\n• 2 series progresivas de press de banca (ligero)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min cardio leve\n• Mobilidade de ombros/peitoral (porta): 30s por lado\n• 2x12 Rotação externa (elástico) leve\n• 2 séries progressivas de supino (leve)"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Keep your shoulder blades stable and avoid losing posture during the bench press. Increase the load only with perfect technique."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantén las escápulas estabilizadas y evita perder la postura en el press de banca. Aumenta la carga solo con una técnica perfecta."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mantenha escápulas estabilizadas e evite perder postura no supino. Aumente carga só com técnica perfeita."
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Shoulder blades “set” on the bench\n• Feet firmly on the floor\n• Lower the bar with control to chest level"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Escápulas “encajadas” en el banco\n• Pies firmes en el suelo\n• La barra baja de forma controlada hasta la línea del pecho"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Escápulas “encaixadas” no banco\n• Pés firmes no chão\n• Barra desce controlada até a linha do peito"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.4.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Flat Bench Press (barbell) — 5x5–8\n2) Incline Bench Press (dumbbell) — 4x8–12\n3) Chest Fly (machine/dumbbell) — 3x10–15\n4) Parallel Bar Dips (or assisted dips) — 3x6–12\n5) Cable Triceps Pushdown — 3x10–15\nRest: 90s (1), 60–90s (2), 45–60s (3–5)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Press de Banca Plano (barra) — 5x5–8\n2) Press de Banca Inclinado (mancuerna) — 4x8–12\n3) Aperturas de Pecho (máquina/mancuerna) — 3x10–15\n4) Fondos en Paralelas (o fondos asistidos) — 3x6–12\n5) Extensión de Tríceps en Polea — 3x10–15\nDescanso: 90s (1), 60–90s (2), 45–60s (3–5)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Supino Reto (barra) — 5x5–8\n2) Supino Inclinado (halter) — 4x8–12\n3) Crucifixo (máquina/halter) — 3x10–15\n4) Paralelas (ou mergulho assistido) — 3x6–12\n5) Tríceps na polia — 3x10–15\nDescanso: 90s (1), 60–90s (2), 45–60s (3–5)"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.block.4.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard workout to improve the bench press and build the chest with controlled volume."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento estándar para mejorar el press de banca y desarrollar el pectoral con un volumen controlado."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino padrão para evolução do supino e construção de peitoral com volume controlado."
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chest A"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pecho A"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PEITO_A"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_a.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chest A – Strength Foundation"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pecho A – Base de Fuerza"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peito A – Base de Força"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min of light cardio\n• 2x15 Push-ups (adapt if needed)\n• 1–2 light sets on the peck-deck machine"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min de cardio suave\n• 2x15 Push-ups (adaptar si es necesario)\n• 1–2 series ligeras en la máquina peck-deck"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5 min de cardio leve\n• 2x15 Push-ups (adaptar se necessário)\n• 1–2 séries leves de máquina peck-deck"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Control the eccentric phase (2–3s)\n• Do not flare your elbows too wide\n• Do not hyperextend your lower back on the incline bench"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Controla la fase excéntrica (2–3s)\n• No abras demasiado los codos\n• No hiperextiendas la zona lumbar en el banco inclinado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Controle a excêntrica (2–3s)\n• Cotovelos sem “abrir demais”\n• Não hiperestender lombar no inclinado"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Incline Bench Press (barbell/dumbbell) — 4x8–12\n2) Flat Bench Press (dumbbell) — 4x10–12\n3) Peck-deck — 3x12–15\n4) Cable Crossover — 3x12–20\n5) Push-ups to near failure — 2 sets\nRest: 45–75s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Press de Banca Inclinado (barra/mancuerna) — 4x8–12\n2) Press de Banca Plano (mancuerna) — 4x10–12\n3) Peck-deck — 3x12–15\n4) Crossover en cable — 3x12–20\n5) Flexiones hasta cerca del fallo — 2 series\nDescanso: 45–75s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Supino Inclinado (barra/halter) — 4x8–12\n2) Supino Reto (halter) — 4x10–12\n3) Peck-deck — 3x12–15\n4) Crossover no cabo — 3x12–20\n5) Flexão até perto da falha — 2 séries\nDescanso: 45–75s"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Classic gym session with more volume and repetitions for metabolic stimulation."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sesión clásica de gimnasio con más volumen y repeticiones para el estímulo metabólico."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sessão clássica de academia com mais volume e repetições para estímulo metabólico."
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chest B"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pecho B"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PEITO_B"
+          }
+        }
+      }
+    },
+    "default_workout.academia.peito.peito_b.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chest B – Hypertrophy and Pump"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pecho B – Hipertrofia y Pump"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peito B – Hipertrofia e Pump"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min on the bike\n• Mobility: ankle (8–10 reps), hip (8 reps)\n• 2x12 Bodyweight Squats\n• 2 progressive sets of the main exercise"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min de bicicleta\n• Movilidad: tobillo (8–10 rep), cadera (8 rep)\n• 2x12 Sentadillas con peso corporal\n• 2 series progresivas del ejercicio principal"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min bike\n• Mobilidade: tornozelo (8–10 rep), quadril (8 rep)\n• 2x12 Agachamento com peso corporal\n• 2 séries progressivas do exercício principal"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Knee follows the line of the foot\n• Keep your torso firm and abs engaged\n• Lower with control, rise with power"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• La rodilla sigue la línea del pie\n• Tronco firme y abdomen activo\n• Bajada controlada, sube con potencia"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Joelho acompanha a linha do pé\n• Tronco firme e abdômen ativo\n• Descida controlada, suba com potência"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Barbell Squat — 5x5–8\n2) Leg Press — 4x10–12\n3) Leg Extension — 3x12–15\n4) Walking Lunge (dumbbell) — 3x10 each leg\n5) Standing Calf Raise — 4x12–20\nRest: 90s (1), 60–90s (2), 45–60s (3–5)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Sentadilla con Barra Libre — 5x5–8\n2) Prensa de Piernas — 4x10–12\n3) Extensión de Cuádriceps — 3x12–15\n4) Zancada Caminando (mancuerna) — 3x10 cada pierna\n5) Elevación de Talones de Pie — 4x12–20\nDescanso: 90s (1), 60–90s (2), 45–60s (3–5)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Agachamento Livre — 5x5–8\n2) Leg Press — 4x10–12\n3) Cadeira Extensora — 3x12–15\n4) Passada (halter) — 3x10 cada perna\n5) Panturrilha em pé — 4x12–20\nDescanso: 90s (1), 60–90s (2), 45–60s (3–5)"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard workout with squats and classic accessory exercises for strong, stable legs."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento estándar con sentadillas y ejercicios accesorios clásicos para unas piernas fuertes y estables."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino padrão com agachamento e acessórios clássicos para pernas fortes e estáveis."
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs A"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piernas A"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PERNAS_A"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_a.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs A – Quadriceps and Foundation"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piernas A – Cuádriceps y Base"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pernas A – Quadríceps e Base"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min of easy cycling\n• 2x12 Glute Bridges\n• 2x10 Good mornings (light)\n• 1–2 light sets of the main exercise"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min de bicicleta suave\n• 2x12 Puente de Glúteos\n• 2x10 Good morning (ligero)\n• 1–2 series ligeras del ejercicio principal"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 5–8 min bike leve\n• 2x12 Ponte de glúteos\n• 2x10 Good morning (leve)\n• 1–2 séries leves do exercício principal"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Neutral spine during the hinge (RDL/deadlift)\n• Feel the hamstrings stretch, without “cheating”\n• Squeeze your glutes at the top"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Columna neutra en la bisagra de cadera (RDL/peso muerto)\n• Siente el estiramiento de los isquiotibiales, sin hacer “trampas”\n• Contrae los glúteos en la parte superior"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Coluna neutra no hinge (RDL/terra)\n• Sinta alongar posterior, sem “roubar”\n• Contraia glúteo no topo"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Romanian Deadlift — 4x6–10\n2) Lying Leg Curl — 4x10–12\n3) Hip Thrust — 4x8–12\n4) Bulgarian Split Squat — 3x8–10 each leg\n5) Seated Calf Raise — 4x12–20\nRest: 60–90s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Peso Muerto Rumano — 4x6–10\n2) Curl Femoral Tumbado — 4x10–12\n3) Hip Thrust — 4x8–12\n4) Sentadilla Búlgara — 3x8–10 cada pierna\n5) Elevación de Talones Sentado — 4x12–20\nDescanso: 60–90s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Levantamento Terra Romeno — 4x6–10\n2) Mesa Flexora — 4x10–12\n3) Hip Thrust — 4x8–12\n4) Afundo (búlgaro) — 3x8–10 cada perna\n5) Panturrilha sentado — 4x12–20\nDescanso: 60–90s"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard workout to strengthen the hamstrings and glutes using hip hinge patterns."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento estándar para fortalecer los isquiotibiales y los glúteos con patrones de bisagra de cadera."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino padrão para fortalecer posterior de coxa e glúteos com padrões de hinge."
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs B"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piernas B"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PERNAS_B"
+          }
+        }
+      }
+    },
+    "default_workout.academia.pernas.pernas_b.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs B – Hamstrings and Glutes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piernas B – Isquiotibiales y Glúteos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pernas B – Posterior e Glúteos"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.bracos.bracos_casa.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Wrist mobility: 30–45s\n• 2x8 incline push-ups\n• 2x10 triceps extensions in the air (controlled)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Movilidad de muñecas: 30–45s\n• 2x8 flexiones inclinadas\n• 2x10 extensiones de tríceps en el aire (control)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Mobilidade de punhos: 30–45s\n• 2x8 flexões inclinadas\n• 2x10 extensão de tríceps no ar (controle)"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.bracos.bracos_casa.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.bracos.bracos_casa.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Close-grip push-up — 4x8–15\n2) Triceps dips on a bench/chair — 4x10–20\n3) Isometric biceps hold with a towel (pull against the foot) — 4x20–30s\n4) Plank — 3x30–60s\nRest: 30–60s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Flexión con agarre cerrado — 4x8–15\n2) Fondos de tríceps en banco/silla — 4x10–20\n3) Isometría de bíceps con toalla (tirar contra el pie) — 4x20–30s\n4) Plancha — 3x30–60s\nDescanso: 30–60s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Flexão fechada — 4x8–15\n2) Tríceps no banco/cadeira — 4x10–20\n3) Isometria de bíceps com toalha (puxar contra o pé) — 4x20–30s\n4) Prancha — 3x30–60s\nDescanso: 30–60s"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.bracos.bracos_casa.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.bracos.bracos_casa.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard arm workout using body leverage and isometric holds."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento estándar para brazos utilizando las palancas del cuerpo y las isometrías."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino padrão para braços usando alavancas do corpo e isometrias."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.bracos.bracos_casa.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arms (Home)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brazos (Casa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "BRACOS_CASA"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.bracos.bracos_casa.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Arms (Home) – Functional Triceps and Biceps"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Brazos (Casa) – Tríceps y Bíceps Funcionales"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Braços (Casa) – Tríceps e Bíceps Funcional"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Diaphragmatic breathing: 6 cycles\n• Cat-camel: 8 reps\n• Easy dead bug: 6 each side"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Respiración diafragmática: 6 ciclos\n• Cat-camel: 8 rep\n• Dead bug suave: 6 cada lado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Respiração diafragmática: 6 ciclos\n• Cat-camel: 8 rep\n• Dead bug leve: 6 cada lado"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Ribs down, abs firm\n• Control and range of motion without losing posture\n• Stop if you feel lower back pain"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Costillas hacia abajo, abdomen firme\n• Control y rango de movimiento sin perder la postura\n• Detente si hay dolor lumbar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Costelas para baixo, abdômen firme\n• Controle e amplitude sem perder postura\n• Pare se houver dor lombar"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Dead Bug — 3x10 each side\n2) Hollow hold (or tuck) — 4x20–40s\n3) Side plank — 3x30–45s each side\n4) Mountain climbers (controlled) — 3x30–45s\nRest: 30–45s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Dead Bug — 3x10 cada lado\n2) Hollow hold (o tuck) — 4x20–40s\n3) Plancha lateral — 3x30–45s cada lado\n4) Mountain climbers (controlados) — 3x30–45s\nDescanso: 30–45s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Dead Bug — 3x10 cada lado\n2) Hollow hold (ou tuck) — 4x20–40s\n3) Prancha lateral — 3x30–45s cada lado\n4) Mountain climbers (controlado) — 3x30–45s\nDescanso: 30–45s"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard core routine without equipment, ideal for lower back protection and performance."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rutina estándar de core sin equipamiento, ideal para la protección lumbar y el rendimiento."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Rotina padrão de core sem equipamentos, ideal para proteção lombar e performance."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core (Home)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core (Casa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "CORE_CASA"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.core.core_casa.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core (Home) – Total Stability"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core (Casa) – Estabilidad Total"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Core (Casa) – Estabilidade Total"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Thoracic mobility: 8 rotations per side\n• Shoulder CARs: 6 per side\n• 2x10 Scapular push-ups (controlled)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Movilidad torácica: 8 rotaciones por lado\n• Shoulder CARs: 6 por lado\n• 2x10 Scapular push-ups (control)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Mobilidade torácica: 8 rotações por lado\n• Shoulder CARs: 6 por lado\n• 2x10 Scapular push-ups (controle)"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "If you have a resistance band, you can add pulldowns. Without a band, focus on control and isometric holds."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Si tienes una banda elástica, puedes añadir jalones. Sin banda elástica, céntrate en el control y la isometría."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Se tiver elástico, pode adicionar puxadas. Sem elástico, foque em controle e isometria."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Superman hold — 3x20–40s\n2) Floor “Y-T-W” — 3x8–10 each letter\n3) Isometric towel row (foot on towel) — 4x20–30s\n4) Plank with shoulder taps — 3x20 reps\nRest: 30–60s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Superman hold — 3x20–40s\n2) “Y-T-W” en el suelo — 3x8–10 cada letra\n3) Remo isométrico con toalla (pie sobre la toalla) — 4x20–30s\n4) Plancha con toque de hombros — 3x20 reps\nDescanso: 30–60s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Superman hold — 3x20–40s\n2) “Y-T-W” no chão — 3x8–10 cada letra\n3) Remada isométrica com toalha (pé na toalha) — 4x20–30s\n4) Prancha com toque no ombro — 3x20 reps\nDescanso: 30–60s"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Functional workout without equipment to improve posture, scapular stability and the lats."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento funcional sin equipamiento para mejorar la postura, la estabilidad escapular y los dorsales."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino funcional sem equipamentos para melhorar postura, estabilidade escapular e dorsais."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back (Home)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espalda (Casa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "COSTAS_CASA"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.costas.costas_casa.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Back (Home) – Posture and Shoulder Blades"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Espalda (Casa) – Postura y Escápulas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Costas (Casa) – Postura e Escápulas"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 2–3 min of jumping jacks or running in place\n• General mobility: 2 min\n• 10 squats + 10 incline push-ups"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 2–3 min de saltos de tijera o carrera en el sitio\n• Movilidad general: 2 min\n• 10 sentadillas + 10 push-ups inclinadas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 2–3 min polichinelos ou corrida parada\n• Mobilidade geral: 2 min\n• 10 agachamentos + 10 push-ups inclinadas"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Adjust your pace to maintain technique. If needed, reduce reps and increase rest."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajusta el ritmo para mantener la técnica. Si es necesario, reduce las reps y aumenta el descanso."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ajuste o ritmo para manter técnica. Se necessário, diminua reps e aumente descanso."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Details"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Detalhes"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 rounds:\n• 12–20 Squats\n• 8–15 Push-ups (adapt: knees or incline)\n• 12–20 Alternating lunges (total)\n• 20–40s Plank\n• 30–60s Rest"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 rondas:\n• 12–20 Sentadillas\n• 8–15 Flexiones (adaptar: rodillas o inclinadas)\n• 12–20 Zancadas alternas (total)\n• 20–40s Plancha\n• 30–60s Descanso"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "4 rounds:\n• 12–20 Agachamentos\n• 8–15 Flexões (adaptar: joelhos ou inclinada)\n• 12–20 Avanços alternados (total)\n• 20–40s Prancha\n• 30–60s Descanso"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "General workout without equipment so the student can train the whole body safely."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento general sin equipamiento para que el alumno entrene todo el cuerpo con seguridad."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino geral sem equipamentos para o aluno treinar o corpo todo com segurança."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Body (Home)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuerpo Completo (Casa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "FULLBODY_CASA"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.fullBody.fullbody_casa.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Body (Home) – Complete Functional Workout"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cuerpo Completo (Casa) – Funcional Completo"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Full Body (Casa) – Funcional Completo"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Gentle shoulder taps: 2x10\n• Shoulder mobility: 1–2 min\n• 2x20s plank"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Shoulder taps suaves: 2x10\n• Movilidad de hombros: 1–2 min\n• 2x20s de plancha"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Shoulder taps leves: 2x10\n• Mobilidade de ombros: 1–2 min\n• 2x20s prancha"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Avoid “sinking” into the plank\n• Control your breathing\n• Shoulders away from your ears"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Evita “hundirte” en la plancha\n• Controla la respiración\n• Hombros lejos de las orejas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Evite “afundar” na prancha\n• Controle a respiração\n• Ombros longe das orelhas"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Pike push-up (or progression) — 4x6–12\n2) Plank with movement (forward/backward) — 3x30–45s\n3) Shoulder taps — 3x20–40 reps\n4) Floor “Y-T-W” — 3x8–10 each letter\nRest: 45–75s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Pike push-up (o progresión) — 4x6–12\n2) Plancha con desplazamiento (hacia delante/atrás) — 3x30–45s\n3) Shoulder taps — 3x20–40 reps\n4) “Y-T-W” en el suelo — 3x8–10 cada letra\nDescanso: 45–75s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Pike push-up (ou progressão) — 4x6–12\n2) Prancha com deslocamento (frente/tras) — 3x30–45s\n3) Shoulder taps — 3x20–40 reps\n4) “Y-T-W” no chão — 3x8–10 cada letra\nDescanso: 45–75s"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Functional workout focused on the deltoids and stability, with no dumbbells required."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento funcional centrado en los deltoides y la estabilidad, sin necesidad de mancuernas."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino funcional focado em deltoides e estabilidade, sem necessidade de halteres."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shoulders (Home)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hombros (Casa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "OMBROS_CASA"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.ombros.ombros_casa.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Shoulders (Home) – Stability and Endurance"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Hombros (Casa) – Estabilidad y Resistencia"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ombros (Casa) – Estabilidade e Resistência"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Wrist mobility: 30–45s\n• Shoulder external rotation: 2x12 (no load)\n• 2x8 incline push-ups (hand on sofa/table)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Movilidad de muñecas: 30–45s\n• Rotación externa de hombros: 2x12 (sin carga)\n• 2x8 flexiones inclinadas (mano sobre el sofá/mesa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Mobilidade de punho: 30–45s\n• Rotação externa de ombro: 2x12 (sem carga)\n• 2x8 flexões inclinadas (mão no sofá/mesa)"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Body in a straight line (glutes and abs firm)\n• Elbows ~45° from the torso\n• Controlled lowering (2–3s)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Cuerpo en línea recta (glúteos y abdomen firmes)\n• Codos a ~45° del tronco\n• Control en la bajada (2–3s)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• Corpo em linha reta (glúteo e abdômen firmes)\n• Cotovelos ~45° do tronco\n• Controle na descida (2–3s)"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Technique"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Técnica"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.block.3.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Standard push-up — 4xAMRAP (leave 1–2 reps in reserve)\n2) Diamond (or close-grip) push-up — 3x8–15\n3) Incline push-up (more reps) — 3x12–20\n4) Plank — 3x30–60s\nRest: 45–75s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Flexión estándar — 4xAMRAP (deja 1–2 reps en reserva)\n2) Flexión diamante (o con agarre cerrado) — 3x8–15\n3) Flexión inclinada (más reps) — 3x12–20\n4) Plancha — 3x30–60s\nDescanso: 45–75s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Flexão padrão — 4xAMRAP (deixe 1–2 reps na reserva)\n2) Flexão diamante (ou fechada) — 3x8–15\n3) Flexão inclinada (mais reps) — 3x12–20\n4) Prancha — 3x30–60s\nDescanso: 45–75s"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.block.3.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard home workout focused on push-ups with progressions by difficulty."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento estándar en casa centrado en flexiones con progresiones según la dificultad."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino padrão em casa focado em flexões com progressões por dificuldade."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chest (Home)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pecho (Casa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PEITO_CASA"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.peito.peito_casa.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Chest (Home) – Progressive Push-ups"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pecho (Casa) – Flexiones Progresivas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Peito (Casa) – Flexões Progressivas"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.pernas.pernas_casa.block.1.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 2 min of jumping jacks or running in place\n• Hip/ankle mobility: 2 min\n• 2x10 slow squats"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 2 min de saltos de tijera o carrera en el sitio\n• Movilidad de cadera/tobillo: 2 min\n• 2x10 sentadillas lentas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "• 2 min polichinelos ou corrida parada\n• Mobilidade de quadril/tornozelo: 2 min\n• 2x10 agachamentos lentos"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.pernas.pernas_casa.block.1.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Warm-up"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Calentamiento"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aquecimento"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.pernas.pernas_casa.block.2.details" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Squat (tempo 3-1-1) — 4x12–20\n2) Alternating lunge — 3x10–16 each leg\n3) Glute bridge — 4x12–20 (1s pause at the top)\n4) Good morning with no load — 3x15–20\n5) Calf raise on a step — 4x15–25\nRest: 30–60s"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Sentadilla (tempo 3-1-1) — 4x12–20\n2) Zancada alterna (lunge) — 3x10–16 cada pierna\n3) Puente de glúteos — 4x12–20 (pausa de 1s arriba)\n4) Good morning sin carga — 3x15–20\n5) Elevación de talones en un escalón — 4x15–25\nDescanso: 30–60s"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "1) Agachamento (tempo 3-1-1) — 4x12–20\n2) Avanço alternado (lunge) — 3x10–16 cada perna\n3) Ponte de glúteos — 4x12–20 (pausa 1s no topo)\n4) Good morning sem carga — 3x15–20\n5) Panturrilha no degrau — 4x15–25\nDescanso: 30–60s"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.pernas.pernas_casa.block.2.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetitions"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeticiones"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetições"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.pernas.pernas_casa.description" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Standard workout without equipment, focusing on the quadriceps, hamstrings and glutes."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento estándar sin equipamiento, centrado en los cuádriceps, los isquiotibiales y los glúteos."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino padrão sem equipamentos com foco em quadríceps, posterior e glúteos."
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.pernas.pernas_casa.name" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs (Home)"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piernas (Casa)"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PERNAS_CASA"
+          }
+        }
+      }
+    },
+    "default_workout.emCasa.pernas.pernas_casa.title" : {
+      "extractionState" : "manual",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Legs (Home) – Functional Strength"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Piernas (Casa) – Fuerza Funcional"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Pernas (Casa) – Força Funcional"
+          }
+        }
+      }
+    },
     "dias" : {
       "extractionState" : "stale",
       "localizations" : {

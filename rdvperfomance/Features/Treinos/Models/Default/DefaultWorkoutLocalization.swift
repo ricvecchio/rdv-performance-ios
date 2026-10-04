@@ -1,9 +1,13 @@
 import Foundation
 
 enum DefaultWorkoutLocalization {
-    private static let sections = [
-        "girlsWods", "heroTributeWorkouts", "openWods",
-        "wodsNomeados", "qualifiersCompeticoes"
+    private static let sectionsByCategory: [TreinoTipo: [String]] = [
+        .crossfit: [
+            "girlsWods", "heroTributeWorkouts", "openWods",
+            "wodsNomeados", "qualifiersCompeticoes"
+        ],
+        .academia: ["peito", "costas", "pernas", "ombros", "bracos", "core", "fullBody"],
+        .emCasa: ["peito", "costas", "pernas", "ombros", "bracos", "core", "fullBody"]
     ]
 
     private struct Entry {
@@ -11,21 +15,27 @@ enum DefaultWorkoutLocalization {
         let seed: DefaultWorkoutSeed
     }
 
-    private static let entriesBySection: [String: [Entry]] = Dictionary(
-        uniqueKeysWithValues: sections.map { section in
-            (section, DefaultWorkoutsCrossfit.defaults(sectionKey: section).map {
-                Entry(key: defaultKey(for: $0, sectionKey: section), seed: $0)
-            })
+    private static let entriesByCategory: [TreinoTipo: [String: [Entry]]] = Dictionary(
+        uniqueKeysWithValues: sectionsByCategory.map { category, sections in
+            (category, Dictionary(uniqueKeysWithValues: sections.map { section in
+                (section, DefaultWorkoutsProvider.defaultsFor(category: category, sectionKey: section).map {
+                    Entry(key: defaultKey(for: $0, sectionKey: section, category: category), seed: $0)
+                })
+            }))
         }
     )
 
-    // Identity uses the benchmark's proper name, never its translated presentation.
-    static func defaultKey(for seed: DefaultWorkoutSeed, sectionKey: String) -> String {
+    // Identity uses the seed's stable name, never its translated presentation.
+    static func defaultKey(
+        for seed: DefaultWorkoutSeed,
+        sectionKey: String,
+        category: TreinoTipo = .crossfit
+    ) -> String {
         let slug = seed.name.lowercased().unicodeScalars.map {
             CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789").contains($0)
                 ? String($0) : "_"
         }.joined().split(separator: "_").joined(separator: "_")
-        return "default_workout.crossfit.\(sectionKey).\(slug)"
+        return "default_workout.\(category.rawValue).\(sectionKey).\(slug)"
     }
 
     static func persistedDescription(for seed: DefaultWorkoutSeed) -> String {
@@ -72,8 +82,8 @@ enum DefaultWorkoutLocalization {
     }
 
     private static func entry(for template: WorkoutTemplateFS) -> Entry? {
-        guard template.categoryRaw == TreinoTipo.crossfit.rawValue,
-              let entries = entriesBySection[template.sectionKey] else { return nil }
+        guard let category = TreinoTipo.normalized(from: template.categoryRaw),
+              let entries = entriesByCategory[category]?[template.sectionKey] else { return nil }
         if let key = template.defaultKey {
             return entries.first { $0.key == key }
         }

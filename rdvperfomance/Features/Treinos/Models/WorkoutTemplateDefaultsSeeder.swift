@@ -63,12 +63,12 @@ final class WorkoutTemplateDefaultsSeeder {
         for seed in seeds {
             let templateTitle = seed.name.trimmingCharacters(in: .whitespacesAndNewlines)
             let titleKey = templateTitle.lowercased()
-            let defaultKey = category == .crossfit
-                ? DefaultWorkoutLocalization.defaultKey(for: seed, sectionKey: sectionKey)
-                : nil
+            let defaultKey = DefaultWorkoutLocalization.defaultKey(
+                for: seed, sectionKey: sectionKey, category: category
+            )
 
             // ✅ Se já existe, não duplica
-            if existingTitles.contains(titleKey) || defaultKey.map({ existingDefaultKeys.contains($0) }) == true {
+            if existingTitles.contains(titleKey) || existingDefaultKeys.contains(defaultKey) {
                 continue
             }
 
@@ -85,9 +85,7 @@ final class WorkoutTemplateDefaultsSeeder {
             let templateDescription = buildTemplateDescription(seed: seed)
             itemsToInsert.append((title: templateTitle, description: templateDescription, blocks: blocksFS, defaultKey: defaultKey))
             existingTitles.insert(titleKey)
-            if let defaultKey {
-                existingDefaultKeys.insert(defaultKey)
-            }
+            existingDefaultKeys.insert(defaultKey)
         }
 
         let didInsertAny = !itemsToInsert.isEmpty
