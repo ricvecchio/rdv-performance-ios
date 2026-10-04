@@ -63,8 +63,8 @@ struct AdminProfileSelectionView: View {
     }
 
     private func selectionButton(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
