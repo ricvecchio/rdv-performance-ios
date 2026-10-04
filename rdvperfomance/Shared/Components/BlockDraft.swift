@@ -6,6 +6,7 @@ enum DefaultWorkoutBlock: Hashable {
     case wod
     case workout
     case loadsAndMovements
+    case details
     case newBlock
 
     var persistedName: String {
@@ -15,6 +16,7 @@ enum DefaultWorkoutBlock: Hashable {
         case .wod: "WOD"
         case .workout: "Treino"
         case .loadsAndMovements: "Cargas / Movimentos"
+        case .details: "Detalhes"
         case .newBlock: "Novo bloco"
         }
     }
@@ -31,6 +33,8 @@ enum DefaultWorkoutBlock: Hashable {
             AppLocalization.string("workout_block.workout", locale: locale)
         case .loadsAndMovements:
             AppLocalization.string("workout_block.loads_and_movements", locale: locale)
+        case .details:
+            AppLocalization.string("ui.details", locale: locale)
         case .newBlock:
             AppLocalization.string("ui.new_block", locale: locale)
         }

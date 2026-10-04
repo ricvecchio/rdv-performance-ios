@@ -929,6 +929,13 @@ struct StudentDayDetailView: View {
         }
     }
 
+    private func displayedBlockName(_ block: BlockFS) -> String {
+        guard block.name == DefaultWorkoutBlock.details.persistedName else {
+            return block.displayedName(locale: locale)
+        }
+        return DefaultWorkoutBlock.details.localizedName(locale: locale)
+    }
+
     // Lista de blocos do dia
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -945,7 +952,7 @@ struct StudentDayDetailView: View {
                     ForEach(Array(nonVideoBlocks.enumerated()), id: \.offset) { idx, block in
                         VStack(alignment: .leading, spacing: 6) {
 
-                            Text(block.displayedName(locale: locale))
+                            Text(displayedBlockName(block))
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -1108,7 +1115,7 @@ struct StudentDayDetailView: View {
                         ForEach(editBlocks.indices, id: \.self) { i in
                             VStack(alignment: .leading, spacing: 8) {
 
-                                Text(editBlocks[i].displayedName(locale: locale))
+                                Text(displayedBlockName(editBlocks[i]))
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
 
