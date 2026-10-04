@@ -167,6 +167,7 @@ struct TeacherWorkoutTemplatesListView: View {
     private var listView: some View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
+                let presentation = DefaultWorkoutLocalization.presentation(for: item, locale: locale)
                 HStack(spacing: 12) {
 
                     Image(systemName: "doc.text.fill")
@@ -174,12 +175,12 @@ struct TeacherWorkoutTemplatesListView: View {
                         .frame(width: 26)
 
                     VStack(alignment: .leading, spacing: 4) {
-                        Text(item.title)
+                        Text(presentation.title)
                             .font(.system(size: 16, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
 
-                        if !item.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                            Text(item.description)
+                        if !presentation.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                            Text(presentation.description)
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.55))
                                 .lineLimit(2)

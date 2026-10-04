@@ -53,25 +53,35 @@ enum DefaultWorkoutLocalization {
         guard let entry = entry(for: template) else { return template }
         let seed = entry.seed
         var result = template
-        if template.title == seed.name.trimmingCharacters(in: .whitespacesAndNewlines) {
-            result.title = localized("\(entry.key).name", fallback: template.title, locale: locale)
+        if matchesLegacyText(template.title, seed.name) {
+            let category = TreinoTipo.normalized(from: template.categoryRaw)
+            let titleComponent = category == .crossfit ? "name" : "title"
+            result.title = localized("\(entry.key).\(titleComponent)", fallback: template.title, locale: locale)
+        } else if matchesLegacyText(template.title, seed.title) {
+            result.title = localized("\(entry.key).title", fallback: template.title, locale: locale)
         }
-        if template.description == persistedDescription(for: seed) {
+        if matchesLegacyText(template.description, persistedDescription(for: seed)) {
             result.description = [
                 localized("\(entry.key).title", fallback: seed.title, locale: locale),
                 localized("\(entry.key).description", fallback: seed.description, locale: locale)
             ].filter { !$0.isEmpty }.joined(separator: "\n")
+        } else if matchesLegacyText(template.description, seed.description) {
+            result.description = localized(
+                "\(entry.key).description", fallback: template.description, locale: locale
+            )
         }
         result.blocks = template.blocks?.map { block in
             // A default marker identifies origin, not permission to overwrite custom edits.
-            guard let original = seed.blocks.first(where: { $0.title == block.name }) else {
+            guard let original = seed.blocks.first(where: {
+                matchesLegacyText($0.title, block.name)
+            }) else {
                 return block
             }
             var localizedBlock = block
             localizedBlock.name = localized(
                 "\(entry.key).block.\(original.order).name", fallback: block.name, locale: locale
             )
-            if block.details == original.text {
+            if matchesLegacyText(block.details, original.text) {
                 localizedBlock.details = localized(
                     "\(entry.key).block.\(original.order).details", fallback: block.details, locale: locale
                 )
@@ -90,14 +100,30 @@ enum DefaultWorkoutLocalization {
         // Legacy documents have random IDs. Match every persisted field, ignoring only block IDs.
         return entries.first { entry in
             let seed = entry.seed
-            guard template.title == seed.name.trimmingCharacters(in: .whitespacesAndNewlines),
-                  template.description == persistedDescription(for: seed),
+            guard matchesLegacyText(template.title, seed.name) || matchesLegacyText(template.title, seed.title),
+                  matchesLegacyText(template.description, persistedDescription(for: seed))
+                    || matchesLegacyText(template.description, seed.description),
                   let blocks = template.blocks else { return false }
             let originals = seed.blocks.sorted { $0.order < $1.order }
             return blocks.count == originals.count && zip(blocks, originals).allSatisfy {
-                $0.0.name == $0.1.title && $0.0.details == $0.1.text
+                matchesLegacyText($0.0.name, $0.1.title)
+                    && matchesLegacyText($0.0.details, $0.1.text)
             }
         }
+    }
+
+    private static func matchesLegacyText(_ lhs: String, _ rhs: String) -> Bool {
+        normalizedLegacyText(lhs) == normalizedLegacyText(rhs)
+    }
+
+    private static func normalizedLegacyText(_ value: String) -> String {
+        value
+            .replacingOccurrences(of: "–", with: "-")
+            .replacingOccurrences(of: "—", with: "-")
+            .folding(options: .diacriticInsensitive, locale: .current)
+            .lowercased()
+            .split(whereSeparator: \.isWhitespace)
+            .joined(separator: " ")
     }
 
     private static func localized(_ key: String, fallback: String, locale: Locale) -> String {
