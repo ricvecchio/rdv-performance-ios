@@ -69,10 +69,10 @@ struct TeacherFeedbacksView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunoSobrePerfil(
+                    kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
                         isHomeSelected: false,
-                        isAlunoSelected: true,
+                        isAlunosSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -235,11 +235,11 @@ struct TeacherFeedbacksView: View {
                     .foregroundColor(.white.opacity(0.92))
                     .frame(minHeight: 120)
                     .padding(10)
-                    .background(Color.black.opacity(0.25))
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
                     )
             }
 
