@@ -122,7 +122,10 @@ struct TeacherStudentDetailView: View {
                 Task { await confirmUnlink() }
             }
         } message: {
-            let format = String(localized: "ui.student_will_be_unlinked_from_category", locale: locale)
+            let format = AppLocalization.string(
+                "ui.student_will_be_unlinked_from_category",
+                locale: locale
+            )
             Text(String(format: format, locale: locale, arguments: [student.name, category.localizedDisplayName(locale: locale)]))
         }
     }
@@ -160,7 +163,10 @@ struct TeacherStudentDetailView: View {
 
                 Text(
                     String(
-                        format: String(localized: "ui.progress_complete_percentage", locale: locale),
+                        format: AppLocalization.string(
+                            "ui.progress_complete_percentage",
+                            locale: locale
+                        ),
                         locale: locale,
                         arguments: [percent]
                     )
@@ -196,35 +202,35 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            actionButton(title: String(localized: "ui.workouts", locale: locale), icon: "calendar") {
+            actionButton(title: AppLocalization.string("ui.workouts", locale: locale), icon: "calendar") {
                 openWorkouts()
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: String(localized: "ui.messages", locale: locale), icon: "paperplane.fill") {
+            actionButton(title: AppLocalization.string("ui.messages", locale: locale), icon: "paperplane.fill") {
                 path.append(.teacherMessage(student: student, category: category))
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: String(localized: "ui.feedbacks", locale: locale), icon: "text.bubble.fill") {
+            actionButton(title: AppLocalization.string("ui.feedbacks", locale: locale), icon: "text.bubble.fill") {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: String(localized: "ui.progress_preview", locale: locale), icon: "gamecontroller.fill") {
+            actionButton(title: AppLocalization.string("ui.progress_preview", locale: locale), icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: String(localized: "ui.unlink", locale: locale), icon: "person.badge.minus") {
+            actionButton(title: AppLocalization.string("ui.unlink", locale: locale), icon: "person.badge.minus") {
                 showUnlinkConfirm = true
             }
         }

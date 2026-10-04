@@ -3,6 +3,13 @@ import Combine
 
 @MainActor
 final class TeacherStudentsListViewModel: ObservableObject {
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
+
 
     @Published private(set) var students: [AppUser] = []
     @Published private(set) var isLoading: Bool = false
@@ -589,7 +596,12 @@ final class TeacherStudentsListViewModel: ObservableObject {
                     .trimmingCharacters(in: .whitespacesAndNewlines)
                 let name = user?.name.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 let displayName = name.isEmpty
-                    ? (email.isEmpty ? String(localized: "common.student", locale: .autoupdatingCurrent) : email)
+                    ? (email.isEmpty
+                        ? AppLocalization.string(
+                            "common.student",
+                            locale: Self.localizationLocale
+                        )
+                        : email)
                     : name
 
                 return StudentLinkItem(

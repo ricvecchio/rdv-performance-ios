@@ -185,7 +185,7 @@ struct StudentFeedbacksView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(teachersById[fb.teacherId]?.name ?? String(localized: "common.trainer", locale: locale))
+                Text(teachersById[fb.teacherId]?.name ?? AppLocalization.string("common.trainer", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -225,12 +225,15 @@ struct StudentFeedbacksView: View {
         errorMessage = nil
 
         guard session.isLoggedIn && session.isStudent else {
-            errorMessage = String(localized: "student_feedbacks.student_only", locale: locale)
+            errorMessage = AppLocalization.string("student_feedbacks.student_only", locale: locale)
             return
         }
 
         guard let sid = Auth.auth().currentUser?.uid, !sid.isEmpty else {
-            errorMessage = String(localized: "student_shared.logged_student_not_found", locale: locale)
+            errorMessage = AppLocalization.string(
+                "student_shared.logged_student_not_found",
+                locale: locale
+            )
             return
         }
 

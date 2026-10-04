@@ -136,7 +136,7 @@ struct TeacherMessageView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(
                 String(
-                    format: String(localized: "ui.student_value", locale: locale),
+                    format: AppLocalization.string("ui.student_value", locale: locale),
                     locale: locale,
                     arguments: [student.name]
                 )
@@ -207,7 +207,7 @@ struct TeacherMessageView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.userName ?? String(localized: "common.trainer", locale: locale))
+                Text(session.userName ?? AppLocalization.string("common.trainer", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -318,17 +318,20 @@ struct TeacherMessageView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "ui.only_trainers_can_access_messages", locale: locale)
+            errorMessage = AppLocalization.string("ui.only_trainers_can_access_messages", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
@@ -355,23 +358,26 @@ struct TeacherMessageView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "ui.only_trainers_can_send_messages", locale: locale)
+            errorMessage = AppLocalization.string("ui.only_trainers_can_send_messages", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
         let bodyTrim = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !bodyTrim.isEmpty else {
-            errorMessage = String(localized: "ui.enter_a_message_before_sending", locale: locale)
+            errorMessage = AppLocalization.string("ui.enter_a_message_before_sending", locale: locale)
             return
         }
 
@@ -401,7 +407,7 @@ struct TeacherMessageView: View {
             messages.insert(local, at: 0)
 
             message = ""
-            successMessage = String(localized: "ui.message_sent_successfully", locale: locale)
+            successMessage = AppLocalization.string("ui.message_sent_successfully", locale: locale)
 
             // ✅ Sincroniza com Firestore
             await loadMessages()

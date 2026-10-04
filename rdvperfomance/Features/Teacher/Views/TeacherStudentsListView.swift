@@ -137,8 +137,8 @@ struct TeacherStudentsListView: View {
             if let inv = invitePendingCancel {
                 Text(
                     String(
-                        format: String(
-                            localized: "ui.invitation_to_value_will_be_cancelled",
+                        format: AppLocalization.string(
+                            "ui.invitation_to_value_will_be_cancelled",
                             locale: locale
                         ),
                         locale: locale,
@@ -160,12 +160,12 @@ struct TeacherStudentsListView: View {
         .alert("common.error", isPresented: $vm.showLinkErrorAlert) {
             Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.linkErrorMessage ?? String(localized: "common.unexpected_error", locale: locale))
+            Text(vm.linkErrorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
         }
         .alert("ui.success", isPresented: $vm.showLinkSuccessAlert) {
             Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.linkSuccessMessage ?? String(localized: "ui.student_linked", locale: locale))
+            Text(vm.linkSuccessMessage ?? AppLocalization.string("ui.student_linked", locale: locale))
         }
         .sheet(isPresented: $showCategoryDialog, onDismiss: {
             studentPendingLink = nil
@@ -350,7 +350,7 @@ struct TeacherStudentsListView: View {
 
                         Text(
                             String(
-                                format: String(localized: "ui.category_value", locale: locale),
+                                format: AppLocalization.string("ui.category_value", locale: locale),
                                 locale: locale,
                                 arguments: [combinedCategoryText(student)]
                             )
@@ -390,7 +390,10 @@ struct TeacherStudentsListView: View {
                 .contentShape(Rectangle())
                 .onTapGesture {
                     guard let sid = student.id, !sid.isEmpty else {
-                        vm.errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
+                        vm.errorMessage = AppLocalization.string(
+                            "ui.invalid_student_id_not_found",
+                            locale: locale
+                        )
                         return
                     }
 
@@ -467,7 +470,10 @@ struct TeacherStudentsListView: View {
 
     private func loadAllStudents() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            vm.errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
         await vm.loadStudents(teacherId: teacherId, force: true)
@@ -476,7 +482,10 @@ struct TeacherStudentsListView: View {
     private func loadInitialData() async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
             vm.clearActiveTeacherData()
-            vm.errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            vm.errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
@@ -491,14 +500,20 @@ struct TeacherStudentsListView: View {
 
     private func confirmCategoryChange(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.setLinkError(String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale))
+            vm.setLinkError(AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            ))
             return
         }
         guard let student = studentPendingCategoryChange,
               let studentId = student.id,
               !studentId.isEmpty
         else {
-            vm.setLinkError(String(localized: "ui.unable_to_identify_the_student_to_change_the_category", locale: locale))
+            vm.setLinkError(AppLocalization.string(
+                "ui.unable_to_identify_the_student_to_change_the_category",
+                locale: locale
+            ))
             return
         }
 
@@ -704,7 +719,10 @@ struct TeacherStudentsListView: View {
 
     private func confirmLink(_ categories: Set<TreinoTipo>) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else {
-            vm.setLinkError(String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale))
+            vm.setLinkError(AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            ))
             return
         }
         guard let item = studentPendingLink else { return }
@@ -858,11 +876,11 @@ struct TeacherStudentsListView: View {
     private func localizedCategoryTitle(_ category: TreinoTipo) -> String {
         switch category {
         case .crossfit:
-            String(localized: "video.category.crossfit", locale: locale)
+            AppLocalization.string("video.category.crossfit", locale: locale)
         case .academia:
-            String(localized: "video.category.gym", locale: locale)
+            AppLocalization.string("video.category.gym", locale: locale)
         case .emCasa:
-            String(localized: "video.category.home", locale: locale)
+            AppLocalization.string("video.category.home", locale: locale)
         }
     }
 
@@ -993,7 +1011,10 @@ struct TeacherStudentsListView: View {
                     Button {
                         Task {
                             guard let teacherId = session.uid, !teacherId.isEmpty else {
-                                vm.setInviteError(String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale))
+                                vm.setInviteError(AppLocalization.string(
+                                    "ui.unable_to_identify_the_signed_in_trainer",
+                                    locale: locale
+                                ))
                                 return
                             }
                             await vm.sendInviteByEmail(
@@ -1033,7 +1054,7 @@ struct TeacherStudentsListView: View {
         .alert("common.error", isPresented: $vm.showInviteErrorAlert) {
             Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.inviteErrorMessage ?? String(localized: "common.unexpected_error", locale: locale))
+            Text(vm.inviteErrorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
         }
         .alert("ui.success", isPresented: $vm.showInviteSuccessAlert) {
             // ✅ OK fecha o modal e limpa o campo — o onDismiss da sheet recarrega dados
@@ -1042,7 +1063,7 @@ struct TeacherStudentsListView: View {
                 showInviteSheet = false
             }
         } message: {
-            Text(vm.inviteSuccessMessage ?? String(localized: "ui.invitation_sent", locale: locale))
+            Text(vm.inviteSuccessMessage ?? AppLocalization.string("ui.invitation_sent", locale: locale))
         }
     }
 
@@ -1091,7 +1112,7 @@ struct TeacherStudentsListView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text(LocalizedStringKey("CONVITES ENVIADOS"))
+                Text("student_teachers.sent_invitations_section")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 

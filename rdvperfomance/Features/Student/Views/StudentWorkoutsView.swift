@@ -386,7 +386,7 @@ struct StudentWorkoutsView: View {
 
                     Text(
                         String(
-                            format: String(localized: "workout.progress_percentage", locale: locale),
+                            format: AppLocalization.string("workout.progress_percentage", locale: locale),
                             locale: locale,
                             arguments: [Int64(vm.progressPercent(for: week))]
                         )
@@ -536,7 +536,7 @@ struct StudentWorkoutsView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                Text(title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : title)
+                Text(title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -555,7 +555,7 @@ struct StudentWorkoutsView: View {
                         let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
                         pendingReceivedVideoSave = (
                             sourceId: sourceId,
-                            title: title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : title,
+                            title: title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title,
                             url: videoURL,
                             videoId: videoId
                         )
@@ -671,7 +671,10 @@ struct StudentWorkoutsView: View {
         let expectedStudentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
         let authenticatedStudentId = (session.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !expectedStudentId.isEmpty, expectedStudentId == authenticatedStudentId else {
-            receivedVideoSaveMessage = String(localized: "workout.video_save_authentication_error", locale: locale)
+            receivedVideoSaveMessage = AppLocalization.string(
+                "workout.video_save_authentication_error",
+                locale: locale
+            )
             return
         }
 
@@ -683,7 +686,10 @@ struct StudentWorkoutsView: View {
                 studentId: authenticatedStudentId
             )
             guard !savedVideos.contains(where: { $0.videoId == video.videoId }) else {
-                receivedVideoSaveMessage = String(localized: "workout.video_already_saved", locale: locale)
+                receivedVideoSaveMessage = AppLocalization.string(
+                    "workout.video_already_saved",
+                    locale: locale
+                )
                 return
             }
 
@@ -702,7 +708,7 @@ struct StudentWorkoutsView: View {
     private func openLockedPlayer(for day: TrainingDayFS, videoId: String) {
         let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
         activeLockedPlayer = LockedPlayerItem(
-            title: title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : title,
+            title: title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title,
             videoId: videoId
         )
     }

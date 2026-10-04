@@ -135,7 +135,7 @@ struct TeacherFeedbacksView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let format = String(localized: "ui.student_value", locale: locale)
+            let format = AppLocalization.string("ui.student_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [student.name]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
@@ -203,7 +203,7 @@ struct TeacherFeedbacksView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.userName ?? String(localized: "common.trainer", locale: locale))
+                Text(session.userName ?? AppLocalization.string("common.trainer", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -313,17 +313,20 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "ui.only_coaches_can_access_feedback", locale: locale)
+            errorMessage = AppLocalization.string("ui.only_coaches_can_access_feedback", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
@@ -350,23 +353,26 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = String(localized: "ui.only_coaches_can_save_feedback", locale: locale)
+            errorMessage = AppLocalization.string("ui.only_coaches_can_save_feedback", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
         let textTrim = newFeedbackText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !textTrim.isEmpty else {
-            errorMessage = String(localized: "ui.enter_feedback_before_saving", locale: locale)
+            errorMessage = AppLocalization.string("ui.enter_feedback_before_saving", locale: locale)
             return
         }
 
@@ -383,7 +389,7 @@ struct TeacherFeedbacksView: View {
             )
 
             newFeedbackText = ""
-            successMessage = String(localized: "ui.feedback_saved_successfully", locale: locale)
+            successMessage = AppLocalization.string("ui.feedback_saved_successfully", locale: locale)
             await loadFeedbacks()
 
         } catch {
