@@ -12,6 +12,7 @@ enum DefaultWorkoutLocalization {
 
     private struct Entry {
         let key: String
+        let category: TreinoTipo
         let seed: DefaultWorkoutSeed
     }
 
@@ -19,7 +20,11 @@ enum DefaultWorkoutLocalization {
         uniqueKeysWithValues: sectionsByCategory.map { category, sections in
             (category, Dictionary(uniqueKeysWithValues: sections.map { section in
                 (section, DefaultWorkoutsProvider.defaultsFor(category: category, sectionKey: section).map {
-                    Entry(key: defaultKey(for: $0, sectionKey: section, category: category), seed: $0)
+                    Entry(
+                        key: defaultKey(for: $0, sectionKey: section, category: category),
+                        category: category,
+                        seed: $0
+                    )
                 })
             }))
         }
@@ -60,27 +65,123 @@ enum DefaultWorkoutLocalization {
 
     static func presentation(for template: WorkoutTemplateFS, locale: Locale) -> WorkoutTemplateFS {
         guard let entry = entry(for: template) else { return template }
-        let seed = entry.seed
         var result = template
-        if matchesLegacyText(template.title, seed.name) {
-            let category = TreinoTipo.normalized(from: template.categoryRaw)
-            let titleComponent = category == .crossfit ? "name" : "title"
-            result.title = localized("\(entry.key).\(titleComponent)", fallback: template.title, locale: locale)
-        } else if matchesLegacyText(template.title, seed.title) {
-            result.title = localized("\(entry.key).title", fallback: template.title, locale: locale)
+        let localized = localizedPresentation(
+            title: template.title,
+            description: template.description,
+            blocks: template.blocks ?? [],
+            entry: entry,
+            locale: locale
+        )
+        result.title = localized.title
+        result.description = localized.description
+        result.blocks = template.blocks == nil ? nil : localized.blocks
+        return result
+    }
+
+    static func presentation(for day: TrainingDayFS, locale: Locale) -> TrainingDayFS {
+        guard let entry = entry(for: day) else { return day }
+        let localized = localizedPresentation(
+            title: day.title,
+            description: day.description,
+            blocks: day.blocks,
+            entry: entry,
+            locale: locale
+        )
+        var result = day
+        result.title = localized.title
+        result.description = localized.description
+        result.blocks = localized.blocks
+        return result
+    }
+
+    private static func entry(for template: WorkoutTemplateFS) -> Entry? {
+        guard let category = TreinoTipo.normalized(from: template.categoryRaw),
+              let entries = entriesByCategory[category]?[template.sectionKey] else { return nil }
+        if let key = template.defaultKey {
+            return entries.first { $0.key == key }
         }
-        if matchesLegacyText(template.description, persistedDescription(for: seed)) {
-            result.description = [
+        // Legacy documents have random IDs. Match every persisted field, ignoring only block IDs.
+        return entries.first { entry in
+            guard let blocks = template.blocks else { return false }
+            return matchesLegacyContent(
+                title: template.title,
+                description: template.description,
+                blocks: blocks,
+                seed: entry.seed
+            )
+        }
+    }
+
+    private static func entry(for day: TrainingDayFS) -> Entry? {
+        for sections in entriesByCategory.values {
+            for entries in sections.values {
+                if let entry = entries.first(where: {
+                    matchesLegacyContent(
+                        title: day.title,
+                        description: day.description,
+                        blocks: day.blocks,
+                        seed: $0.seed
+                    )
+                }) {
+                    return entry
+                }
+            }
+        }
+        return nil
+    }
+
+    private static func matchesLegacyContent(
+        title: String,
+        description: String,
+        blocks: [BlockFS],
+        seed: DefaultWorkoutSeed
+    ) -> Bool {
+        guard matchesLegacyText(title, seed.name) || matchesLegacyText(title, seed.title),
+              matchesLegacyText(description, persistedDescription(for: seed))
+                || matchesLegacyText(description, seed.description) else {
+            return false
+        }
+        let originals = seed.blocks.sorted { $0.order < $1.order }
+        return blocks.count == originals.count && zip(blocks, originals).allSatisfy {
+            matchesLegacyText($0.0.name, $0.1.title)
+                && matchesLegacyText($0.0.details, $0.1.text)
+        }
+    }
+
+    private static func localizedPresentation(
+        title: String,
+        description: String,
+        blocks: [BlockFS],
+        entry: Entry,
+        locale: Locale
+    ) -> (title: String, description: String, blocks: [BlockFS]) {
+        let seed = entry.seed
+        let localizedTitle: String
+        if matchesLegacyText(title, seed.name) {
+            let titleComponent = entry.category == .crossfit ? "name" : "title"
+            localizedTitle = localized("\(entry.key).\(titleComponent)", fallback: title, locale: locale)
+        } else if matchesLegacyText(title, seed.title) {
+            localizedTitle = localized("\(entry.key).title", fallback: title, locale: locale)
+        } else {
+            localizedTitle = title
+        }
+
+        let localizedDescription: String
+        if matchesLegacyText(description, persistedDescription(for: seed)) {
+            localizedDescription = [
                 localized("\(entry.key).title", fallback: seed.title, locale: locale),
                 localized("\(entry.key).description", fallback: seed.description, locale: locale)
             ].filter { !$0.isEmpty }.joined(separator: "\n")
-        } else if matchesLegacyText(template.description, seed.description) {
-            result.description = localized(
-                "\(entry.key).description", fallback: template.description, locale: locale
+        } else if matchesLegacyText(description, seed.description) {
+            localizedDescription = localized(
+                "\(entry.key).description", fallback: description, locale: locale
             )
+        } else {
+            localizedDescription = description
         }
-        result.blocks = template.blocks?.map { block in
-            // A default marker identifies origin, not permission to overwrite custom edits.
+
+        let localizedBlocks = blocks.map { block in
             guard let original = seed.blocks.first(where: {
                 matchesLegacyText($0.title, block.name)
             }) else {
@@ -97,28 +198,8 @@ enum DefaultWorkoutLocalization {
             }
             return localizedBlock
         }
-        return result
-    }
 
-    private static func entry(for template: WorkoutTemplateFS) -> Entry? {
-        guard let category = TreinoTipo.normalized(from: template.categoryRaw),
-              let entries = entriesByCategory[category]?[template.sectionKey] else { return nil }
-        if let key = template.defaultKey {
-            return entries.first { $0.key == key }
-        }
-        // Legacy documents have random IDs. Match every persisted field, ignoring only block IDs.
-        return entries.first { entry in
-            let seed = entry.seed
-            guard matchesLegacyText(template.title, seed.name) || matchesLegacyText(template.title, seed.title),
-                  matchesLegacyText(template.description, persistedDescription(for: seed))
-                    || matchesLegacyText(template.description, seed.description),
-                  let blocks = template.blocks else { return false }
-            let originals = seed.blocks.sorted { $0.order < $1.order }
-            return blocks.count == originals.count && zip(blocks, originals).allSatisfy {
-                matchesLegacyText($0.0.name, $0.1.title)
-                    && matchesLegacyText($0.0.details, $0.1.text)
-            }
-        }
+        return (localizedTitle, localizedDescription, localizedBlocks)
     }
 
     private static func matchesLegacyText(_ lhs: String, _ rhs: String) -> Bool {

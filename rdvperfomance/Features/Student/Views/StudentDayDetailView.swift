@@ -34,6 +34,10 @@ struct StudentDayDetailView: View {
 
     private var isTeacherViewing: Bool { session.isTrainer }
 
+    private var presentation: TrainingDayFS {
+        DefaultWorkoutLocalization.presentation(for: day, locale: locale)
+    }
+
     private var formattedWeekTitle: String {
         var title = weekTitle.trimmingCharacters(in: .whitespacesAndNewlines)
 
@@ -97,9 +101,9 @@ struct StudentDayDetailView: View {
 
     // ✅ Blocos normais (sem os blocos de vídeo)
     private var nonVideoBlocks: [BlockFS] {
-        if videoItems.isEmpty { return day.blocks }
+        if videoItems.isEmpty { return presentation.blocks }
         let videoIds = Set(videoItems.map { $0.blockId })
-        return day.blocks.filter { !videoIds.contains($0.id) }
+        return presentation.blocks.filter { !videoIds.contains($0.id) }
     }
 
     // ✅ Quando existe vídeo no dia: remover "Visualizar no ambiente", blocos e agora também o card "Treino"
@@ -390,7 +394,7 @@ struct StudentDayDetailView: View {
                 .foregroundColor(.white.opacity(0.75))
 
             VStack(alignment: .leading, spacing: 6) {
-                Text(day.title)
+                Text(presentation.title)
                     .font(.system(size: 20, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -400,8 +404,8 @@ struct StudentDayDetailView: View {
                         .foregroundColor(.white.opacity(0.45))
                 }
 
-                if !day.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text(day.description)
+                if !presentation.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(presentation.description)
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.65))
                         .fixedSize(horizontal: false, vertical: true)

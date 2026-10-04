@@ -40,6 +40,7 @@ struct StudentWorkoutsView: View {
     }
 
     @State private var selectedFilter: WorkoutsFilter = .active
+    @State private var hasAppeared = false
     @State private var expandedWeekIds = Set<String>()
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
@@ -152,14 +153,12 @@ struct StudentWorkoutsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
 
-        .task(id: studentId) {
-            await loadInitialData()
-        }
         .onAppear {
-            guard vm.hasLoadedWeeks else { return }
+            let shouldForceReload = hasAppeared
+            hasAppeared = true
             Task {
                 await vm.loadWeeksAndMeta(
-                    force: true,
+                    force: shouldForceReload,
                     filterByActiveTeacherLinks: !isTeacherViewing,
                     viewingTeacherId: viewingTeacherId
                 )
@@ -848,7 +847,7 @@ struct StudentWorkoutsView: View {
                         .frame(width: 28)
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(day.title)
+                        Text(DefaultWorkoutLocalization.presentation(for: day, locale: locale).title)
                             .font(.system(size: 17, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
                         Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText(locale: locale)))
