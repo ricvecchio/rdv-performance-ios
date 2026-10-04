@@ -59,25 +59,27 @@ struct PersonalRecordsView: View {
         let title: String
         let localizedTitle: String?
         let sectionKey: String
+        let icon: String
 
-        init(title: String, localizedTitle: String? = nil, sectionKey: String) {
+        init(title: String, localizedTitle: String? = nil, sectionKey: String, icon: String) {
             self.title = title
             self.localizedTitle = localizedTitle
             self.sectionKey = sectionKey
+            self.icon = icon
         }
     }
 
     // Itens fixos conforme solicitado (ordem + nomes)
     private let menuItems: [PRMenuItem] = [
-        .init(title: "Barbell", localizedTitle: "personal_records_barbell.barbell", sectionKey: "barbell"),
-        .init(title: "Gymnastic", localizedTitle: "personal_records_gymnastic.gymnastic", sectionKey: "gymnastic"),
-        .init(title: "Endurance", localizedTitle: "personal_records_endurance.endurance", sectionKey: "endurance"),
-        .init(title: "Notables", localizedTitle: "personal_records_notables.notables", sectionKey: "notables"),
-        .init(title: "Girls", localizedTitle: "personal_records_girls.girls", sectionKey: "girls"),
-        .init(title: "Open", localizedTitle: "personal_records_open.open", sectionKey: "open"),
-        .init(title: "The Heroes", localizedTitle: "personal_records_heroes.the_heroes", sectionKey: "theHeroes"),
-        .init(title: "Campeonatos", localizedTitle: "personal_records_campeonatos.championships", sectionKey: "campeonatos"),
-        .init(title: "Crossfit Games", localizedTitle: "personal_records_crossfit_games.crossfit_games", sectionKey: "crossfitGames")
+        .init(title: "Barbell", localizedTitle: "personal_records_barbell.barbell", sectionKey: "barbell", icon: "dumbbell.fill"),
+        .init(title: "Gymnastic", localizedTitle: "personal_records_gymnastic.gymnastic", sectionKey: "gymnastic", icon: "figure.gymnastics"),
+        .init(title: "Endurance", localizedTitle: "personal_records_endurance.endurance", sectionKey: "endurance", icon: "figure.run"),
+        .init(title: "Notables", localizedTitle: "personal_records_notables.notables", sectionKey: "notables", icon: "star.fill"),
+        .init(title: "Girls", localizedTitle: "personal_records_girls.girls", sectionKey: "girls", icon: "figure.strengthtraining.traditional"),
+        .init(title: "Open", localizedTitle: "personal_records_open.open", sectionKey: "open", icon: "flag.checkered"),
+        .init(title: "The Heroes", localizedTitle: "personal_records_heroes.the_heroes", sectionKey: "theHeroes", icon: "shield.fill"),
+        .init(title: "Campeonatos", localizedTitle: "personal_records_campeonatos.championships", sectionKey: "campeonatos", icon: "trophy.fill"),
+        .init(title: "Crossfit Games", localizedTitle: "personal_records_crossfit_games.crossfit_games", sectionKey: "crossfitGames", icon: "globe")
     ]
 
     var body: some View {
@@ -109,7 +111,7 @@ struct PersonalRecordsView: View {
                                     actionRow(
                                         title: item.title,
                                         localizedTitle: item.localizedTitle,
-                                        icon: "folder.fill"
+                                        icon: item.icon
                                     ) {
 
                                         if item.sectionKey == "barbell" {
@@ -234,11 +236,16 @@ struct PersonalRecordsView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
+            HStack(alignment: .center, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: icon)
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
 
                 Group {
                     if let localizedTitle {
@@ -249,14 +256,16 @@ struct PersonalRecordsView: View {
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
+                .lineLimit(2)
 
-                Spacer()
+                Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
             .overlay(
@@ -265,6 +274,7 @@ struct PersonalRecordsView: View {
             )
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
     }
 
     private var tecnofitImportButton: some View {
