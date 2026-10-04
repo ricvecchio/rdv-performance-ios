@@ -13,15 +13,15 @@ enum ExcelWorkoutImporter {
         var errorDescription: String? {
             switch self {
             case .fileUnreadable:
-                return String(localized: "ui.unable_to_read_the_selected_excel_file", locale: ExcelWorkoutImporter.localizationLocale)
+                return AppLocalization.string("ui.unable_to_read_the_selected_excel_file", locale: ExcelWorkoutImporter.localizationLocale)
             case .workbookInvalid:
-                return String(localized: "ui.invalid_spreadsheet_check_that_it_is_an_xlsx_file", locale: ExcelWorkoutImporter.localizationLocale)
+                return AppLocalization.string("ui.invalid_spreadsheet_check_that_it_is_an_xlsx_file", locale: ExcelWorkoutImporter.localizationLocale)
             case .worksheetNotFound:
-                return String(localized: "ui.unable_to_find_a_data_tab_in_the_spreadsheet", locale: ExcelWorkoutImporter.localizationLocale)
+                return AppLocalization.string("ui.unable_to_find_a_data_tab_in_the_spreadsheet", locale: ExcelWorkoutImporter.localizationLocale)
             case .headerNotFound:
-                return String(localized: "ui.unable_to_identify_the_spreadsheet_header_check_that_the_import_treinos_tab_exists_and_contains_the_title_row", locale: ExcelWorkoutImporter.localizationLocale)
+                return AppLocalization.string("ui.unable_to_identify_the_spreadsheet_header_check_that_the_import_treinos_tab_exists_and_contains_the_title_row", locale: ExcelWorkoutImporter.localizationLocale)
             case .missingRequiredColumn:
-                return String(localized: "ui.required_column_not_found_title", locale: ExcelWorkoutImporter.localizationLocale)
+                return AppLocalization.string("ui.required_column_not_found_title", locale: ExcelWorkoutImporter.localizationLocale)
             }
         }
     }

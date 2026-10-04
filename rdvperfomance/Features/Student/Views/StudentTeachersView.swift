@@ -226,7 +226,7 @@ struct StudentTeachersView: View {
                 Task { await unlinkTeacher() }
             }
         } message: {
-            let format = String(localized: "student_teachers.unlink_confirmation", locale: locale)
+            let format = AppLocalization.string("student_teachers.unlink_confirmation", locale: locale)
             Text(
                 String(
                     format: format,
@@ -241,14 +241,14 @@ struct StudentTeachersView: View {
         )) {
             Button("common.ok", role: .cancel) {}
         } message: {
-            Text(actionErrorMessage ?? String(localized: "common.unexpected_error", locale: locale))
+            Text(actionErrorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
         }
     }
 
     private var linkedTeachersCard: some View {
         card(title: "student_teachers.linked_coaches_section") {
             if isLoadingData {
-                loadingView(String(localized: "student_teachers.loading_teachers", locale: locale))
+                loadingView(AppLocalization.string("student_teachers.loading_teachers", locale: locale))
             } else if linkedTeachers.isEmpty {
                 emptyView(
                     title: "student_teachers.no_linked_coach",
@@ -268,7 +268,7 @@ struct StudentTeachersView: View {
     private var sentRequestsCard: some View {
         card(title: "student_teachers.sent_invitations_section") {
             if isLoadingData {
-                loadingView(String(localized: "student_teachers.loading_invitations", locale: locale))
+                loadingView(AppLocalization.string("student_teachers.loading_invitations", locale: locale))
             } else if sentRequests.isEmpty {
                 emptyView(
                     title: "student_teachers.no_sent_invitation",
@@ -288,7 +288,7 @@ struct StudentTeachersView: View {
     private var receivedInvitesCard: some View {
         card(title: "student_teachers.received_invitations_section") {
             if isLoadingData {
-                loadingView(String(localized: "student_teachers.loading_invitations", locale: locale))
+                loadingView(AppLocalization.string("student_teachers.loading_invitations", locale: locale))
             } else if receivedInvites.isEmpty {
                 emptyView(
                     title: "student_teachers.no_pending_invitation",
@@ -462,14 +462,14 @@ struct StudentTeachersView: View {
 
     private func openTeacherDetails(_ teacher: AppUser?) {
         guard let teacher else {
-            actionErrorMessage = String(localized: "student_teachers.teacher_data_load_error", locale: locale)
+            actionErrorMessage = AppLocalization.string("student_teachers.teacher_data_load_error", locale: locale)
             return
         }
         selectedTeacher = teacher
     }
 
     private func teacherDetailsSheet(_ teacher: AppUser) -> some View {
-        let title = String(localized: "common.trainer", locale: locale)
+        let title = AppLocalization.string("common.trainer", locale: locale)
         return ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
 
@@ -491,8 +491,8 @@ struct StudentTeachersView: View {
 
                     if teacherHasDetails(teacher) {
                         VStack(alignment: .leading, spacing: 14) {
-                            teacherDetailsField(title: String(localized: "student_teachers.cref", locale: locale), value: teacher.cref)
-                            teacherDetailsField(title: String(localized: "student_teachers.biography", locale: locale), value: teacher.bio)
+                            teacherDetailsField(title: AppLocalization.string("student_teachers.cref", locale: locale), value: teacher.cref)
+                            teacherDetailsField(title: AppLocalization.string("student_teachers.biography", locale: locale), value: teacher.bio)
                         }
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -841,7 +841,7 @@ struct StudentTeachersView: View {
               let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !requestId.isEmpty else {
             requestPendingCancellation = nil
-            actionErrorMessage = String(localized: "student_teachers.invite_identifier_missing", locale: locale)
+            actionErrorMessage = AppLocalization.string("student_teachers.invite_identifier_missing", locale: locale)
             return
         }
 
@@ -858,7 +858,7 @@ struct StudentTeachersView: View {
     private func acceptInvite(_ invite: TeacherStudentInviteFS) async {
         let uid = currentUid
         guard !uid.isEmpty else {
-            actionErrorMessage = String(localized: "student_teachers.student_identifier_missing", locale: locale)
+            actionErrorMessage = AppLocalization.string("student_teachers.student_identifier_missing", locale: locale)
             return
         }
 
@@ -891,14 +891,14 @@ struct StudentTeachersView: View {
               let teacherId = teacher.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !teacherId.isEmpty else {
             teacherPendingUnlink = nil
-            actionErrorMessage = String(localized: "student_teachers.teacher_identifier_missing", locale: locale)
+            actionErrorMessage = AppLocalization.string("student_teachers.teacher_identifier_missing", locale: locale)
             return
         }
 
         let studentId = currentUid
         guard !studentId.isEmpty else {
             teacherPendingUnlink = nil
-            actionErrorMessage = String(localized: "student_teachers.student_identifier_missing", locale: locale)
+            actionErrorMessage = AppLocalization.string("student_teachers.student_identifier_missing", locale: locale)
             return
         }
 
@@ -935,7 +935,7 @@ struct StudentTeachersView: View {
 
         let uid = currentUid
         guard !uid.isEmpty else {
-            linkActionMessage = String(localized: "student_teachers.student_identifier_missing", locale: locale)
+            linkActionMessage = AppLocalization.string("student_teachers.student_identifier_missing", locale: locale)
             linkActionMessageIsError = true
             return false
         }
@@ -972,7 +972,7 @@ struct StudentTeachersView: View {
 
             let teacherId = teacherIdRaw.trimmingCharacters(in: .whitespacesAndNewlines)
             if teacherId.isEmpty {
-                linkActionMessage = String(localized: "student_teachers.teacher_identifier_missing", locale: locale)
+                linkActionMessage = AppLocalization.string("student_teachers.teacher_identifier_missing", locale: locale)
                 linkActionMessageIsError = true
                 return false
             }

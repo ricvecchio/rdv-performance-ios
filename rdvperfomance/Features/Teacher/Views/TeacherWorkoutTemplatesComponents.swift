@@ -177,16 +177,16 @@ struct TeacherWorkoutTemplatesEmptyView: View {
         VStack(spacing: 10) {
             Text(
                 isCrossfitCategory
-                    ? String(localized: "ui.no_wod_registered", locale: locale)
-                    : String(localized: "ui.no_workout_registered", locale: locale)
+                    ? AppLocalization.string("ui.no_wod_registered", locale: locale)
+                    : AppLocalization.string("ui.no_workout_registered", locale: locale)
             )
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text(
                 isCrossfitCategory
-                    ? String(localized: "ui.tap_add_wod_to_start", locale: locale)
-                    : String(localized: "ui.create_templates_for_them_to_appear_here", locale: locale)
+                    ? AppLocalization.string("ui.tap_add_wod_to_start", locale: locale)
+                    : AppLocalization.string("ui.create_templates_for_them_to_appear_here", locale: locale)
             )
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))

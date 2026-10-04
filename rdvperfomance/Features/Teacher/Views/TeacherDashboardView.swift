@@ -428,16 +428,14 @@ struct TeacherDashboardView: View {
     private func saveQuickAccessItems() async {
         guard let teacherId = session.uid?.trimmingCharacters(in: .whitespacesAndNewlines),
               !teacherId.isEmpty else {
-            quickAccessEditorError = String(
-                localized: "ui.unable_to_identify_the_signed_in_trainer",
+            quickAccessEditorError = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer",
                 locale: locale
             )
             return
         }
         guard editableQuickAccessItems.count == 3,
               Set(editableQuickAccessItems).count == 3 else {
-            quickAccessEditorError = String(
-                localized: "ui.select_exactly_3_shortcuts",
+            quickAccessEditorError = AppLocalization.string("ui.select_exactly_3_shortcuts",
                 locale: locale
             )
             return

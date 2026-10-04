@@ -970,8 +970,8 @@ Bar-Facing Burpees
                 deleteSelectedItem()
             }
         } message: {
-            let recordName = selectedItem?.name ?? String(localized: "personal_records.item_fallback", locale: locale)
-            let format = String(localized: "personal_records.delete_record_confirmation", locale: locale)
+            let recordName = selectedItem?.name ?? AppLocalization.string("personal_records.item_fallback", locale: locale)
+            let format = AppLocalization.string("personal_records.delete_record_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
@@ -1467,13 +1467,13 @@ Bar-Facing Burpees
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = String(localized: "personal_records.open.item_name_required", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.open.item_name_required", locale: locale)
             return
         }
 
         let existingNames = allItems.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = String(localized: "personal_records.open.duplicate_item", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.open.duplicate_item", locale: locale)
             return
         }
 

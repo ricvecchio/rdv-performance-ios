@@ -14,7 +14,7 @@ class GameScene: SKScene {
         backgroundColor = .white
 
         let label = SKLabelNode(
-            text: String(localized: "sprites.greeting", locale: Self.localizationLocale)
+            text: AppLocalization.string("sprites.greeting", locale: Self.localizationLocale)
         )
         label.fontSize = 28
         label.fontColor = .black

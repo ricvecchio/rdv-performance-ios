@@ -124,14 +124,14 @@ struct TeacherWorkoutTemplatesListView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let format = String(localized: "ui.category_value", locale: locale)
+            let format = AppLocalization.string("ui.category_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [category.localizedDisplayName(locale: locale)]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
 
             Text(
                 String(
-                    format: String(localized: "ui.section_value", locale: locale),
+                    format: AppLocalization.string("ui.section_value", locale: locale),
                     locale: locale,
                     arguments: [sectionTitle]
                 )
@@ -260,7 +260,7 @@ struct TeacherWorkoutTemplatesListView: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             items = []
             return
         }

@@ -170,7 +170,7 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedVideoTitle: String {
         let title = preselectedVideo?.title.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : title
+        return title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title
     }
 
     private var selectedVideoURL: String {
@@ -649,7 +649,7 @@ struct TeacherSendWorkoutView: View {
                     .foregroundColor(.white.opacity(0.92))
                 Text(
                     String(
-                        format: String(localized: "ui.category_value", locale: locale),
+                        format: AppLocalization.string("ui.category_value", locale: locale),
                         locale: locale,
                         arguments: [studentCategoryText(student)]
                     )
@@ -815,23 +815,23 @@ struct TeacherSendWorkoutView: View {
         switch category {
         case .crossfit:
             return [
-                .init(title: String(localized: "library.crossfit.girls_wods", locale: locale), sectionKey: "girlsWods"),
-                .init(title: String(localized: "library.crossfit.hero_tribute_workouts", locale: locale), sectionKey: "heroTributeWorkouts"),
-                .init(title: String(localized: "library.crossfit.open_wods", locale: locale), sectionKey: "openWods"),
-                .init(title: String(localized: "library.crossfit.named_wods", locale: locale), sectionKey: "wodsNomeados"),
-                .init(title: String(localized: "library.crossfit.qualifier_competition_wods", locale: locale), sectionKey: "qualifiersCompeticoes"),
-                .init(title: String(localized: "ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
+                .init(title: AppLocalization.string("library.crossfit.girls_wods", locale: locale), sectionKey: "girlsWods"),
+                .init(title: AppLocalization.string("library.crossfit.hero_tribute_workouts", locale: locale), sectionKey: "heroTributeWorkouts"),
+                .init(title: AppLocalization.string("library.crossfit.open_wods", locale: locale), sectionKey: "openWods"),
+                .init(title: AppLocalization.string("library.crossfit.named_wods", locale: locale), sectionKey: "wodsNomeados"),
+                .init(title: AppLocalization.string("library.crossfit.qualifier_competition_wods", locale: locale), sectionKey: "qualifiersCompeticoes"),
+                .init(title: AppLocalization.string("ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
             ]
         case .academia, .emCasa:
             return [
-                .init(title: String(localized: "ui.chest", locale: locale), sectionKey: "peito"),
-                .init(title: String(localized: "ui.back", locale: locale), sectionKey: "costas"),
-                .init(title: String(localized: "ui.legs", locale: locale), sectionKey: "pernas"),
-                .init(title: String(localized: "ui.shoulders", locale: locale), sectionKey: "ombros"),
-                .init(title: String(localized: "ui.arms", locale: locale), sectionKey: "bracos"),
-                .init(title: String(localized: "ui.core_abs", locale: locale), sectionKey: "core"),
-                .init(title: String(localized: "ui.full_body", locale: locale), sectionKey: "fullBody"),
-                .init(title: String(localized: "ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
+                .init(title: AppLocalization.string("ui.chest", locale: locale), sectionKey: "peito"),
+                .init(title: AppLocalization.string("ui.back", locale: locale), sectionKey: "costas"),
+                .init(title: AppLocalization.string("ui.legs", locale: locale), sectionKey: "pernas"),
+                .init(title: AppLocalization.string("ui.shoulders", locale: locale), sectionKey: "ombros"),
+                .init(title: AppLocalization.string("ui.arms", locale: locale), sectionKey: "bracos"),
+                .init(title: AppLocalization.string("ui.core_abs", locale: locale), sectionKey: "core"),
+                .init(title: AppLocalization.string("ui.full_body", locale: locale), sectionKey: "fullBody"),
+                .init(title: AppLocalization.string("ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
             ]
         }
     }
@@ -1017,7 +1017,7 @@ struct TeacherSendWorkoutView: View {
                let lastDay = availableDays.last?.date {
                 Text(
                     String(
-                        format: String(localized: "common.date_range", locale: locale),
+                        format: AppLocalization.string("common.date_range", locale: locale),
                         locale: locale,
                         arguments: [dateTitle(for: firstDay), dateTitle(for: lastDay)]
                     )
@@ -1218,7 +1218,7 @@ struct TeacherSendWorkoutView: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -1272,7 +1272,7 @@ struct TeacherSendWorkoutView: View {
         do {
             let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             guard !teacherId.isEmpty else {
-                errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+                errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                 return
             }
 
@@ -1460,7 +1460,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
                 Text(
                     String(
-                        format: String(localized: "ui.select_workout_value", locale: locale),
+                        format: AppLocalization.string("ui.select_workout_value", locale: locale),
                         locale: locale,
                         arguments: [category.localizedDisplayName(locale: locale)]
                     )

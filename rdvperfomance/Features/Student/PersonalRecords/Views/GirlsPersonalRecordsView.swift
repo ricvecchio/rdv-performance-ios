@@ -480,11 +480,11 @@ struct GirlsPersonalRecordsView: View {
         } message: {
             Text(
                 String(
-                    format: String(localized: "personal_records.delete_record_confirmation", locale: locale),
+                    format: AppLocalization.string("personal_records.delete_record_confirmation", locale: locale),
                     locale: locale,
                     arguments: [
                         selectedWod?.name
-                            ?? String(localized: "personal_records.wod_fallback", locale: locale)
+                            ?? AppLocalization.string("personal_records.wod_fallback", locale: locale)
                     ]
                 )
             )
@@ -1280,13 +1280,13 @@ Jasmine (AMRAP 20 min)
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = String(localized: "personal_records.girls.wod_name_required", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.girls.wod_name_required", locale: locale)
             return
         }
 
         let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = String(localized: "personal_records.girls.duplicate_wod", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.girls.duplicate_wod", locale: locale)
             return
         }
 

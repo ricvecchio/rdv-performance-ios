@@ -33,36 +33,30 @@ struct ARContainerView: UIViewRepresentable {
                 case .normal: break
                 case .notAvailable:
                     label.isHidden = false
-                    label.text = String(
-                        localized: "ar.status.camera_unavailable",
+                    label.text = AppLocalization.string("ar.status.camera_unavailable",
                         locale: ARContainerView.localizationLocale
                     )
                 case .limited(let reason):
                     label.isHidden = false
                     switch reason {
                     case .initializing:
-                        label.text = String(
-                            localized: "ar.status.tracking_initializing",
+                        label.text = AppLocalization.string("ar.status.tracking_initializing",
                             locale: ARContainerView.localizationLocale
                         )
                     case .excessiveMotion:
-                        label.text = String(
-                            localized: "ar.status.tracking_excessive_motion",
+                        label.text = AppLocalization.string("ar.status.tracking_excessive_motion",
                             locale: ARContainerView.localizationLocale
                         )
                     case .insufficientFeatures:
-                        label.text = String(
-                            localized: "ar.status.tracking_insufficient_features",
+                        label.text = AppLocalization.string("ar.status.tracking_insufficient_features",
                             locale: ARContainerView.localizationLocale
                         )
                     case .relocalizing:
-                        label.text = String(
-                            localized: "ar.status.tracking_relocalizing",
+                        label.text = AppLocalization.string("ar.status.tracking_relocalizing",
                             locale: ARContainerView.localizationLocale
                         )
                     @unknown default:
-                        label.text = String(
-                            localized: "ar.status.tracking_unknown",
+                        label.text = AppLocalization.string("ar.status.tracking_unknown",
                             locale: ARContainerView.localizationLocale
                         )
                     }
@@ -74,8 +68,7 @@ struct ARContainerView: UIViewRepresentable {
         func session(_ session: ARSession, didFailWithError error: Error) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
-                self.statusLabel?.text = String(
-                    localized: "ar.status.session_failed",
+                self.statusLabel?.text = AppLocalization.string("ar.status.session_failed",
                     locale: ARContainerView.localizationLocale
                 )
             }
@@ -85,8 +78,7 @@ struct ARContainerView: UIViewRepresentable {
         func sessionWasInterrupted(_ session: ARSession) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
-                self.statusLabel?.text = String(
-                    localized: "ar.status.session_interrupted",
+                self.statusLabel?.text = AppLocalization.string("ar.status.session_interrupted",
                     locale: ARContainerView.localizationLocale
                 )
             }
@@ -96,8 +88,7 @@ struct ARContainerView: UIViewRepresentable {
         func sessionInterruptionEnded(_ session: ARSession) {
             DispatchQueue.main.async {
                 self.statusLabel?.isHidden = false
-                self.statusLabel?.text = String(
-                    localized: "ar.status.session_restarted",
+                self.statusLabel?.text = AppLocalization.string("ar.status.session_restarted",
                     locale: ARContainerView.localizationLocale
                 )
             }
@@ -133,8 +124,7 @@ struct ARContainerView: UIViewRepresentable {
 
         let statusLabel = UILabel()
         statusLabel.translatesAutoresizingMaskIntoConstraints = false
-        statusLabel.text = String(
-            localized: "ar.status.waiting_for_camera",
+        statusLabel.text = AppLocalization.string("ar.status.waiting_for_camera",
             locale: Self.localizationLocale
         )
         statusLabel.textColor = .white

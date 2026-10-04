@@ -179,8 +179,8 @@ struct TecnofitImportSheet: View {
         } label: {
             Text(
                 preview == nil
-                    ? String(localized: "tecnofit_import.fetch_records", locale: locale)
-                    : String(localized: "tecnofit_import.import_action", locale: locale)
+                    ? AppLocalization.string("tecnofit_import.fetch_records", locale: locale)
+                    : AppLocalization.string("tecnofit_import.import_action", locale: locale)
             )
                 .frame(maxWidth: .infinity)
                 .font(.system(size: 16, weight: .semibold))
@@ -250,8 +250,7 @@ struct TecnofitImportSheet: View {
 
     private func fetchRecords() {
         guard let uid = session.currentUid, !uid.isEmpty else {
-            errorMessage = String(
-                localized: "tecnofit_import.session_unavailable",
+            errorMessage = AppLocalization.string("tecnofit_import.session_unavailable",
                 locale: locale
             )
             return
@@ -288,8 +287,7 @@ struct TecnofitImportSheet: View {
               let uid = session.currentUid,
               !uid.isEmpty
         else {
-            errorMessage = String(
-                localized: "tecnofit_import.session_unavailable",
+            errorMessage = AppLocalization.string("tecnofit_import.session_unavailable",
                 locale: locale
             )
             return
@@ -303,16 +301,14 @@ struct TecnofitImportSheet: View {
                 try await repository.markTecnofitImportCompleted(uid: uid)
                 successMessage = imported > 0
                     ? importedRecordsText(imported)
-                    : String(
-                        localized: "tecnofit_import.no_records_changed",
+                    : AppLocalization.string("tecnofit_import.no_records_changed",
                         locale: locale
                     )
                 onImportCompleted()
                 try? await Task.sleep(for: .seconds(1.5))
                 dismiss()
             } catch {
-                errorMessage = String(
-                    localized: "tecnofit_import.import_error",
+                errorMessage = AppLocalization.string("tecnofit_import.import_error",
                     locale: locale
                 )
             }
@@ -325,29 +321,29 @@ struct TecnofitImportSheet: View {
 
     private func recordsReadyText(_ count: Int) -> String {
         let format = count == 1
-            ? String(localized: "tecnofit_import.records_ready_singular", locale: locale)
-            : String(localized: "tecnofit_import.records_ready_plural", locale: locale)
+            ? AppLocalization.string("tecnofit_import.records_ready_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.records_ready_plural", locale: locale)
         return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 
     private func conflictsPreservedText(_ count: Int) -> String {
         let format = count == 1
-            ? String(localized: "tecnofit_import.existing_records_preserved_singular", locale: locale)
-            : String(localized: "tecnofit_import.existing_records_preserved_plural", locale: locale)
+            ? AppLocalization.string("tecnofit_import.existing_records_preserved_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.existing_records_preserved_plural", locale: locale)
         return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 
     private func unmatchedSkippedText(_ count: Int) -> String {
         let format = count == 1
-            ? String(localized: "tecnofit_import.unmapped_items_skipped_singular", locale: locale)
-            : String(localized: "tecnofit_import.unmapped_items_skipped_plural", locale: locale)
+            ? AppLocalization.string("tecnofit_import.unmapped_items_skipped_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.unmapped_items_skipped_plural", locale: locale)
         return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 
     private func importedRecordsText(_ count: Int) -> String {
         let format = count == 1
-            ? String(localized: "tecnofit_import.records_imported_singular", locale: locale)
-            : String(localized: "tecnofit_import.records_imported_plural", locale: locale)
+            ? AppLocalization.string("tecnofit_import.records_imported_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.records_imported_plural", locale: locale)
         return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 

@@ -103,7 +103,7 @@ struct HomeView: View {
 
             // ✅ HomeView agora é somente do aluno
             guard let uid = session.uid else { return }
-            let name = session.userName ?? "Aluno"
+            let name = session.userName ?? AppLocalization.string("common.student", locale: locale)
             path.append(.studentWorkouts(studentId: uid, studentName: name))
         } label: {
             tileLayout(

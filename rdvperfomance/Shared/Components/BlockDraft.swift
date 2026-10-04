@@ -6,6 +6,7 @@ enum DefaultWorkoutBlock: Hashable {
     case wod
     case workout
     case loadsAndMovements
+    case newBlock
 
     var persistedName: String {
         switch self {
@@ -14,21 +15,24 @@ enum DefaultWorkoutBlock: Hashable {
         case .wod: "WOD"
         case .workout: "Treino"
         case .loadsAndMovements: "Cargas / Movimentos"
+        case .newBlock: "Novo bloco"
         }
     }
 
     func localizedName(locale: Locale) -> String {
         switch self {
         case .warmup:
-            String(localized: "workout_block.warmup", locale: locale)
+            AppLocalization.string("workout_block.warmup", locale: locale)
         case .technique:
-            String(localized: "workout_block.technique", locale: locale)
+            AppLocalization.string("workout_block.technique", locale: locale)
         case .wod:
-            String(localized: "workout_block.wod", locale: locale)
+            AppLocalization.string("workout_block.wod", locale: locale)
         case .workout:
-            String(localized: "workout_block.workout", locale: locale)
+            AppLocalization.string("workout_block.workout", locale: locale)
         case .loadsAndMovements:
-            String(localized: "workout_block.loads_and_movements", locale: locale)
+            AppLocalization.string("workout_block.loads_and_movements", locale: locale)
+        case .newBlock:
+            AppLocalization.string("ui.new_block", locale: locale)
         }
     }
 }

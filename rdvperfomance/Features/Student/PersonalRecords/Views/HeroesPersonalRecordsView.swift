@@ -827,8 +827,8 @@ struct HeroesPersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            let recordName = selectedWod?.name ?? String(localized: "personal_records.wod_fallback", locale: locale)
-            let format = String(localized: "personal_records.delete_record_confirmation", locale: locale)
+            let recordName = selectedWod?.name ?? AppLocalization.string("personal_records.wod_fallback", locale: locale)
+            let format = AppLocalization.string("personal_records.delete_record_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
@@ -1313,13 +1313,13 @@ struct HeroesPersonalRecordsView: View {
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = String(localized: "personal_records.heroes.wod_name_required", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.heroes.wod_name_required", locale: locale)
             return
         }
 
         let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = String(localized: "personal_records.heroes.duplicate_wod", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.heroes.duplicate_wod", locale: locale)
             return
         }
 

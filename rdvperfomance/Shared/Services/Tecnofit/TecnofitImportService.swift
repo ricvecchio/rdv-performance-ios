@@ -10,15 +10,15 @@ enum TecnofitImportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .credentialsRequired:
-            return String(localized: "tecnofit.errors.credentials_required", locale: Self.localizationLocale)
+            return AppLocalization.string("tecnofit.errors.credentials_required", locale: Self.localizationLocale)
         case .invalidCredentials:
-            return String(localized: "tecnofit.errors.invalid_credentials", locale: Self.localizationLocale)
+            return AppLocalization.string("tecnofit.errors.invalid_credentials", locale: Self.localizationLocale)
         case .companySelectionRequired:
-            return String(localized: "tecnofit.errors.company_selection_required", locale: Self.localizationLocale)
+            return AppLocalization.string("tecnofit.errors.company_selection_required", locale: Self.localizationLocale)
         case .noRecords:
-            return String(localized: "tecnofit.errors.no_records", locale: Self.localizationLocale)
+            return AppLocalization.string("tecnofit.errors.no_records", locale: Self.localizationLocale)
         case .unavailable:
-            return String(localized: "tecnofit.errors.unavailable", locale: Self.localizationLocale)
+            return AppLocalization.string("tecnofit.errors.unavailable", locale: Self.localizationLocale)
         }
     }
 

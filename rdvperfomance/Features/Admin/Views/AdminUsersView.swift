@@ -306,7 +306,7 @@ private struct AdminStudentDetailView: View {
         guard let start = week.startDate, let end = week.endDate else {
             return week.categoryRaw
         }
-        let format = String(localized: "common.date_range", locale: locale)
+        let format = AppLocalization.string("common.date_range", locale: locale)
         return String(
             format: format,
             locale: locale,

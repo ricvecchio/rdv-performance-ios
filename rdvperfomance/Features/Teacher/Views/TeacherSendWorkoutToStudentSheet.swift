@@ -120,7 +120,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var studentMenu: some View {
         let label = selectedStudent?.name
-            ?? String(localized: "ui.select_student", locale: locale)
+            ?? AppLocalization.string("ui.select_student", locale: locale)
 
         let items: [(id: String, name: String)] = students.compactMap { s in
             guard let id = s.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -202,7 +202,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var weekMenuEmptyButton: some View {
         Button {
-            errorMessage = String(localized: "ui.the_student_must_have_a_registered_week", locale: locale)
+            errorMessage = AppLocalization.string("ui.the_student_must_have_a_registered_week", locale: locale)
             successMessage = nil
         } label: {
             HStack {
@@ -226,7 +226,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var weekMenuWithItems: some View {
         let labelText = selectedWeek?.weekTitle
-            ?? String(localized: "ui.select_week", locale: locale)
+            ?? AppLocalization.string("ui.select_week", locale: locale)
 
         let items: [(id: String, title: String)] = weeks.compactMap { w in
             guard let id = w.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -274,7 +274,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 ForEach(dayOptions, id: \.self) { i in
                     Text(
                         String(
-                            format: String(localized: "ui.day_number_int", locale: locale),
+                            format: AppLocalization.string("ui.day_number_int", locale: locale),
                             locale: locale,
                             arguments: [i + 1]
                         )
@@ -312,7 +312,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -362,7 +362,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
         guard let student = selectedStudent, let sid = student.id, !sid.isEmpty else { return }
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -387,7 +387,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
         successMessage = nil
 
         guard let weekId = selectedWeek?.id, !weekId.isEmpty else {
-            errorMessage = String(localized: "ui.select_a_valid_week", locale: locale)
+            errorMessage = AppLocalization.string("ui.select_a_valid_week", locale: locale)
             return
         }
 
@@ -411,7 +411,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 blocks: blocks
             )
 
-            successMessage = String(localized: "ui.workout_sent_successfully", locale: locale)
+            successMessage = AppLocalization.string("ui.workout_sent_successfully", locale: locale)
         } catch {
             errorMessage = error.localizedDescription
         }

@@ -948,10 +948,12 @@ struct TeacherStudentsListView: View {
         case invite = 0
         case sent = 1
 
-        var title: LocalizedStringKey {
+        func title(locale: Locale) -> String {
             switch self {
-            case .invite: return "Convidar"
-            case .sent: return "Convites"
+            case .invite:
+                AppLocalization.string("ui.invite", locale: locale)
+            case .sent:
+                AppLocalization.string("student_teachers.sent_invitations_section", locale: locale)
             }
         }
     }
@@ -979,7 +981,7 @@ struct TeacherStudentsListView: View {
                         VStack(alignment: .leading, spacing: 14) {
                             Picker("", selection: $inviteTab) {
                                 ForEach(InviteTab.allCases, id: \.rawValue) { tab in
-                                    Text(tab.title).tag(tab)
+                                    Text(tab.title(locale: locale)).tag(tab)
                                 }
                             }
                             .pickerStyle(.segmented)

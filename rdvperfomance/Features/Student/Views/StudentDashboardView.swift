@@ -218,10 +218,10 @@ struct StudentDashboardView: View {
     private var inviteNoticeMessage: String {
         let count = viewModel.pendingTeacherInvites.count
         if count == 1 {
-            return String(localized: "dashboard.teacher_invitation.pending_single", locale: locale)
+            return AppLocalization.string("dashboard.teacher_invitation.pending_single", locale: locale)
         }
 
-        let format = String(localized: "dashboard.teacher_invitation.pending_multiple", locale: locale)
+        let format = AppLocalization.string("dashboard.teacher_invitation.pending_multiple", locale: locale)
         return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 
@@ -430,7 +430,7 @@ struct StudentDashboardView: View {
                         .tint(Theme.Colors.primaryGreen)
                     Text(
                         String(
-                            format: String(localized: "dashboard.progress_percentage", locale: locale),
+                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
                             locale: locale,
                             arguments: [Int64((progress * 100).rounded())]
                         )
@@ -743,7 +743,7 @@ struct StudentDashboardView: View {
         } label: {
             Text(
                 String(
-                    format: String(localized: "dashboard.agenda.date_label", locale: locale),
+                    format: AppLocalization.string("dashboard.agenda.date_label", locale: locale),
                     locale: locale,
                     arguments: [
                         title,
@@ -1020,9 +1020,9 @@ struct StudentDashboardView: View {
     private var nextFitWodTitle: String {
         let unitName = viewModel.studentUnitName
         guard !unitName.isEmpty else {
-            return String(localized: "dashboard.wod.title", locale: locale)
+            return AppLocalization.string("dashboard.wod.title", locale: locale)
         }
-        let format = String(localized: "dashboard.wod.title_with_modality", locale: locale)
+        let format = AppLocalization.string("dashboard.wod.title_with_modality", locale: locale)
         return String(format: format, locale: locale, arguments: [unitName])
     }
 
@@ -1216,7 +1216,7 @@ struct StudentDashboardView: View {
                     Spacer()
                     Text(
                         String(
-                            format: String(localized: "dashboard.progress_percentage", locale: locale),
+                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
                             locale: locale,
                             arguments: [Int64((item.progress * 100).rounded())]
                         )
@@ -1225,8 +1225,8 @@ struct StudentDashboardView: View {
                         .foregroundColor(Theme.Colors.primaryGreen)
                 }
                 let completionFormat = item.totalCount == 1
-                    ? String(localized: "dashboard.upcoming_workouts.progress_singular", locale: locale)
-                    : String(localized: "dashboard.upcoming_workouts.progress_plural", locale: locale)
+                    ? AppLocalization.string("dashboard.upcoming_workouts.progress_singular", locale: locale)
+                    : AppLocalization.string("dashboard.upcoming_workouts.progress_plural", locale: locale)
                 Text(
                     String(
                         format: completionFormat,

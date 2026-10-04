@@ -28,17 +28,17 @@ final class AccountSecurityService {
         var errorDescription: String? {
             switch self {
             case .notLoggedIn:
-                return String(localized: "account_security.errors.login_required", locale: AccountSecurityService.localizationLocale)
+                return AppLocalization.string("account_security.errors.login_required", locale: AccountSecurityService.localizationLocale)
             case .missingEmail:
-                return String(localized: "account_security.errors.email_missing", locale: AccountSecurityService.localizationLocale)
+                return AppLocalization.string("account_security.errors.email_missing", locale: AccountSecurityService.localizationLocale)
             case .weakPassword:
-                return String(localized: "account_security.errors.weak_password", locale: AccountSecurityService.localizationLocale)
+                return AppLocalization.string("account_security.errors.weak_password", locale: AccountSecurityService.localizationLocale)
             case .passwordMismatch:
-                return String(localized: "account_security.errors.password_mismatch", locale: AccountSecurityService.localizationLocale)
+                return AppLocalization.string("account_security.errors.password_mismatch", locale: AccountSecurityService.localizationLocale)
             case .requiresRecentLogin:
-                return String(localized: "account_security.errors.reauthentication_required", locale: AccountSecurityService.localizationLocale)
+                return AppLocalization.string("account_security.errors.reauthentication_required", locale: AccountSecurityService.localizationLocale)
             case .invalidCredential:
-                return String(localized: "account_security.errors.invalid_current_password", locale: AccountSecurityService.localizationLocale)
+                return AppLocalization.string("account_security.errors.invalid_current_password", locale: AccountSecurityService.localizationLocale)
             case .unknown(let msg):
                 return msg
             }

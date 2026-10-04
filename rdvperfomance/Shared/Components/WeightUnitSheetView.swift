@@ -10,8 +10,8 @@ enum WeightUnit: String, CaseIterable {
                 ?? AppLanguage.portugueseBrazil.rawValue
         )
         switch self {
-        case .kg: return String(localized: "settings.weight_unit.kilograms", locale: locale)
-        case .lbs: return String(localized: "settings.weight_unit.pounds", locale: locale)
+        case .kg: return AppLocalization.string("settings.weight_unit.kilograms", locale: locale)
+        case .lbs: return AppLocalization.string("settings.weight_unit.pounds", locale: locale)
         }
     }
 

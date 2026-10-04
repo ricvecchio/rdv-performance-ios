@@ -310,8 +310,7 @@ final class StudentDashboardViewModel: ObservableObject {
     func authenticateNextFit(email: String, password: String, locale: Locale) async -> Bool {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedEmail.isEmpty, !password.isEmpty else {
-            nextFitLoginError = String(
-                localized: "dashboard.nextfit.credentials_required",
+            nextFitLoginError = AppLocalization.string("dashboard.nextfit.credentials_required",
                 locale: locale
             )
             return false
@@ -335,8 +334,7 @@ final class StudentDashboardViewModel: ObservableObject {
             nextFitLoginError = error.localizedDescription
             return false
         } catch {
-            nextFitLoginError = String(
-                localized: "dashboard.nextfit.login_error",
+            nextFitLoginError = AppLocalization.string("dashboard.nextfit.login_error",
                 locale: locale
             )
             return false
@@ -377,10 +375,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: locale)
+                nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
             }
         } catch {
-            nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: locale)
+            nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
         }
         isLoadingNextFitAgenda = false
 
@@ -399,10 +397,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaWodError = String(localized: "dashboard.agenda.wod_load_error", locale: locale)
+                nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
             }
         } catch {
-            nextFitAgendaWodError = String(localized: "dashboard.agenda.wod_load_error", locale: locale)
+            nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
         }
     }
 
@@ -426,10 +424,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaDetailError = String(localized: "dashboard.agenda.detail_load_error", locale: locale)
+                nextFitAgendaDetailError = AppLocalization.string("dashboard.agenda.detail_load_error", locale: locale)
             }
         } catch {
-            nextFitAgendaDetailError = String(localized: "dashboard.agenda.detail_load_error", locale: locale)
+            nextFitAgendaDetailError = AppLocalization.string("dashboard.agenda.detail_load_error", locale: locale)
         }
     }
 
@@ -454,7 +452,7 @@ final class StudentDashboardViewModel: ObservableObject {
             print("[NextFit Agenda] Iniciando agendamento. CodigoAgenda: \(agendaId)")
             #endif
             guard let contract = try await resolveNextFitAgendaContract(for: agendaId) else {
-                agendaActionErrors[agendaId] = String(localized: "dashboard.agenda.schedule_error", locale: locale)
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.schedule_error", locale: locale)
                 return
             }
             #if DEBUG
@@ -472,7 +470,7 @@ final class StudentDashboardViewModel: ObservableObject {
             )
             await refreshNextFitAgenda(
                 afterActionFor: agendaId,
-                errorMessage: String(localized: "dashboard.agenda.schedule_error", locale: locale),
+                errorMessage: AppLocalization.string("dashboard.agenda.schedule_error", locale: locale),
                 locale: locale
             )
         } catch let error as NextFitServiceError {
@@ -483,10 +481,10 @@ final class StudentDashboardViewModel: ObservableObject {
             case let .agendaCheckInBusinessFailure(_, message):
                 agendaActionErrors[agendaId] = message
             default:
-                agendaActionErrors[agendaId] = String(localized: "dashboard.agenda.schedule_error", locale: locale)
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.schedule_error", locale: locale)
             }
         } catch {
-            agendaActionErrors[agendaId] = String(localized: "dashboard.agenda.schedule_error", locale: locale)
+            agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.schedule_error", locale: locale)
         }
     }
 
@@ -522,10 +520,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                agendaActionErrors[agendaId] = String(localized: "dashboard.agenda.cancel_error", locale: locale)
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
             }
         } catch {
-            agendaActionErrors[agendaId] = String(localized: "dashboard.agenda.cancel_error", locale: locale)
+            agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
         }
     }
 
@@ -551,10 +549,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                agendaActionErrors[agendaId] = String(localized: "dashboard.agenda.cancel_error", locale: locale)
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
             }
         } catch {
-            agendaActionErrors[agendaId] = String(localized: "dashboard.agenda.cancel_error", locale: locale)
+            agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
         }
     }
 
@@ -711,7 +709,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 nextFitError = error.localizedDescription
             }
         } catch {
-            nextFitError = String(localized: "dashboard.wod.load_error", locale: locale)
+            nextFitError = AppLocalization.string("dashboard.wod.load_error", locale: locale)
             return
         }
 
@@ -723,10 +721,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: locale)
+                nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
             }
         } catch {
-            nextFitAgendaError = String(localized: "dashboard.agenda.load_error", locale: locale)
+            nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
         }
     }
 
@@ -790,7 +788,7 @@ final class StudentDashboardViewModel: ObservableObject {
         agendaActionErrors[agendaId] = nil
         await refreshNextFitAgenda(
             afterActionFor: agendaId,
-            errorMessage: String(localized: "dashboard.agenda.cancel_error", locale: locale),
+            errorMessage: AppLocalization.string("dashboard.agenda.cancel_error", locale: locale),
             locale: locale
         )
     }

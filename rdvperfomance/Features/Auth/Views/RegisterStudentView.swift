@@ -216,9 +216,9 @@ struct RegisterStudentView: View {
                 ?? AppLanguage.portugueseBrazil.rawValue
         )
         switch opt {
-        case .CROSSFIT: return String(localized: "auth.focus_area.crossfit", locale: locale)
-        case .GYM: return String(localized: "auth.focus_area.gym", locale: locale)
-        case .HOME: return String(localized: "auth.focus_area.home", locale: locale)
+        case .CROSSFIT: return AppLocalization.string("auth.focus_area.crossfit", locale: locale)
+        case .GYM: return AppLocalization.string("auth.focus_area.gym", locale: locale)
+        case .HOME: return AppLocalization.string("auth.focus_area.home", locale: locale)
         }
     }
 

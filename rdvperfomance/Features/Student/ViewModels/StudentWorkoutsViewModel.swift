@@ -421,8 +421,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
     func toggleCompleted(dayId: String, in weekId: String, locale: Locale) async {
         guard let week = weeks.first(where: { $0.id == weekId }),
               let startDate = week.startDate else {
-            weekDaysErrorByWeekId[weekId] = String(
-                localized: "workout.week_start_validation_error",
+            weekDaysErrorByWeekId[weekId] = AppLocalization.string("workout.week_start_validation_error",
                 locale: locale
             )
             return

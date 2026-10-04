@@ -72,10 +72,19 @@ struct TeacherImportedWorkoutsRepository {
         return parsed
     }
     
-    static func addWorkout(teacherId: String, title: String) async throws {
+    static func addWorkout(teacherId: String, title: String, locale: Locale) async throws {
         let cleanedTitle = title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !cleanedTitle.isEmpty else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "ui.enter_the_workout_title")])
+            throw NSError(
+                domain: "",
+                code: -1,
+                userInfo: [
+                    NSLocalizedDescriptionKey: AppLocalization.string(
+                        "ui.enter_the_workout_title",
+                        locale: locale
+                    )
+                ]
+            )
         }
         
         let payload: [String: Any] = [

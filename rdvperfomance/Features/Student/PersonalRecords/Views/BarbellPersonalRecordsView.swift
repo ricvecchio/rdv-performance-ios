@@ -289,7 +289,7 @@ struct BarbellPersonalRecordsView: View {
 
             Text(
                 String(
-                    format: String(localized: "personal_records.barbell.pr_with_unit", locale: locale),
+                    format: AppLocalization.string("personal_records.barbell.pr_with_unit", locale: locale),
                     locale: locale,
                     arguments: [preferredWeightUnit.shortLabel]
                 )
@@ -371,7 +371,7 @@ struct BarbellPersonalRecordsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(
                             String(
-                                format: String(localized: "personal_records.barbell.max_load_with_unit", locale: locale),
+                                format: AppLocalization.string("personal_records.barbell.max_load_with_unit", locale: locale),
                                 locale: locale,
                                 arguments: [preferredWeightUnit.shortLabel]
                             )
@@ -532,8 +532,7 @@ struct BarbellPersonalRecordsView: View {
                 deleteSelectedMove()
             }
         } message: {
-            let format = String(
-                localized: "personal_records.barbell.delete_named_record_confirmation",
+            let format = AppLocalization.string("personal_records.barbell.delete_named_record_confirmation",
                 locale: locale
             )
             Text(
@@ -621,8 +620,7 @@ struct BarbellPersonalRecordsView: View {
 
                                     Text(
                                         String(
-                                            format: String(
-                                                localized: "personal_records.barbell.value_with_unit",
+                                            format: AppLocalization.string("personal_records.barbell.value_with_unit",
                                                 locale: locale
                                             ),
                                             locale: locale,
@@ -771,8 +769,7 @@ struct BarbellPersonalRecordsView: View {
 
                 Text(
                     String(
-                        format: String(
-                            localized: "personal_records.barbell.new_movement_description",
+                        format: AppLocalization.string("personal_records.barbell.new_movement_description",
                             locale: locale
                         ),
                         locale: locale,
@@ -809,8 +806,7 @@ struct BarbellPersonalRecordsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(
                             String(
-                                format: String(
-                                    localized: "personal_records.barbell.max_load_optional_with_unit",
+                                format: AppLocalization.string("personal_records.barbell.max_load_optional_with_unit",
                                     locale: locale
                                 ),
                                 locale: locale,
@@ -894,8 +890,7 @@ struct BarbellPersonalRecordsView: View {
 
         let cleanName = newMoveName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addMoveErrorMessage = String(
-                localized: "personal_records.barbell.movement_name_required",
+            addMoveErrorMessage = AppLocalization.string("personal_records.barbell.movement_name_required",
                 locale: locale
             )
             return
@@ -903,8 +898,7 @@ struct BarbellPersonalRecordsView: View {
 
         let existingNames = allMoves.map { $0.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) }
         if existingNames.contains(cleanName.lowercased()) {
-            addMoveErrorMessage = String(
-                localized: "personal_records.barbell.duplicate_movement",
+            addMoveErrorMessage = AppLocalization.string("personal_records.barbell.duplicate_movement",
                 locale: locale
             )
             return

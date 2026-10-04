@@ -17,14 +17,14 @@ struct TeacherAcademiaLibraryView: View {
 
     private var menuItems: [MenuItem] {
         [
-            .init(title: String(localized: "ui.chest", locale: locale), sectionKey: "peito"),
-            .init(title: String(localized: "ui.back", locale: locale), sectionKey: "costas"),
-            .init(title: String(localized: "ui.legs", locale: locale), sectionKey: "pernas"),
-            .init(title: String(localized: "ui.shoulders", locale: locale), sectionKey: "ombros"),
-            .init(title: String(localized: "ui.arms", locale: locale), sectionKey: "bracos"),
-            .init(title: String(localized: "ui.core_abs", locale: locale), sectionKey: "core"),
-            .init(title: String(localized: "ui.full_body", locale: locale), sectionKey: "fullBody"),
-            .init(title: String(localized: "ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
+            .init(title: AppLocalization.string("ui.chest", locale: locale), sectionKey: "peito"),
+            .init(title: AppLocalization.string("ui.back", locale: locale), sectionKey: "costas"),
+            .init(title: AppLocalization.string("ui.legs", locale: locale), sectionKey: "pernas"),
+            .init(title: AppLocalization.string("ui.shoulders", locale: locale), sectionKey: "ombros"),
+            .init(title: AppLocalization.string("ui.arms", locale: locale), sectionKey: "bracos"),
+            .init(title: AppLocalization.string("ui.core_abs", locale: locale), sectionKey: "core"),
+            .init(title: AppLocalization.string("ui.full_body", locale: locale), sectionKey: "fullBody"),
+            .init(title: AppLocalization.string("ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
         ]
     }
 

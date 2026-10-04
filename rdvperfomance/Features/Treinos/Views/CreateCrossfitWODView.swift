@@ -206,7 +206,7 @@ struct CreateCrossfitWODView: View {
 
                 Spacer()
                 Button {
-                    blocks.append(BlockDraft(name: "Novo bloco", details: ""))
+                    blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(.green.opacity(0.85))
@@ -342,19 +342,19 @@ struct CreateCrossfitWODView: View {
         successMessage = nil
 
         guard session.isTrainer else {
-            errorMessage = String(localized: "ui.only_coaches_can_add_wods", locale: locale)
+            errorMessage = AppLocalization.string("ui.only_coaches_can_add_wods", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = String(localized: "ui.enter_the_wod_title", locale: locale)
+            errorMessage = AppLocalization.string("ui.enter_the_wod_title", locale: locale)
             return
         }
 

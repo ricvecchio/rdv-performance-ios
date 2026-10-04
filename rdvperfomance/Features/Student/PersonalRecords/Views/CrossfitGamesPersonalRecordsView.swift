@@ -44,8 +44,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                 guard descriptionLocalizationKeys.indices.contains(index) else {
                     return line
                 }
-                return String(
-                    localized: descriptionLocalizationKeys[index],
+                return AppLocalization.string(descriptionLocalizationKeys[index],
                     locale: locale
                 )
             }
@@ -77,8 +76,7 @@ struct CrossfitGamesPersonalRecordsView: View {
             guard let year = items.first?.yearTitle else {
                 return title
             }
-            let format = String(
-                localized: "crossfit_games.individual_elite.title",
+            let format = AppLocalization.string("crossfit_games.individual_elite.title",
                 locale: locale
             )
             return String(format: format, locale: locale, arguments: [year])
@@ -543,7 +541,7 @@ struct CrossfitGamesPersonalRecordsView: View {
         }
         let existingYears = Set(sections.compactMap { $0.items.first?.yearTitle })
         let extraSections = customByYear.keys.filter { !existingYears.contains($0) }.sorted().map { year in
-            let format = String(localized: "personal_records.crossfit_games.custom_events_title", locale: locale)
+            let format = AppLocalization.string("personal_records.crossfit_games.custom_events_title", locale: locale)
             return GamesSection(
                 title: String(format: format, locale: locale, arguments: [year]),
                 items: (customByYear[year] ?? []).map {
@@ -933,8 +931,8 @@ struct CrossfitGamesPersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            let recordName = selectedWod?.name ?? String(localized: "personal_records.event_fallback_feminine", locale: locale)
-            let format = String(localized: "personal_records.delete_record_confirmation", locale: locale)
+            let recordName = selectedWod?.name ?? AppLocalization.string("personal_records.event_fallback_feminine", locale: locale)
+            let format = AppLocalization.string("personal_records.delete_record_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
@@ -1458,12 +1456,12 @@ struct CrossfitGamesPersonalRecordsView: View {
         let year = newItemYear.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !year.isEmpty, !cleanName.isEmpty else {
-            addItemErrorMessage = String(localized: "personal_records.crossfit_games.year_and_event_required", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.crossfit_games.year_and_event_required", locale: locale)
             return
         }
         let existingNames = allSections.flatMap(\.items).map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = String(localized: "personal_records.crossfit_games.duplicate_event", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.crossfit_games.duplicate_event", locale: locale)
             return
         }
 

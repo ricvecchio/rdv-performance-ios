@@ -4,8 +4,7 @@ enum ProfilePhotoProcessingError: LocalizedError {
     case unableToProcess
 
     var errorDescription: String? {
-        String(
-            localized: "profile_photo.errors.processing_failed",
+        AppLocalization.string("profile_photo.errors.processing_failed",
             locale: Self.localizationLocale
         )
     }

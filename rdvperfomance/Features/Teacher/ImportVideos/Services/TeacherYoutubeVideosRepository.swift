@@ -52,13 +52,20 @@ struct TeacherYoutubeVideosRepository {
         return parsed
     }
     
-    static func addVideo(teacherId: String, title: String, url: String, videoCategory: TeacherYoutubeVideoCategory) async throws {
+    static func addVideo(
+        teacherId: String,
+        title: String,
+        url: String,
+        videoCategory: TeacherYoutubeVideoCategory,
+        locale: Locale
+    ) async throws {
         try await addVideo(
             ownerCollection: "teachers",
             ownerId: teacherId,
             title: title,
             url: url,
-            videoCategory: videoCategory
+            videoCategory: videoCategory,
+            locale: locale
         )
     }
 
@@ -66,14 +73,16 @@ struct TeacherYoutubeVideosRepository {
         studentId: String,
         title: String,
         url: String,
-        videoCategory: TeacherYoutubeVideoCategory
+        videoCategory: TeacherYoutubeVideoCategory,
+        locale: Locale
     ) async throws {
         try await addVideo(
             ownerCollection: "users",
             ownerId: studentId,
             title: title,
             url: url,
-            videoCategory: videoCategory
+            videoCategory: videoCategory,
+            locale: locale
         )
     }
 
@@ -124,11 +133,21 @@ struct TeacherYoutubeVideosRepository {
         ownerId: String,
         title: String,
         url: String,
-        videoCategory: TeacherYoutubeVideoCategory
+        videoCategory: TeacherYoutubeVideoCategory,
+        locale: Locale
     ) async throws {
         let cleanedUrl = url.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let videoId = YouTubeVideoImporter.extractYoutubeVideoId(from: cleanedUrl) else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: String(localized: "ui.invalid_youtube_link")])
+            throw NSError(
+                domain: "",
+                code: -1,
+                userInfo: [
+                    NSLocalizedDescriptionKey: AppLocalization.string(
+                        "ui.invalid_youtube_link",
+                        locale: locale
+                    )
+                ]
+            )
         }
         
         let payload: [String: Any] = [

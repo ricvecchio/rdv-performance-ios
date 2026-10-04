@@ -41,8 +41,7 @@ struct TeacherAddWorkoutSheet: View {
                                     Button {
                                         let t = title.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
                                         if t.isEmpty {
-                                            sheetMessage = String(
-                                                localized: "ui.enter_the_workout_title",
+                                            sheetMessage = AppLocalization.string("ui.enter_the_workout_title",
                                                 locale: locale
                                             )
                                             sheetMessageIsError = true

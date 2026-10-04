@@ -21,12 +21,12 @@ struct TeacherCrossfitLibraryView: View {
     // Importante: se suas keys reais no Firestore forem diferentes, ajuste SOMENTE os valores abaixo.
     private var menuItems: [CrossfitMenuItem] {
         [
-            .init(title: String(localized: "library.crossfit.girls_wods", locale: locale), sectionKey: "girlsWods"),
-            .init(title: String(localized: "library.crossfit.hero_tribute_workouts", locale: locale), sectionKey: "heroTributeWorkouts"),
-            .init(title: String(localized: "library.crossfit.open_wods", locale: locale), sectionKey: "openWods"),
-            .init(title: String(localized: "library.crossfit.named_wods", locale: locale), sectionKey: "wodsNomeados"),
-            .init(title: String(localized: "library.crossfit.qualifier_competition_wods", locale: locale), sectionKey: "qualifiersCompeticoes"),
-            .init(title: String(localized: "ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
+            .init(title: AppLocalization.string("library.crossfit.girls_wods", locale: locale), sectionKey: "girlsWods"),
+            .init(title: AppLocalization.string("library.crossfit.hero_tribute_workouts", locale: locale), sectionKey: "heroTributeWorkouts"),
+            .init(title: AppLocalization.string("library.crossfit.open_wods", locale: locale), sectionKey: "openWods"),
+            .init(title: AppLocalization.string("library.crossfit.named_wods", locale: locale), sectionKey: "wodsNomeados"),
+            .init(title: AppLocalization.string("library.crossfit.qualifier_competition_wods", locale: locale), sectionKey: "qualifiersCompeticoes"),
+            .init(title: AppLocalization.string("ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
         ]
     }
 

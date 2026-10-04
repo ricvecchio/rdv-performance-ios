@@ -28,12 +28,15 @@ struct BlockFS: Identifiable, Codable, Hashable {
 
 extension TrainingDayFS {
     // Retorna texto formatado para exibir na UI
-    var subtitleText: String {
+    func subtitleText(locale: Locale) -> String {
         let idx = max(dayIndex, 0) + 1
+        let format = AppLocalization.string("ui.day_value_ld", locale: locale)
+        let dayText = String(format: format, locale: locale, arguments: [Int64(idx)])
+
         if !dayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return "\(dayName) • Dia \(idx)"
+            return "\(dayName) • \(dayText)"
         }
-        return "Dia \(idx)"
+        return dayText
     }
 
     var isVideoDay: Bool {

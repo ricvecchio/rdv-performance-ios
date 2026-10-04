@@ -241,7 +241,7 @@ struct StudentDayDetailView: View {
 
             // ✅ ALTERADO: título do cabeçalho agora é o dia (ex: "Dia 1")
             ToolbarItem(placement: .principal) {
-                Text(trainingDateTitle(for: day.date, fallback: day.subtitleText))
+                Text(trainingDateTitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -290,7 +290,7 @@ struct StudentDayDetailView: View {
                 Task { await deleteDay() }
             }
         } message: {
-            let format = String(localized: "workout_day_detail.day_delete_confirmation", locale: locale)
+            let format = AppLocalization.string("workout_day_detail.day_delete_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [day.title]))
         }
         .alert("workout_day_detail.remove_video", isPresented: $showRemoveVideoConfirm) {
@@ -361,7 +361,7 @@ struct StudentDayDetailView: View {
             // ✅ ALTERADO: manter apenas a semana no corpo (o dia foi para o cabeçalho)
             Text(
                 String(
-                    format: String(localized: "workout.week_number", locale: locale),
+                    format: AppLocalization.string("workout.week_number", locale: locale),
                     locale: locale,
                     arguments: [formattedWeekTitle]
                 )
@@ -443,7 +443,7 @@ struct StudentDayDetailView: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.55))
 
-                            Text(selectedMovementName ?? String(localized: "workout_day_detail.select", locale: locale))
+                            Text(selectedMovementName ?? AppLocalization.string("workout_day_detail.select", locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .lineLimit(1)
@@ -779,7 +779,7 @@ struct StudentDayDetailView: View {
     private func openLockedPlayer(item: VideoDayItem) {
         let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
         let safeTitle = titleTrim.isEmpty
-            ? String(localized: "workout.youtube_video", locale: locale)
+            ? AppLocalization.string("workout.youtube_video", locale: locale)
             : titleTrim
 
         activeLockedPlayer = LockedPlayerItem(
@@ -803,7 +803,7 @@ struct StudentDayDetailView: View {
                 let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
                 Text(
                     titleTrim.isEmpty
-                        ? String(localized: "workout.youtube_video", locale: locale)
+                        ? AppLocalization.string("workout.youtube_video", locale: locale)
                         : titleTrim
                 )
                     .font(.system(size: 16, weight: .semibold))
@@ -900,7 +900,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = String(localized: "workout_day_detail.invalid_day", locale: locale)
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 
@@ -1140,13 +1140,13 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = String(localized: "workout_day_detail.invalid_day", locale: locale)
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 
         let t = editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else {
-            errorMessage = String(localized: "workout_day_detail.title_required", locale: locale)
+            errorMessage = AppLocalization.string("workout_day_detail.title_required", locale: locale)
             return
         }
 
@@ -1179,7 +1179,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = String(localized: "workout_day_detail.invalid_day", locale: locale)
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 

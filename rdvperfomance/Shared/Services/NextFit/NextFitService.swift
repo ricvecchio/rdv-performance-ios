@@ -13,17 +13,17 @@ enum NextFitServiceError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingSession, .invalidSession:
-            return String(localized: "nextfit.errors.connect_account", locale: Self.localizationLocale)
+            return AppLocalization.string("nextfit.errors.connect_account", locale: Self.localizationLocale)
         case .registrationNotFound:
-            return String(localized: "nextfit.errors.registration_not_found", locale: Self.localizationLocale)
+            return AppLocalization.string("nextfit.errors.registration_not_found", locale: Self.localizationLocale)
         case .muralhaRegistrationNotFound:
-            return String(localized: "nextfit.errors.muralha_registration_not_found", locale: Self.localizationLocale)
+            return AppLocalization.string("nextfit.errors.muralha_registration_not_found", locale: Self.localizationLocale)
         case .invalidCredentials:
-            return String(localized: "nextfit.errors.invalid_credentials", locale: Self.localizationLocale)
+            return AppLocalization.string("nextfit.errors.invalid_credentials", locale: Self.localizationLocale)
         case let .agendaCheckInBusinessFailure(_, message):
             return message
         case .unavailable:
-            return String(localized: "nextfit.errors.unavailable", locale: Self.localizationLocale)
+            return AppLocalization.string("nextfit.errors.unavailable", locale: Self.localizationLocale)
         }
     }
 
@@ -182,8 +182,7 @@ struct NextFitService {
                 let dailyModalityName = wod.descricaoModalidade?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
                 let studentModalityName = studentModalityNames[modalityId] ?? ""
-                let modalityFallbackFormat = String(
-                    localized: "nextfit.modality_fallback",
+                let modalityFallbackFormat = AppLocalization.string("nextfit.modality_fallback",
                     locale: Self.localizationLocale
                 )
                 let modalityFallback = String(
@@ -776,8 +775,7 @@ struct NextFitService {
         if response.errorCode == 71038 {
             return .agendaCheckInBusinessFailure(
                 errorCode: response.errorCode,
-                message: String(
-                    localized: "nextfit.errors.class_withdrawn",
+                message: AppLocalization.string("nextfit.errors.class_withdrawn",
                     locale: Self.localizationLocale
                 )
             )
@@ -868,7 +866,7 @@ struct NextFitService {
     }
 
     private func localizedScheduleText(startDate: Date, endDate: Date) -> String {
-        let format = String(localized: "common.time_range", locale: Self.localizationLocale)
+        let format = AppLocalization.string("common.time_range", locale: Self.localizationLocale)
         return String(
             format: format,
             locale: Self.localizationLocale,

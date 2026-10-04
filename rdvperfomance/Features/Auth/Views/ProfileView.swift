@@ -817,8 +817,7 @@ struct ProfileView: View {
             guard let data = try await item.loadTransferable(type: Data.self),
                   let image = UIImage(data: data)
             else {
-                errorMessage = String(
-                    localized: "auth.profile_photo.load_failed",
+                errorMessage = AppLocalization.string("auth.profile_photo.load_failed",
                     locale: locale
                 )
                 showErrorAlert = true
@@ -1298,7 +1297,7 @@ struct ProfileView: View {
                         Spacer()
                         Text(
                             String(
-                                format: String(localized: "profile.icons.copied", locale: locale),
+                                format: AppLocalization.string("profile.icons.copied", locale: locale),
                                 locale: locale,
                                 arguments: [copied]
                             )

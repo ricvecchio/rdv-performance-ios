@@ -25,27 +25,27 @@ struct CrossfitMenuView: View {
 
                     VStack(spacing: 0) {
                         menuTile(
-                            title: String(localized: "ui.wod", locale: locale),
+                            title: AppLocalization.string("ui.wod", locale: locale),
                             imageName: "rdv_crossfit_wod_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "ui.benchmark", locale: locale),
+                            title: AppLocalization.string("ui.benchmark", locale: locale),
                             imageName: "rdv_crossfit_benchmark_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "ui.my_personal_records", locale: locale),
+                            title: AppLocalization.string("ui.my_personal_records", locale: locale),
                             imageName: "rdv_crossfit_meusrecordes_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "ui.progress", locale: locale),
+                            title: AppLocalization.string("ui.progress", locale: locale),
                             imageName: "rdv_crossfit_progressos_horizontal",
                             height: tileHeight
                         )
                         menuTile(
-                            title: String(localized: "ui.build_your_workout", locale: locale),
+                            title: AppLocalization.string("ui.build_your_workout", locale: locale),
                             imageName: "rdv_crossfit_monteseutreino_horizontal",
                             height: tileHeight
                         )

@@ -103,7 +103,7 @@ struct ProgressGameView: View {
     private var fallbackCard: some View {
         let percent = Int((vm.metrics.weeklyCompletion * 100).rounded())
         return VStack(alignment: .leading, spacing: 8) {
-            Text(vm.metrics.displayName ?? String(localized: "gamification.progress.student_title", locale: locale))
+            Text(vm.metrics.displayName ?? AppLocalization.string("gamification.progress.student_title", locale: locale))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
@@ -112,7 +112,7 @@ struct ProgressGameView: View {
                 .foregroundColor(.white.opacity(0.55))
 
             if !vm.metrics.badges.isEmpty {
-                let format = String(localized: "gamification.badges.summary", locale: locale)
+                let format = AppLocalization.string("gamification.badges.summary", locale: locale)
                 Text(
                     String(
                         format: format,
@@ -140,8 +140,7 @@ struct ProgressGameView: View {
     }
 
     private func progressSummary(percent: Int, streakDays: Int) -> String {
-        let format = String(
-            localized: streakDays == 1
+        let format = AppLocalization.string(streakDays == 1
                 ? "gamification.progress.summary.one_day"
                 : "gamification.progress.summary.other_days",
             locale: locale

@@ -18,21 +18,21 @@ struct TeacherMapView: View {
     private var displayCoordinateText: String {
         let format: String
         if let coord = academyCoordinate {
-            format = String(localized: "ui.gym_5f_5f", locale: locale)
+            format = AppLocalization.string("ui.gym_5f_5f", locale: locale)
             return String(
                 format: format,
                 locale: locale,
                 arguments: [coord.latitude, coord.longitude]
             )
         } else if let last = vm.lastLocation {
-            format = String(localized: "ui.last_5f_5f", locale: locale)
+            format = AppLocalization.string("ui.last_5f_5f", locale: locale)
             return String(
                 format: format,
                 locale: locale,
                 arguments: [last.coordinate.latitude, last.coordinate.longitude]
             )
         } else {
-            return String(localized: "ui.location", locale: locale)
+            return AppLocalization.string("ui.location", locale: locale)
         }
     }
 

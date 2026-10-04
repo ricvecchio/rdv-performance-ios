@@ -170,7 +170,7 @@ struct CreateTrainingWeekView: View {
     // Header com contexto do aluno e categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let format = String(localized: "ui.student_value", locale: locale)
+            let format = AppLocalization.string("ui.student_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [student.name]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
@@ -388,11 +388,11 @@ struct CreateTrainingWeekView: View {
         successMessage = nil
 
         guard let studentId = student.id, !studentId.isEmpty else {
-            vm.errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
+            vm.errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            vm.errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            vm.errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -485,7 +485,7 @@ struct CreateTrainingWeekView: View {
 
         guard let week = editingWeek, let weekId = week.id, !weekId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             await MainActor.run {
-                errorMessage = String(localized: "ui.unable_to_edit_invalid_week", locale: locale)
+                errorMessage = AppLocalization.string("ui.unable_to_edit_invalid_week", locale: locale)
             }
             return
         }
@@ -493,7 +493,7 @@ struct CreateTrainingWeekView: View {
         let trimmed = editingTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
-                errorMessage = String(localized: "ui.enter_a_valid_title", locale: locale)
+                errorMessage = AppLocalization.string("ui.enter_a_valid_title", locale: locale)
             }
             return
         }
@@ -511,7 +511,7 @@ struct CreateTrainingWeekView: View {
             try await FirestoreRepository.shared.updateWeekTitle(weekId: weekId, newTitle: trimmed)
 
             await MainActor.run {
-                successMessage = String(localized: "ui.title_updated_successfully", locale: locale)
+                successMessage = AppLocalization.string("ui.title_updated_successfully", locale: locale)
                 isEditSheetOpen = false
                 editingWeek = nil
             }
@@ -527,10 +527,9 @@ struct CreateTrainingWeekView: View {
 
     private func deleteWeekMessageText() -> String {
         guard let w = weekPendingDelete else {
-            return String(localized: "ui.are_you_sure_you_want_to_delete_this_week", locale: locale)
+            return AppLocalization.string("ui.are_you_sure_you_want_to_delete_this_week", locale: locale)
         }
-        let format = String(
-            localized: "ui.week_will_be_deleted",
+        let format = AppLocalization.string("ui.week_will_be_deleted",
             locale: locale
         )
         return String(format: format, locale: locale, arguments: [w.weekTitle])
@@ -548,7 +547,7 @@ struct CreateTrainingWeekView: View {
 
         do {
             try await FirestoreRepository.shared.deleteTrainingWeekCascade(weekId: weekId)
-            successMessage = String(localized: "ui.week_deleted_successfully", locale: locale)
+            successMessage = AppLocalization.string("ui.week_deleted_successfully", locale: locale)
             weekPendingDelete = nil
             await loadWeeks()
         } catch {
@@ -565,18 +564,18 @@ struct CreateTrainingWeekView: View {
         guard !isSaving else { return }
 
         guard let studentId = student.id, !studentId.isEmpty else {
-            errorMessage = String(localized: "ui.invalid_student_id_not_found", locale: locale)
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         let trimmedTitle = weekTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
-            errorMessage = String(localized: "ui.enter_the_week_title", locale: locale)
+            errorMessage = AppLocalization.string("ui.enter_the_week_title", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -597,7 +596,7 @@ struct CreateTrainingWeekView: View {
             )
 
             weekTitle = ""
-            successMessage = String(localized: "ui.week_published_successfully", locale: locale)
+            successMessage = AppLocalization.string("ui.week_published_successfully", locale: locale)
             await loadWeeks()
 
         } catch {
@@ -610,7 +609,7 @@ struct CreateTrainingWeekView: View {
         let f = DateFormatter()
         f.locale = locale
         f.setLocalizedDateFormatFromTemplate("ddMMyyyy")
-        let format = String(localized: "ui.value_value", locale: locale)
+        let format = AppLocalization.string("ui.value_value", locale: locale)
         return String(
             format: format,
             locale: locale,

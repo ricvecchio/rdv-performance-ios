@@ -13,7 +13,7 @@ struct CreateTrainingDayView: View {
 
     // Form
     @State private var dayIndex: Int = 0
-    @State private var dayName: String = "Segunda-feira"
+    @State private var dayName: String = ""
     @State private var date: Date = Date()
 
     @State private var title: String = ""
@@ -155,7 +155,7 @@ struct CreateTrainingDayView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            let format = String(localized: "ui.category_value", locale: locale)
+            let format = AppLocalization.string("ui.category_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [category.localizedDisplayName(locale: locale)]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
@@ -202,7 +202,7 @@ struct CreateTrainingDayView: View {
                     ForEach(0..<7, id: \.self) { i in
                         let exists = existingDaysByIndex[i] != nil
                         if exists {
-                            let format = String(localized: "ui.day_value_ld_2", locale: locale)
+                            let format = AppLocalization.string("ui.day_value_ld_2", locale: locale)
                             Text(
                                 String(
                                     format: format,
@@ -212,7 +212,7 @@ struct CreateTrainingDayView: View {
                             )
                             .tag(i)
                         } else {
-                            let format = String(localized: "ui.day_value_ld", locale: locale)
+                            let format = AppLocalization.string("ui.day_value_ld", locale: locale)
                             Text(
                                 String(
                                     format: format,
@@ -320,7 +320,7 @@ struct CreateTrainingDayView: View {
             HStack {
                 Spacer()
                 Button {
-                    blocks.append(BlockDraft(name: "Novo bloco", details: ""))
+                    blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(.green.opacity(0.85))
@@ -335,7 +335,7 @@ struct CreateTrainingDayView: View {
                     HStack {
                         Text(
                             b.name.isEmpty
-                                ? String(localized: "ui.unnamed", locale: locale)
+                                ? AppLocalization.string("ui.unnamed", locale: locale)
                                 : b.displayedName(locale: locale)
                         )
                             .font(.system(size: 13, weight: .semibold))
@@ -514,7 +514,7 @@ struct CreateTrainingDayView: View {
         errorMessage = nil
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -615,25 +615,25 @@ struct CreateTrainingDayView: View {
         successMessage = nil
 
         guard session.isTrainer else {
-            errorMessage = String(localized: "ui.only_coaches_can_add_days", locale: locale)
+            errorMessage = AppLocalization.string("ui.only_coaches_can_add_days", locale: locale)
             return
         }
 
         let cleanWeekId = weekId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanWeekId.isEmpty else {
-            errorMessage = String(localized: "ui.invalid_weekid", locale: locale)
+            errorMessage = AppLocalization.string("ui.invalid_weekid", locale: locale)
             return
         }
 
         let cleanDayName = dayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanDayName.isEmpty else {
-            errorMessage = String(localized: "ui.enter_the_day_name", locale: locale)
+            errorMessage = AppLocalization.string("ui.enter_the_day_name", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = String(localized: "ui.enter_the_workout_title", locale: locale)
+            errorMessage = AppLocalization.string("ui.enter_the_workout_title", locale: locale)
             return
         }
 
@@ -656,8 +656,7 @@ struct CreateTrainingDayView: View {
                 blocks: payloadBlocks
             )
 
-            successMessage = String(
-                localized: currentEditingDayId == nil
+            successMessage = AppLocalization.string(currentEditingDayId == nil
                     ? "ui.day_saved_successfully"
                     : "ui.changes_saved_successfully",
                 locale: locale
@@ -672,17 +671,26 @@ struct CreateTrainingDayView: View {
     }
 
     private func weekdayName(for index: Int) -> String {
-        let names = [
-            "Segunda-feira",
-            "Terça-feira",
-            "Quarta-feira",
-            "Quinta-feira",
-            "Sexta-feira",
-            "Sábado",
-            "Domingo"
-        ]
-        guard index >= 0 && index < names.count else { return "Dia \(index + 1)" }
-        return names[index]
+        guard (0...6).contains(index) else {
+            let format = AppLocalization.string("ui.day_value_ld", locale: locale)
+            return String(format: format, locale: locale, arguments: [Int64(index + 1)])
+        }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        guard
+            let monday = calendar.date(from: DateComponents(year: 2024, month: 1, day: 1)),
+            let date = calendar.date(byAdding: .day, value: index, to: monday)
+        else {
+            let format = AppLocalization.string("ui.day_value_ld", locale: locale)
+            return String(format: format, locale: locale, arguments: [Int64(index + 1)])
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.calendar = calendar
+        formatter.setLocalizedDateFormatFromTemplate("EEEE")
+        return formatter.string(from: date).capitalized(with: locale)
     }
 
     private func syncDayName() {

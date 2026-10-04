@@ -42,7 +42,7 @@ struct TeacherMyWorkoutsView: View {
                                 path.append(.createCrossfitWOD(
                                     category: .crossfit,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: String(localized: "ui.my_workouts", locale: locale)
+                                    sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
                                 ))
                             }
                         }
@@ -60,7 +60,7 @@ struct TeacherMyWorkoutsView: View {
                                 path.append(.createTreinoAcademia(
                                     category: .academia,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: String(localized: "ui.my_workouts", locale: locale)
+                                    sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
                                 ))
                             }
                         }
@@ -78,7 +78,7 @@ struct TeacherMyWorkoutsView: View {
                                 path.append(.createTreinoCasa(
                                     category: .emCasa,
                                     sectionKey: "meusTreinos",
-                                    sectionTitle: String(localized: "ui.my_workouts", locale: locale)
+                                    sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
                                 ))
                             }
                         }

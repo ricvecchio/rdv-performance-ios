@@ -201,7 +201,7 @@ struct TeacherImportVideosView: View {
     private func openLockedPlayer(for video: TeacherYoutubeVideo) {
         activeLockedPlayer = LockedPlayerItem(
             title: video.title.isEmpty
-                ? String(localized: "workout.youtube_video", locale: locale)
+                ? AppLocalization.string("workout.youtube_video", locale: locale)
                 : video.title,
             videoId: video.videoId
         )
@@ -327,7 +327,7 @@ struct TeacherImportVideosView: View {
             thumbnailView(videoId: v.videoId)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(v.title.isEmpty ? String(localized: "workout.youtube_video", locale: locale) : v.title)
+                Text(v.title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : v.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
@@ -504,7 +504,7 @@ struct TeacherImportVideosView: View {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
                     videos = []
-                    errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+                    errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
                 videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
@@ -546,14 +546,15 @@ struct TeacherImportVideosView: View {
             switch context {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                    errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+                    errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
                 try await TeacherYoutubeVideosRepository.addVideo(
                     teacherId: teacherId,
                     title: title,
                     url: url,
-                    videoCategory: videoCategory
+                    videoCategory: videoCategory,
+                    locale: locale
                 )
             case .student(let studentId):
                 guard let authenticatedStudentId = validatedStudentId(studentId) else {
@@ -568,7 +569,8 @@ struct TeacherImportVideosView: View {
                     studentId: authenticatedStudentId,
                     title: title,
                     url: url,
-                    videoCategory: videoCategory
+                    videoCategory: videoCategory,
+                    locale: locale
                 )
             }
             await loadVideos()
@@ -596,7 +598,7 @@ struct TeacherImportVideosView: View {
         switch context {
         case .teacher:
             guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                editTitleErrorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+                editTitleErrorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                 return
             }
             updateTitle = {
@@ -659,7 +661,7 @@ struct TeacherImportVideosView: View {
             switch context {
             case .teacher:
                 guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
-                    errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+                    errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
                 try await TeacherYoutubeVideosRepository.deleteVideo(
@@ -702,7 +704,7 @@ struct TeacherImportVideosView: View {
         guard !expectedStudentId.isEmpty,
               expectedStudentId == authenticatedStudentId
         else {
-            errorMessage = String(localized: "ui.unable_to_validate_your_authentication_to_access_your_videos", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_validate_your_authentication_to_access_your_videos", locale: locale)
             return nil
         }
 
@@ -728,13 +730,11 @@ struct TeacherImportVideosView: View {
     private var permissionErrorMessage: String {
         switch context {
         case .teacher:
-            return String(
-                localized: "ui.no_permission_to_access_import_videos_verify_that_you_are_signed_in_and_that_your_user_type_is_coach_trainer",
+            return AppLocalization.string("ui.no_permission_to_access_import_videos_verify_that_you_are_signed_in_and_that_your_user_type_is_coach_trainer",
                 locale: locale
             )
         case .student:
-            return String(
-                localized: "ui.no_permission_to_access_your_videos_verify_your_authentication_and_try_again",
+            return AppLocalization.string("ui.no_permission_to_access_your_videos_verify_your_authentication_and_try_again",
                 locale: locale
             )
         }

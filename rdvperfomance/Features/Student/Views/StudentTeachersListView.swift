@@ -139,7 +139,7 @@ struct StudentTeachersListView: View {
         )) {
             Button("common.ok", role: .cancel) {}
         } message: {
-            Text(vm.errorMessage ?? String(localized: "common.unexpected_error", locale: locale))
+            Text(vm.errorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
         }
     }
 
@@ -422,8 +422,7 @@ struct StudentTeachersListView: View {
 
     private func load() async {
         guard let studentId = session.uid, !studentId.isEmpty else {
-            vm.errorMessage = String(
-                localized: "student_shared.logged_student_not_found",
+            vm.errorMessage = AppLocalization.string("student_shared.logged_student_not_found",
                 locale: locale
             )
             return
@@ -480,11 +479,11 @@ struct StudentTeachersListView: View {
 
                 VStack(alignment: .leading, spacing: 8) {
                     teacherDetailRow(
-                        String(localized: "student_teachers.whatsapp", locale: locale),
+                        AppLocalization.string("student_teachers.whatsapp", locale: locale),
                         BrazilianPhoneFormatter.format(teacher.phone ?? "")
                     )
-                    teacherDetailRow(String(localized: "student_teachers.cref", locale: locale), teacher.cref ?? "")
-                    teacherDetailRow(String(localized: "student_teachers.biography", locale: locale), teacher.bio ?? "")
+                    teacherDetailRow(AppLocalization.string("student_teachers.cref", locale: locale), teacher.cref ?? "")
+                    teacherDetailRow(AppLocalization.string("student_teachers.biography", locale: locale), teacher.bio ?? "")
                 }
                 .padding(16)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -505,7 +504,7 @@ struct StudentTeachersListView: View {
     private func teacherDetailRow(_ title: String, _ value: String) -> some View {
         let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
         if !trimmed.isEmpty {
-            let format = String(localized: "common.label_value", locale: locale)
+            let format = AppLocalization.string("common.label_value", locale: locale)
             Text(String(format: format, locale: locale, arguments: [title, trimmed]))
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.65))

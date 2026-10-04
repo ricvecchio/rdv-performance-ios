@@ -304,8 +304,7 @@ struct TeacherMessageView: View {
     private func friendlyFirestoreError(_ error: Error) -> String {
         let msg = (error as NSError).localizedDescription
         if msg.lowercased().contains("missing or insufficient permissions") {
-            return String(
-                localized: "ui.you_do_not_have_permission_to_access_this_students_messages_confirm_that_you_are_signed_in_as_a_trainer_and_that_firestore_rules_allow_users_alunoid_messages",
+            return AppLocalization.string("ui.you_do_not_have_permission_to_access_this_students_messages_confirm_that_you_are_signed_in_as_a_trainer_and_that_firestore_rules_allow_users_alunoid_messages",
                 locale: locale
             )
         }

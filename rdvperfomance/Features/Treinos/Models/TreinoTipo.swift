@@ -46,17 +46,17 @@ enum TreinoTipo: String, Hashable {
 
     func localizedDisplayName(locale: Locale) -> String {
         switch self {
-        case .crossfit: return String(localized: "video.category.crossfit", locale: locale)
-        case .academia: return String(localized: "video.category.gym", locale: locale)
-        case .emCasa: return String(localized: "ui.home_workouts", locale: locale)
+        case .crossfit: return AppLocalization.string("video.category.crossfit", locale: locale)
+        case .academia: return AppLocalization.string("video.category.gym", locale: locale)
+        case .emCasa: return AppLocalization.string("ui.home_workouts", locale: locale)
         }
     }
 
     func localizedTitle(locale: Locale) -> String {
         switch self {
-        case .crossfit: return String(localized: "ui.crossfit_workouts", locale: locale)
-        case .academia: return String(localized: "ui.gym_workouts", locale: locale)
-        case .emCasa: return String(localized: "ui.home_workouts", locale: locale)
+        case .crossfit: return AppLocalization.string("ui.crossfit_workouts", locale: locale)
+        case .academia: return AppLocalization.string("ui.gym_workouts", locale: locale)
+        case .emCasa: return AppLocalization.string("ui.home_workouts", locale: locale)
         }
     }
 

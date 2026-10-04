@@ -299,8 +299,7 @@ struct TeacherFeedbacksView: View {
     private func friendlyFirestoreError(_ error: Error) -> String {
         let msg = (error as NSError).localizedDescription
         if msg.lowercased().contains("missing or insufficient permissions") {
-            return String(
-                localized: "ui.no_permission_to_access_this_student_s_feedback_verify_that_you_are_signed_in_as_a_coach_and_that_the_firestore_rules_allow_users_alunoid_feedbacks",
+            return AppLocalization.string("ui.no_permission_to_access_this_student_s_feedback_verify_that_you_are_signed_in_as_a_coach_and_that_the_firestore_rules_allow_users_alunoid_feedbacks",
                 locale: locale
             )
         }

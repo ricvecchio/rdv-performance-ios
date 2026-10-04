@@ -6,6 +6,7 @@ struct DeleteAccountView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var currentPassword: String = ""
     @State private var confirmText: String = ""
@@ -21,8 +22,13 @@ struct DeleteAccountView: View {
     // Retorna verdadeiro se pode executar a exclusão
     private var canDelete: Bool {
         !currentPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        && confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR"
+        && confirmText.trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare(confirmationKeyword) == .orderedSame
         && !isLoading
+    }
+
+    private var confirmationKeyword: String {
+        AppLocalization.string("settings.delete.confirmation_keyword", locale: locale)
     }
 
     // Constrói a interface com aviso, formulário e ações
@@ -142,7 +148,7 @@ struct DeleteAccountView: View {
             underlineField(
                 title: (
                     Text("settings.delete.confirm_prefix").foregroundColor(textSecondary)
-                    + Text("EXCLUIR").bold().foregroundColor(.white.opacity(0.92))
+                    + Text(confirmationKeyword).bold().foregroundColor(.white.opacity(0.92))
                     + Text("settings.delete.confirm_suffix").foregroundColor(textSecondary)
                 )
                 .font(.system(size: 14)),
@@ -205,8 +211,16 @@ struct DeleteAccountView: View {
             return
         }
 
-        guard confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR" else {
-            presentError("settings.delete.confirmation_required")
+        guard confirmText.trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare(confirmationKeyword) == .orderedSame else {
+            let format = AppLocalization.string("settings.delete.confirmation_required", locale: locale)
+            presentError(
+                String(
+                    format: format,
+                    locale: locale,
+                    arguments: [confirmationKeyword]
+                )
+            )
             return
         }
 

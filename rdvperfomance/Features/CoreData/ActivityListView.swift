@@ -45,7 +45,7 @@ struct ActivityListView: View {
     private func add() {
         let newItem = UserActivity(context: viewContext)
         newItem.id = UUID()
-        let format = String(localized: "core_data.activity.generated_title", locale: locale)
+        let format = AppLocalization.string("core_data.activity.generated_title", locale: locale)
         newItem.title = String(format: format, locale: locale, arguments: [Int64.random(in: 1...1000)])
         newItem.date = Date()
 

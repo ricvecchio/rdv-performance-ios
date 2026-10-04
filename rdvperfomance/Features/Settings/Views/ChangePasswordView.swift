@@ -52,7 +52,7 @@ struct ChangePasswordView: View {
 
                             if showSuccess {
                                 feedbackCard(
-                                    text: String(localized: "settings.password.changed_success", locale: locale),
+                                    text: AppLocalization.string("settings.password.changed_success", locale: locale),
                                     isError: false
                                 )
                             }
@@ -161,22 +161,22 @@ struct ChangePasswordView: View {
         let cn = confirmNewPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard session.isLoggedIn else {
-            presentError(String(localized: "auth.errors.login_required", locale: locale))
+            presentError(AppLocalization.string("auth.errors.login_required", locale: locale))
             return
         }
 
         guard !cp.isEmpty, !np.isEmpty, !cn.isEmpty else {
-            presentError(String(localized: "settings.password.fill_all", locale: locale))
+            presentError(AppLocalization.string("settings.password.fill_all", locale: locale))
             return
         }
 
         guard np.count >= 6 else {
-            presentError(String(localized: "settings.password.min_length", locale: locale))
+            presentError(AppLocalization.string("settings.password.min_length", locale: locale))
             return
         }
 
         guard np == cn else {
-            presentError(String(localized: "settings.password.confirmation_mismatch", locale: locale))
+            presentError(AppLocalization.string("settings.password.confirmation_mismatch", locale: locale))
             return
         }
 

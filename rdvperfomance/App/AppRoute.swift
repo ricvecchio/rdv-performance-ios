@@ -21,19 +21,19 @@ enum CrossfitLibrarySection: String, Hashable, CaseIterable {
     var title: String {
         switch self {
         case .benchmarks:
-            return String(localized: "library.crossfit.girls_wods", locale: Self.localizationLocale)
+            return AppLocalization.string("library.crossfit.girls_wods", locale: Self.localizationLocale)
         case .heroTributeWorkouts:
-            return String(localized: "library.crossfit.hero_tribute_workouts", locale: Self.localizationLocale)
+            return AppLocalization.string("library.crossfit.hero_tribute_workouts", locale: Self.localizationLocale)
         case .competicoesOficiais:
-            return String(localized: "library.crossfit.official_competitions", locale: Self.localizationLocale)
+            return AppLocalization.string("library.crossfit.official_competitions", locale: Self.localizationLocale)
         case .formatosWod:
-            return String(localized: "library.crossfit.wod_formats", locale: Self.localizationLocale)
+            return AppLocalization.string("library.crossfit.wod_formats", locale: Self.localizationLocale)
         case .formatoSocial:
-            return String(localized: "library.crossfit.social_format", locale: Self.localizationLocale)
+            return AppLocalization.string("library.crossfit.social_format", locale: Self.localizationLocale)
         case .opens:
-            return String(localized: "library.crossfit.opens", locale: Self.localizationLocale)
+            return AppLocalization.string("library.crossfit.opens", locale: Self.localizationLocale)
         case .meusTreinos:
-            return String(localized: "workouts.my_workouts", locale: Self.localizationLocale)
+            return AppLocalization.string("workouts.my_workouts", locale: Self.localizationLocale)
         }
     }
 

@@ -23760,6 +23760,29 @@
         }
       }
     },
+    "settings.delete.confirmation_keyword" : {
+      "comment" : "The word users must type to confirm account deletion.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "DELETE"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ELIMINAR"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "EXCLUIR"
+          }
+        }
+      }
+    },
     "settings.delete.confirm_suffix" : {
       "comment" : "Stable semantic key for:  para confirmar",
       "localizations" : {
@@ -23789,19 +23812,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Type EXCLUIR to confirm."
+            "value" : "Type %@ to confirm."
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Escribe EXCLUIR para confirmar."
+            "value" : "Escribe %@ para confirmar."
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Digite EXCLUIR para confirmar."
+            "value" : "Digite %@ para confirmar."
           }
         }
       }

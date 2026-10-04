@@ -448,8 +448,8 @@ struct EndurancePersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            let recordName = selectedMove?.name ?? String(localized: "personal_records.item_fallback", locale: locale)
-            let format = String(localized: "personal_records.delete_record_confirmation", locale: locale)
+            let recordName = selectedMove?.name ?? AppLocalization.string("personal_records.item_fallback", locale: locale)
+            let format = AppLocalization.string("personal_records.delete_record_confirmation", locale: locale)
             Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
@@ -897,13 +897,13 @@ struct EndurancePersonalRecordsView: View {
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = String(localized: "personal_records.endurance.item_name_required", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.endurance.item_name_required", locale: locale)
             return
         }
 
         let existingNames = allMoves.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = String(localized: "personal_records.endurance.duplicate_item", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.endurance.duplicate_item", locale: locale)
             return
         }
 

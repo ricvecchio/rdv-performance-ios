@@ -559,8 +559,7 @@ struct EditProfileView: View {
     private func clearPhotoOnlyAndSync() async {
         guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
             presentError(
-                String(
-                    localized: "auth.profile_photo.remove_missing_user",
+                AppLocalization.string("auth.profile_photo.remove_missing_user",
                     locale: locale
                 )
             )
@@ -596,14 +595,13 @@ struct EditProfileView: View {
                 }
             } else {
                 presentError(
-                    String(
-                        localized: "auth.profile_photo.load_failed",
+                    AppLocalization.string("auth.profile_photo.load_failed",
                         locale: locale
                     )
                 )
             }
         } catch {
-            let format = String(localized: "auth.profile_photo.load_error", locale: locale)
+            let format = AppLocalization.string("auth.profile_photo.load_error", locale: locale)
             presentError(
                 String(
                     format: format,
@@ -635,9 +633,9 @@ struct EditProfileView: View {
                 ?? AppLanguage.portugueseBrazil.rawValue
         )
         switch opt {
-        case .CROSSFIT: return String(localized: "auth.focus_area.crossfit", locale: locale)
-        case .GYM: return String(localized: "auth.focus_area.gym", locale: locale)
-        case .HOME: return String(localized: "auth.focus_area.home", locale: locale)
+        case .CROSSFIT: return AppLocalization.string("auth.focus_area.crossfit", locale: locale)
+        case .GYM: return AppLocalization.string("auth.focus_area.gym", locale: locale)
+        case .HOME: return AppLocalization.string("auth.focus_area.home", locale: locale)
         }
     }
 

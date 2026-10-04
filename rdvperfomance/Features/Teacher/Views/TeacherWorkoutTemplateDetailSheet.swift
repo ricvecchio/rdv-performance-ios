@@ -151,7 +151,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                     ForEach(blocks.indices, id: \.self) { i in
                         let b = blocks[i]
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(b.name.isEmpty ? String(localized: "ui.block", locale: locale) : b.displayedName(locale: locale))
+                            Text(b.name.isEmpty ? AppLocalization.string("ui.block", locale: locale) : b.displayedName(locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
 
@@ -287,7 +287,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
         guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !templateId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_save_invalid_templateid", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_save_invalid_templateid", locale: locale)
             return
         }
 
@@ -300,7 +300,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 blocks: draftBlocks
             )
 
-            successMessage = String(localized: "ui.changes_saved_successfully", locale: locale)
+            successMessage = AppLocalization.string("ui.changes_saved_successfully", locale: locale)
             isEditing = false
 
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)

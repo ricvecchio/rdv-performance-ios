@@ -129,7 +129,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(workout.title.isEmpty ? String(localized: "ui.workout", locale: locale) : workout.title)
+            Text(workout.title.isEmpty ? AppLocalization.string("ui.workout", locale: locale) : workout.title)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
                 .lineLimit(2)
@@ -146,7 +146,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
     
     private var readOnlyBlocks: some View {
         VStack(spacing: 12) {
-            blockCard(title: String(localized: "ui.description", locale: locale), value: workout.description)
+            blockCard(title: AppLocalization.string("ui.description", locale: locale), value: workout.description)
             blockCard(title: DefaultWorkoutBlock.warmup.localizedName(locale: locale), value: workout.aquecimento)
             blockCard(title: DefaultWorkoutBlock.technique.localizedName(locale: locale), value: workout.tecnica)
             blockCard(title: DefaultWorkoutBlock.wod.localizedName(locale: locale), value: workout.wod)
@@ -156,7 +156,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
     
     private var editableBlocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
-            blockEditor(title: String(localized: "ui.description", locale: locale), text: $draftDescription)
+            blockEditor(title: AppLocalization.string("ui.description", locale: locale), text: $draftDescription)
             
             Divider().background(Theme.Colors.divider)
             
@@ -262,13 +262,13 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         successMessage = nil
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = String(localized: "ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
         
         let workoutId = workout.id.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
         guard !workoutId.isEmpty else {
-            errorMessage = String(localized: "ui.unable_to_save_invalid_workout_id", locale: locale)
+            errorMessage = AppLocalization.string("ui.unable_to_save_invalid_workout_id", locale: locale)
             return
         }
         
@@ -288,7 +288,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
                 ]
             )
             
-            successMessage = String(localized: "ui.changes_saved_successfully", locale: locale)
+            successMessage = AppLocalization.string("ui.changes_saved_successfully", locale: locale)
             isEditing = false
         } catch {
             errorMessage = error.localizedDescription

@@ -697,7 +697,8 @@ struct StudentWorkoutsView: View {
                 studentId: authenticatedStudentId,
                 title: video.title,
                 url: video.url,
-                videoCategory: .crossfit
+                videoCategory: .crossfit,
+                locale: locale
             )
             receivedVideoSaveSuccessSourceId = video.sourceId
         } catch {
@@ -766,7 +767,7 @@ struct StudentWorkoutsView: View {
         weekId: String
     ) -> some View {
         let isExpanded = expandedDayIds.contains(group.id)
-        let fallback = group.days.first?.subtitleText ?? ""
+        let fallback = group.days.first?.subtitleText(locale: locale) ?? ""
         let status = vm.dayStatus(for: group.days, in: weekId)
 
         return VStack(spacing: 0) {
@@ -850,7 +851,7 @@ struct StudentWorkoutsView: View {
                         Text(day.title)
                             .font(.system(size: 17, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
-                        Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText))
+                        Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.35))
                     }

@@ -154,8 +154,7 @@ struct LoginView: View {
         await session.refreshProfile()
 
         guard session.isLoggedIn else {
-            vm.errorMessage = String(
-                localized: "auth.login.profile_not_found",
+            vm.errorMessage = AppLocalization.string("auth.login.profile_not_found",
                 locale: locale
             )
             return

@@ -488,8 +488,7 @@ struct GymnasticPersonalRecordsView: View {
                 deleteSelectedItem()
             }
         } message: {
-            let format = String(
-                localized: "personal_records.gymnastic.delete_named_record_confirmation",
+            let format = AppLocalization.string("personal_records.gymnastic.delete_named_record_confirmation",
                 locale: locale
             )
             Text(String(format: format, locale: locale, arguments: [item.name]))
@@ -633,13 +632,13 @@ struct GymnasticPersonalRecordsView: View {
 
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = String(localized: "personal_records.gymnastic.movement_name_required", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.gymnastic.movement_name_required", locale: locale)
             return
         }
 
         let existingNames = allItems.map { $0.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) }
         if existingNames.contains(cleanName.lowercased()) {
-            addItemErrorMessage = String(localized: "personal_records.gymnastic.duplicate_item", locale: locale)
+            addItemErrorMessage = AppLocalization.string("personal_records.gymnastic.duplicate_item", locale: locale)
             return
         }
 

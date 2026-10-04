@@ -110,7 +110,7 @@ final class StudentTeachersListViewModel: ObservableObject {
     func cancel(request: TeacherStudentLinkRequestFS, studentId: String, studentEmail: String, locale: Locale) async {
         guard let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !requestId.isEmpty else {
-            errorMessage = String(localized: "student_teachers.invite_identifier_missing", locale: locale)
+            errorMessage = AppLocalization.string("student_teachers.invite_identifier_missing", locale: locale)
             return
         }
 
