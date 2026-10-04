@@ -256,56 +256,24 @@ final class StudentWorkoutsViewModel: ObservableObject {
         let format = AppLocalization.string("workout.teacher.named", locale: locale)
         let explicitName = (week.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitName.isEmpty {
-            LocalizationDiagnostics.resolved(
-                context: "StudentWorkouts.teacherLine.named",
-                locale: locale,
-                key: "workout.teacher.named",
-                value: format
-            )
             return String(format: format, locale: locale, arguments: [explicitName])
         }
 
         let explicitEmail = (week.teacherEmail ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitEmail.isEmpty {
-            LocalizationDiagnostics.resolved(
-                context: "StudentWorkouts.teacherLine.named",
-                locale: locale,
-                key: "workout.teacher.named",
-                value: format
-            )
             return String(format: format, locale: locale, arguments: [explicitEmail])
         }
 
         let teacherId = week.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            let value = AppLocalization.string("workout.teacher.unavailable", locale: locale)
-            LocalizationDiagnostics.resolved(
-                context: "StudentWorkouts.teacherLine.unavailable",
-                locale: locale,
-                key: "workout.teacher.unavailable",
-                value: value
-            )
-            return value
+            return AppLocalization.string("workout.teacher.unavailable", locale: locale)
         }
 
         if let name = teacherNameById[teacherId], !name.isEmpty {
-            LocalizationDiagnostics.resolved(
-                context: "StudentWorkouts.teacherLine.named",
-                locale: locale,
-                key: "workout.teacher.named",
-                value: format
-            )
             return String(format: format, locale: locale, arguments: [name])
         }
 
-        let value = AppLocalization.string("workout.teacher.loading", locale: locale)
-        LocalizationDiagnostics.resolved(
-            context: "StudentWorkouts.teacherLine.loading",
-            locale: locale,
-            key: "workout.teacher.loading",
-            value: value
-        )
-        return value
+        return AppLocalization.string("workout.teacher.loading", locale: locale)
     }
 
     func progressPercent(for week: TrainingWeekFS) -> Int {

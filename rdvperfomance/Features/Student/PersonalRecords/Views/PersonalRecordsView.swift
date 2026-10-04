@@ -34,8 +34,8 @@ struct PersonalRecordsFooter: View {
     }
 }
 
-// Tela do Aluno: Recorde Pessoal (menu de seções)
-struct StudentPersonalRecordsView: View {
+// Tela compartilhada de Recordes Pessoais.
+struct PersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
     let onBack: () -> Void
@@ -100,10 +100,6 @@ struct StudentPersonalRecordsView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("personal_records.select_a_section")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
-
                             if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
                                 tecnofitImportButton
                             }
@@ -154,12 +150,14 @@ struct StudentPersonalRecordsView: View {
                                     }
                                 }
 
-                                actionRow(
-                                    title: "Meus Vídeos",
-                                    localizedTitle: "workout.my_videos",
-                                    icon: "video.fill"
-                                ) {
-                                    path.append(.studentVideos)
+                                if case .student = navigationContext {
+                                    actionRow(
+                                        title: "Meus Vídeos",
+                                        localizedTitle: "workout.my_videos",
+                                        icon: "video.fill"
+                                    ) {
+                                        path.append(.studentVideos)
+                                    }
                                 }
                             }
 
@@ -299,9 +297,6 @@ struct StudentPersonalRecordsView: View {
             hasCompletedTecnofitImport = hasCompletedImport
             hasLoadedTecnofitImportStatus = true
         } catch {
-            #if DEBUG
-            print("[PersonalRecords] Não foi possível carregar o status de importação do Tecnofit: \(error)")
-            #endif
         }
     }
 

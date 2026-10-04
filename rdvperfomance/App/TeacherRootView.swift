@@ -60,7 +60,7 @@ struct TeacherRootView: View {
     private func teacherDestination(_ route: AppRoute) -> some View {
         switch route {
         case .teacherPersonalRecords(let category):
-            StudentPersonalRecordsView(
+            PersonalRecordsView(
                 path: destinationPath,
                 onBack: { destinationPath.wrappedValue.removeLast() },
                 navigationContext: .teacher(category: category)

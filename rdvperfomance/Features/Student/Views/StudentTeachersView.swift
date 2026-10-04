@@ -189,21 +189,6 @@ struct StudentTeachersView: View {
             await loadStudentEmailIfNeeded()
             await refreshData()
         }
-        .onAppear {
-#if DEBUG
-            print("[i18n] StudentTeachersView DEBUG diagnostic executed")
-#endif
-            LocalizationDiagnostics.runtimeSnapshot(
-                context: "StudentTeachersView",
-                locale: locale
-            )
-        }
-        .onChange(of: locale.identifier) { _, _ in
-            LocalizationDiagnostics.runtimeSnapshot(
-                context: "StudentTeachersView",
-                locale: locale
-            )
-        }
         .alert("student_teachers.cancel_invitation_confirmation_title", isPresented: $showRequestCancellationConfirmation) {
             Button("common.cancel", role: .cancel) { requestPendingCancellation = nil }
             Button("student_teachers.confirm_cancellation", role: .destructive) {
@@ -509,14 +494,6 @@ struct StudentTeachersView: View {
                     .buttonStyle(.plain)
                 }
                 .padding(16)
-            }
-            .onAppear {
-                LocalizationDiagnostics.resolved(
-                    context: "StudentTeachers.teacherDetails",
-                    locale: locale,
-                    key: "common.trainer",
-                    value: title
-                )
             }
         }
     }
@@ -1046,12 +1023,6 @@ struct StudentTeachersView: View {
     }
 
     private func localizedLinkActionMessage(key: String, value: String) -> String {
-        LocalizationDiagnostics.resolved(
-            context: "StudentTeachers.linkRequest",
-            locale: locale,
-            key: key,
-            value: value
-        )
         return value
     }
 }

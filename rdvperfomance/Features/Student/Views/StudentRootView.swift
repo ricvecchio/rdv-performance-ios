@@ -175,7 +175,7 @@ struct StudentRootView: View {
 
     private var recordsTab: some View {
         NavigationStack(path: $recordsPath) {
-            StudentPersonalRecordsView(
+            PersonalRecordsView(
                 path: $recordsPath,
                 onBack: { selectSection(.agenda) },
                 onSelectSection: selectSection

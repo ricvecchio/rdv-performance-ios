@@ -122,14 +122,7 @@ struct StudentDashboardView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
-#if DEBUG
-            print("[i18n] StudentDashboardView DEBUG diagnostic executed")
-#endif
-            logLocalizationSnapshot()
             Task { await viewModel.load(locale: locale) }
-        }
-        .onChange(of: locale.identifier) { _, _ in
-            logLocalizationSnapshot()
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -1258,31 +1251,11 @@ struct StudentDashboardView: View {
 
     private func weeklyProgressText(completed: Int, total: Int) -> String {
         let format = AppLocalization.string("dashboard.weekly_progress", locale: locale)
-        let value = String(
+        return String(
             format: format,
             locale: locale,
             arguments: [Int64(completed), Int64(total)]
         )
-        LocalizationDiagnostics.resolved(
-            context: "StudentDashboard.weeklyProgress",
-            locale: locale,
-            key: "dashboard.weekly_progress",
-            value: value
-        )
-        return value
-    }
-
-    private func logLocalizationSnapshot() {
-        let completed = viewModel.currentWeekDaySummaries.filter(\.isCompleted).count
-        let total = viewModel.currentWeekDaySummaries.count
-        LocalizationDiagnostics.runtimeSnapshot(
-            context: "StudentDashboardView",
-            locale: locale
-        )
-        _ = greeting
-        _ = weeklyProgressText(completed: completed, total: total)
-        _ = DashboardAgendaDay.today.title(locale: locale)
-        _ = DashboardAgendaDay.tomorrow.title(locale: locale)
     }
 
     private func weekdayAbbreviation(for date: Date?) -> String {
