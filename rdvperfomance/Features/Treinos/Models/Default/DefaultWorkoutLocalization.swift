@@ -31,11 +31,20 @@ enum DefaultWorkoutLocalization {
         sectionKey: String,
         category: TreinoTipo = .crossfit
     ) -> String {
-        let slug = seed.name.lowercased().unicodeScalars.map {
+        defaultKey(name: seed.name, sectionKey: sectionKey, category: category)
+    }
+
+    static func defaultKey(name: String, sectionKey: String, category: TreinoTipo) -> String {
+        let slug = name.lowercased().unicodeScalars.map {
             CharacterSet(charactersIn: "abcdefghijklmnopqrstuvwxyz0123456789").contains($0)
                 ? String($0) : "_"
         }.joined().split(separator: "_").joined(separator: "_")
         return "default_workout.\(category.rawValue).\(sectionKey).\(slug)"
+    }
+
+    // Persistence and legacy matching must use the same baseline, regardless of the app locale.
+    static func seedText(for key: String) -> String {
+        AppLocalization.string(String.LocalizationValue(key), locale: Locale(identifier: "pt-BR"))
     }
 
     static func persistedDescription(for seed: DefaultWorkoutSeed) -> String {
