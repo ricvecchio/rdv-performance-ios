@@ -176,7 +176,7 @@ struct TeacherDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(alignment: .firstTextBaseline) {
                 Text("ui.today_s_summary")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()
@@ -206,11 +206,11 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -218,7 +218,7 @@ struct TeacherDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("ui.quick_access")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()
@@ -251,11 +251,11 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -500,18 +500,18 @@ struct TeacherDashboardView: View {
             }
 
             Text(title)
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.62))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, minHeight: 118)
         .padding(.horizontal, 6)
-        .background(Color.white.opacity(0.06))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -654,12 +654,12 @@ struct TeacherDashboardView: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(2)
 
                     Text(subtitle)
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(3)
                 }
@@ -673,11 +673,11 @@ struct TeacherDashboardView: View {
             .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Color.white.opacity(0.06))
+            .background(Color.black.opacity(0.68))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
