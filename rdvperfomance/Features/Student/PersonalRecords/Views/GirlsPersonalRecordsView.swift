@@ -253,11 +253,11 @@ struct GirlsPersonalRecordsView: View {
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -268,13 +268,13 @@ struct GirlsPersonalRecordsView: View {
                 .frame(width: 26, height: 1)
 
             Text("personal_records_girls.workout")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
             Text("personal_records.time_score_label")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -303,7 +303,7 @@ struct GirlsPersonalRecordsView: View {
                 }
 
                 Text(wod.name)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -355,7 +355,7 @@ struct GirlsPersonalRecordsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Text("personal_records_girls.enter_your_time_score_leave_it_blank_to_remove_it")
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.60))
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 16)
@@ -372,7 +372,7 @@ struct GirlsPersonalRecordsView: View {
                             VStack(alignment: .leading, spacing: 8) {
                                 HStack {
                                     Text("personal_records.time_score_field_label")
-                                        .font(.system(size: 13, weight: .semibold))
+                                        .font(.system(size: 14, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.75))
                                 }
 
@@ -509,7 +509,7 @@ struct GirlsPersonalRecordsView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("personal_records_campeonatos.wod")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
                     Text(title)
@@ -524,7 +524,7 @@ struct GirlsPersonalRecordsView: View {
 
             ScrollView {
                 Text(description)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 2)
@@ -671,12 +671,12 @@ struct GirlsPersonalRecordsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
                     Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
@@ -714,7 +714,7 @@ struct GirlsPersonalRecordsView: View {
                                     }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
-                                        .font(.system(size: 13))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
@@ -1200,7 +1200,7 @@ Jasmine (AMRAP 20 min)
                         .padding(.top, 4)
 
                     Text("personal_records_girls.create_a_wod_and_if_you_want_enter_your_initial_result_now")
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
@@ -1214,7 +1214,7 @@ Jasmine (AMRAP 20 min)
 
                         if let message = addItemErrorMessage {
                             Text(message)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.yellow.opacity(0.85))
                         }
                     }
@@ -1263,7 +1263,7 @@ Jasmine (AMRAP 20 min)
     ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             TextField(placeholder, text: text)
