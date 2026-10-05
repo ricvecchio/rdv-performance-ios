@@ -547,8 +547,7 @@ Descanso: 1 min entre rounds.
                 Text(move.name)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                    .lineLimit(2)
 
                 Spacer()
 
