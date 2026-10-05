@@ -166,7 +166,7 @@ struct CreateTreinoAcademiaView: View {
                     .foregroundColor(.white.opacity(0.55))
 
                 TextEditor(text: $description)
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundColor(.white.opacity(0.55))
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
