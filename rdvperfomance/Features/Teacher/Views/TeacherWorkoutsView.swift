@@ -183,8 +183,9 @@ struct TeacherWorkoutsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
+            .shadow(color: Theme.Colors.primaryGreen.opacity(0.12), radius: 6, y: 2)
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
