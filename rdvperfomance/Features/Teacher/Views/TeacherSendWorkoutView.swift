@@ -1107,7 +1107,7 @@ struct TeacherSendWorkoutView: View {
 
     private func sectionTitle(_ title: LocalizedStringKey) -> some View {
         Text(title)
-            .font(.system(size: 16, weight: .semibold))
+            .font(.system(size: 17, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
     }
 
