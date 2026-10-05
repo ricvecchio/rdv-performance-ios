@@ -171,7 +171,7 @@ struct StudentDayDetailView: View {
     @State private var percentText: String = ""
     @FocusState private var isPercentFieldFocused: Bool
 
-    // Corpo principal com header, conteúdo do dia, blocos e footer
+    // Corpo principal com header, conteúdo do dia e blocos
     var body: some View {
         ZStack {
 
@@ -220,8 +220,6 @@ struct StudentDayDetailView: View {
                     .padding(.bottom, 28)
                     .frame(maxWidth: .infinity)
                 }
-
-                footer
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -339,23 +337,6 @@ struct StudentDayDetailView: View {
         .onChange(of: percentText) { _, _ in
             autoSaveCalcState()
         }
-    }
-
-    // Footer padrão de Treinos
-    private var footer: some View {
-        FooterBar(
-            path: $path,
-            kind: .studentHomeTreinosRecordsProfile(
-                isHomeSelected: false,
-                isTreinosSelected: true,
-                isRecordsSelected: false,
-                isPerfilSelected: false
-            ),
-            onSelectStudentSection: onSelectSection
-        )
-        .frame(height: Theme.Layout.footerHeight)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.footerBackground)
     }
 
     // Header com título e subtítulo

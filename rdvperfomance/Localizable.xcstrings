@@ -78451,6 +78451,7 @@
       }
     },
     "personal_records_campeonatos.add_new_event" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -78473,6 +78474,7 @@
       }
     },
     "personal_records_campeonatos.add_your_best_result_for_each_event" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -78693,6 +78695,7 @@
       }
     },
     "personal_records_crossfit_games.add_new_event" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -78715,6 +78718,7 @@
       }
     },
     "personal_records_crossfit_games.add_your_best_time_for_each_event" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -78825,6 +78829,7 @@
       }
     },
     "personal_records_endurance.add_new_item" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -78847,6 +78852,7 @@
       }
     },
     "personal_records_endurance.add_your_best_result_for_each_item" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -79023,6 +79029,7 @@
       }
     },
     "personal_records_girls.add_new_wod" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -79443,6 +79450,7 @@
       }
     },
     "personal_records_heroes.add_your_best_time_for_each_wod" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
