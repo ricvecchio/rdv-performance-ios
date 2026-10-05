@@ -760,13 +760,13 @@ Bar-Facing Burpees
                 .frame(width: 26, height: 1)
 
             Text("personal_records_open.open")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
             Text("personal_records.pr_label")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -795,7 +795,7 @@ Bar-Facing Burpees
                 }
 
                 Text(item.name)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(2)
 
@@ -803,13 +803,13 @@ Bar-Facing Burpees
 
                 if let displayValue, !displayValue.isEmpty {
                     Text(displayValue)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 

@@ -268,13 +268,13 @@ struct GirlsPersonalRecordsView: View {
                 .frame(width: 26, height: 1)
 
             Text("personal_records_girls.workout")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
             Text("personal_records.time_score_label")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -303,7 +303,7 @@ struct GirlsPersonalRecordsView: View {
                 }
 
                 Text(wod.name)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(2)
 
@@ -311,11 +311,11 @@ struct GirlsPersonalRecordsView: View {
 
                 if let storedValue {
                     Text(storedValue)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 
