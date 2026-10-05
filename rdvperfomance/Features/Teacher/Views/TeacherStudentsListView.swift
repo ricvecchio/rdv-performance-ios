@@ -227,7 +227,6 @@ struct TeacherStudentsListView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-                        header
                         filterRow
                         contentCard
                         if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
@@ -258,15 +257,6 @@ struct TeacherStudentsListView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
-    }
-
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("ui.select_a_student_to_view_details_and_create_workouts")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.35))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func sectionTitle(_ title: LocalizedStringKey) -> some View {
