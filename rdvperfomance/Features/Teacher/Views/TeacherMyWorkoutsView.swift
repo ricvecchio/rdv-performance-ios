@@ -84,9 +84,10 @@ struct TeacherMyWorkoutsView: View {
                                 }
                             }
                         }
-                        .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 16)
+                        .frame(maxWidth: contentMaxWidth)
+                        .frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
 
