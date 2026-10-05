@@ -187,7 +187,7 @@ struct StudentDashboardView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.yellow.opacity(0.85))
                 Text("dashboard.notices")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
             }
 
@@ -206,9 +206,9 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
 
     private var inviteNoticeMessage: String {
@@ -262,7 +262,7 @@ struct StudentDashboardView: View {
                 )
 
             Text("dashboard.you_do_not_have_a_linked_coach_yet")
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text("dashboard.link_with_a_coach_to_receive_workouts_and_track_your_progress")
@@ -285,9 +285,9 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
         .onAppear {
             isTeacherLinkIconPulsing = true
         }
@@ -412,7 +412,7 @@ struct StudentDashboardView: View {
 
         return VStack(alignment: .leading, spacing: 14) {
             Text("dashboard.weekly_progress_title")
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
             if viewModel.isLoading {
                 ProgressView()
@@ -457,16 +457,16 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
 
     private var nextFitWodCard: some View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text(nextFitWodTitle)
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()
@@ -598,9 +598,9 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
 
     @ViewBuilder
@@ -1027,7 +1027,7 @@ struct StudentDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack {
                 Text("dashboard.upcoming_workouts")
-                    .font(.system(size: 18, weight: .bold))
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
                 Button("dashboard.view_all") {
@@ -1061,9 +1061,9 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
 
     private var nextFitLoginSheet: some View {
