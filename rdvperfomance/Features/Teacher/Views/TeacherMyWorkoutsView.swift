@@ -25,65 +25,69 @@ struct TeacherMyWorkoutsView: View {
                     .frame(maxWidth: .infinity)
 
                 GeometryReader { proxy in
-                    let tileHeight = proxy.size.height / 3
+                    let tileHeight = max(180, (proxy.size.height - 60) / 3)
 
-                    VStack(spacing: 0) {
+                    ScrollView(showsIndicators: false) {
+                        VStack(spacing: 14) {
 
-                        programaTile(
-                            imageName: "rdv_programa_crossfit_horizontal",
-                            height: tileHeight,
-                            badgeText: "ui.crossfit_workouts",
-                            badgeIcon: "figure.strengthtraining.traditional"
-                        ) {
-                            switch mode {
-                            case .library:
-                                path.append(.teacherCrossfitLibrary(section: .benchmarks, mode: mode))
-                            case .create:
-                                path.append(.createCrossfitWOD(
-                                    category: .crossfit,
-                                    sectionKey: "meusTreinos",
-                                    sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
-                                ))
+                            programaTile(
+                                imageName: "rdv_programa_crossfit_horizontal",
+                                height: tileHeight,
+                                badgeText: "ui.crossfit_workouts",
+                                badgeIcon: "figure.strengthtraining.traditional"
+                            ) {
+                                switch mode {
+                                case .library:
+                                    path.append(.teacherCrossfitLibrary(section: .benchmarks, mode: mode))
+                                case .create:
+                                    path.append(.createCrossfitWOD(
+                                        category: .crossfit,
+                                        sectionKey: "meusTreinos",
+                                        sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
+                                    ))
+                                }
+                            }
+
+                            programaTile(
+                                imageName: "rdv_programa_academia_horizontal",
+                                height: tileHeight,
+                                badgeText: "ui.gym_workouts",
+                                badgeIcon: "dumbbell"
+                            ) {
+                                switch mode {
+                                case .library:
+                                    path.append(.teacherAcademiaLibrary(mode: mode))
+                                case .create:
+                                    path.append(.createTreinoAcademia(
+                                        category: .academia,
+                                        sectionKey: "meusTreinos",
+                                        sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
+                                    ))
+                                }
+                            }
+
+                            programaTile(
+                                imageName: "rdv_programa_treinos_em_casa_horizontal",
+                                height: tileHeight,
+                                badgeText: "ui.home_workouts",
+                                badgeIcon: "house.fill"
+                            ) {
+                                switch mode {
+                                case .library:
+                                    path.append(.teacherEmCasaLibrary(mode: mode))
+                                case .create:
+                                    path.append(.createTreinoCasa(
+                                        category: .emCasa,
+                                        sectionKey: "meusTreinos",
+                                        sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
+                                    ))
+                                }
                             }
                         }
-
-                        programaTile(
-                            imageName: "rdv_programa_academia_horizontal",
-                            height: tileHeight,
-                            badgeText: "ui.gym_workouts",
-                            badgeIcon: "dumbbell"
-                        ) {
-                            switch mode {
-                            case .library:
-                                path.append(.teacherAcademiaLibrary(mode: mode))
-                            case .create:
-                                path.append(.createTreinoAcademia(
-                                    category: .academia,
-                                    sectionKey: "meusTreinos",
-                                    sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
-                                ))
-                            }
-                        }
-
-                        programaTile(
-                            imageName: "rdv_programa_treinos_em_casa_horizontal",
-                            height: tileHeight,
-                            badgeText: "ui.home_workouts",
-                            badgeIcon: "house.fill"
-                        ) {
-                            switch mode {
-                            case .library:
-                                path.append(.teacherEmCasaLibrary(mode: mode))
-                            case .create:
-                                path.append(.createTreinoCasa(
-                                    category: .emCasa,
-                                    sectionKey: "meusTreinos",
-                                    sectionTitle: AppLocalization.string("ui.my_workouts", locale: locale)
-                                ))
-                            }
-                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 16)
                     }
-                    .frame(width: proxy.size.width, height: proxy.size.height)
                 }
 
                 FooterBar(
@@ -152,11 +156,14 @@ struct TeacherMyWorkoutsView: View {
             .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
         }
         .buttonStyle(.plain)
-        .background(
-            Color.black.opacity(0.3)
-                .shadow(color: .black.opacity(0.3), radius: 2, x: 0, y: 1)
-        )
         .frame(height: height)
+        .background(Color.black.opacity(0.76))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+        .shadow(color: Theme.Colors.primaryGreen.opacity(0.12), radius: 6, y: 2)
     }
 
     private func tileLayout(
@@ -166,94 +173,68 @@ struct TeacherMyWorkoutsView: View {
         badgeIcon: String
     ) -> some View {
 
-        tileBase(imageName: imageName, height: height)
-            .overlay(alignment: .bottomLeading) {
-                badgeView(text: badgeText, icon: badgeIcon)
-                    .padding(.leading, 155)
-                    .padding(.bottom, 14)
-                    .padding(.trailing, 24)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .overlay(Rectangle().stroke(Color.white.opacity(0.1), lineWidth: 0.5))
-            .clipped()
-            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+        VStack(spacing: 0) {
+            tileBase(imageName: imageName, height: height - 62)
+            badgeView(text: badgeText, icon: badgeIcon)
+        }
+        .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
     }
 
     private func tileBase(imageName: String, height: CGFloat) -> some View {
         ZStack {
-            ZStack {
-                Color.black
-
-                Image(imageName)
-                    .resizable()
-                    .scaledToFit()
-                    .frame(maxWidth: .infinity, maxHeight: height)
-                    .overlay(
-                        Rectangle()
-                            .fill(Color.black.opacity(0.7))
-                            .mask(
-                                HStack(spacing: 0) {
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [.black, .clear]),
-                                        startPoint: .leading,
-                                        endPoint: .trailing
-                                    )
-                                    .frame(width: 28)
-
-                                    Spacer()
-
-                                    LinearGradient(
-                                        gradient: Gradient(colors: [.black, .clear]),
-                                        startPoint: .trailing,
-                                        endPoint: .leading
-                                    )
-                                    .frame(width: 28)
-                                }
-                            )
+            Image(imageName)
+                .resizable()
+                .scaledToFill()
+                .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
+                .clipped()
+                .overlay(
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.38)],
+                        startPoint: .top,
+                        endPoint: .bottom
                     )
-            }
-            .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
-
-            LinearGradient(
-                colors: [.black.opacity(0.70), .black.opacity(0.15), .clear],
-                startPoint: .bottom,
-                endPoint: .top
-            )
-
-            VStack {
-                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .top, endPoint: .bottom)
-                    .frame(height: 4)
-                Spacer()
-                LinearGradient(colors: [.black.opacity(0.15), .clear], startPoint: .bottom, endPoint: .top)
-                    .frame(height: 4)
-            }
-            .frame(height: height)
-            .allowsHitTesting(false)
+                )
         }
         .frame(maxWidth: .infinity, minHeight: height, maxHeight: height)
     }
 
     private func badgeView(text: LocalizedStringKey, icon: String) -> some View {
         HStack(spacing: 10) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.green.opacity(0.90))
+            ZStack {
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(Theme.Colors.primaryGreen.opacity(0.14))
+
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+            }
+            .frame(width: 38, height: 38)
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+            )
 
             Text(text)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.95))
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
+
+            Spacer()
+
+            ZStack {
+                Circle()
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.42), lineWidth: 1)
+
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+            }
+            .frame(width: 30, height: 30)
         }
-        .padding(.horizontal, 14)
+        .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Theme.Colors.cardBackground.opacity(0.92))
-        .cornerRadius(14)
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
-        )
-        .shadow(color: .black.opacity(0.35), radius: 6, x: 0, y: 3)
+        .background(Color.black.opacity(0.88))
     }
 
     private func pop() {
