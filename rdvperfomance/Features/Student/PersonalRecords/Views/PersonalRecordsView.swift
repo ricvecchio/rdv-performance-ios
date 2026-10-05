@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum PersonalRecordsNavigationContext {
     case student
@@ -72,7 +73,7 @@ struct PersonalRecordsView: View {
     // Itens fixos conforme solicitado (ordem + nomes)
     private let menuItems: [PRMenuItem] = [
         .init(title: "Barbell", localizedTitle: "personal_records_barbell.barbell", sectionKey: "barbell", icon: "dumbbell.fill"),
-        .init(title: "Gymnastic", localizedTitle: "personal_records_gymnastic.gymnastic", sectionKey: "gymnastic", icon: "circle.circle"),
+        .init(title: "Gymnastic", localizedTitle: "personal_records_gymnastic.gymnastic", sectionKey: "gymnastic", icon: "gymnastic_rings"),
         .init(title: "Endurance", localizedTitle: "personal_records_endurance.endurance", sectionKey: "endurance", icon: "figure.run"),
         .init(title: "Notables", localizedTitle: "personal_records_notables.notables", sectionKey: "notables", icon: "star.fill"),
         .init(title: "Girls", localizedTitle: "personal_records_girls.girls", sectionKey: "girls", icon: "figure.strengthtraining.traditional"),
@@ -242,9 +243,15 @@ struct PersonalRecordsView: View {
                         .fill(Color.green.opacity(0.14))
                         .frame(width: 34, height: 34)
 
-                    Image(systemName: icon)
-                        .foregroundColor(.green.opacity(0.85))
-                        .font(.system(size: 16, weight: .semibold))
+                    if UIImage(named: icon) != nil {
+                        Image(icon)
+                            .renderingMode(.template)
+                            .foregroundColor(.green.opacity(0.85))
+                    } else {
+                        Image(systemName: icon)
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 16, weight: .semibold))
+                    }
                 }
 
                 Group {
