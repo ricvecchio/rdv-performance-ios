@@ -149,9 +149,10 @@ struct GymnasticPersonalRecordsView: View {
                 PersonalRecordsFooter(
                     path: $path,
                     navigationContext: navigationContext,
-                    studentFooterKind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
-                        isSobreSelected: true,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
