@@ -76,8 +76,6 @@ struct TeacherAcademiaLibraryView: View {
                                     }
                                 }
                             }
-
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
