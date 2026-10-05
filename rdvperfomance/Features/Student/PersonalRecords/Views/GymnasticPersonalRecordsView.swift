@@ -262,13 +262,13 @@ struct GymnasticPersonalRecordsView: View {
                 .frame(width: 26, height: 1)
 
             Text("personal_records.movement")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
             Text("personal_records.pr_label")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -298,14 +298,14 @@ struct GymnasticPersonalRecordsView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.name)
-                        .font(.system(size: 17, weight: .semibold))
+                        .font(.system(size: 18, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
 
                     if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text(item.metric)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(.white.opacity(0.45))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -316,13 +316,13 @@ struct GymnasticPersonalRecordsView: View {
 
                 if let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(value)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 

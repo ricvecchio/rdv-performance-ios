@@ -280,7 +280,7 @@ struct BarbellPersonalRecordsView: View {
                 .frame(width: 26, height: 1)
 
             Text("personal_records.movement")
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
@@ -292,7 +292,7 @@ struct BarbellPersonalRecordsView: View {
                     arguments: [preferredWeightUnit.shortLabel]
                 )
             )
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -322,7 +322,7 @@ struct BarbellPersonalRecordsView: View {
                 }
 
                 Text(move.name)
-                    .font(.system(size: 17, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -331,11 +331,11 @@ struct BarbellPersonalRecordsView: View {
 
                 if let displayValue {
                     Text(formatNumber(displayValue))
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 
