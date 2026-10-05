@@ -735,7 +735,7 @@ struct CrossfitGamesPersonalRecordsView: View {
     private func sectionHeader(title: String) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 13, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.75))
             Spacer()
         }

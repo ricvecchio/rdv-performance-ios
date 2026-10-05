@@ -602,7 +602,7 @@ struct BarbellPersonalRecordsView: View {
                         .frame(maxWidth: .infinity, alignment: .center)
 
                     Text("personal_records.history")
-                        .font(.system(size: 16, weight: .bold))
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white.opacity(0.92))
 
                     if entries.isEmpty {
