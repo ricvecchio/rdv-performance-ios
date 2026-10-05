@@ -120,7 +120,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var studentMenu: some View {
         let label = selectedStudent?.name
-            ?? AppLocalization.string("ui.select_student", locale: locale)
+            ?? ""
 
         let items: [(id: String, name: String)] = students.compactMap { s in
             guard let id = s.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
