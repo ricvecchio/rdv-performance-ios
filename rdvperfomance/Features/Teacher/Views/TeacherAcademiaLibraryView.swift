@@ -47,12 +47,7 @@ struct TeacherAcademiaLibraryView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-
-                            Text("ui.select_a_section")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
-
-                            VStack(spacing: 12) {
+                            VStack(spacing: 14) {
                                 ForEach(menuItems) { item in
                                     actionRow(title: item.title, icon: "folder.fill") {
                                         if templateMode == .attach {
@@ -141,11 +136,20 @@ struct TeacherAcademiaLibraryView: View {
 
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 11)
+                        .fill(Theme.Colors.primaryGreen.opacity(0.14))
+
+                    Image(systemName: icon)
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .frame(width: 42, height: 42)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11)
+                        .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+                )
 
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
@@ -155,15 +159,17 @@ struct TeacherAcademiaLibraryView: View {
 
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
+                    .font(.system(size: 14, weight: .semibold))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 16)
+            .background(Color.black.opacity(0.76))
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
+            .shadow(color: Theme.Colors.primaryGreen.opacity(0.12), radius: 6, y: 2)
         }
         .buttonStyle(.plain)
     }
