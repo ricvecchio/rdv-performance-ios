@@ -305,7 +305,7 @@ struct GymnasticPersonalRecordsView: View {
 
                     if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text(item.metric)
-                            .font(.system(size: 15, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.45))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
