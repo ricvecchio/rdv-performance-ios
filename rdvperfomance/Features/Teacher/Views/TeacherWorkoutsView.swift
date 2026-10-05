@@ -161,12 +161,12 @@ struct TeacherWorkoutsView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(2)
 
                     Text(subtitle)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(2)
                 }
