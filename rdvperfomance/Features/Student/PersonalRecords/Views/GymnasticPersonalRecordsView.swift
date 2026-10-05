@@ -290,9 +290,9 @@ struct GymnasticPersonalRecordsView: View {
                         .fill(Color.green.opacity(0.14))
                         .frame(width: 34, height: 34)
 
-                    Image(systemName: "figure.gymnastics")
+                    Image("gymnastic_rings")
+                        .renderingMode(.template)
                         .foregroundColor(.green.opacity(0.85))
-                        .font(.system(size: 16, weight: .semibold))
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
