@@ -154,7 +154,8 @@ struct CreateTreinoCasaView: View {
                 showPassword: $showPasswordDummy,
                 lineColor: Theme.Colors.divider,
                 textColor: .white.opacity(0.55),
-                placeholderColor: .white.opacity(0.55)
+                placeholderColor: .white.opacity(0.55),
+                inputBackground: Color.white.opacity(0.06)
             )
 
             Divider().background(Theme.Colors.divider)
