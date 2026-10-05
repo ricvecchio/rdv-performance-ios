@@ -7,7 +7,7 @@ struct TeacherMyWorkoutsView: View {
     let mode: TeacherWorkoutsMode
     @Environment(\.locale) private var locale
 
-    private let contentMaxWidth: CGFloat = 380
+    private let contentMaxWidth: CGFloat = 430
 
     var body: some View {
         ZStack {
@@ -84,7 +84,7 @@ struct TeacherMyWorkoutsView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 16)
+                        .padding(.horizontal, 10)
                         .padding(.vertical, 16)
                         .frame(maxWidth: contentMaxWidth)
                         .frame(maxWidth: .infinity, alignment: .center)
