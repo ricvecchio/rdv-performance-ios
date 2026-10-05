@@ -141,9 +141,12 @@ struct StudentDashboardView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(greeting)
+            DashboardGreeting.styledText(
+                name: session.userName,
+                audience: .student,
+                locale: locale
+            )
                 .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white)
             Text("dashboard.discipline_today_results_tomorrow")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
@@ -1240,14 +1243,6 @@ struct StudentDashboardView: View {
         }
         .padding(.vertical, 8)
         .contentShape(Rectangle())
-    }
-
-    private var greeting: String {
-        DashboardGreeting.text(
-            name: session.userName,
-            audience: .student,
-            locale: locale
-        )
     }
 
     private func weeklyProgressText(completed: Int, total: Int) -> String {

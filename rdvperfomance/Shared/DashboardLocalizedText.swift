@@ -7,6 +7,26 @@ enum DashboardGreetingAudience {
 }
 
 enum DashboardGreeting {
+    static func styledText(
+        name: String?,
+        audience: DashboardGreetingAudience,
+        locale: Locale
+    ) -> Text {
+        let greeting = text(name: name, audience: audience, locale: locale)
+        let trimmedName = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+
+        guard !trimmedName.isEmpty, let nameRange = greeting.range(of: trimmedName) else {
+            return Text(greeting).foregroundColor(.white)
+        }
+
+        return Text(String(greeting[..<nameRange.lowerBound]))
+            .foregroundColor(.white)
+            + Text(trimmedName)
+                .foregroundColor(Theme.Colors.primaryGreen)
+            + Text(String(greeting[nameRange.upperBound...]))
+                .foregroundColor(.white)
+    }
+
     static func text(
         name: String?,
         audience: DashboardGreetingAudience,

@@ -158,9 +158,12 @@ struct TeacherDashboardView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(greeting)
+            DashboardGreeting.styledText(
+                name: session.userName,
+                audience: .teacher,
+                locale: locale
+            )
                 .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white)
 
             Text("ui.tracking_your_class_s_progress")
                 .font(.system(size: 14))
@@ -464,14 +467,6 @@ struct TeacherDashboardView: View {
         let items = rawItems.compactMap(TeacherQuickAccessItem.init(rawValue:))
         guard items.count == 3, Set(items).count == 3 else { return nil }
         return items
-    }
-
-    private var greeting: String {
-        DashboardGreeting.text(
-            name: session.userName,
-            audience: .teacher,
-            locale: locale
-        )
     }
 
     private var todayText: String {
