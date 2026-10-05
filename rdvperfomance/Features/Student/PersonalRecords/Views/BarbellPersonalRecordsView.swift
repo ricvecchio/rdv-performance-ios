@@ -321,25 +321,11 @@ struct BarbellPersonalRecordsView: View {
                         .font(.system(size: 16, weight: .semibold))
                 }
 
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(move.name)
-                        .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
-                        .lineLimit(1)
-                        .minimumScaleFactor(0.85)
-
-                    Text(
-                        String(
-                            format: AppLocalization.string("personal_records.barbell.pr_with_unit", locale: locale),
-                            locale: locale,
-                            arguments: [preferredWeightUnit.shortLabel]
-                        )
-                    )
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.45))
+                Text(move.name)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
-                }
 
                 Spacer()
 
