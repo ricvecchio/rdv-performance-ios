@@ -146,28 +146,6 @@ struct BarbellPersonalRecordsView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-
-                            HStack(alignment: .center, spacing: 10) {
-                                Text("personal_records_barbell.add_your_maximum_load_for_each_movement")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.55))
-
-                                Spacer()
-
-                                Button {
-                                    addMoveErrorMessage = nil
-                                    newMoveName = ""
-                                    newMoveValue = ""
-                                    showAddMoveSheet = true
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.green.opacity(0.85))
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("personal_records_barbell.add_new_movement")
-                            }
-
                             tableContainer()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -222,7 +200,27 @@ struct BarbellPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    Button {
+                        addMoveErrorMessage = nil
+                        newMoveName = ""
+                        newMoveValue = ""
+                        showAddMoveSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -313,10 +311,15 @@ struct BarbellPersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "dumbbell.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 15))
-                    .frame(width: 26)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: "dumbbell.fill")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
 
                 Text(move.name)
                     .font(.system(size: 15, weight: .semibold))

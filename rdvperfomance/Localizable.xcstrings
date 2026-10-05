@@ -79506,6 +79506,7 @@
       }
     },
     "personal_records_notables.add_new_benchmark" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
