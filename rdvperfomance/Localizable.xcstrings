@@ -79045,6 +79045,7 @@
       }
     },
     "personal_records_girls.add_your_best_result_for_each_workout" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
