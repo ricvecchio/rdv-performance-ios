@@ -261,7 +261,7 @@ struct PersonalRecordsView: View {
                         Text(title)
                     }
                 }
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
                 .lineLimit(2)
 
@@ -273,11 +273,11 @@ struct PersonalRecordsView: View {
             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 4)
-            .background(Theme.Colors.cardBackground)
+            .background(Color.black.opacity(0.68))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
