@@ -82,10 +82,10 @@ struct AdminProfileSelectionView: View {
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.black.opacity(0.55))
+                    .fill(Color.black.opacity(0.68))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
             )
             .shadow(color: .black.opacity(0.25), radius: 10, y: 6)
