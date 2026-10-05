@@ -136,6 +136,16 @@ struct GymnasticPersonalRecordsView: View {
                         VStack(alignment: .leading, spacing: 14) {
 
                             HStack(alignment: .center, spacing: 10) {
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 9)
+                                        .fill(Color.green.opacity(0.14))
+                                        .frame(width: 34, height: 34)
+
+                                    Image(systemName: "figure.gymnastics")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+
                                 Text("personal_records_gymnastic.add_your_personal_record_for_each_movement")
                                     .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.55))
