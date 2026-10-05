@@ -12,6 +12,7 @@ struct TrainingDayFS: Identifiable, Codable, Hashable {
 
     var title: String
     var description: String
+    var categoryRaw: String?
 
     var blocks: [BlockFS]
 

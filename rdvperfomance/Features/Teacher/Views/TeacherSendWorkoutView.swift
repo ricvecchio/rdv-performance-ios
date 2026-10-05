@@ -114,8 +114,11 @@ struct TeacherSendWorkoutView: View {
         self.startsAtWorkout = startsAtWorkout && self.preselectedStudentID != nil
         self.preselectedVideo = preselectedVideo
         _selectedStudentIDs = State(initialValue: self.preselectedStudentID.map { [$0] } ?? [])
+        let preselectedTemplateCategory = preselectedTemplate
+            .flatMap { TreinoTipo.normalized(from: $0.categoryRaw) }
+            ?? category
         _selectedTemplates = State(
-            initialValue: preselectedTemplate.map { [category: $0] } ?? [:]
+            initialValue: preselectedTemplate.map { [preselectedTemplateCategory: $0] } ?? [:]
         )
         _step = State(initialValue: self.startsAtWorkout ? .workout : .student)
     }
@@ -1318,7 +1321,7 @@ struct TeacherSendWorkoutView: View {
                         blocks: blocks
                     )
                 } else {
-                    for (_, template) in selectedTemplatesInOrder {
+                    for (templateCategory, template) in selectedTemplatesInOrder {
                         let blocks = template.blocks ?? []
                         _ = try await FirestoreRepository.shared.upsertDay(
                             weekId: week.weekId,
@@ -1328,7 +1331,8 @@ struct TeacherSendWorkoutView: View {
                             date: selectedDate,
                             title: template.title,
                             description: template.description,
-                            blocks: blocks
+                            blocks: blocks,
+                            categoryRaw: templateCategory.rawValue
                         )
                     }
                 }

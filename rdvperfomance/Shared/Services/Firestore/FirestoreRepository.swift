@@ -487,7 +487,8 @@ final class FirestoreRepository {
         date: Date,
         title: String,
         description: String,
-        blocks: [BlockFS] = []
+        blocks: [BlockFS] = [],
+        categoryRaw: String? = nil
     ) async throws -> String {
         try await trainingRepository.upsertDay(
             weekId: weekId,
@@ -497,7 +498,8 @@ final class FirestoreRepository {
             date: date,
             title: title,
             description: description,
-            blocks: blocks
+            blocks: blocks,
+            categoryRaw: categoryRaw
         )
     }
 

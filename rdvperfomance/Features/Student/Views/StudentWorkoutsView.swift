@@ -886,7 +886,7 @@ struct StudentWorkoutsView: View {
                     ZStack {
                         RoundedRectangle(cornerRadius: 9)
                             .fill(Theme.Colors.primaryGreen.opacity(0.14))
-                        Image(systemName: workoutIconName(for: week))
+                        Image(systemName: workoutIconName(for: day, in: week))
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundColor(Theme.Colors.primaryGreen)
                     }
@@ -1005,8 +1005,12 @@ struct StudentWorkoutsView: View {
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
-    private func workoutIconName(for week: TrainingWeekFS) -> String {
-        guard let category = TreinoTipo.normalized(from: week.categoryRaw) else {
+    private func workoutIconName(for day: TrainingDayFS, in week: TrainingWeekFS) -> String {
+        let category = day.categoryRaw
+            .flatMap { TreinoTipo.normalized(from: $0) }
+            ?? TreinoTipo.normalized(from: week.categoryRaw)
+
+        guard let category else {
             return "dumbbell.fill"
         }
 

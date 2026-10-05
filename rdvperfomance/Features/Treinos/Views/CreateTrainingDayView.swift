@@ -653,7 +653,8 @@ struct CreateTrainingDayView: View {
                 date: date,
                 title: cleanTitle,
                 description: description,
-                blocks: payloadBlocks
+                blocks: payloadBlocks,
+                categoryRaw: category.rawValue
             )
 
             successMessage = AppLocalization.string(currentEditingDayId == nil

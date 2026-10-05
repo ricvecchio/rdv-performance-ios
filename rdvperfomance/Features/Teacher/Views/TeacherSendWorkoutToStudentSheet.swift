@@ -408,7 +408,8 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 date: date,
                 title: template.title,
                 description: template.description,
-                blocks: blocks
+                blocks: blocks,
+                categoryRaw: category.rawValue
             )
 
             successMessage = AppLocalization.string("ui.workout_sent_successfully", locale: locale)
