@@ -364,7 +364,18 @@ struct StudentWorkoutsView: View {
     }
 
     private func weekHeaderContent(week: TrainingWeekFS, isExpanded: Bool) -> some View {
-        HStack(spacing: 14) {
+        let progressPercent = vm.progressPercent(for: week)
+        let progressValue = Double(progressPercent) / 100.0
+        let weekId = week.id ?? ""
+        let trainingDays = vm.days(for: weekId).filter { !$0.isVideoDay }
+        let completedCount = trainingDays.compactMap(\.id)
+            .filter { vm.isCompleted(dayId: $0, in: weekId) }
+            .count
+        let completionFormat = trainingDays.count == 1
+            ? AppLocalization.string("dashboard.upcoming_workouts.progress_singular", locale: locale)
+            : AppLocalization.string("dashboard.upcoming_workouts.progress_plural", locale: locale)
+
+        return HStack(spacing: 14) {
             Image(systemName: "calendar")
                 .font(.system(size: 18))
                 .foregroundColor(.green.opacity(0.85))
@@ -384,11 +395,11 @@ struct StudentWorkoutsView: View {
                         String(
                             format: AppLocalization.string("workout.progress_percentage", locale: locale),
                             locale: locale,
-                            arguments: [Int64(vm.progressPercent(for: week))]
+                            arguments: [Int64(progressPercent)]
                         )
                     )
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.55))
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Theme.Colors.primaryGreen)
                 }
 
                 HStack(spacing: 8) {
@@ -407,6 +418,19 @@ struct StudentWorkoutsView: View {
                             .lineLimit(1)
                     }
                 }
+
+                Text(
+                    String(
+                        format: completionFormat,
+                        locale: locale,
+                        arguments: [Int64(completedCount), Int64(trainingDays.count)]
+                    )
+                )
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+
+                ProgressView(value: progressValue)
+                    .tint(Theme.Colors.primaryGreen)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
