@@ -265,11 +265,11 @@ struct BarbellPersonalRecordsView: View {
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -280,7 +280,7 @@ struct BarbellPersonalRecordsView: View {
                 .frame(width: 26, height: 1)
 
             Text("personal_records.movement")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
@@ -292,7 +292,7 @@ struct BarbellPersonalRecordsView: View {
                     arguments: [preferredWeightUnit.shortLabel]
                 )
             )
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -322,7 +322,7 @@ struct BarbellPersonalRecordsView: View {
                 }
 
                 Text(move.name)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -379,7 +379,7 @@ struct BarbellPersonalRecordsView: View {
                                 arguments: [preferredWeightUnit.shortLabel]
                             )
                         )
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         HStack(spacing: 10) {
@@ -444,7 +444,7 @@ struct BarbellPersonalRecordsView: View {
                                     .foregroundColor(.green.opacity(0.90))
 
                                 Text("personal_records.progress")
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
                             }
 
@@ -454,7 +454,7 @@ struct BarbellPersonalRecordsView: View {
                                 historyMove = move
                             } label: {
                                 Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.green.opacity(0.90))
                             }
                             .buttonStyle(.plain)
@@ -467,7 +467,7 @@ struct BarbellPersonalRecordsView: View {
 
                     if canDeleteSelectedMove {
                         Text("personal_records_barbell.deleting_will_remove_this_record_from_your_history_this_action_cannot_be_undone")
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.50))
                             .multilineTextAlignment(.leading)
                             .padding(.horizontal, 16)
@@ -611,7 +611,7 @@ struct BarbellPersonalRecordsView: View {
                             .foregroundColor(.white.opacity(0.60))
 
                         Text("personal_records_barbell.save_new_prs_to_track_your_progress")
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.45))
                     } else {
                         VStack(spacing: 0) {
@@ -651,7 +651,7 @@ struct BarbellPersonalRecordsView: View {
                                     Spacer()
 
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
-                                        .font(.system(size: 13))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
 
                                     Button {
@@ -779,7 +779,7 @@ struct BarbellPersonalRecordsView: View {
                         arguments: [preferredWeightUnit.shortLabel]
                     )
                 )
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -788,7 +788,7 @@ struct BarbellPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_barbell.movement_name")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         TextField("personal_records_barbell.e_g_bulgarian_split_squat", text: $newMoveName)
@@ -816,7 +816,7 @@ struct BarbellPersonalRecordsView: View {
                                 arguments: [preferredWeightUnit.shortLabel]
                             )
                         )
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         HStack(spacing: 10) {
@@ -843,7 +843,7 @@ struct BarbellPersonalRecordsView: View {
 
                     if let msg = addMoveErrorMessage {
                         Text(msg)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.yellow.opacity(0.85))
                             .padding(.top, 4)
                     }

@@ -745,11 +745,11 @@ Bar-Facing Burpees
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -760,13 +760,13 @@ Bar-Facing Burpees
                 .frame(width: 26, height: 1)
 
             Text("personal_records_open.open")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
             Text("personal_records.pr_label")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -795,7 +795,7 @@ Bar-Facing Burpees
                 }
 
                 Text(item.name)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -850,7 +850,7 @@ Bar-Facing Burpees
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                     Text("personal_records_endurance.enter_your_best_result_leave_it_blank_to_remove_it")
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
@@ -865,7 +865,7 @@ Bar-Facing Burpees
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
                             Text("personal_records.result_field_label")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
                         }
 
@@ -993,7 +993,7 @@ Bar-Facing Burpees
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("personal_records_campeonatos.wod")
-                        .font(.system(size: 12, weight: .bold))
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
                     Text(wod.titleLine)
@@ -1008,7 +1008,7 @@ Bar-Facing Burpees
 
             ScrollView {
                 Text(wod.description)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1165,12 +1165,12 @@ Bar-Facing Burpees
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
                     Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
@@ -1208,7 +1208,7 @@ Bar-Facing Burpees
                                     }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
-                                        .font(.system(size: 13))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
@@ -1389,7 +1389,7 @@ Bar-Facing Burpees
                         .padding(.top, 4)
 
                     Text("personal_records_endurance.create_an_item_and_if_you_want_enter_your_initial_result_now")
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
@@ -1405,7 +1405,7 @@ Bar-Facing Burpees
 
                         if let message = addItemErrorMessage {
                             Text(message)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.yellow.opacity(0.85))
                         }
                     }
@@ -1450,7 +1450,7 @@ Bar-Facing Burpees
     private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             TextField(placeholder, text: text)

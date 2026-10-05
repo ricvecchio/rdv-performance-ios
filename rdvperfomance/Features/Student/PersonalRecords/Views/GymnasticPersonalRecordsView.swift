@@ -247,11 +247,11 @@ struct GymnasticPersonalRecordsView: View {
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -262,13 +262,13 @@ struct GymnasticPersonalRecordsView: View {
                 .frame(width: 26, height: 1)
 
             Text("personal_records.movement")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
             Text("personal_records.pr_label")
-                .font(.system(size: 12, weight: .bold))
+                .font(.system(size: 14, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -305,7 +305,7 @@ struct GymnasticPersonalRecordsView: View {
 
                     if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text(item.metric)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.45))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -359,12 +359,12 @@ struct GymnasticPersonalRecordsView: View {
 
                 if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(item.metric)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                 }
 
                 Text("personal_records_gymnastic.enter_your_record_leave_it_blank_to_remove_it")
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -372,7 +372,7 @@ struct GymnasticPersonalRecordsView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
                         Text("personal_records.result_field_label")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
                     }
 
@@ -395,7 +395,7 @@ struct GymnasticPersonalRecordsView: View {
 
                 if canDelete {
                     Text("personal_records_barbell.deleting_will_remove_this_record_from_your_history_this_action_cannot_be_undone")
-                        .font(.system(size: 12, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.50))
                         .multilineTextAlignment(.leading)
                         .padding(.horizontal, 16)
@@ -517,7 +517,7 @@ struct GymnasticPersonalRecordsView: View {
                     .padding(.top, 4)
 
                 Text("personal_records_gymnastic.create_an_item_and_if_you_want_enter_your_record_now")
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -526,7 +526,7 @@ struct GymnasticPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_barbell.movement_name")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         TextField("personal_records_gymnastic.e_g_rope_climb", text: $newItemName)
@@ -546,7 +546,7 @@ struct GymnasticPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_gymnastic.type_metric_optional")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         TextField("personal_records_gymnastic.e_g_max_reps_for_time_max_distance", text: $newItemMetric)
@@ -566,7 +566,7 @@ struct GymnasticPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_gymnastic.record_optional")
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         TextField("personal_records_gymnastic.e_g_50_1_90m_3_25", text: $newItemValue)
@@ -586,7 +586,7 @@ struct GymnasticPersonalRecordsView: View {
 
                     if let msg = addItemErrorMessage {
                         Text(msg)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.yellow.opacity(0.85))
                             .padding(.top, 4)
                     }
@@ -789,7 +789,7 @@ struct GymnasticPersonalRecordsView: View {
     private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text("common.date")
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             Button {
@@ -818,12 +818,12 @@ struct GymnasticPersonalRecordsView: View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
                 Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
                     Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
@@ -861,7 +861,7 @@ struct GymnasticPersonalRecordsView: View {
                                     }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
-                                        .font(.system(size: 13))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
