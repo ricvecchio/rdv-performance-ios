@@ -47,7 +47,7 @@ struct TeacherAcademiaLibraryView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            VStack(spacing: 14) {
+                            VStack(spacing: 10) {
                                 ForEach(menuItems) { item in
                                     actionRow(title: item.title, icon: "folder.fill") {
                                         if templateMode == .attach {
@@ -160,7 +160,7 @@ struct TeacherAcademiaLibraryView: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 16)
+            .padding(.vertical, 12)
             .background(Color.black.opacity(0.76))
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
