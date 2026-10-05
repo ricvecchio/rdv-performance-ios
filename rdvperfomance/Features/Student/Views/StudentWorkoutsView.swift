@@ -267,15 +267,24 @@ struct StudentWorkoutsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 9)
-                .background(selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
+                .background(
+                    selectedFilter == filter
+                        ? Theme.Colors.primaryGreen.opacity(0.24)
+                        : Color.black.opacity(0.42)
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.30) : Color.white.opacity(0.12),
+                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.55) : Color.white.opacity(0.12),
                             lineWidth: 1
                         )
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(
+                    color: selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.20) : .clear,
+                    radius: 8,
+                    y: 2
+                )
         }
         .buttonStyle(.plain)
     }
@@ -315,16 +324,9 @@ struct StudentWorkoutsView: View {
     }
 
     private func weeksList(_ weeks: [TrainingWeekFS]) -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             ForEach(Array(weeks.enumerated()), id: \.offset) { item in
-                let idx = item.offset
-                let week = item.element
-
-                expandableWeekRow(week)
-
-                if idx < weeks.count - 1 {
-                    innerDivider(leading: 54)
-                }
+                expandableWeekRow(item.element)
             }
         }
     }
@@ -375,13 +377,21 @@ struct StudentWorkoutsView: View {
             ? AppLocalization.string("dashboard.upcoming_workouts.progress_singular", locale: locale)
             : AppLocalization.string("dashboard.upcoming_workouts.progress_plural", locale: locale)
 
-        return HStack(spacing: 14) {
-            Image(systemName: "calendar")
-                .font(.system(size: 18))
-                .foregroundColor(.green.opacity(0.85))
-                .frame(width: 28)
+        return HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 11)
+                    .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                Image(systemName: "calendar")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+            }
+            .frame(width: 42, height: 42)
+            .overlay(
+                RoundedRectangle(cornerRadius: 11)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+            )
 
-            VStack(alignment: .leading, spacing: 3) {
+            VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 8) {
                     Text(vm.subtitleForWeek(week, locale: locale))
                         .font(.system(size: 18, weight: .medium))
@@ -400,6 +410,14 @@ struct StudentWorkoutsView: View {
                     )
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(Theme.Colors.primaryGreen)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Theme.Colors.primaryGreen.opacity(0.14))
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(Theme.Colors.primaryGreen.opacity(0.25), lineWidth: 1)
+                        )
                 }
 
                 HStack(spacing: 8) {
@@ -439,16 +457,17 @@ struct StudentWorkoutsView: View {
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                .padding(.top, 14)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, 16)
         .contentShape(Rectangle())
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color.black.opacity(0.76))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.25), lineWidth: 1)
         )
     }
 
@@ -498,7 +517,7 @@ struct StudentWorkoutsView: View {
                         trainingDayGroup(group, week: week, weekId: weekId)
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.top, 10)
             }
         }
     }
@@ -801,10 +820,14 @@ struct StudentWorkoutsView: View {
                 }
             } label: {
                 HStack(spacing: 14) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 16))
-                        .foregroundColor(Theme.Colors.primaryGreen)
-                        .frame(width: 28)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                        Image(systemName: "calendar")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen)
+                    }
+                    .frame(width: 34, height: 34)
 
                     Text(trainingDateSubtitle(for: group.date, fallback: fallback))
                         .font(.system(size: 17, weight: isExpanded ? .semibold : .medium))
@@ -821,34 +844,32 @@ struct StudentWorkoutsView: View {
                         .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 13)
+                .padding(.vertical, 14)
                 .contentShape(Rectangle())
-                .background(isExpanded ? Theme.Colors.primaryGreen.opacity(0.12) : Color.clear)
+                .background(isExpanded ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.54))
             }
             .buttonStyle(.plain)
 
             if isExpanded {
-                VStack(spacing: 0) {
-                    innerDivider(leading: 16)
-
-                    ForEach(Array(group.days.enumerated()), id: \.element.id) { index, day in
-                        trainingDayRow(day, week: week, weekId: weekId)
-                        if index < group.days.count - 1 {
-                            innerDivider(leading: 54)
-                        }
+                VStack(spacing: 8) {
+                    ForEach(Array(group.days.enumerated()), id: \.element.id) { item in
+                        trainingDayRow(item.element, week: week, weekId: weekId)
                     }
                 }
-                .padding(.vertical, 4)
-                .background(Theme.Colors.cardBackground)
+                .padding(10)
+                .background(Color.black.opacity(0.40))
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color.black.opacity(0.72))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Color.white.opacity(0.12),
+                    lineWidth: 1
+                )
         )
     }
 
@@ -857,15 +878,19 @@ struct StudentWorkoutsView: View {
         week: TrainingWeekFS,
         weekId: String
     ) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             Button {
                 path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: week.weekTitle))
             } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: "dumbbell.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.green.opacity(0.85))
-                        .frame(width: 28)
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                        Image(systemName: "dumbbell.fill")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen)
+                    }
+                    .frame(width: 36, height: 36)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(DefaultWorkoutLocalization.presentation(for: day, locale: locale).title)
@@ -890,19 +915,36 @@ struct StudentWorkoutsView: View {
                         .labelStyle(.titleAndIcon)
                 }
 
+                let isCompleted = vm.isCompleted(dayId: dayId, in: weekId)
                 Button {
                     Task { await vm.toggleCompleted(dayId: dayId, in: weekId, locale: locale) }
                 } label: {
-                    Image(systemName: completionIcon(isCompleted: vm.isCompleted(dayId: dayId, in: weekId)))
-                        .font(.system(size: 20))
-                        .foregroundColor(vm.isCompleted(dayId: dayId, in: weekId) ? .green.opacity(0.85) : .white.opacity(0.35))
+                    ZStack {
+                        Circle()
+                            .fill(isCompleted ? Theme.Colors.primaryGreen : .clear)
+                        Circle()
+                            .stroke(
+                                isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35),
+                                lineWidth: 1.5
+                            )
+                        if isCompleted {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.black.opacity(0.78))
+                        }
+                    }
+                    .frame(width: 24, height: 24)
                 }
                 .buttonStyle(.plain)
-                .padding(.trailing, 16)
             }
         }
-        .padding(.leading, 16)
-        .padding(.vertical, 12)
+        .padding(12)
+        .background(Color.black.opacity(0.68))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
@@ -961,10 +1003,6 @@ struct StudentWorkoutsView: View {
         formatter.locale = locale
         formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
         return formatter.string(from: date).capitalized(with: formatter.locale)
-    }
-
-    private func completionIcon(isCompleted: Bool) -> String {
-        return isCompleted ? "checkmark.circle.fill" : "circle"
     }
 
     private func applyInitialExpansionIfNeeded() {
