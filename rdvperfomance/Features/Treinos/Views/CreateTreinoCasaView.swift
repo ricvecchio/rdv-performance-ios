@@ -153,7 +153,7 @@ struct CreateTreinoCasaView: View {
                 isSecure: false,
                 showPassword: $showPasswordDummy,
                 lineColor: Theme.Colors.divider,
-                textColor: .white.opacity(0.92),
+                textColor: .white.opacity(0.55),
                 placeholderColor: .white.opacity(0.55)
             )
 
