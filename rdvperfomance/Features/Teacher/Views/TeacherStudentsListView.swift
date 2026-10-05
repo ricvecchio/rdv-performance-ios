@@ -301,10 +301,10 @@ struct TeacherStudentsListView: View {
                 .padding(.horizontal, 6)
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
-                .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
+                .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Color.white.opacity(0.12), lineWidth: 1)
+                        .stroke(isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
         }
@@ -330,8 +330,12 @@ struct TeacherStudentsListView: View {
             .padding(.vertical, 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func studentsList(_ list: [AppUser]) -> some View {
@@ -345,7 +349,7 @@ struct TeacherStudentsListView: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(student.name)
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: 17, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
 
                         Text(
@@ -355,7 +359,7 @@ struct TeacherStudentsListView: View {
                                 arguments: [combinedCategoryText(student)]
                             )
                         )
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 14, weight: .medium))
                             .foregroundColor(.white.opacity(0.55))
                     }
 
@@ -595,8 +599,12 @@ struct TeacherStudentsListView: View {
             Color.clear.frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private var pendingLinkRequestsCard: some View {
@@ -635,8 +643,12 @@ struct TeacherStudentsListView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func linkRequestRow(_ item: StudentLinkItem) -> some View {
