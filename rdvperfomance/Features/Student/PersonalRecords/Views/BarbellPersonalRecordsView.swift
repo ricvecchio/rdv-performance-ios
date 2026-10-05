@@ -322,7 +322,7 @@ struct BarbellPersonalRecordsView: View {
                 }
 
                 Text(move.name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)

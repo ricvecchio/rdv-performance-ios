@@ -78141,6 +78141,7 @@
       }
     },
     "personal_records_barbell.add_new_movement" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -78163,6 +78164,7 @@
       }
     },
     "personal_records_barbell.add_your_maximum_load_for_each_movement" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
