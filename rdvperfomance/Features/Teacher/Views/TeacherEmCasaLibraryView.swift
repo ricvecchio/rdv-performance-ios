@@ -47,7 +47,7 @@ struct TeacherEmCasaLibraryView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            VStack(spacing: 7) {
+                            VStack(spacing: 10) {
                                 ForEach(menuItems) { item in
                                     actionRow(title: item.title, icon: "folder.fill") {
                                         if templateMode == .attach {
@@ -79,7 +79,7 @@ struct TeacherEmCasaLibraryView: View {
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
-                        .padding(.top, 10)
+                        .padding(.top, 16)
 
                         Spacer(minLength: 0)
                     }
@@ -136,16 +136,16 @@ struct TeacherEmCasaLibraryView: View {
         Button(action: action) {
             HStack(spacing: 14) {
                 ZStack {
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 11)
                         .fill(Theme.Colors.primaryGreen.opacity(0.14))
 
                     Image(systemName: icon)
                         .foregroundColor(Theme.Colors.primaryGreen)
                         .font(.system(size: 17, weight: .semibold))
                 }
-                .frame(width: 36, height: 36)
+                .frame(width: 42, height: 42)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: 11)
                         .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
                 )
 
@@ -160,7 +160,7 @@ struct TeacherEmCasaLibraryView: View {
                     .font(.system(size: 14, weight: .semibold))
             }
             .padding(.horizontal, 16)
-            .padding(.vertical, 9)
+            .padding(.vertical, 12)
             .background(Color.black.opacity(0.76))
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
