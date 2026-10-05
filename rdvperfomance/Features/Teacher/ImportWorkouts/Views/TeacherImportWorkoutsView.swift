@@ -178,7 +178,6 @@ struct TeacherImportWorkoutsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadWorkouts() }
-        .onAppear { Task { await loadWorkouts() } }
         .sheet(isPresented: $isAddSheetPresented) {
             TeacherAddWorkoutSheet { title in
                 Task { await addWorkout(title: title) }
@@ -198,9 +197,7 @@ struct TeacherImportWorkoutsView: View {
             )
             .ignoresSafeArea()
         }
-        .sheet(item: $activeSheet, onDismiss: {
-            Task { await loadWorkouts() }
-        }) { sheet in
+        .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .detail(let w):
                 TeacherImportedWorkoutDetailsSheet(
