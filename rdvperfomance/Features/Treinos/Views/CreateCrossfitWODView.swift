@@ -170,7 +170,7 @@ struct CreateCrossfitWODView: View {
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Color.black.opacity(0.22))
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -258,7 +258,7 @@ struct CreateCrossfitWODView: View {
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Color.black.opacity(0.22))
+                            .background(Color.white.opacity(0.06))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
