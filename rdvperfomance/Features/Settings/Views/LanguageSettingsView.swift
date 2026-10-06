@@ -112,8 +112,12 @@ struct LanguageSettingsView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func languageRow(_ language: AppLanguage) -> some View {
@@ -128,7 +132,7 @@ struct LanguageSettingsView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 4, style: .continuous))
 
                 Text(language.localizedName)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()

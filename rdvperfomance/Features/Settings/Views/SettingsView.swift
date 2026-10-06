@@ -192,8 +192,12 @@ struct SettingsView: View {
         VStack(spacing: 0) { content() }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
-            .background(Theme.Colors.cardBackground)
+            .background(Color.black.opacity(0.68))
             .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
     }
 
     private func divider() -> some View {
@@ -212,7 +216,7 @@ struct SettingsView: View {
                     .frame(width: 28)
 
                 Text(title)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()

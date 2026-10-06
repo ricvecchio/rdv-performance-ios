@@ -112,14 +112,14 @@ struct InfoLegalView: View {
 
                 if let title = section.title {
                     Text(LocalizedStringKey(title))
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
                 }
 
                 if let intro = section.introText {
                     Text(LocalizedStringKey(intro))
-                        .font(.system(size: 15))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.82))
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -131,7 +131,7 @@ struct InfoLegalView: View {
                                 Text("•")
                                     .foregroundColor(.white.opacity(0.78))
                                 Text(LocalizedStringKey(b))
-                                    .font(.system(size: 15))
+                                    .font(.system(size: 14))
                                     .foregroundColor(.white.opacity(0.78))
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -146,8 +146,12 @@ struct InfoLegalView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 }
 
