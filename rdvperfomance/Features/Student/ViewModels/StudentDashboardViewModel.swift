@@ -233,6 +233,7 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     func load(locale: Locale) async {
+        hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         guard !isLoadingData else { return }
         isLoadingData = true
         isLoading = true
@@ -319,11 +320,7 @@ final class StudentDashboardViewModel: ObservableObject {
             isMuralhaStudent = false
         }
 
-        if isMuralhaStudent {
-            await loadNextFitWod(locale: locale)
-        } else {
-            resetNextFitWod()
-        }
+        await loadNextFitWod(locale: locale)
     }
 
     func authenticateNextFit(email: String, password: String, locale: Locale) async -> Bool {
@@ -361,7 +358,6 @@ final class StudentDashboardViewModel: ObservableObject {
     }
 
     func retryNextFitWod(locale: Locale) async {
-        guard isMuralhaStudent else { return }
         await loadNextFitWod(locale: locale)
     }
 

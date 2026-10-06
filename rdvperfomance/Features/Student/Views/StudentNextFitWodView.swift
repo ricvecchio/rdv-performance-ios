@@ -33,9 +33,6 @@ struct StudentNextFitWodView: View {
 
     @Environment(\.locale) private var locale
     @StateObject private var viewModel: StudentDashboardViewModel
-    @State private var isNextFitLoginSheetPresented = false
-    @State private var nextFitEmailInput = ""
-    @State private var nextFitPasswordInput = ""
     @State private var isNextFitLogoutConfirmationPresented = false
     @State private var isNextFitLogoutErrorPresented = false
 
@@ -131,9 +128,10 @@ struct StudentNextFitWodView: View {
         .onAppear {
             Task { await viewModel.loadNextFit(locale: locale) }
         }
-        .sheet(isPresented: $isNextFitLoginSheetPresented, onDismiss: clearNextFitCredentials) {
-            nextFitLoginSheet
-                .presentationDetents([.fraction(0.50)])
+        .onChange(of: viewModel.needsNextFitAuthentication) { _, needsAuthentication in
+            if needsAuthentication, path.last == .studentNextFitWod {
+                path.removeLast()
+            }
         }
         .alert("dashboard.could_not_disconnect_from_nextfit", isPresented: $isNextFitLogoutErrorPresented) {
             Button("common.ok", role: .cancel) { }
@@ -186,33 +184,7 @@ struct StudentNextFitWodView: View {
                 ProgressView()
                     .tint(.white)
             } else if viewModel.needsNextFitAuthentication {
-                Text("dashboard.connect_your_nextfit_account_to_view_today_s_workout")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-
-                Button {
-                    nextFitEmailInput = ""
-                    nextFitPasswordInput = ""
-                    isNextFitLoginSheetPresented = true
-                } label: {
-                    ZStack(alignment: .leading) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "person.badge.plus")
-
-                            Text("dashboard.invite_coach")
-                        }
-                        .hidden()
-
-                        HStack(spacing: 10) {
-                            Image(systemName: "link")
-
-                            Text("dashboard.connect_nextfit")
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .compactPrimaryGreenActionButton()
-                }
-                .buttonStyle(.plain)
+                EmptyView()
             } else if let error = viewModel.nextFitError {
                 Text(error)
                     .font(.system(size: 14))
@@ -716,138 +688,5 @@ struct StudentNextFitWodView: View {
         }
         let format = AppLocalization.string("dashboard.wod.title_with_modality", locale: locale)
         return String(format: format, locale: locale, arguments: [unitName])
-    }
-
-    private var nextFitLoginSheet: some View {
-        ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                ScrollView(showsIndicators: false) {
-                    VStack(spacing: 14) {
-                        Capsule()
-                            .fill(Color.white.opacity(0.18))
-                            .frame(width: 44, height: 5)
-                            .padding(.top, 10)
-
-                        Text("dashboard.sign_in_to_nextfit")
-                            .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
-                            .padding(.top, 4)
-
-                        VStack(alignment: .leading, spacing: 14) {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("common.email")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.75))
-
-                                TextField("dashboard.nextfit.email_placeholder", text: $nextFitEmailInput)
-                                    .textInputAutocapitalization(.never)
-                                    .keyboardType(.emailAddress)
-                                    .autocorrectionDisabled(true)
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 14)
-                                    .background(Color.white.opacity(0.10))
-                                    .cornerRadius(14)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                    )
-                                    .foregroundColor(.white.opacity(0.92))
-                            }
-
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("common.password")
-                                    .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.75))
-
-                                SecureField("dashboard.your_password", text: $nextFitPasswordInput)
-                                    .textInputAutocapitalization(.never)
-                                    .autocorrectionDisabled(true)
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .padding(.horizontal, 14)
-                                    .padding(.vertical, 14)
-                                    .background(Color.white.opacity(0.10))
-                                    .cornerRadius(14)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                                    )
-                                    .foregroundColor(.white.opacity(0.92))
-                            }
-
-                            if let error = viewModel.nextFitLoginError {
-                                Text(error)
-                                    .font(.system(size: 13))
-                                    .foregroundColor(.yellow.opacity(0.95))
-                            }
-                        }
-                        .padding(14)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
-                        .cornerRadius(14)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                        )
-                        .padding(.horizontal, 16)
-                        .padding(.top, 14)
-                    }
-                }
-
-                HStack(spacing: 12) {
-                    Button {
-                        isNextFitLoginSheetPresented = false
-                    } label: {
-                        Text("common.cancel")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(viewModel.isAuthenticatingNextFit)
-
-                    Button {
-                        let email = nextFitEmailInput
-                        let password = nextFitPasswordInput
-                        nextFitPasswordInput = ""
-
-                        Task {
-                            if await viewModel.authenticateNextFit(email: email, password: password, locale: locale) {
-                                isNextFitLoginSheetPresented = false
-                            }
-                        }
-                    } label: {
-                        HStack(spacing: 10) {
-                            Text("dashboard.sign_in")
-
-                            if viewModel.isAuthenticatingNextFit {
-                                ProgressView()
-                            }
-                        }
-                        .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(viewModel.isAuthenticatingNextFit)
-                }
-                .padding(.horizontal, 16)
-                .padding(.top, 6)
-                .padding(.bottom, 16)
-            }
-        }
-    }
-
-    private func clearNextFitCredentials() {
-        nextFitEmailInput = ""
-        nextFitPasswordInput = ""
     }
 }
