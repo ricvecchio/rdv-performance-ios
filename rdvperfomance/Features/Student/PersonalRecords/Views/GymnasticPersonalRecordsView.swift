@@ -298,14 +298,14 @@ struct GymnasticPersonalRecordsView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.name)
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
 
                     if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text(item.metric)
-                            .font(.system(size: 14, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.45))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
