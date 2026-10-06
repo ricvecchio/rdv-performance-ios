@@ -93573,6 +93573,7 @@
       }
     },
     "ui.select_students" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
