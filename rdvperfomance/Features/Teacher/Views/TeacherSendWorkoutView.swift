@@ -15,11 +15,11 @@ private struct WorkoutPickerLabel: View {
     var body: some View {
         let borderColor: Color = isSelected
             ? Theme.Colors.primaryGreen.opacity(0.35)
-            : Color.white.opacity(0.08)
+            : Theme.Colors.primaryGreen.opacity(0.28)
 
         HStack {
             title.view()
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
             .lineLimit(1)
             Spacer()
@@ -29,7 +29,7 @@ private struct WorkoutPickerLabel: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -688,11 +688,11 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
         .disabled(isSending)
     }
@@ -712,11 +712,11 @@ struct TeacherSendWorkoutView: View {
             templatePicker(category: .emCasa, title: "ui.home_workouts")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -792,22 +792,22 @@ struct TeacherSendWorkoutView: View {
     ) -> some View {
         HStack {
             title.view()
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
             .foregroundColor(.white.opacity(0.92))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.25))
+                .foregroundColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(isSelected ? Color.green.opacity(0.14) : Color.white.opacity(0.06))
+        .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    isSelected ? Color.green.opacity(0.35) : Color.white.opacity(0.08),
+                    isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28),
                     lineWidth: 1
                 )
         )
@@ -1580,11 +1580,11 @@ private struct WorkoutTemplateSelectionSheet: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -1624,11 +1624,11 @@ private struct WorkoutTemplateSelectionSheet: View {
             }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
-            .background(Theme.Colors.cardBackground)
+            .background(Color.black.opacity(0.68))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
         }
     }
@@ -1712,7 +1712,7 @@ private struct WorkoutTemplateSelectionSheet: View {
     private func selectionRow(title: String, isSelected: Bool) -> some View {
         HStack(spacing: 12) {
             Text(title)
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Spacer()
@@ -1743,11 +1743,11 @@ private struct WorkoutTemplateSelectionSheet: View {
                     .foregroundColor(.white.opacity(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.10))
+                    .background(Color.black.opacity(0.68))
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
             }
             .buttonStyle(.plain)
