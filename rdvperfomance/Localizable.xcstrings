@@ -8347,6 +8347,7 @@
       }
     },
     "dashboard.agenda.date_label" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
