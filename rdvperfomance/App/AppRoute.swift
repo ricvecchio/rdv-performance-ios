@@ -131,6 +131,7 @@ enum AppRoute: Hashable {
     case studentMessages(category: TreinoTipo)
     case studentFeedbacks(category: TreinoTipo)
     case studentTeachers(studentEmail: String)
+    case studentNextFitWod
 
     case studentPersonalRecords
     case studentPersonalRecordsBarbell

@@ -166,6 +166,13 @@ struct StudentRootView: View {
                 onSelectSection: selectSection
             )
 
+        case .studentNextFitWod:
+            StudentNextFitWodView(
+                path: path,
+                studentId: studentId,
+                onSelectSection: selectSection
+            )
+
         default:
             EmptyView()
         }

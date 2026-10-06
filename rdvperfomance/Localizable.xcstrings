@@ -9654,6 +9654,28 @@
         }
       }
     },
+    "dashboard.wod.view_details" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "View details"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver detalles"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ver detalhes"
+          }
+        }
+      }
+    },
     "dashboard.you_do_not_have_a_linked_coach_yet" : {
       "localizations" : {
         "en" : {

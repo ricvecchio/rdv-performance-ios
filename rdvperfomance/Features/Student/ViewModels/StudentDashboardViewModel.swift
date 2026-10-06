@@ -276,19 +276,9 @@ final class StudentDashboardViewModel: ObservableObject {
         guard !activeTeacherIds.isEmpty else {
             currentWeekDaySummaries = []
             upcomingDayGroups = []
-            if isMuralhaStudent {
-                await loadNextFitWod(locale: locale)
-            } else {
-                resetNextFitWod()
-            }
             return
         }
 
-        if isMuralhaStudent {
-            await loadNextFitWod(locale: locale)
-        } else {
-            resetNextFitWod()
-        }
 
         do {
             let weeks = try await repository.getWeeksForStudent(studentId: studentId)
@@ -318,6 +308,22 @@ final class StudentDashboardViewModel: ObservableObject {
             upcomingDayGroups = []
         }
 
+    }
+
+    func loadNextFit(locale: Locale) async {
+        do {
+            currentStudentUser = try await repository.getUser(uid: studentId)
+            isMuralhaStudent = isMuralhaUnit(currentStudentUser?.unitName)
+        } catch {
+            currentStudentUser = nil
+            isMuralhaStudent = false
+        }
+
+        if isMuralhaStudent {
+            await loadNextFitWod(locale: locale)
+        } else {
+            resetNextFitWod()
+        }
     }
 
     func authenticateNextFit(email: String, password: String, locale: Locale) async -> Bool {
