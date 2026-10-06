@@ -12,11 +12,6 @@ struct StudentDashboardView: View {
     @State private var isTeacherLinkIconPulsing = false
     @State private var isRequestLinkSheetPresented = false
     @State private var teacherEmailInput = ""
-    @State private var isNextFitLoginSheetPresented = false
-    @State private var nextFitEmailInput = ""
-    @State private var nextFitPasswordInput = ""
-    @State private var isNextFitLogoutConfirmationPresented = false
-    @State private var isNextFitLogoutErrorPresented = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -101,15 +96,6 @@ struct StudentDashboardView: View {
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
                 .presentationDetents([.fraction(0.50)])
-        }
-        .sheet(isPresented: $isNextFitLoginSheetPresented, onDismiss: clearNextFitCredentials) {
-            nextFitLoginSheet
-                .presentationDetents([.fraction(0.50)])
-        }
-        .alert("dashboard.could_not_disconnect_from_nextfit", isPresented: $isNextFitLogoutErrorPresented) {
-            Button("common.ok", role: .cancel) { }
-        } message: {
-            Text("dashboard.try_again_message")
         }
     }
 
