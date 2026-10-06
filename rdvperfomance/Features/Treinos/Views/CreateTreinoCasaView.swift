@@ -153,9 +153,9 @@ struct CreateTreinoCasaView: View {
                 isSecure: false,
                 showPassword: $showPasswordDummy,
                 lineColor: Theme.Colors.divider,
-                textColor: .white.opacity(0.55),
+                textColor: .white.opacity(0.92),
                 placeholderColor: .white.opacity(0.55),
-                inputBackground: Color.white.opacity(0.06)
+                inputBackground: Color.black.opacity(0.35)
             )
 
             Divider().background(Theme.Colors.divider)
@@ -166,26 +166,27 @@ struct CreateTreinoCasaView: View {
                     .foregroundColor(.white.opacity(0.55))
 
                 TextEditor(text: $description)
-                    .foregroundColor(.white.opacity(0.55))
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.92))
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Color.white.opacity(0.06))
+                    .background(Color.black.opacity(0.35))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -203,7 +204,7 @@ struct CreateTreinoCasaView: View {
                     blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundColor(Theme.Colors.primaryGreen)
                         .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)
@@ -222,7 +223,7 @@ struct CreateTreinoCasaView: View {
                                 )
                             )
                                 .foregroundColor(.white.opacity(0.92))
-                                .font(.system(size: 16))
+                                .font(.system(size: 17))
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
 
@@ -247,15 +248,16 @@ struct CreateTreinoCasaView: View {
 
                     VStack(alignment: .leading, spacing: 6) {
                         TextEditor(text: $b.details)
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.92))
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Color.white.opacity(0.06))
+                            .background(Color.black.opacity(0.35))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                             )
                     }
 
@@ -266,18 +268,18 @@ struct CreateTreinoCasaView: View {
 
             if blocks.isEmpty {
                 Text("ui.no_block_added")
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -306,7 +308,7 @@ struct CreateTreinoCasaView: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
 
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
 
             Spacer()
@@ -314,11 +316,11 @@ struct CreateTreinoCasaView: View {
 
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
