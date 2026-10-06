@@ -533,14 +533,14 @@ struct TeacherSendWorkoutView: View {
                 .background(
                     isSelected
                         ? Theme.Colors.primaryGreen.opacity(0.18)
-                        : Color.white.opacity(0.10)
+                        : Color.black.opacity(0.68)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             isSelected
                                 ? Theme.Colors.primaryGreen.opacity(0.30)
-                                : Color.white.opacity(0.12),
+                                : Theme.Colors.primaryGreen.opacity(0.28),
                             lineWidth: 1
                         )
                 )
@@ -585,11 +585,11 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
-        .background(Color.white.opacity(0.10))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -627,11 +627,11 @@ struct TeacherSendWorkoutView: View {
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
         .disabled(isSending)
     }
@@ -647,7 +647,7 @@ struct TeacherSendWorkoutView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(student.name)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
                 Text(
                     String(
@@ -656,7 +656,7 @@ struct TeacherSendWorkoutView: View {
                         arguments: [studentCategoryText(student)]
                     )
                 )
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
             }
 
