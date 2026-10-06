@@ -43,6 +43,7 @@ struct StudentWorkoutsView: View {
     @State private var expandedWeekIds = Set<String>()
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
+    @State private var hasAppeared = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
     @State private var pendingReceivedVideoSave: (
         sourceId: String,
@@ -63,6 +64,7 @@ struct StudentWorkoutsView: View {
         initialExpandedDayId: String? = nil,
         onInitialExpansionHandled: @escaping () -> Void = {},
         onSelectSection: @escaping (StudentMainSection) -> Void = { _ in },
+        viewModel: StudentWorkoutsViewModel? = nil,
         repository: FirestoreRepository = .shared
     ) {
         self._path = path
@@ -72,7 +74,7 @@ struct StudentWorkoutsView: View {
         self.initialExpandedDayId = initialExpandedDayId
         self.onInitialExpansionHandled = onInitialExpansionHandled
         self.onSelectSection = onSelectSection
-        _vm = StateObject(wrappedValue: StudentWorkoutsViewModel(studentId: studentId, repository: repository))
+        _vm = StateObject(wrappedValue: viewModel ?? StudentWorkoutsViewModel(studentId: studentId, repository: repository))
     }
 
     private var isTeacherViewing: Bool { session.isTrainer }
@@ -153,7 +155,21 @@ struct StudentWorkoutsView: View {
         .navigationBarTitleDisplayMode(.inline)
 
         .onAppear {
-            guard !vm.hasLoadedWeeks else { return }
+            let isFirstAppearance = !hasAppeared
+            hasAppeared = true
+            guard !vm.hasLoadedWeeks else {
+                // ViewModel reaproveitado (troca de aba): exibe o cache na hora e
+                // apenas revalida a lista de semanas em segundo plano.
+                guard isFirstAppearance else { return }
+                applyInitialExpansionIfNeeded()
+                Task {
+                    await vm.revalidateWeeksInBackground(
+                        filterByActiveTeacherLinks: !isTeacherViewing,
+                        viewingTeacherId: viewingTeacherId
+                    )
+                }
+                return
+            }
             Task {
                 await vm.loadWeeksAndMeta(
                     filterByActiveTeacherLinks: !isTeacherViewing,

@@ -97843,6 +97843,7 @@
       }
     },
     "workout.week_number" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

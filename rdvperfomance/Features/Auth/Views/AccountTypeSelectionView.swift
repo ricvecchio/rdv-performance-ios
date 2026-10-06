@@ -94,11 +94,11 @@ struct AccountTypeSelectionView: View {
         Button(action: action) {
             VStack(spacing: 8) {
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Text(subtitle)
-                    .font(.system(size: 13, weight: .regular))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundColor(.white.opacity(0.65))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 14)
@@ -106,10 +106,10 @@ struct AccountTypeSelectionView: View {
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.black.opacity(0.55))
+                    .fill(Color.black.opacity(0.68))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
             )
             .shadow(color: .black.opacity(0.25), radius: 10, y: 6)

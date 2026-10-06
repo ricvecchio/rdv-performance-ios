@@ -77,33 +77,10 @@ final class StudentWorkoutsViewModel: ObservableObject {
             let t0 = Date()
             #endif
 
-            let activeTeacherIds: Set<String>
-            if filterByActiveTeacherLinks {
-                activeTeacherIds = Set(
-                    try await repository.getTeacherLinksForStudent(studentId: studentId)
-                        .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
-                        .filter { !$0.isEmpty }
-                )
-            } else {
-                activeTeacherIds = []
-            }
-            let cleanViewingTeacherId = viewingTeacherId?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            if let cleanViewingTeacherId, cleanViewingTeacherId.isEmpty {
-                throw FirestoreRepositoryError.missingTeacherId
-            }
-
-            let result = try await repository.getWeeksForStudent(
-                studentId: studentId,
-                teacherId: cleanViewingTeacherId
+            let visibleWeeks = try await fetchVisibleWeeks(
+                filterByActiveTeacherLinks: filterByActiveTeacherLinks,
+                viewingTeacherId: viewingTeacherId
             )
-            let visibleWeeks = filterByActiveTeacherLinks
-                ? result.filter {
-                    activeTeacherIds.contains(
-                        $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-                    )
-                }
-                : result
 
             #if DEBUG
             print("[StudentWorkouts] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(visibleWeeks.count) semana(s)")
@@ -133,6 +110,65 @@ final class StudentWorkoutsViewModel: ObservableObject {
         }
     }
 
+    /// Busca vínculos ativos e semanas em paralelo (consultas independentes).
+    private func fetchVisibleWeeks(
+        filterByActiveTeacherLinks: Bool,
+        viewingTeacherId: String?
+    ) async throws -> [TrainingWeekFS] {
+        let cleanViewingTeacherId = viewingTeacherId?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let cleanViewingTeacherId, cleanViewingTeacherId.isEmpty {
+            throw FirestoreRepositoryError.missingTeacherId
+        }
+
+        async let weeksResult = repository.getWeeksForStudent(
+            studentId: studentId,
+            teacherId: cleanViewingTeacherId
+        )
+
+        guard filterByActiveTeacherLinks else {
+            return try await weeksResult
+        }
+
+        let activeTeacherIds = Set(
+            try await repository.getTeacherLinksForStudent(studentId: studentId)
+                .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+        )
+        let result = try await weeksResult
+        return result.filter {
+            activeTeacherIds.contains(
+                $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        }
+    }
+
+    /// Revalida somente a lista de semanas quando a tela é remontada com dados já
+    /// em memória. Não limpa caches nem exibe loading: dias/status já carregados
+    /// são reaproveitados e apenas semanas novas buscam seus metadados.
+    func revalidateWeeksInBackground(
+        filterByActiveTeacherLinks: Bool,
+        viewingTeacherId: String? = nil
+    ) async {
+        guard hasLoadedWeeksAndMeta, weeksLoadTask == nil else { return }
+
+        guard let visibleWeeks = try? await fetchVisibleWeeks(
+            filterByActiveTeacherLinks: filterByActiveTeacherLinks,
+            viewingTeacherId: viewingTeacherId
+        ) else { return }
+
+        guard weeksLoadTask == nil else { return }
+
+        let generation = UUID()
+        metadataGeneration = generation
+        await loadSecondaryMetadata(for: visibleWeeks, generation: generation)
+
+        guard metadataGeneration == generation else { return }
+        if weeks != visibleWeeks {
+            weeks = visibleWeeks
+        }
+    }
+
     private func loadSecondaryMetadata(for weeks: [TrainingWeekFS], generation: UUID) async {
         #if DEBUG
         let t0 = Date()
@@ -159,7 +195,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
                         return name.isEmpty && email.isEmpty
                     }
                     .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty }
+                    .filter { !$0.isEmpty && teacherNameById[$0] == nil }
             )
         )
 
@@ -230,10 +266,14 @@ final class StudentWorkoutsViewModel: ObservableObject {
         let completed = trainingDays.compactMap(\.id)
             .filter { isCompleted(dayId: $0, in: weekId) }
             .count
-        weekProgressPercent[weekId] = Self.computePercentStatic(
+        let percent = Self.computePercentStatic(
             completed: completed,
             total: trainingDays.count
         )
+        // Evita republicar (e re-renderizar a lista) quando o valor não mudou.
+        if weekProgressPercent[weekId] != percent {
+            weekProgressPercent[weekId] = percent
+        }
     }
 
     func subtitleForWeek(_ week: TrainingWeekFS, locale: Locale) -> String {

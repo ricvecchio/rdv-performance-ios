@@ -920,8 +920,12 @@ struct ProfileView: View {
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
@@ -948,7 +952,7 @@ struct ProfileView: View {
                     .foregroundColor(.green)
 
                 Text(trimmed)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.65))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -1056,8 +1060,12 @@ struct ProfileView: View {
             }
         }
         .padding(.vertical, 8)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func divider() -> some View {
@@ -1148,7 +1156,7 @@ struct ProfileView: View {
                     Text(title)
                 }
             }
-                .font(.system(size: 18, weight: .medium))
+                .font(.system(size: 17, weight: .medium))
                 .foregroundColor(titleColor)
 
             Spacer()

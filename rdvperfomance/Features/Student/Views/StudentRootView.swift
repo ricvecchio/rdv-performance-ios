@@ -52,6 +52,18 @@ struct StudentRootView: View {
     @State private var workoutsInitialWeekId: String?
     @State private var workoutsInitialDayId: String?
 
+    /// Mantém o cache de Treinos da Semana entre trocas de aba (somente a aba
+    /// selecionada é montada, o que recriaria o ViewModel a cada retorno).
+    @StateObject private var workoutsViewModel: StudentWorkoutsViewModel
+
+    init(studentId: String, studentName: String) {
+        self.studentId = studentId
+        self.studentName = studentName
+        _workoutsViewModel = StateObject(
+            wrappedValue: StudentWorkoutsViewModel(studentId: studentId, repository: .shared)
+        )
+    }
+
     var body: some View {
         selectedTab
             .environment(\.selectStudentMainSection, selectSection)
@@ -135,7 +147,8 @@ struct StudentRootView: View {
                     workoutsInitialWeekId = nil
                     workoutsInitialDayId = nil
                 },
-                onSelectSection: selectSection
+                onSelectSection: selectSection,
+                viewModel: workoutsViewModel
             )
             .navigationDestination(for: AppRoute.self) { route in
                 workoutsDestination(for: route, path: $workoutsPath)

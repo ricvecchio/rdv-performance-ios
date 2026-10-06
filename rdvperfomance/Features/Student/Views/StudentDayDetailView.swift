@@ -38,16 +38,6 @@ struct StudentDayDetailView: View {
         DefaultWorkoutLocalization.presentation(for: day, locale: locale)
     }
 
-    private var formattedWeekTitle: String {
-        var title = weekTitle.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if title.hasPrefix("Semana ") {
-            title.removeFirst("Semana ".count)
-        }
-
-        return title.replacingOccurrences(of: " - ", with: " à ")
-    }
-
     // ✅ Player de vídeo (mesmo comportamento da TeacherImportVideosView)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
 
@@ -188,8 +178,6 @@ struct StudentDayDetailView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-                        header
-
                         if let err = errorMessage {
                             messageCard(text: err)
                         }
@@ -337,24 +325,6 @@ struct StudentDayDetailView: View {
         .onChange(of: percentText) { _, _ in
             autoSaveCalcState()
         }
-    }
-
-    // Header com título e subtítulo
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-
-            // ✅ ALTERADO: manter apenas a semana no corpo (o dia foi para o cabeçalho)
-            Text(
-                String(
-                    format: AppLocalization.string("workout.week_number", locale: locale),
-                    locale: locale,
-                    arguments: [formattedWeekTitle]
-                )
-            )
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func trainingDateTitle(for date: Date?, fallback: String) -> String {
