@@ -86,7 +86,7 @@ struct StudentTeachersView: View {
                     VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 10) {
                             Text("student_teachers.manage_your_coaches_and_links")
-                                .font(.system(size: 13))
+                                .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
 
                             Button {
@@ -304,8 +304,12 @@ struct StudentTeachersView: View {
             Color.clear.frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func teacherRow(_ teacher: AppUser) -> some View {
@@ -319,12 +323,12 @@ struct StudentTeachersView: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher.name)
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(teacher.email)
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.35))
                             .lineLimit(1)
                             .truncationMode(.tail)
@@ -365,7 +369,7 @@ struct StudentTeachersView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(request.teacherEmail)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -404,12 +408,12 @@ struct StudentTeachersView: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher?.name ?? invite.teacherEmail)
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(invite.teacherEmail)
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.35))
                             .lineLimit(1)
                             .truncationMode(.tail)
