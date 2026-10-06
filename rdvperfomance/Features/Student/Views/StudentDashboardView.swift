@@ -140,9 +140,6 @@ struct StudentDashboardView: View {
         case .linked, .failed:
             progressCard
             nextFitWodEntryCard
-            if !viewModel.isMuralhaStudent {
-                upcomingWorkoutsCard
-            }
         }
     }
 
@@ -567,95 +564,6 @@ struct StudentDashboardView: View {
         .contentShape(RoundedRectangle(cornerRadius: 14))
     }
 
-    private var upcomingWorkoutsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("dashboard.upcoming_workouts")
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
-                Spacer()
-                Button("dashboard.view_all") {
-                    onSelectSection(.agenda)
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen)
-                .buttonStyle(.plain)
-            }
-
-            if viewModel.isLoading {
-                ProgressView().tint(.white)
-            } else if viewModel.upcomingDayGroups.isEmpty {
-                Text("dashboard.no_workout_scheduled")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-            } else {
-                ForEach(Array(viewModel.upcomingDayGroups.enumerated()), id: \.element.id) { index, item in
-                    Button {
-                        guard let dayId = item.initialDayId else { return }
-                        onSelectWorkout(item.weekId, dayId)
-                    } label: {
-                        upcomingWorkoutRow(item)
-                    }
-                    .buttonStyle(.plain)
-                    if index < viewModel.upcomingDayGroups.count - 1 {
-                        Divider().background(Theme.Colors.divider).padding(.leading, 42)
-                    }
-                }
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
-    }
-
-    private func upcomingWorkoutRow(_ item: StudentDashboardDayGroup) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: "calendar")
-                .font(.system(size: 18))
-                .foregroundColor(.green.opacity(0.85))
-                .frame(width: 28)
-            VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Text(dateTitle(for: item.date))
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
-                    Spacer()
-                    Text(
-                        String(
-                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
-                            locale: locale,
-                            arguments: [Int64((item.progress * 100).rounded())]
-                        )
-                    )
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Theme.Colors.primaryGreen)
-                }
-                let completionFormat = item.totalCount == 1
-                    ? AppLocalization.string("dashboard.upcoming_workouts.progress_singular", locale: locale)
-                    : AppLocalization.string("dashboard.upcoming_workouts.progress_plural", locale: locale)
-                Text(
-                    String(
-                        format: completionFormat,
-                        locale: locale,
-                        arguments: [Int64(item.completedCount), Int64(item.totalCount)]
-                    )
-                )
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
-                ProgressView(value: item.progress)
-                    .tint(Theme.Colors.primaryGreen)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
-                .padding(.top, 3)
-        }
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
-    }
-
     private func weeklyProgressText(completed: Int, total: Int) -> String {
         let format = AppLocalization.string("dashboard.weekly_progress", locale: locale)
         return String(
@@ -671,14 +579,6 @@ struct StudentDashboardView: View {
         formatter.locale = locale
         formatter.setLocalizedDateFormatFromTemplate("EEE")
         return formatter.string(from: date).replacingOccurrences(of: ".", with: "").capitalized
-    }
-
-    private func dateTitle(for date: Date?) -> String {
-        guard let date else { return "" }
-        let formatter = DateFormatter()
-        formatter.locale = locale
-        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
-        return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
     private var nextFitLoginSheet: some View {

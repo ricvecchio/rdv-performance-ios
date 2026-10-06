@@ -8592,6 +8592,7 @@
       }
     },
     "dashboard.connect_your_nextfit_account_to_view_today_s_workout" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
