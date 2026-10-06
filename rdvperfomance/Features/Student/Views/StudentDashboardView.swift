@@ -786,6 +786,10 @@ struct StudentDashboardView: View {
                     }
                     .pickerStyle(.segmented)
                     .tint(Color.white.opacity(0.06))
+                    .overlay(
+                        Capsule()
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    )
                 }
 
                 ForEach(wod.activities) { activity in

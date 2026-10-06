@@ -280,7 +280,7 @@
 				DEVELOPMENT_TEAM = HZ2G6N37TC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "RDV Perfomance";
+				INFOPLIST_KEY_CFBundleDisplayName = "RDV Performance";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Precisamos da câmera para capturar imagens";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo).";
@@ -323,7 +323,7 @@
 				DEVELOPMENT_TEAM = HZ2G6N37TC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "RDV Perfomance";
+				INFOPLIST_KEY_CFBundleDisplayName = "RDV Performance";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Precisamos da câmera para capturar imagens";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo).";
