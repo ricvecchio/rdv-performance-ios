@@ -492,7 +492,6 @@ struct TeacherSendWorkoutView: View {
 
     private var studentSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            sectionTitle("ui.select_students")
             studentSearchField
             studentFilterRow
             selectAllVisibleStudentsButton
