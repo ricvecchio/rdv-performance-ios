@@ -161,11 +161,11 @@ struct StudentFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -187,11 +187,11 @@ struct StudentFeedbacksView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(teachersById[fb.teacherId]?.name ?? AppLocalization.string("common.trainer", locale: locale))
-                    .font(.system(size: 14, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Text(fb.text)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.75))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
