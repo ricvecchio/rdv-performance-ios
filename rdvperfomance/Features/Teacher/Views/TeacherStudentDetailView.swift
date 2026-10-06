@@ -191,8 +191,12 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func actionsCard() -> some View {
@@ -236,8 +240,12 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // MARK: - Helpers
@@ -249,15 +257,19 @@ struct TeacherStudentDetailView: View {
                     .foregroundColor(.green.opacity(0.85))
                     .frame(width: 22, alignment: .center)
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
             .padding(14)
-            .background(Color.black.opacity(0.25))
+            .background(Color.black.opacity(0.68))
             .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }
