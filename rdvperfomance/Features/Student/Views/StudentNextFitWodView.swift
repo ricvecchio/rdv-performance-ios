@@ -69,7 +69,6 @@ struct StudentNextFitWodView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
                             nextFitWodCard
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
@@ -78,22 +77,7 @@ struct StudentNextFitWodView: View {
                         Spacer(minLength: 0)
                     }
                 }
-
-                FooterBar(
-                    path: $path,
-                    kind: .studentHomeTreinosRecordsProfile(
-                        isHomeSelected: true,
-                        isTreinosSelected: false,
-                        isRecordsSelected: false,
-                        isPerfilSelected: false
-                    ),
-                    onSelectStudentSection: onSelectSection
-                )
-                .frame(height: Theme.Layout.footerHeight)
-                .frame(maxWidth: .infinity)
-                .background(Theme.Colors.footerBackground)
             }
-            .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
