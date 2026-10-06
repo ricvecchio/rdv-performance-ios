@@ -787,8 +787,14 @@ struct StudentDashboardView: View {
                     .pickerStyle(.segmented)
                     .tint(Color.white.opacity(0.06))
                     .overlay(
-                        Capsule()
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                        HStack(spacing: 4) {
+                            ForEach(viewModel.nextFitAgendaWods) { _ in
+                                Capsule()
+                                    .stroke(Theme.Colors.primaryGreen.opacity(0.42), lineWidth: 1)
+                            }
+                        }
+                        .padding(2)
+                        .allowsHitTesting(false)
                     )
                 }
 
