@@ -766,7 +766,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                 }
 
                 Text(wod.name)
-                    .font(.system(size: 18, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(2)
 
