@@ -49,7 +49,7 @@ struct TeacherEmCasaLibraryView: View {
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(spacing: 10) {
                                 ForEach(menuItems) { item in
-                                    actionRow(title: item.title, icon: "figure.strengthtraining.traditional") {
+                                    actionRow(title: item.title, icon: "house.fill") {
                                         if templateMode == .attach {
                                             path.append(.teacherWorkoutTemplates(
                                                 category: .emCasa,
