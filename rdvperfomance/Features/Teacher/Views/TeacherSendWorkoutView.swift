@@ -942,40 +942,7 @@ struct TeacherSendWorkoutView: View {
 
     private var daySection: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 6) {
-                ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { period in
-                    let isSelected = daySelectionPeriod == period
-
-                    Button {
-                        daySelectionPeriod = period
-                    } label: {
-                        Text(period.title)
-                            .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.85)
-                            .padding(.horizontal, 6)
-                            .padding(.vertical, 9)
-                            .frame(maxWidth: .infinity)
-                            .background(
-                                isSelected
-                                    ? Theme.Colors.primaryGreen.opacity(0.18)
-                                    : Color.black.opacity(0.68)
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(
-                                        isSelected
-                                            ? Theme.Colors.primaryGreen.opacity(0.30)
-                                            : Theme.Colors.primaryGreen.opacity(0.28),
-                                        lineWidth: 1
-                                    )
-                            )
-                            .clipShape(RoundedRectangle(cornerRadius: 12))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+            daySelectionPeriodRow
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, daySelectionPeriod == .upcomingWeeks ? 12 : 16)
@@ -1025,6 +992,40 @@ struct TeacherSendWorkoutView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
+    }
+
+    private var daySelectionPeriodRow: some View {
+        HStack(spacing: 6) {
+            ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { (period: DaySelectionPeriod) in
+                let isSelected: Bool = daySelectionPeriod == period
+                let backgroundColor: Color = isSelected
+                    ? Theme.Colors.primaryGreen.opacity(0.18)
+                    : Color.black.opacity(0.68)
+                let borderColor: Color = isSelected
+                    ? Theme.Colors.primaryGreen.opacity(0.30)
+                    : Theme.Colors.primaryGreen.opacity(0.28)
+
+                Button {
+                    daySelectionPeriod = period
+                } label: {
+                    Text(period.title)
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                        .padding(.horizontal, 6)
+                        .padding(.vertical, 9)
+                        .frame(maxWidth: .infinity)
+                        .background(backgroundColor)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(borderColor, lineWidth: 1)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 12))
+                }
+                .buttonStyle(.plain)
+            }
+        }
     }
 
     private var futureWeekNavigation: some View {
