@@ -269,13 +269,13 @@ struct StudentWorkoutsView: View {
                 .padding(.vertical, 9)
                 .background(
                     selectedFilter == filter
-                        ? Theme.Colors.primaryGreen.opacity(0.24)
-                        : Color.black.opacity(0.42)
+                        ? Theme.Colors.primaryGreen.opacity(0.18)
+                        : Color.black.opacity(0.68)
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.55) : Color.white.opacity(0.12),
+                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.55) : Theme.Colors.primaryGreen.opacity(0.28),
                             lineWidth: 1
                         )
                 )
@@ -394,7 +394,7 @@ struct StudentWorkoutsView: View {
             VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 8) {
                     Text(vm.subtitleForWeek(week, locale: locale))
-                        .font(.system(size: 18, weight: .medium))
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -422,7 +422,7 @@ struct StudentWorkoutsView: View {
 
                 HStack(spacing: 8) {
                     Text(vm.teacherLineForWeek(week, locale: locale))
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(1)
 
@@ -444,7 +444,7 @@ struct StudentWorkoutsView: View {
                         arguments: [Int64(completedCount), Int64(trainingDays.count)]
                     )
                 )
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
                 ProgressView(value: progressValue)
@@ -463,11 +463,11 @@ struct StudentWorkoutsView: View {
         .padding(.vertical, 16)
         .contentShape(Rectangle())
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.76))
+        .background(Color.black.opacity(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.25), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.28), lineWidth: 1)
         )
     }
 
@@ -862,12 +862,12 @@ struct StudentWorkoutsView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.72))
+        .background(Color.black.opacity(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Color.white.opacity(0.12),
+                    isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Theme.Colors.primaryGreen.opacity(0.28),
                     lineWidth: 1
                 )
         )
@@ -897,7 +897,7 @@ struct StudentWorkoutsView: View {
                             .font(.system(size: 17, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
                         Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText(locale: locale)))
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.35))
                     }
 
@@ -943,7 +943,7 @@ struct StudentWorkoutsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -1071,7 +1071,7 @@ struct StudentWorkoutsView: View {
                 .foregroundColor(.white.opacity(0.92))
 
             Text(message)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
@@ -1102,7 +1102,7 @@ struct StudentWorkoutsView: View {
                 .foregroundColor(.white.opacity(0.92))
 
             Text("workout.the_coach_has_not_published_workouts_for_this_student_yet")
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -1127,7 +1127,7 @@ struct StudentWorkoutsView: View {
                 .foregroundColor(.white.opacity(0.92))
 
             Text(content.message)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
