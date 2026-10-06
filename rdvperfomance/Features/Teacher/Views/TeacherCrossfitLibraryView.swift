@@ -51,7 +51,7 @@ struct TeacherCrossfitLibraryView: View {
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(spacing: 14) {
                                 ForEach(menuItems) { item in
-                                    actionRow(title: item.title, icon: "folder.fill") {
+                                    actionRow(title: item.title, icon: "figure.strengthtraining.traditional") {
                                         if templateMode == .attach {
                                             path.append(.teacherWorkoutTemplates(
                                                 category: .crossfit,
