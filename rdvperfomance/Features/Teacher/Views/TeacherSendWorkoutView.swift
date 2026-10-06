@@ -874,11 +874,11 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -930,24 +930,52 @@ struct TeacherSendWorkoutView: View {
                     .foregroundColor(.green.opacity(0.85))
 
                 Text(category.localizedDisplayName(locale: locale))
-                    .font(.system(size: 13, weight: .medium))
+                    .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.55))
             }
 
             Text(template.title)
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
         }
     }
 
     private var daySection: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $daySelectionPeriod) {
+            HStack(spacing: 6) {
                 ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { period in
-                    Text(period.title).tag(period)
+                    let isSelected = daySelectionPeriod == period
+
+                    Button {
+                        daySelectionPeriod = period
+                    } label: {
+                        Text(period.title)
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.85)
+                            .padding(.horizontal, 6)
+                            .padding(.vertical, 9)
+                            .frame(maxWidth: .infinity)
+                            .background(
+                                isSelected
+                                    ? Theme.Colors.primaryGreen.opacity(0.18)
+                                    : Color.black.opacity(0.68)
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        isSelected
+                                            ? Theme.Colors.primaryGreen.opacity(0.30)
+                                            : Theme.Colors.primaryGreen.opacity(0.28),
+                                        lineWidth: 1
+                                    )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
-            .pickerStyle(.segmented)
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, daySelectionPeriod == .upcomingWeeks ? 12 : 16)
@@ -980,22 +1008,22 @@ struct TeacherSendWorkoutView: View {
                     }
                 }
             }
-            .background(Color.white.opacity(0.10))
+            .background(Color.black.opacity(0.68))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
             .disabled(isSending)
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -1007,7 +1035,7 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(futureWeekOffset == 0 ? 0.25 : 0.75))
+                    .foregroundColor(futureWeekOffset == 0 ? .white.opacity(0.25) : Theme.Colors.primaryGreen)
                     .frame(width: 32, height: 28)
             }
             .buttonStyle(.plain)
@@ -1036,7 +1064,7 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundColor(Theme.Colors.primaryGreen)
                     .frame(width: 32, height: 28)
             }
             .buttonStyle(.plain)
@@ -1053,7 +1081,7 @@ struct TeacherSendWorkoutView: View {
                 .font(.system(size: 20))
                 .foregroundColor(selectionColor)
             Text(weekdayTitle(for: day.date))
-                .font(.system(size: 16, weight: .medium))
+                .font(.system(size: 17, weight: .medium))
                 .foregroundColor(.white.opacity(0.92))
             Spacer()
             Text(dateTitle(for: day.date))
@@ -1062,6 +1090,7 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
+        .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.clear)
     }
 
     private func nextButton(enabled: Bool, action: @escaping () -> Void) -> some View {
