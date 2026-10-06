@@ -376,7 +376,7 @@ struct StudentDayDetailView: View {
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(presentation.title)
-                    .font(.system(size: 20, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 if let dateText = formattedDate(day.date) {
@@ -396,8 +396,12 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // MARK: - ✅ NOVO CARD: cálculo % do PR
@@ -407,7 +411,7 @@ struct StudentDayDetailView: View {
         VStack(alignment: .leading, spacing: 10) {
 
             Text("workout_day_detail.calculation_by_pr_barbell")
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             VStack(spacing: 10) {
@@ -530,8 +534,12 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private var movementPickerSheet: some View {
@@ -757,8 +765,12 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func openLockedPlayer(item: VideoDayItem) {
@@ -791,7 +803,7 @@ struct StudentDayDetailView: View {
                         ? AppLocalization.string("workout.youtube_video", locale: locale)
                         : titleTrim
                 )
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
 
@@ -938,7 +950,7 @@ struct StudentDayDetailView: View {
                         VStack(alignment: .leading, spacing: 6) {
 
                             Text(displayedBlockName(block))
-                                .font(.system(size: 16, weight: .semibold))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -963,8 +975,12 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Mensagem de erro/aviso estilizada
