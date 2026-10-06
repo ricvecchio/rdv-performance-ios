@@ -149,7 +149,7 @@ struct ARExerciseView: View {
                 Color.black.opacity(0.95).ignoresSafeArea()
                 VStack(alignment: .leading, spacing: 12) {
                     Text("ar.correction_points.new")
-                        .font(.system(size: 18, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white)
 
                     UnderlineTextField(

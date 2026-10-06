@@ -101,7 +101,7 @@ struct AboutView: View {
     private func contentCard() -> some View {
         VStack(spacing: 14) {
             Text("about.headline")
-                .font(.system(size: 18, weight: .bold))
+                .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white)
                 .multilineTextAlignment(.center)
 
@@ -117,8 +117,12 @@ struct AboutView: View {
                 .multilineTextAlignment(.center)
         }
         .padding()
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(12)
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Retorna uma linha com ícone de check e texto descritivo

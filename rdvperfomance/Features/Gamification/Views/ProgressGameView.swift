@@ -87,11 +87,11 @@ struct ProgressGameView: View {
             SpriteKitPanel(metrics: vm.metrics, locale: locale)
                 .frame(height: 340)
                 .padding(.horizontal, 2)
-                .background(Theme.Colors.cardBackground)
+                .background(Color.black.opacity(0.68))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 14))
 
@@ -104,11 +104,11 @@ struct ProgressGameView: View {
         let percent = Int((vm.metrics.weeklyCompletion * 100).rounded())
         return VStack(alignment: .leading, spacing: 8) {
             Text(vm.metrics.displayName ?? AppLocalization.string("gamification.progress.student_title", locale: locale))
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text(progressSummary(percent: percent, streakDays: vm.metrics.streakDays))
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
             if !vm.metrics.badges.isEmpty {
@@ -131,11 +131,11 @@ struct ProgressGameView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
