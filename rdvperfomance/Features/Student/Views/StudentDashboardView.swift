@@ -698,22 +698,18 @@ struct StudentDashboardView: View {
                 }
             }
 
-            if viewModel.isTomorrowAgendaSelected {
-                nextFitAgendaWodContent
-            }
+            nextFitAgendaWodContent
         }
     }
 
     private var nextFitAgendaDateSelector: some View {
-        HStack(spacing: 10) {
-            nextFitAgendaDateButton(
-                day: .today,
-                date: viewModel.todayAgendaDate
-            )
-            nextFitAgendaDateButton(
-                day: .tomorrow,
-                date: viewModel.tomorrowAgendaDate
-            )
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(viewModel.nextFitAgendaDates, id: \.self) { date in
+                    nextFitAgendaDateButton(date: date)
+                }
+            }
+            .padding(.vertical, 1)
         }
     }
 
@@ -729,31 +725,40 @@ struct StudentDashboardView: View {
         }
     }
 
-    private func nextFitAgendaDateButton(day: DashboardAgendaDay, date: Date) -> some View {
+    private func nextFitAgendaDateButton(date: Date) -> some View {
         let isSelected = Calendar.current.isDate(
             viewModel.selectedNextFitAgendaDate,
             inSameDayAs: date
         )
-        let title = day.title(locale: locale)
+        let formatter = DateFormatter()
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.timeZone = Calendar.current.timeZone
+        formatter.dateFormat = "dd/MM"
         return Button {
             Task { await viewModel.selectNextFitAgendaDate(date, locale: locale) }
         } label: {
-            Text(
-                String(
-                    format: AppLocalization.string("dashboard.agenda.date_label", locale: locale),
-                    locale: locale,
-                    arguments: [
-                        title,
-                        date.formatted(.dateTime.day().month(.twoDigits).locale(locale))
-                    ]
-                )
-            )
-                .font(.system(size: 13, weight: .bold))
+            Text(verbatim: formatter.string(from: date))
+                .font(.system(size: 14, weight: .semibold))
+                .monospacedDigit()
                 .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.65))
-                .padding(.horizontal, 12)
+                .padding(.horizontal, 14)
                 .padding(.vertical, 9)
-                .background(isSelected ? Color.white.opacity(0.10) : Color.white.opacity(0.04))
+                .background(
+                    isSelected
+                        ? Theme.Colors.primaryGreen.opacity(0.14)
+                        : Color.white.opacity(0.04)
+                )
                 .cornerRadius(10)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(
+                            isSelected
+                                ? Theme.Colors.primaryGreen.opacity(0.55)
+                                : Color.white.opacity(0.08),
+                            lineWidth: 1
+                        )
+                )
         }
         .buttonStyle(.plain)
     }

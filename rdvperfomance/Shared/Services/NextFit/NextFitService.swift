@@ -314,33 +314,115 @@ struct NextFitService {
         }
     }
 
-    func loadWods(for date: Date, sessionAccount: String) async throws -> [NextFitWodDisplay] {
+    func loadUpcomingWodDays(sessionAccount: String) async throws -> [NextFitUpcomingWodDisplay] {
         guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
             throw NextFitServiceError.missingSession
         }
 
         do {
             let modalities = try await loadUpcomingWodModalities(token: token)
-            var displays = [NextFitWodDisplay]()
+            var upcoming = [NextFitUpcomingWodDisplay]()
+            var loadedWodIds = Set<Int>()
+            var failedModalities = 0
 
             for modality in modalities {
-                let upcomingWods = try await loadUpcomingWods(
-                    modalityId: modality.id,
-                    token: token
-                )
-                guard let wod = upcomingWods.first(where: {
-                    isDate($0.dataExec, inSameDayAs: date, calendar: .current)
-                }) else {
+                let upcomingWods: [NextFitDailyWodsResponse.Wod]
+                do {
+                    upcomingWods = try await loadUpcomingWods(
+                        modalityId: modality.id,
+                        token: token
+                    )
+                } catch NextFitHTTPError.unauthorized {
+                    throw NextFitHTTPError.unauthorized
+                } catch {
+                    failedModalities += 1
+                    debugLog("Falha ao carregar próximos WODs da modalidade \(modality.id).")
                     continue
                 }
 
-                displays.append(
-                    try await wodDisplay(
-                        for: wod,
-                        fallbackModalityName: modality.descricao,
-                        token: token
+                for wod in upcomingWods {
+                    guard let date = wodDate(from: wod.dataExec) else {
+                        debugLog("Não foi possível interpretar DataExec: \(wod.dataExec).")
+                        continue
+                    }
+                    guard loadedWodIds.insert(wod.id).inserted else { continue }
+
+                    let responseModalityName = wod.descricaoModalidade?
+                        .trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+                    upcoming.append(
+                        NextFitUpcomingWodDisplay(
+                            id: wod.id,
+                            date: date,
+                            dataExec: wod.dataExec,
+                            title: wod.descricao?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "",
+                            modalityId: wod.codigoModalidade,
+                            modalityName: !responseModalityName.isEmpty
+                                ? responseModalityName
+                                : modality.descricao.trimmingCharacters(in: .whitespacesAndNewlines)
+                        )
                     )
-                )
+                }
+            }
+
+            if !modalities.isEmpty, failedModalities == modalities.count {
+                throw NextFitServiceError.unavailable
+            }
+
+            // Ordenação estável pela data real, preservando a ordem das modalidades retornadas.
+            return upcoming.enumerated()
+                .sorted { lhs, rhs in
+                    lhs.element.date == rhs.element.date
+                        ? lhs.offset < rhs.offset
+                        : lhs.element.date < rhs.element.date
+                }
+                .map(\.element)
+        } catch NextFitHTTPError.unauthorized {
+            try? NextFitKeychainStore.deleteToken(for: sessionAccount)
+            throw NextFitServiceError.invalidSession
+        } catch let error as NextFitServiceError {
+            throw error
+        } catch {
+            throw NextFitServiceError.unavailable
+        }
+    }
+
+    func loadWods(
+        _ upcomingWods: [NextFitUpcomingWodDisplay],
+        sessionAccount: String
+    ) async throws -> [NextFitWodDisplay] {
+        guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
+            throw NextFitServiceError.missingSession
+        }
+
+        do {
+            var displays = [NextFitWodDisplay]()
+            var failedWods = 0
+
+            for upcomingWod in upcomingWods {
+                do {
+                    displays.append(
+                        try await wodDisplay(
+                            for: NextFitDailyWodsResponse.Wod(
+                                id: upcomingWod.id,
+                                dataExec: upcomingWod.dataExec,
+                                descricao: upcomingWod.title,
+                                codigoModalidade: upcomingWod.modalityId,
+                                descricaoModalidade: upcomingWod.modalityName
+                            ),
+                            fallbackModalityName: upcomingWod.modalityName,
+                            token: token
+                        )
+                    )
+                } catch NextFitHTTPError.unauthorized {
+                    throw NextFitHTTPError.unauthorized
+                } catch {
+                    failedWods += 1
+                    debugLog("Falha ao carregar detalhe do WOD \(upcomingWod.id).")
+                }
+            }
+
+            if !upcomingWods.isEmpty, failedWods == upcomingWods.count {
+                throw NextFitServiceError.unavailable
             }
 
             return displays
@@ -836,6 +918,19 @@ struct NextFitService {
             return false
         }
         return calendar.isDate(parsedDate, inSameDayAs: selectedDate)
+    }
+
+    private func wodDate(from value: String) -> Date? {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "pt_BR")
+        formatter.calendar = Calendar(identifier: .gregorian)
+        formatter.timeZone = Calendar.current.timeZone
+        formatter.dateFormat = "dd/MM/yyyy HH:mm:ss"
+        if let date = formatter.date(from: value) {
+            return Calendar.current.startOfDay(for: date)
+        }
+        formatter.dateFormat = "dd/MM/yyyy"
+        return formatter.date(from: value).map { Calendar.current.startOfDay(for: $0) }
     }
 
     private func agendaDate(from value: String) -> Date? {

@@ -16,6 +16,15 @@ struct NextFitWodDisplay: Equatable, Identifiable {
     var id: Int { modalityId }
 }
 
+struct NextFitUpcomingWodDisplay: Equatable, Identifiable {
+    let id: Int
+    let date: Date
+    let dataExec: String
+    let title: String
+    let modalityId: Int
+    let modalityName: String
+}
+
 struct NextFitAgendaDisplay: Equatable, Identifiable {
     let id: Int
     let statusAgendaParticipante: Int?

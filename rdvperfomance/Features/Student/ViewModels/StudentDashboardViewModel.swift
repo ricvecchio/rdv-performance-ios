@@ -92,6 +92,7 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var nextFitAgenda: [NextFitAgendaDisplay] = []
     @Published private(set) var selectedNextFitAgendaDate = Calendar.current.startOfDay(for: Date())
     @Published private(set) var nextFitAgendaWods: [NextFitWodDisplay] = []
+    @Published private(set) var nextFitUpcomingWods: [NextFitUpcomingWodDisplay] = []
     @Published private(set) var isLoadingNextFitAgenda = false
     @Published private(set) var isLoadingNextFitAgendaWods = false
     @Published private(set) var nextFitAgendaWodError: String?
@@ -144,6 +145,18 @@ final class StudentDashboardViewModel: ObservableObject {
 
     var tomorrowAgendaDate: Date {
         Calendar.current.date(byAdding: .day, value: 1, to: todayAgendaDate) ?? todayAgendaDate
+    }
+
+    var nextFitAgendaDates: [Date] {
+        let calendar = Calendar.current
+        var dates = [todayAgendaDate]
+        for wod in nextFitUpcomingWods {
+            let date = calendar.startOfDay(for: wod.date)
+            if !dates.contains(where: { calendar.isDate($0, inSameDayAs: date) }) {
+                dates.append(date)
+            }
+        }
+        return dates.sorted()
     }
 
     var nextFitAgendaWod: NextFitWodDisplay? {
@@ -351,8 +364,9 @@ final class StudentDashboardViewModel: ObservableObject {
 
         let calendar = Calendar.current
         let selectedDate = calendar.startOfDay(for: date)
-        guard calendar.isDate(selectedDate, inSameDayAs: todayAgendaDate)
-                || calendar.isDate(selectedDate, inSameDayAs: tomorrowAgendaDate) else {
+        guard nextFitAgendaDates.contains(where: {
+            calendar.isDate($0, inSameDayAs: selectedDate)
+        }) else {
             return
         }
 
@@ -382,12 +396,23 @@ final class StudentDashboardViewModel: ObservableObject {
         }
         isLoadingNextFitAgenda = false
 
-        guard isTomorrowAgendaSelected else { return }
+        await loadNextFitAgendaWods(for: selectedDate, locale: locale)
+    }
+
+    private func loadNextFitAgendaWods(for date: Date, locale: Locale) async {
+        let calendar = Calendar.current
+        var loadedModalityIds = Set<Int>()
+        let dateWods = nextFitUpcomingWods.filter {
+            calendar.isDate($0.date, inSameDayAs: date)
+                && loadedModalityIds.insert($0.modalityId).inserted
+        }
+        guard !dateWods.isEmpty else { return }
+
         isLoadingNextFitAgendaWods = true
         defer { isLoadingNextFitAgendaWods = false }
         do {
             nextFitAgendaWods = try await nextFitService.loadWods(
-                for: selectedDate,
+                dateWods,
                 sessionAccount: studentId
             )
             selectedNextFitAgendaWodModalityId = nextFitAgendaWods.first?.modalityId
@@ -572,6 +597,7 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []
+        nextFitUpcomingWods = []
         selectedNextFitAgendaWodModalityId = nil
         processingAgendaIds = []
         agendaActionErrors = [:]
@@ -726,6 +752,26 @@ final class StudentDashboardViewModel: ObservableObject {
         } catch {
             nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
         }
+
+        guard !needsNextFitAuthentication else { return }
+
+        do {
+            nextFitUpcomingWods = try await nextFitService.loadUpcomingWodDays(sessionAccount: studentId)
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
+            }
+            return
+        } catch {
+            nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
+            return
+        }
+
+        await loadNextFitAgendaWods(for: selectedNextFitAgendaDate, locale: locale)
     }
 
     private func resetNextFitWod() {
@@ -734,6 +780,7 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []
+        nextFitUpcomingWods = []
         selectedNextFitAgendaWodModalityId = nil
         selectedNextFitAgendaDate = todayAgendaDate
         processingAgendaIds = []
