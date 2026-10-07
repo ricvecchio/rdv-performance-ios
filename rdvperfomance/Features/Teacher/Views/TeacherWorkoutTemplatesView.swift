@@ -59,13 +59,6 @@ struct TeacherWorkoutTemplatesView: View {
             : AppLocalization.string("ui.add_workout", locale: locale)
     }
 
-    private var descriptionText: String {
-        if isAcademiaOrEmCasaCategory {
-            return AppLocalization.string("ui.create_and_manage_this_sections_workouts", locale: locale)
-        }
-        return AppLocalization.string("ui.create_and_manage_this_sections_wods", locale: locale)
-    }
-
     @State private var activeSheet: ActiveSheet? = nil
 
     enum ActiveSheet: Identifiable {
@@ -115,10 +108,6 @@ struct TeacherWorkoutTemplatesView: View {
                                     .foregroundColor(.white.opacity(0.92))
                             }
 
-                            Text(descriptionText)
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.35))
-
                             if shouldShowAddButton {
                                 TeacherWorkoutTemplatesAddButton(
                                     title: addButtonTitle,
@@ -148,7 +137,7 @@ struct TeacherWorkoutTemplatesView: View {
                             )
 
                             if let err = errorMessage {
-                                TeacherWorkoutTemplatesMessageCard(text: err, isError: true)
+                                TeacherWorkoutTemplatesMessageCard(text: err, isError: true, usesApprovedCardStyle: true)
                             }
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)

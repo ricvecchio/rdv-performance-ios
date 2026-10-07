@@ -156,11 +156,11 @@ struct TeacherWorkoutTemplatesListView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -176,12 +176,12 @@ struct TeacherWorkoutTemplatesListView: View {
 
                     VStack(alignment: .leading, spacing: 4) {
                         Text(presentation.title)
-                            .font(.system(size: 16, weight: .semibold))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
 
                         if !presentation.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                             Text(presentation.description)
-                                .font(.system(size: 13))
+                                .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
                                 .lineLimit(2)
                         }
@@ -216,11 +216,11 @@ struct TeacherWorkoutTemplatesListView: View {
     private func errorView(_ msg: String) -> some View {
         VStack(spacing: 10) {
             Text("workout.oops_unable_to_load")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text(msg)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
@@ -241,11 +241,11 @@ struct TeacherWorkoutTemplatesListView: View {
     private var emptyView: some View {
         VStack(spacing: 10) {
             Text("ui.no_workout_registered")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text("ui.tap_to_create_your_first_workout")
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }

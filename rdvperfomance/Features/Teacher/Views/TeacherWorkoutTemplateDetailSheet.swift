@@ -61,11 +61,11 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                                 }
 
                                 if let err = errorMessage {
-                                    TeacherWorkoutTemplatesMessageCard(text: err, isError: true)
+                                    TeacherWorkoutTemplatesMessageCard(text: err, isError: true, usesApprovedCardStyle: true)
                                 }
 
                                 if let ok = successMessage {
-                                    TeacherWorkoutTemplatesMessageCard(text: ok, isError: false)
+                                    TeacherWorkoutTemplatesMessageCard(text: ok, isError: false, usesApprovedCardStyle: true)
                                 }
 
                                 Color.clear.frame(height: 18)
@@ -163,33 +163,33 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                         let b = blocks[i]
                         VStack(alignment: .leading, spacing: 8) {
                             Text(b.name.isEmpty ? AppLocalization.string("ui.block", locale: locale) : b.displayedName(locale: locale))
-                                .font(.system(size: 14, weight: .semibold))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
 
                             Text(b.details)
-                                .font(.system(size: 13))
+                                .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.70))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(Color.black.opacity(0.68))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                         )
                     }
                 }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("ui.no_blocks_registered")
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
 
                     Text("ui.this_wod_does_not_yet_have_warm_up_technique_wod_blocks")
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                 }
                 .padding(.vertical, 16)
@@ -213,22 +213,22 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
     private func blockEditor(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.85))
 
             TextEditor(text: text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.92))
                 .frame(minHeight: 110)
                 .scrollContentBackground(.hidden)

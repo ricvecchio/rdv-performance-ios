@@ -48,11 +48,11 @@ struct TeacherWorkoutTemplatesContentCard: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 }
@@ -110,13 +110,13 @@ struct TeacherWorkoutTemplateRow: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(presentation.title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 let sub = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !sub.isEmpty {
                     Text(sub)
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(2)
                 }
@@ -182,7 +182,7 @@ struct TeacherWorkoutTemplatesEmptyView: View {
                     ? AppLocalization.string("ui.no_wod_registered", locale: locale)
                     : AppLocalization.string("ui.no_workout_registered", locale: locale)
             )
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text(
@@ -190,7 +190,7 @@ struct TeacherWorkoutTemplatesEmptyView: View {
                     ? AppLocalization.string("ui.tap_add_wod_to_start", locale: locale)
                     : AppLocalization.string("ui.create_templates_for_them_to_appear_here", locale: locale)
             )
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -204,6 +204,7 @@ struct TeacherWorkoutTemplatesMessageCard: View {
 
     let text: String
     let isError: Bool
+    var usesApprovedCardStyle: Bool = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -211,18 +212,23 @@ struct TeacherWorkoutTemplatesMessageCard: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
 
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: usesApprovedCardStyle ? 14 : 13))
                 .foregroundColor(.white.opacity(0.75))
 
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(usesApprovedCardStyle ? 0.68 : 0.35))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(
+                    usesApprovedCardStyle
+                        ? Theme.Colors.primaryGreen.opacity(0.28)
+                        : Color.white.opacity(0.10),
+                    lineWidth: 1
+                )
         )
     }
 }
