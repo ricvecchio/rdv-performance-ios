@@ -85,10 +85,6 @@ struct StudentTeachersView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("student_teachers.manage_your_coaches_and_links")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
-
                             Button {
                                 teacherEmailInput = ""
                                 linkActionMessage = nil

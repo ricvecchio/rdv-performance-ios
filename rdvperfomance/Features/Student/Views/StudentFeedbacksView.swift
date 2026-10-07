@@ -42,7 +42,6 @@ struct StudentFeedbacksView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            header
                             listCard
 
                             if let err = errorMessage {
@@ -112,16 +111,6 @@ struct StudentFeedbacksView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await load() }
-    }
-
-    // Header de contexto com categoria
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("student_feedbacks.here_you_can_see_feedback_sent_by_your_coach")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // Card com lista de feedbacks
