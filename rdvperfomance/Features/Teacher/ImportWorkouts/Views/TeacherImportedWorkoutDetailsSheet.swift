@@ -177,22 +177,22 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     
     private func blockEditor(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.85))
             
             TextEditor(text: text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.92))
                 .frame(minHeight: 110)
                 .scrollContentBackground(.hidden)
@@ -209,22 +209,22 @@ struct TeacherImportedWorkoutDetailsSheet: View {
     private func blockCard(title: String, value: String) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.85))
             
             Text(value.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty ? "-" : value)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.70))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     
@@ -234,18 +234,18 @@ struct TeacherImportedWorkoutDetailsSheet: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
             
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     

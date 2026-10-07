@@ -296,11 +296,11 @@ struct TeacherImportWorkoutsView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     
@@ -331,12 +331,12 @@ struct TeacherImportWorkoutsView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(w.title.isEmpty ? AppLocalization.string("ui.workout", locale: locale) : w.title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                 
                 Text("ui.imported_via_excel")
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
             }
@@ -386,11 +386,11 @@ struct TeacherImportWorkoutsView: View {
     private var emptyView: some View {
         VStack(spacing: 10) {
             Text("ui.no_workout_registered")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
             
             Text("ui.tap_import_excel_to_add_workouts")
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -405,18 +405,18 @@ struct TeacherImportWorkoutsView: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
             
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     

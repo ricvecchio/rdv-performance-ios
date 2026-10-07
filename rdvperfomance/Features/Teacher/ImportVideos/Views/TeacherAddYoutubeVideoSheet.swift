@@ -26,13 +26,13 @@ struct TeacherAddYoutubeVideoSheet: View {
                             .padding(.top, 10)
 
                         Text("ui.add_video")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             Text("ui.paste_the_youtube_link_and_add_a_title_to_make_it_easier_to_find")
-                                .font(.system(size: 13))
+                                .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.45))
 
                             formFields
@@ -43,11 +43,11 @@ struct TeacherAddYoutubeVideoSheet: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(Color.black.opacity(0.68))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -103,7 +103,7 @@ struct TeacherAddYoutubeVideoSheet: View {
         VStack(alignment: .leading, spacing: 10) {
             VStack(alignment: .leading, spacing: 8) {
                 Text("ui.title_optional")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
@@ -125,7 +125,7 @@ struct TeacherAddYoutubeVideoSheet: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("ui.youtube_link")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 
                 ZStack(alignment: .leading) {
@@ -148,7 +148,7 @@ struct TeacherAddYoutubeVideoSheet: View {
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("ui.video_category")
-                    .font(.system(size: 13, weight: .semibold))
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 
                 Picker("", selection: $selectedCategory) {
@@ -170,7 +170,7 @@ struct TeacherAddYoutubeVideoSheet: View {
     
     private func sheetMessageCard(text: LocalizedStringKey, isError: Bool) -> some View {
         Text(text)
-            .font(.system(size: 13, weight: .semibold))
+            .font(.system(size: 14, weight: .semibold))
             .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
             .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -175,11 +175,11 @@ struct TeacherImportVideosView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     
@@ -238,13 +238,13 @@ struct TeacherImportVideosView: View {
                             .padding(.top, 10)
 
                         Text("ui.edit_title")
-                            .font(.system(size: 18, weight: .bold))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("ui.title")
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
 
                             TextField("", text: $editingVideoTitle)
@@ -263,17 +263,17 @@ struct TeacherImportVideosView: View {
 
                             if let editTitleErrorMessage {
                                 Text(editTitleErrorMessage)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.yellow.opacity(0.85))
                             }
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(Color.black.opacity(0.68))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -328,12 +328,12 @@ struct TeacherImportVideosView: View {
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(v.title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : v.title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                 
                 Text(v.category.localizedTitle)
-                    .font(.system(size: 12))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
             }
@@ -453,11 +453,11 @@ struct TeacherImportVideosView: View {
     private var emptyView: some View {
         VStack(spacing: 10) {
             Text("ui.no_video_registered")
-                .font(.system(size: 15, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
             
             Text("ui.tap_add_video_to_save_youtube_link")
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -472,18 +472,18 @@ struct TeacherImportVideosView: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
             
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     
