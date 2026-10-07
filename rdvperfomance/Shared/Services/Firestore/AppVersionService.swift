@@ -3,6 +3,9 @@ import FirebaseFirestore
 
 struct AppVersionConfig {
     let minimumVersion: AppVersion
+    /// Build mínimo exigido quando a versão instalada é igual a `minimumVersion`.
+    /// Campo opcional `minimumBuild` em `app_config/ios`; ausente ou inválido = 0 (sem exigência de build).
+    let minimumBuild: Int
     let latestVersion: AppVersion
     let forceUpdate: Bool
     let appStoreURL: String
@@ -22,10 +25,30 @@ struct AppVersionConfig {
         }
 
         self.minimumVersion = minimumVersion
+        self.minimumBuild = Self.nonNegativeInt(from: data["minimumBuild"]) ?? 0
         self.latestVersion = latestVersion
         self.forceUpdate = forceUpdate
         self.appStoreURL = appStoreURL
         self.message = Self.optionalNonEmptyString(from: data["message"])
+    }
+
+    private static func nonNegativeInt(from value: Any?) -> Int? {
+        let intValue: Int?
+
+        switch value {
+        case let number as NSNumber where CFGetTypeID(number) != CFBooleanGetTypeID():
+            intValue = number.intValue
+        case let string as String:
+            intValue = Int(string.trimmingCharacters(in: .whitespacesAndNewlines))
+        default:
+            intValue = nil
+        }
+
+        guard let intValue, intValue >= 0 else {
+            return nil
+        }
+
+        return intValue
     }
 
     private static func optionalNonEmptyString(from value: Any?) -> String? {
@@ -126,8 +149,20 @@ final class AppVersionService {
                 return .upToDate
             }
 
-            if config.forceUpdate && installedVersion < config.minimumVersion {
-                return .forceUpdate(config)
+            if config.forceUpdate {
+                if installedVersion < config.minimumVersion {
+                    return .forceUpdate(config)
+                }
+
+                if installedVersion == config.minimumVersion {
+                    if let installedBuild = installedBuildNumber() {
+                        if installedBuild < config.minimumBuild {
+                            return .forceUpdate(config)
+                        }
+                    } else {
+                        log("O build instalado não pôde ser lido.")
+                    }
+                }
             }
 
             return installedVersion < config.latestVersion ? .optionalUpdate : .upToDate
@@ -135,6 +170,14 @@ final class AppVersionService {
             log("Não foi possível consultar app_config/ios: \(error.localizedDescription)")
             return .upToDate
         }
+    }
+
+    private func installedBuildNumber() -> Int? {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String else {
+            return nil
+        }
+
+        return Int(value.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
     private func log(_ message: String) {
