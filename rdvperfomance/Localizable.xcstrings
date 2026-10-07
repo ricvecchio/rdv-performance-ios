@@ -89564,6 +89564,7 @@
       }
     },
     "ui.create_and_manage_this_sections_wods" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -89586,6 +89587,7 @@
       }
     },
     "ui.create_and_manage_this_sections_workouts" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

@@ -164,13 +164,24 @@ struct TeacherWorkoutTemplatesListView: View {
         )
     }
 
+    private var categoryIcon: String {
+        switch category {
+        case .crossfit:
+            return "figure.strengthtraining.traditional"
+        case .academia:
+            return "dumbbell"
+        case .emCasa:
+            return "house.fill"
+        }
+    }
+
     private var listView: some View {
         VStack(spacing: 0) {
             ForEach(Array(items.enumerated()), id: \.offset) { idx, item in
                 let presentation = DefaultWorkoutLocalization.presentation(for: item, locale: locale)
                 HStack(spacing: 12) {
 
-                    Image(systemName: "doc.text.fill")
+                    Image(systemName: categoryIcon)
                         .foregroundColor(.green.opacity(0.85))
                         .frame(width: 26)
 

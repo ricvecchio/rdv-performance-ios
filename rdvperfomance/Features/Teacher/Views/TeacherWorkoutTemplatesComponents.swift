@@ -24,6 +24,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
     let hasLoadedInitialData: Bool
     let templates: [WorkoutTemplateFS]
     let isCrossfitCategory: Bool
+    let category: TreinoTipo
     let showsTemplateActions: Bool
 
     let onTapTemplate: (WorkoutTemplateFS) -> Void
@@ -39,6 +40,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
             } else {
                 TeacherWorkoutTemplatesList(
                     templates: templates,
+                    category: category,
                     showsTemplateActions: showsTemplateActions,
                     onTapTemplate: onTapTemplate,
                     onSendTemplate: onSendTemplate,
@@ -60,6 +62,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
 struct TeacherWorkoutTemplatesList: View {
 
     let templates: [WorkoutTemplateFS]
+    let category: TreinoTipo
     let showsTemplateActions: Bool
     let onTapTemplate: (WorkoutTemplateFS) -> Void
     let onSendTemplate: (WorkoutTemplateFS) -> Void
@@ -75,6 +78,7 @@ struct TeacherWorkoutTemplatesList: View {
                 } label: {
                     TeacherWorkoutTemplateRow(
                         template: t,
+                        category: category,
                         showsTemplateActions: showsTemplateActions,
                         onSend: { onSendTemplate(t) },
                         onDelete: { onDeleteTemplate(t) }
@@ -95,15 +99,27 @@ struct TeacherWorkoutTemplateRow: View {
     @Environment(\.locale) private var locale
 
     let template: WorkoutTemplateFS
+    let category: TreinoTipo
     let showsTemplateActions: Bool
     let onSend: () -> Void
     let onDelete: () -> Void
+
+    private var categoryIcon: String {
+        switch category {
+        case .crossfit:
+            return "figure.strengthtraining.traditional"
+        case .academia:
+            return "dumbbell"
+        case .emCasa:
+            return "house.fill"
+        }
+    }
 
     var body: some View {
         let presentation = DefaultWorkoutLocalization.presentation(for: template, locale: locale)
         HStack(spacing: 12) {
 
-            Image(systemName: "dumbbell.fill")
+            Image(systemName: categoryIcon)
                 .foregroundColor(.green.opacity(0.85))
                 .font(.system(size: 16))
                 .frame(width: 26)

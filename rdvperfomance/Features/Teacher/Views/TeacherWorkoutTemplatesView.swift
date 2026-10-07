@@ -120,6 +120,7 @@ struct TeacherWorkoutTemplatesView: View {
                                 hasLoadedInitialData: hasLoadedInitialData,
                                 templates: templates,
                                 isCrossfitCategory: isCrossfitCategory,
+                                category: category,
                                 showsTemplateActions: mode == .manage,
                                 onTapTemplate: { t in
                                     if mode == .attach {
