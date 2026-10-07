@@ -86123,6 +86123,7 @@
       }
     },
     "student_feedbacks.here_you_can_see_feedback_sent_by_your_coach" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -86211,6 +86212,7 @@
       }
     },
     "student_messages.here_you_can_see_messages_sent_by_your_coach" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -87003,6 +87005,7 @@
       }
     },
     "student_teachers.manage_your_coaches_and_links" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

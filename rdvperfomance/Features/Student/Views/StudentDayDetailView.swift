@@ -340,10 +340,6 @@ struct StudentDayDetailView: View {
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("personal_records_girls.workout")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             VStack(alignment: .leading, spacing: 6) {
                 Text(presentation.title)
                     .font(.system(size: 17, weight: .semibold))
@@ -460,7 +456,7 @@ struct StudentDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
 
                     // Peso (ocupa o resto)
