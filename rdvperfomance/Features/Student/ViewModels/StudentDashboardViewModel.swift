@@ -113,6 +113,9 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
     @Published var linkActionMessageIsError = false
+    @Published private(set) var currentWeekCheckInSummaries: [StudentDashboardDaySummary] =
+        StudentDashboardViewModel.makeCurrentWeekCheckInSummaries(checkedInDays: [])
+    @Published private(set) var isLoadingCurrentWeekCheckIns = false
 
     private let studentId: String
     private let repository: FirestoreRepository
@@ -309,6 +312,42 @@ final class StudentDashboardViewModel: ObservableObject {
             upcomingDayGroups = []
         }
 
+    }
+
+    func loadCurrentWeekCheckIns() async {
+        let calendar = Self.checkInWeekCalendar
+        let today = calendar.startOfDay(for: Date())
+        let weekDates = Self.currentCheckInWeekDates(calendar: calendar)
+
+        guard nextFitService.hasSession(sessionAccount: studentId) else {
+            currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: [])
+            isLoadingCurrentWeekCheckIns = false
+            return
+        }
+
+        isLoadingCurrentWeekCheckIns = true
+        var checkedInDays = Set<Date>()
+
+        for date in weekDates where date <= today {
+            if Task.isCancelled { return }
+            do {
+                let agenda = try await nextFitService.loadAgenda(for: date, sessionAccount: studentId)
+                if agenda.contains(where: {
+                    $0.hasCheckIn && calendar.isDate($0.startDate, inSameDayAs: date)
+                }) {
+                    checkedInDays.insert(date)
+                }
+            } catch {
+                if Task.isCancelled { return }
+                #if DEBUG
+                print("[StudentDashboard] Não foi possível carregar os check-ins do dia: \(error.localizedDescription)")
+                #endif
+            }
+        }
+
+        guard !Task.isCancelled else { return }
+        currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: checkedInDays)
+        isLoadingCurrentWeekCheckIns = false
     }
 
     func loadNextFit(locale: Locale) async {
@@ -941,6 +980,35 @@ final class StudentDashboardViewModel: ObservableObject {
                 )
             }
             .sorted { $0.date < $1.date }
+    }
+
+    private static var checkInWeekCalendar: Calendar {
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2
+        return calendar
+    }
+
+    private static func currentCheckInWeekDates(calendar: Calendar) -> [Date] {
+        let today = calendar.startOfDay(for: Date())
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: today) else {
+            return []
+        }
+        let weekStart = calendar.startOfDay(for: week.start)
+        return (0..<7).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: weekStart)
+        }
+    }
+
+    private static func makeCurrentWeekCheckInSummaries(
+        checkedInDays: Set<Date>
+    ) -> [StudentDashboardDaySummary] {
+        let calendar = checkInWeekCalendar
+        return currentCheckInWeekDates(calendar: calendar).map { date in
+            StudentDashboardDaySummary(
+                date: date,
+                isCompleted: checkedInDays.contains { calendar.isDate($0, inSameDayAs: date) }
+            )
+        }
     }
 
     private func makeUpcomingDayGroups(

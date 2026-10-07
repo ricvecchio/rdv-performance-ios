@@ -97,6 +97,9 @@ struct StudentDashboardView: View {
         .onAppear {
             Task { await viewModel.load(locale: locale) }
         }
+        .task(id: viewModel.hasNextFitSession) {
+            await viewModel.loadCurrentWeekCheckIns()
+        }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
                 .presentationDetents([.fraction(0.50)])
@@ -136,9 +139,11 @@ struct StudentDashboardView: View {
                 .padding(.vertical, 28)
         case .unlinked:
             noLinkedTeacherCard
+            weeklyCheckInsCard
             nextFitWodEntryCard
         case .linked, .failed:
             progressCard
+            weeklyCheckInsCard
             nextFitWodEntryCard
         }
     }
@@ -462,6 +467,90 @@ struct StudentDashboardView: View {
                 .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
         .accessibilityHidden(true)
+    }
+
+    private var weeklyCheckInsCard: some View {
+        let completed = viewModel.currentWeekCheckInSummaries.filter(\.isCompleted).count
+        let total = viewModel.currentWeekCheckInSummaries.count
+        let progress = total == 0 ? 0 : Double(completed) / Double(total)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                weeklyCheckInsIcon
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("dashboard.weekly_checkins_title")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+
+                    if viewModel.isLoadingCurrentWeekCheckIns {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text(weeklyProgressText(completed: completed, total: total))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.55))
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                if !viewModel.isLoadingCurrentWeekCheckIns {
+                    Text(
+                        String(
+                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
+                            locale: locale,
+                            arguments: [Int64((progress * 100).rounded())]
+                        )
+                    )
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                }
+            }
+
+            if !viewModel.isLoadingCurrentWeekCheckIns {
+                Spacer(minLength: 0)
+
+                ProgressView(value: progress)
+                    .tint(Theme.Colors.primaryGreen)
+
+                HStack(spacing: 10) {
+                    ForEach(viewModel.currentWeekCheckInSummaries) { item in
+                        VStack(spacing: 6) {
+                            Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
+                                .foregroundColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                            Text(weekdayAbbreviation(for: item.date))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white.opacity(0.75))
+                        }
+                        .frame(maxWidth: .infinity)
+                    }
+                }
+                .frame(maxWidth: .infinity)
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(14)
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+    }
+
+    private var weeklyCheckInsIcon: some View {
+        Image(systemName: "person.crop.circle.badge.checkmark")
+            .font(.system(size: 18, weight: .semibold))
+            .foregroundColor(Theme.Colors.primaryGreen)
+            .frame(width: 42, height: 42)
+            .background(Theme.Colors.primaryGreen.opacity(0.10))
+            .background(Color.black.opacity(0.55))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
+            .accessibilityHidden(true)
     }
 
     @ViewBuilder

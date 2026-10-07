@@ -9504,6 +9504,28 @@
         }
       }
     },
+    "dashboard.weekly_checkins_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Weekly check-ins"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-ins de la semana"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Check-ins da semana"
+          }
+        }
+      }
+    },
     "dashboard.weekly_progress" : {
       "localizations" : {
         "en" : {
