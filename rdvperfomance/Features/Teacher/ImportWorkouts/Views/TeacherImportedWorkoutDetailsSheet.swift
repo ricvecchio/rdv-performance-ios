@@ -133,13 +133,6 @@ struct TeacherImportedWorkoutDetailsSheet: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
                 .lineLimit(2)
-            
-            let desc = workout.description.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-            if !desc.isEmpty {
-                Text(desc)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.70))
-            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
