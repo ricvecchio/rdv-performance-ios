@@ -143,10 +143,6 @@ struct TeacherMessageView: View {
             )
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
-
-            Text("ui.send_guidance_notices_and_messages_to_the_student")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
