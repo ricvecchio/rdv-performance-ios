@@ -9084,7 +9084,6 @@
       }
     },
     "dashboard.no_workout_scheduled" : {
-      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9593,6 +9592,7 @@
       }
     },
     "dashboard.wod_of_the_day" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -9610,6 +9610,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "WOD do dia"
+          }
+        }
+      }
+    },
+    "dashboard.wod.banner_title" : {
+      "comment" : "Title of the banner shown above the NextFit workout activities.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Workout of the day"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenamiento del día"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Treino do dia"
           }
         }
       }
@@ -9659,6 +9682,7 @@
       }
     },
     "dashboard.wod.title_with_modality" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {

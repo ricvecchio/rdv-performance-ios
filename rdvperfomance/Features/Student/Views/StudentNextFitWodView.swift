@@ -26,6 +26,20 @@ private extension View {
     }
 }
 
+private struct NextFitCardStyle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Color.black.opacity(0.68))
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
+    }
+}
+
 struct StudentNextFitWodView: View {
     @Binding var path: [AppRoute]
     let studentId: String
@@ -68,11 +82,12 @@ struct StudentNextFitWodView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            nextFitWodCard
+                            nextFitContent
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
                         .padding(.top, 16)
+                        .padding(.bottom, 24)
 
                         Spacer(minLength: 0)
                     }
@@ -105,6 +120,12 @@ struct StudentNextFitWodView: View {
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                if viewModel.hasNextFitSession {
+                    nextFitLogoutButton
+                }
+            }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
@@ -124,52 +145,48 @@ struct StudentNextFitWodView: View {
         }
     }
 
-    private var nextFitWodCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text(nextFitWodTitle)
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
-
-                Spacer()
-
-                if viewModel.hasNextFitSession {
-                    Button {
-                        isNextFitLogoutConfirmationPresented = true
-                    } label: {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.45))
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(viewModel.isLoadingNextFitWod)
-                    .accessibilityLabel("dashboard.disconnect_nextfit")
-                    .confirmationDialog(
-                        "dashboard.disconnect_nextfit_confirmation_title",
-                        isPresented: $isNextFitLogoutConfirmationPresented,
-                        titleVisibility: .visible
-                    ) {
-                        Button("dashboard.disconnect", role: .destructive) {
-                            do {
-                                try viewModel.logoutNextFit()
-                            } catch {
-                                isNextFitLogoutErrorPresented = true
-                            }
-                        }
-                        Button("common.cancel", role: .cancel) { }
-                    } message: {
-                        Text("dashboard.you_will_need_to_sign_in_again_to_view_today_s_wod")
-                    }
+    private var nextFitLogoutButton: some View {
+        Button {
+            isNextFitLogoutConfirmationPresented = true
+        } label: {
+            Image(systemName: "rectangle.portrait.and.arrow.right")
+                .font(.system(size: 15, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+                .frame(width: 44, height: 44)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .disabled(viewModel.isLoadingNextFitWod)
+        .accessibilityLabel("dashboard.disconnect_nextfit")
+        .confirmationDialog(
+            "dashboard.disconnect_nextfit_confirmation_title",
+            isPresented: $isNextFitLogoutConfirmationPresented,
+            titleVisibility: .visible
+        ) {
+            Button("dashboard.disconnect", role: .destructive) {
+                do {
+                    try viewModel.logoutNextFit()
+                } catch {
+                    isNextFitLogoutErrorPresented = true
                 }
             }
+            Button("common.cancel", role: .cancel) { }
+        } message: {
+            Text("dashboard.you_will_need_to_sign_in_again_to_view_today_s_wod")
+        }
+    }
 
-            if viewModel.isLoadingNextFitWod {
-                ProgressView()
-                    .tint(.white)
-            } else if viewModel.needsNextFitAuthentication {
-                EmptyView()
-            } else if let error = viewModel.nextFitError {
+    @ViewBuilder
+    private var nextFitContent: some View {
+        if viewModel.isLoadingNextFitWod {
+            ProgressView()
+                .tint(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+        } else if viewModel.needsNextFitAuthentication {
+            EmptyView()
+        } else if let error = viewModel.nextFitError {
+            VStack(alignment: .leading, spacing: 14) {
                 Text(error)
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
@@ -182,68 +199,315 @@ struct StudentNextFitWodView: View {
                         .compactPrimaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
+            }
+            .modifier(NextFitCardStyle())
+        } else {
+            nextFitAgendaDateSelector
+
+            nextFitTabSelector
+
+            if viewModel.isNextFitAgendaSelected {
+                nextFitAgendaContent
+                    .modifier(NextFitCardStyle())
             } else {
-                if viewModel.nextFitContentOptions.count > 1 {
-                    Picker("", selection: $viewModel.selectedNextFitContent) {
-                        ForEach(viewModel.nextFitContentOptions) { option in
-                            nextFitContentOptionLabel(option)
-                                .tag(Optional(option.selection))
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .tint(.white)
-                    .environment(\.colorScheme, .dark)
-                    .onChange(of: viewModel.selectedNextFitContent) { _, selection in
-                        if selection != .agenda {
-                            viewModel.clearNextFitAgendaDetail()
-                        }
-                    }
-                }
-
-                if viewModel.isNextFitAgendaSelected {
-                    nextFitAgendaContent
-                } else if let wod = viewModel.nextFitWod {
-                    VStack(spacing: 10) {
-                        ForEach(wod.activities) { activity in
-                            VStack(alignment: .leading, spacing: 14) {
-                                Text(activity.title)
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(Theme.Colors.primaryGreen)
-
-                                Text(activity.description)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.92))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .padding(14)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.white.opacity(0.06))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
-                            )
-                        }
-                    }
-                } else {
-                    Text("dashboard.no_wod_available_for_today")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
-                }
+                nextFitSelectedDateWodContent
             }
         }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
+
+    // MARK: - Dados da data selecionada
+
+    private var isTodayAgendaDateSelected: Bool {
+        Calendar.current.isDate(
+            viewModel.selectedNextFitAgendaDate,
+            inSameDayAs: viewModel.todayAgendaDate
+        )
+    }
+
+    /// Hoje: WODs carregados em `loadTodayWods`. Demais datas: WODs da data selecionada.
+    private var displayedNextFitWods: [NextFitWodDisplay] {
+        isTodayAgendaDateSelected ? viewModel.nextFitWods : viewModel.nextFitAgendaWods
+    }
+
+    private var displayedNextFitWod: NextFitWodDisplay? {
+        guard !viewModel.isNextFitAgendaSelected else { return nil }
+        if case let .wod(modalityId)? = viewModel.selectedNextFitContent,
+           let wod = displayedNextFitWods.first(where: { $0.modalityId == modalityId }) {
+            return wod
+        }
+        return displayedNextFitWods.first
+    }
+
+    private var isLoadingSelectedDateWods: Bool {
+        !isTodayAgendaDateSelected
+            && (viewModel.isLoadingNextFitAgenda || viewModel.isLoadingNextFitAgendaWods)
+    }
+
+    private var nextFitTabOptions: [StudentDashboardNextFitContentOption] {
+        displayedNextFitWods.map {
+            .wod(id: $0.modalityId, title: $0.modalityName)
+        } + [
+            .agenda
+        ]
+    }
+
+    // MARK: - Abas
+
+    private var nextFitTabSelector: some View {
+        HStack(spacing: 8) {
+            ForEach(nextFitTabOptions) { option in
+                nextFitTabButton(option)
+            }
+        }
+    }
+
+    private func nextFitTabButton(_ option: StudentDashboardNextFitContentOption) -> some View {
+        let isSelected: Bool = {
+            switch option.selection {
+            case .agenda:
+                return viewModel.isNextFitAgendaSelected
+            case .wod(let modalityId):
+                return displayedNextFitWod?.modalityId == modalityId
+            }
+        }()
+
+        return Button {
+            let selection = option.selection
+            viewModel.selectedNextFitContent = selection
+            if selection != .agenda {
+                viewModel.clearNextFitAgendaDetail()
+            }
+        } label: {
+            nextFitContentOptionLabel(option)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 12)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(
+                            isSelected
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Theme.Colors.primaryGreen.opacity(0.55),
+                                            Theme.Colors.primaryGreen.opacity(0.25)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                : AnyShapeStyle(Color.black.opacity(0.68))
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(
+                            isSelected
+                                ? Theme.Colors.primaryGreen.opacity(0.85)
+                                : Color.white.opacity(0.08),
+                            lineWidth: 1
+                        )
+                )
+                .shadow(
+                    color: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : .clear,
+                    radius: 8
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Treino da data selecionada
+
+    @ViewBuilder
+    private var nextFitSelectedDateWodContent: some View {
+        if isLoadingSelectedDateWods {
+            ProgressView()
+                .tint(.white)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 24)
+        } else if !isTodayAgendaDateSelected, let error = viewModel.nextFitAgendaWodError {
+            VStack(alignment: .leading, spacing: 14) {
+                Text(error)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                Button {
+                    Task {
+                        await viewModel.selectNextFitAgendaDate(
+                            viewModel.selectedNextFitAgendaDate,
+                            locale: locale
+                        )
+                    }
+                } label: {
+                    Text("dashboard.try_again_action")
+                        .padding(.horizontal, 14)
+                        .compactPrimaryGreenActionButton()
+                }
+                .buttonStyle(.plain)
+            }
+            .modifier(NextFitCardStyle())
+        } else if let wod = displayedNextFitWod {
+            nextFitWodBanner(wod)
+
+            if wod.activities.isEmpty {
+                nextFitEmptyWodMessage
+            } else {
+                ForEach(wod.activities) { activity in
+                    nextFitActivityCard(activity)
+                }
+            }
+        } else {
+            nextFitEmptyWodMessage
+        }
+    }
+
+    private var nextFitEmptyWodMessage: some View {
+        Text(
+            isTodayAgendaDateSelected
+                ? LocalizedStringKey("dashboard.no_wod_available_for_today")
+                : LocalizedStringKey("dashboard.no_workout_scheduled")
+        )
+        .font(.system(size: 14))
+        .foregroundColor(.white.opacity(0.55))
+        .modifier(NextFitCardStyle())
+    }
+
+    private func nextFitWodBanner(_ wod: NextFitWodDisplay) -> some View {
+        let unitName = viewModel.studentUnitName
+
+        return HStack(spacing: 14) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Theme.Colors.primaryGreen.opacity(0.16))
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.35), lineWidth: 1)
+                Image(systemName: "dumbbell.fill")
+                    .font(.system(size: 24, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+            }
+            .frame(width: 58, height: 58)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("dashboard.wod.banner_title")
+                    .font(.system(size: 21, weight: .bold))
+                    .foregroundColor(.white)
+
+                if !unitName.isEmpty {
+                    Text(verbatim: unitName)
+                        .font(.system(size: 16))
+                        .foregroundColor(.white.opacity(0.75))
+                }
+            }
+            .lineLimit(1)
+            .minimumScaleFactor(0.8)
+
+            Spacer(minLength: 8)
+
+            Text(verbatim: wod.modalityName.uppercased())
+                .font(.system(size: 14, weight: .bold))
+                .foregroundColor(Theme.Colors.primaryGreen)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(Color.black.opacity(0.6))
+                .clipShape(RoundedRectangle(cornerRadius: 10))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Theme.Colors.primaryGreen.opacity(0.45), lineWidth: 1)
+                )
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: 88, alignment: .leading)
+        .background {
+            ZStack {
+                Image("rdv_crossfit_wod_horizontal")
+                    .resizable()
+                    .scaledToFill()
+
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.92),
+                        Color.black.opacity(0.6),
+                        Color.black.opacity(0.35)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+            }
+            .clipped()
+            .allowsHitTesting(false)
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+        )
+    }
+
+    private func nextFitActivityCard(_ activity: NextFitWodActivityDisplay) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Image(systemName: nextFitActivityIconName(for: activity.title))
+                .font(.system(size: 22, weight: .semibold))
+                .foregroundColor(Theme.Colors.primaryGreen)
+                .frame(width: 30)
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text(activity.title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+
+                Text(activity.description)
+                    .font(.system(size: 15))
+                    .foregroundColor(.white.opacity(0.92))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        }
+        .padding(16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            ZStack {
+                Color.black.opacity(0.68)
+                Theme.Colors.primaryGreen.opacity(0.05)
+            }
+        )
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    /// Ícone apenas visual, escolhido pelo título real da atividade retornado pela API.
+    private func nextFitActivityIconName(for title: String) -> String {
+        let normalized = title
+            .folding(options: [.caseInsensitive, .diacriticInsensitive], locale: locale)
+            .lowercased()
+
+        if normalized.contains("warm") || normalized.contains("aquec") {
+            return "list.bullet"
+        }
+        if normalized.contains("skill") || normalized.contains("tecnic") || normalized.contains("habilidade") {
+            return "figure.gymnastics"
+        }
+        if normalized.contains("wod") || normalized.contains("metcon") {
+            return "trophy.fill"
+        }
+        if normalized.contains("rx") || normalized.contains("forca") || normalized.contains("strength") {
+            return "bolt.fill"
+        }
+        return "dumbbell.fill"
+    }
+
 
     @ViewBuilder
     private var nextFitAgendaContent: some View {
         VStack(alignment: .leading, spacing: 14) {
-            nextFitAgendaDateSelector
-
             if viewModel.isLoadingNextFitAgenda || viewModel.isLoadingNextFitAgendaDetail {
                 ProgressView()
                     .tint(.white)
@@ -333,8 +597,6 @@ struct StudentNextFitWodView: View {
                     }
                 }
             }
-
-            nextFitAgendaWodContent
         }
     }
 
@@ -345,7 +607,8 @@ struct StudentNextFitWodView: View {
                     nextFitAgendaDateButton(date: date)
                 }
             }
-            .padding(.vertical, 1)
+            .padding(.vertical, 6)
+            .padding(.horizontal, 2)
         }
     }
 
@@ -362,100 +625,76 @@ struct StudentNextFitWodView: View {
     }
 
     private func nextFitAgendaDateButton(date: Date) -> some View {
-        let isSelected = Calendar.current.isDate(
+        let calendar = Calendar.current
+        let isSelected = calendar.isDate(
             viewModel.selectedNextFitAgendaDate,
             inSameDayAs: date
         )
         let formatter = DateFormatter()
         formatter.calendar = Calendar(identifier: .gregorian)
         formatter.locale = Locale(identifier: "pt_BR")
-        formatter.timeZone = Calendar.current.timeZone
+        formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "dd/MM"
         return Button {
             Task { await viewModel.selectNextFitAgendaDate(date, locale: locale) }
         } label: {
-            Text(verbatim: formatter.string(from: date))
-                .font(.system(size: 14, weight: .semibold))
-                .monospacedDigit()
-                .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.65))
-                .padding(.horizontal, 14)
-                .padding(.vertical, 9)
-                .background(
-                    isSelected
-                        ? Theme.Colors.primaryGreen.opacity(0.14)
-                        : Color.white.opacity(0.04)
-                )
-                .cornerRadius(10)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(
-                            isSelected
-                                ? Theme.Colors.primaryGreen.opacity(0.55)
-                                : Color.white.opacity(0.08),
-                            lineWidth: 1
-                        )
-                )
+            VStack(spacing: 4) {
+                Text(verbatim: nextFitAgendaDayTitle(for: date))
+                    .font(.system(size: 13, weight: .medium))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+
+                Text(verbatim: formatter.string(from: date))
+                    .font(.system(size: 16, weight: .semibold))
+                    .monospacedDigit()
+            }
+            .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85))
+            .frame(minWidth: 58)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(
+                        isSelected
+                            ? Theme.Colors.primaryGreen.opacity(0.18)
+                            : Color.black.opacity(0.68)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isSelected
+                            ? Theme.Colors.primaryGreen.opacity(0.85)
+                            : Color.white.opacity(0.08),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : .clear,
+                radius: 6
+            )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
 
-    @ViewBuilder
-    private var nextFitAgendaWodContent: some View {
-        if viewModel.isLoadingNextFitAgendaWods {
-            ProgressView()
-                .tint(.white)
-        } else if let error = viewModel.nextFitAgendaWodError {
-            Text(error)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        } else if let wod = viewModel.nextFitAgendaWod {
-            VStack(alignment: .leading, spacing: 10) {
-                Text("dashboard.wod_of_the_day")
-                    .font(.system(size: 16, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
-
-                if viewModel.nextFitAgendaWods.count > 1 {
-                    Picker("", selection: $viewModel.selectedNextFitAgendaWodModalityId) {
-                        ForEach(viewModel.nextFitAgendaWods) { item in
-                            Text(item.modalityName.uppercased()).tag(Optional(item.modalityId))
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .tint(Color.white.opacity(0.06))
-                    .overlay(
-                        HStack(spacing: 4) {
-                            ForEach(viewModel.nextFitAgendaWods) { _ in
-                                Capsule()
-                                    .stroke(Theme.Colors.primaryGreen.opacity(0.42), lineWidth: 1)
-                            }
-                        }
-                        .padding(2)
-                        .allowsHitTesting(false)
-                    )
-                }
-
-                ForEach(wod.activities) { activity in
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(activity.title)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(Theme.Colors.primaryGreen)
-
-                        Text(activity.description)
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.92))
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
-                    )
-                }
-            }
+    /// "HOJE", "AMANHÃ" ou o dia da semana abreviado (ex.: "QUA"), conforme o idioma do app.
+    private func nextFitAgendaDayTitle(for date: Date) -> String {
+        let calendar = Calendar.current
+        if calendar.isDate(date, inSameDayAs: viewModel.todayAgendaDate) {
+            return DashboardAgendaDay.today.title(locale: locale)
         }
+        if calendar.isDate(date, inSameDayAs: viewModel.tomorrowAgendaDate) {
+            return DashboardAgendaDay.tomorrow.title(locale: locale)
+        }
+        let formatter = DateFormatter()
+        formatter.calendar = calendar
+        formatter.locale = locale
+        formatter.timeZone = calendar.timeZone
+        formatter.dateFormat = "EEE"
+        return formatter.string(from: date)
+            .replacingOccurrences(of: ".", with: "")
+            .uppercased(with: locale)
     }
 
     private func nextFitAgendaDetailContent(_ detail: NextFitAgendaDetailDisplay) -> some View {
@@ -663,14 +902,5 @@ struct StudentNextFitWodView: View {
         }
         .padding(16)
         .frame(width: 300, alignment: .leading)
-    }
-
-    private var nextFitWodTitle: String {
-        let unitName = viewModel.studentUnitName
-        guard !unitName.isEmpty else {
-            return AppLocalization.string("dashboard.wod.title", locale: locale)
-        }
-        let format = AppLocalization.string("dashboard.wod.title_with_modality", locale: locale)
-        return String(format: format, locale: locale, arguments: [unitName])
     }
 }
