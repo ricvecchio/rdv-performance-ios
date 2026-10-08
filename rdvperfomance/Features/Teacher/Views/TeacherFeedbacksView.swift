@@ -384,8 +384,10 @@ struct TeacherFeedbacksView: View {
             )
 
             newFeedbackText = ""
-            successMessage = AppLocalization.string("ui.feedback_saved_successfully", locale: locale)
             await loadFeedbacks()
+
+            // Define o sucesso após o recarregamento, que limpa os estados de status
+            successMessage = AppLocalization.string("ui.feedback_saved_successfully", locale: locale)
 
         } catch {
             errorMessage = friendlyFirestoreError(error)

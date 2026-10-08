@@ -402,10 +402,12 @@ struct TeacherMessageView: View {
             messages.insert(local, at: 0)
 
             message = ""
-            successMessage = AppLocalization.string("ui.message_sent_successfully", locale: locale)
 
             // ✅ Sincroniza com Firestore
             await loadMessages()
+
+            // Define o sucesso após o recarregamento, que limpa os estados de status
+            successMessage = AppLocalization.string("ui.message_sent_successfully", locale: locale)
 
         } catch {
             errorMessage = friendlyFirestoreError(error)
