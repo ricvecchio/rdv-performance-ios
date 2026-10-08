@@ -244,11 +244,42 @@ struct StudentNextFitWodView: View {
     }
 
     private var nextFitTabOptions: [StudentDashboardNextFitContentOption] {
-        displayedNextFitWods.map {
-            .wod(id: $0.modalityId, title: $0.modalityName)
+        let modalities: [(id: Int, name: String)]
+        if isLoadingSelectedDateWods {
+            // Durante a troca de data, mantém as abas das modalidades previstas para a data
+            // (mesmo filtro usado no carregamento), evitando que o seletor encolha só para AGENDA.
+            let calendar = Calendar.current
+            var modalityIds = Set<Int>()
+            modalities = viewModel.nextFitUpcomingWods
+                .filter {
+                    calendar.isDate($0.date, inSameDayAs: viewModel.selectedNextFitAgendaDate)
+                        && modalityIds.insert($0.modalityId).inserted
+                }
+                .map { (id: $0.modalityId, name: $0.modalityName) }
+        } else {
+            modalities = displayedNextFitWods.map { (id: $0.modalityId, name: $0.modalityName) }
+        }
+        return modalities.map {
+            .wod(id: $0.id, title: $0.name)
         } + [
             .agenda
         ]
+    }
+
+    /// Modalidade destacada nas abas, derivada de `selectedNextFitContent`.
+    private var highlightedNextFitModalityId: Int? {
+        guard !viewModel.isNextFitAgendaSelected else { return nil }
+        guard isLoadingSelectedDateWods else { return displayedNextFitWod?.modalityId }
+
+        let modalityIds = nextFitTabOptions.compactMap { option -> Int? in
+            if case let .wod(modalityId, _) = option { return modalityId }
+            return nil
+        }
+        if case let .wod(modalityId)? = viewModel.selectedNextFitContent,
+           modalityIds.contains(modalityId) {
+            return modalityId
+        }
+        return modalityIds.first
     }
 
     // MARK: - Abas
@@ -267,7 +298,7 @@ struct StudentNextFitWodView: View {
             case .agenda:
                 return viewModel.isNextFitAgendaSelected
             case .wod(let modalityId):
-                return displayedNextFitWod?.modalityId == modalityId
+                return highlightedNextFitModalityId == modalityId
             }
         }()
 
@@ -642,7 +673,7 @@ struct StudentNextFitWodView: View {
                 Text(verbatim: nextFitAgendaDayTitle(for: date))
                     .font(.system(size: 13, weight: .medium))
                     .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .fixedSize()
 
                 Text(verbatim: formatter.string(from: date))
                     .font(.system(size: 16, weight: .semibold))
