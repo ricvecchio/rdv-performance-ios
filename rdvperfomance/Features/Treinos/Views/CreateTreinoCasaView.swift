@@ -167,7 +167,7 @@ struct CreateTreinoCasaView: View {
 
                 TextEditor(text: $description)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundColor(.white.opacity(0.75))
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
@@ -249,7 +249,7 @@ struct CreateTreinoCasaView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         TextEditor(text: $b.details)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundColor(.white.opacity(0.75))
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
