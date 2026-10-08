@@ -21,6 +21,10 @@ struct TeacherFeedbacksView: View {
     @State private var newFeedbackText: String = ""
     @State private var showPasswordDummy: Bool = false
 
+    @FocusState private var isFeedbackFocused: Bool
+
+    private let successMessageScrollID = "teacherFeedbackSuccess"
+
     private let contentMaxWidth: CGFloat = 380
 
     // Corpo com histórico de feedbacks e formulário para novo feedback
@@ -39,31 +43,41 @@ struct TeacherFeedbacksView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 14) {
 
-                            header
-                            formCard
-                            listCard
+                                header
+                                formCard
+                                listCard
 
-                            if let err = errorMessage {
-                                messageCard(text: err, isError: true)
+                                if let err = errorMessage {
+                                    messageCard(text: err, isError: true)
+                                }
+
+                                if let ok = successMessage {
+                                    messageCard(text: ok, isError: false)
+                                        .id(successMessageScrollID)
+                                }
+
+                                Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                             }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
 
-                            if let ok = successMessage {
-                                messageCard(text: ok, isError: false)
-                            }
-
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
+                    }
+                    .onChange(of: successMessage) { _, newValue in
+                        // Rola até a confirmação de sucesso para que fique visível
+                        guard newValue != nil else { return }
+                        withAnimation {
+                            proxy.scrollTo(successMessageScrollID, anchor: .bottom)
+                        }
                     }
                 }
 
@@ -227,6 +241,7 @@ struct TeacherFeedbacksView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 TextEditor(text: $newFeedbackText)
+                    .focused($isFeedbackFocused)
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white.opacity(0.92))
                     .frame(minHeight: 120)
@@ -384,6 +399,8 @@ struct TeacherFeedbacksView: View {
             )
 
             newFeedbackText = ""
+            // Fecha o teclado somente após a gravação bem-sucedida
+            isFeedbackFocused = false
             await loadFeedbacks()
 
             // Define o sucesso após o recarregamento, que limpa os estados de status

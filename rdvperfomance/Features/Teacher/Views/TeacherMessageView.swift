@@ -20,6 +20,10 @@ struct TeacherMessageView: View {
 
     @State private var messages: [TeacherMessageFS] = []
 
+    @FocusState private var isMessageFocused: Bool
+
+    private let successMessageScrollID = "teacherMessageSuccess"
+
     private let contentMaxWidth: CGFloat = 380
 
     // Corpo com histórico de mensagens e formulário para nova mensagem
@@ -38,31 +42,41 @@ struct TeacherMessageView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 14) {
 
-                            header
-                            formCard
-                            messagesCard
+                                header
+                                formCard
+                                messagesCard
 
-                            if let err = errorMessage {
-                                messageCard(text: err, isError: true)
+                                if let err = errorMessage {
+                                    messageCard(text: err, isError: true)
+                                }
+
+                                if let ok = successMessage {
+                                    messageCard(text: ok, isError: false)
+                                        .id(successMessageScrollID)
+                                }
+
+                                Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                             }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
 
-                            if let ok = successMessage {
-                                messageCard(text: ok, isError: false)
-                            }
-
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
+                    }
+                    .onChange(of: successMessage) { _, newValue in
+                        // Rola até a confirmação de sucesso para que fique visível
+                        guard newValue != nil else { return }
+                        withAnimation {
+                            proxy.scrollTo(successMessageScrollID, anchor: .bottom)
+                        }
                     }
                 }
 
@@ -232,6 +246,7 @@ struct TeacherMessageView: View {
 
             VStack(alignment: .leading, spacing: 8) {
                 TextEditor(text: $message)
+                    .focused($isMessageFocused)
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white.opacity(0.92))
                     .frame(minHeight: 140)
@@ -402,6 +417,8 @@ struct TeacherMessageView: View {
             messages.insert(local, at: 0)
 
             message = ""
+            // Fecha o teclado somente após a gravação bem-sucedida
+            isMessageFocused = false
 
             // ✅ Sincroniza com Firestore
             await loadMessages()
