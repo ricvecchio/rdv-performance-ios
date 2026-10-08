@@ -264,7 +264,7 @@ struct TeacherStudentDetailView: View {
                     .foregroundColor(.white.opacity(0.35))
             }
             .padding(14)
-            .background(Color.white.opacity(0.06))
+            .background(Color.black.opacity(0.68))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
