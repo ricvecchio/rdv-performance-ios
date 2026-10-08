@@ -22,6 +22,7 @@ struct UnderlineTextField: View {
     let textColor: Color
     let placeholderColor: Color
     let inputBackground: Color?
+    let inputBorderColor: Color?
 
     init(
         title: LocalizedStringKey,
@@ -32,6 +33,7 @@ struct UnderlineTextField: View {
         textColor: Color,
         placeholderColor: Color,
         inputBackground: Color? = nil,
+        inputBorderColor: Color? = nil,
         isEmail: Bool = false
     ) {
         self.title = title
@@ -42,6 +44,7 @@ struct UnderlineTextField: View {
         self.textColor = textColor
         self.placeholderColor = placeholderColor
         self.inputBackground = inputBackground
+        self.inputBorderColor = inputBorderColor
         self.isEmail = isEmail
     }
 
@@ -83,7 +86,7 @@ struct UnderlineTextField: View {
             .clipShape(RoundedRectangle(cornerRadius: inputBackground == nil ? 0 : 12))
             .overlay(
                 RoundedRectangle(cornerRadius: inputBackground == nil ? 0 : 12)
-                    .stroke(inputBackground == nil ? .clear : Color.white.opacity(0.10), lineWidth: 1)
+                    .stroke(inputBackground == nil ? .clear : (inputBorderColor ?? Color.white.opacity(0.10)), lineWidth: 1)
             )
 
             Rectangle()

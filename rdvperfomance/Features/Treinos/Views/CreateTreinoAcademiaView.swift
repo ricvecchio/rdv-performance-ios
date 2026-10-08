@@ -156,7 +156,8 @@ struct CreateTreinoAcademiaView: View {
                 lineColor: Theme.Colors.divider,
                 textColor: .white.opacity(0.92),
                 placeholderColor: .white.opacity(0.55),
-                inputBackground: Color.black.opacity(0.35)
+                inputBackground: Color.white.opacity(0.06),
+                inputBorderColor: Theme.Colors.primaryGreen.opacity(0.28)
             )
 
             Divider().background(Theme.Colors.divider)
@@ -172,7 +173,7 @@ struct CreateTreinoAcademiaView: View {
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Color.black.opacity(0.35))
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -254,7 +255,7 @@ struct CreateTreinoAcademiaView: View {
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Color.black.opacity(0.35))
+                            .background(Color.white.opacity(0.06))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
