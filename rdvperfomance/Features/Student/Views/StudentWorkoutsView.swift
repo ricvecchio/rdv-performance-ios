@@ -103,7 +103,9 @@ struct StudentWorkoutsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
 
-                        header
+                        if !isTeacherViewing {
+                            header
+                        }
                         filterRow
                         if isTeacherViewing {
                             publishWorkoutButton
