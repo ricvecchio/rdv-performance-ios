@@ -308,7 +308,7 @@ struct StudentNextFitWodView: View {
                         .stroke(
                             isSelected
                                 ? Theme.Colors.primaryGreen.opacity(0.85)
-                                : Color.white.opacity(0.08),
+                                : Theme.Colors.primaryGreen.opacity(0.28),
                             lineWidth: 1
                         )
                 )
@@ -446,7 +446,7 @@ struct StudentNextFitWodView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -665,7 +665,7 @@ struct StudentNextFitWodView: View {
                     .stroke(
                         isSelected
                             ? Theme.Colors.primaryGreen.opacity(0.85)
-                            : Color.white.opacity(0.08),
+                            : Theme.Colors.primaryGreen.opacity(0.28),
                         lineWidth: 1
                     )
             )
