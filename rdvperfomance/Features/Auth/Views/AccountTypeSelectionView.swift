@@ -66,7 +66,8 @@ struct AccountTypeSelectionView: View {
                 Spacer()
             }
         }
-        .blur(radius: isTeacherCodeSheetPresented ? 4 : 0)
+        .blur(radius: isTeacherCodeSheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: isTeacherCodeSheetPresented)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

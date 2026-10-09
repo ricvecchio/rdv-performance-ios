@@ -50,7 +50,10 @@ enum TeacherAuthorizationError: LocalizedError, Equatable {
             return AppLocalization.string("teacher_authorization.error.invalid_data", locale: locale)
         case .network:
             return AppLocalization.string("teacher_authorization.error.network", locale: locale)
-        case .unknown:
+        case .functionUnavailable:
+            // Reutiliza a mensagem existente: o serviço ainda não está disponível no servidor
+            return AppLocalization.string("teacher_authorization.error.not_configured", locale: locale)
+        case .backendError, .unknown:
             return AppLocalization.string("teacher_authorization.error.unknown", locale: locale)
         }
     }
@@ -169,7 +172,7 @@ final class TeacherAuthorizationService {
             !projectID.isEmpty,
             let url = URL(string: "https://\(region)-\(projectID).cloudfunctions.net/\(functionName)")
         else {
-            throw TeacherAuthorizationError.unknown
+            throw TeacherAuthorizationError.notConfigured
         }
         return url
     }
@@ -210,20 +213,44 @@ final class TeacherAuthorizationService {
         do {
             (data, response) = try await session.data(for: request)
         } catch {
+            // Falha real de transporte (sem resposta do servidor)
+            logDiagnostic(functionName, "transport error: \((error as? URLError)?.code.rawValue ?? -1)")
             throw TeacherAuthorizationError.network
         }
 
+        let statusCode = (response as? HTTPURLResponse)?.statusCode ?? -1
         let json = (try? JSONSerialization.jsonObject(with: data)) as? [String: Any] ?? [:]
 
+        // Erro estruturado do protocolo callable: {"error": {"status": ..., "details": {"reason": ...}}}
         if let errorObject = json["error"] as? [String: Any] {
-            throw mapError(errorObject)
+            let mapped = mapError(errorObject)
+            logDiagnostic(
+                functionName,
+                "HTTP \(statusCode) status=\(errorObject["status"] as? String ?? "-") mapped=\(mapped)"
+            )
+            throw mapped
         }
 
-        guard let http = response as? HTTPURLResponse, (200..<300).contains(http.statusCode) else {
-            throw TeacherAuthorizationError.network
+        guard (200..<300).contains(statusCode) else {
+            // Resposta sem objeto de erro callable (ex.: página HTML do Google).
+            // Não é falha de conexão: o servidor respondeu.
+            let mapped: TeacherAuthorizationError = statusCode == 404 ? .functionUnavailable : .backendError
+            logDiagnostic(functionName, "HTTP \(statusCode) without callable error body, mapped=\(mapped)")
+            throw mapped
         }
 
-        return json["result"] as? [String: Any] ?? [:]
+        guard let result = json["result"] as? [String: Any] else {
+            logDiagnostic(functionName, "HTTP \(statusCode) without result object")
+            throw TeacherAuthorizationError.backendError
+        }
+        return result
+    }
+
+    // Log apenas de diagnóstico (DEBUG): nunca inclui código, ticket, senha, token ou dados pessoais
+    private func logDiagnostic(_ functionName: String, _ message: String) {
+        #if DEBUG
+        print("[TeacherAuthorization] \(functionName): \(message)")
+        #endif
     }
 
     private func mapError(_ errorObject: [String: Any]) -> TeacherAuthorizationError {
@@ -250,6 +277,8 @@ final class TeacherAuthorizationService {
         case "PERMISSION_DENIED", "UNAUTHENTICATED": return .permissionDenied
         case "ALREADY_EXISTS": return .emailAlreadyInUse
         case "UNAVAILABLE", "DEADLINE_EXCEEDED": return .network
+        case "NOT_FOUND": return .functionUnavailable
+        case "INTERNAL", "UNKNOWN": return .backendError
         default: return .unknown
         }
     }
