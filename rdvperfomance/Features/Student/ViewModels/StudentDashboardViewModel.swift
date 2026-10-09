@@ -548,16 +548,25 @@ final class StudentDashboardViewModel: ObservableObject {
                 "CodigoContratoCliente: \(contract.contractClientId)"
             )
             #endif
-            try await nextFitService.checkInAgenda(
+            let enteredWaitlist = try await nextFitService.checkInAgenda(
                 agendaId: agendaId,
                 contractClientId: contract.contractClientId,
                 sessionAccount: studentId
             )
-            await refreshNextFitAgenda(
-                afterActionFor: agendaId,
-                errorMessage: AppLocalization.string("dashboard.agenda.schedule_error", locale: locale),
-                locale: locale
-            )
+
+            // Fila de espera não é uma reserva confirmada: mantém o fluxo original de atualização.
+            guard !enteredWaitlist else {
+                await refreshNextFitAgenda(
+                    afterActionFor: agendaId,
+                    errorMessage: AppLocalization.string("dashboard.agenda.schedule_error", locale: locale),
+                    locale: locale
+                )
+                return
+            }
+
+            // Check-in confirmado pelo NextFit: reflete imediatamente no horário e no detalhe abertos
+            applyConfirmedAgendaCheckIn(agendaId)
+            await reconcileNextFitAgendaAfterCheckIn(agendaId)
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -874,6 +883,83 @@ final class StudentDashboardViewModel: ObservableObject {
             }
         } catch {
             agendaActionErrors[agendaId] = errorMessage
+        }
+    }
+
+    // Atualiza somente o estado local do horário cujo check-in foi confirmado pelo NextFit
+    private func applyConfirmedAgendaCheckIn(_ agendaId: Int) {
+        if let index = nextFitAgenda.firstIndex(where: { $0.id == agendaId }) {
+            let entry = nextFitAgenda[index]
+            nextFitAgenda[index] = NextFitAgendaDisplay(
+                id: entry.id,
+                statusAgendaParticipante: entry.statusAgendaParticipante,
+                startDate: entry.startDate,
+                endDate: entry.endDate,
+                startTime: entry.startTime,
+                endTime: entry.endTime,
+                enrolledStudents: entry.enrolledStudents,
+                studentLimit: entry.studentLimit,
+                modalityName: entry.modalityName,
+                instructorName: entry.instructorName,
+                locationName: entry.locationName,
+                canSchedule: false,
+                canCancelCheckIn: true,
+                hasCheckIn: true
+            )
+        }
+
+        if let detail = selectedNextFitAgendaDetail, detail.id == agendaId {
+            selectedNextFitAgendaDetail = NextFitAgendaDetailDisplay(
+                id: detail.id,
+                statusAgendaParticipante: detail.statusAgendaParticipante,
+                modalityId: detail.modalityId,
+                hasCheckIn: true,
+                canSchedule: false,
+                canCancelCheckIn: true,
+                dateText: detail.dateText,
+                scheduleText: detail.scheduleText,
+                capacityText: detail.capacityText,
+                modalityName: detail.modalityName,
+                instructorName: detail.instructorName,
+                locationName: detail.locationName,
+                participants: detail.participants
+            )
+        }
+    }
+
+    // Sincroniza com o NextFit após check-in confirmado, sem ocultar o detalhe aberto
+    // e sem desfazer a confirmação caso apenas a atualização posterior falhe.
+    private func reconcileNextFitAgendaAfterCheckIn(_ agendaId: Int) async {
+        let agendaDate = selectedNextFitAgendaDate
+        do {
+            let refreshedAgenda = try await nextFitService.loadAgenda(
+                for: agendaDate,
+                sessionAccount: studentId
+            )
+            // Ignora a resposta se o aluno trocou de data durante a sincronização
+            guard Calendar.current.isDate(selectedNextFitAgendaDate, inSameDayAs: agendaDate) else { return }
+            nextFitAgenda = refreshedAgenda
+
+            if selectedNextFitAgendaId == agendaId {
+                let refreshedDetail = try await nextFitService.loadAgendaDetail(
+                    agendaId: agendaId,
+                    sessionAccount: studentId
+                )
+                if selectedNextFitAgendaId == agendaId {
+                    selectedNextFitAgendaDetail = refreshedDetail
+                }
+            }
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                // Check-in já confirmado: mantém o estado confirmado até a próxima atualização.
+                break
+            }
+        } catch {
+            // Check-in já confirmado: mantém o estado confirmado até a próxima atualização.
         }
     }
 

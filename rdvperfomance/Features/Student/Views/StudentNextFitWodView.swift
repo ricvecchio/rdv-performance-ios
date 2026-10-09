@@ -49,6 +49,8 @@ struct StudentNextFitWodView: View {
     @StateObject private var viewModel: StudentDashboardViewModel
     @State private var isNextFitLogoutConfirmationPresented = false
     @State private var isNextFitLogoutErrorPresented = false
+    // Indica se a consulta inicial do WOD já foi concluída (evita estado vazio antes da consulta)
+    @State private var hasFinishedInitialNextFitLoad = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -131,7 +133,10 @@ struct StudentNextFitWodView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
-            Task { await viewModel.loadNextFit(locale: locale) }
+            Task {
+                await viewModel.loadNextFit(locale: locale)
+                hasFinishedInitialNextFitLoad = true
+            }
         }
         .onChange(of: viewModel.needsNextFitAuthentication) { _, needsAuthentication in
             if needsAuthentication, path.last == .studentNextFitWod {
@@ -178,7 +183,7 @@ struct StudentNextFitWodView: View {
 
     @ViewBuilder
     private var nextFitContent: some View {
-        if viewModel.isLoadingNextFitWod {
+        if viewModel.isLoadingNextFitWod || !hasFinishedInitialNextFitLoad {
             ProgressView()
                 .tint(.white)
                 .frame(maxWidth: .infinity)
