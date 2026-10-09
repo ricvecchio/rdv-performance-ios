@@ -327,6 +327,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
         isLoadingCurrentWeekCheckIns = true
         var checkedInDays = Set<Date>()
+        var failedDays = Set<Date>()
 
         for date in weekDates where date <= today {
             if Task.isCancelled { return }
@@ -337,8 +338,18 @@ final class StudentDashboardViewModel: ObservableObject {
                 }) {
                     checkedInDays.insert(date)
                 }
+            } catch NextFitServiceError.missingSession, NextFitServiceError.invalidSession {
+                if Task.isCancelled { return }
+                // Sessão NextFit ausente ou expirada: solicita nova autenticação (mesmo tratamento dos demais fluxos)
+                currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: [])
+                isLoadingCurrentWeekCheckIns = false
+                needsNextFitAuthentication = true
+                hasNextFitSession = false
+                return
             } catch {
                 if Task.isCancelled { return }
+                // Falha temporária não confirma ausência de check-in
+                failedDays.insert(date)
                 #if DEBUG
                 print("[StudentDashboard] Não foi possível carregar os check-ins do dia: \(error.localizedDescription)")
                 #endif
@@ -346,6 +357,14 @@ final class StudentDashboardViewModel: ObservableObject {
         }
 
         guard !Task.isCancelled else { return }
+
+        // Preserva o último resultado válido dos dias cuja consulta falhou
+        for date in failedDays where currentWeekCheckInSummaries.contains(where: {
+            $0.isCompleted && calendar.isDate($0.date, inSameDayAs: date)
+        }) {
+            checkedInDays.insert(date)
+        }
+
         currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: checkedInDays)
         isLoadingCurrentWeekCheckIns = false
     }
