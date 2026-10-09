@@ -264,7 +264,12 @@ struct TeacherStudentDetailView: View {
                     .foregroundColor(.white.opacity(0.35))
             }
             .padding(14)
-            .background(Color.black.opacity(0.68))
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
