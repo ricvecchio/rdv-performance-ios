@@ -161,13 +161,17 @@ struct TeacherEmCasaLibraryView: View {
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
-            .background(Color.black.opacity(0.76))
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
                     .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
-            .shadow(color: Theme.Colors.primaryGreen.opacity(0.12), radius: 6, y: 2)
         }
         .buttonStyle(.plain)
     }
