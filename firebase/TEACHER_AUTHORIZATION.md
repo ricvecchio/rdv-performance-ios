@@ -59,7 +59,7 @@ A permissão de administrador é verificada **no servidor**: e-mail do token de 
 
 - Projeto Firebase `rdvperformanceapp` no plano **Blaze** (obrigatório para Cloud Functions).
 - Firebase CLI instalada (`npm install -g firebase-tools`) e autenticada (`firebase login`).
-- Node.js 20.
+- Node.js 22 (o runtime Node.js 20 foi descontinuado em 2026-04-30 e o deploy é bloqueado a partir de 2026-10-30).
 
 ### 4.2. Cloud Functions
 

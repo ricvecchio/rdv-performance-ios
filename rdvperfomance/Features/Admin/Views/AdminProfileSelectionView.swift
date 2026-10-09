@@ -78,6 +78,9 @@ struct AdminProfileSelectionView: View {
                 Spacer()
             }
         }
+        // Desfoca somente a tela de origem; o conteúdo do sheet é renderizado em outra camada e permanece nítido
+        .blur(radius: isTeacherAuthorizationSheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: isTeacherAuthorizationSheetPresented)
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $isTeacherAuthorizationSheetPresented) {
             TeacherAuthorizationCodeView()
