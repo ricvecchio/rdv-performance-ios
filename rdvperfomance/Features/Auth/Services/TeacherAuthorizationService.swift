@@ -16,6 +16,10 @@ enum TeacherAuthorizationError: LocalizedError, Equatable {
     case weakPassword
     case invalidData
     case network
+    // Função não encontrada / não implantada no projeto Firebase (HTTP 404)
+    case functionUnavailable
+    // Resposta inesperada do backend sem objeto de erro "callable" (ex.: 401/403 de infraestrutura, 5xx)
+    case backendError
     case unknown
 
     private static var localizationLocale: Locale {
