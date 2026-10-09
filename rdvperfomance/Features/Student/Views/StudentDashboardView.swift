@@ -633,15 +633,18 @@ struct StudentDashboardView: View {
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .leading)
         .background(
-            LinearGradient(
-                colors: [
-                    Color.black.opacity(0.82),
-                    Color.black.opacity(0.55),
-                    Color.black.opacity(0.25)
-                ],
-                startPoint: .leading,
-                endPoint: .trailing
-            )
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.82),
+                        Color.black.opacity(0.55),
+                        Color.black.opacity(0.25)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                Theme.Colors.primaryGreen.opacity(0.05)
+            }
         )
         .background(
             Image("rdv_treino1_horizontal")
