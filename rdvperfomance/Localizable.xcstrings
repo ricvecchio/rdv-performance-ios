@@ -87850,6 +87850,627 @@
         }
       }
     },
+    "teacher_authorization.admin.confirm_action" : {
+      "comment" : "Teacher authorization: Gerar",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerar"
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.confirm_message" : {
+      "comment" : "Teacher authorization: O código atual deixará de funcionar imediatamente, inclusive para autorizações ainda não utilizadas.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The current code will stop working immediately, including authorizations not yet used."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El código actual dejará de funcionar de inmediato, incluidas las autorizaciones aún no utilizadas."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O código atual deixará de funcionar imediatamente, inclusive para autorizações ainda não utilizadas."
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.confirm_title" : {
+      "comment" : "Teacher authorization: Gerar novo código?",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate a new code?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Generar un nuevo código?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerar novo código?"
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.copied" : {
+      "comment" : "Teacher authorization: Código copiado.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Code copied."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código copiado."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código copiado."
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.copy" : {
+      "comment" : "Teacher authorization: Copiar",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar"
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.current_code" : {
+      "comment" : "Teacher authorization: Código vigente",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Current code"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código vigente"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código vigente"
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.description" : {
+      "comment" : "Teacher authorization: Compartilhe este código somente com professores autorizados. Cada validação permite um único cadastro.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Share this code only with authorized coaches. Each validation allows a single registration."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Comparte este código solo con entrenadores autorizados. Cada validación permite un único registro."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Compartilhe este código somente com professores autorizados. Cada validação permite um único cadastro."
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.entry" : {
+      "comment" : "Teacher authorization: Código de autorização de professores",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach authorization code"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de autorización de entrenadores"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de autorização de professores"
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.generate" : {
+      "comment" : "Teacher authorization: Gerar novo código",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generate new code"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Generar nuevo código"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerar novo código"
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.rotated" : {
+      "comment" : "Teacher authorization: Novo código gerado com sucesso.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "New code generated successfully."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Nuevo código generado correctamente."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Novo código gerado com sucesso."
+          }
+        }
+      }
+    },
+    "teacher_authorization.admin.title" : {
+      "comment" : "Teacher authorization: Autorização de professores",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach authorization"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorización de entrenadores"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autorização de professores"
+          }
+        }
+      }
+    },
+    "teacher_authorization.continue" : {
+      "comment" : "Teacher authorization: Continuar",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continue"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Continuar"
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.authorization_expired" : {
+      "comment" : "Teacher authorization: A autorização expirou ou não é mais válida. Volte e informe o código novamente.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The authorization has expired or is no longer valid. Go back and enter the code again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La autorización expiró o ya no es válida. Vuelve e ingresa el código nuevamente."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A autorização expirou ou não é mais válida. Volte e informe o código novamente."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.authorization_required" : {
+      "comment" : "Teacher authorization: É necessário informar o código de autorização para cadastrar um Professor.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "An authorization code is required to create a Coach account."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Es necesario ingresar el código de autorización para registrar un Entrenador."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "É necessário informar o código de autorização para cadastrar um Professor."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.email_in_use" : {
+      "comment" : "Teacher authorization: Este e-mail já está em uso.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This email is already in use."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este correo electrónico ya está en uso."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este e-mail já está em uso."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.invalid_code" : {
+      "comment" : "Teacher authorization: Código de autorização inválido. Verifique e tente novamente.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid authorization code. Please check it and try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de autorización inválido. Verifícalo e inténtalo de nuevo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de autorização inválido. Verifique e tente novamente."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.invalid_data" : {
+      "comment" : "Teacher authorization: Dados inválidos. Revise as informações e tente novamente.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid data. Please review the information and try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Datos inválidos. Revisa la información e inténtalo de nuevo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Dados inválidos. Revise as informações e tente novamente."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.invalid_email" : {
+      "comment" : "Teacher authorization: E-mail inválido.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invalid email."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Correo electrónico inválido."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "E-mail inválido."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.network" : {
+      "comment" : "Teacher authorization: Não foi possível concluir a validação agora. Verifique sua conexão e tente novamente.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to complete the validation right now. Check your connection and try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No fue posible completar la validación ahora. Verifica tu conexión e inténtalo de nuevo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível concluir a validação agora. Verifique sua conexão e tente novamente."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.not_configured" : {
+      "comment" : "Teacher authorization: O cadastro de professores ainda não está disponível. Entre em contato com o administrador.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Coach registration is not available yet. Please contact the administrator."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El registro de entrenadores aún no está disponible. Comunícate con el administrador."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O cadastro de professores ainda não está disponível. Entre em contato com o administrador."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.permission_denied" : {
+      "comment" : "Teacher authorization: Você não tem permissão para realizar esta operação.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "You do not have permission to perform this action."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No tienes permiso para realizar esta operación."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Você não tem permissão para realizar esta operação."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.too_many_attempts" : {
+      "comment" : "Teacher authorization: Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Too many attempts. Please wait a few minutes and try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Demasiados intentos. Espera unos minutos e inténtalo de nuevo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Muitas tentativas. Aguarde alguns minutos e tente novamente."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.unknown" : {
+      "comment" : "Teacher authorization: Não foi possível concluir a operação. Tente novamente.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to complete the operation. Please try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No fue posible completar la operación. Inténtalo de nuevo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível concluir a operação. Tente novamente."
+          }
+        }
+      }
+    },
+    "teacher_authorization.error.weak_password" : {
+      "comment" : "Teacher authorization: A senha deve ter pelo menos 6 caracteres.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The password must be at least 6 characters long."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "La contraseña debe tener al menos 6 caracteres."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "A senha deve ter pelo menos 6 caracteres."
+          }
+        }
+      }
+    },
+    "teacher_authorization.placeholder" : {
+      "comment" : "Teacher authorization: RDV-XXXX-XXXX-XXXX",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RDV-XXXX-XXXX-XXXX"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RDV-XXXX-XXXX-XXXX"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "RDV-XXXX-XXXX-XXXX"
+          }
+        }
+      }
+    },
+    "teacher_authorization.prompt" : {
+      "comment" : "Teacher authorization: Informe o código fornecido pelo administrador para cadastrar uma conta de Professor.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter the code provided by the administrator to create a Coach account."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa el código proporcionado por el administrador para crear una cuenta de Entrenador."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informe o código fornecido pelo administrador para cadastrar uma conta de Professor."
+          }
+        }
+      }
+    },
+    "teacher_authorization.title" : {
+      "comment" : "Teacher authorization: Código de autorização",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Authorization code"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de autorización"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Código de autorização"
+          }
+        }
+      }
+    },
     "tecnofit.errors.company_selection_required" : {
       "comment" : "Stable semantic key for: Não foi possível identificar com segurança sua unidade CrossFit no Tecnofit.",
       "localizations" : {

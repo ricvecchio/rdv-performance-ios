@@ -28,6 +28,7 @@ final class RegisterViewModel: ObservableObject {
     @Published var successMessage: String? = nil
 
     private let service = FirebaseAuthService()
+    private let teacherAuthorizationService = TeacherAuthorizationService()
     private let repository: FirestoreRepository
 
     // Inicializa com repositório Firestore injetado
@@ -81,6 +82,12 @@ final class RegisterViewModel: ObservableObject {
         isLoading = true
         defer { isLoading = false }
 
+        // Cadastro de professor exige autorização validada e é efetivado no backend
+        if userType == .TRAINER {
+            await submitAuthorizedTrainer(form: form)
+            return
+        }
+
         do {
             let createdUid: String = try await service.register(form)
 
@@ -107,6 +114,35 @@ final class RegisterViewModel: ObservableObject {
                 arguments: [ns.localizedDescription]
             )
         }
+    }
+
+    // Cria a conta de professor pela Cloud Function, que valida e consome a autorização
+    private func submitAuthorizedTrainer(form: RegisterFormDTO) async {
+        let authorizationStore = TeacherSignupAuthorizationStore.shared
+
+        guard let ticket = authorizationStore.ticket else {
+            errorMessage = TeacherAuthorizationError.authorizationRequired.localizedDescription
+            return
+        }
+
+        do {
+            _ = try await teacherAuthorizationService.createTeacherAccount(ticket: ticket, form: form)
+            authorizationStore.clear()
+        } catch let error as TeacherAuthorizationError {
+            if error == .authorizationExpired {
+                authorizationStore.clear()
+            }
+            errorMessage = error.localizedDescription
+            return
+        } catch {
+            errorMessage = TeacherAuthorizationError.unknown.localizedDescription
+            return
+        }
+
+        // A conta já foi criada no backend; autentica para manter o comportamento anterior.
+        // Em caso de falha no login automático, o usuário retorna ao login e entra manualmente.
+        _ = try? await service.login(email: form.email, password: form.password)
+        successMessage = AppLocalization.string("auth.registration.success", locale: Self.localizationLocale)
     }
 
     // Limpa mensagens de erro e sucesso exibidas na tela

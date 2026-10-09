@@ -3,6 +3,8 @@ import SwiftUI
 struct AdminProfileSelectionView: View {
     @EnvironmentObject private var session: AppSession
 
+    @State private var isTeacherAuthorizationSheetPresented = false
+
     private let textSecondary = Color.white.opacity(0.60)
 
     var body: some View {
@@ -56,10 +58,31 @@ struct AdminProfileSelectionView: View {
                     .foregroundColor(textSecondary)
                     .padding(.top, 18)
 
+                if session.isAdmin {
+                    Button {
+                        isTeacherAuthorizationSheetPresented = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "key.fill")
+                            Text("teacher_authorization.admin.entry")
+                        }
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 14)
+                }
+
                 Spacer()
             }
         }
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $isTeacherAuthorizationSheetPresented) {
+            TeacherAuthorizationCodeView()
+                .presentationDetents([.fraction(0.55)])
+        }
     }
 
     private func selectionButton(
