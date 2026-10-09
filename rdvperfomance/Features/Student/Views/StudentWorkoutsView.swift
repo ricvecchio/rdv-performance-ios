@@ -103,9 +103,6 @@ struct StudentWorkoutsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
 
-                        if !isTeacherViewing {
-                            header
-                        }
                         filterRow
                         if isTeacherViewing {
                             publishWorkoutButton
@@ -236,16 +233,6 @@ struct StudentWorkoutsView: View {
         .background(Theme.Colors.footerBackground)
     }
 
-    // Header informativo
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-
-            Text("workout.select_a_week_to_view_the_days")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.35))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
 
     private var publishWorkoutButton: some View {
         Button {
