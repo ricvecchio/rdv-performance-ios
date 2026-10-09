@@ -66,6 +66,7 @@ struct AccountTypeSelectionView: View {
                 Spacer()
             }
         }
+        .blur(radius: isTeacherCodeSheetPresented ? 4 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -122,7 +123,7 @@ struct AccountTypeSelectionView: View {
                                 .foregroundColor(.white.opacity(0.75))
                                 .fixedSize(horizontal: false, vertical: true)
 
-                            SecureField("teacher_authorization.placeholder", text: $teacherCodeInput)
+                            TextField("teacher_authorization.placeholder", text: $teacherCodeInput)
                                 .textInputAutocapitalization(.characters)
                                 .autocorrectionDisabled(true)
                                 .textContentType(.oneTimeCode)
