@@ -604,10 +604,11 @@ struct StudentDashboardView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(Theme.Colors.primaryGreen)
                     .frame(width: 42, height: 42)
+                    .background(Theme.Colors.primaryGreen.opacity(0.10))
                     .background(Color.black.opacity(0.55))
-                    .clipShape(Circle())
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
-                        Circle()
+                        RoundedRectangle(cornerRadius: 12)
                             .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
 
