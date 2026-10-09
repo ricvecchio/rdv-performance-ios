@@ -97673,6 +97673,7 @@
       }
     },
     "workout.select_a_week_to_view_the_days" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
