@@ -190,7 +190,6 @@ struct TeacherWorkoutsView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
-            .shadow(color: Theme.Colors.primaryGreen.opacity(0.12), radius: 6, y: 2)
         }
         .buttonStyle(.plain)
         .frame(maxWidth: .infinity)
