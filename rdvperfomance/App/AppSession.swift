@@ -29,7 +29,8 @@ final class AppSession: ObservableObject {
 
     private var authListener: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
-    private let administratorEmail = "ric.vecchio@gmail.com"
+    // Custom claim emitida somente pelo Firebase Admin SDK (ambiente confiável)
+    private let administratorClaim = "admin"
 
     enum MeasurementUnitLoadState {
         case idle
@@ -73,8 +74,12 @@ final class AppSession: ObservableObject {
     }
 
     // Retorna verdadeiro se existe um usuário autenticado
+    // Perfil ADMIN só é aceito após validação no servidor (perfil + custom claim)
     var isLoggedIn: Bool {
-        uid != nil && (userType != nil || isAdmin)
+        guard uid != nil else { return false }
+        if isAdmin { return true }
+        guard let userType else { return false }
+        return userType != .ADMIN
     }
 
     // Retorna o identificador único do usuário autenticado
@@ -120,7 +125,7 @@ final class AppSession: ObservableObject {
                     self.preferredWeightUnit = "kg"
                     self.measurementUnitLoadState = .loading
                     self.uid = user.uid
-                    self.isAdmin = self.isAuthenticatedAdministrator()
+                    self.isAdmin = false
                     self.adminProfileMode = nil
                     self.storedUid = user.uid
                     await self.loadUserProfile(uid: user.uid)
@@ -141,14 +146,14 @@ final class AppSession: ObservableObject {
 
     // Carrega nome e tipo de usuário do documento Firestore
     func loadUserProfile(uid: String) async {
-        isAdmin = isAuthenticatedAdministrator()
-
         do {
             let snap = try await db.collection("users").document(uid).getDocument(source: .server)
 
             guard let data = snap.data() else {
                 self.userType = nil
                 self.userName = nil
+                self.isAdmin = false
+                self.adminProfileMode = nil
                 self.measurementUnitLoadState = .failed
 
                 self.storedUserTypeRaw = ""
@@ -170,6 +175,17 @@ final class AppSession: ObservableObject {
 
             self.userName = name
             self.userType = typeRaw.flatMap { UserTypeDTO(rawValue: $0) }
+
+            // Administrador: perfil ADMIN (lido do servidor) + custom claim "admin" no token do Firebase Auth.
+            // A alternância de modo (AdminProfileMode) é preservada enquanto o usuário continuar administrador.
+            var validatedAdmin = false
+            if self.userType == .ADMIN {
+                validatedAdmin = await self.hasAdministratorClaim(uid: uid)
+            }
+            self.isAdmin = validatedAdmin
+            if !validatedAdmin {
+                self.adminProfileMode = nil
+            }
 
             self.storedUserName = name ?? ""
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
@@ -220,10 +236,21 @@ final class AppSession: ObservableObject {
         storedUserName = ""
     }
 
-    private func isAuthenticatedAdministrator() -> Bool {
-        let email = (Auth.auth().currentUser?.email ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        return email == administratorEmail
+    // Verifica a custom claim administrativa no token emitido pelo Firebase Auth.
+    // A renovação forçada garante que concessões/revogações recentes sejam refletidas
+    // (inclusive no token usado pelo Firestore para avaliar as regras).
+    private func hasAdministratorClaim(uid: String) async -> Bool {
+        guard let user = Auth.auth().currentUser, user.uid == uid else { return false }
+
+        do {
+            let tokenResult = try await user.getIDTokenResult(forcingRefresh: true)
+            return (tokenResult.claims[administratorClaim] as? Bool) == true
+        } catch {
+            #if DEBUG
+            print("[AppSession] Falha ao validar perfil administrativo: \(error.localizedDescription)")
+            #endif
+            // Mantém somente a validação já obtida nesta sessão (em memória) para o mesmo usuário
+            return isAdmin && self.uid == uid
+        }
     }
 }

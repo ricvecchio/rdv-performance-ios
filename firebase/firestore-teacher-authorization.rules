@@ -24,14 +24,21 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // -------------------------------------------------------------------------
-    // Administrador (verificado no servidor pelo token do Firebase Auth).
-    // Mesmo e-mail usado em AppSession.isAdmin; a custom claim { admin: true }
-    // também é aceita, caso venha a ser configurada.
+    // Administrador — identificado pelo UID autenticado, sem e-mail fixo.
+    //
+    // Exige as DUAS fontes, ambas atribuídas somente em ambiente confiável
+    // (Firebase Admin SDK / Console, que ignoram as regras), nunca pelo app:
+    //   - custom claim { admin: true } no token do Firebase Auth;
+    //   - users/{uid}.userType == 'ADMIN' (protegido pela seção 4).
+    // O app (AppSession.isAdmin) usa exatamente o mesmo critério.
+    //
+    // Nas regras publicadas, a função equivalente chama-se isAdmin() (hoje
+    // baseada em UID fixo). Ver TEACHER_AUTHORIZATION.md, seção 3.
     // -------------------------------------------------------------------------
     function isTeacherSignupAdmin() {
       return request.auth != null
-        && (request.auth.token.get('admin', false) == true
-            || request.auth.token.get('email', '') == 'ric.vecchio@gmail.com');
+        && request.auth.token.get('admin', false) == true
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('userType', '') == 'ADMIN';
     }
 
     function teacherSignupCodePath(codeId) {
@@ -137,9 +144,13 @@ service cloud.firestore {
     //    - Clientes podem criar o próprio perfil como STUDENT (ou sem userType).
     //    - Perfil TRAINER só é aceito se, no mesmo lote, for criado o registro
     //      em teacher_signup_redemptions/{uid} com um código vigente.
+    //    - Perfil ADMIN NUNCA é aceito de clientes (criação ou alteração).
+    //      Somente Admin SDK / Console (ambiente confiável) atribuem ADMIN.
     //    - Nenhum cliente pode alterar o userType de um perfil existente
-    //      (impede STUDENT -> TRAINER). Única exceção: perfil sem userType pode
-    //      receber STUDENT (compatibilidade com gravações com merge).
+    //      (impede STUDENT -> TRAINER e qualquer tipo -> ADMIN). Única exceção:
+    //      perfil sem userType pode receber STUDENT (compatibilidade com gravações com merge).
+    //    - O administrador continua podendo atualizar os demais campos do
+    //      próprio perfil (nome, foto, unidade...), pois o userType não muda.
     // -------------------------------------------------------------------------
     function teacherSignupAuthorized(uid) {
       let redemption = /databases/$(database)/documents/teacher_signup_redemptions/$(uid);
@@ -163,14 +174,14 @@ service cloud.firestore {
     }
 
     match /users/{uid} {
-      // Exemplo de composição — substitua <REGRA_EXISTENTE_CREATE> e
-      // <REGRA_EXISTENTE_UPDATE> pelas condições atualmente publicadas:
+      // Composição com a regra publicada (ruleset de 2026-10-12), que hoje é
+      // "allow write: if isOwner(userId);" e precisa ser separada em:
       //
-      // allow create: if <REGRA_EXISTENTE_CREATE> && userTypeAllowedOnCreate(uid);
-      // allow update: if <REGRA_EXISTENTE_UPDATE> && userTypeUnchanged();
+      // allow create: if isOwner(userId) && userTypeAllowedOnCreate(userId);
+      // allow update: if isOwner(userId) && userTypeUnchanged();
+      // allow delete: if isOwner(userId);
       //
-      // Caso as regras atuais usem "allow write", separe em create/update/delete
-      // para aplicar as condições acima apenas em create e update.
+      // Manter "allow get" e "allow list" publicados sem alteração.
     }
   }
 }
