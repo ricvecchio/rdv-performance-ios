@@ -145,11 +145,13 @@ As modalidades (`TreinoTipo`) organizam os vínculos entre professores e alunos,
 
 ### Treinos e progresso
 
-Na tela **Treinos da Semana** (`StudentWorkoutsView`), o aluno consulta as semanas recebidas de professores com vínculo ativo, com filtros **Atuais**, **Próximos** e **Concluídos**. Cada semana exibe período, professor e percentual de progresso, e pode ser expandida para listar os dias agrupados por data, com indicação de concluído ou atrasado.
+Na tela **Treinos da Semana** (`TrainingWeeksView`), o aluno consulta as semanas recebidas de professores com vínculo ativo, com filtros **Atuais**, **Próximos** e **Concluídos**. Cada semana exibe período, professor e percentual de progresso, e pode ser expandida para listar os dias agrupados por data, com indicação de concluído ou atrasado.
 
 O aluno marca os dias como concluídos nas semanas já iniciadas; a conclusão é gravada no Firestore e o progresso da semana é recalculado a partir dos dias concluídos. Vídeos enviados pelo professor podem ser reproduzidos e salvos em **Meus Vídeos**.
 
-O detalhe do dia (`StudentDayDetailView`) apresenta título, data, descrição, vídeos e blocos do treino. Para o aluno, o card **Cálculo por % do PR (Barbell)** permite escolher um movimento de Barbell e informar um percentual; o app calcula o peso correspondente a partir do recorde salvo pelo aluno e exibe o resultado na unidade de medida preferida.
+O detalhe do dia (`TrainingDayDetailView`) apresenta título, data, descrição, vídeos e blocos do treino. Para o aluno, o card **Cálculo por % do PR (Barbell)** permite escolher um movimento de Barbell e informar um percentual; o app calcula o peso correspondente a partir do recorde salvo pelo aluno e exibe o resultado na unidade de medida preferida.
+
+`TrainingWeeksView` e `TrainingDayDetailView` ficam em `Features/Treinos/Views` porque também são usadas pelo professor ao acompanhar os treinos de um aluno. As ações exibidas dependem do perfil ativo: conclusão de dias, salvamento de vídeos e cálculo por % do PR são exclusivos do aluno; publicação de treino, edição e exclusão do dia são exclusivas do professor.
 
 ### WOD do dia (NextFit)
 
@@ -204,7 +206,7 @@ Recorde Pessoal
 
 ### Meus Vídeos do aluno
 
-Na seção Recordes, **Meus Vídeos** reúne os vídeos do YouTube salvos pelo aluno, com reprodução, edição do título e remoção.
+Na seção Recordes, **Meus Vídeos** reúne os vídeos do YouTube salvos pelo aluno, com reprodução, edição do título e remoção. A tela é `YoutubeVideosView`, compartilhada com o professor e aberta no contexto do aluno (`YoutubeVideosContext.student`).
 
 ### Professores, mensagens e feedbacks
 
@@ -231,7 +233,7 @@ Na seção Recordes, **Meus Vídeos** reúne os vídeos do YouTube salvos pelo a
 
 O professor pode listar alunos vinculados, pesquisar e filtrar por modalidade, convidar alunos por e-mail, acompanhar e cancelar convites enviados. Também pode analisar solicitações de vínculo, definir uma ou mais categorias ao aceitar, recusar solicitações e alterar a categoria de alunos já vinculados.
 
-No detalhe de um aluno (`TeacherStudentDetailView`), o professor consulta o progresso e a categoria do treino e acessa as ações **Treinos**, **Mensagens**, **Feedbacks**, **Preview do Progresso** e desvincular aluno. Na tela de treinos do aluno, o botão **Publicar Treino** abre o fluxo de envio com o aluno pré-selecionado.
+No detalhe de um aluno (`TeacherStudentDetailView`), o professor consulta o progresso e a categoria do treino e acessa as ações **Treinos**, **Mensagens**, **Feedbacks**, **Preview do Progresso** e desvincular aluno. Na tela de treinos do aluno (`TrainingWeeksView`), o botão **Publicar Treino** abre o fluxo de envio com o aluno pré-selecionado; no detalhe do dia (`TrainingDayDetailView`), o professor pode editar ou excluir o dia.
 
 ### Treinos do professor
 
@@ -280,11 +282,13 @@ O fluxo **Importar** permite baixar e compartilhar o modelo de planilha Excel in
 
 ### Meus Recordes
 
-**Meus Recordes** reutiliza as categorias de Recordes Pessoais no contexto do professor, com os registros vinculados ao UID do próprio professor.
+**Meus Recordes** reutiliza as categorias de Recordes Pessoais no contexto do professor, com os registros vinculados ao UID do próprio professor. As telas de Recordes Pessoais ficam em `Features/PersonalRecords` e recebem o contexto de navegação (`PersonalRecordsNavigationContext`) de cada perfil.
 
 ### Meus Vídeos
 
 O professor pode cadastrar links do YouTube com título e modalidade, reproduzir os vídeos salvos, editar o título, removê-los e enviá-los para alunos pelo fluxo **Enviar treino**. A reprodução usa WebView e inclui suporte a AirPlay.
+
+Os componentes de vídeo são compartilhados entre professor e aluno e ficam em `Features/Videos`: `YoutubeVideosView` (com `YoutubeVideosContext`), `AddYoutubeVideoSheet`, `YoutubeLockedPlayerSheet`, `YoutubeVideosRepository`, os modelos `YoutubeVideo` e `YoutubeVideoCategory` e o utilitário `YouTubeVideoImporter`. O envio de vídeo para alunos está disponível somente no contexto do professor.
 
 ---
 
@@ -310,14 +314,14 @@ No perfil de administrador, `AdminUsersView` lista usuários, permite filtrar to
 | `MessageRepository` | Mensagens entre professor e aluno |
 | `FeedbackRepository` | Feedbacks destinados ao aluno |
 | `WorkoutTemplateRepository` | Templates reutilizáveis de treino |
-| `StudentPersonalRecordsRepository` | Armazenamento remoto dos Recordes Pessoais |
+| `PersonalRecordsRepository` | Armazenamento remoto dos Recordes Pessoais do usuário autenticado (aluno ou professor) |
 
 Serviços e repositórios complementares:
 
 | Componente | Responsabilidade |
 |---|---|
 | `TeacherImportedWorkoutsRepository` | Treinos importados por planilha |
-| `TeacherYoutubeVideosRepository` | Vídeos do professor e do aluno |
+| `YoutubeVideosRepository` | Vídeos do professor e do aluno |
 | `AppVersionService` | Configuração de versão mínima do app |
 | `TeacherAuthorizationService` | Chamadas às Cloud Functions de autorização de professores |
 | `AccountSecurityService` | Alteração de senha e exclusão de conta |
@@ -369,8 +373,9 @@ Os documentos de controle dessa autorização (`teacher_signup_config`, `teacher
 
 Os componentes reutilizados pelos fluxos ativos incluem:
 
-- `FooterBar` e `HeaderBar` para navegação e cabeçalhos;
+- `FooterBar` para navegação entre as seções principais;
 - `HeaderAvatarView` e `MiniProfileHeader` para apresentação do perfil;
+- `UserAvatarView` para avatares de alunos e professores em listas e vínculos;
 - `PhoneTextField` e `UnderlineTextField` para campos de formulário;
 - `BlockDraft` para montagem de blocos de treino;
 - `WorkoutTemplateAttachment` para anexar blocos de templates existentes;
@@ -383,7 +388,7 @@ Os componentes reutilizados pelos fluxos ativos incluem:
 O projeto também contém módulos que não fazem parte dos fluxos ativos ou que funcionam apenas como demonstração:
 
 - **Preview do Progresso** (`SpriteDemoView` e `Features/Gamification`) é acessível pelas Configurações e pelo detalhe do aluno, como uma prévia visual em SpriteKit com métricas de demonstração;
-- `Features/AR`, `Features/Map`, `Features/CoreData`, `Features/Home` e as telas `TreinosView` e `CrossfitMenuView` permanecem no código, mas não são acessíveis pela navegação atual.
+- `Features/CoreData` mantém `PersistenceController`, com modelo Core Data programático e a entidade `UserActivity`. O container é inicializado em `rdvperfomanceApp` e injetado no ambiente SwiftUI (`managedObjectContext`), mas nenhum fluxo atual lê ou grava essa entidade.
 
 ---
 
@@ -403,27 +408,28 @@ rdvperfomance/
 │   └── rdvperfomanceApp.swift
 ├── Features/
 │   ├── Admin/
-│   ├── AR/
 │   ├── Auth/
 │   ├── CoreData/
 │   ├── Gamification/
-│   ├── Home/
-│   ├── Map/
+│   ├── PersonalRecords/
+│   │   └── Views/
 │   ├── Settings/
 │   ├── Sprites/
 │   ├── Student/
-│   │   ├── Models/
 │   │   ├── Navigation/
-│   │   ├── PersonalRecords/
 │   │   ├── ViewModels/
 │   │   └── Views/
 │   ├── Teacher/
-│   │   ├── ImportVideos/
 │   │   ├── ImportWorkouts/
 │   │   ├── ViewModels/
 │   │   └── Views/
-│   └── Treinos/
+│   ├── Treinos/
+│   │   ├── Models/
+│   │   └── Views/
+│   └── Videos/
 │       ├── Models/
+│       ├── Services/
+│       ├── UIKit/
 │       └── Views/
 ├── Resources/
 │   ├── Assets.xcassets/
@@ -448,7 +454,14 @@ functions/
 firebase/
 ├── firestore-teacher-authorization.rules
 └── TEACHER_AUTHORIZATION.md
+
+rdvperfomanceTests/
+└── RDVPerformanceTests.swift
+
+firebase.json
 ```
+
+`firebase.json` configura o deploy das Cloud Functions (`functions/`, runtime `nodejs22`). O arquivo `rdvperfomanceTests/RDVPerformanceTests.swift` contém testes unitários, mas ainda não está associado a um target de testes em `rdvperfomance.xcodeproj`.
 
 ---
 
