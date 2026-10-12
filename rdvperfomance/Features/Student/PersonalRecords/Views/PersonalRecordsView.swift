@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 enum PersonalRecordsNavigationContext {
     case student
@@ -34,8 +35,8 @@ struct PersonalRecordsFooter: View {
     }
 }
 
-// Tela do Aluno: Recorde Pessoal (menu de seções)
-struct StudentPersonalRecordsView: View {
+// Tela compartilhada de Recordes Pessoais.
+struct PersonalRecordsView: View {
 
     @Binding var path: [AppRoute]
     let onBack: () -> Void
@@ -57,20 +58,29 @@ struct StudentPersonalRecordsView: View {
     private struct PRMenuItem: Identifiable, Hashable {
         let id = UUID()
         let title: String
+        let localizedTitle: String?
         let sectionKey: String
+        let icon: String
+
+        init(title: String, localizedTitle: String? = nil, sectionKey: String, icon: String) {
+            self.title = title
+            self.localizedTitle = localizedTitle
+            self.sectionKey = sectionKey
+            self.icon = icon
+        }
     }
 
     // Itens fixos conforme solicitado (ordem + nomes)
     private let menuItems: [PRMenuItem] = [
-        .init(title: "Barbell", sectionKey: "barbell"),
-        .init(title: "Gymnastic", sectionKey: "gymnastic"),
-        .init(title: "Endurance", sectionKey: "endurance"),
-        .init(title: "Notables", sectionKey: "notables"),
-        .init(title: "Girls", sectionKey: "girls"),
-        .init(title: "Open", sectionKey: "open"),
-        .init(title: "The Heroes", sectionKey: "theHeroes"),
-        .init(title: "Campeonatos", sectionKey: "campeonatos"),
-        .init(title: "Crossfit Games", sectionKey: "crossfitGames")
+        .init(title: "Barbell", localizedTitle: "personal_records_barbell.barbell", sectionKey: "barbell", icon: "dumbbell.fill"),
+        .init(title: "Gymnastic", localizedTitle: "personal_records_gymnastic.gymnastic", sectionKey: "gymnastic", icon: "gymnastic_rings"),
+        .init(title: "Endurance", localizedTitle: "personal_records_endurance.endurance", sectionKey: "endurance", icon: "figure.run"),
+        .init(title: "Notables", localizedTitle: "personal_records_notables.notables", sectionKey: "notables", icon: "star.fill"),
+        .init(title: "Girls", localizedTitle: "personal_records_girls.girls", sectionKey: "girls", icon: "figure.strengthtraining.traditional"),
+        .init(title: "Open", localizedTitle: "personal_records_open.open", sectionKey: "open", icon: "flag.checkered"),
+        .init(title: "The Heroes", localizedTitle: "personal_records_heroes.the_heroes", sectionKey: "theHeroes", icon: "shield.fill"),
+        .init(title: "Campeonatos", localizedTitle: "personal_records_campeonatos.championships", sectionKey: "campeonatos", icon: "trophy.fill"),
+        .init(title: "Crossfit Games", localizedTitle: "personal_records_crossfit_games.crossfit_games", sectionKey: "crossfitGames", icon: "globe")
     ]
 
     var body: some View {
@@ -91,19 +101,19 @@ struct StudentPersonalRecordsView: View {
                     HStack {
                         Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
-
-                            Text("Selecione uma seção.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
+                        VStack(alignment: .leading, spacing: 8) {
 
                             if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
                                 tecnofitImportButton
                             }
 
-                            VStack(spacing: 12) {
+                            VStack(spacing: 6) {
                                 ForEach(menuItems) { item in
-                                    actionRow(title: item.title, icon: "folder.fill") {
+                                    actionRow(
+                                        title: item.title,
+                                        localizedTitle: item.localizedTitle,
+                                        icon: item.icon
+                                    ) {
 
                                         if item.sectionKey == "barbell" {
                                             path.append(.studentPersonalRecordsBarbell)
@@ -143,8 +153,14 @@ struct StudentPersonalRecordsView: View {
                                     }
                                 }
 
-                                actionRow(title: "Meus Vídeos", icon: "video.fill") {
-                                    path.append(.studentVideos)
+                                if case .student = navigationContext {
+                                    actionRow(
+                                        title: "Meus Vídeos",
+                                        localizedTitle: "workout.my_videos",
+                                        icon: "video.fill"
+                                    ) {
+                                        path.append(.studentVideos)
+                                    }
                                 }
                             }
 
@@ -152,7 +168,7 @@ struct StudentPersonalRecordsView: View {
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
-                        .padding(.top, 16)
+                        .padding(.top, 8)
 
                         Spacer(minLength: 0)
                     }
@@ -200,7 +216,7 @@ struct StudentPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Recorde Pessoal")
+                Text("personal_records.personal_record")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -214,33 +230,63 @@ struct StudentPersonalRecordsView: View {
         .navigationBarTitleDisplayMode(.inline)
     }
 
-    private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
+    private func actionRow(
+        title: String,
+        localizedTitle: String? = nil,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
+            HStack(alignment: .center, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
 
-                Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    if UIImage(named: icon) != nil {
+                        Image(icon)
+                            .renderingMode(.template)
+                            .foregroundColor(.green.opacity(0.85))
+                    } else {
+                        Image(systemName: icon)
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                }
 
-                Spacer()
+                Group {
+                    if let localizedTitle {
+                        Text(LocalizedStringKey(localizedTitle))
+                    } else {
+                        Text(title)
+                    }
+                }
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .lineLimit(2)
+
+                Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
+            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 4)
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
+        .frame(maxWidth: .infinity)
     }
 
     private var tecnofitImportButton: some View {
@@ -249,7 +295,7 @@ struct StudentPersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
-                Text("Importar do Tecnofit")
+                Text("personal_records.import_from_tecnofit")
             }
             .padding(.horizontal, 14)
             .compactPrimaryGreenActionButton()
@@ -273,9 +319,6 @@ struct StudentPersonalRecordsView: View {
             hasCompletedTecnofitImport = hasCompletedImport
             hasLoadedTecnofitImportStatus = true
         } catch {
-            #if DEBUG
-            print("[PersonalRecords] Não foi possível carregar o status de importação do Tecnofit: \(error)")
-            #endif
         }
     }
 

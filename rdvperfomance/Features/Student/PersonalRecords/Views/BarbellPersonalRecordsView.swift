@@ -3,6 +3,7 @@ import Charts
 
 // Tela do Aluno: Recorde Pessoal > Barbell (lista fixa de movimentos + carga máxima)
 struct BarbellPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
 
@@ -145,28 +146,6 @@ struct BarbellPersonalRecordsView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-
-                            HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione sua carga máxima por movimento.")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.55))
-
-                                Spacer()
-
-                                Button {
-                                    addMoveErrorMessage = nil
-                                    newMoveName = ""
-                                    newMoveValue = ""
-                                    showAddMoveSheet = true
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.green.opacity(0.85))
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo movimento")
-                            }
-
                             tableContainer()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -215,13 +194,33 @@ struct BarbellPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Barbell")
+                Text("personal_records_barbell.barbell")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    Button {
+                        addMoveErrorMessage = nil
+                        newMoveName = ""
+                        newMoveValue = ""
+                        showAddMoveSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -266,11 +265,11 @@ struct BarbellPersonalRecordsView: View {
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -280,14 +279,20 @@ struct BarbellPersonalRecordsView: View {
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Movimento")
-                .font(.system(size: 12, weight: .bold))
+            Text("personal_records.movement")
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR (\(preferredWeightUnit.shortLabel))")
-                .font(.system(size: 12, weight: .bold))
+            Text(
+                String(
+                    format: AppLocalization.string("personal_records.barbell.pr_with_unit", locale: locale),
+                    locale: locale,
+                    arguments: [preferredWeightUnit.shortLabel]
+                )
+            )
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -306,13 +311,18 @@ struct BarbellPersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "dumbbell.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 15))
-                    .frame(width: 26)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: "dumbbell.fill")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
 
                 Text(move.name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -321,11 +331,11 @@ struct BarbellPersonalRecordsView: View {
 
                 if let displayValue {
                     Text(formatNumber(displayValue))
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 
@@ -362,12 +372,18 @@ struct BarbellPersonalRecordsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)):")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text(
+                            String(
+                                format: AppLocalization.string("personal_records.barbell.max_load_with_unit", locale: locale),
+                                locale: locale,
+                                arguments: [preferredWeightUnit.shortLabel]
+                            )
+                        )
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         HStack(spacing: 10) {
-                            TextField("Ex: 90,50", text: $inputValue)
+                            TextField("personal_records_barbell.e_g_90_50", text: $inputValue)
                                 .keyboardType(.decimalPad)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
@@ -427,8 +443,8 @@ struct BarbellPersonalRecordsView: View {
                                 Image(systemName: "chart.line.uptrend.xyaxis")
                                     .foregroundColor(.green.opacity(0.90))
 
-                                Text("Evolução")
-                                    .font(.system(size: 13, weight: .semibold))
+                                Text("personal_records.progress")
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
                             }
 
@@ -437,8 +453,8 @@ struct BarbellPersonalRecordsView: View {
                             Button {
                                 historyMove = move
                             } label: {
-                                Label("Histórico", systemImage: "clock.arrow.circlepath")
-                                    .font(.system(size: 13, weight: .semibold))
+                                Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
+                                    .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.green.opacity(0.90))
                             }
                             .buttonStyle(.plain)
@@ -450,8 +466,8 @@ struct BarbellPersonalRecordsView: View {
                     .padding(.top, 8)
 
                     if canDeleteSelectedMove {
-                        Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
-                            .font(.system(size: 12, weight: .semibold))
+                        Text("personal_records_barbell.deleting_will_remove_this_record_from_your_history_this_action_cannot_be_undone")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.50))
                             .multilineTextAlignment(.leading)
                             .padding(.horizontal, 16)
@@ -467,7 +483,7 @@ struct BarbellPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -486,7 +502,7 @@ struct BarbellPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -504,7 +520,7 @@ struct BarbellPersonalRecordsView: View {
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir movimento")
+                        .accessibilityLabel("personal_records_barbell.delete_movement")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -513,13 +529,22 @@ struct BarbellPersonalRecordsView: View {
             }
         }
         .presentationDetents([.fraction(0.80)])
-        .alert("Excluir registro", isPresented: $showDeleteAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
                 deleteSelectedMove()
             }
         } message: {
-            Text("Deseja excluir o registro de \"\(selectedMove?.name ?? "este movimento")\"?")
+            let format = AppLocalization.string("personal_records.barbell.delete_named_record_confirmation",
+                locale: locale
+            )
+            Text(
+                String(
+                    format: format,
+                    locale: locale,
+                    arguments: [selectedMove?.name ?? ""]
+                )
+            )
         }
         .sheet(item: $historyMove) { move in
             historySheet(move: move)
@@ -537,12 +562,11 @@ struct BarbellPersonalRecordsView: View {
                         displayedComponents: .date
                     )
                     .datePickerStyle(.graphical)
-                    .environment(\.locale, Locale(identifier: "pt_BR"))
 
                     Button {
                         showPRDatePicker = false
                     } label: {
-                        Text("Confirmar")
+                        Text("common.confirm")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -577,17 +601,17 @@ struct BarbellPersonalRecordsView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
 
-                    Text("Histórico")
-                        .font(.system(size: 16, weight: .bold))
+                    Text("personal_records.history")
+                        .font(.system(size: 17, weight: .bold))
                         .foregroundColor(.white.opacity(0.92))
 
                     if entries.isEmpty {
-                        Text("Nenhum histórico de evolução registrado ainda.")
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.60))
 
-                        Text("Salve novos PRs para acompanhar sua evolução.")
-                            .font(.system(size: 13))
+                        Text("personal_records_barbell.save_new_prs_to_track_your_progress")
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.45))
                     } else {
                         VStack(spacing: 0) {
@@ -597,12 +621,23 @@ struct BarbellPersonalRecordsView: View {
                                         .foregroundColor(.green.opacity(0.85))
                                         .frame(width: 22)
 
-                                    Text("\(formatNumber(convertFromStorageKgToPreferredUnit(entry.valueKg))) \(preferredWeightUnit.shortLabel)")
+                                    Text(
+                                        String(
+                                            format: AppLocalization.string("personal_records.barbell.value_with_unit",
+                                                locale: locale
+                                            ),
+                                            locale: locale,
+                                            arguments: [
+                                                formatNumber(convertFromStorageKgToPreferredUnit(entry.valueKg)),
+                                                preferredWeightUnit.shortLabel
+                                            ]
+                                        )
+                                    )
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
 
                                     if entry.id == recordID {
-                                        Text("RECORDE")
+                                        Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.green)
                                             .padding(.horizontal, 8)
@@ -615,8 +650,8 @@ struct BarbellPersonalRecordsView: View {
 
                                     Spacer()
 
-                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
-                                        .font(.system(size: 13))
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
 
                                     Button {
@@ -629,7 +664,7 @@ struct BarbellPersonalRecordsView: View {
                                             .frame(width: 28, height: 28)
                                     }
                                     .buttonStyle(.plain)
-                                    .accessibilityLabel("Excluir registro")
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -656,18 +691,18 @@ struct BarbellPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
-        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
-            Button("Cancelar", role: .cancel) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) {
                 historyEntryPendingDeletion = nil
             }
-            Button("Excluir", role: .destructive) {
+            Button("common.delete", role: .destructive) {
                 if let entry = historyEntryPendingDeletion {
                     deleteHistoryEntry(entry, for: move.storageKey)
                 }
                 historyEntryPendingDeletion = nil
             }
         } message: {
-            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
         }
     }
 
@@ -730,13 +765,21 @@ struct BarbellPersonalRecordsView: View {
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text("Novo movimento")
+                Text("personal_records_barbell.new_movement")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                Text("Crie um movimento e, se quiser, já informe a carga máxima em \(preferredWeightUnit.shortLabel).")
-                    .font(.system(size: 13))
+                Text(
+                    String(
+                        format: AppLocalization.string("personal_records.barbell.new_movement_description",
+                            locale: locale
+                        ),
+                        locale: locale,
+                        arguments: [preferredWeightUnit.shortLabel]
+                    )
+                )
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -744,11 +787,11 @@ struct BarbellPersonalRecordsView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Nome do movimento")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text("personal_records_barbell.movement_name")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
-                        TextField("Ex: Bulgarian Split Squat", text: $newMoveName)
+                        TextField("personal_records_barbell.e_g_bulgarian_split_squat", text: $newMoveName)
                             .textInputAutocapitalization(.words)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -764,12 +807,20 @@ struct BarbellPersonalRecordsView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Carga máxima (\(preferredWeightUnit.shortLabel)) (opcional)")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text(
+                            String(
+                                format: AppLocalization.string("personal_records.barbell.max_load_optional_with_unit",
+                                    locale: locale
+                                ),
+                                locale: locale,
+                                arguments: [preferredWeightUnit.shortLabel]
+                            )
+                        )
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
                         HStack(spacing: 10) {
-                            TextField("Ex: 90,50", text: $newMoveValue)
+                            TextField("personal_records_barbell.e_g_90_50", text: $newMoveValue)
                                 .keyboardType(.decimalPad)
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
@@ -792,7 +843,7 @@ struct BarbellPersonalRecordsView: View {
 
                     if let msg = addMoveErrorMessage {
                         Text(msg)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.yellow.opacity(0.85))
                             .padding(.top, 4)
                     }
@@ -805,7 +856,7 @@ struct BarbellPersonalRecordsView: View {
                     Button {
                         showAddMoveSheet = false
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -822,7 +873,7 @@ struct BarbellPersonalRecordsView: View {
                     Button {
                         addNewMove()
                     } label: {
-                        Text("Adicionar")
+                        Text("common.add")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -842,13 +893,17 @@ struct BarbellPersonalRecordsView: View {
 
         let cleanName = newMoveName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addMoveErrorMessage = "Informe o nome do movimento."
+            addMoveErrorMessage = AppLocalization.string("personal_records.barbell.movement_name_required",
+                locale: locale
+            )
             return
         }
 
         let existingNames = allMoves.map { $0.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) }
         if existingNames.contains(cleanName.lowercased()) {
-            addMoveErrorMessage = "Este movimento já existe na sua lista."
+            addMoveErrorMessage = AppLocalization.string("personal_records.barbell.duplicate_movement",
+                locale: locale
+            )
             return
         }
 
@@ -973,8 +1028,8 @@ struct BarbellPersonalRecordsView: View {
 
     private func formatPRDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd 'de' MMMM, yyyy"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
         return formatter.string(from: date)
     }
 

@@ -52,13 +52,20 @@ struct TeacherYoutubeVideosRepository {
         return parsed
     }
     
-    static func addVideo(teacherId: String, title: String, url: String, videoCategory: TeacherYoutubeVideoCategory) async throws {
+    static func addVideo(
+        teacherId: String,
+        title: String,
+        url: String,
+        videoCategory: TeacherYoutubeVideoCategory,
+        locale: Locale
+    ) async throws {
         try await addVideo(
             ownerCollection: "teachers",
             ownerId: teacherId,
             title: title,
             url: url,
-            videoCategory: videoCategory
+            videoCategory: videoCategory,
+            locale: locale
         )
     }
 
@@ -66,15 +73,59 @@ struct TeacherYoutubeVideosRepository {
         studentId: String,
         title: String,
         url: String,
-        videoCategory: TeacherYoutubeVideoCategory
+        videoCategory: TeacherYoutubeVideoCategory,
+        locale: Locale
     ) async throws {
         try await addVideo(
             ownerCollection: "users",
             ownerId: studentId,
             title: title,
             url: url,
-            videoCategory: videoCategory
+            videoCategory: videoCategory,
+            locale: locale
         )
+    }
+
+    static func updateVideoTitle(
+        teacherId: String,
+        videoId: String,
+        title: String
+    ) async throws {
+        try await updateVideoTitle(
+            ownerCollection: "teachers",
+            ownerId: teacherId,
+            videoId: videoId,
+            title: title
+        )
+    }
+
+    static func updateStudentVideoTitle(
+        studentId: String,
+        videoId: String,
+        title: String
+    ) async throws {
+        try await updateVideoTitle(
+            ownerCollection: "users",
+            ownerId: studentId,
+            videoId: videoId,
+            title: title
+        )
+    }
+
+    private static func updateVideoTitle(
+        ownerCollection: String,
+        ownerId: String,
+        videoId: String,
+        title: String
+    ) async throws {
+        try await Firestore.firestore()
+            .collection(ownerCollection)
+            .document(ownerId)
+            .collection("youtubeVideos")
+            .document(videoId)
+            .updateData([
+                "title": title.trimmingCharacters(in: .whitespacesAndNewlines)
+            ])
     }
 
     private static func addVideo(
@@ -82,11 +133,21 @@ struct TeacherYoutubeVideosRepository {
         ownerId: String,
         title: String,
         url: String,
-        videoCategory: TeacherYoutubeVideoCategory
+        videoCategory: TeacherYoutubeVideoCategory,
+        locale: Locale
     ) async throws {
         let cleanedUrl = url.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let videoId = YouTubeVideoImporter.extractYoutubeVideoId(from: cleanedUrl) else {
-            throw NSError(domain: "", code: -1, userInfo: [NSLocalizedDescriptionKey: "Link inválido. Cole um link do YouTube (youtu.be/ ou youtube.com/watch)."])
+            throw NSError(
+                domain: "",
+                code: -1,
+                userInfo: [
+                    NSLocalizedDescriptionKey: AppLocalization.string(
+                        "ui.invalid_youtube_link",
+                        locale: locale
+                    )
+                ]
+            )
         }
         
         let payload: [String: Any] = [

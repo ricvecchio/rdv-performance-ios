@@ -74,7 +74,7 @@ struct RegisterStudentView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Cadastro Aluno")
+                Text("auth.register_student.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -95,7 +95,7 @@ struct RegisterStudentView: View {
         VStack(spacing: 18) {
 
             UnderlineTextField(
-                title: "Nome",
+                title: "common.name",
                 text: $vm.name,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -105,17 +105,18 @@ struct RegisterStudentView: View {
             )
 
             UnderlineTextField(
-                title: "E-mail",
+                title: "common.email",
                 text: $vm.email,
                 isSecure: false,
                 showPassword: .constant(false),
                 lineColor: lineColor,
                 textColor: .white,
-                placeholderColor: textSecondary
+                placeholderColor: textSecondary,
+                isEmail: true
             )
 
             UnderlineTextField(
-                title: "Senha",
+                title: "common.password",
                 text: $vm.password,
                 isSecure: true,
                 showPassword: $showPassword,
@@ -126,7 +127,7 @@ struct RegisterStudentView: View {
 
             // ✅ Campo de telefone com máscara brasileira centralizada
             PhoneTextField(
-                title: "WhatsApp (opcional)",
+                title: "auth.fields.whatsapp_optional",
                 digits: $vm.phone,
                 lineColor: lineColor,
                 textColor: .white,
@@ -134,7 +135,7 @@ struct RegisterStudentView: View {
             )
 
             pickerRow(
-                title: "Área de foco",
+                title: "auth.fields.focus_area",
                 selection: $vm.focusArea,
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
@@ -143,8 +144,12 @@ struct RegisterStudentView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Retorna área com mensagens de erro/sucesso e botões de ação
@@ -182,7 +187,11 @@ struct RegisterStudentView: View {
                             .tint(.white.opacity(0.9))
                     }
 
-                    Text(vm.isLoading ? "Criando..." : "Criar Conta")
+                    Text(
+                        vm.isLoading
+                            ? LocalizedStringKey("auth.registration.loading")
+                            : LocalizedStringKey("auth.registration.submit")
+                    )
                 }
                 .frame(maxWidth: .infinity)
                 .primaryGreenActionButton()
@@ -193,7 +202,7 @@ struct RegisterStudentView: View {
             Button {
                 path.removeAll()
             } label: {
-                Text("Já tenho conta — Voltar ao Login")
+                Text("auth.registration.back_to_login")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
                     .underline()
@@ -206,16 +215,20 @@ struct RegisterStudentView: View {
 
     // Converte FocusAreaDTO em texto amigável para exibição
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
         switch opt {
-        case .CROSSFIT: return "Crossfit"
-        case .GYM: return "Academia"
-        case .HOME: return "Em Casa"
+        case .CROSSFIT: return AppLocalization.string("auth.focus_area.crossfit", locale: locale)
+        case .GYM: return AppLocalization.string("auth.focus_area.gym", locale: locale)
+        case .HOME: return AppLocalization.string("auth.focus_area.home", locale: locale)
         }
     }
 
     // Retorna picker com menu dropdown estilizado
     private func pickerRow<T: RawRepresentable & CaseIterable>(
-        title: String,
+        title: LocalizedStringKey,
         selection: Binding<T>,
         options: [T],
         displayText: ((T) -> String)? = nil

@@ -72,7 +72,7 @@ struct HeaderAvatarView: View {
                     }
                 )
                 .contentShape(Circle())
-                .accessibilityLabel("Perfil")
+                .accessibilityLabel("common.profile")
         } else {
             MiniProfileHeader(imageName: "rdv_user_default", size: size)
         }

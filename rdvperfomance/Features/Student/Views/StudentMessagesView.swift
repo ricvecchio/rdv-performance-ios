@@ -11,6 +11,7 @@ struct StudentMessagesView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
@@ -41,7 +42,6 @@ struct StudentMessagesView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            header
                             listCard
 
                             if let err = errorMessage {
@@ -60,12 +60,13 @@ struct StudentMessagesView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
+                    kind: .teacherHomeAlunosSobrePerfil(
+                        selectedCategory: category,
+                        isHomeSelected: false,
+                        isAlunosSelected: false,
                         isSobreSelected: false,
                         isPerfilSelected: false
-                    ),
-                    onSelectStudentSection: onSelectSection
+                    )
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .frame(maxWidth: .infinity)
@@ -92,7 +93,7 @@ struct StudentMessagesView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Mensagens")
+                Text("student_messages.messages")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -112,22 +113,12 @@ struct StudentMessagesView: View {
         .task { await load() }
     }
 
-    // Header com categoria e descrição
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Aqui você vê as mensagens enviadas pelo seu treinador.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     // Card com lista de mensagens
     private var listCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("HISTÓRICO")
+                Text("student_feedbacks.history")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 
@@ -139,7 +130,7 @@ struct StudentMessagesView: View {
             }
 
             if messages.isEmpty {
-                Text("Nenhuma mensagem recebida ainda.")
+                Text("student_messages.no_message_received_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -159,11 +150,11 @@ struct StudentMessagesView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -184,12 +175,12 @@ struct StudentMessagesView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(teachersById[msg.teacherId]?.name ?? "Professor")
-                    .font(.system(size: 14, weight: .semibold))
+                Text(teachersById[msg.teacherId]?.name ?? AppLocalization.string("common.trainer", locale: locale))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Text(msg.body)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.75))
                     .lineLimit(3)
             }
@@ -225,12 +216,15 @@ struct StudentMessagesView: View {
         errorMessage = nil
 
         guard session.isLoggedIn && session.isStudent else {
-            errorMessage = "Apenas aluno pode acessar mensagens."
+            errorMessage = AppLocalization.string("student_messages.student_only", locale: locale)
             return
         }
 
         guard let sid = Auth.auth().currentUser?.uid, !sid.isEmpty else {
-            errorMessage = "Não foi possível identificar o aluno logado."
+            errorMessage = AppLocalization.string(
+                "student_shared.logged_student_not_found",
+                locale: locale
+            )
             return
         }
 
@@ -255,8 +249,8 @@ struct StudentMessagesView: View {
     // Formata data para exibição
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy HH:mm"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyyHHmm")
         return f.string(from: date)
     }
 

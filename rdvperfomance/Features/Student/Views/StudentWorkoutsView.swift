@@ -19,6 +19,7 @@ struct StudentWorkoutsView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
@@ -42,6 +43,18 @@ struct StudentWorkoutsView: View {
     @State private var expandedWeekIds = Set<String>()
     @State private var expandedDayIds = Set<String>()
     @State private var hasAppliedInitialExpansion = false
+    @State private var hasAppeared = false
+    @State private var activeLockedPlayer: LockedPlayerItem? = nil
+    @State private var pendingReceivedVideoSave: (
+        sourceId: String,
+        title: String,
+        url: String,
+        videoId: String
+    )? = nil
+    @State private var isReceivedVideoSaveConfirmationPresented = false
+    @State private var isSavingReceivedVideo = false
+    @State private var receivedVideoSaveMessage: String? = nil
+    @State private var receivedVideoSaveSuccessSourceId: String? = nil
 
     init(
         path: Binding<[AppRoute]>,
@@ -51,6 +64,7 @@ struct StudentWorkoutsView: View {
         initialExpandedDayId: String? = nil,
         onInitialExpansionHandled: @escaping () -> Void = {},
         onSelectSection: @escaping (StudentMainSection) -> Void = { _ in },
+        viewModel: StudentWorkoutsViewModel? = nil,
         repository: FirestoreRepository = .shared
     ) {
         self._path = path
@@ -60,7 +74,7 @@ struct StudentWorkoutsView: View {
         self.initialExpandedDayId = initialExpandedDayId
         self.onInitialExpansionHandled = onInitialExpansionHandled
         self.onSelectSection = onSelectSection
-        _vm = StateObject(wrappedValue: StudentWorkoutsViewModel(studentId: studentId, repository: repository))
+        _vm = StateObject(wrappedValue: viewModel ?? StudentWorkoutsViewModel(studentId: studentId, repository: repository))
     }
 
     private var isTeacherViewing: Bool { session.isTrainer }
@@ -89,7 +103,6 @@ struct StudentWorkoutsView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
 
-                        header
                         filterRow
                         if isTeacherViewing {
                             publishWorkoutButton
@@ -125,7 +138,7 @@ struct StudentWorkoutsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Treinos")
+                Text("workout.workouts_this_week")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -140,14 +153,24 @@ struct StudentWorkoutsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
 
-        .task(id: studentId) {
-            await loadInitialData()
-        }
         .onAppear {
-            guard vm.hasLoadedWeeks else { return }
+            let isFirstAppearance = !hasAppeared
+            hasAppeared = true
+            guard !vm.hasLoadedWeeks else {
+                // ViewModel reaproveitado (troca de aba): exibe o cache na hora e
+                // apenas revalida a lista de semanas em segundo plano.
+                guard isFirstAppearance else { return }
+                applyInitialExpansionIfNeeded()
+                Task {
+                    await vm.revalidateWeeksInBackground(
+                        filterByActiveTeacherLinks: !isTeacherViewing,
+                        viewingTeacherId: viewingTeacherId
+                    )
+                }
+                return
+            }
             Task {
                 await vm.loadWeeksAndMeta(
-                    force: true,
                     filterByActiveTeacherLinks: !isTeacherViewing,
                     viewingTeacherId: viewingTeacherId
                 )
@@ -155,6 +178,26 @@ struct StudentWorkoutsView: View {
         }
         .onChange(of: vm.weeks) { _, _ in
             applyInitialExpansionIfNeeded()
+        }
+        .fullScreenCover(item: $activeLockedPlayer) { item in
+            TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
+        }
+        .alert(
+            "workout.my_videos",
+            isPresented: Binding(
+                get: { receivedVideoSaveMessage != nil },
+                set: { isPresented in
+                    if !isPresented {
+                        receivedVideoSaveMessage = nil
+                    }
+                }
+            )
+        ) {
+            Button("common.ok", role: .cancel) {
+                receivedVideoSaveMessage = nil
+            }
+        } message: {
+            Text(receivedVideoSaveMessage ?? "")
         }
     }
 
@@ -190,16 +233,6 @@ struct StudentWorkoutsView: View {
         .background(Theme.Colors.footerBackground)
     }
 
-    // Header informativo
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-
-            Text("Selecione uma semana para ver os dias.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.35))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
 
     private var publishWorkoutButton: some View {
         Button {
@@ -212,7 +245,7 @@ struct StudentWorkoutsView: View {
         } label: {
             HStack {
                 Spacer()
-                Text("Publicar Treino")
+                Text("workout.publish_workout")
                 Spacer()
             }
             .primaryGreenActionButton()
@@ -222,14 +255,14 @@ struct StudentWorkoutsView: View {
 
     private var filterRow: some View {
         HStack(spacing: 8) {
-            filterChip(title: "Atuais", filter: .active)
-            filterChip(title: "Próximos", filter: .upcoming)
-            filterChip(title: "Concluídos", filter: .completed)
+            filterChip(title: "workout.filter.active", filter: .active)
+            filterChip(title: "workout.filter.upcoming", filter: .upcoming)
+            filterChip(title: "workout.filter.completed", filter: .completed)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func filterChip(title: String, filter: WorkoutsFilter) -> some View {
+    private func filterChip(title: LocalizedStringKey, filter: WorkoutsFilter) -> some View {
         Button {
             selectedFilter = filter
         } label: {
@@ -239,15 +272,24 @@ struct StudentWorkoutsView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 9)
-                .background(selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
+                .background(
+                    selectedFilter == filter
+                        ? Theme.Colors.primaryGreen.opacity(0.18)
+                        : Color.black.opacity(0.68)
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.30) : Color.white.opacity(0.12),
+                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.55) : Theme.Colors.primaryGreen.opacity(0.28),
                             lineWidth: 1
                         )
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                .shadow(
+                    color: selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.20) : .clear,
+                    radius: 8,
+                    y: 2
+                )
         }
         .buttonStyle(.plain)
     }
@@ -287,40 +329,11 @@ struct StudentWorkoutsView: View {
     }
 
     private func weeksList(_ weeks: [TrainingWeekFS]) -> some View {
-        VStack(spacing: 0) {
+        VStack(spacing: 12) {
             ForEach(Array(weeks.enumerated()), id: \.offset) { item in
-                let idx = item.offset
-                let week = item.element
-
-                if isTeacherViewing {
-                    weekNavigationRow(week)
-                } else {
-                    expandableWeekRow(week)
-                }
-
-                if idx < weeks.count - 1 {
-                    innerDivider(leading: 54)
-                }
+                expandableWeekRow(item.element)
             }
         }
-    }
-
-    private func weekNavigationRow(_ week: TrainingWeekFS) -> some View {
-        Button {
-            guard let weekId = week.id, !weekId.isEmpty else {
-                vm.errorMessage = "Não foi possível abrir a semana: weekId está vazio."
-                return
-            }
-
-            path.append(.studentWeekDetail(
-                studentId: studentId,
-                weekId: weekId,
-                weekTitle: week.weekTitle
-            ))
-        } label: {
-            weekHeaderContent(week: week, isExpanded: false)
-        }
-        .buttonStyle(.plain)
     }
 
     @ViewBuilder
@@ -358,43 +371,89 @@ struct StudentWorkoutsView: View {
     }
 
     private func weekHeaderContent(week: TrainingWeekFS, isExpanded: Bool) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: "calendar")
-                .font(.system(size: 18))
-                .foregroundColor(.green.opacity(0.85))
-                .frame(width: 28)
+        let progressPercent = vm.progressPercent(for: week)
+        let progressValue = Double(progressPercent) / 100.0
+        let weekId = week.id ?? ""
+        let trainingDays = vm.days(for: weekId).filter { !$0.isVideoDay }
+        let completedCount = trainingDays.compactMap(\.id)
+            .filter { vm.isCompleted(dayId: $0, in: weekId) }
+            .count
+        let completionFormat = trainingDays.count == 1
+            ? AppLocalization.string("dashboard.upcoming_workouts.progress_singular", locale: locale)
+            : AppLocalization.string("dashboard.upcoming_workouts.progress_plural", locale: locale)
 
-            VStack(alignment: .leading, spacing: 3) {
+        return HStack(alignment: .top, spacing: 12) {
+            ZStack {
+                RoundedRectangle(cornerRadius: 11)
+                    .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                Image(systemName: "calendar")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+            }
+            .frame(width: 42, height: 42)
+            .overlay(
+                RoundedRectangle(cornerRadius: 11)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+            )
+
+            VStack(alignment: .leading, spacing: 7) {
                 HStack(spacing: 8) {
-                    Text(vm.subtitleForWeek(week))
-                        .font(.system(size: 18, weight: .medium))
+                    Text(vm.subtitleForWeek(week, locale: locale))
+                        .font(.system(size: 17, weight: .medium))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
 
                     Spacer(minLength: 4)
 
-                    Text("\(vm.progressPercent(for: week))%")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.55))
+                    Text(
+                        String(
+                            format: AppLocalization.string("workout.progress_percentage", locale: locale),
+                            locale: locale,
+                            arguments: [Int64(progressPercent)]
+                        )
+                    )
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 5)
+                        .background(Theme.Colors.primaryGreen.opacity(0.14))
+                        .clipShape(Capsule())
+                        .overlay(
+                            Capsule()
+                                .stroke(Theme.Colors.primaryGreen.opacity(0.25), lineWidth: 1)
+                        )
                 }
 
                 HStack(spacing: 8) {
-                    Text(vm.teacherLineForWeek(week))
-                        .font(.system(size: 13, weight: .semibold))
+                    Text(vm.teacherLineForWeek(week, locale: locale))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(1)
 
                     Spacer(minLength: 4)
 
                     if vm.isUpcoming(week) {
-                        Label("Em breve", systemImage: "clock.fill")
+                        Label(LocalizedStringKey("workout.coming_soon"), systemImage: "clock.fill")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
                             .labelStyle(.titleAndIcon)
                             .lineLimit(1)
                     }
                 }
+
+                Text(
+                    String(
+                        format: completionFormat,
+                        locale: locale,
+                        arguments: [Int64(completedCount), Int64(trainingDays.count)]
+                    )
+                )
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.55))
+
+                ProgressView(value: progressValue)
+                    .tint(Theme.Colors.primaryGreen)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -403,16 +462,17 @@ struct StudentWorkoutsView: View {
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                .padding(.top, 14)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, 16)
         .contentShape(Rectangle())
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color.black.opacity(0.68))
+        .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 16)
+                .stroke(Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.28), lineWidth: 1)
         )
     }
 
@@ -430,7 +490,7 @@ struct StudentWorkoutsView: View {
                     .foregroundColor(.white.opacity(0.55))
                     .multilineTextAlignment(.center)
 
-                Button("Tentar novamente") {
+                Button("dashboard.try_again_action") {
                     Task { await vm.loadDaysAndStatus(for: weekId, force: true) }
                 }
                 .font(.system(size: 14, weight: .semibold))
@@ -446,7 +506,7 @@ struct StudentWorkoutsView: View {
             let groups = trainingDayGroups(from: days)
 
             if days.isEmpty {
-                Text("O professor ainda não adicionou dias para esta semana.")
+                Text("workout.the_coach_has_not_added_days_for_this_week_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -455,24 +515,24 @@ struct StudentWorkoutsView: View {
             } else {
                 VStack(spacing: 10) {
                     if !videos.isEmpty {
-                        videoSection(days: videos, week: week, weekId: weekId)
+                        videoSection(days: videos)
                     }
 
                     ForEach(groups) { group in
                         trainingDayGroup(group, week: week, weekId: weekId)
                     }
                 }
-                .padding(.vertical, 8)
+                .padding(.top, 10)
             }
         }
     }
 
-    private func videoSection(days: [TrainingDayFS], week: TrainingWeekFS, weekId: String) -> some View {
+    private func videoSection(days: [TrainingDayFS]) -> some View {
         VStack(spacing: 0) {
             HStack(spacing: 10) {
                 Image(systemName: "video.fill")
                     .font(.system(size: 13, weight: .semibold))
-                Text("Vídeos")
+                Text("workout.videos")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
             }
@@ -481,9 +541,11 @@ struct StudentWorkoutsView: View {
             .padding(.vertical, 10)
 
             ForEach(Array(days.enumerated()), id: \.element.id) { index, day in
-                trainingDayRow(day, week: week, weekId: weekId, isVideo: true)
+                if let video = youtubeVideoInfo(for: day) {
+                    videoCard(for: day, videoId: video.videoId, videoURL: video.url)
+                }
                 if index < days.count - 1 {
-                    innerDivider(leading: 54)
+                    innerDivider(leading: 14)
                 }
             }
         }
@@ -492,8 +554,255 @@ struct StudentWorkoutsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
+    }
+
+    private func youtubeVideoInfo(for day: TrainingDayFS) -> (videoId: String, url: String)? {
+        for block in day.blocks {
+            let name = block.name.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard name.caseInsensitiveCompare("Vídeo") == .orderedSame else { continue }
+
+            let url = block.details.trimmingCharacters(in: .whitespacesAndNewlines)
+            if let videoId = YouTubeVideoImporter.extractYoutubeVideoId(from: url) {
+                return (videoId, url)
+            }
+        }
+
+        return nil
+    }
+
+    private func videoCard(for day: TrainingDayFS, videoId: String, videoURL: String) -> some View {
+        let sourceId = day.id ?? "\(day.dayIndex)-\(videoId)"
+
+        return HStack(spacing: 12) {
+            videoThumbnail(videoId: videoId)
+
+            VStack(alignment: .leading, spacing: 4) {
+                let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                Text(title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+
+                Text("workout.youtube")
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.55))
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            if !isTeacherViewing {
+                Menu {
+                    Button {
+                        let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
+                        pendingReceivedVideoSave = (
+                            sourceId: sourceId,
+                            title: title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title,
+                            url: videoURL,
+                            videoId: videoId
+                        )
+                        isReceivedVideoSaveConfirmationPresented = true
+                    } label: {
+                        Label(LocalizedStringKey("workout.save_to_my_videos"), systemImage: "bookmark")
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .font(.system(size: 18, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .padding(.vertical, 6)
+                        .padding(.horizontal, 8)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .disabled(isSavingReceivedVideo)
+                .popover(
+                    isPresented: Binding(
+                        get: {
+                            (isReceivedVideoSaveConfirmationPresented
+                                && pendingReceivedVideoSave?.sourceId == sourceId)
+                                || receivedVideoSaveSuccessSourceId == sourceId
+                        },
+                        set: { isPresented in
+                            if !isPresented {
+                                if pendingReceivedVideoSave?.sourceId == sourceId {
+                                    isReceivedVideoSaveConfirmationPresented = false
+                                    pendingReceivedVideoSave = nil
+                                }
+                                if receivedVideoSaveSuccessSourceId == sourceId {
+                                    receivedVideoSaveSuccessSourceId = nil
+                                }
+                            }
+                        }
+                    ),
+                    arrowEdge: .bottom
+                ) {
+                    Group {
+                        if receivedVideoSaveSuccessSourceId == sourceId {
+                            receivedVideoSaveSuccessCard(sourceId: sourceId)
+                        } else {
+                            receivedVideoSaveConfirmationCard
+                        }
+                    }
+                    .presentationCompactAdaptation(.popover)
+                }
+            }
+
+            Button {
+                openLockedPlayer(for: day, videoId: videoId)
+            } label: {
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 14)
+        .contentShape(Rectangle())
+        .onTapGesture {
+            openLockedPlayer(for: day, videoId: videoId)
+        }
+    }
+
+    private var receivedVideoSaveConfirmationCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("workout.save_to_my_videos")
+                .font(.system(size: 17, weight: .semibold))
+
+            Text("workout.do_you_want_to_save_this_video_to_your_my_videos_list")
+                .font(.system(size: 14))
+                .foregroundColor(.secondary)
+
+            HStack {
+                Button("common.cancel", role: .cancel) {
+                    isReceivedVideoSaveConfirmationPresented = false
+                    pendingReceivedVideoSave = nil
+                }
+
+                Spacer()
+
+                Button("common.save") {
+                    guard let video = pendingReceivedVideoSave else { return }
+                    isReceivedVideoSaveConfirmationPresented = false
+                    pendingReceivedVideoSave = nil
+                    Task { await saveReceivedVideoToMyVideos(video) }
+                }
+            }
+        }
+        .padding(16)
+        .frame(width: 300, alignment: .leading)
+    }
+
+    private func receivedVideoSaveSuccessCard(sourceId: String) -> some View {
+        Text("workout.video_saved_to_my_videos")
+            .font(.system(size: 14, weight: .semibold))
+            .padding(16)
+            .frame(width: 240, alignment: .leading)
+            .task {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                guard !Task.isCancelled, receivedVideoSaveSuccessSourceId == sourceId else { return }
+                receivedVideoSaveSuccessSourceId = nil
+            }
+    }
+
+    @MainActor
+    private func saveReceivedVideoToMyVideos(
+        _ video: (sourceId: String, title: String, url: String, videoId: String)
+    ) async {
+        guard !isTeacherViewing else { return }
+
+        let expectedStudentId = studentId.trimmingCharacters(in: .whitespacesAndNewlines)
+        let authenticatedStudentId = (session.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !expectedStudentId.isEmpty, expectedStudentId == authenticatedStudentId else {
+            receivedVideoSaveMessage = AppLocalization.string(
+                "workout.video_save_authentication_error",
+                locale: locale
+            )
+            return
+        }
+
+        isSavingReceivedVideo = true
+        defer { isSavingReceivedVideo = false }
+
+        do {
+            let savedVideos = try await TeacherYoutubeVideosRepository.loadStudentVideos(
+                studentId: authenticatedStudentId
+            )
+            guard !savedVideos.contains(where: { $0.videoId == video.videoId }) else {
+                receivedVideoSaveMessage = AppLocalization.string(
+                    "workout.video_already_saved",
+                    locale: locale
+                )
+                return
+            }
+
+            try await TeacherYoutubeVideosRepository.addStudentVideo(
+                studentId: authenticatedStudentId,
+                title: video.title,
+                url: video.url,
+                videoCategory: .crossfit,
+                locale: locale
+            )
+            receivedVideoSaveSuccessSourceId = video.sourceId
+        } catch {
+            receivedVideoSaveMessage = error.localizedDescription
+        }
+    }
+
+    private func openLockedPlayer(for day: TrainingDayFS, videoId: String) {
+        let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
+        activeLockedPlayer = LockedPlayerItem(
+            title: title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title,
+            videoId: videoId
+        )
+    }
+
+    private func videoThumbnail(videoId: String) -> some View {
+        let thumbnailURL = "https://img.youtube.com/vi/\(videoId)/hqdefault.jpg"
+
+        return ZStack(alignment: .bottomTrailing) {
+            AsyncImage(url: URL(string: thumbnailURL)) { phase in
+                switch phase {
+                case .empty:
+                    ZStack {
+                        Color.white.opacity(0.06)
+                        ProgressView().tint(.white.opacity(0.8))
+                    }
+                case .success(let image):
+                    image.resizable().scaledToFill()
+                case .failure:
+                    ZStack {
+                        Color.white.opacity(0.06)
+                        Image(systemName: "video.fill")
+                            .foregroundColor(.green.opacity(0.85))
+                    }
+                @unknown default:
+                    Color.white.opacity(0.06)
+                }
+            }
+            .frame(width: 66, height: 40)
+            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(
+                RoundedRectangle(cornerRadius: 10)
+                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+            )
+
+            ZStack {
+                Circle()
+                    .fill(Color.black.opacity(0.45))
+                Image(systemName: "play.fill")
+                    .font(.system(size: 10, weight: .bold))
+                    .foregroundColor(.white.opacity(0.95))
+                    .padding(.leading, 1)
+            }
+            .frame(width: 18, height: 18)
+            .overlay(
+                Circle()
+                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+            )
+            .padding(6)
+        }
     }
 
     private func trainingDayGroup(
@@ -502,7 +811,7 @@ struct StudentWorkoutsView: View {
         weekId: String
     ) -> some View {
         let isExpanded = expandedDayIds.contains(group.id)
-        let fallback = group.days.first?.subtitleText ?? ""
+        let fallback = group.days.first?.subtitleText(locale: locale) ?? ""
         let status = vm.dayStatus(for: group.days, in: weekId)
 
         return VStack(spacing: 0) {
@@ -516,10 +825,14 @@ struct StudentWorkoutsView: View {
                 }
             } label: {
                 HStack(spacing: 14) {
-                    Image(systemName: "calendar")
-                        .font(.system(size: 16))
-                        .foregroundColor(Theme.Colors.primaryGreen)
-                        .frame(width: 28)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                        Image(systemName: "calendar")
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen)
+                    }
+                    .frame(width: 34, height: 34)
 
                     Text(trainingDateSubtitle(for: group.date, fallback: fallback))
                         .font(.system(size: 17, weight: isExpanded ? .semibold : .medium))
@@ -536,59 +849,60 @@ struct StudentWorkoutsView: View {
                         .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 13)
+                .padding(.vertical, 14)
                 .contentShape(Rectangle())
-                .background(isExpanded ? Theme.Colors.primaryGreen.opacity(0.12) : Color.clear)
+                .background(isExpanded ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.54))
             }
             .buttonStyle(.plain)
 
             if isExpanded {
-                VStack(spacing: 0) {
-                    innerDivider(leading: 16)
-
-                    ForEach(Array(group.days.enumerated()), id: \.element.id) { index, day in
-                        trainingDayRow(day, week: week, weekId: weekId, isVideo: false)
-                        if index < group.days.count - 1 {
-                            innerDivider(leading: 54)
-                        }
+                VStack(spacing: 8) {
+                    ForEach(Array(group.days.enumerated()), id: \.element.id) { item in
+                        trainingDayRow(item.element, week: week, weekId: weekId)
                     }
                 }
-                .padding(.vertical, 4)
-                .background(Theme.Colors.cardBackground)
+                .padding(10)
+                .background(Color.black.opacity(0.40))
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(Color.black.opacity(0.68))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(
+                    isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Theme.Colors.primaryGreen.opacity(0.28),
+                    lineWidth: 1
+                )
         )
     }
 
     private func trainingDayRow(
         _ day: TrainingDayFS,
         week: TrainingWeekFS,
-        weekId: String,
-        isVideo: Bool
+        weekId: String
     ) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 12) {
             Button {
                 path.append(.studentDayDetail(weekId: weekId, day: day, weekTitle: week.weekTitle))
             } label: {
-                HStack(spacing: 14) {
-                    Image(systemName: isVideo ? "video.fill" : "dumbbell.fill")
-                        .font(.system(size: 16))
-                        .foregroundColor(.green.opacity(0.85))
-                        .frame(width: 28)
+                HStack(spacing: 12) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                        Image(systemName: workoutIconName(for: day, in: week))
+                            .font(.system(size: 15, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen)
+                    }
+                    .frame(width: 36, height: 36)
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(day.title)
+                        Text(DefaultWorkoutLocalization.presentation(for: day, locale: locale).title)
                             .font(.system(size: 17, weight: .medium))
                             .foregroundColor(.white.opacity(0.92))
-                        Text(isVideo ? day.subtitleText : trainingDateSubtitle(for: day.date, fallback: day.subtitleText))
-                            .font(.system(size: 13))
+                        Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText(locale: locale)))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.35))
                     }
 
@@ -598,39 +912,56 @@ struct StudentWorkoutsView: View {
             }
             .buttonStyle(.plain)
 
-            if !isVideo, let dayId = day.id, !vm.isUpcoming(week) {
+            if !isTeacherViewing, let dayId = day.id, !vm.isUpcoming(week) {
                 if vm.isOverdue(day, in: weekId) {
-                    Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
+                    Label(LocalizedStringKey("workout.overdue"), systemImage: "exclamationmark.triangle.fill")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundColor(.red.opacity(0.9))
                         .labelStyle(.titleAndIcon)
                 }
 
+                let isCompleted = vm.isCompleted(dayId: dayId, in: weekId)
                 Button {
-                    Task { await vm.toggleCompleted(dayId: dayId, in: weekId) }
+                    Task { await vm.toggleCompleted(dayId: dayId, in: weekId, locale: locale) }
                 } label: {
-                    Image(systemName: completionIcon(isCompleted: vm.isCompleted(dayId: dayId, in: weekId)))
-                        .font(.system(size: 20))
-                        .foregroundColor(vm.isCompleted(dayId: dayId, in: weekId) ? .green.opacity(0.85) : .white.opacity(0.35))
+                    ZStack {
+                        Circle()
+                            .fill(isCompleted ? Theme.Colors.primaryGreen : .clear)
+                        Circle()
+                            .stroke(
+                                isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35),
+                                lineWidth: 1.5
+                            )
+                        if isCompleted {
+                            Image(systemName: "checkmark")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.black.opacity(0.78))
+                        }
+                    }
+                    .frame(width: 24, height: 24)
                 }
                 .buttonStyle(.plain)
-                .padding(.trailing, 16)
             }
         }
-        .padding(.leading, 16)
-        .padding(.vertical, 12)
+        .padding(12)
+        .background(Color.black.opacity(0.68))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
     private func dayStatusIndicator(_ status: StudentWorkoutDayStatus) -> some View {
         switch status {
         case .completed:
-            Label("Concluído", systemImage: "checkmark.circle.fill")
+            Label(LocalizedStringKey("common.done"), systemImage: "checkmark.circle.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(Theme.Colors.primaryGreen)
                 .labelStyle(.titleAndIcon)
         case .overdue:
-            Label("Em atraso", systemImage: "exclamationmark.triangle.fill")
+            Label(LocalizedStringKey("workout.overdue"), systemImage: "exclamationmark.triangle.fill")
                 .font(.system(size: 12, weight: .semibold))
                 .foregroundColor(.red.opacity(0.9))
                 .labelStyle(.titleAndIcon)
@@ -674,13 +1005,28 @@ struct StudentWorkoutsView: View {
     private func trainingDateSubtitle(for date: Date?, fallback: String) -> String {
         guard let date else { return fallback }
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE dd/MM"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
         return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
-    private func completionIcon(isCompleted: Bool) -> String {
-        return isCompleted ? "checkmark.circle.fill" : "circle"
+    private func workoutIconName(for day: TrainingDayFS, in week: TrainingWeekFS) -> String {
+        let category = day.categoryRaw
+            .flatMap { TreinoTipo.normalized(from: $0) }
+            ?? TreinoTipo.normalized(from: week.categoryRaw)
+
+        guard let category else {
+            return "dumbbell.fill"
+        }
+
+        switch category {
+        case .crossfit:
+            return "figure.strengthtraining.traditional"
+        case .academia:
+            return "dumbbell"
+        case .emCasa:
+            return "house.fill"
+        }
     }
 
     private func applyInitialExpansionIfNeeded() {
@@ -715,7 +1061,7 @@ struct StudentWorkoutsView: View {
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando semanas...")
+            Text("workout.loading_weeks")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -725,12 +1071,12 @@ struct StudentWorkoutsView: View {
 
     private func errorView(message: String) -> some View {
         VStack(spacing: 10) {
-            Text("Ops! Não foi possível carregar.")
+            Text("workout.oops_unable_to_load")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
             Text(message)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
 
@@ -743,7 +1089,7 @@ struct StudentWorkoutsView: View {
                     )
                 }
             } label: {
-                Text("Tentar novamente")
+                Text("dashboard.try_again_action")
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
             }
@@ -756,12 +1102,12 @@ struct StudentWorkoutsView: View {
 
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text("Nenhuma semana cadastrada")
+            Text("workout.no_week_registered")
                 .font(.system(size: 15, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("O professor ainda não publicou treinos para este aluno.")
-                .font(.system(size: 13))
+            Text("workout.the_coach_has_not_published_workouts_for_this_student_yet")
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -771,13 +1117,13 @@ struct StudentWorkoutsView: View {
     }
 
     private var filteredEmptyView: some View {
-        let content: (title: String, message: String) = switch selectedFilter {
+        let content: (title: LocalizedStringKey, message: LocalizedStringKey) = switch selectedFilter {
         case .active:
-            ("Nenhum treino ativo", "Você não possui treinos pendentes a partir de hoje.")
+            ("workout.empty.active.title", "workout.empty.active.message")
         case .upcoming:
-            ("Nenhum treino futuro", "Você não possui treinos programados para as próximas semanas.")
+            ("workout.empty.upcoming.title", "workout.empty.upcoming.message")
         case .completed:
-            ("Nenhum treino concluído", "Treinos concluídos ou com período encerrado aparecerão aqui.")
+            ("workout.empty.completed.title", "workout.empty.completed.message")
         }
 
         return VStack(spacing: 10) {
@@ -786,7 +1132,7 @@ struct StudentWorkoutsView: View {
                 .foregroundColor(.white.opacity(0.92))
 
             Text(content.message)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -815,17 +1161,4 @@ struct StudentWorkoutsView: View {
         }
     }
 
-    private func loadInitialData() async {
-        if isTeacherViewing {
-            await vm.loadWeeksAndMeta(
-                filterByActiveTeacherLinks: false,
-                viewingTeacherId: viewingTeacherId
-            )
-        } else {
-            await vm.loadWeeksAndMeta(
-                filterByActiveTeacherLinks: true,
-                viewingTeacherId: viewingTeacherId
-            )
-        }
-    }
 }

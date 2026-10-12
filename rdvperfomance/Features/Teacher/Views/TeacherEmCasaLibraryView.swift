@@ -5,6 +5,7 @@ struct TeacherEmCasaLibraryView: View {
     @Binding var path: [AppRoute]
     let mode: TeacherWorkoutsMode
     let templateMode: TeacherWorkoutTemplatesMode
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -14,16 +15,18 @@ struct TeacherEmCasaLibraryView: View {
         let sectionKey: String
     }
 
-    private let menuItems: [MenuItem] = [
-        .init(title: "Peito", sectionKey: "peito"),
-        .init(title: "Costas", sectionKey: "costas"),
-        .init(title: "Pernas", sectionKey: "pernas"),
-        .init(title: "Ombros", sectionKey: "ombros"),
-        .init(title: "Braços", sectionKey: "bracos"),
-        .init(title: "Core / Abdômen", sectionKey: "core"),
-        .init(title: "Full Body", sectionKey: "fullBody"),
-        .init(title: "Meus Treinos", sectionKey: "meusTreinos")
-    ]
+    private var menuItems: [MenuItem] {
+        [
+            .init(title: AppLocalization.string("ui.chest", locale: locale), sectionKey: "peito"),
+            .init(title: AppLocalization.string("ui.back", locale: locale), sectionKey: "costas"),
+            .init(title: AppLocalization.string("ui.legs", locale: locale), sectionKey: "pernas"),
+            .init(title: AppLocalization.string("ui.shoulders", locale: locale), sectionKey: "ombros"),
+            .init(title: AppLocalization.string("ui.arms", locale: locale), sectionKey: "bracos"),
+            .init(title: AppLocalization.string("ui.core_abs", locale: locale), sectionKey: "core"),
+            .init(title: AppLocalization.string("ui.full_body", locale: locale), sectionKey: "fullBody"),
+            .init(title: AppLocalization.string("ui.my_workouts", locale: locale), sectionKey: "meusTreinos")
+        ]
+    }
 
     var body: some View {
         ZStack {
@@ -44,14 +47,9 @@ struct TeacherEmCasaLibraryView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-
-                            Text("Selecione uma seção.")
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
-
-                            VStack(spacing: 12) {
+                            VStack(spacing: 10) {
                                 ForEach(menuItems) { item in
-                                    actionRow(title: item.title, icon: "folder.fill") {
+                                    actionRow(title: item.title, icon: "house.fill") {
                                         if templateMode == .attach {
                                             path.append(.teacherWorkoutTemplates(
                                                 category: .emCasa,
@@ -78,8 +76,6 @@ struct TeacherEmCasaLibraryView: View {
                                     }
                                 }
                             }
-
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
@@ -123,7 +119,7 @@ struct TeacherEmCasaLibraryView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Treinos em Casa")
+                Text("ui.home_workouts")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -138,11 +134,20 @@ struct TeacherEmCasaLibraryView: View {
 
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
+            HStack(spacing: 14) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 11)
+                        .fill(Theme.Colors.primaryGreen.opacity(0.14))
+
+                    Image(systemName: icon)
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .font(.system(size: 17, weight: .semibold))
+                }
+                .frame(width: 42, height: 42)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 11)
+                        .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+                )
 
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
@@ -152,14 +157,20 @@ struct TeacherEmCasaLibraryView: View {
 
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
+                    .font(.system(size: 14, weight: .semibold))
             }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 12)
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 16)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

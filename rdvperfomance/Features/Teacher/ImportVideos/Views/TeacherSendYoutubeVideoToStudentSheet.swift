@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct TeacherSendYoutubeVideoToStudentSheet: View {
+    @Environment(\.locale) private var locale
 
     let video: TeacherYoutubeVideo
     let category: TreinoTipo
@@ -50,11 +51,11 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
                     .padding(.top, 16)
                 }
             }
-            .navigationTitle("Enviar vídeo")
+            .navigationTitle("ui.send_video")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+                    Button("common.close") { dismiss() }
                 }
             }
             .task { await bootstrap() }
@@ -63,14 +64,14 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
     private var header: some View {
         let title = video.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeTitle = title.isEmpty ? "Vídeo do YouTube" : title
+        let safeTitle = title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title
 
         return VStack(alignment: .leading, spacing: 8) {
             Text(safeTitle)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Escolha o aluno, a semana e o dia onde este vídeo será aplicado.")
+            Text("ui.choose_the_student_week_and_day_where_this_video_will_be_applied")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -103,7 +104,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
     private var loadingInline: some View {
         HStack(spacing: 10) {
             ProgressView()
-            Text("Carregando...")
+            Text("ui.loading")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -112,7 +113,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
     private var studentPickerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Aluno")
+            Text("common.student")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -121,7 +122,8 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
     }
 
     private var studentMenu: some View {
-        let label = selectedStudent?.name ?? "Selecionar aluno"
+        let label = selectedStudent?.name
+            ?? AppLocalization.string("ui.select_student", locale: locale)
 
         let items: [(id: String, name: String)] = students.compactMap { s in
             guard let id = s.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -165,15 +167,15 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         let hasStudent = (selectedStudent != nil)
 
         return VStack(alignment: .leading, spacing: 6) {
-            Text("Semana")
+            Text("ui.week")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
             if !hasStudent {
-                weekMenuDisabledPlaceholder(text: "Selecione um aluno primeiro")
+                weekMenuDisabledPlaceholder(text: "ui.select_a_student_first")
                     .disabled(true)
             } else if isLoading {
-                weekMenuDisabledPlaceholder(text: "Carregando semanas...")
+                weekMenuDisabledPlaceholder(text: "workout.loading_weeks")
                     .disabled(true)
             } else if weeks.isEmpty {
                 weekMenuEmptyButton
@@ -183,7 +185,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         }
     }
 
-    private func weekMenuDisabledPlaceholder(text: String) -> some View {
+    private func weekMenuDisabledPlaceholder(text: LocalizedStringKey) -> some View {
         HStack {
             Text(text)
                 .foregroundColor(.white.opacity(0.35))
@@ -203,11 +205,11 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
     private var weekMenuEmptyButton: some View {
         Button {
-            errorMessage = "O aluno deve ter uma semana cadastrada."
+            errorMessage = AppLocalization.string("ui.the_student_must_have_a_registered_week", locale: locale)
             successMessage = nil
         } label: {
             HStack {
-                Text("Selecionar semana")
+                Text("ui.select_week")
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
                 Image(systemName: "chevron.down")
@@ -226,7 +228,8 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
     }
 
     private var weekMenuWithItems: some View {
-        let labelText = selectedWeek?.weekTitle ?? "Selecionar semana"
+        let labelText = selectedWeek?.weekTitle
+            ?? AppLocalization.string("ui.select_week", locale: locale)
 
         let items: [(id: String, title: String)] = weeks.compactMap { w in
             guard let id = w.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -266,13 +269,20 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
     private var dayPickerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Dia")
+            Text("ui.day")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
-            Picker("Dia", selection: $selectedDayIndex) {
+            Picker(LocalizedStringKey("ui.day"), selection: $selectedDayIndex) {
                 ForEach(dayOptions, id: \.self) { i in
-                    Text("Dia \(i + 1)").tag(i)
+                    Text(
+                        String(
+                            format: AppLocalization.string("ui.day_number_int", locale: locale),
+                            locale: locale,
+                            arguments: [i + 1]
+                        )
+                    )
+                    .tag(i)
                 }
             }
             .pickerStyle(.segmented)
@@ -289,7 +299,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
                 if isSending {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Enviar")
+                    Text("ui.send")
                 }
                 Spacer()
             }
@@ -305,7 +315,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -330,7 +340,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         guard let student = selectedStudent, let sid = student.id, !sid.isEmpty else { return }
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -355,7 +365,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         successMessage = nil
 
         guard let weekId = selectedWeek?.id, !weekId.isEmpty else {
-            errorMessage = "Selecione uma semana válida."
+            errorMessage = AppLocalization.string("ui.select_a_valid_week", locale: locale)
             return
         }
 
@@ -364,7 +374,9 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
         let dayName = "Dia \(selectedDayIndex + 1)"
 
         let titleTrim = video.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeTitle = titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim
+        let safeTitle = titleTrim.isEmpty
+            ? AppLocalization.string("workout.youtube_video", locale: locale)
+            : titleTrim
         let urlTrim = video.url.trimmingCharacters(in: .whitespacesAndNewlines)
 
         // ✅ Mantém padrão por blocos e evita "sem blocos cadastrados" em telas que renderizam blocos.
@@ -391,7 +403,7 @@ struct TeacherSendYoutubeVideoToStudentSheet: View {
                 blocks: blocks
             )
 
-            successMessage = "Vídeo enviado com sucesso!"
+            successMessage = AppLocalization.string("ui.video_sent_successfully", locale: locale)
         } catch {
             errorMessage = error.localizedDescription
         }

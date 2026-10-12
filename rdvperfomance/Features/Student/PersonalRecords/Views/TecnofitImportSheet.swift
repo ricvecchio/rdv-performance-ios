@@ -3,6 +3,7 @@ import SwiftUI
 struct TecnofitImportSheet: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
     let onImportCompleted: () -> Void
 
     @State private var email = ""
@@ -28,7 +29,7 @@ struct TecnofitImportSheet: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Importar do Tecnofit")
+                        Text("personal_records.import_from_tecnofit")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
@@ -54,7 +55,7 @@ struct TecnofitImportSheet: View {
 
     private var importCard: some View {
         VStack(alignment: .leading, spacing: 14) {
-            Text("Conecte sua conta para buscar recordes da unidade CrossFit. Seus recordes já existentes serão preservados.")
+            Text("tecnofit_import.connect_your_account_to_fetch_records_from_the_crossfit_location_your_existing_records_will_be_preserved")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.45))
 
@@ -63,7 +64,7 @@ struct TecnofitImportSheet: View {
             if isLoading {
                 HStack(spacing: 10) {
                     ProgressView().tint(.green)
-                    Text("Buscando recordes...")
+                    Text("tecnofit_import.fetching_records")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.75))
                 }
@@ -94,7 +95,7 @@ struct TecnofitImportSheet: View {
     private var credentialsFields: some View {
         VStack(alignment: .leading, spacing: 10) {
             credentialField(
-                title: "E-mail",
+                title: "common.email",
                 field: AnyView(
                     TextField("", text: $email)
                         .textInputAutocapitalization(.never)
@@ -105,7 +106,7 @@ struct TecnofitImportSheet: View {
             )
 
             credentialField(
-                title: "Senha",
+                title: "common.password",
                 field: AnyView(
                     SecureField("", text: $password)
                         .textContentType(.password)
@@ -114,7 +115,7 @@ struct TecnofitImportSheet: View {
         }
     }
 
-    private func credentialField(title: String, field: AnyView) -> some View {
+    private func credentialField(title: LocalizedStringKey, field: AnyView) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
@@ -137,12 +138,24 @@ struct TecnofitImportSheet: View {
     @ViewBuilder
     private func summaryCard(_ preview: TecnofitImportPreview) -> some View {
         VStack(alignment: .leading, spacing: 10) {
-            Text("Resumo da importação")
+            Text("tecnofit_import.import_summary")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(.white)
-            summaryLine("\(preview.recordsReady) recorde(s) pronto(s) para importar", icon: "checkmark.circle.fill", color: .green)
-            summaryLine("\(preview.conflictsPreserved) recorde(s) existente(s) preservado(s)", icon: "shield.fill", color: .orange)
-            summaryLine("\(preview.unmatchedSkipped) item(ns) sem mapeamento compatível ignorado(s)", icon: "arrow.uturn.forward.circle", color: .white.opacity(0.65))
+            summaryLine(
+                recordsReadyText(preview.recordsReady),
+                icon: "checkmark.circle.fill",
+                color: .green
+            )
+            summaryLine(
+                conflictsPreservedText(preview.conflictsPreserved),
+                icon: "shield.fill",
+                color: .orange
+            )
+            summaryLine(
+                unmatchedSkippedText(preview.unmatchedSkipped),
+                icon: "arrow.uturn.forward.circle",
+                color: .white.opacity(0.65)
+            )
         }
     }
 
@@ -164,7 +177,11 @@ struct TecnofitImportSheet: View {
                 importRecords()
             }
         } label: {
-            Text(preview == nil ? "Buscar recordes" : "Importar")
+            Text(
+                preview == nil
+                    ? AppLocalization.string("tecnofit_import.fetch_records", locale: locale)
+                    : AppLocalization.string("tecnofit_import.import_action", locale: locale)
+            )
                 .frame(maxWidth: .infinity)
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(actionButtonIsEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
@@ -208,7 +225,7 @@ struct TecnofitImportSheet: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "xmark")
-                Text("Cancelar")
+                Text("common.cancel")
             }
             .font(.system(size: 15, weight: .bold))
             .foregroundColor(.white.opacity(0.85))
@@ -233,7 +250,9 @@ struct TecnofitImportSheet: View {
 
     private func fetchRecords() {
         guard let uid = session.currentUid, !uid.isEmpty else {
-            errorMessage = "Sua sessão não está disponível para importar recordes."
+            errorMessage = AppLocalization.string("tecnofit_import.session_unavailable",
+                locale: locale
+            )
             return
         }
 
@@ -268,7 +287,9 @@ struct TecnofitImportSheet: View {
               let uid = session.currentUid,
               !uid.isEmpty
         else {
-            errorMessage = "Sua sessão não está disponível para importar recordes."
+            errorMessage = AppLocalization.string("tecnofit_import.session_unavailable",
+                locale: locale
+            )
             return
         }
 
@@ -279,13 +300,17 @@ struct TecnofitImportSheet: View {
             do {
                 try await repository.markTecnofitImportCompleted(uid: uid)
                 successMessage = imported > 0
-                    ? "\(imported) recorde(s) importado(s) com sucesso."
-                    : "Nenhum recorde foi alterado; os registros existentes foram preservados."
+                    ? importedRecordsText(imported)
+                    : AppLocalization.string("tecnofit_import.no_records_changed",
+                        locale: locale
+                    )
                 onImportCompleted()
                 try? await Task.sleep(for: .seconds(1.5))
                 dismiss()
             } catch {
-                errorMessage = "Não foi possível concluir a importação. Tente novamente."
+                errorMessage = AppLocalization.string("tecnofit_import.import_error",
+                    locale: locale
+                )
             }
         }
     }
@@ -293,4 +318,33 @@ struct TecnofitImportSheet: View {
     private func clearPassword() {
         password = ""
     }
+
+    private func recordsReadyText(_ count: Int) -> String {
+        let format = count == 1
+            ? AppLocalization.string("tecnofit_import.records_ready_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.records_ready_plural", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
+    private func conflictsPreservedText(_ count: Int) -> String {
+        let format = count == 1
+            ? AppLocalization.string("tecnofit_import.existing_records_preserved_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.existing_records_preserved_plural", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
+    private func unmatchedSkippedText(_ count: Int) -> String {
+        let format = count == 1
+            ? AppLocalization.string("tecnofit_import.unmapped_items_skipped_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.unmapped_items_skipped_plural", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
+    private func importedRecordsText(_ count: Int) -> String {
+        let format = count == 1
+            ? AppLocalization.string("tecnofit_import.records_imported_singular", locale: locale)
+            : AppLocalization.string("tecnofit_import.records_imported_plural", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
+    }
+
 }

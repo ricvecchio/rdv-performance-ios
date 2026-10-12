@@ -24,6 +24,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
     let hasLoadedInitialData: Bool
     let templates: [WorkoutTemplateFS]
     let isCrossfitCategory: Bool
+    let category: TreinoTipo
     let showsTemplateActions: Bool
 
     let onTapTemplate: (WorkoutTemplateFS) -> Void
@@ -39,6 +40,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
             } else {
                 TeacherWorkoutTemplatesList(
                     templates: templates,
+                    category: category,
                     showsTemplateActions: showsTemplateActions,
                     onTapTemplate: onTapTemplate,
                     onSendTemplate: onSendTemplate,
@@ -48,11 +50,11 @@ struct TeacherWorkoutTemplatesContentCard: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 }
@@ -60,6 +62,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
 struct TeacherWorkoutTemplatesList: View {
 
     let templates: [WorkoutTemplateFS]
+    let category: TreinoTipo
     let showsTemplateActions: Bool
     let onTapTemplate: (WorkoutTemplateFS) -> Void
     let onSendTemplate: (WorkoutTemplateFS) -> Void
@@ -75,6 +78,7 @@ struct TeacherWorkoutTemplatesList: View {
                 } label: {
                     TeacherWorkoutTemplateRow(
                         template: t,
+                        category: category,
                         showsTemplateActions: showsTemplateActions,
                         onSend: { onSendTemplate(t) },
                         onDelete: { onDeleteTemplate(t) }
@@ -92,29 +96,43 @@ struct TeacherWorkoutTemplatesList: View {
 }
 
 struct TeacherWorkoutTemplateRow: View {
+    @Environment(\.locale) private var locale
 
     let template: WorkoutTemplateFS
+    let category: TreinoTipo
     let showsTemplateActions: Bool
     let onSend: () -> Void
     let onDelete: () -> Void
 
+    private var categoryIcon: String {
+        switch category {
+        case .crossfit:
+            return "figure.strengthtraining.traditional"
+        case .academia:
+            return "dumbbell"
+        case .emCasa:
+            return "house.fill"
+        }
+    }
+
     var body: some View {
+        let presentation = DefaultWorkoutLocalization.presentation(for: template, locale: locale)
         HStack(spacing: 12) {
 
-            Image(systemName: "dumbbell.fill")
+            Image(systemName: categoryIcon)
                 .foregroundColor(.green.opacity(0.85))
                 .font(.system(size: 16))
                 .frame(width: 26)
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(template.title)
-                    .font(.system(size: 16, weight: .semibold))
+                Text(presentation.title)
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
-                let sub = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
+                let sub = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !sub.isEmpty {
                     Text(sub)
-                        .font(.system(size: 13))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(2)
                 }
@@ -127,13 +145,13 @@ struct TeacherWorkoutTemplateRow: View {
                     Button {
                         onSend()
                     } label: {
-                        Label("Enviar para aluno", systemImage: "paperplane.fill")
+                        Label(LocalizedStringKey("ui.send_to_student"), systemImage: "paperplane.fill")
                     }
 
                     Button(role: .destructive) {
                         onDelete()
                     } label: {
-                        Label("Remover", systemImage: "trash.fill")
+                        Label(LocalizedStringKey("ui.remove"), systemImage: "trash.fill")
                     }
                 } label: {
                     Image(systemName: "ellipsis")
@@ -159,7 +177,7 @@ struct TeacherWorkoutTemplatesLoadingView: View {
     var body: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando...")
+            Text("ui.loading")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -171,15 +189,24 @@ struct TeacherWorkoutTemplatesLoadingView: View {
 struct TeacherWorkoutTemplatesEmptyView: View {
 
     let isCrossfitCategory: Bool
+    @Environment(\.locale) private var locale
 
     var body: some View {
         VStack(spacing: 10) {
-            Text(isCrossfitCategory ? "Nenhum WOD cadastrado" : "Nenhum treino cadastrado")
-                .font(.system(size: 15, weight: .semibold))
+            Text(
+                isCrossfitCategory
+                    ? AppLocalization.string("ui.no_wod_registered", locale: locale)
+                    : AppLocalization.string("ui.no_workout_registered", locale: locale)
+            )
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text(isCrossfitCategory ? "Toque em \"Adicionar WOD\" para começar." : "Cadastre templates para aparecerem aqui.")
-                .font(.system(size: 13))
+            Text(
+                isCrossfitCategory
+                    ? AppLocalization.string("ui.tap_add_wod_to_start", locale: locale)
+                    : AppLocalization.string("ui.create_templates_for_them_to_appear_here", locale: locale)
+            )
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -193,6 +220,7 @@ struct TeacherWorkoutTemplatesMessageCard: View {
 
     let text: String
     let isError: Bool
+    var usesApprovedCardStyle: Bool = false
 
     var body: some View {
         HStack(spacing: 10) {
@@ -200,18 +228,23 @@ struct TeacherWorkoutTemplatesMessageCard: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
 
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: usesApprovedCardStyle ? 14 : 13))
                 .foregroundColor(.white.opacity(0.75))
 
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(usesApprovedCardStyle ? 0.68 : 0.35))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(
+                    usesApprovedCardStyle
+                        ? Theme.Colors.primaryGreen.opacity(0.28)
+                        : Color.white.opacity(0.10),
+                    lineWidth: 1
+                )
         )
     }
 }

@@ -27,11 +27,20 @@ enum StudentDashboardNextFitSelection: Hashable {
     case agenda
 }
 
-struct StudentDashboardNextFitContentOption: Identifiable {
-    let selection: StudentDashboardNextFitSelection
-    let title: String
+enum StudentDashboardNextFitContentOption: Identifiable {
+    case wod(id: Int, title: String)
+    case agenda
 
     var id: StudentDashboardNextFitSelection { selection }
+
+    var selection: StudentDashboardNextFitSelection {
+        switch self {
+        case .wod(let id, _):
+            .wod(id)
+        case .agenda:
+            .agenda
+        }
+    }
 }
 
 struct StudentDashboardAgendaCancellationConfirmation: Equatable {
@@ -71,7 +80,6 @@ enum StudentDashboardTeacherLinkState: Equatable {
 @MainActor
 final class StudentDashboardViewModel: ObservableObject {
     private static let primaryNextFitModalityCode = 262777
-
     @Published private(set) var currentWeekDaySummaries: [StudentDashboardDaySummary] = []
     @Published private(set) var upcomingDayGroups: [StudentDashboardDayGroup] = []
     @Published private(set) var isLoading = true
@@ -82,6 +90,13 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var isLoadingNextFitWod = false
     @Published private(set) var nextFitWods: [NextFitWodDisplay] = []
     @Published private(set) var nextFitAgenda: [NextFitAgendaDisplay] = []
+    @Published private(set) var selectedNextFitAgendaDate = Calendar.current.startOfDay(for: Date())
+    @Published private(set) var nextFitAgendaWods: [NextFitWodDisplay] = []
+    @Published private(set) var nextFitUpcomingWods: [NextFitUpcomingWodDisplay] = []
+    @Published private(set) var isLoadingNextFitAgenda = false
+    @Published private(set) var isLoadingNextFitAgendaWods = false
+    @Published private(set) var nextFitAgendaWodError: String?
+    @Published var selectedNextFitAgendaWodModalityId: Int?
     @Published private(set) var selectedNextFitAgendaId: Int?
     @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay?
     @Published private(set) var isLoadingNextFitAgendaDetail = false
@@ -98,6 +113,9 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published var nextFitLoginError: String?
     @Published var linkActionMessage: String?
     @Published var linkActionMessageIsError = false
+    @Published private(set) var currentWeekCheckInSummaries: [StudentDashboardDaySummary] =
+        StudentDashboardViewModel.makeCurrentWeekCheckInSummaries(checkedInDays: [])
+    @Published private(set) var isLoadingCurrentWeekCheckIns = false
 
     private let studentId: String
     private let repository: FirestoreRepository
@@ -115,6 +133,40 @@ final class StudentDashboardViewModel: ObservableObject {
 
     var isNextFitAgendaSelected: Bool {
         selectedNextFitContent == .agenda
+    }
+
+    var isTomorrowAgendaSelected: Bool {
+        Calendar.current.isDate(
+            selectedNextFitAgendaDate,
+            inSameDayAs: tomorrowAgendaDate
+        )
+    }
+
+    var todayAgendaDate: Date {
+        Calendar.current.startOfDay(for: Date())
+    }
+
+    var tomorrowAgendaDate: Date {
+        Calendar.current.date(byAdding: .day, value: 1, to: todayAgendaDate) ?? todayAgendaDate
+    }
+
+    var nextFitAgendaDates: [Date] {
+        let calendar = Calendar.current
+        var dates = [todayAgendaDate]
+        for wod in nextFitUpcomingWods {
+            let date = calendar.startOfDay(for: wod.date)
+            if !dates.contains(where: { calendar.isDate($0, inSameDayAs: date) }) {
+                dates.append(date)
+            }
+        }
+        return dates.sorted()
+    }
+
+    var nextFitAgendaWod: NextFitWodDisplay? {
+        guard let modalityId = selectedNextFitAgendaWodModalityId else {
+            return nil
+        }
+        return nextFitAgendaWods.first { $0.modalityId == modalityId }
     }
 
     func isProcessingAgenda(_ agendaId: Int) -> Bool {
@@ -162,9 +214,9 @@ final class StudentDashboardViewModel: ObservableObject {
 
     var nextFitContentOptions: [StudentDashboardNextFitContentOption] {
         nextFitModalityOptions.map {
-            StudentDashboardNextFitContentOption(selection: .wod($0.id), title: $0.title)
+            .wod(id: $0.id, title: $0.title)
         } + [
-            StudentDashboardNextFitContentOption(selection: .agenda, title: "Agenda")
+            .agenda
         ]
     }
 
@@ -183,7 +235,8 @@ final class StudentDashboardViewModel: ObservableObject {
         self.nextFitService = nextFitService
     }
 
-    func load() async {
+    func load(locale: Locale) async {
+        hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         guard !isLoadingData else { return }
         isLoadingData = true
         isLoading = true
@@ -227,19 +280,9 @@ final class StudentDashboardViewModel: ObservableObject {
         guard !activeTeacherIds.isEmpty else {
             currentWeekDaySummaries = []
             upcomingDayGroups = []
-            if isMuralhaStudent {
-                await loadNextFitWod()
-            } else {
-                resetNextFitWod()
-            }
             return
         }
 
-        if isMuralhaStudent {
-            await loadNextFitWod()
-        } else {
-            resetNextFitWod()
-        }
 
         do {
             let weeks = try await repository.getWeeksForStudent(studentId: studentId)
@@ -271,10 +314,79 @@ final class StudentDashboardViewModel: ObservableObject {
 
     }
 
-    func authenticateNextFit(email: String, password: String) async -> Bool {
+    func loadCurrentWeekCheckIns() async {
+        let calendar = Self.checkInWeekCalendar
+        let today = calendar.startOfDay(for: Date())
+        let weekDates = Self.currentCheckInWeekDates(calendar: calendar)
+
+        guard nextFitService.hasSession(sessionAccount: studentId) else {
+            currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: [])
+            isLoadingCurrentWeekCheckIns = false
+            return
+        }
+
+        isLoadingCurrentWeekCheckIns = true
+        var checkedInDays = Set<Date>()
+        var failedDays = Set<Date>()
+
+        for date in weekDates where date <= today {
+            if Task.isCancelled { return }
+            do {
+                let agenda = try await nextFitService.loadAgenda(for: date, sessionAccount: studentId)
+                if agenda.contains(where: {
+                    $0.hasCheckIn && calendar.isDate($0.startDate, inSameDayAs: date)
+                }) {
+                    checkedInDays.insert(date)
+                }
+            } catch NextFitServiceError.missingSession, NextFitServiceError.invalidSession {
+                if Task.isCancelled { return }
+                // Sessão NextFit ausente ou expirada: solicita nova autenticação (mesmo tratamento dos demais fluxos)
+                currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: [])
+                isLoadingCurrentWeekCheckIns = false
+                needsNextFitAuthentication = true
+                hasNextFitSession = false
+                return
+            } catch {
+                if Task.isCancelled { return }
+                // Falha temporária não confirma ausência de check-in
+                failedDays.insert(date)
+                #if DEBUG
+                print("[StudentDashboard] Não foi possível carregar os check-ins do dia: \(error.localizedDescription)")
+                #endif
+            }
+        }
+
+        guard !Task.isCancelled else { return }
+
+        // Preserva o último resultado válido dos dias cuja consulta falhou
+        for date in failedDays where currentWeekCheckInSummaries.contains(where: {
+            $0.isCompleted && calendar.isDate($0.date, inSameDayAs: date)
+        }) {
+            checkedInDays.insert(date)
+        }
+
+        currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: checkedInDays)
+        isLoadingCurrentWeekCheckIns = false
+    }
+
+    func loadNextFit(locale: Locale) async {
+        do {
+            currentStudentUser = try await repository.getUser(uid: studentId)
+            isMuralhaStudent = isMuralhaUnit(currentStudentUser?.unitName)
+        } catch {
+            currentStudentUser = nil
+            isMuralhaStudent = false
+        }
+
+        await loadNextFitWod(locale: locale)
+    }
+
+    func authenticateNextFit(email: String, password: String, locale: Locale) async -> Bool {
         let trimmedEmail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedEmail.isEmpty, !password.isEmpty else {
-            nextFitLoginError = "Informe seu e-mail e senha do NextFit."
+            nextFitLoginError = AppLocalization.string("dashboard.nextfit.credentials_required",
+                locale: locale
+            )
             return false
         }
 
@@ -290,23 +402,94 @@ final class StudentDashboardViewModel: ObservableObject {
             )
             nextFitContractClientIdsByModality = [:]
             hasNextFitSession = true
-            await loadNextFitWod()
+            await loadNextFitWod(locale: locale)
             return true
         } catch let error as NextFitServiceError {
             nextFitLoginError = error.localizedDescription
             return false
         } catch {
-            nextFitLoginError = "Não foi possível entrar no NextFit. Tente novamente."
+            nextFitLoginError = AppLocalization.string("dashboard.nextfit.login_error",
+                locale: locale
+            )
             return false
         }
     }
 
-    func retryNextFitWod() async {
-        guard isMuralhaStudent else { return }
-        await loadNextFitWod()
+    func retryNextFitWod(locale: Locale) async {
+        await loadNextFitWod(locale: locale)
     }
 
-    func selectNextFitAgenda(_ agendaId: Int) async {
+    func selectNextFitAgendaDate(_ date: Date, locale: Locale) async {
+        guard !isLoadingNextFitAgenda, !isLoadingNextFitAgendaWods else { return }
+
+        let calendar = Calendar.current
+        let selectedDate = calendar.startOfDay(for: date)
+        guard nextFitAgendaDates.contains(where: {
+            calendar.isDate($0, inSameDayAs: selectedDate)
+        }) else {
+            return
+        }
+
+        selectedNextFitAgendaDate = selectedDate
+        agendaActionErrors = [:]
+        clearNextFitAgendaDetail()
+        nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
+        nextFitAgendaWods = []
+        selectedNextFitAgendaWodModalityId = nil
+        isLoadingNextFitAgenda = true
+        do {
+            nextFitAgenda = try await nextFitService.loadAgenda(
+                for: selectedDate,
+                sessionAccount: studentId
+            )
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
+            }
+        } catch {
+            nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
+        }
+        isLoadingNextFitAgenda = false
+
+        await loadNextFitAgendaWods(for: selectedDate, locale: locale)
+    }
+
+    private func loadNextFitAgendaWods(for date: Date, locale: Locale) async {
+        let calendar = Calendar.current
+        var loadedModalityIds = Set<Int>()
+        let dateWods = nextFitUpcomingWods.filter {
+            calendar.isDate($0.date, inSameDayAs: date)
+                && loadedModalityIds.insert($0.modalityId).inserted
+        }
+        guard !dateWods.isEmpty else { return }
+
+        isLoadingNextFitAgendaWods = true
+        defer { isLoadingNextFitAgendaWods = false }
+        do {
+            nextFitAgendaWods = try await nextFitService.loadWods(
+                dateWods,
+                sessionAccount: studentId
+            )
+            selectedNextFitAgendaWodModalityId = nextFitAgendaWods.first?.modalityId
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
+            }
+        } catch {
+            nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
+        }
+    }
+
+    func selectNextFitAgenda(_ agendaId: Int, locale: Locale) async {
         guard !isLoadingNextFitAgendaDetail else { return }
 
         selectedNextFitAgendaId = agendaId
@@ -326,19 +509,19 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+                nextFitAgendaDetailError = AppLocalization.string("dashboard.agenda.detail_load_error", locale: locale)
             }
         } catch {
-            nextFitAgendaDetailError = "Não foi possível carregar os detalhes da AGENDA. Tente novamente."
+            nextFitAgendaDetailError = AppLocalization.string("dashboard.agenda.detail_load_error", locale: locale)
         }
     }
 
-    func retryNextFitAgendaDetail() async {
+    func retryNextFitAgendaDetail(locale: Locale) async {
         guard let agendaId = selectedNextFitAgendaId else { return }
-        await selectNextFitAgenda(agendaId)
+        await selectNextFitAgenda(agendaId, locale: locale)
     }
 
-    func checkInAgenda(_ agendaId: Int) async {
+    func checkInAgenda(_ agendaId: Int, locale: Locale) async {
         guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }),
               !isAgendaWithdrawal(agendaId),
               agenda.endDate >= Date(),
@@ -354,7 +537,7 @@ final class StudentDashboardViewModel: ObservableObject {
             print("[NextFit Agenda] Iniciando agendamento. CodigoAgenda: \(agendaId)")
             #endif
             guard let contract = try await resolveNextFitAgendaContract(for: agendaId) else {
-                agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.schedule_error", locale: locale)
                 return
             }
             #if DEBUG
@@ -365,15 +548,25 @@ final class StudentDashboardViewModel: ObservableObject {
                 "CodigoContratoCliente: \(contract.contractClientId)"
             )
             #endif
-            try await nextFitService.checkInAgenda(
+            let enteredWaitlist = try await nextFitService.checkInAgenda(
                 agendaId: agendaId,
                 contractClientId: contract.contractClientId,
                 sessionAccount: studentId
             )
-            await refreshNextFitAgenda(
-                afterActionFor: agendaId,
-                errorMessage: "Não foi possível realizar o agendamento. Tente novamente."
-            )
+
+            // Fila de espera não é uma reserva confirmada: mantém o fluxo original de atualização.
+            guard !enteredWaitlist else {
+                await refreshNextFitAgenda(
+                    afterActionFor: agendaId,
+                    errorMessage: AppLocalization.string("dashboard.agenda.schedule_error", locale: locale),
+                    locale: locale
+                )
+                return
+            }
+
+            // Check-in confirmado pelo NextFit: reflete imediatamente no horário e no detalhe abertos
+            applyConfirmedAgendaCheckIn(agendaId)
+            await reconcileNextFitAgendaAfterCheckIn(agendaId)
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -382,14 +575,14 @@ final class StudentDashboardViewModel: ObservableObject {
             case let .agendaCheckInBusinessFailure(_, message):
                 agendaActionErrors[agendaId] = message
             default:
-                agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.schedule_error", locale: locale)
             }
         } catch {
-            agendaActionErrors[agendaId] = "Não foi possível realizar o agendamento. Tente novamente."
+            agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.schedule_error", locale: locale)
         }
     }
 
-    func cancelAgendaCheckIn(_ agendaId: Int) async {
+    func cancelAgendaCheckIn(_ agendaId: Int, locale: Locale) async {
         guard let agenda = nextFitAgenda.first(where: { $0.id == agendaId }) else {
             return
         }
@@ -414,21 +607,21 @@ final class StudentDashboardViewModel: ObservableObject {
                 agendaId: agendaId,
                 sessionAccount: studentId
             )
-            await handleAgendaCancellationResponse(response, agendaId: agendaId)
+            await handleAgendaCancellationResponse(response, agendaId: agendaId, locale: locale)
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
             }
         } catch {
-            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
         }
     }
 
-    func confirmAgendaCancellation() async {
+    func confirmAgendaCancellation(locale: Locale) async {
         guard let confirmation = agendaCancellationConfirmation else { return }
         let agendaId = confirmation.agendaId
         agendaCancellationConfirmation = nil
@@ -443,17 +636,17 @@ final class StudentDashboardViewModel: ObservableObject {
                 confirmation: true,
                 sessionAccount: studentId
             )
-            await handleAgendaCancellationResponse(response, agendaId: agendaId)
+            await handleAgendaCancellationResponse(response, agendaId: agendaId, locale: locale)
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+                agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
             }
         } catch {
-            agendaActionErrors[agendaId] = "Não foi possível cancelar o agendamento. Tente novamente."
+            agendaActionErrors[agendaId] = AppLocalization.string("dashboard.agenda.cancel_error", locale: locale)
         }
     }
 
@@ -472,22 +665,29 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
+        nextFitAgendaWods = []
+        nextFitUpcomingWods = []
+        selectedNextFitAgendaWodModalityId = nil
         processingAgendaIds = []
         agendaActionErrors = [:]
         clearNextFitAgendaDetail()
         selectedNextFitContent = nil
         nextFitError = nil
         nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
         nextFitLoginError = nil
         hasNextFitSession = false
         needsNextFitAuthentication = true
     }
 
-    func requestLinkByTeacherEmail(teacherEmail: String) async -> Bool {
+    func requestLinkByTeacherEmail(teacherEmail: String, locale: Locale) async -> Bool {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         guard email.contains("@"), email.contains(".") else {
-            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessage = AppLocalization.string(
+                "student_teachers.link_request.invalid_email",
+                locale: locale
+            )
             linkActionMessageIsError = true
             return false
         }
@@ -500,7 +700,10 @@ final class StudentDashboardViewModel: ObservableObject {
         do {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherId = teacher.id else {
-                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessage = AppLocalization.string(
+                    "student_teachers.link_request.teacher_not_found",
+                    locale: locale
+                )
                 linkActionMessageIsError = true
                 return false
             }
@@ -520,9 +723,12 @@ final class StudentDashboardViewModel: ObservableObject {
                 teacherEmail: email
             )
 
-            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessage = AppLocalization.string(
+                "student_teachers.link_request.success",
+                locale: locale
+            )
             linkActionMessageIsError = false
-            await load()
+            await load(locale: locale)
             return true
 
         } catch {
@@ -560,15 +766,19 @@ final class StudentDashboardViewModel: ObservableObject {
         }
     }
 
-    private func loadNextFitWod() async {
+    private func loadNextFitWod(locale: Locale) async {
         guard !isLoadingNextFitWod else { return }
 
         isLoadingNextFitWod = true
         hasNextFitSession = nextFitService.hasSession(sessionAccount: studentId)
         nextFitError = nil
         nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
         nextFitWods = []
         nextFitAgenda = []
+        nextFitAgendaWods = []
+        selectedNextFitAgendaWodModalityId = nil
+        selectedNextFitAgendaDate = todayAgendaDate
         processingAgendaIds = []
         agendaActionErrors = [:]
         clearNextFitAgendaDetail()
@@ -594,7 +804,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 nextFitError = error.localizedDescription
             }
         } catch {
-            nextFitError = "Não foi possível carregar o WOD. Tente novamente."
+            nextFitError = AppLocalization.string("dashboard.wod.load_error", locale: locale)
             return
         }
 
@@ -606,11 +816,31 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasNextFitSession = false
                 needsNextFitAuthentication = true
             default:
-                nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+                nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
             }
         } catch {
-            nextFitAgendaError = "Não foi possível carregar a AGENDA. Tente novamente."
+            nextFitAgendaError = AppLocalization.string("dashboard.agenda.load_error", locale: locale)
         }
+
+        guard !needsNextFitAuthentication else { return }
+
+        do {
+            nextFitUpcomingWods = try await nextFitService.loadUpcomingWodDays(sessionAccount: studentId)
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
+            }
+            return
+        } catch {
+            nextFitAgendaWodError = AppLocalization.string("dashboard.agenda.wod_load_error", locale: locale)
+            return
+        }
+
+        await loadNextFitAgendaWods(for: selectedNextFitAgendaDate, locale: locale)
     }
 
     private func resetNextFitWod() {
@@ -618,6 +848,10 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitContractClientIdsByModality = [:]
         nextFitWods = []
         nextFitAgenda = []
+        nextFitAgendaWods = []
+        nextFitUpcomingWods = []
+        selectedNextFitAgendaWodModalityId = nil
+        selectedNextFitAgendaDate = todayAgendaDate
         processingAgendaIds = []
         agendaActionErrors = [:]
         clearNextFitAgendaDetail()
@@ -626,14 +860,18 @@ final class StudentDashboardViewModel: ObservableObject {
         needsNextFitAuthentication = false
         nextFitError = nil
         nextFitAgendaError = nil
+        nextFitAgendaWodError = nil
         nextFitLoginError = nil
     }
 
-    private func refreshNextFitAgenda(afterActionFor agendaId: Int, errorMessage: String) async {
+    private func refreshNextFitAgenda(afterActionFor agendaId: Int, errorMessage: String, locale: Locale) async {
         do {
-            nextFitAgenda = try await nextFitService.loadTodayAgenda(sessionAccount: studentId)
+            nextFitAgenda = try await nextFitService.loadAgenda(
+                for: selectedNextFitAgendaDate,
+                sessionAccount: studentId
+            )
             if selectedNextFitAgendaId == agendaId {
-                await selectNextFitAgenda(agendaId)
+                await selectNextFitAgenda(agendaId, locale: locale)
             }
         } catch let error as NextFitServiceError {
             switch error {
@@ -648,9 +886,87 @@ final class StudentDashboardViewModel: ObservableObject {
         }
     }
 
+    // Atualiza somente o estado local do horário cujo check-in foi confirmado pelo NextFit
+    private func applyConfirmedAgendaCheckIn(_ agendaId: Int) {
+        if let index = nextFitAgenda.firstIndex(where: { $0.id == agendaId }) {
+            let entry = nextFitAgenda[index]
+            nextFitAgenda[index] = NextFitAgendaDisplay(
+                id: entry.id,
+                statusAgendaParticipante: entry.statusAgendaParticipante,
+                startDate: entry.startDate,
+                endDate: entry.endDate,
+                startTime: entry.startTime,
+                endTime: entry.endTime,
+                enrolledStudents: entry.enrolledStudents,
+                studentLimit: entry.studentLimit,
+                modalityName: entry.modalityName,
+                instructorName: entry.instructorName,
+                locationName: entry.locationName,
+                canSchedule: false,
+                canCancelCheckIn: true,
+                hasCheckIn: true
+            )
+        }
+
+        if let detail = selectedNextFitAgendaDetail, detail.id == agendaId {
+            selectedNextFitAgendaDetail = NextFitAgendaDetailDisplay(
+                id: detail.id,
+                statusAgendaParticipante: detail.statusAgendaParticipante,
+                modalityId: detail.modalityId,
+                hasCheckIn: true,
+                canSchedule: false,
+                canCancelCheckIn: true,
+                dateText: detail.dateText,
+                scheduleText: detail.scheduleText,
+                capacityText: detail.capacityText,
+                modalityName: detail.modalityName,
+                instructorName: detail.instructorName,
+                locationName: detail.locationName,
+                participants: detail.participants
+            )
+        }
+    }
+
+    // Sincroniza com o NextFit após check-in confirmado, sem ocultar o detalhe aberto
+    // e sem desfazer a confirmação caso apenas a atualização posterior falhe.
+    private func reconcileNextFitAgendaAfterCheckIn(_ agendaId: Int) async {
+        let agendaDate = selectedNextFitAgendaDate
+        do {
+            let refreshedAgenda = try await nextFitService.loadAgenda(
+                for: agendaDate,
+                sessionAccount: studentId
+            )
+            // Ignora a resposta se o aluno trocou de data durante a sincronização
+            guard Calendar.current.isDate(selectedNextFitAgendaDate, inSameDayAs: agendaDate) else { return }
+            nextFitAgenda = refreshedAgenda
+
+            if selectedNextFitAgendaId == agendaId {
+                let refreshedDetail = try await nextFitService.loadAgendaDetail(
+                    agendaId: agendaId,
+                    sessionAccount: studentId
+                )
+                if selectedNextFitAgendaId == agendaId {
+                    selectedNextFitAgendaDetail = refreshedDetail
+                }
+            }
+        } catch let error as NextFitServiceError {
+            switch error {
+            case .missingSession, .invalidSession:
+                hasNextFitSession = false
+                needsNextFitAuthentication = true
+            default:
+                // Check-in já confirmado: mantém o estado confirmado até a próxima atualização.
+                break
+            }
+        } catch {
+            // Check-in já confirmado: mantém o estado confirmado até a próxima atualização.
+        }
+    }
+
     private func handleAgendaCancellationResponse(
         _ response: NextFitAgendaCancelCheckInResponse,
-        agendaId: Int
+        agendaId: Int,
+        locale: Locale
     ) async {
         if let question = response.content?.question?
             .trimmingCharacters(in: .whitespacesAndNewlines),
@@ -665,7 +981,8 @@ final class StudentDashboardViewModel: ObservableObject {
         agendaActionErrors[agendaId] = nil
         await refreshNextFitAgenda(
             afterActionFor: agendaId,
-            errorMessage: "Não foi possível cancelar o agendamento. Tente novamente."
+            errorMessage: AppLocalization.string("dashboard.agenda.cancel_error", locale: locale),
+            locale: locale
         )
     }
 
@@ -768,6 +1085,35 @@ final class StudentDashboardViewModel: ObservableObject {
                 )
             }
             .sorted { $0.date < $1.date }
+    }
+
+    private static var checkInWeekCalendar: Calendar {
+        var calendar = Calendar.current
+        calendar.firstWeekday = 2
+        return calendar
+    }
+
+    private static func currentCheckInWeekDates(calendar: Calendar) -> [Date] {
+        let today = calendar.startOfDay(for: Date())
+        guard let week = calendar.dateInterval(of: .weekOfYear, for: today) else {
+            return []
+        }
+        let weekStart = calendar.startOfDay(for: week.start)
+        return (0..<7).compactMap {
+            calendar.date(byAdding: .day, value: $0, to: weekStart)
+        }
+    }
+
+    private static func makeCurrentWeekCheckInSummaries(
+        checkedInDays: Set<Date>
+    ) -> [StudentDashboardDaySummary] {
+        let calendar = checkInWeekCalendar
+        return currentCheckInWeekDates(calendar: calendar).map { date in
+            StudentDashboardDaySummary(
+                date: date,
+                isCompleted: checkedInDays.contains { calendar.isDate($0, inSameDayAs: date) }
+            )
+        }
     }
 
     private func makeUpcomingDayGroups(

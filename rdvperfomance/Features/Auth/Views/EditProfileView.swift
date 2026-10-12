@@ -7,6 +7,7 @@ struct EditProfileView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var previewImage: UIImage? = nil
@@ -147,7 +148,7 @@ struct EditProfileView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Editar Perfil")
+                Text("auth.edit_profile.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -156,11 +157,11 @@ struct EditProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        // ✅ Botão "Concluir" na toolbar do teclado para fechar o .phonePad
+        // ✅ Botão "common.done" na toolbar do teclado para fechar o .phonePad
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
                 Spacer()
-                Button("Concluir") {
+                Button("common.done") {
                     phoneFieldFocused = false
                 }
             }
@@ -194,19 +195,19 @@ struct EditProfileView: View {
                 Button {
                     showPhotoPicker = true
                 } label: {
-                    Label("Escolher foto da biblioteca", systemImage: "photo")
+                    Label(LocalizedStringKey("auth.profile_photo.choose_library"), systemImage: "photo")
                 }
 
                 Button {
                     showAvatarPicker = true
                 } label: {
-                    Label("Escolher Avatar", systemImage: "person.crop.circle")
+                    Label(LocalizedStringKey("auth.profile_photo.choose_avatar"), systemImage: "person.crop.circle")
                 }
 
                 Button(role: .destructive) {
                     Task { await clearPhotoOnlyAndSync() }
                 } label: {
-                    Label("Remover foto", systemImage: "trash.fill")
+                    Label(LocalizedStringKey("auth.profile_photo.remove"), systemImage: "trash.fill")
                 }
             } label: {
                 ZStack {
@@ -234,26 +235,30 @@ struct EditProfileView: View {
             .buttonStyle(.plain)
             .disabled(isLoadingImage)
 
-            Text("Foto de Perfil")
-                .font(.system(size: 16, weight: .semibold))
+            Text("auth.profile_photo.title")
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Retorna card com campos do formulário
     private func formCard() -> some View {
         VStack(spacing: 18) {
-            readOnlyRow(title: "E-mail", value: userEmail)
+            readOnlyRow(title: "common.email", value: userEmail)
             nameField()
 
             // ✅ Campo de telefone com máscara brasileira e FocusState
             VStack(alignment: .leading, spacing: 6) {
-                Text("WhatsApp (opcional)")
+                Text("auth.fields.whatsapp_optional")
                     .font(.system(size: 14))
                     .foregroundColor(textSecondary)
 
@@ -274,14 +279,14 @@ struct EditProfileView: View {
 
                 // Indicador de validação (apenas quando há dígitos e está inválido)
                 if !whatsappDigits.isEmpty && !isPhoneValid {
-                    Text("Número incompleto (mínimo 10 dígitos)")
+                    Text("auth.fields.phone_incomplete")
                         .font(.system(size: 12, weight: .medium))
                         .foregroundColor(.yellow.opacity(0.85))
                 }
             }
 
             pickerRow(
-                title: "Área de foco",
+                title: "auth.fields.focus_area",
                 selection: $focusAreaDraft,
                 options: studentFocusOptions,
                 displayText: displayTextForFocusArea
@@ -289,7 +294,7 @@ struct EditProfileView: View {
 
             if session.isTrainer {
                 UnderlineTextField(
-                    title: "CREF (opcional)",
+                    title: "auth.fields.cref_optional",
                     text: $crefDraft,
                     isSecure: false,
                     showPassword: .constant(false),
@@ -304,8 +309,12 @@ struct EditProfileView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func actionButtons() -> some View {
@@ -324,7 +333,11 @@ struct EditProfileView: View {
                             Image(systemName: "checkmark.circle.fill")
                         }
 
-                        Text(isSaving ? "Salvando..." : "Salvar")
+                        Text(
+                            isSaving
+                                ? LocalizedStringKey("common.saving")
+                                : LocalizedStringKey("common.save")
+                        )
                     }
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
@@ -365,7 +378,7 @@ struct EditProfileView: View {
         }
     }
 
-    private func readOnlyRow(title: String, value: String) -> some View {
+    private func readOnlyRow(title: LocalizedStringKey, value: String) -> some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 14))
@@ -384,7 +397,7 @@ struct EditProfileView: View {
 
     private func nameField() -> some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Nome")
+            Text("common.name")
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 
@@ -403,7 +416,7 @@ struct EditProfileView: View {
 
     private func multilineBioField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Bio (opcional)")
+            Text("auth.fields.bio_optional")
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 
@@ -553,7 +566,11 @@ struct EditProfileView: View {
     // ✅ Remove foto local + remove do Firestore
     private func clearPhotoOnlyAndSync() async {
         guard let uid = currentUid?.trimmingCharacters(in: .whitespacesAndNewlines), !uid.isEmpty else {
-            presentError("Não foi possível identificar o usuário para remover a foto.")
+            presentError(
+                AppLocalization.string("auth.profile_photo.remove_missing_user",
+                    locale: locale
+                )
+            )
             return
         }
 
@@ -585,10 +602,21 @@ struct EditProfileView: View {
                     self.errorMessage = ""
                 }
             } else {
-                presentError("Não foi possível carregar a imagem selecionada.")
+                presentError(
+                    AppLocalization.string("auth.profile_photo.load_failed",
+                        locale: locale
+                    )
+                )
             }
         } catch {
-            presentError("Erro ao carregar imagem: \(error.localizedDescription)")
+            let format = AppLocalization.string("auth.profile_photo.load_error", locale: locale)
+            presentError(
+                String(
+                    format: format,
+                    locale: locale,
+                    arguments: [error.localizedDescription]
+                )
+            )
         }
     }
 
@@ -608,10 +636,14 @@ struct EditProfileView: View {
 
     // Converte FocusAreaDTO em texto amigável
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
         switch opt {
-        case .CROSSFIT: return "Crossfit"
-        case .GYM: return "Academia"
-        case .HOME: return "Em Casa"
+        case .CROSSFIT: return AppLocalization.string("auth.focus_area.crossfit", locale: locale)
+        case .GYM: return AppLocalization.string("auth.focus_area.gym", locale: locale)
+        case .HOME: return AppLocalization.string("auth.focus_area.home", locale: locale)
         }
     }
 
@@ -791,11 +823,11 @@ struct EditProfileView: View {
                         .padding(24)
                     }
                 }
-                .navigationTitle("Escolher Avatar")
+                .navigationTitle("auth.profile_photo.choose_avatar")
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarTrailing) {
-                        Button("Fechar") {
+                        Button("common.close") {
                             dismiss()
                         }
                     }
@@ -808,7 +840,7 @@ struct EditProfileView: View {
 
     // Retorna picker estilizado com underline
     private func pickerRow<T: RawRepresentable & CaseIterable>(
-        title: String,
+        title: LocalizedStringKey,
         selection: Binding<T>,
         options: [T],
         displayText: ((T) -> String)? = nil

@@ -26,6 +26,12 @@ final class FirebaseAuthService {
     // Cria usuário no Firebase Auth e salva perfil no Firestore
     func register(_ form: RegisterFormDTO) async throws -> String {
 
+        // Contas de professor são criadas somente pelo backend (TeacherAuthorizationService),
+        // após validação do código de autorização administrativo.
+        guard form.userType != .TRAINER else {
+            throw TeacherAuthorizationError.authorizationRequired
+        }
+
         let result = try await Auth.auth().createUser(withEmail: form.email, password: form.password)
         let uid = result.user.uid
 

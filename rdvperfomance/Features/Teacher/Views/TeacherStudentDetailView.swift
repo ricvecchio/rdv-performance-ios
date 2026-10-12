@@ -9,6 +9,7 @@ struct TeacherStudentDetailView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @StateObject private var studentsViewModel: TeacherStudentsListViewModel
 
@@ -101,7 +102,7 @@ struct TeacherStudentDetailView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Aluno")
+                Text("common.student")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -115,13 +116,17 @@ struct TeacherStudentDetailView: View {
         .task {
             await loadProgress()
         }
-        .alert("Desvincular aluno?", isPresented: $showUnlinkConfirm) {
-            Button("Cancelar", role: .cancel) {}
-            Button("Desvincular", role: .destructive) {
+        .alert("ui.unlink_student", isPresented: $showUnlinkConfirm) {
+            Button("common.cancel", role: .cancel) {}
+            Button("ui.unlink", role: .destructive) {
                 Task { await confirmUnlink() }
             }
         } message: {
-            Text("O aluno \"\(student.name)\" será desvinculado da categoria \(category.displayName).")
+            let format = AppLocalization.string(
+                "ui.student_will_be_unlinked_from_category",
+                locale: locale
+            )
+            Text(String(format: format, locale: locale, arguments: [student.name, category.localizedDisplayName(locale: locale)]))
         }
     }
 
@@ -132,7 +137,7 @@ struct TeacherStudentDetailView: View {
 
         return VStack(alignment: .leading, spacing: 10) {
 
-            Text("Aluno")
+            Text("common.student")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -145,7 +150,7 @@ struct TeacherStudentDetailView: View {
 
             VStack(alignment: .leading, spacing: 12) {
                 HStack {
-                    Text("Progresso do Aluno")
+                    Text("ui.student_progress")
                         .font(.system(size: 14, weight: .medium))
                         .foregroundColor(.white.opacity(0.55))
 
@@ -156,7 +161,16 @@ struct TeacherStudentDetailView: View {
                     }
                 }
 
-                Text("\(percent)% completo")
+                Text(
+                    String(
+                        format: AppLocalization.string(
+                            "ui.progress_complete_percentage",
+                            locale: locale
+                        ),
+                        locale: locale,
+                        arguments: [percent]
+                    )
+                )
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
@@ -167,63 +181,71 @@ struct TeacherStudentDetailView: View {
             Divider()
                 .background(Theme.Colors.divider)
 
-            Text("Categoria do Treino")
+            Text("ui.workout_category")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            Text(category.tituloOverlayImagem)
+            Text(category.localizedDisplayName(locale: locale))
                 .font(.system(size: 18, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func actionsCard() -> some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("Ações")
+            Text("ui.actions")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            actionButton(title: "Treinos", icon: "calendar") {
+            actionButton(title: AppLocalization.string("ui.workouts", locale: locale), icon: "calendar") {
                 openWorkouts()
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Mensagens", icon: "paperplane.fill") {
+            actionButton(title: AppLocalization.string("ui.messages", locale: locale), icon: "paperplane.fill") {
                 path.append(.teacherMessage(student: student, category: category))
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
+            actionButton(title: AppLocalization.string("ui.feedbacks", locale: locale), icon: "text.bubble.fill") {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
+            actionButton(title: AppLocalization.string("ui.progress_preview", locale: locale), icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
             }
 
             Divider()
                 .background(Theme.Colors.divider)
 
-            actionButton(title: "Desvincular", icon: "person.badge.minus") {
+            actionButton(title: AppLocalization.string("ui.unlink", locale: locale), icon: "person.badge.minus") {
                 showUnlinkConfirm = true
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // MARK: - Helpers
@@ -233,16 +255,26 @@ struct TeacherStudentDetailView: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .foregroundColor(.green.opacity(0.85))
+                    .frame(width: 22, alignment: .center)
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
             .padding(14)
-            .background(Color.black.opacity(0.25))
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
             .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }

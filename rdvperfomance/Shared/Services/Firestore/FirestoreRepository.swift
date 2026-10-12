@@ -22,6 +22,14 @@ final class FirestoreRepository {
         try await userRepository.getUser(uid: uid)
     }
 
+    func getTeacherQuickAccessItems(uid: String) async throws -> [String]? {
+        try await userRepository.getTeacherQuickAccessItems(uid: uid)
+    }
+
+    func setTeacherQuickAccessItems(uid: String, items: [String]) async throws {
+        try await userRepository.setTeacherQuickAccessItems(uid: uid, items: items)
+    }
+
     func getUsers(byIds ids: [String]) async throws -> [String: AppUser] {
         try await userRepository.getUsers(byIds: ids)
     }
@@ -479,7 +487,8 @@ final class FirestoreRepository {
         date: Date,
         title: String,
         description: String,
-        blocks: [BlockFS] = []
+        blocks: [BlockFS] = [],
+        categoryRaw: String? = nil
     ) async throws -> String {
         try await trainingRepository.upsertDay(
             weekId: weekId,
@@ -489,7 +498,8 @@ final class FirestoreRepository {
             date: date,
             title: title,
             description: description,
-            blocks: blocks
+            blocks: blocks,
+            categoryRaw: categoryRaw
         )
     }
 
@@ -672,7 +682,7 @@ final class FirestoreRepository {
         teacherId: String,
         categoryRaw: String,
         sectionKey: String,
-        items: [(title: String, description: String, blocks: [BlockFS])]
+        items: [(title: String, description: String, blocks: [BlockFS], defaultKey: String?)]
     ) async throws {
         try await workoutTemplateRepository.createWorkoutTemplatesBatch(
             teacherId: teacherId,

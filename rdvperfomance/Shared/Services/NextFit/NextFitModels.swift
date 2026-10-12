@@ -16,6 +16,15 @@ struct NextFitWodDisplay: Equatable, Identifiable {
     var id: Int { modalityId }
 }
 
+struct NextFitUpcomingWodDisplay: Equatable, Identifiable {
+    let id: Int
+    let date: Date
+    let dataExec: String
+    let title: String
+    let modalityId: Int
+    let modalityName: String
+}
+
 struct NextFitAgendaDisplay: Equatable, Identifiable {
     let id: Int
     let statusAgendaParticipante: Int?
@@ -32,7 +41,14 @@ struct NextFitAgendaDisplay: Equatable, Identifiable {
     let canCancelCheckIn: Bool
     let hasCheckIn: Bool
 
-    var scheduleText: String { "\(startTime) às \(endTime)" }
+    func scheduleText(locale: Locale) -> String {
+        let format = AppLocalization.string("common.time_range", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [startTime, endTime]
+        )
+    }
     var capacityText: String { String(format: "%02d/%02d", enrolledStudents, studentLimit) }
 }
 

@@ -14,23 +14,62 @@ enum FirestoreRepositoryError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .missingWeekId:
-            return "Não foi possível carregar/salvar: weekId está vazio ou nulo."
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_week_id",
+                locale: Self.localizationLocale
+            )
         case .missingUserId:
-            return "Não foi possível identificar o usuário (uid vazio)."
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_user_id",
+                locale: Self.localizationLocale
+            )
         case .missingStudentId:
-            return "Não foi possível identificar o aluno (studentId vazio)."
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_student_id",
+                locale: Self.localizationLocale
+            )
         case .missingTeacherId:
-            return "Não foi possível identificar o professor (teacherId vazio)."
+            return AppLocalization.string(
+                "firestore_repository.errors.missing_teacher_id",
+                locale: Self.localizationLocale
+            )
         case .invalidData:
-            return "Dados inválidos para operação no Firestore."
+            return AppLocalization.string(
+                "firestore_repository.errors.invalid_data",
+                locale: Self.localizationLocale
+            )
         case .writeFailed:
-            return "Não foi possível salvar os dados no Firestore."
+            return AppLocalization.string(
+                "firestore_repository.errors.write_failed",
+                locale: Self.localizationLocale
+            )
         case .notFound:
-            return "Registro não encontrado no Firestore."
+            return AppLocalization.string(
+                "firestore_repository.errors.not_found",
+                locale: Self.localizationLocale
+            )
         case .weekNotStarted:
-            return "Esta semana ainda não começou e não pode receber conclusões."
+            return AppLocalization.string(
+                "firestore_repository.errors.week_not_started",
+                locale: Self.localizationLocale
+            )
         case .deleteFailed(let details):
-            return "Falha ao excluir: \(details)"
+            let format = AppLocalization.string(
+                "firestore_repository.errors.delete_failed",
+                locale: Self.localizationLocale
+            )
+            return String(
+                format: format,
+                locale: Self.localizationLocale,
+                arguments: [details]
+            )
         }
+    }
+
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
     }
 }

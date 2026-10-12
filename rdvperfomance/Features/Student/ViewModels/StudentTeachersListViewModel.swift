@@ -3,7 +3,6 @@ import Combine
 
 @MainActor
 final class StudentTeachersListViewModel: ObservableObject {
-
     @Published private(set) var linkedTeachers: [AppUser] = []
     @Published private(set) var sentRequests: [TeacherStudentLinkRequestFS] = []
     @Published private(set) var receivedInvites: [TeacherStudentInviteFS] = []
@@ -47,21 +46,35 @@ final class StudentTeachersListViewModel: ObservableObject {
         }
     }
 
-    func sendRequest(studentId: String, studentEmail: String, teacherEmail: String) async -> String? {
+    func sendRequest(studentId: String, studentEmail: String, teacherEmail: String, locale: Locale) async -> String? {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
-        guard email.contains("@"), email.contains(".") else { return "Informe um e-mail válido." }
+        guard email.contains("@"), email.contains(".") else {
+            return AppLocalization.string(
+                "student_teachers.link_request.invalid_email",
+                locale: locale
+            )
+        }
 
         do {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherId = teacher.id?.trimmingCharacters(in: .whitespacesAndNewlines),
                   !teacherId.isEmpty else {
-                return "Não encontrei um professor com esse e-mail."
+                return AppLocalization.string(
+                    "student_teachers.link_request.teacher_not_found",
+                    locale: locale
+                )
             }
             if linkedTeachers.contains(where: { $0.id == teacherId }) {
-                return "Esse professor já está vinculado."
+                return AppLocalization.string(
+                    "student_teachers.link_request.already_linked",
+                    locale: locale
+                )
             }
             if sentRequests.contains(where: { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) == teacherId }) {
-                return "Já existe uma solicitação pendente para esse professor."
+                return AppLocalization.string(
+                    "student_teachers.link_request.pending",
+                    locale: locale
+                )
             }
             try await repository.createLinkRequest(
                 studentId: studentId,
@@ -94,10 +107,10 @@ final class StudentTeachersListViewModel: ObservableObject {
         }
     }
 
-    func cancel(request: TeacherStudentLinkRequestFS, studentId: String, studentEmail: String) async {
+    func cancel(request: TeacherStudentLinkRequestFS, studentId: String, studentEmail: String, locale: Locale) async {
         guard let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !requestId.isEmpty else {
-            errorMessage = "Não foi possível identificar o convite."
+            errorMessage = AppLocalization.string("student_teachers.invite_identifier_missing", locale: locale)
             return
         }
 

@@ -10,6 +10,7 @@ struct ProfileView: View {
     let onBack: () -> Void
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -266,7 +267,7 @@ struct ProfileView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Perfil")
+                Text("common.profile")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -292,19 +293,19 @@ struct ProfileView: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
-        .alert("Trocar unidade", isPresented: $showTrocarUnidadeAlert) {
-            TextField("Ex.: CROSSFIT MURALHA", text: $unidadeDraft)
+        .alert(LocalizedStringKey("profile.unit.change_title"), isPresented: $showTrocarUnidadeAlert) {
+            TextField("profile.unit.placeholder", text: $unidadeDraft)
 
-            Button("Cancelar", role: .cancel) { }
+            Button("common.cancel", role: .cancel) { }
 
-            Button("Salvar") {
+            Button("common.save") {
                 Task { await salvarUnidade() }
             }
         } message: {
-            Text("Digite a unidade onde você treina. Se deixar em branco, a unidade será removida do perfil.")
+            Text("profile.unit.change_message")
         }
-        .alert("Erro", isPresented: $showErrorAlert) {
-            Button("OK", role: .cancel) {
+        .alert("common.error", isPresented: $showErrorAlert) {
+            Button("common.ok", role: .cancel) {
                 showErrorAlert = false
                 errorMessage = nil
             }
@@ -816,7 +817,9 @@ struct ProfileView: View {
             guard let data = try await item.loadTransferable(type: Data.self),
                   let image = UIImage(data: data)
             else {
-                errorMessage = "Não foi possível carregar a imagem selecionada."
+                errorMessage = AppLocalization.string("auth.profile_photo.load_failed",
+                    locale: locale
+                )
                 showErrorAlert = true
                 return
             }
@@ -854,19 +857,19 @@ struct ProfileView: View {
                     selectedPhotoItem = nil
                     showPhotoPicker = true
                 } label: {
-                    Label("Escolher foto", systemImage: "photo.fill")
+                    Label(LocalizedStringKey("auth.profile_photo.choose"), systemImage: "photo.fill")
                 }
 
                 Button {
                     showAvatarPicker = true
                 } label: {
-                    Label("Escolher Avatar", systemImage: "person.crop.circle")
+                    Label(LocalizedStringKey("auth.profile_photo.choose_avatar"), systemImage: "person.crop.circle")
                 }
 
                 Button(role: .destructive) {
                     Task { await removePhoto() }
                 } label: {
-                    Label("Remover foto", systemImage: "trash.fill")
+                    Label(LocalizedStringKey("auth.profile_photo.remove"), systemImage: "trash.fill")
                 }
             } label: {
                 HeaderAvatarView(size: 92, isNavigationEnabled: false)
@@ -917,8 +920,12 @@ struct ProfileView: View {
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     @ViewBuilder
@@ -945,7 +952,7 @@ struct ProfileView: View {
                     .foregroundColor(.green)
 
                 Text(trimmed)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.65))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -959,6 +966,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "person.3.fill",
                     title: "Trocar perfil (Admin)",
+                    localizedTitle: "Trocar perfil (Admin)",
                     trailing: .chevron,
                     iconColor: .red.opacity(0.85),
                     titleColor: .red.opacity(0.95)
@@ -968,7 +976,12 @@ struct ProfileView: View {
                 divider()
             }
 
-            optionRow(icon: "ruler", title: "Trocar unidade", trailing: .chevron) {
+            optionRow(
+                icon: "ruler",
+                title: "profile.unit.change_title",
+                localizedTitle: "profile.unit.change_title",
+                trailing: .chevron
+            ) {
                 openTrocarUnidade()
             }
 
@@ -977,6 +990,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "envelope.fill",
                     title: "Mensagens",
+                    localizedTitle: "Mensagens",
                     trailing: .chevron,
                     activityBadgeCount: unreadMessagesCount
                 ) {
@@ -988,6 +1002,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "text.bubble.fill",
                     title: "Feedbacks",
+                    localizedTitle: "Feedbacks",
                     trailing: .chevron,
                     activityBadgeCount: unreadFeedbacksCount
                 ) {
@@ -999,6 +1014,7 @@ struct ProfileView: View {
                 optionRow(
                     icon: "person.2.fill",
                     title: "Meus professores",
+                    localizedTitle: "Meus professores",
                     trailing: .chevron,
                     activityBadgeCount: teacherActivitiesCount
                 ) {
@@ -1009,7 +1025,8 @@ struct ProfileView: View {
                 divider()
                 optionRow(
                     icon: "ruler.fill",
-                    title: "Unidade de Medida",
+                    title: "settings.weight_unit.title",
+                    localizedTitle: "settings.weight_unit.title",
                     trailing: .textWithChevron(preferredWeightUnit.shortLabel)
                 ) {
                     draftWeightUnitRawState = preferredWeightUnitRawState
@@ -1021,7 +1038,8 @@ struct ProfileView: View {
                 divider()
                 optionRow(
                     icon: "ruler.fill",
-                    title: "Unidade de Medida",
+                    title: "settings.weight_unit.title",
+                    localizedTitle: "settings.weight_unit.title",
                     trailing: .textWithChevron(preferredWeightUnit.shortLabel)
                 ) {
                     draftWeightUnitRawState = preferredWeightUnitRawState
@@ -1031,14 +1049,23 @@ struct ProfileView: View {
 
             if session.isAdmin {
                 divider()
-                optionRow(icon: "square.grid.2x2.fill", title: "Meus Ícones", trailing: .chevron) {
+                optionRow(
+                    icon: "square.grid.2x2.fill",
+                    title: "profile.icons.title",
+                    localizedTitle: "profile.icons.title",
+                    trailing: .chevron
+                ) {
                     showMeusIconesModal = true
                 }
             }
         }
         .padding(.vertical, 8)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func divider() -> some View {
@@ -1060,6 +1087,7 @@ struct ProfileView: View {
     private func optionRow(
         icon: String,
         title: String,
+        localizedTitle: String? = nil,
         trailing: Trailing,
         activityBadgeCount: Int = 0,
         iconColor: Color = .green.opacity(0.85),
@@ -1072,6 +1100,7 @@ struct ProfileView: View {
                     optionRowContent(
                         icon: icon,
                         title: title,
+                        localizedTitle: localizedTitle,
                         trailing: trailing,
                         activityBadgeCount: activityBadgeCount,
                         iconColor: iconColor,
@@ -1083,6 +1112,7 @@ struct ProfileView: View {
                 optionRowContent(
                     icon: icon,
                     title: title,
+                    localizedTitle: localizedTitle,
                     trailing: trailing,
                     activityBadgeCount: activityBadgeCount,
                     iconColor: iconColor,
@@ -1095,6 +1125,7 @@ struct ProfileView: View {
     private func optionRowContent(
         icon: String,
         title: String,
+        localizedTitle: String?,
         trailing: Trailing,
         activityBadgeCount: Int,
         iconColor: Color,
@@ -1118,8 +1149,14 @@ struct ProfileView: View {
                     }
                 }
 
-            Text(title)
-                .font(.system(size: 18, weight: .medium))
+            Group {
+                if let localizedTitle {
+                    Text(LocalizedStringKey(localizedTitle))
+                } else {
+                    Text(title)
+                }
+            }
+                .font(.system(size: 17, weight: .medium))
                 .foregroundColor(titleColor)
 
             Spacer()
@@ -1189,7 +1226,7 @@ struct ProfileView: View {
         } label: {
             HStack {
                 Spacer()
-                Text("Sair")
+                Text("auth.logout")
                 Spacer()
             }
             .primaryGreenActionButton()
@@ -1209,7 +1246,7 @@ struct ProfileView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Toque em um ícone para copiar o nome.")
+                            Text("profile.icons.instructions")
                                 .font(.system(size: 14, weight: .medium))
                                 .foregroundColor(.white.opacity(0.65))
                                 .padding(.top, 12)
@@ -1266,7 +1303,13 @@ struct ProfileView: View {
                 if let copied = copiedIconName {
                     VStack {
                         Spacer()
-                        Text("Copiado: \(copied)")
+                        Text(
+                            String(
+                                format: AppLocalization.string("profile.icons.copied", locale: locale),
+                                locale: locale,
+                                arguments: [copied]
+                            )
+                        )
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .padding(.horizontal, 14)
@@ -1284,11 +1327,11 @@ struct ProfileView: View {
                     .animation(.easeInOut(duration: 0.18), value: copiedIconName)
                 }
             }
-            .navigationTitle("Meus Ícones")
+            .navigationTitle(LocalizedStringKey("profile.icons.title"))
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button("Fechar") {
+                    Button("common.close") {
                         showMeusIconesModal = false
                     }
                     .foregroundColor(.green)

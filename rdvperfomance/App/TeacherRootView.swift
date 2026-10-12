@@ -60,7 +60,7 @@ struct TeacherRootView: View {
     private func teacherDestination(_ route: AppRoute) -> some View {
         switch route {
         case .teacherPersonalRecords(let category):
-            StudentPersonalRecordsView(
+            PersonalRecordsView(
                 path: destinationPath,
                 onBack: { destinationPath.wrappedValue.removeLast() },
                 navigationContext: .teacher(category: category)
@@ -141,12 +141,19 @@ struct TeacherRootView: View {
                 sectionTitle: sectionTitle,
                 mode: mode
             )
-        case .teacherSendWorkout(let preselectedStudentID, let startsAtWorkout):
+        case .teacherSendWorkout(
+            let preselectedStudentID,
+            let startsAtWorkout,
+            let preselectedTemplate,
+            let preselectedVideo
+        ):
             TeacherSendWorkoutView(
                 path: destinationPath,
                 category: category,
                 preselectedStudentID: preselectedStudentID,
-                startsAtWorkout: startsAtWorkout
+                startsAtWorkout: startsAtWorkout,
+                preselectedTemplate: preselectedTemplate,
+                preselectedVideo: preselectedVideo?.video
             )
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)
@@ -161,20 +168,25 @@ struct TeacherRootView: View {
             CreateTreinoAcademiaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
         case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
             CreateTreinoCasaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
-        case .studentWorkouts(let studentId, let studentName):
-            StudentWorkoutsView(path: destinationPath, studentId: studentId, studentName: studentName)
-        case .studentWeekDetail(let studentId, let weekId, let weekTitle, let selectedDayId):
-            StudentWeekDetailView(
+        case .studentWorkouts(
+            let studentId,
+            let studentName,
+            let initialExpandedWeekId,
+            let initialExpandedDayId
+        ):
+            StudentWorkoutsView(
                 path: destinationPath,
                 studentId: studentId,
-                weekId: weekId,
-                weekTitle: weekTitle,
-                initialExpandedDayId: selectedDayId
+                studentName: studentName,
+                initialExpandedWeekId: initialExpandedWeekId,
+                initialExpandedDayId: initialExpandedDayId
             )
         case .studentDayDetail(let weekId, let day, let weekTitle):
             StudentDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
         case .configuracoes:
             SettingsView(path: destinationPath)
+        case .idioma:
+            LanguageSettingsView()
         case .editarPerfil:
             EditProfileView(path: destinationPath)
         case .alterarSenha:

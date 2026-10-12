@@ -103,10 +103,12 @@
 				};
 			};
 			buildConfigurationList = 0C9DDCAE2EFAE51300E9988D /* Build configuration list for PBXProject "rdvperfomance" */;
-			developmentRegion = en;
+			developmentRegion = "pt-BR";
 			hasScannedForEncodings = 0;
 			knownRegions = (
 				en,
+				es,
+				"pt-BR",
 				Base,
 			);
 			mainGroup = 0C9DDCAA2EFAE51300E9988D;
@@ -274,11 +276,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = HZ2G6N37TC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "RDV Perfomance";
+				INFOPLIST_KEY_CFBundleDisplayName = "RDV Performance";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Precisamos da câmera para capturar imagens";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo).";
@@ -294,7 +296,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.15;
+				MARKETING_VERSION = 1.0.22;
 				PRODUCT_BUNDLE_IDENTIFIER = br.com.rdvperfomance;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -317,11 +319,11 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 17;
+				CURRENT_PROJECT_VERSION = 24;
 				DEVELOPMENT_TEAM = HZ2G6N37TC;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_CFBundleDisplayName = "RDV Perfomance";
+				INFOPLIST_KEY_CFBundleDisplayName = "RDV Performance";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.sports";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Precisamos da câmera para capturar imagens";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Usamos sua localização para centrar o mapa e mostrar a posição da academia (demo).";
@@ -337,7 +339,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.15;
+				MARKETING_VERSION = 1.0.22;
 				PRODUCT_BUNDLE_IDENTIFIER = br.com.rdvperfomance;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

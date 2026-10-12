@@ -3,6 +3,7 @@ import Charts
 
 // Tela do Aluno: Recorde Pessoal > Gymnastic (lista fixa + registros)
 struct GymnasticPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
 
@@ -133,29 +134,6 @@ struct GymnasticPersonalRecordsView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-
-                            HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu recorde por movimento.")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.55))
-
-                                Spacer()
-
-                                Button {
-                                    addItemErrorMessage = nil
-                                    newItemName = ""
-                                    newItemMetric = ""
-                                    newItemValue = ""
-                                    showAddItemSheet = true
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.green.opacity(0.85))
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo item")
-                            }
-
                             tableContainer()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -171,9 +149,10 @@ struct GymnasticPersonalRecordsView: View {
                 PersonalRecordsFooter(
                     path: $path,
                     navigationContext: navigationContext,
-                    studentFooterKind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
-                        isSobreSelected: true,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
                         isPerfilSelected: false
                     ),
                     onSelectStudentSection: onSelectSection
@@ -203,13 +182,34 @@ struct GymnasticPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Gymnastic")
+                Text("personal_records_gymnastic.gymnastic")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    Button {
+                        addItemErrorMessage = nil
+                        newItemName = ""
+                        newItemMetric = ""
+                        newItemValue = ""
+                        showAddItemSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -247,11 +247,11 @@ struct GymnasticPersonalRecordsView: View {
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -261,14 +261,14 @@ struct GymnasticPersonalRecordsView: View {
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Movimento")
-                .font(.system(size: 12, weight: .bold))
+            Text("personal_records.movement")
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR")
-                .font(.system(size: 12, weight: .bold))
+            Text("personal_records.pr_label")
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -286,21 +286,26 @@ struct GymnasticPersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "figure.strengthtraining.traditional")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 15))
-                    .frame(width: 26)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image("gymnastic_rings")
+                        .renderingMode(.template)
+                        .foregroundColor(.green.opacity(0.85))
+                }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.name)
-                        .font(.system(size: 15, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
 
                     if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text(item.metric)
-                            .font(.system(size: 12, weight: .semibold))
+                            .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.45))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
@@ -311,13 +316,13 @@ struct GymnasticPersonalRecordsView: View {
 
                 if let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(value)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 
@@ -354,24 +359,24 @@ struct GymnasticPersonalRecordsView: View {
 
                 if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(item.metric)
-                        .font(.system(size: 13, weight: .semibold))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.55))
                 }
 
-                Text("Informe seu recorde. Para remover, deixe vazio.")
-                    .font(.system(size: 13))
+                Text("personal_records_gymnastic.enter_your_record_leave_it_blank_to_remove_it")
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
                 VStack(alignment: .leading, spacing: 8) {
                     HStack {
-                        Text("Resultado:")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text("personal_records.result_field_label")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
                     }
 
-                    TextField("Ex: 50 / 1,90m / 3:25", text: $inputValue)
+                    TextField("personal_records_gymnastic.e_g_50_1_90m_3_25", text: $inputValue)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .font(.system(size: 16, weight: .semibold))
@@ -389,8 +394,8 @@ struct GymnasticPersonalRecordsView: View {
                 .padding(.top, 4)
 
                 if canDelete {
-                    Text("Ao excluir, o registro será removido do seu histórico. Esta ação não pode ser desfeita.")
-                        .font(.system(size: 12, weight: .semibold))
+                    Text("personal_records_barbell.deleting_will_remove_this_record_from_your_history_this_action_cannot_be_undone")
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.50))
                         .multilineTextAlignment(.leading)
                         .padding(.horizontal, 16)
@@ -409,11 +414,10 @@ struct GymnasticPersonalRecordsView: View {
                     ZStack {
                         Theme.Colors.headerBackground.ignoresSafeArea()
                         VStack(spacing: 16) {
-                            DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                            DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                 .datePickerStyle(.graphical)
-                                .environment(\.locale, Locale(identifier: "pt_BR"))
                             Button { showPRDatePicker = false } label: {
-                                Text("Confirmar")
+                                Text("common.confirm")
                                     .frame(maxWidth: .infinity)
                                     .primaryGreenActionButton()
                             }
@@ -430,7 +434,7 @@ struct GymnasticPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedItem = nil
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -449,7 +453,7 @@ struct GymnasticPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedItem = nil
                     } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -467,7 +471,7 @@ struct GymnasticPersonalRecordsView: View {
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir item")
+                        .accessibilityLabel("personal_records_endurance.delete_item")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -482,13 +486,16 @@ struct GymnasticPersonalRecordsView: View {
             selectedPRDate = Date()
             resetExistingPREditing()
         }
-        .alert("Excluir registro", isPresented: $showDeleteAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \"\(item.name)\"?")
+            let format = AppLocalization.string("personal_records.gymnastic.delete_named_record_confirmation",
+                locale: locale
+            )
+            Text(String(format: format, locale: locale, arguments: [item.name]))
         }
     }
 
@@ -504,13 +511,13 @@ struct GymnasticPersonalRecordsView: View {
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text("Novo item")
+                Text("personal_records_gymnastic.new_item")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
 
-                Text("Crie um item e, se quiser, já informe seu recorde.")
-                    .font(.system(size: 13))
+                Text("personal_records_gymnastic.create_an_item_and_if_you_want_enter_your_record_now")
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
@@ -518,11 +525,11 @@ struct GymnasticPersonalRecordsView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Nome do movimento")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text("personal_records_barbell.movement_name")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
-                        TextField("Ex: Rope Climb", text: $newItemName)
+                        TextField("personal_records_gymnastic.e_g_rope_climb", text: $newItemName)
                             .textInputAutocapitalization(.words)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -538,11 +545,11 @@ struct GymnasticPersonalRecordsView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Tipo / Métrica (opcional)")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text("personal_records_gymnastic.type_metric_optional")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
-                        TextField("Ex: Max Reps / For Time / Max Distance", text: $newItemMetric)
+                        TextField("personal_records_gymnastic.e_g_max_reps_for_time_max_distance", text: $newItemMetric)
                             .textInputAutocapitalization(.sentences)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -558,11 +565,11 @@ struct GymnasticPersonalRecordsView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Recorde (opcional)")
-                            .font(.system(size: 13, weight: .semibold))
+                        Text("personal_records_gymnastic.record_optional")
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.75))
 
-                        TextField("Ex: 50 / 1,90m / 3:25", text: $newItemValue)
+                        TextField("personal_records_gymnastic.e_g_50_1_90m_3_25", text: $newItemValue)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -579,7 +586,7 @@ struct GymnasticPersonalRecordsView: View {
 
                     if let msg = addItemErrorMessage {
                         Text(msg)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.yellow.opacity(0.85))
                             .padding(.top, 4)
                     }
@@ -592,7 +599,7 @@ struct GymnasticPersonalRecordsView: View {
                     Button {
                         showAddItemSheet = false
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -609,7 +616,7 @@ struct GymnasticPersonalRecordsView: View {
                     Button {
                         addNewItem()
                     } label: {
-                        Text("Adicionar")
+                        Text("common.add")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -629,13 +636,13 @@ struct GymnasticPersonalRecordsView: View {
 
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do movimento."
+            addItemErrorMessage = AppLocalization.string("personal_records.gymnastic.movement_name_required", locale: locale)
             return
         }
 
         let existingNames = allItems.map { $0.name.lowercased().trimmingCharacters(in: .whitespacesAndNewlines) }
         if existingNames.contains(cleanName.lowercased()) {
-            addItemErrorMessage = "Este item já existe na sua lista."
+            addItemErrorMessage = AppLocalization.string("personal_records.gymnastic.duplicate_item", locale: locale)
             return
         }
 
@@ -781,8 +788,8 @@ struct GymnasticPersonalRecordsView: View {
     @ViewBuilder
     private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Data")
-                .font(.system(size: 13, weight: .semibold))
+            Text("common.date")
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             Button {
@@ -810,13 +817,13 @@ struct GymnasticPersonalRecordsView: View {
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("Evolução", systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 13, weight: .semibold))
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label("Histórico", systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
@@ -837,7 +844,7 @@ struct GymnasticPersonalRecordsView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
-                        Text("Nenhum histórico de evolução registrado ainda.")
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.60))
                     } else {
@@ -848,13 +855,13 @@ struct GymnasticPersonalRecordsView: View {
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
                                     if entry.id == recordID {
-                                        Text("RECORDE")
+                                        Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.green)
                                     }
                                     Spacer()
-                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
-                                        .font(.system(size: 13))
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
@@ -864,7 +871,7 @@ struct GymnasticPersonalRecordsView: View {
                                             .foregroundColor(.red.opacity(0.85))
                                     }
                                     .buttonStyle(.plain)
-                                    .accessibilityLabel("Excluir registro")
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -884,16 +891,16 @@ struct GymnasticPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
-        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
-            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
                 if let entry = historyEntryPendingDeletion {
                     deleteHistoryEntry(entry, for: key, metadata: metadata)
                 }
                 historyEntryPendingDeletion = nil
             }
         } message: {
-            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
         }
     }
 
@@ -949,8 +956,8 @@ struct GymnasticPersonalRecordsView: View {
 
     private func formatPRDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd 'de' MMMM, yyyy"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
         return formatter.string(from: date)
     }
 

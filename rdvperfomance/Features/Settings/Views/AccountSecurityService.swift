@@ -8,6 +8,12 @@ final class AccountSecurityService {
 
     static let shared = AccountSecurityService()
     private init() {}
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 
     // Erros específicos do serviço de segurança
     enum ServiceError: LocalizedError {
@@ -22,17 +28,17 @@ final class AccountSecurityService {
         var errorDescription: String? {
             switch self {
             case .notLoggedIn:
-                return "Você precisa estar logado para realizar esta ação."
+                return AppLocalization.string("account_security.errors.login_required", locale: AccountSecurityService.localizationLocale)
             case .missingEmail:
-                return "Não foi possível identificar o e-mail do usuário logado."
+                return AppLocalization.string("account_security.errors.email_missing", locale: AccountSecurityService.localizationLocale)
             case .weakPassword:
-                return "A nova senha é muito fraca. Use pelo menos 6 caracteres."
+                return AppLocalization.string("account_security.errors.weak_password", locale: AccountSecurityService.localizationLocale)
             case .passwordMismatch:
-                return "As senhas não conferem."
+                return AppLocalization.string("account_security.errors.password_mismatch", locale: AccountSecurityService.localizationLocale)
             case .requiresRecentLogin:
-                return "Por segurança, faça login novamente e tente de novo."
+                return AppLocalization.string("account_security.errors.reauthentication_required", locale: AccountSecurityService.localizationLocale)
             case .invalidCredential:
-                return "Senha atual inválida."
+                return AppLocalization.string("account_security.errors.invalid_current_password", locale: AccountSecurityService.localizationLocale)
             case .unknown(let msg):
                 return msg
             }

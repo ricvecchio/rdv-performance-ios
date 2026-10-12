@@ -22,7 +22,7 @@ struct ProgressGamePreviewView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
 
-                        Text("Preview interativo do progresso gamificado.")
+                        Text("gamification.preview.description")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.55))
                             .frame(maxWidth: .infinity, alignment: .leading)
@@ -35,7 +35,7 @@ struct ProgressGamePreviewView: View {
                         } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "shuffle")
-                                Text("Randomizar cenário")
+                                Text("gamification.preview.randomize")
                             }
                             .padding(.horizontal, 14)
                             .primaryGreenActionButton()
@@ -66,11 +66,11 @@ private struct SpriteKitPreviewCard: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 }

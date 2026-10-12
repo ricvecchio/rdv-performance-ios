@@ -38,10 +38,13 @@ struct SettingsView: View {
 
                         VStack(alignment: .leading, spacing: 16) {
 
-                            sectionTitle("CONTA")
+                            sectionTitle("settings.section.account")
                             accountCard()
 
-                            sectionTitle("SUPORTE & LEGAL")
+                            sectionTitle("settings.section.preferences")
+                            preferencesCard()
+
+                            sectionTitle("settings.section.support_legal")
                             supportLegalCard()
 
                             Color.clear.frame(height: 16)
@@ -80,7 +83,7 @@ struct SettingsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Configurações")
+                Text("settings.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -126,7 +129,7 @@ struct SettingsView: View {
         dismiss()
     }
 
-    private func sectionTitle(_ text: String) -> some View {
+    private func sectionTitle(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
             .foregroundColor(.white.opacity(0.35))
@@ -135,16 +138,24 @@ struct SettingsView: View {
 
     private func accountCard() -> some View {
         card {
-            cardRow(icon: "person.crop.circle", title: "Editar Perfil") {
+            cardRow(icon: "person.crop.circle", title: "auth.edit_profile.title") {
                 path.append(.editarPerfil)
             }
             divider()
-            cardRow(icon: "key.fill", title: "Alterar Senha") {
+            cardRow(icon: "key.fill", title: "settings.password.title") {
                 path.append(.alterarSenha)
             }
             divider()
-            cardRow(icon: "trash.fill", title: "Excluir Conta") {
+            cardRow(icon: "trash.fill", title: "settings.delete.title") {
                 path.append(.excluirConta)
+            }
+        }
+    }
+
+    private func preferencesCard() -> some View {
+        card {
+            cardRow(icon: "globe", title: "settings.language.title") {
+                path.append(.idioma)
             }
         }
     }
@@ -152,26 +163,26 @@ struct SettingsView: View {
     private func supportLegalCard() -> some View {
         card {
 
-            cardRow(icon: "info.circle.fill", title: "Sobre") {
+            cardRow(icon: "info.circle.fill", title: "settings.about") {
                 path.append(.sobre)
             }
 
             divider()
 
-            cardRow(icon: "questionmark.circle.fill", title: "Central de Ajuda") {
+            cardRow(icon: "questionmark.circle.fill", title: "settings.help_center") {
                 path.append(.infoLegal(.helpCenter))
             }
             divider()
-            cardRow(icon: "hand.raised.fill", title: "Políticas de Privacidade") {
+            cardRow(icon: "hand.raised.fill", title: "settings.privacy_policy") {
                 path.append(.infoLegal(.privacyPolicy))
             }
             divider()
-            cardRow(icon: "doc.text.fill", title: "Termos de Uso") {
+            cardRow(icon: "doc.text.fill", title: "settings.terms_of_use") {
                 path.append(.infoLegal(.termsOfUse))
             }
             divider()
 
-            cardRow(icon: "gamecontroller.fill", title: "Preview do Progresso") {
+            cardRow(icon: "gamecontroller.fill", title: "settings.progress_preview") {
                 path.append(.spriteDemo)
             }
         }
@@ -181,8 +192,12 @@ struct SettingsView: View {
         VStack(spacing: 0) { content() }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
-            .background(Theme.Colors.cardBackground)
+            .background(Color.black.opacity(0.68))
             .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
     }
 
     private func divider() -> some View {
@@ -191,7 +206,7 @@ struct SettingsView: View {
             .padding(.leading, 54)
     }
 
-    private func cardRow(icon: String, title: String, action: @escaping () -> Void) -> some View {
+    private func cardRow(icon: String, title: LocalizedStringKey, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             HStack(spacing: 14) {
 
@@ -201,7 +216,7 @@ struct SettingsView: View {
                     .frame(width: 28)
 
                 Text(title)
-                    .font(.system(size: 18, weight: .medium))
+                    .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()

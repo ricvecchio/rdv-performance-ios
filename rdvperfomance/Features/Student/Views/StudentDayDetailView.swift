@@ -15,6 +15,7 @@ struct StudentDayDetailView: View {
     var onSelectSection: (StudentMainSection) -> Void = { _ in }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -32,6 +33,10 @@ struct StudentDayDetailView: View {
     @State private var didPrepareEditFields: Bool = false
 
     private var isTeacherViewing: Bool { session.isTrainer }
+
+    private var presentation: TrainingDayFS {
+        DefaultWorkoutLocalization.presentation(for: day, locale: locale)
+    }
 
     // ✅ Player de vídeo (mesmo comportamento da TeacherImportVideosView)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
@@ -86,9 +91,9 @@ struct StudentDayDetailView: View {
 
     // ✅ Blocos normais (sem os blocos de vídeo)
     private var nonVideoBlocks: [BlockFS] {
-        if videoItems.isEmpty { return day.blocks }
+        if videoItems.isEmpty { return presentation.blocks }
         let videoIds = Set(videoItems.map { $0.blockId })
-        return day.blocks.filter { !videoIds.contains($0.id) }
+        return presentation.blocks.filter { !videoIds.contains($0.id) }
     }
 
     // ✅ Quando existe vídeo no dia: remover "Visualizar no ambiente", blocos e agora também o card "Treino"
@@ -156,7 +161,7 @@ struct StudentDayDetailView: View {
     @State private var percentText: String = ""
     @FocusState private var isPercentFieldFocused: Bool
 
-    // Corpo principal com header, conteúdo do dia, blocos e footer
+    // Corpo principal com header, conteúdo do dia e blocos
     var body: some View {
         ZStack {
 
@@ -173,8 +178,6 @@ struct StudentDayDetailView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-                        header
-
                         if let err = errorMessage {
                             messageCard(text: err)
                         }
@@ -205,8 +208,6 @@ struct StudentDayDetailView: View {
                     .padding(.bottom, 28)
                     .frame(maxWidth: .infinity)
                 }
-
-                footer
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
@@ -230,7 +231,7 @@ struct StudentDayDetailView: View {
 
             // ✅ ALTERADO: título do cabeçalho agora é o dia (ex: "Dia 1")
             ToolbarItem(placement: .principal) {
-                Text(day.subtitleText)
+                Text(trainingDateTitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -242,13 +243,13 @@ struct StudentDayDetailView: View {
                             didPrepareEditFields = false
                             showEditSheet = true
                         } label: {
-                            Label("Editar", systemImage: "pencil")
+                            Label(LocalizedStringKey("workout_day_detail.edit"), systemImage: "pencil")
                         }
 
                         Button(role: .destructive) {
                             showDeleteConfirm = true
                         } label: {
-                            Label("Excluir", systemImage: "trash")
+                            Label(LocalizedStringKey("common.delete"), systemImage: "trash")
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -264,7 +265,7 @@ struct StudentDayDetailView: View {
             ToolbarItemGroup(placement: .keyboard) {
                 if isPercentFieldFocused {
                     Spacer()
-                    Button("Salvar") {
+                    Button("common.save") {
                         autoSaveCalcState()
                         isPercentFieldFocused = false
                     }
@@ -273,24 +274,25 @@ struct StudentDayDetailView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .alert("Excluir dia?", isPresented: $showDeleteConfirm) {
-            Button("Cancelar", role: .cancel) {}
-            Button("Excluir", role: .destructive) {
+        .alert("workout_day_detail.delete_day", isPresented: $showDeleteConfirm) {
+            Button("common.cancel", role: .cancel) {}
+            Button("common.delete", role: .destructive) {
                 Task { await deleteDay() }
             }
         } message: {
-            Text("O dia \"\(day.title)\" será excluído.")
+            let format = AppLocalization.string("workout_day_detail.day_delete_confirmation", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [day.title]))
         }
-        .alert("Remover vídeo?", isPresented: $showRemoveVideoConfirm) {
-            Button("Cancelar", role: .cancel) {
+        .alert("workout_day_detail.remove_video", isPresented: $showRemoveVideoConfirm) {
+            Button("common.cancel", role: .cancel) {
                 videoPendingRemove = nil
             }
-            Button("Remover", role: .destructive) {
+            Button("workout_day_detail.remove", role: .destructive) {
                 guard let item = videoPendingRemove else { return }
                 Task { await removeVideoFromDay(item: item) }
             }
         } message: {
-            Text("Este vídeo será removido do dia de treino.")
+            Text("workout_day_detail.this_video_will_be_removed_from_the_training_day")
         }
         .sheet(isPresented: $showEditSheet, onDismiss: {
             didPrepareEditFields = false
@@ -325,46 +327,22 @@ struct StudentDayDetailView: View {
         }
     }
 
-    // Footer padrão de Treinos
-    private var footer: some View {
-        FooterBar(
-            path: $path,
-            kind: .studentHomeTreinosRecordsProfile(
-                isHomeSelected: false,
-                isTreinosSelected: true,
-                isRecordsSelected: false,
-                isPerfilSelected: false
-            ),
-            onSelectStudentSection: onSelectSection
-        )
-        .frame(height: Theme.Layout.footerHeight)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.footerBackground)
-    }
+    private func trainingDateTitle(for date: Date?, fallback: String) -> String {
+        guard let date else { return fallback }
 
-    // Header com título e subtítulo
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-
-            // ✅ ALTERADO: manter apenas a semana no corpo (o dia foi para o cabeçalho)
-            Text("Semana: \(weekTitle)")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
+        return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
     // Card principal do treino
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("Treino")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             VStack(alignment: .leading, spacing: 6) {
-                Text(day.title)
-                    .font(.system(size: 20, weight: .semibold))
+                Text(presentation.title)
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 if let dateText = formattedDate(day.date) {
@@ -373,8 +351,8 @@ struct StudentDayDetailView: View {
                         .foregroundColor(.white.opacity(0.45))
                 }
 
-                if !day.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text(day.description)
+                if !presentation.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(presentation.description)
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.65))
                         .fixedSize(horizontal: false, vertical: true)
@@ -384,8 +362,12 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // MARK: - ✅ NOVO CARD: cálculo % do PR
@@ -394,8 +376,8 @@ struct StudentDayDetailView: View {
     private var prPercentCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("Cálculo por % do PR (Barbell)")
-                .font(.system(size: 14, weight: .semibold))
+            Text("workout_day_detail.calculation_by_pr_barbell")
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             VStack(spacing: 10) {
@@ -412,11 +394,11 @@ struct StudentDayDetailView: View {
                             .frame(width: 22)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Movimento")
+                            Text("personal_records.movement")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.55))
 
-                            Text(selectedMovementName ?? "Selecionar")
+                            Text(selectedMovementName ?? AppLocalization.string("workout_day_detail.select", locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .lineLimit(1)
@@ -435,7 +417,7 @@ struct StudentDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -456,7 +438,7 @@ struct StudentDayDetailView: View {
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.55))
 
-                            TextField("Ex: 50", text: $percentText)
+                            TextField("workout_day_detail.e_g_50", text: $percentText)
                                 .keyboardType(.decimalPad)
                                 .focused($isPercentFieldFocused)
                                 .textInputAutocapitalization(.never)
@@ -474,7 +456,7 @@ struct StudentDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
 
                     // Peso (ocupa o resto)
@@ -486,7 +468,7 @@ struct StudentDayDetailView: View {
                             .frame(width: 22)
 
                         VStack(alignment: .leading, spacing: 2) {
-                            Text("Peso")
+                            Text("workout_day_detail.weight")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.white.opacity(0.55))
 
@@ -506,20 +488,24 @@ struct StudentDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
                 }
             }
 
-            Text("Os dados ficam salvos automaticamente para este dia.")
+            Text("workout_day_detail.data_is_saved_automatically_for_this_day")
                 .font(.system(size: 12))
                 .foregroundColor(.white.opacity(0.45))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private var movementPickerSheet: some View {
@@ -534,7 +520,7 @@ struct StudentDayDetailView: View {
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
-                Text("Selecione o movimento")
+                Text("workout_day_detail.select_movement")
                     .font(.system(size: 18, weight: .bold))
                     .foregroundColor(.white)
                     .padding(.top, 4)
@@ -598,7 +584,7 @@ struct StudentDayDetailView: View {
                 Button {
                     showMovementPicker = false
                 } label: {
-                    Text("Fechar")
+                    Text("common.close")
                         .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.85))
                         .frame(maxWidth: .infinity)
@@ -653,7 +639,7 @@ struct StudentDayDetailView: View {
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 2
         formatter.minimumFractionDigits = 0
-        formatter.decimalSeparator = "."
+        formatter.locale = locale
         return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
     }
 
@@ -727,7 +713,7 @@ struct StudentDayDetailView: View {
     private var videosCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("Vídeos")
+            Text("workout.videos")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
@@ -745,13 +731,19 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func openLockedPlayer(item: VideoDayItem) {
         let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeTitle = titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim
+        let safeTitle = titleTrim.isEmpty
+            ? AppLocalization.string("workout.youtube_video", locale: locale)
+            : titleTrim
 
         activeLockedPlayer = LockedPlayerItem(
             title: safeTitle,
@@ -772,12 +764,16 @@ struct StudentDayDetailView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                Text(titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim)
-                    .font(.system(size: 16, weight: .semibold))
+                Text(
+                    titleTrim.isEmpty
+                        ? AppLocalization.string("workout.youtube_video", locale: locale)
+                        : titleTrim
+                )
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
 
-                Text("YouTube")
+                Text("workout.youtube")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
@@ -789,7 +785,7 @@ struct StudentDayDetailView: View {
                 Button(role: .destructive) {
                     requestRemoveVideo(item: item)
                 } label: {
-                    Label("Remover", systemImage: "trash.fill")
+                    Label(LocalizedStringKey("workout_day_detail.remove"), systemImage: "trash.fill")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -867,7 +863,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 
@@ -896,12 +892,19 @@ struct StudentDayDetailView: View {
         }
     }
 
+    private func displayedBlockName(_ block: BlockFS) -> String {
+        guard block.name == DefaultWorkoutBlock.details.persistedName else {
+            return block.displayedName(locale: locale)
+        }
+        return DefaultWorkoutBlock.details.localizedName(locale: locale)
+    }
+
     // Lista de blocos do dia
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
             if nonVideoBlocks.isEmpty && videoItems.isEmpty {
-                Text("Nenhum bloco cadastrado.")
+                Text("workout_day_detail.no_block_registered")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else if nonVideoBlocks.isEmpty {
@@ -912,8 +915,8 @@ struct StudentDayDetailView: View {
                     ForEach(Array(nonVideoBlocks.enumerated()), id: \.offset) { idx, block in
                         VStack(alignment: .leading, spacing: 6) {
 
-                            Text(block.name)
-                                .font(.system(size: 16, weight: .semibold))
+                            Text(displayedBlockName(block))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -938,8 +941,12 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Mensagem de erro/aviso estilizada
@@ -971,7 +978,7 @@ struct StudentDayDetailView: View {
     private func formattedDate(_ date: Date?) -> String? {
         guard let date else { return nil }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
+        f.locale = locale
         f.dateStyle = .medium
         return f.string(from: date)
     }
@@ -991,12 +998,12 @@ struct StudentDayDetailView: View {
 
             VStack(alignment: .leading, spacing: 14) {
 
-                Text("Editar dia de treino")
+                Text("workout_day_detail.edit_training_day")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 UnderlineTextField(
-                    title: "Título",
+                    title: "workout_day_detail.title_field",
                     text: $editTitle,
                     isSecure: false,
                     showPassword: .constant(false),
@@ -1006,7 +1013,7 @@ struct StudentDayDetailView: View {
                 )
 
                 UnderlineTextField(
-                    title: "Descrição",
+                    title: "workout_day_detail.description_field",
                     text: $editDescription,
                     isSecure: false,
                     showPassword: .constant(false),
@@ -1025,7 +1032,7 @@ struct StudentDayDetailView: View {
                 HStack(spacing: 10) {
 
                     Button { showEditSheet = false } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.90))
                             .padding(.horizontal, 14)
@@ -1039,7 +1046,7 @@ struct StudentDayDetailView: View {
                     Button { Task { await saveDayEdits() } } label: {
                         HStack(spacing: 10) {
                             if isSaving { ProgressView().tint(.white) }
-                            Text("Salvar")
+                            Text("common.save")
                         }
                         .padding(.horizontal, 14)
                         .primaryGreenActionButton()
@@ -1061,12 +1068,12 @@ struct StudentDayDetailView: View {
     private var blocksEditorSection: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("Blocos")
+            Text("workout_day_detail.blocks")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             if editBlocks.isEmpty {
-                Text("Nenhum bloco cadastrado para este dia.")
+                Text("workout_day_detail.no_block_registered_for_this_day")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -1075,7 +1082,7 @@ struct StudentDayDetailView: View {
                         ForEach(editBlocks.indices, id: \.self) { i in
                             VStack(alignment: .leading, spacing: 8) {
 
-                                Text(editBlocks[i].name)
+                                Text(displayedBlockName(editBlocks[i]))
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
 
@@ -1107,13 +1114,13 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 
         let t = editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else {
-            errorMessage = "Informe o título do dia."
+            errorMessage = AppLocalization.string("workout_day_detail.title_required", locale: locale)
             return
         }
 
@@ -1146,7 +1153,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 

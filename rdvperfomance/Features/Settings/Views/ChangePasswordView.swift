@@ -19,6 +19,7 @@ struct ChangePasswordView: View {
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
     private let contentMaxWidth: CGFloat = 380
+    @Environment(\.locale) private var locale
 
     // Constrói a interface da tela de alteração de senha
     var body: some View {
@@ -50,7 +51,10 @@ struct ChangePasswordView: View {
                             }
 
                             if showSuccess {
-                                feedbackCard(text: "Senha alterada com sucesso.", isError: false)
+                                feedbackCard(
+                                    text: AppLocalization.string("settings.password.changed_success", locale: locale),
+                                    isError: false
+                                )
                             }
 
                             Color.clear.frame(height: 18)
@@ -86,7 +90,7 @@ struct ChangePasswordView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Alterar Senha")
+                Text("settings.password.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -101,15 +105,19 @@ struct ChangePasswordView: View {
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            secureUnderlineField(title: "Senha atual", text: $currentPassword)
-            secureUnderlineField(title: "Nova senha", text: $newPassword)
-            secureUnderlineField(title: "Confirmar nova senha", text: $confirmNewPassword)
+            secureUnderlineField(title: "settings.password.current", text: $currentPassword)
+            secureUnderlineField(title: "settings.password.new", text: $newPassword)
+            secureUnderlineField(title: "settings.password.confirm", text: $confirmNewPassword)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func savePasswordButton() -> some View {
@@ -120,7 +128,11 @@ struct ChangePasswordView: View {
                 Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "key.fill")
-                    Text(isLoading ? "Salvando..." : "Salvar nova senha")
+                    Text(
+                        isLoading
+                            ? LocalizedStringKey("common.saving")
+                            : LocalizedStringKey("settings.password.save")
+                    )
                 }
                 Spacer()
             }
@@ -153,22 +165,22 @@ struct ChangePasswordView: View {
         let cn = confirmNewPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard session.isLoggedIn else {
-            presentError("Você precisa estar logado.")
+            presentError(AppLocalization.string("auth.errors.login_required", locale: locale))
             return
         }
 
         guard !cp.isEmpty, !np.isEmpty, !cn.isEmpty else {
-            presentError("Preencha todos os campos.")
+            presentError(AppLocalization.string("settings.password.fill_all", locale: locale))
             return
         }
 
         guard np.count >= 6 else {
-            presentError("A nova senha deve ter pelo menos 6 caracteres.")
+            presentError(AppLocalization.string("settings.password.min_length", locale: locale))
             return
         }
 
         guard np == cn else {
-            presentError("A confirmação da nova senha não confere.")
+            presentError(AppLocalization.string("settings.password.confirmation_mismatch", locale: locale))
             return
         }
 
@@ -201,7 +213,10 @@ struct ChangePasswordView: View {
     }
 
     // Retorna campo seguro com linha inferior
-    private func secureUnderlineField(title: String, text: Binding<String>) -> some View {
+    private func secureUnderlineField(
+        title: LocalizedStringKey,
+        text: Binding<String>
+    ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
             Text(title)

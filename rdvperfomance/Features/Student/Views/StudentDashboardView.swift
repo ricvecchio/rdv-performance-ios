@@ -1,31 +1,5 @@
 import SwiftUI
 
-private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
-    @Environment(\.isEnabled) private var isEnabled
-
-    func body(content: Content) -> some View {
-        content
-            .font(.system(size: 15, weight: .semibold))
-            .foregroundColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
-            .padding(.vertical, 9)
-            .background(isEnabled ? Color.red.opacity(0.20) : Color.white.opacity(0.10))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(
-                        isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12),
-                        lineWidth: 1
-                    )
-            )
-    }
-}
-
-private extension View {
-    func compactDestructiveAgendaActionButton() -> some View {
-        modifier(CompactDestructiveAgendaActionButtonModifier())
-    }
-}
-
 struct StudentDashboardView: View {
     @Binding var path: [AppRoute]
     let studentId: String
@@ -33,6 +7,7 @@ struct StudentDashboardView: View {
     let onSelectWorkout: (String, String) -> Void
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
     @StateObject private var viewModel: StudentDashboardViewModel
     @State private var isTeacherLinkIconPulsing = false
     @State private var isRequestLinkSheetPresented = false
@@ -40,10 +15,9 @@ struct StudentDashboardView: View {
     @State private var isNextFitLoginSheetPresented = false
     @State private var nextFitEmailInput = ""
     @State private var nextFitPasswordInput = ""
-    @State private var isNextFitLogoutConfirmationPresented = false
-    @State private var isNextFitLogoutErrorPresented = false
 
     private let contentMaxWidth: CGFloat = 380
+    private let summaryCardHeight: CGFloat = 132
 
     init(
         path: Binding<[AppRoute]>,
@@ -109,7 +83,7 @@ struct StudentDashboardView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .principal) {
-                Text("Área do Aluno")
+                Text("dashboard.student_area")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -121,7 +95,10 @@ struct StudentDashboardView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .onAppear {
-            Task { await viewModel.load() }
+            Task { await viewModel.load(locale: locale) }
+        }
+        .task(id: viewModel.hasNextFitSession) {
+            await viewModel.loadCurrentWeekCheckIns()
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -131,19 +108,17 @@ struct StudentDashboardView: View {
             nextFitLoginSheet
                 .presentationDetents([.fraction(0.50)])
         }
-        .alert("Não foi possível desconectar do NextFit.", isPresented: $isNextFitLogoutErrorPresented) {
-            Button("OK", role: .cancel) { }
-        } message: {
-            Text("Tente novamente.")
-        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(greeting)
+            DashboardGreeting.styledText(
+                name: session.userName,
+                audience: .student,
+                locale: locale
+            )
                 .font(.system(size: 26, weight: .bold))
-                .foregroundColor(.white)
-            Text("Disciplina hoje, resultado amanhã! 💪")
+            Text("dashboard.discipline_today_results_tomorrow")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -164,16 +139,12 @@ struct StudentDashboardView: View {
                 .padding(.vertical, 28)
         case .unlinked:
             noLinkedTeacherCard
-            if viewModel.isMuralhaStudent {
-                nextFitWodCard
-            }
+            weeklyCheckInsCard
+            nextFitWodEntryCard
         case .linked, .failed:
             progressCard
-            if viewModel.isMuralhaStudent {
-                nextFitWodCard
-            } else {
-                upcomingWorkoutsCard
-            }
+            weeklyCheckInsCard
+            nextFitWodEntryCard
         }
     }
 
@@ -182,8 +153,8 @@ struct StudentDashboardView: View {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.yellow.opacity(0.85))
-                Text("Avisos")
-                    .font(.system(size: 18, weight: .bold))
+                Text("dashboard.notices")
+                    .font(.system(size: 17, weight: .bold))
                     .foregroundColor(.white.opacity(0.92))
             }
 
@@ -194,7 +165,7 @@ struct StudentDashboardView: View {
             } label: {
                 noticeRow(
                     icon: "person.crop.circle.badge.checkmark",
-                    title: "Convite de professor",
+                    title: "dashboard.teacher_invitation.title",
                     message: inviteNoticeMessage
                 )
             }
@@ -202,19 +173,26 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
 
     private var inviteNoticeMessage: String {
         let count = viewModel.pendingTeacherInvites.count
-        return count == 1
-            ? "Você possui um convite pendente"
-            : "Você possui \(count) convites pendentes"
+        if count == 1 {
+            return AppLocalization.string("dashboard.teacher_invitation.pending_single", locale: locale)
+        }
+
+        let format = AppLocalization.string("dashboard.teacher_invitation.pending_multiple", locale: locale)
+        return String(format: format, locale: locale, arguments: [Int64(count)])
     }
 
-    private func noticeRow(icon: String, title: String, message: String) -> some View {
+    private func noticeRow(
+        icon: String,
+        title: LocalizedStringKey,
+        message: String
+    ) -> some View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 18))
@@ -250,11 +228,11 @@ struct StudentDashboardView: View {
                     value: isTeacherLinkIconPulsing
                 )
 
-            Text("Você ainda não tem um professor vinculado")
-                .font(.system(size: 18, weight: .bold))
+            Text("dashboard.you_do_not_have_a_linked_coach_yet")
+                .font(.system(size: 17, weight: .bold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Vincule-se a um professor para receber treinos e acompanhar sua evolução.")
+            Text("dashboard.link_with_a_coach_to_receive_workouts_and_track_your_progress")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -265,7 +243,7 @@ struct StudentDashboardView: View {
                 HStack(spacing: 10) {
                     Image(systemName: "person.badge.plus")
 
-                    Text("Convidar professor")
+                    Text("dashboard.invite_coach")
                 }
                 .padding(.horizontal, 14)
                 .compactPrimaryGreenActionButton()
@@ -274,9 +252,9 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
         .onAppear {
             isTeacherLinkIconPulsing = true
         }
@@ -294,22 +272,22 @@ struct StudentDashboardView: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Solicitar vínculo")
+                        Text("dashboard.request_link")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Digite o e-mail do professor para enviar a solicitação.")
+                            Text("dashboard.enter_the_coach_s_email_to_send_the_request")
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.45))
 
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("E-mail do professor")
+                                Text("dashboard.coach_email")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
 
-                                TextField("professor@email.com", text: $teacherEmailInput)
+                                TextField("dashboard.coach_email_placeholder", text: $teacherEmailInput)
                                     .textInputAutocapitalization(.never)
                                     .keyboardType(.emailAddress)
                                     .autocorrectionDisabled(true)
@@ -348,7 +326,7 @@ struct StudentDashboardView: View {
                     Button {
                         isRequestLinkSheetPresented = false
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -365,14 +343,17 @@ struct StudentDashboardView: View {
 
                     Button {
                         Task {
-                            let ok = await viewModel.requestLinkByTeacherEmail(teacherEmail: teacherEmailInput)
+                            let ok = await viewModel.requestLinkByTeacherEmail(
+                                teacherEmail: teacherEmailInput,
+                                locale: locale
+                            )
                             if ok {
                                 isRequestLinkSheetPresented = false
                             }
                         }
                     } label: {
                         HStack(spacing: 10) {
-                            Text("Enviar solicitação")
+                            Text("dashboard.send_request")
 
                             if viewModel.isProcessingLinkAction {
                                 ProgressView()
@@ -396,26 +377,50 @@ struct StudentDashboardView: View {
         let total = viewModel.currentWeekDaySummaries.count
         let progress = total == 0 ? 0 : Double(completed) / Double(total)
 
-        return VStack(alignment: .leading, spacing: 14) {
-            Text("Progresso da semana")
-                .font(.system(size: 18, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
-            if viewModel.isLoading {
-                ProgressView()
-                    .tint(.white)
-            } else {
-                Text("\(completed) de \(total) dias concluídos")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-                HStack(spacing: 10) {
-                    ProgressView(value: progress)
-                        .tint(Theme.Colors.primaryGreen)
-                    Text("\(Int((progress * 100).rounded()))%")
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                weeklyProgressIcon
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("dashboard.weekly_progress_title")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+
+                    if viewModel.isLoading {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text(weeklyProgressText(completed: completed, total: total))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.55))
+                            .lineLimit(1)
+                    }
+                }
+
+                Spacer()
+
+                if !viewModel.isLoading {
+                    Text(
+                        String(
+                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
+                            locale: locale,
+                            arguments: [Int64((progress * 100).rounded())]
+                        )
+                    )
                         .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                 }
+            }
+
+            if !viewModel.isLoading {
+                Spacer(minLength: 0)
+
+                ProgressView(value: progress)
+                    .tint(Theme.Colors.primaryGreen)
+
                 if total == 0 {
-                    Text("Você não possui treinos programados para esta semana.")
+                    Text("dashboard.you_do_not_have_workouts_scheduled_for_this_week")
                         .font(.system(size: 13))
                         .foregroundColor(.white.opacity(0.55))
                 } else {
@@ -436,498 +441,237 @@ struct StudentDashboardView: View {
             }
         }
         .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
 
-    private var nextFitWodCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text(nextFitWodTitle)
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
+    private var weeklyProgressIcon: some View {
+        HStack(alignment: .bottom, spacing: 2.5) {
+            ForEach([CGFloat(9), 14, 19], id: \.self) { height in
+                RoundedRectangle(cornerRadius: 1.5)
+                    .fill(Theme.Colors.primaryGreen)
+                    .frame(width: 4, height: height)
+            }
+            RoundedRectangle(cornerRadius: 1.5)
+                .fill(Color.white.opacity(0.75))
+                .frame(width: 4, height: 11)
+        }
+        .frame(width: 42, height: 42)
+        .background(Theme.Colors.primaryGreen.opacity(0.10))
+        .background(Color.black.opacity(0.55))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+        .accessibilityHidden(true)
+    }
+
+    private var weeklyCheckInsCard: some View {
+        let completed = viewModel.currentWeekCheckInSummaries.filter(\.isCompleted).count
+        let total = viewModel.currentWeekCheckInSummaries.count
+        let progress = total == 0 ? 0 : Double(completed) / Double(total)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 12) {
+                weeklyCheckInsIcon
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("dashboard.weekly_checkins_title")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+
+                    if viewModel.isLoadingCurrentWeekCheckIns {
+                        ProgressView()
+                            .tint(.white)
+                    } else {
+                        Text(weeklyProgressText(completed: completed, total: total))
+                            .font(.system(size: 14, weight: .medium))
+                            .foregroundColor(.white.opacity(0.55))
+                            .lineLimit(1)
+                    }
+                }
 
                 Spacer()
 
-                if viewModel.hasNextFitSession {
-                    Button {
-                        isNextFitLogoutConfirmationPresented = true
-                    } label: {
-                        Image(systemName: "rectangle.portrait.and.arrow.right")
-                            .font(.system(size: 13, weight: .medium))
-                            .foregroundColor(.white.opacity(0.45))
-                            .frame(width: 44, height: 44)
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(viewModel.isLoadingNextFitWod)
-                    .accessibilityLabel("Desconectar NextFit")
-                    .confirmationDialog(
-                        "Desconectar NextFit?",
-                        isPresented: $isNextFitLogoutConfirmationPresented,
-                        titleVisibility: .visible
-                    ) {
-                        Button("Desconectar", role: .destructive) {
-                            do {
-                                try viewModel.logoutNextFit()
-                            } catch {
-                                isNextFitLogoutErrorPresented = true
-                            }
-                        }
-                        Button("Cancelar", role: .cancel) { }
-                    } message: {
-                        Text("Você precisará entrar novamente para consultar o WOD do dia.")
-                    }
-                }
-            }
-
-            if viewModel.isLoadingNextFitWod {
-                ProgressView()
-                    .tint(.white)
-            } else if viewModel.needsNextFitAuthentication {
-                Text("Conecte sua conta NextFit para consultar o treino de hoje.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-
-                Button {
-                    nextFitEmailInput = ""
-                    nextFitPasswordInput = ""
-                    isNextFitLoginSheetPresented = true
-                } label: {
-                    ZStack(alignment: .leading) {
-                        HStack(spacing: 10) {
-                            Image(systemName: "person.badge.plus")
-
-                            Text("Convidar professor")
-                        }
-                        .hidden()
-
-                        HStack(spacing: 10) {
-                            Image(systemName: "link")
-
-                            Text("Conectar NextFit")
-                        }
-                    }
-                    .padding(.horizontal, 14)
-                    .compactPrimaryGreenActionButton()
-                }
-                .buttonStyle(.plain)
-            } else if let error = viewModel.nextFitError {
-                Text(error)
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-
-                Button {
-                    Task { await viewModel.retryNextFitWod() }
-                } label: {
-                    Text("Tentar novamente")
-                        .padding(.horizontal, 14)
-                        .compactPrimaryGreenActionButton()
-                }
-                .buttonStyle(.plain)
-            } else {
-                if viewModel.nextFitContentOptions.count > 1 {
-                    Picker("", selection: $viewModel.selectedNextFitContent) {
-                        ForEach(viewModel.nextFitContentOptions) { option in
-                            Text(option.title.uppercased())
-                                .tag(Optional(option.selection))
-                        }
-                    }
-                    .pickerStyle(.segmented)
-                    .tint(Color.white.opacity(0.06))
-                    .onChange(of: viewModel.selectedNextFitContent) { _, selection in
-                        if selection != .agenda {
-                            viewModel.clearNextFitAgendaDetail()
-                        }
-                    }
-                }
-
-                if viewModel.isNextFitAgendaSelected {
-                    nextFitAgendaContent
-                } else if let wod = viewModel.nextFitWod {
-                    VStack(spacing: 10) {
-                        ForEach(wod.activities) { activity in
-                            VStack(alignment: .leading, spacing: 14) {
-                                Text(activity.title)
-                                    .font(.system(size: 16, weight: .semibold))
-                                    .foregroundColor(Theme.Colors.primaryGreen)
-
-                                Text(activity.description)
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.92))
-                                    .frame(maxWidth: .infinity, alignment: .leading)
-                            }
-                            .padding(14)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .background(Color.white.opacity(0.06))
-                            .cornerRadius(12)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
-                            )
-                        }
-                    }
-                } else {
-                    Text("Nenhum WOD disponível para hoje.")
-                        .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
-                }
-            }
-        }
-        .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
-    }
-
-    @ViewBuilder
-    private var nextFitAgendaContent: some View {
-        if viewModel.isLoadingNextFitAgendaDetail {
-            ProgressView()
-                .tint(.white)
-        } else if let detail = viewModel.selectedNextFitAgendaDetail {
-            nextFitAgendaDetailContent(detail)
-        } else if let error = viewModel.nextFitAgendaDetailError {
-            nextFitAgendaDetailErrorContent(error)
-        } else if let error = viewModel.nextFitAgendaError {
-            Text(error)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-
-            Button {
-                Task { await viewModel.retryNextFitWod() }
-            } label: {
-                Text("Tentar novamente")
-                    .padding(.horizontal, 14)
-                    .compactPrimaryGreenActionButton()
-            }
-            .buttonStyle(.plain)
-        } else if viewModel.nextFitAgenda.isEmpty {
-            Text("Nenhum horário disponível para hoje.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        } else {
-            VStack(spacing: 10) {
-                ForEach(viewModel.nextFitAgenda) { entry in
-                    VStack(alignment: .leading, spacing: 12) {
-                        Button {
-                            Task { await viewModel.selectNextFitAgenda(entry.id) }
-                        } label: {
-                            VStack(alignment: .leading, spacing: 12) {
-                                HStack {
-                                    nextFitAgendaDetailRow(
-                                        icon: "clock",
-                                        text: entry.scheduleText,
-                                        font: .system(size: 14, weight: .medium),
-                                        textColor: .white.opacity(0.92)
-                                    )
-                                    Spacer()
-                                    nextFitAgendaDetailRow(
-                                        icon: "person.2.fill",
-                                        text: entry.capacityText,
-                                        font: .system(size: 14, weight: .medium),
-                                        textColor: .white.opacity(0.92)
-                                    )
-                                }
-                                nextFitAgendaDetailRow(
-                                    icon: "dumbbell.fill",
-                                    text: entry.modalityName,
-                                    font: .system(size: 16, weight: .semibold),
-                                    textColor: Theme.Colors.primaryGreen
-                                )
-                                nextFitAgendaDetailRow(
-                                    icon: "person.fill",
-                                    text: entry.instructorName,
-                                    textColor: .white.opacity(0.92)
-                                )
-                            }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                        }
-                        .buttonStyle(.plain)
-
-                        HStack {
-                            nextFitAgendaDetailRow(
-                                icon: "mappin.and.ellipse",
-                                text: entry.locationName,
-                                textColor: .white.opacity(0.55)
-                            )
-                            Spacer()
-                            agendaCheckInButton(for: entry)
-                        }
-                        if let error = viewModel.agendaActionError(for: entry.id) {
-                            Text(error)
-                                .font(.system(size: 13))
-                                .foregroundColor(.red.opacity(0.9))
-                        }
-                    }
-                    .padding(14)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.white.opacity(0.06))
-                    .cornerRadius(12)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                if !viewModel.isLoadingCurrentWeekCheckIns {
+                    Text(
+                        String(
+                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
+                            locale: locale,
+                            arguments: [Int64((progress * 100).rounded())]
+                        )
                     )
-                }
-            }
-        }
-    }
-
-    private func nextFitAgendaDetailContent(_ detail: NextFitAgendaDetailDisplay) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Button {
-                viewModel.clearNextFitAgendaDetail()
-            } label: {
-                Label("Voltar à agenda", systemImage: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
-            }
-            .buttonStyle(.plain)
-
-            VStack(alignment: .leading, spacing: 12) {
-                HStack {
-                    nextFitAgendaDetailRow(icon: "calendar", text: detail.dateText)
-                    Spacer()
-                    nextFitAgendaDetailRow(icon: "person.2.fill", text: detail.capacityText)
-                }
-                nextFitAgendaDetailRow(icon: "clock", text: detail.scheduleText)
-                nextFitAgendaDetailRow(icon: "dumbbell.fill", text: detail.modalityName)
-                nextFitAgendaDetailRow(icon: "person.fill", text: detail.instructorName)
-                nextFitAgendaDetailRow(icon: "mappin.and.ellipse", text: detail.locationName)
-            }
-            .padding(14)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.06))
-            .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08), lineWidth: 1))
-
-            Text("PARTICIPANTES")
-                .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
-
-            if detail.participants.isEmpty {
-                Text("Nenhum participante neste horário.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-            } else {
-                ForEach(detail.participants) { participant in
-                    Text(participant.name)
-                        .font(.system(size: 14))
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                 }
             }
 
-            if let entry = viewModel.nextFitAgenda.first(where: { $0.id == detail.id }) {
-                HStack {
-                    Spacer()
-                    agendaCheckInButton(for: entry)
-                }
-            }
+            if !viewModel.isLoadingCurrentWeekCheckIns {
+                Spacer(minLength: 0)
 
-            if let error = viewModel.agendaActionError(for: detail.id) {
-                Text(error)
-                    .font(.system(size: 13))
-                    .foregroundColor(.red.opacity(0.9))
-            }
-        }
-    }
+                ProgressView(value: progress)
+                    .tint(Theme.Colors.primaryGreen)
 
-    private func nextFitAgendaDetailErrorContent(_ error: String) -> some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Button {
-                viewModel.clearNextFitAgendaDetail()
-            } label: {
-                Label("Voltar à agenda", systemImage: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
-            }
-            .buttonStyle(.plain)
-
-            Text(error)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-
-            Button {
-                Task { await viewModel.retryNextFitAgendaDetail() }
-            } label: {
-                Text("Tentar novamente")
-                    .padding(.horizontal, 14)
-                    .compactPrimaryGreenActionButton()
-            }
-            .buttonStyle(.plain)
-        }
-    }
-
-    private func nextFitAgendaDetailRow(
-        icon: String,
-        text: String,
-        font: Font = .system(size: 14),
-        textColor: Color = .white.opacity(0.92)
-    ) -> some View {
-        Label {
-            Text(text)
-        } icon: {
-            Image(systemName: icon)
-                .foregroundColor(Theme.Colors.primaryGreen)
-                .frame(width: 18)
-        }
-        .font(font)
-        .foregroundColor(textColor)
-    }
-
-    @ViewBuilder
-    private func agendaCheckInButton(for entry: NextFitAgendaDisplay) -> some View {
-        if viewModel.isAgendaWithdrawal(entry.id) {
-            HStack(spacing: 10) {
-                Image(systemName: "xmark.circle")
-                Text("Desistente")
-            }
-            .padding(.horizontal, 14)
-            .compactDestructiveAgendaActionButton()
-            .accessibilityLabel("Desistente")
-        } else if entry.endDate < Date() {
-            Button { } label: {
                 HStack(spacing: 10) {
-                    Image(systemName: "clock.badge.xmark")
-                    Text("Encerrado")
-                }
-                    .padding(.horizontal, 14)
-                    .compactPrimaryGreenActionButton()
-            }
-            .buttonStyle(.plain)
-            .disabled(true)
-        } else {
-            agendaCheckInButton(for: entry.id)
-        }
-    }
-
-    @ViewBuilder
-    private func agendaCheckInButton(for agendaId: Int) -> some View {
-        let isProcessing = viewModel.isProcessingAgenda(agendaId)
-        if viewModel.canCancelAgendaCheckIn(agendaId) {
-            Button {
-                Task { await viewModel.cancelAgendaCheckIn(agendaId) }
-            } label: {
-                HStack(spacing: 10) {
-                    if isProcessing {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "xmark.circle")
-                    }
-                    Text("Cancelar")
-                }
-                .padding(.horizontal, 14)
-                .compactDestructiveAgendaActionButton()
-            }
-            .buttonStyle(.plain)
-            .disabled(isProcessing)
-            .popover(
-                isPresented: Binding(
-                    get: { viewModel.agendaCancellationConfirmation?.agendaId == agendaId },
-                    set: { isPresented in
-                        if !isPresented {
-                            viewModel.dismissAgendaCancellationConfirmation()
+                    ForEach(viewModel.currentWeekCheckInSummaries) { item in
+                        VStack(spacing: 6) {
+                            Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
+                                .foregroundColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                            Text(weekdayAbbreviation(for: item.date))
+                                .font(.system(size: 12, weight: .medium))
+                                .foregroundColor(.white.opacity(0.75))
                         }
-                    }
-                ),
-                arrowEdge: .bottom
-            ) {
-                agendaCancellationConfirmationCard
-                    .presentationCompactAdaptation(.popover)
-            }
-        } else {
-            Button {
-                Task { await viewModel.checkInAgenda(agendaId) }
-            } label: {
-                HStack(spacing: 10) {
-                    if isProcessing {
-                        ProgressView()
-                    } else {
-                        Image(systemName: "calendar.badge.plus")
-                    }
-                    Text("Agendar")
-                }
-                .padding(.horizontal, 14)
-                .compactPrimaryGreenActionButton()
-            }
-            .buttonStyle(.plain)
-            .disabled(isProcessing || !viewModel.canScheduleAgendaCheckIn(agendaId))
-        }
-    }
-
-    private var agendaCancellationConfirmationCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            Text("Confirmar Cancelamento?")
-                .font(.system(size: 17, weight: .semibold))
-
-            Text(viewModel.agendaCancellationConfirmation?.question ?? "")
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
-
-            HStack {
-                Button("Cancelar", role: .cancel) {
-                    viewModel.dismissAgendaCancellationConfirmation()
-                }
-
-                Spacer()
-
-                Button("Confirmar", role: .destructive) {
-                    Task { await viewModel.confirmAgendaCancellation() }
-                }
-            }
-        }
-        .padding(16)
-        .frame(width: 300, alignment: .leading)
-    }
-
-    private var nextFitWodTitle: String {
-        let unitName = viewModel.studentUnitName
-        return unitName.isEmpty ? "WOD do dia" : "WOD do dia (\(unitName))"
-    }
-
-    private var upcomingWorkoutsCard: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            HStack {
-                Text("Próximos treinos")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
-                Spacer()
-                Button("Ver todos") {
-                    onSelectSection(.agenda)
-                }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen)
-                .buttonStyle(.plain)
-            }
-
-            if viewModel.isLoading {
-                ProgressView().tint(.white)
-            } else if viewModel.upcomingDayGroups.isEmpty {
-                Text("Nenhum treino programado.")
-                    .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
-            } else {
-                ForEach(Array(viewModel.upcomingDayGroups.enumerated()), id: \.element.id) { index, item in
-                    Button {
-                        guard let dayId = item.initialDayId else { return }
-                        onSelectWorkout(item.weekId, dayId)
-                    } label: {
-                        upcomingWorkoutRow(item)
-                    }
-                    .buttonStyle(.plain)
-                    if index < viewModel.upcomingDayGroups.count - 1 {
-                        Divider().background(Theme.Colors.divider).padding(.leading, 42)
+                        .frame(maxWidth: .infinity)
                     }
                 }
+                .frame(maxWidth: .infinity)
             }
         }
         .padding(14)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+    }
+
+    private var weeklyCheckInsIcon: some View {
+        Image(systemName: "person.crop.circle.badge.checkmark")
+            .font(.system(size: 18, weight: .semibold))
+            .foregroundColor(Theme.Colors.primaryGreen)
+            .frame(width: 42, height: 42)
+            .background(Theme.Colors.primaryGreen.opacity(0.10))
+            .background(Color.black.opacity(0.55))
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
+            .accessibilityHidden(true)
+    }
+
+    @ViewBuilder
+    private var nextFitWodEntryCard: some View {
+        if viewModel.hasNextFitSession {
+            Button {
+                path.append(.studentNextFitWod)
+            } label: {
+                nextFitWodEntryCardContent {
+                    HStack(spacing: 6) {
+                        Spacer()
+
+                        Text("dashboard.wod.view_details")
+                        Image(systemName: "chevron.right")
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+                }
+            }
+            .buttonStyle(.plain)
+        } else {
+            nextFitWodEntryCardContent {
+                HStack {
+                    Spacer()
+
+                    Button {
+                        nextFitEmailInput = ""
+                        nextFitPasswordInput = ""
+                        isNextFitLoginSheetPresented = true
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: "link")
+
+                            Text("dashboard.connect_nextfit")
+                        }
+                        .padding(.horizontal, 14)
+                        .compactPrimaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+    }
+
+    private func nextFitWodEntryCardContent<Action: View>(
+        @ViewBuilder action: () -> Action
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(spacing: 12) {
+                Image(systemName: "dumbbell.fill")
+                    .font(.system(size: 18, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .frame(width: 42, height: 42)
+                    .background(Theme.Colors.primaryGreen.opacity(0.10))
+                    .background(Color.black.opacity(0.55))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    )
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text("dashboard.wod.title")
+                        .font(.system(size: 17, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+
+                    if !viewModel.studentUnitName.isEmpty {
+                        Text(verbatim: viewModel.studentUnitName)
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.75))
+                            .lineLimit(1)
+                    }
+                }
+            }
+
+            Spacer(minLength: 18)
+
+            action()
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .leading)
+        .background(
+            ZStack {
+                LinearGradient(
+                    colors: [
+                        Color.black.opacity(0.82),
+                        Color.black.opacity(0.55),
+                        Color.black.opacity(0.25)
+                    ],
+                    startPoint: .leading,
+                    endPoint: .trailing
+                )
+                Theme.Colors.primaryGreen.opacity(0.05)
+            }
+        )
+        .background(
+            Image("rdv_treino1_horizontal")
+                .resizable()
+                .scaledToFill()
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+        .contentShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    private func weeklyProgressText(completed: Int, total: Int) -> String {
+        let format = AppLocalization.string("dashboard.weekly_progress", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [Int64(completed), Int64(total)]
+        )
+    }
+
+    private func weekdayAbbreviation(for date: Date?) -> String {
+        guard let date else { return "" }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEE")
+        return formatter.string(from: date).replacingOccurrences(of: ".", with: "").capitalized
     }
 
     private var nextFitLoginSheet: some View {
@@ -942,18 +686,18 @@ struct StudentDashboardView: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Entrar no NextFit")
+                        Text("dashboard.sign_in_to_nextfit")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("E-mail")
+                                Text("common.email")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
 
-                                TextField("seu@email.com", text: $nextFitEmailInput)
+                                TextField("dashboard.nextfit.email_placeholder", text: $nextFitEmailInput)
                                     .textInputAutocapitalization(.never)
                                     .keyboardType(.emailAddress)
                                     .autocorrectionDisabled(true)
@@ -970,11 +714,11 @@ struct StudentDashboardView: View {
                             }
 
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("Senha")
+                                Text("common.password")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
 
-                                SecureField("Sua senha", text: $nextFitPasswordInput)
+                                SecureField("dashboard.your_password", text: $nextFitPasswordInput)
                                     .textInputAutocapitalization(.never)
                                     .autocorrectionDisabled(true)
                                     .font(.system(size: 16, weight: .semibold))
@@ -1012,7 +756,7 @@ struct StudentDashboardView: View {
                     Button {
                         isNextFitLoginSheetPresented = false
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -1033,13 +777,13 @@ struct StudentDashboardView: View {
                         nextFitPasswordInput = ""
 
                         Task {
-                            if await viewModel.authenticateNextFit(email: email, password: password) {
+                            if await viewModel.authenticateNextFit(email: email, password: password, locale: locale) {
                                 isNextFitLoginSheetPresented = false
                             }
                         }
                     } label: {
                         HStack(spacing: 10) {
-                            Text("Entrar")
+                            Text("dashboard.sign_in")
 
                             if viewModel.isAuthenticatingNextFit {
                                 ProgressView()
@@ -1061,57 +805,5 @@ struct StudentDashboardView: View {
     private func clearNextFitCredentials() {
         nextFitEmailInput = ""
         nextFitPasswordInput = ""
-    }
-
-    private func upcomingWorkoutRow(_ item: StudentDashboardDayGroup) -> some View {
-        HStack(alignment: .top, spacing: 14) {
-            Image(systemName: "calendar")
-                .font(.system(size: 18))
-                .foregroundColor(.green.opacity(0.85))
-                .frame(width: 28)
-            VStack(alignment: .leading, spacing: 3) {
-                HStack {
-                    Text(dateTitle(for: item.date))
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
-                    Spacer()
-                    Text("\(Int((item.progress * 100).rounded()))%")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Theme.Colors.primaryGreen)
-                }
-                Text("\(item.completedCount) de \(item.totalCount) \(item.totalCount == 1 ? "treino concluído" : "treinos concluídos")")
-                    .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
-                ProgressView(value: item.progress)
-                    .tint(Theme.Colors.primaryGreen)
-            }
-            Spacer()
-            Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
-                .padding(.top, 3)
-        }
-        .padding(.vertical, 8)
-        .contentShape(Rectangle())
-    }
-
-    private var greeting: String {
-        let name = session.userName?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        return name.isEmpty ? "Olá, Aluno!" : "Olá, \(name)!"
-    }
-
-    private func weekdayAbbreviation(for date: Date?) -> String {
-        guard let date else { return "" }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEE"
-        return formatter.string(from: date).replacingOccurrences(of: ".", with: "").capitalized
-    }
-
-    private func dateTitle(for date: Date?) -> String {
-        guard let date else { return "" }
-        let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "EEEE dd/MM"
-        return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 }

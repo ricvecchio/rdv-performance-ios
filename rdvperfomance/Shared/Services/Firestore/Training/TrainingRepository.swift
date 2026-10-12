@@ -198,7 +198,8 @@ final class TrainingRepository: FirestoreBaseRepository {
         date: Date,
         title: String,
         description: String,
-        blocks: [BlockFS] = []
+        blocks: [BlockFS] = [],
+        categoryRaw: String? = nil
     ) async throws -> String {
         
         let cleanWeekId = clean(weekId)
@@ -220,7 +221,7 @@ final class TrainingRepository: FirestoreBaseRepository {
                 .document()
         }
         
-        let payload: [String: Any] = [
+        var payload: [String: Any] = [
             "dayIndex": dayIndex,
             "dayName": dayName,
             "date": Timestamp(date: date),
@@ -230,6 +231,9 @@ final class TrainingRepository: FirestoreBaseRepository {
             "createdAt": FieldValue.serverTimestamp(),
             "updatedAt": FieldValue.serverTimestamp()
         ]
+        if let categoryRaw, let category = TreinoTipo.normalized(from: categoryRaw) {
+            payload["categoryRaw"] = category.rawValue
+        }
         
         try await ref.setData(payload, merge: true)
         

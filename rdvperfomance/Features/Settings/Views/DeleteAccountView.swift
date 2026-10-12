@@ -6,6 +6,7 @@ struct DeleteAccountView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var currentPassword: String = ""
     @State private var confirmText: String = ""
@@ -21,8 +22,13 @@ struct DeleteAccountView: View {
     // Retorna verdadeiro se pode executar a exclusão
     private var canDelete: Bool {
         !currentPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        && confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR"
+        && confirmText.trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare(confirmationKeyword) == .orderedSame
         && !isLoading
+    }
+
+    private var confirmationKeyword: String {
+        AppLocalization.string("settings.delete.confirmation_keyword", locale: locale)
     }
 
     // Constrói a interface com aviso, formulário e ações
@@ -96,7 +102,7 @@ struct DeleteAccountView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Excluir Conta")
+                Text("settings.delete.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -114,14 +120,14 @@ struct DeleteAccountView: View {
             HStack(spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.red.opacity(0.9))
-                Text("Atenção")
-                    .font(.system(size: 16, weight: .semibold))
+                Text("common.warning")
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
 
-            Text("Esta ação é permanente. Seu acesso será removido e você será deslogado do aplicativo.")
-                .font(.system(size: 13))
+            Text("settings.delete.warning_message")
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.60))
                 .multilineTextAlignment(.leading)
 
@@ -129,21 +135,25 @@ struct DeleteAccountView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Retorna formulário com senha e confirmação
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            secureUnderlineField(title: "Senha atual", text: $currentPassword)
+            secureUnderlineField(title: "settings.password.current", text: $currentPassword)
 
             underlineField(
                 title: (
-                    Text("Digite ").foregroundColor(textSecondary)
-                    + Text("EXCLUIR").bold().foregroundColor(.white.opacity(0.92))
-                    + Text(" para confirmar").foregroundColor(textSecondary)
+                    Text("settings.delete.confirm_prefix").foregroundColor(textSecondary)
+                    + Text(confirmationKeyword).bold().foregroundColor(.white.opacity(0.92))
+                    + Text("settings.delete.confirm_suffix").foregroundColor(textSecondary)
                 )
                 .font(.system(size: 14)),
                 text: $confirmText
@@ -155,8 +165,12 @@ struct DeleteAccountView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func deleteAccountButton() -> some View {
@@ -167,7 +181,11 @@ struct DeleteAccountView: View {
                 Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "trash.fill")
-                    Text(isLoading ? "Excluindo..." : "Excluir minha conta")
+                    Text(
+                        isLoading
+                            ? LocalizedStringKey("settings.delete.loading")
+                            : LocalizedStringKey("settings.delete.submit")
+                    )
                 }
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
@@ -191,18 +209,26 @@ struct DeleteAccountView: View {
         errorMessage = ""
 
         guard session.isLoggedIn else {
-            presentError("Você precisa estar logado.")
+            presentError("auth.errors.login_required")
             return
         }
 
         let pw = currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !pw.isEmpty else {
-            presentError("Informe sua senha atual.")
+            presentError("settings.delete.current_password_required")
             return
         }
 
-        guard confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR" else {
-            presentError("Digite EXCLUIR para confirmar.")
+        guard confirmText.trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare(confirmationKeyword) == .orderedSame else {
+            let format = AppLocalization.string("settings.delete.confirmation_required", locale: locale)
+            presentError(
+                String(
+                    format: format,
+                    locale: locale,
+                    arguments: [confirmationKeyword]
+                )
+            )
             return
         }
 
@@ -250,7 +276,7 @@ struct DeleteAccountView: View {
     }
 
     // Retorna campo seguro com linha inferior
-    private func secureUnderlineField(title: String, text: Binding<String>) -> some View {
+    private func secureUnderlineField(title: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
             Text(title)

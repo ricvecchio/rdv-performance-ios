@@ -17,6 +17,8 @@ struct TeacherWorkoutTemplatesView: View {
     let sectionTitle: String
     let mode: TeacherWorkoutTemplatesMode
 
+    @Environment(\.locale) private var locale
+
     @State private var templates: [WorkoutTemplateFS] = []
     @State private var isLoading: Bool = true
     @State private var hasLoadedInitialData: Bool = false
@@ -52,28 +54,20 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private var addButtonTitle: String {
-        isCrossfitCategory ? "Adicionar WOD" : "Adicionar Treino"
-    }
-
-    private var descriptionText: String {
-        if isAcademiaOrEmCasaCategory {
-            return "Cadastre e gerencie os treinos desta seção."
-        }
-        return "Cadastre e gerencie os WODs desta seção."
+        isCrossfitCategory
+            ? AppLocalization.string("ui.add_wod", locale: locale)
+            : AppLocalization.string("ui.add_workout", locale: locale)
     }
 
     @State private var activeSheet: ActiveSheet? = nil
 
     enum ActiveSheet: Identifiable {
         case detail(WorkoutTemplateFS)
-        case send(WorkoutTemplateFS)
 
         var id: String {
             switch self {
             case .detail(let t):
                 return "detail-\(t.id ?? UUID().uuidString)"
-            case .send(let t):
-                return "send-\(t.id ?? UUID().uuidString)"
             }
         }
     }
@@ -103,14 +97,16 @@ struct TeacherWorkoutTemplatesView: View {
                             } else if isAcademiaOrEmCasaCategory {
                                 EmptyView()
                             } else {
-                                Text("\(category.displayName) • \(sectionTitle)")
+                                Text(
+                                    String(
+                                        format: AppLocalization.string("ui.category_section", locale: locale),
+                                        locale: locale,
+                                        arguments: [category.localizedDisplayName(locale: locale), sectionTitle]
+                                    )
+                                )
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
                             }
-
-                            Text(descriptionText)
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.35))
 
                             if shouldShowAddButton {
                                 TeacherWorkoutTemplatesAddButton(
@@ -124,6 +120,7 @@ struct TeacherWorkoutTemplatesView: View {
                                 hasLoadedInitialData: hasLoadedInitialData,
                                 templates: templates,
                                 isCrossfitCategory: isCrossfitCategory,
+                                category: category,
                                 showsTemplateActions: mode == .manage,
                                 onTapTemplate: { t in
                                     if mode == .attach {
@@ -133,7 +130,7 @@ struct TeacherWorkoutTemplatesView: View {
                                     }
                                 },
                                 onSendTemplate: { t in
-                                    activeSheet = .send(t)
+                                    path.append(.teacherSendWorkout(preselectedTemplate: t))
                                 },
                                 onDeleteTemplate: { t in
                                     Task { await deleteTemplate(template: t) }
@@ -141,7 +138,7 @@ struct TeacherWorkoutTemplatesView: View {
                             )
 
                             if let err = errorMessage {
-                                TeacherWorkoutTemplatesMessageCard(text: err, isError: true)
+                                TeacherWorkoutTemplatesMessageCard(text: err, isError: true, usesApprovedCardStyle: true)
                             }
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -209,12 +206,6 @@ struct TeacherWorkoutTemplatesView: View {
             switch sheet {
             case .detail(let t):
                 TeacherWorkoutTemplateDetailSheet(template: t)
-
-            case .send(let t):
-                TeacherSendWorkoutToStudentSheet(
-                    template: t,
-                    category: category
-                )
             }
         }
     }
@@ -246,7 +237,7 @@ struct TeacherWorkoutTemplatesView: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             templates = []
             isLoading = false
             hasLoadedInitialData = true
@@ -326,7 +317,12 @@ struct TeacherWorkoutTemplatesView: View {
             }
 
         } catch {
-            errorMessage = "Falha ao inserir treinos padrão: \(error.localizedDescription)"
+            let format = AppLocalization.string("ui.failed_to_add_default_workouts_value", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
 
         #if DEBUG
@@ -339,13 +335,13 @@ struct TeacherWorkoutTemplatesView: View {
 
         guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !templateId.isEmpty else {
-            errorMessage = "Não foi possível remover: id do treino inválido."
+            errorMessage = AppLocalization.string("ui.unable_to_remove_invalid_workout_id", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -359,7 +355,12 @@ struct TeacherWorkoutTemplatesView: View {
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
 
         } catch {
-            errorMessage = "Falha ao remover o treino: \(error.localizedDescription)"
+            let format = AppLocalization.string("ui.failed_to_remove_the_workout_value", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
     }
 

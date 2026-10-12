@@ -8,6 +8,7 @@ struct StudentTeachersView: View {
     let onSelectSection: (StudentMainSection) -> Void
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
     private let repository: FirestoreRepository
@@ -84,10 +85,6 @@ struct StudentTeachersView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
                         VStack(alignment: .leading, spacing: 10) {
-                            Text("Gerencie seus professores e vínculos.")
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.55))
-
                             Button {
                                 teacherEmailInput = ""
                                 linkActionMessage = nil
@@ -97,7 +94,7 @@ struct StudentTeachersView: View {
                                 HStack(spacing: 10) {
                                     Image(systemName: "person.badge.plus")
 
-                                    Text("Convidar professor")
+                                    Text("dashboard.invite_coach")
                                 }
                                 .padding(.horizontal, 14)
                                 .compactPrimaryGreenActionButton()
@@ -164,7 +161,7 @@ struct StudentTeachersView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Meus professores")
+                Text("student_teachers.my_coaches")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -188,48 +185,55 @@ struct StudentTeachersView: View {
             await loadStudentEmailIfNeeded()
             await refreshData()
         }
-        .alert("Cancelar convite?", isPresented: $showRequestCancellationConfirmation) {
-            Button("Cancelar", role: .cancel) { requestPendingCancellation = nil }
-            Button("Confirmar cancelamento", role: .destructive) {
+        .alert("student_teachers.cancel_invitation_confirmation_title", isPresented: $showRequestCancellationConfirmation) {
+            Button("common.cancel", role: .cancel) { requestPendingCancellation = nil }
+            Button("student_teachers.confirm_cancellation", role: .destructive) {
                 Task { await cancelRequest() }
             }
         } message: {
-            Text("Deseja cancelar este convite enviado ao professor?")
+            Text("student_teachers.do_you_want_to_cancel_this_invitation_sent_to_the_coach")
         }
-        .alert("Recusar convite?", isPresented: $showInviteDeclineConfirmation) {
-            Button("Cancelar", role: .cancel) { invitePendingDecline = nil }
-            Button("Recusar", role: .destructive) {
+        .alert("student_teachers.decline_invitation_confirmation_title", isPresented: $showInviteDeclineConfirmation) {
+            Button("common.cancel", role: .cancel) { invitePendingDecline = nil }
+            Button("student_teachers.decline", role: .destructive) {
                 Task { await declineInvite() }
             }
         } message: {
-            Text("Deseja recusar este convite de vínculo?")
+            Text("student_teachers.do_you_want_to_decline_this_link_invitation")
         }
-        .alert("Recusar vínculo?", isPresented: $showTeacherUnlinkConfirmation) {
-            Button("Cancelar", role: .cancel) { teacherPendingUnlink = nil }
-            Button("Recusar vínculo", role: .destructive) {
+        .alert("student_teachers.decline_link_confirmation_title", isPresented: $showTeacherUnlinkConfirmation) {
+            Button("common.cancel", role: .cancel) { teacherPendingUnlink = nil }
+            Button("student_teachers.decline_link_action", role: .destructive) {
                 Task { await unlinkTeacher() }
             }
         } message: {
-            Text("Deseja remover o vínculo com o professor \"\(teacherPendingUnlink?.name ?? "")\"?")
+            let format = AppLocalization.string("student_teachers.unlink_confirmation", locale: locale)
+            Text(
+                String(
+                    format: format,
+                    locale: locale,
+                    arguments: [teacherPendingUnlink?.name ?? ""]
+                )
+            )
         }
-        .alert("Erro", isPresented: Binding(
+        .alert("common.error", isPresented: Binding(
             get: { actionErrorMessage != nil },
             set: { if !$0 { actionErrorMessage = nil } }
         )) {
-            Button("OK", role: .cancel) {}
+            Button("common.ok", role: .cancel) {}
         } message: {
-            Text(actionErrorMessage ?? "Ocorreu um erro.")
+            Text(actionErrorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
         }
     }
 
     private var linkedTeachersCard: some View {
-        card(title: "PROFESSORES VINCULADOS") {
+        card(title: "student_teachers.linked_coaches_section") {
             if isLoadingData {
-                loadingView("Carregando professores...")
+                loadingView(AppLocalization.string("student_teachers.loading_teachers", locale: locale))
             } else if linkedTeachers.isEmpty {
                 emptyView(
-                    title: "Nenhum professor vinculado",
-                    message: "Convide ou aceite um professor para aparecer aqui."
+                    title: "student_teachers.no_linked_coach",
+                    message: "student_teachers.invite_or_accept_coach"
                 )
             } else {
                 ForEach(linkedTeachers, id: \.id) { teacher in
@@ -243,11 +247,14 @@ struct StudentTeachersView: View {
     }
 
     private var sentRequestsCard: some View {
-        card(title: "CONVITES ENVIADOS") {
+        card(title: "student_teachers.sent_invitations_section") {
             if isLoadingData {
-                loadingView("Carregando convites...")
+                loadingView(AppLocalization.string("student_teachers.loading_invitations", locale: locale))
             } else if sentRequests.isEmpty {
-                emptyView(title: "Nenhum convite enviado", message: "Convide um professor para iniciar um vínculo.")
+                emptyView(
+                    title: "student_teachers.no_sent_invitation",
+                    message: "student_teachers.invite_coach_to_start_link"
+                )
             } else {
                 ForEach(sentRequests, id: \.id) { request in
                     sentRequestRow(request)
@@ -260,11 +267,14 @@ struct StudentTeachersView: View {
     }
 
     private var receivedInvitesCard: some View {
-        card(title: "CONVITES RECEBIDOS") {
+        card(title: "student_teachers.received_invitations_section") {
             if isLoadingData {
-                loadingView("Carregando convites...")
+                loadingView(AppLocalization.string("student_teachers.loading_invitations", locale: locale))
             } else if receivedInvites.isEmpty {
-                emptyView(title: "Nenhum convite pendente", message: "Convites de professores aparecerão aqui.")
+                emptyView(
+                    title: "student_teachers.no_pending_invitation",
+                    message: "student_teachers.coach_invitations_will_appear_here"
+                )
             } else {
                 ForEach(receivedInvites, id: \.id) { invite in
                     receivedInviteRow(invite)
@@ -276,7 +286,7 @@ struct StudentTeachersView: View {
         }
     }
 
-    private func card<Content: View>(title: String, @ViewBuilder content: () -> Content) -> some View {
+    private func card<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
@@ -290,8 +300,12 @@ struct StudentTeachersView: View {
             Color.clear.frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func teacherRow(_ teacher: AppUser) -> some View {
@@ -305,12 +319,12 @@ struct StudentTeachersView: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher.name)
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(teacher.email)
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.35))
                             .lineLimit(1)
                             .truncationMode(.tail)
@@ -328,7 +342,7 @@ struct StudentTeachersView: View {
                     teacherPendingUnlink = teacher
                     showTeacherUnlinkConfirmation = true
                 } label: {
-                    Label("Recusar vínculo", systemImage: "person.badge.minus")
+                    Label(LocalizedStringKey("student_teachers.decline_link_action"), systemImage: "person.badge.minus")
                 }
             } label: {
                 menuIcon
@@ -351,7 +365,7 @@ struct StudentTeachersView: View {
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(request.teacherEmail)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .truncationMode(.tail)
@@ -364,7 +378,7 @@ struct StudentTeachersView: View {
                     requestPendingCancellation = request
                     showRequestCancellationConfirmation = true
                 } label: {
-                    Label("Cancelar convite", systemImage: "xmark.circle")
+                    Label(LocalizedStringKey("student_teachers.cancel_invitation_action"), systemImage: "xmark.circle")
                 }
             } label: {
                 menuIcon
@@ -390,12 +404,12 @@ struct StudentTeachersView: View {
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher?.name ?? invite.teacherEmail)
-                            .font(.system(size: 18, weight: .medium))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(invite.teacherEmail)
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.35))
                             .lineLimit(1)
                             .truncationMode(.tail)
@@ -412,13 +426,13 @@ struct StudentTeachersView: View {
                 Button {
                     Task { await acceptInvite(invite) }
                 } label: {
-                    Label("Aceitar vínculo", systemImage: "checkmark")
+                    Label(LocalizedStringKey("student_teachers.accept_link"), systemImage: "checkmark")
                 }
                 Button(role: .destructive) {
                     invitePendingDecline = invite
                     showInviteDeclineConfirmation = true
                 } label: {
-                    Label("Recusar convite", systemImage: "xmark.circle")
+                    Label(LocalizedStringKey("student_teachers.decline_invitation_action"), systemImage: "xmark.circle")
                 }
             } label: {
                 menuIcon
@@ -433,20 +447,21 @@ struct StudentTeachersView: View {
 
     private func openTeacherDetails(_ teacher: AppUser?) {
         guard let teacher else {
-            actionErrorMessage = "Não foi possível carregar os dados do professor."
+            actionErrorMessage = AppLocalization.string("student_teachers.teacher_data_load_error", locale: locale)
             return
         }
         selectedTeacher = teacher
     }
 
     private func teacherDetailsSheet(_ teacher: AppUser) -> some View {
-        ZStack {
+        let title = AppLocalization.string("common.trainer", locale: locale)
+        return ZStack {
             Theme.Colors.headerBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(spacing: 10) {
-                        Text("Professor")
+                        Text(title)
                             .font(Theme.Fonts.headerTitle())
                             .foregroundColor(.white)
 
@@ -461,8 +476,8 @@ struct StudentTeachersView: View {
 
                     if teacherHasDetails(teacher) {
                         VStack(alignment: .leading, spacing: 14) {
-                            teacherDetailsField(title: "CREF", value: teacher.cref)
-                            teacherDetailsField(title: "Biografia", value: teacher.bio)
+                            teacherDetailsField(title: AppLocalization.string("student_teachers.cref", locale: locale), value: teacher.cref)
+                            teacherDetailsField(title: AppLocalization.string("student_teachers.biography", locale: locale), value: teacher.bio)
                         }
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -470,7 +485,7 @@ struct StudentTeachersView: View {
                         .cornerRadius(14)
                     }
 
-                    Button("Fechar") {
+                    Button("common.close") {
                         selectedTeacher = nil
                     }
                     .padding(.horizontal, 14)
@@ -508,7 +523,7 @@ struct StudentTeachersView: View {
     }
 
     private var pendingStatus: some View {
-        Text("Pendente")
+        Text("student_teachers.pending")
             .font(.system(size: 12, weight: .semibold))
             .foregroundColor(.yellow.opacity(0.85))
             .padding(.horizontal, 8)
@@ -542,7 +557,7 @@ struct StudentTeachersView: View {
         .padding(.vertical, 18)
     }
 
-    private func emptyView(title: String, message: String) -> some View {
+    private func emptyView(title: LocalizedStringKey, message: LocalizedStringKey) -> some View {
         VStack(spacing: 12) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
@@ -569,22 +584,22 @@ struct StudentTeachersView: View {
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
-                        Text("Convidar professor")
+                        Text("dashboard.invite_coach")
                             .font(.system(size: 18, weight: .bold))
                             .foregroundColor(.white)
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Text("Digite o e-mail do professor para enviar a solicitação.")
+                            Text("dashboard.enter_the_coach_s_email_to_send_the_request")
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.45))
 
                             VStack(alignment: .leading, spacing: 8) {
-                                Text("E-mail do professor")
+                                Text("dashboard.coach_email")
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.75))
 
-                                TextField("professor@email.com", text: $teacherEmailInput)
+                                TextField("dashboard.coach_email_placeholder", text: $teacherEmailInput)
                                     .textInputAutocapitalization(.never)
                                     .keyboardType(.emailAddress)
                                     .autocorrectionDisabled(true)
@@ -623,7 +638,7 @@ struct StudentTeachersView: View {
                     Button {
                         showRequestLinkModal = false
                     } label: {
-                        Text("Voltar")
+                        Text("student_teachers.back")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -647,7 +662,7 @@ struct StudentTeachersView: View {
                         }
                     } label: {
                         HStack(spacing: 10) {
-                            Text("Enviar solicitação")
+                            Text("dashboard.send_request")
 
                             if isProcessingLinkAction {
                                 ProgressView()
@@ -803,7 +818,7 @@ struct StudentTeachersView: View {
               let requestId = request.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !requestId.isEmpty else {
             requestPendingCancellation = nil
-            actionErrorMessage = "Não foi possível identificar o convite."
+            actionErrorMessage = AppLocalization.string("student_teachers.invite_identifier_missing", locale: locale)
             return
         }
 
@@ -820,7 +835,7 @@ struct StudentTeachersView: View {
     private func acceptInvite(_ invite: TeacherStudentInviteFS) async {
         let uid = currentUid
         guard !uid.isEmpty else {
-            actionErrorMessage = "Não foi possível identificar o aluno."
+            actionErrorMessage = AppLocalization.string("student_teachers.student_identifier_missing", locale: locale)
             return
         }
 
@@ -853,14 +868,14 @@ struct StudentTeachersView: View {
               let teacherId = teacher.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !teacherId.isEmpty else {
             teacherPendingUnlink = nil
-            actionErrorMessage = "Não foi possível identificar o professor."
+            actionErrorMessage = AppLocalization.string("student_teachers.teacher_identifier_missing", locale: locale)
             return
         }
 
         let studentId = currentUid
         guard !studentId.isEmpty else {
             teacherPendingUnlink = nil
-            actionErrorMessage = "Não foi possível identificar o aluno."
+            actionErrorMessage = AppLocalization.string("student_teachers.student_identifier_missing", locale: locale)
             return
         }
 
@@ -884,14 +899,20 @@ struct StudentTeachersView: View {
         let email = teacherEmail.trimmingCharacters(in: .whitespacesAndNewlines).lowercased()
 
         guard email.contains("@"), email.contains(".") else {
-            linkActionMessage = "Informe um e-mail válido."
+            linkActionMessage = localizedLinkActionMessage(
+                key: "student_teachers.link_request.invalid_email",
+                value: AppLocalization.string(
+                    "student_teachers.link_request.invalid_email",
+                    locale: locale
+                )
+            )
             linkActionMessageIsError = true
             return false
         }
 
         let uid = currentUid
         guard !uid.isEmpty else {
-            linkActionMessage = "Não foi possível identificar o aluno."
+            linkActionMessage = AppLocalization.string("student_teachers.student_identifier_missing", locale: locale)
             linkActionMessageIsError = true
             return false
         }
@@ -899,7 +920,10 @@ struct StudentTeachersView: View {
         await loadStudentEmailIfNeeded()
         let currentStudentEmail = effectiveStudentEmail
         if currentStudentEmail.isEmpty {
-            linkActionMessage = "Não foi possível identificar o e-mail do aluno."
+            linkActionMessage = AppLocalization.string(
+                "student_teachers.link_request.student_email_missing",
+                locale: locale
+            )
             linkActionMessageIsError = true
             return false
         }
@@ -912,14 +936,20 @@ struct StudentTeachersView: View {
         do {
             guard let teacher = try await repository.getTeacherByEmail(email: email),
                   let teacherIdRaw = teacher.id else {
-                linkActionMessage = "Não encontrei um professor com esse e-mail."
+                linkActionMessage = localizedLinkActionMessage(
+                    key: "student_teachers.link_request.teacher_not_found",
+                    value: AppLocalization.string(
+                        "student_teachers.link_request.teacher_not_found",
+                        locale: locale
+                    )
+                )
                 linkActionMessageIsError = true
                 return false
             }
 
             let teacherId = teacherIdRaw.trimmingCharacters(in: .whitespacesAndNewlines)
             if teacherId.isEmpty {
-                linkActionMessage = "Não foi possível identificar o professor."
+                linkActionMessage = AppLocalization.string("student_teachers.teacher_identifier_missing", locale: locale)
                 linkActionMessageIsError = true
                 return false
             }
@@ -927,7 +957,10 @@ struct StudentTeachersView: View {
             await loadLinkedTeachers()
 
             if linkedTeacherIds.contains(teacherId) {
-                linkActionMessage = "Esse professor já está vinculado."
+                linkActionMessage = AppLocalization.string(
+                    "student_teachers.link_request.already_linked",
+                    locale: locale
+                )
                 linkActionMessageIsError = true
                 return false
             }
@@ -940,7 +973,13 @@ struct StudentTeachersView: View {
                     return requestTeacherId == teacherId && status == "pending"
                 }
                 if hasPendingSameTeacher {
-                    linkActionMessage = "Já existe uma solicitação pendente para esse professor."
+                    linkActionMessage = localizedLinkActionMessage(
+                        key: "student_teachers.link_request.pending",
+                        value: AppLocalization.string(
+                            "student_teachers.link_request.pending",
+                            locale: locale
+                        )
+                    )
                     linkActionMessageIsError = true
                     return false
                 }
@@ -954,7 +993,13 @@ struct StudentTeachersView: View {
                 teacherEmail: email
             )
 
-            linkActionMessage = "Solicitação enviada com sucesso."
+            linkActionMessage = localizedLinkActionMessage(
+                key: "student_teachers.link_request.success",
+                value: AppLocalization.string(
+                    "student_teachers.link_request.success",
+                    locale: locale
+                )
+            )
             linkActionMessageIsError = false
 
             await refreshData()
@@ -963,7 +1008,10 @@ struct StudentTeachersView: View {
             let nsError = error as NSError
             if nsError.domain == FirestoreErrorDomain,
                nsError.code == FirestoreErrorCode.permissionDenied.rawValue {
-                linkActionMessage = "Sem permissão para solicitar vínculo. Ajuste as regras do Firestore para permitir localizar professores."
+                linkActionMessage = AppLocalization.string(
+                    "student_teachers.link_request.permission_denied",
+                    locale: locale
+                )
                 linkActionMessageIsError = true
                 return false
             }
@@ -972,5 +1020,9 @@ struct StudentTeachersView: View {
             linkActionMessageIsError = true
             return false
         }
+    }
+
+    private func localizedLinkActionMessage(key: String, value: String) -> String {
+        return value
     }
 }

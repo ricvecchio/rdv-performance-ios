@@ -9,6 +9,7 @@ struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
 
     @State private var showPassword: Bool = false
+    @Environment(\.locale) private var locale
 
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
@@ -35,7 +36,7 @@ struct LoginView: View {
                     .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
                     .padding(.top, 20)
 
-                Text("Entre com sua conta")
+                Text("auth.login.prompt")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white)
                     .padding(.top, 10)
@@ -44,17 +45,18 @@ struct LoginView: View {
                 VStack(spacing: 22) {
 
                     UnderlineTextField(
-                        title: "E-mail",
+                        title: "common.email",
                         text: $vm.email,
                         isSecure: false,
                         showPassword: .constant(false),
                         lineColor: lineColor,
                         textColor: .white,
-                        placeholderColor: textSecondary
+                        placeholderColor: textSecondary,
+                        isEmail: true
                     )
 
                     UnderlineTextField(
-                        title: "Senha",
+                        title: "common.password",
                         text: $vm.password,
                         isSecure: true,
                         showPassword: $showPassword,
@@ -78,7 +80,7 @@ struct LoginView: View {
                 }
 
                 Button { } label: {
-                    Text("Esqueceu a senha?")
+                    Text("auth.login.forgot_password")
                         .font(.system(size: 14))
                         .foregroundColor(textSecondary)
                         .padding(.top, 14)
@@ -96,7 +98,11 @@ struct LoginView: View {
                                 .tint(.white.opacity(0.92))
                         }
 
-                        Text(vm.isLoading ? "Entrando..." : "Acessar")
+                        Text(
+                            vm.isLoading
+                                ? LocalizedStringKey("auth.login.loading")
+                                : LocalizedStringKey("auth.login.submit")
+                        )
 
                         Spacer()
                     }
@@ -111,7 +117,7 @@ struct LoginView: View {
                 Button {
                     path.append(.accountTypeSelection)
                 } label: {
-                    Text("Inscreva-se gratuitamente")
+                    Text("auth.login.sign_up")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white)
                         .underline()
@@ -148,7 +154,9 @@ struct LoginView: View {
         await session.refreshProfile()
 
         guard session.isLoggedIn else {
-            vm.errorMessage = "Seu perfil não foi encontrado no Firestore (users/{uid})."
+            vm.errorMessage = AppLocalization.string("auth.login.profile_not_found",
+                locale: locale
+            )
             return
         }
 

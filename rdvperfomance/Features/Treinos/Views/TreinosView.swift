@@ -4,6 +4,7 @@ struct TreinosView: View {
 
     @Binding var path: [AppRoute]
     let tipo: TreinoTipo
+    @Environment(\.locale) private var locale
 
     var body: some View {
         ZStack {
@@ -32,7 +33,7 @@ struct TreinosView: View {
                                 .frame(maxWidth: maxContentWidth)
                                 .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
 
-                            Text(tipo.tituloOverlayImagem)
+                            Text(tipo.localizedDisplayName(locale: locale))
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(.white)
                                 .shadow(color: .black.opacity(0.95), radius: 8, x: 0, y: 3)
@@ -50,7 +51,7 @@ struct TreinosView: View {
                 FooterBar(
                     path: $path,
                     kind: .treinosComPerfil(
-                        treinoTitle: tipo.titulo,
+                        treinoTitle: tipo.localizedTitle(locale: locale),
                         treinoIcon: AnyView(tipo.iconeRodapeTreinos),
                         isHomeSelected: false,
                         isTreinoSelected: true,
@@ -82,7 +83,7 @@ struct TreinosView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text(tipo.titulo)
+                Text(tipo.localizedTitle(locale: locale))
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -104,4 +105,3 @@ struct TreinosView: View {
         path.removeLast()
     }
 }
-

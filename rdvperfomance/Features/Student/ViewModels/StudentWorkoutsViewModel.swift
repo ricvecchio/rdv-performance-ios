@@ -9,7 +9,6 @@ enum StudentWorkoutDayStatus {
 
 @MainActor
 final class StudentWorkoutsViewModel: ObservableObject {
-
     @Published private(set) var weeks: [TrainingWeekFS] = []
     @Published private(set) var isLoading: Bool = false
     @Published private(set) var hasLoadedWeekMetadata: Bool = false
@@ -28,7 +27,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
 
     var hasLoadedWeeks: Bool { hasLoadedWeeksAndMeta }
 
-    private var weekRangeText: [String: String] = [:]
+    private var weekDateRanges: [String: (start: Date, end: Date)] = [:]
     @Published private(set) var weekProgressPercent: [String: Int] = [:]
     private var weekEndDate: [String: Date] = [:]
 
@@ -78,33 +77,10 @@ final class StudentWorkoutsViewModel: ObservableObject {
             let t0 = Date()
             #endif
 
-            let activeTeacherIds: Set<String>
-            if filterByActiveTeacherLinks {
-                activeTeacherIds = Set(
-                    try await repository.getTeacherLinksForStudent(studentId: studentId)
-                        .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
-                        .filter { !$0.isEmpty }
-                )
-            } else {
-                activeTeacherIds = []
-            }
-            let cleanViewingTeacherId = viewingTeacherId?
-                .trimmingCharacters(in: .whitespacesAndNewlines)
-            if let cleanViewingTeacherId, cleanViewingTeacherId.isEmpty {
-                throw FirestoreRepositoryError.missingTeacherId
-            }
-
-            let result = try await repository.getWeeksForStudent(
-                studentId: studentId,
-                teacherId: cleanViewingTeacherId
+            let visibleWeeks = try await fetchVisibleWeeks(
+                filterByActiveTeacherLinks: filterByActiveTeacherLinks,
+                viewingTeacherId: viewingTeacherId
             )
-            let visibleWeeks = filterByActiveTeacherLinks
-                ? result.filter {
-                    activeTeacherIds.contains(
-                        $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-                    )
-                }
-                : result
 
             #if DEBUG
             print("[StudentWorkouts] getWeeksForStudent: \(String(format: "%.2f", Date().timeIntervalSince(t0)))s — \(visibleWeeks.count) semana(s)")
@@ -117,7 +93,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
             hasLoadedWeeksAndMeta = true
             hasLoadedWeekMetadata = visibleWeeks.isEmpty
             isLoading = false
-            weekRangeText = [:]
+            weekDateRanges = [:]
             weekProgressPercent = [:]
             weekEndDate = [:]
 
@@ -131,6 +107,65 @@ final class StudentWorkoutsViewModel: ObservableObject {
         } catch {
             self.errorMessage = (error as NSError).localizedDescription
             isLoading = false
+        }
+    }
+
+    /// Busca vínculos ativos e semanas em paralelo (consultas independentes).
+    private func fetchVisibleWeeks(
+        filterByActiveTeacherLinks: Bool,
+        viewingTeacherId: String?
+    ) async throws -> [TrainingWeekFS] {
+        let cleanViewingTeacherId = viewingTeacherId?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        if let cleanViewingTeacherId, cleanViewingTeacherId.isEmpty {
+            throw FirestoreRepositoryError.missingTeacherId
+        }
+
+        async let weeksResult = repository.getWeeksForStudent(
+            studentId: studentId,
+            teacherId: cleanViewingTeacherId
+        )
+
+        guard filterByActiveTeacherLinks else {
+            return try await weeksResult
+        }
+
+        let activeTeacherIds = Set(
+            try await repository.getTeacherLinksForStudent(studentId: studentId)
+                .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
+                .filter { !$0.isEmpty }
+        )
+        let result = try await weeksResult
+        return result.filter {
+            activeTeacherIds.contains(
+                $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
+            )
+        }
+    }
+
+    /// Revalida somente a lista de semanas quando a tela é remontada com dados já
+    /// em memória. Não limpa caches nem exibe loading: dias/status já carregados
+    /// são reaproveitados e apenas semanas novas buscam seus metadados.
+    func revalidateWeeksInBackground(
+        filterByActiveTeacherLinks: Bool,
+        viewingTeacherId: String? = nil
+    ) async {
+        guard hasLoadedWeeksAndMeta, weeksLoadTask == nil else { return }
+
+        guard let visibleWeeks = try? await fetchVisibleWeeks(
+            filterByActiveTeacherLinks: filterByActiveTeacherLinks,
+            viewingTeacherId: viewingTeacherId
+        ) else { return }
+
+        guard weeksLoadTask == nil else { return }
+
+        let generation = UUID()
+        metadataGeneration = generation
+        await loadSecondaryMetadata(for: visibleWeeks, generation: generation)
+
+        guard metadataGeneration == generation else { return }
+        if weeks != visibleWeeks {
+            weeks = visibleWeeks
         }
     }
 
@@ -160,7 +195,7 @@ final class StudentWorkoutsViewModel: ObservableObject {
                         return name.isEmpty && email.isEmpty
                     }
                     .map { $0.teacherId.trimmingCharacters(in: .whitespacesAndNewlines) }
-                    .filter { !$0.isEmpty }
+                    .filter { !$0.isEmpty && teacherNameById[$0] == nil }
             )
         )
 
@@ -219,8 +254,8 @@ final class StudentWorkoutsViewModel: ObservableObject {
             return
         }
 
-        if let range = Self.computeRangeTextStatic(startDate: week.startDate, endDate: week.endDate) {
-            weekRangeText[weekId] = range
+        if let startDate = week.startDate, let endDate = week.endDate {
+            weekDateRanges[weekId] = (startDate, endDate)
         }
         if let endDate = week.endDate {
             weekEndDate[weekId] = endDate
@@ -231,39 +266,54 @@ final class StudentWorkoutsViewModel: ObservableObject {
         let completed = trainingDays.compactMap(\.id)
             .filter { isCompleted(dayId: $0, in: weekId) }
             .count
-        weekProgressPercent[weekId] = Self.computePercentStatic(
+        let percent = Self.computePercentStatic(
             completed: completed,
             total: trainingDays.count
         )
+        // Evita republicar (e re-renderizar a lista) quando o valor não mudou.
+        if weekProgressPercent[weekId] != percent {
+            weekProgressPercent[weekId] = percent
+        }
     }
 
-    func subtitleForWeek(_ week: TrainingWeekFS) -> String {
-        guard let weekId = week.id else { return "Treinos da semana" }
+    func subtitleForWeek(_ week: TrainingWeekFS, locale: Locale) -> String {
+        guard let weekId = week.id, let range = weekDateRanges[weekId] else {
+            return AppLocalization.string("workout.week_title", locale: locale)
+        }
 
-        let range = weekRangeText[weekId] ?? "Treinos da semana"
-
-        return range
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("ddMMyyyy")
+        let format = AppLocalization.string("common.date_range", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [formatter.string(from: range.start), formatter.string(from: range.end)]
+        )
     }
 
-    func teacherLineForWeek(_ week: TrainingWeekFS) -> String {
+    func teacherLineForWeek(_ week: TrainingWeekFS, locale: Locale) -> String {
+        let format = AppLocalization.string("workout.teacher.named", locale: locale)
         let explicitName = (week.teacherName ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitName.isEmpty {
-            return "Professor: \(explicitName)"
+            return String(format: format, locale: locale, arguments: [explicitName])
         }
 
         let explicitEmail = (week.teacherEmail ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         if !explicitEmail.isEmpty {
-            return "Professor: \(explicitEmail)"
+            return String(format: format, locale: locale, arguments: [explicitEmail])
         }
 
         let teacherId = week.teacherId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !teacherId.isEmpty else { return "Professor: —" }
-
-        if let name = teacherNameById[teacherId], !name.isEmpty {
-            return "Professor: \(name)"
+        guard !teacherId.isEmpty else {
+            return AppLocalization.string("workout.teacher.unavailable", locale: locale)
         }
 
-        return "Professor: ..."
+        if let name = teacherNameById[teacherId], !name.isEmpty {
+            return String(format: format, locale: locale, arguments: [name])
+        }
+
+        return AppLocalization.string("workout.teacher.loading", locale: locale)
     }
 
     func progressPercent(for week: TrainingWeekFS) -> Int {
@@ -376,10 +426,12 @@ final class StudentWorkoutsViewModel: ObservableObject {
         await task.value
     }
 
-    func toggleCompleted(dayId: String, in weekId: String) async {
+    func toggleCompleted(dayId: String, in weekId: String, locale: Locale) async {
         guard let week = weeks.first(where: { $0.id == weekId }),
               let startDate = week.startDate else {
-            weekDaysErrorByWeekId[weekId] = "Não foi possível validar o início desta semana."
+            weekDaysErrorByWeekId[weekId] = AppLocalization.string("workout.week_start_validation_error",
+                locale: locale
+            )
             return
         }
         guard Calendar.current.startOfDay(for: Date()) >= Calendar.current.startOfDay(for: startDate) else {
@@ -423,13 +475,4 @@ final class StudentWorkoutsViewModel: ObservableObject {
         return Int(v.rounded())
     }
 
-    nonisolated static func computeRangeTextStatic(startDate: Date?, endDate: Date?) -> String? {
-        guard let startDate, let endDate else { return nil }
-
-        let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy"
-
-        return "\(f.string(from: startDate)) a \(f.string(from: endDate))"
-    }
 }

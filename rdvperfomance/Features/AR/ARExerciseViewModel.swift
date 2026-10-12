@@ -6,6 +6,12 @@ import Combine
 
 @MainActor
 final class ARExerciseViewModel: ObservableObject {
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
     let weekId: String
     let dayId: String
 
@@ -29,7 +35,9 @@ final class ARExerciseViewModel: ObservableObject {
         let pts = storage.loadCorrectionPoints(weekId: weekId, dayId: dayId)
         correctionPoints = pts
         if pts.isEmpty {
-            errorMessage = "Falha ao carregar pontos de correção"
+            errorMessage = AppLocalization.string("ar.correction_points.load_failed",
+                locale: Self.localizationLocale
+            )
         }
     }
 
@@ -38,7 +46,9 @@ final class ARExerciseViewModel: ObservableObject {
         do {
             try storage.saveCorrectionPoints(correctionPoints, weekId: weekId, dayId: dayId)
         } catch {
-            errorMessage = "Falha ao salvar pontos de correção"
+            errorMessage = AppLocalization.string("ar.correction_points.save_failed",
+                locale: Self.localizationLocale
+            )
         }
     }
 
@@ -77,4 +87,3 @@ final class ARExerciseViewModel: ObservableObject {
         return e
     }
 }
-

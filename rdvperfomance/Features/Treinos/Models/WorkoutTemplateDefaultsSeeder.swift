@@ -55,14 +55,20 @@ final class WorkoutTemplateDefaultsSeeder {
                 .filter { !$0.isEmpty }
         )
 
-        var itemsToInsert: [(title: String, description: String, blocks: [BlockFS])] = []
+        var existingDefaultKeys = Set(existingTemplates.compactMap {
+            DefaultWorkoutLocalization.resolvedKey(for: $0)
+        })
+        var itemsToInsert: [(title: String, description: String, blocks: [BlockFS], defaultKey: String?)] = []
 
         for seed in seeds {
             let templateTitle = seed.name.trimmingCharacters(in: .whitespacesAndNewlines)
             let titleKey = templateTitle.lowercased()
+            let defaultKey = DefaultWorkoutLocalization.defaultKey(
+                for: seed, sectionKey: sectionKey, category: category
+            )
 
             // ✅ Se já existe, não duplica
-            if existingTitles.contains(titleKey) {
+            if existingTitles.contains(titleKey) || existingDefaultKeys.contains(defaultKey) {
                 continue
             }
 
@@ -77,8 +83,9 @@ final class WorkoutTemplateDefaultsSeeder {
                 }
 
             let templateDescription = buildTemplateDescription(seed: seed)
-            itemsToInsert.append((title: templateTitle, description: templateDescription, blocks: blocksFS))
+            itemsToInsert.append((title: templateTitle, description: templateDescription, blocks: blocksFS, defaultKey: defaultKey))
             existingTitles.insert(titleKey)
+            existingDefaultKeys.insert(defaultKey)
         }
 
         let didInsertAny = !itemsToInsert.isEmpty
@@ -123,12 +130,7 @@ final class WorkoutTemplateDefaultsSeeder {
     }
 
     private func buildTemplateDescription(seed: DefaultWorkoutSeed) -> String {
-        let header = seed.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let desc = seed.description.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        if header.isEmpty { return desc }
-        if desc.isEmpty { return header }
-        return "\(header)\n\(desc)"
+        DefaultWorkoutLocalization.persistedDescription(for: seed)
     }
 
     private func buildFlagKey(teacherId: String, categoryRaw: String, sectionKey: String) -> String {
@@ -141,4 +143,3 @@ final class WorkoutTemplateDefaultsSeeder {
         return "seeded_defaults_v6_\(safeTeacherId)_\(safeCategory)_\(safeSection)"
     }
 }
-

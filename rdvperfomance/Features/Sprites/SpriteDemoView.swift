@@ -41,7 +41,7 @@ struct SpriteDemoView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Visualize um preview interativo de evolução/consistência.")
+                            Text("sprites.preview.description")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -53,7 +53,7 @@ struct SpriteDemoView: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "shuffle")
-                                    Text("Randomizar cenário")
+                                    Text("gamification.preview.randomize")
                                 }
                                 .padding(.horizontal, 14)
                                 .primaryGreenActionButton()
@@ -94,7 +94,7 @@ struct SpriteDemoView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Preview do Progresso")
+                Text("sprites.preview.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -112,22 +112,30 @@ struct SpriteDemoView: View {
     private func previewCard() -> some View {
         VStack(spacing: 0) {
 
-            Color.clear.frame(height: 8)
+            Color.clear.frame(height: 12)
 
-            SpriteKitPreviewPanel(metrics: vm.metrics)
-                .frame(height: 420)
-                .frame(maxWidth: .infinity)
-                .clipped()
-                .padding(.horizontal, 2)
+            ZStack {
+                Color.white.opacity(0.06)
 
-            Color.clear.frame(height: 8)
+                SpriteKitPreviewPanel(metrics: vm.metrics)
+            }
+            .frame(height: 480)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .padding(.horizontal, 12)
+
+            Color.clear.frame(height: 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -142,24 +150,26 @@ struct SpriteDemoView: View {
 private struct SpriteKitPreviewPanel: View {
 
     let metrics: ProgressMetrics
+    @Environment(\.locale) private var locale
 
-    @State private var scene: ProgressGameScene = ProgressGameSceneFactory.makeScene(
-        size: CGSize(width: 10, height: 10)
-    )
+    @State private var scene = Self.makePreviewScene()
 
     // Constrói a view do SpriteKit com gerenciamento de tamanho
     var body: some View {
         GeometryReader { geo in
-            SpriteView(scene: scene)
+            SpriteView(scene: scene, options: [.allowsTransparency])
                 .onAppear {
                     applySizeIfNeeded(geo.size)
-                    scene.update(with: metrics, animated: false)
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
                 .onChange(of: geo.size) { _, newSize in
                     applySizeIfNeeded(newSize)
                 }
                 .onChange(of: metrics) { _, newValue in
-                    scene.update(with: newValue, animated: true)
+                    scene.update(with: newValue, locale: locale, animated: true)
+                }
+                .onChange(of: locale.identifier) { _, _ in
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
         }
         .clipped()
@@ -171,5 +181,11 @@ private struct SpriteKitPreviewPanel: View {
         if scene.size != size {
             scene.size = size
         }
+    }
+
+    private static func makePreviewScene() -> ProgressGameScene {
+        let scene = ProgressGameSceneFactory.makeScene(size: CGSize(width: 10, height: 10))
+        scene.configurePreviewBadgeLayout()
+        return scene
     }
 }

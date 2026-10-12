@@ -3,6 +3,7 @@ import Charts
 
 // Tela do Aluno: Recorde Pessoal > Campeonatos (lista fixa + PR em texto)
 struct CampeonatosPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
 
@@ -244,29 +245,6 @@ struct CampeonatosPersonalRecordsView: View {
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-
-                            HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor resultado por prova.")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.55))
-
-                                Spacer()
-
-                                Button {
-                                    addItemErrorMessage = nil
-                                    newItemName = ""
-                                    newItemDescription = ""
-                                    newItemValue = ""
-                                    showAddItemSheet = true
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.green.opacity(0.85))
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo prova")
-                            }
-
                             tableContainer()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -315,13 +293,34 @@ struct CampeonatosPersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Campeonatos")
+                Text("personal_records_campeonatos.championships")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    Button {
+                        addItemErrorMessage = nil
+                        newItemName = ""
+                        newItemDescription = ""
+                        newItemValue = ""
+                        showAddItemSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -360,11 +359,11 @@ struct CampeonatosPersonalRecordsView: View {
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -374,14 +373,14 @@ struct CampeonatosPersonalRecordsView: View {
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Prova")
-                .font(.system(size: 12, weight: .bold))
+            Text("personal_records_campeonatos.event")
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("Resultado:")
-                .font(.system(size: 12, weight: .bold))
+            Text("personal_records.result_field_label")
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -399,13 +398,18 @@ struct CampeonatosPersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "trophy.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 15))
-                    .frame(width: 26)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: "trophy.fill")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
 
                 Text(wod.name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
@@ -414,11 +418,11 @@ struct CampeonatosPersonalRecordsView: View {
 
                 if let stored, !stored.isEmpty {
                     Text(stored)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 
@@ -464,12 +468,12 @@ struct CampeonatosPersonalRecordsView: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("PR (tempo)")
-                                .font(.system(size: 13, weight: .semibold))
+                            Text("personal_records_campeonatos.pr_time")
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
                         }
 
-                        TextField("Ex: 12:34", text: $inputValue)
+                        TextField("personal_records_campeonatos.e_g_12_34", text: $inputValue)
                             .keyboardType(.numbersAndPunctuation)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
@@ -499,11 +503,10 @@ struct CampeonatosPersonalRecordsView: View {
                         ZStack {
                             Theme.Colors.headerBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
-                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
-                                    .environment(\.locale, Locale(identifier: "pt_BR"))
                                 Button { showPRDatePicker = false } label: {
-                                    Text("Confirmar")
+                                    Text("common.confirm")
                                         .frame(maxWidth: .infinity)
                                         .primaryGreenActionButton()
                                 }
@@ -523,7 +526,7 @@ struct CampeonatosPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -542,7 +545,7 @@ struct CampeonatosPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -560,7 +563,7 @@ struct CampeonatosPersonalRecordsView: View {
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir prova")
+                        .accessibilityLabel("personal_records_campeonatos.delete_event")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -569,13 +572,15 @@ struct CampeonatosPersonalRecordsView: View {
             }
         }
         .presentationDetents([.fraction(0.80)])
-        .alert("Excluir registro", isPresented: $showDeleteAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedWod?.name ?? "este prova")?")
+            let recordName = selectedWod?.name ?? AppLocalization.string("personal_records.event_fallback", locale: locale)
+            let format = AppLocalization.string("personal_records.delete_record_confirmation", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
             inputValue = ""
@@ -595,8 +600,8 @@ struct CampeonatosPersonalRecordsView: View {
                     .foregroundColor(.green.opacity(0.90))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("WOD")
-                        .font(.system(size: 12, weight: .bold))
+                    Text("personal_records_campeonatos.wod")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
                     Text(wod.name)
@@ -611,7 +616,7 @@ struct CampeonatosPersonalRecordsView: View {
 
             ScrollView {
                 Text(description)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 2)
@@ -755,13 +760,13 @@ struct CampeonatosPersonalRecordsView: View {
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("Evolução", systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 13, weight: .semibold))
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label("Histórico", systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
@@ -782,7 +787,7 @@ struct CampeonatosPersonalRecordsView: View {
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
-                        Text("Nenhum histórico de evolução registrado ainda.")
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.60))
                     } else {
@@ -793,13 +798,13 @@ struct CampeonatosPersonalRecordsView: View {
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
                                     if entry.id == recordID {
-                                        Text("RECORDE")
+                                        Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.green)
                                     }
                                     Spacer()
-                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
-                                        .font(.system(size: 13))
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
@@ -809,7 +814,7 @@ struct CampeonatosPersonalRecordsView: View {
                                             .foregroundColor(.red.opacity(0.85))
                                     }
                                     .buttonStyle(.plain)
-                                    .accessibilityLabel("Excluir registro")
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -829,16 +834,16 @@ struct CampeonatosPersonalRecordsView: View {
             }
         }
         .presentationDetents([.large])
-        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
-            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
                 if let entry = historyEntryPendingDeletion {
                     deleteHistoryEntry(entry, for: key, metadata: metadata)
                 }
                 historyEntryPendingDeletion = nil
             }
         } message: {
-            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
         }
     }
 
@@ -894,8 +899,8 @@ struct CampeonatosPersonalRecordsView: View {
 
     private func formatPRDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd 'de' MMMM, yyyy"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
         return formatter.string(from: date)
     }
 
@@ -974,27 +979,27 @@ struct CampeonatosPersonalRecordsView: View {
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Nova prova de Campeonato")
+                    Text("personal_records_campeonatos.new_championship_event")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie um prova e, se quiser, já informe seu resultado inicial.")
-                        .font(.system(size: 13))
+                    Text("personal_records_campeonatos.create_an_event_and_if_you_want_enter_your_initial_result_now")
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                    addItemField("Nome da prova", placeholder: "Ex: Prova 1", text: $newItemName)
+                    addItemField("personal_records.campeonatos.event_name_field", placeholder: "personal_records.placeholder.event_name", text: $newItemName)
 
-                    addItemField("Descrição (opcional)", placeholder: "Ex: For Time — 3 rounds", text: $newItemDescription)
+                    addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.for_time_three_rounds", text: $newItemDescription)
 
-                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34", text: $newItemValue)
+                    addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.yellow.opacity(0.85))
                         }
                     }
@@ -1004,7 +1009,7 @@ struct CampeonatosPersonalRecordsView: View {
                         Button {
                             showAddItemSheet = false
                         } label: {
-                            Text("Cancelar")
+                            Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
                                 .frame(maxWidth: .infinity)
@@ -1021,7 +1026,7 @@ struct CampeonatosPersonalRecordsView: View {
                         Button {
                             addNewItem()
                         } label: {
-                            Text("Adicionar")
+                            Text("common.add")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
                         }
@@ -1036,10 +1041,10 @@ struct CampeonatosPersonalRecordsView: View {
         .presentationDetents([.medium])
     }
 
-    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+    private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             TextField(placeholder, text: text)
@@ -1059,13 +1064,13 @@ struct CampeonatosPersonalRecordsView: View {
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do prova."
+            addItemErrorMessage = AppLocalization.string("personal_records.campeonatos.event_name_required", locale: locale)
             return
         }
 
         let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este prova já existe na sua lista."
+            addItemErrorMessage = AppLocalization.string("personal_records.campeonatos.duplicate_event", locale: locale)
             return
         }
 

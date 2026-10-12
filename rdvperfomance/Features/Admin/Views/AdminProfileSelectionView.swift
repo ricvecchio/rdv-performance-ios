@@ -3,6 +3,8 @@ import SwiftUI
 struct AdminProfileSelectionView: View {
     @EnvironmentObject private var session: AppSession
 
+    @State private var isTeacherAuthorizationSheetPresented = false
+
     private let textSecondary = Color.white.opacity(0.60)
 
     var body: some View {
@@ -21,7 +23,7 @@ struct AdminProfileSelectionView: View {
                     .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
                     .padding(.top, 20)
 
-                Text("Escolha seu perfil de Administração")
+                Text("admin.profile_selection.prompt")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white)
                     .padding(.top, 10)
@@ -29,42 +31,66 @@ struct AdminProfileSelectionView: View {
 
                 VStack(spacing: 14) {
                     selectionButton(
-                        title: "Perfil Administrador",
-                        subtitle: "Gerencie usuários, vínculos e treinos"
+                        title: "admin.profile_selection.administrator.title",
+                        subtitle: "admin.profile_selection.administrator.subtitle"
                     ) {
                         session.selectAdminProfile(.administrator)
                     }
 
                     selectionButton(
-                        title: "Perfil Aluno",
-                        subtitle: "Visualize o aplicativo como aluno"
+                        title: "admin.profile_selection.student.title",
+                        subtitle: "admin.profile_selection.student.subtitle"
                     ) {
                         session.selectAdminProfile(.student)
                     }
 
                     selectionButton(
-                        title: "Perfil Professor",
-                        subtitle: "Visualize o aplicativo como professor"
+                        title: "admin.profile_selection.trainer.title",
+                        subtitle: "admin.profile_selection.trainer.subtitle"
                     ) {
                         session.selectAdminProfile(.trainer)
                     }
                 }
                 .frame(width: 300)
 
-                Text("Você pode trocar de perfil nas configurações.")
+                Text("admin.profile_selection.change_note")
                     .font(.system(size: 13))
                     .foregroundColor(textSecondary)
                     .padding(.top, 18)
 
+                if session.isAdmin {
+                    Button {
+                        isTeacherAuthorizationSheetPresented = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "key.fill")
+                            Text("teacher_authorization.admin.entry")
+                        }
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(.top, 14)
+                }
+
                 Spacer()
             }
         }
+        // Desfoca somente a tela de origem; o conteúdo do sheet é renderizado em outra camada e permanece nítido
+        .blur(radius: isTeacherAuthorizationSheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: isTeacherAuthorizationSheetPresented)
         .navigationBarBackButtonHidden(true)
+        .sheet(isPresented: $isTeacherAuthorizationSheetPresented) {
+            TeacherAuthorizationCodeView()
+                .presentationDetents([.fraction(0.55)])
+        }
     }
 
     private func selectionButton(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -82,10 +108,10 @@ struct AdminProfileSelectionView: View {
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.black.opacity(0.55))
+                    .fill(Color.black.opacity(0.68))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
             )
             .shadow(color: .black.opacity(0.25), radius: 10, y: 6)

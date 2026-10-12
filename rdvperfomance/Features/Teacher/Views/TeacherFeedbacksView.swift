@@ -9,6 +9,7 @@ struct TeacherFeedbacksView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var isLoading: Bool = false
     @State private var isSaving: Bool = false
@@ -19,6 +20,10 @@ struct TeacherFeedbacksView: View {
 
     @State private var newFeedbackText: String = ""
     @State private var showPasswordDummy: Bool = false
+
+    @FocusState private var isFeedbackFocused: Bool
+
+    private let successMessageScrollID = "teacherFeedbackSuccess"
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -38,40 +43,50 @@ struct TeacherFeedbacksView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 14) {
 
-                            header
-                            formCard
-                            listCard
+                                header
+                                formCard
+                                listCard
 
-                            if let err = errorMessage {
-                                messageCard(text: err, isError: true)
+                                if let err = errorMessage {
+                                    messageCard(text: err, isError: true)
+                                }
+
+                                if let ok = successMessage {
+                                    messageCard(text: ok, isError: false)
+                                        .id(successMessageScrollID)
+                                }
+
+                                Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                             }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
 
-                            if let ok = successMessage {
-                                messageCard(text: ok, isError: false)
-                            }
-
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
+                    }
+                    .onChange(of: successMessage) { _, newValue in
+                        // Rola até a confirmação de sucesso para que fique visível
+                        guard newValue != nil else { return }
+                        withAnimation {
+                            proxy.scrollTo(successMessageScrollID, anchor: .bottom)
+                        }
                     }
                 }
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunoSobrePerfil(
+                    kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
                         isHomeSelected: false,
-                        isAlunoSelected: true,
+                        isAlunosSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -101,7 +116,7 @@ struct TeacherFeedbacksView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Feedbacks")
+                Text("ui.feedbacks")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -134,13 +149,10 @@ struct TeacherFeedbacksView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aluno: \(student.name)")
+            let format = AppLocalization.string("ui.student_value", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [student.name]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
-
-            Text("Registre feedbacks e acompanhe o histórico.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -149,8 +161,8 @@ struct TeacherFeedbacksView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("HISTÓRICO")
-                    .font(.system(size: 14, weight: .medium))
+                Text("ui.history")
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.35))
 
                 Spacer()
@@ -161,8 +173,8 @@ struct TeacherFeedbacksView: View {
             }
 
             if feedbacks.isEmpty {
-                Text("Nenhum feedback registrado ainda.")
-                    .font(.system(size: 13))
+                Text("ui.no_feedback_recorded_yet")
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             } else {
                 VStack(spacing: 0) {
@@ -176,11 +188,11 @@ struct TeacherFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -201,12 +213,12 @@ struct TeacherFeedbacksView: View {
             }
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(session.userName ?? "Professor")
+                Text(session.userName ?? AppLocalization.string("common.trainer", locale: locale))
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Text(fb.text)
-                    .font(.system(size: 13))
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.75))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -222,22 +234,26 @@ struct TeacherFeedbacksView: View {
                     .foregroundColor(.green.opacity(0.85))
                     .font(.system(size: 14))
 
-                Text("FEEDBACK")
-                    .font(.system(size: 14, weight: .medium))
+                Text("ui.feedback")
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.35))
             }
 
             VStack(alignment: .leading, spacing: 8) {
                 TextEditor(text: $newFeedbackText)
+                    .focused($isFeedbackFocused)
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white.opacity(0.92))
                     .frame(minHeight: 120)
                     .padding(10)
-                    .background(Color.black.opacity(0.25))
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                            .stroke(
+                                Theme.Colors.primaryGreen.opacity(0.28),
+                                lineWidth: 1
+                            )
                     )
             }
 
@@ -249,7 +265,7 @@ struct TeacherFeedbacksView: View {
                     if isSaving {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Salvar")
+                        Text("common.save")
                     }
                     Spacer()
                 }
@@ -261,11 +277,11 @@ struct TeacherFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -274,17 +290,17 @@ struct TeacherFeedbacksView: View {
             Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -297,7 +313,9 @@ struct TeacherFeedbacksView: View {
     private func friendlyFirestoreError(_ error: Error) -> String {
         let msg = (error as NSError).localizedDescription
         if msg.lowercased().contains("missing or insufficient permissions") {
-            return "Sem permissão para acessar os feedbacks desse aluno. Verifique se você está logado como PROFESSOR e se as regras do Firestore liberam /users/{alunoId}/feedbacks."
+            return AppLocalization.string("ui.no_permission_to_access_this_student_s_feedback_verify_that_you_are_signed_in_as_a_coach_and_that_the_firestore_rules_allow_users_alunoid_feedbacks",
+                locale: locale
+            )
         }
         return msg
     }
@@ -308,17 +326,20 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode acessar feedbacks."
+            errorMessage = AppLocalization.string("ui.only_coaches_can_access_feedback", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
@@ -345,23 +366,26 @@ struct TeacherFeedbacksView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode salvar feedback."
+            errorMessage = AppLocalization.string("ui.only_coaches_can_save_feedback", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
         let textTrim = newFeedbackText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !textTrim.isEmpty else {
-            errorMessage = "Digite um feedback antes de salvar."
+            errorMessage = AppLocalization.string("ui.enter_feedback_before_saving", locale: locale)
             return
         }
 
@@ -378,8 +402,12 @@ struct TeacherFeedbacksView: View {
             )
 
             newFeedbackText = ""
-            successMessage = "Feedback salvo com sucesso."
+            // Fecha o teclado somente após a gravação bem-sucedida
+            isFeedbackFocused = false
             await loadFeedbacks()
+
+            // Define o sucesso após o recarregamento, que limpa os estados de status
+            successMessage = AppLocalization.string("ui.feedback_saved_successfully", locale: locale)
 
         } catch {
             errorMessage = friendlyFirestoreError(error)
@@ -388,8 +416,8 @@ struct TeacherFeedbacksView: View {
 
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy HH:mm"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyyHHmm")
         return f.string(from: date)
     }
 

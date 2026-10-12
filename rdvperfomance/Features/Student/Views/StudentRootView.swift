@@ -52,6 +52,18 @@ struct StudentRootView: View {
     @State private var workoutsInitialWeekId: String?
     @State private var workoutsInitialDayId: String?
 
+    /// Mantém o cache de Treinos da Semana entre trocas de aba (somente a aba
+    /// selecionada é montada, o que recriaria o ViewModel a cada retorno).
+    @StateObject private var workoutsViewModel: StudentWorkoutsViewModel
+
+    init(studentId: String, studentName: String) {
+        self.studentId = studentId
+        self.studentName = studentName
+        _workoutsViewModel = StateObject(
+            wrappedValue: StudentWorkoutsViewModel(studentId: studentId, repository: .shared)
+        )
+    }
+
     var body: some View {
         selectedTab
             .environment(\.selectStudentMainSection, selectSection)
@@ -135,7 +147,8 @@ struct StudentRootView: View {
                     workoutsInitialWeekId = nil
                     workoutsInitialDayId = nil
                 },
-                onSelectSection: selectSection
+                onSelectSection: selectSection,
+                viewModel: workoutsViewModel
             )
             .navigationDestination(for: AppRoute.self) { route in
                 workoutsDestination(for: route, path: $workoutsPath)
@@ -146,16 +159,6 @@ struct StudentRootView: View {
     @ViewBuilder
     private func workoutsDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
         switch route {
-
-        case .studentWeekDetail(let studentId, let weekId, let weekTitle, let selectedDayId):
-            StudentWeekDetailView(
-                path: path,
-                studentId: studentId,
-                weekId: weekId,
-                weekTitle: weekTitle,
-                initialExpandedDayId: selectedDayId,
-                onSelectSection: selectSection
-            )
 
         case .studentDayDetail(let weekId, let day, let weekTitle):
             StudentDayDetailView(
@@ -176,6 +179,13 @@ struct StudentRootView: View {
                 onSelectSection: selectSection
             )
 
+        case .studentNextFitWod:
+            StudentNextFitWodView(
+                path: path,
+                studentId: studentId,
+                onSelectSection: selectSection
+            )
+
         default:
             EmptyView()
         }
@@ -185,7 +195,7 @@ struct StudentRootView: View {
 
     private var recordsTab: some View {
         NavigationStack(path: $recordsPath) {
-            StudentPersonalRecordsView(
+            PersonalRecordsView(
                 path: $recordsPath,
                 onBack: { selectSection(.agenda) },
                 onSelectSection: selectSection
@@ -258,6 +268,9 @@ struct StudentRootView: View {
 
         case .configuracoes:
             SettingsView(path: $profilePath)
+
+        case .idioma:
+            LanguageSettingsView()
 
         case .editarPerfil:
             EditProfileView(path: $profilePath)

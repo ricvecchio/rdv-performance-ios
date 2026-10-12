@@ -8,6 +8,28 @@
 import XCTest
 @testable import rdvperfomance
 
+// MARK: - AppVersion Tests
+
+final class AppVersionTests: XCTestCase {
+
+    func testComparesNumericComponents() {
+        XCTAssertLessThan(AppVersion("1.0.9")!, AppVersion("1.0.10")!)
+        XCTAssertLessThan(AppVersion("1.0.10")!, AppVersion("1.1.0")!)
+        XCTAssertLessThan(AppVersion("1.1.0")!, AppVersion("1.10.0")!)
+        XCTAssertLessThan(AppVersion("1.10.0")!, AppVersion("2.0.0")!)
+    }
+
+    func testTreatsMissingComponentsAsZero() {
+        XCTAssertEqual(AppVersion("1.0")!, AppVersion("1.0.0")!)
+    }
+
+    func testRejectsInvalidVersions() {
+        XCTAssertNil(AppVersion(""))
+        XCTAssertNil(AppVersion("1..0"))
+        XCTAssertNil(AppVersion("1.0.beta"))
+    }
+}
+
 // MARK: - BrazilianPhoneFormatter Tests
 
 final class BrazilianPhoneFormatterTests: XCTestCase {

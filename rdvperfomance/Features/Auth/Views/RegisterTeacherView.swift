@@ -73,7 +73,7 @@ struct RegisterTeacherView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Cadastro Professor")
+                Text("auth.register_teacher.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -94,7 +94,7 @@ struct RegisterTeacherView: View {
         VStack(spacing: 18) {
 
             UnderlineTextField(
-                title: "Nome",
+                title: "common.name",
                 text: $vm.name,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -104,17 +104,18 @@ struct RegisterTeacherView: View {
             )
 
             UnderlineTextField(
-                title: "E-mail",
+                title: "common.email",
                 text: $vm.email,
                 isSecure: false,
                 showPassword: .constant(false),
                 lineColor: lineColor,
                 textColor: .white,
-                placeholderColor: textSecondary
+                placeholderColor: textSecondary,
+                isEmail: true
             )
 
             UnderlineTextField(
-                title: "Senha",
+                title: "common.password",
                 text: $vm.password,
                 isSecure: true,
                 showPassword: $showPassword,
@@ -125,7 +126,7 @@ struct RegisterTeacherView: View {
 
             // ✅ Campo de telefone com máscara brasileira centralizada
             PhoneTextField(
-                title: "WhatsApp (opcional)",
+                title: "auth.fields.whatsapp_optional",
                 digits: $vm.phone,
                 lineColor: lineColor,
                 textColor: .white,
@@ -133,7 +134,7 @@ struct RegisterTeacherView: View {
             )
 
             UnderlineTextField(
-                title: "CREF (opcional)",
+                title: "auth.fields.cref_optional",
                 text: $vm.cref,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -143,7 +144,7 @@ struct RegisterTeacherView: View {
             )
 
             UnderlineTextField(
-                title: "Nome da academia (opcional)",
+                title: "auth.fields.gym_name_optional",
                 text: $vm.gymName,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -155,7 +156,7 @@ struct RegisterTeacherView: View {
             multilineBioField()
 
             pickerRow(
-                title: "Área de foco",
+                title: "auth.fields.focus_area",
                 selection: $vm.focusArea,
                 options: FocusAreaDTO.allCases,
                 displayText: displayTextForFocusArea
@@ -164,15 +165,19 @@ struct RegisterTeacherView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Campo de texto multilinha para biografia do professor
     private func multilineBioField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text("Bio (opcional)")
+            Text("auth.fields.bio_optional")
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 
@@ -226,7 +231,11 @@ struct RegisterTeacherView: View {
                             .tint(.white.opacity(0.9))
                     }
 
-                    Text(vm.isLoading ? "Criando..." : "Criar Conta")
+                    Text(
+                        vm.isLoading
+                            ? LocalizedStringKey("auth.registration.loading")
+                            : LocalizedStringKey("auth.registration.submit")
+                    )
                 }
                 .frame(maxWidth: .infinity)
                 .primaryGreenActionButton()
@@ -237,7 +246,7 @@ struct RegisterTeacherView: View {
             Button {
                 path.removeAll()
             } label: {
-                Text("Já tenho conta — Voltar ao Login")
+                Text("auth.registration.back_to_login")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
                     .underline()
@@ -249,16 +258,20 @@ struct RegisterTeacherView: View {
     }
 
     private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
         switch opt {
-        case .CROSSFIT: return "Crossfit"
-        case .GYM: return "Academia"
-        case .HOME: return "Em Casa"
+        case .CROSSFIT: return AppLocalization.string("auth.focus_area.crossfit", locale: locale)
+        case .GYM: return AppLocalization.string("auth.focus_area.gym", locale: locale)
+        case .HOME: return AppLocalization.string("auth.focus_area.home", locale: locale)
         }
     }
 
     // Renderiza picker estilizado com linha inferior
     private func pickerRow<T: RawRepresentable & CaseIterable>(
-        title: String,
+        title: LocalizedStringKey,
         selection: Binding<T>,
         options: [T],
         displayText: ((T) -> String)? = nil

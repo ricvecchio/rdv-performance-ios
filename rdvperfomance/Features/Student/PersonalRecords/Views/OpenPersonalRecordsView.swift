@@ -3,6 +3,7 @@ import Charts
 
 // Tela do Aluno: Recorde Pessoal > Open (lista fixa + PR em texto)
 struct OpenPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
 
@@ -630,30 +631,6 @@ Bar-Facing Burpees
                         Spacer(minLength: 0)
 
                         VStack(alignment: .leading, spacing: 14) {
-
-                            HStack(alignment: .center, spacing: 10) {
-                                Text("Adicione seu melhor resultado por item.")
-                                    .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.55))
-
-                                Spacer()
-
-                                Button {
-                                    addItemErrorMessage = nil
-                                    newItemName = ""
-                                    newItemTitle = ""
-                                    newItemDescription = ""
-                                    newItemValue = ""
-                                    showAddItemSheet = true
-                                } label: {
-                                    Image(systemName: "plus.circle.fill")
-                                        .foregroundColor(.green.opacity(0.85))
-                                        .font(.system(size: 18, weight: .semibold))
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Adicionar novo item")
-                            }
-
                             tableContainer()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -702,13 +679,35 @@ Bar-Facing Burpees
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Open")
+                Text("personal_records_open.open")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    Button {
+                        addItemErrorMessage = nil
+                        newItemName = ""
+                        newItemTitle = ""
+                        newItemDescription = ""
+                        newItemValue = ""
+                        showAddItemSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -746,11 +745,11 @@ Bar-Facing Burpees
                 }
             }
         }
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -760,14 +759,14 @@ Bar-Facing Burpees
             Color.clear
                 .frame(width: 26, height: 1)
 
-            Text("Open")
-                .font(.system(size: 12, weight: .bold))
+            Text("personal_records_open.open")
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
 
             Spacer()
 
-            Text("PR")
-                .font(.system(size: 12, weight: .bold))
+            Text("personal_records.pr_label")
+                .font(.system(size: 15, weight: .bold))
                 .foregroundColor(.white.opacity(0.55))
         }
         .padding(.horizontal, 14)
@@ -785,28 +784,32 @@ Bar-Facing Burpees
         } label: {
             HStack(spacing: 10) {
 
-                Image(systemName: "trophy.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 15))
-                    .frame(width: 26)
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: "flag.checkered")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
 
                 Text(item.name)
-                    .font(.system(size: 15, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.85)
+                    .lineLimit(2)
 
                 Spacer()
 
                 if let displayValue, !displayValue.isEmpty {
                     Text(displayValue)
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.88))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
-                        .font(.system(size: 14, weight: .bold))
+                        .font(.system(size: 15, weight: .bold))
                         .foregroundColor(.white.opacity(0.45))
                 }
 
@@ -845,8 +848,8 @@ Bar-Facing Burpees
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
-                    Text("Informe seu melhor resultado. Para remover, deixe vazio.")
-                        .font(.system(size: 13))
+                    Text("personal_records_endurance.enter_your_best_result_leave_it_blank_to_remove_it")
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
@@ -860,12 +863,12 @@ Bar-Facing Burpees
 
                     VStack(alignment: .leading, spacing: 8) {
                         HStack {
-                            Text("Resultado:")
-                                .font(.system(size: 13, weight: .semibold))
+                            Text("personal_records.result_field_label")
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.75))
                         }
 
-                        TextField("Ex: 7:32 ou 210 reps ou 450 pts", text: $inputValue)
+                        TextField("personal_records_notables.e_g_7_32_210_reps_or_450_pts", text: $inputValue)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
@@ -894,11 +897,10 @@ Bar-Facing Burpees
                         ZStack {
                             Theme.Colors.headerBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
-                                DatePicker("Data do PR", selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
-                                    .environment(\.locale, Locale(identifier: "pt_BR"))
                                 Button { showPRDatePicker = false } label: {
-                                    Text("Confirmar")
+                                    Text("common.confirm")
                                         .frame(maxWidth: .infinity)
                                         .primaryGreenActionButton()
                                 }
@@ -918,7 +920,7 @@ Bar-Facing Burpees
                         resetExistingPREditing()
                         selectedItem = nil
                     } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
                             .foregroundColor(.white.opacity(0.85))
                             .frame(maxWidth: .infinity)
@@ -937,7 +939,7 @@ Bar-Facing Burpees
                         resetExistingPREditing()
                         selectedItem = nil
                     } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .frame(maxWidth: .infinity)
                             .primaryGreenActionButton()
                     }
@@ -955,7 +957,7 @@ Bar-Facing Burpees
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("Excluir item")
+                        .accessibilityLabel("personal_records_endurance.delete_item")
                     }
                 }
                 .padding(.horizontal, 16)
@@ -964,13 +966,15 @@ Bar-Facing Burpees
             }
         }
         .presentationDetents([.fraction(0.80)])
-        .alert("Excluir registro", isPresented: $showDeleteAlert) {
-            Button("Cancelar", role: .cancel) { }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
                 deleteSelectedItem()
             }
         } message: {
-            Text("Deseja excluir o registro de \(selectedItem?.name ?? "este item")?")
+            let recordName = selectedItem?.name ?? AppLocalization.string("personal_records.item_fallback", locale: locale)
+            let format = AppLocalization.string("personal_records.delete_record_confirmation", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [recordName]))
         }
         .onAppear {
             inputValue = ""
@@ -987,8 +991,8 @@ Bar-Facing Burpees
                     .foregroundColor(.green.opacity(0.90))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("WOD")
-                        .font(.system(size: 12, weight: .bold))
+                    Text("personal_records_campeonatos.wod")
+                        .font(.system(size: 14, weight: .bold))
                         .foregroundColor(.white.opacity(0.60))
 
                     Text(wod.titleLine)
@@ -1003,7 +1007,7 @@ Bar-Facing Burpees
 
             ScrollView {
                 Text(wod.description)
-                    .font(.system(size: 13, weight: .semibold, design: .monospaced))
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
                     .foregroundColor(.white.opacity(0.78))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .fixedSize(horizontal: false, vertical: true)
@@ -1159,13 +1163,13 @@ Bar-Facing Burpees
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("Evolução", systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 13, weight: .semibold))
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label("Histórico", systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 13, weight: .semibold))
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
+                        .font(.system(size: 14, weight: .semibold))
                         .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
@@ -1186,7 +1190,7 @@ Bar-Facing Burpees
                         .foregroundColor(.white)
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
-                        Text("Nenhum histórico de evolução registrado ainda.")
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.60))
                     } else {
@@ -1197,13 +1201,13 @@ Bar-Facing Burpees
                                         .font(.system(size: 15, weight: .semibold))
                                         .foregroundColor(.white.opacity(0.92))
                                     if entry.id == recordID {
-                                        Text("RECORDE")
+                                        Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
                                             .foregroundColor(.green)
                                     }
                                     Spacer()
-                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(Locale(identifier: "pt_BR"))))
-                                        .font(.system(size: 13))
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
+                                        .font(.system(size: 14))
                                         .foregroundColor(.white.opacity(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
@@ -1213,7 +1217,7 @@ Bar-Facing Burpees
                                             .foregroundColor(.red.opacity(0.85))
                                     }
                                     .buttonStyle(.plain)
-                                    .accessibilityLabel("Excluir registro")
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
@@ -1233,16 +1237,16 @@ Bar-Facing Burpees
             }
         }
         .presentationDetents([.large])
-        .alert("Excluir registro", isPresented: $showHistoryEntryDeletionAlert) {
-            Button("Cancelar", role: .cancel) { historyEntryPendingDeletion = nil }
-            Button("Excluir", role: .destructive) {
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
                 if let entry = historyEntryPendingDeletion {
                     deleteHistoryEntry(entry, for: key, metadata: metadata)
                 }
                 historyEntryPendingDeletion = nil
             }
         } message: {
-            Text("Deseja excluir este registro do histórico? Esta ação não pode ser desfeita.")
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
         }
     }
 
@@ -1298,8 +1302,8 @@ Bar-Facing Burpees
 
     private func formatPRDate(_ date: Date) -> String {
         let formatter = DateFormatter()
-        formatter.locale = Locale(identifier: "pt_BR")
-        formatter.dateFormat = "dd 'de' MMMM, yyyy"
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
         return formatter.string(from: date)
     }
 
@@ -1378,29 +1382,29 @@ Bar-Facing Burpees
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
-                    Text("Novo item Open")
+                    Text("personal_records_open.new_open_item")
                         .font(.system(size: 18, weight: .bold))
                         .foregroundColor(.white)
                         .padding(.top, 4)
 
-                    Text("Crie um item e, se quiser, já informe seu resultado inicial.")
-                        .font(.system(size: 13))
+                    Text("personal_records_endurance.create_an_item_and_if_you_want_enter_your_initial_result_now")
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
                     VStack(alignment: .leading, spacing: 10) {
-                    addItemField("Nome do item", placeholder: "Ex: Open 26.1", text: $newItemName)
+                    addItemField("personal_records.open.item_name_field", placeholder: "personal_records.placeholder.open_item", text: $newItemName)
 
-                    addItemField("Título do WOD (opcional)", placeholder: "Ex: AMRAP 12 min", text: $newItemTitle)
+                    addItemField("personal_records.open.wod_title_optional", placeholder: "personal_records.placeholder.amrap", text: $newItemTitle)
 
-                    addItemField("Descrição (opcional)", placeholder: "Ex: 12 burpees", text: $newItemDescription)
+                    addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.burpees", text: $newItemDescription)
 
-                    addItemField("Resultado inicial (opcional)", placeholder: "Ex: 12:34 ou 150 reps", text: $newItemValue)
+                    addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time_or_reps", text: $newItemValue)
 
                         if let message = addItemErrorMessage {
                             Text(message)
-                                .font(.system(size: 13, weight: .semibold))
+                                .font(.system(size: 14, weight: .semibold))
                                 .foregroundColor(.yellow.opacity(0.85))
                         }
                     }
@@ -1410,7 +1414,7 @@ Bar-Facing Burpees
                         Button {
                             showAddItemSheet = false
                         } label: {
-                            Text("Cancelar")
+                            Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(.white.opacity(0.85))
                                 .frame(maxWidth: .infinity)
@@ -1427,7 +1431,7 @@ Bar-Facing Burpees
                         Button {
                             addNewItem()
                         } label: {
-                            Text("Adicionar")
+                            Text("common.add")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
                         }
@@ -1442,10 +1446,10 @@ Bar-Facing Burpees
         .presentationDetents([.medium])
     }
 
-    private func addItemField(_ label: String, placeholder: String, text: Binding<String>) -> some View {
+    private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
-                .font(.system(size: 13, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             TextField(placeholder, text: text)
@@ -1465,13 +1469,13 @@ Bar-Facing Burpees
         addItemErrorMessage = nil
         let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanName.isEmpty else {
-            addItemErrorMessage = "Informe o nome do item."
+            addItemErrorMessage = AppLocalization.string("personal_records.open.item_name_required", locale: locale)
             return
         }
 
         let existingNames = allItems.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
         guard !existingNames.contains(cleanName.lowercased()) else {
-            addItemErrorMessage = "Este item já existe na sua lista."
+            addItemErrorMessage = AppLocalization.string("personal_records.open.duplicate_item", locale: locale)
             return
         }
 

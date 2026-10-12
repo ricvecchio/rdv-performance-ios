@@ -11,6 +11,7 @@ struct WorkoutTemplateFS: Identifiable, Codable, Hashable {
 
     var title: String
     var description: String
+    var defaultKey: String? = nil
 
     // Para evoluir depois: blocos prontos do dia
     var blocks: [BlockFS]?
@@ -18,4 +19,3 @@ struct WorkoutTemplateFS: Identifiable, Codable, Hashable {
     @ServerTimestamp var createdAt: Timestamp?
     @ServerTimestamp var updatedAt: Timestamp?
 }
-

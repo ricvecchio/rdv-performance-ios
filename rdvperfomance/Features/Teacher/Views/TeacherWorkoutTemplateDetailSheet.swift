@@ -3,6 +3,7 @@ import FirebaseFirestore
 import UIKit
 
 struct TeacherWorkoutTemplateDetailSheet: View {
+    @Environment(\.locale) private var locale
 
     let template: WorkoutTemplateFS
     @Environment(\.dismiss) private var dismiss
@@ -11,6 +12,8 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
     @State private var isEditing: Bool = false
     @State private var draftBlocks: [BlockFS] = []
+    @State private var draftOriginalDetails: [String: String] = [:]
+    @State private var savedTemplate: WorkoutTemplateFS?
 
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
@@ -19,6 +22,14 @@ struct TeacherWorkoutTemplateDetailSheet: View {
     private let warmupTitle = "Aquecimento"
     private let techniqueTitle = "Técnica"
     private let loadsTitle = "Cargas / Movimentos"
+
+    private var currentTemplate: WorkoutTemplateFS {
+        savedTemplate ?? template
+    }
+
+    private var presentation: WorkoutTemplateFS {
+        DefaultWorkoutLocalization.presentation(for: currentTemplate, locale: locale)
+    }
 
     var body: some View {
         NavigationStack {
@@ -50,11 +61,11 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                                 }
 
                                 if let err = errorMessage {
-                                    TeacherWorkoutTemplatesMessageCard(text: err, isError: true)
+                                    TeacherWorkoutTemplatesMessageCard(text: err, isError: true, usesApprovedCardStyle: true)
                                 }
 
                                 if let ok = successMessage {
-                                    TeacherWorkoutTemplatesMessageCard(text: ok, isError: false)
+                                    TeacherWorkoutTemplatesMessageCard(text: ok, isError: false, usesApprovedCardStyle: true)
                                 }
 
                                 Color.clear.frame(height: 18)
@@ -69,19 +80,19 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 }
                 .ignoresSafeArea(.container, edges: [.bottom])
             }
-            .navigationTitle("Treino")
+            .navigationTitle("ui.workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
 
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+                    Button("common.close") { dismiss() }
                         .disabled(isSaving)
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
                     if isEditing {
                         HStack(spacing: 12) {
-                            Button("Cancelar") {
+                            Button("common.cancel") {
                                 errorMessage = nil
                                 successMessage = nil
                                 isEditing = false
@@ -95,16 +106,17 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                                 if isSaving {
                                     ProgressView().tint(.white)
                                 } else {
-                                    Text("Salvar")
+                                    Text("common.save")
                                 }
                             }
                             .disabled(isSaving)
                         }
                     } else {
-                        Button("Editar") {
+                        Button("ui.edit") {
                             errorMessage = nil
                             successMessage = nil
                             isEditing = true
+                            resetDraftFromTemplate()
                             ensureEditableBlocksExist()
                         }
                     }
@@ -129,11 +141,11 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text(template.title)
+            Text(presentation.title)
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            let desc = template.description.trimmingCharacters(in: .whitespacesAndNewlines)
+            let desc = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
             if !desc.isEmpty {
                 Text(desc)
                     .font(.system(size: 14))
@@ -145,39 +157,39 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
     private var readOnlyBlocks: some View {
         Group {
-            if let blocks = template.blocks, !blocks.isEmpty {
+            if let blocks = presentation.blocks, !blocks.isEmpty {
                 VStack(spacing: 12) {
                     ForEach(blocks.indices, id: \.self) { i in
                         let b = blocks[i]
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(b.name.isEmpty ? "Bloco" : b.name)
-                                .font(.system(size: 14, weight: .semibold))
+                            Text(b.name.isEmpty ? AppLocalization.string("ui.block", locale: locale) : b.displayedName(locale: locale))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.85))
 
                             Text(b.details)
-                                .font(.system(size: 13))
+                                .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.70))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(Color.black.opacity(0.68))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                         )
                     }
                 }
             } else {
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Sem blocos cadastrados")
-                        .font(.system(size: 15, weight: .semibold))
+                    Text("ui.no_blocks_registered")
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
 
-                    Text("Este WOD ainda não possui Aquecimento/Técnica/WOD/Blocos.")
-                        .font(.system(size: 13))
+                    Text("ui.this_wod_does_not_yet_have_warm_up_technique_wod_blocks")
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                 }
                 .padding(.vertical, 16)
@@ -188,35 +200,35 @@ struct TeacherWorkoutTemplateDetailSheet: View {
     private var editableBlocksCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            blockEditor(title: warmupTitle, text: bindingForBlockDetails(title: warmupTitle))
+            blockEditor(title: DefaultWorkoutBlock.warmup.localizedName(locale: locale), text: bindingForBlockDetails(title: warmupTitle))
 
             Divider().background(Theme.Colors.divider)
 
-            blockEditor(title: techniqueTitle, text: bindingForBlockDetails(title: techniqueTitle))
+            blockEditor(title: DefaultWorkoutBlock.technique.localizedName(locale: locale), text: bindingForBlockDetails(title: techniqueTitle))
 
             Divider().background(Theme.Colors.divider)
 
-            blockEditor(title: loadsTitle, text: bindingForBlockDetails(title: loadsTitle))
+            blockEditor(title: DefaultWorkoutBlock.loadsAndMovements.localizedName(locale: locale), text: bindingForBlockDetails(title: loadsTitle))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
     private func blockEditor(title: String, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
-                .font(.system(size: 14, weight: .semibold))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.85))
 
             TextEditor(text: text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.92))
                 .frame(minHeight: 110)
                 .scrollContentBackground(.hidden)
@@ -231,7 +243,13 @@ struct TeacherWorkoutTemplateDetailSheet: View {
     }
 
     private func resetDraftFromTemplate() {
-        draftBlocks = template.blocks ?? []
+        let displayedBlocks = presentation.blocks ?? []
+        draftBlocks = (currentTemplate.blocks ?? []).map { block in
+            var draft = block
+            draft.details = displayedBlocks.first(where: { $0.id == block.id })?.details ?? block.details
+            return draft
+        }
+        draftOriginalDetails = draftBlocks.reduce(into: [:]) { $0[$1.id] = $1.details }
     }
 
     private func normalize(_ s: String) -> String {
@@ -286,7 +304,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
 
         guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !templateId.isEmpty else {
-            errorMessage = "Não foi possível salvar: templateId inválido."
+            errorMessage = AppLocalization.string("ui.unable_to_save_invalid_templateid", locale: locale)
             return
         }
 
@@ -294,12 +312,25 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         defer { isSaving = false }
 
         do {
+            // Unchanged editor translations stay presentation-only, not persisted user edits.
+            let blocksToSave = draftBlocks.map { block in
+                var persisted = block
+                if block.details == draftOriginalDetails[block.id],
+                   let original = currentTemplate.blocks?.first(where: { $0.id == block.id }) {
+                    persisted.details = original.details
+                }
+                return persisted
+            }
             try await FirestoreRepository.shared.updateWorkoutTemplateBlocks(
                 templateId: templateId,
-                blocks: draftBlocks
+                blocks: blocksToSave
             )
 
-            successMessage = "Alterações salvas com sucesso!"
+            var updatedTemplate = currentTemplate
+            updatedTemplate.blocks = blocksToSave
+            savedTemplate = updatedTemplate
+            resetDraftFromTemplate()
+            successMessage = AppLocalization.string("ui.changes_saved_successfully", locale: locale)
             isEditing = false
 
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)

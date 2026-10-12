@@ -20,7 +20,7 @@ import UIKit
 /// ```
 struct PhoneTextField: View {
 
-    let title: String
+    let title: LocalizedStringKey
     @Binding var digits: String
 
     var lineColor: Color       = Color.white.opacity(0.35)

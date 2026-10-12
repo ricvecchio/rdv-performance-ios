@@ -12,6 +12,7 @@ struct CreateTrainingWeekView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var weekTitle: String = ""
     @State private var showPasswordDummy: Bool = false
@@ -123,7 +124,7 @@ struct CreateTrainingWeekView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Publicar semana")
+                Text("ui.publish_week")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -154,11 +155,11 @@ struct CreateTrainingWeekView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .task { await loadWeeks() }
         .sheet(isPresented: $isEditSheetOpen) { editWeekSheet }
-        .alert("Excluir semana?", isPresented: $showDeleteWeekConfirm) {
-            Button("Cancelar", role: .cancel) {
+        .alert("ui.delete_week_2", isPresented: $showDeleteWeekConfirm) {
+            Button("common.cancel", role: .cancel) {
                 weekPendingDelete = nil
             }
-            Button("Excluir", role: .destructive) {
+            Button("common.delete", role: .destructive) {
                 Task { await confirmDeleteWeek() }
             }
         } message: {
@@ -169,11 +170,12 @@ struct CreateTrainingWeekView: View {
     // Header com contexto do aluno e categoria
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aluno: \(student.name)")
+            let format = AppLocalization.string("ui.student_value", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [student.name]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
 
-            Text("Você pode ver semanas já cadastradas, editar o título e adicionar dias.")
+            Text("ui.you_can_view_registered_weeks_edit_the_title_and_add_days")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -185,7 +187,7 @@ struct CreateTrainingWeekView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("SEMANAS CADASTRADAS")
+                Text("ui.registered_weeks")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 
@@ -201,7 +203,7 @@ struct CreateTrainingWeekView: View {
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else if vm.weeks.isEmpty {
-                Text("Nenhuma semana cadastrada para este aluno.")
+                Text("ui.no_week_registered_for_this_student")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -246,9 +248,15 @@ struct CreateTrainingWeekView: View {
                             .foregroundColor(.white.opacity(0.45))
                     }
 
-                    Text(week.isPublished ? "Publicada" : "Rascunho")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(week.isPublished ? .green.opacity(0.85) : .white.opacity(0.45))
+                    Group {
+                        if week.isPublished {
+                            Text("ui.published")
+                        } else {
+                            Text("ui.draft")
+                        }
+                    }
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundColor(week.isPublished ? .green.opacity(0.85) : .white.opacity(0.45))
                 }
 
                 Spacer()
@@ -258,14 +266,14 @@ struct CreateTrainingWeekView: View {
                     Button {
                         openEditWeekTitle(week)
                     } label: {
-                        Label("Editar título", systemImage: "pencil")
+                        Label(LocalizedStringKey("ui.edit_title"), systemImage: "pencil")
                     }
 
                     Button(role: .destructive) {
                         weekPendingDelete = week
                         showDeleteWeekConfirm = true
                     } label: {
-                        Label("Excluir semana", systemImage: "trash")
+                        Label(LocalizedStringKey("ui.delete_week"), systemImage: "trash")
                     }
 
                 } label: {
@@ -281,7 +289,7 @@ struct CreateTrainingWeekView: View {
             HStack(spacing: 10) {
 
                 Button { openWeekDays(week) } label: {
-                    Text("Ver dias")
+                    Text("ui.view_days")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .padding(.horizontal, 12)
@@ -292,7 +300,7 @@ struct CreateTrainingWeekView: View {
                 .buttonStyle(.plain)
 
                 Button { openAddDay(week) } label: {
-                    Text("Adicionar dias")
+                    Text("ui.add_days")
                         .padding(.horizontal, 12)
                         .primaryGreenActionButton()
                 }
@@ -307,12 +315,12 @@ struct CreateTrainingWeekView: View {
     private var formCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("NOVA SEMANA")
+            Text("ui.new_week")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.35))
 
             UnderlineTextField(
-                title: "Título da semana",
+                title: "ui.week_title",
                 text: $weekTitle,
                 isSecure: false,
                 showPassword: $showPasswordDummy,
@@ -329,7 +337,7 @@ struct CreateTrainingWeekView: View {
                     if isSaving {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Publicar")
+                        Text("ui.publish")
                     }
                     Spacer()
                 }
@@ -380,11 +388,11 @@ struct CreateTrainingWeekView: View {
         successMessage = nil
 
         guard let studentId = student.id, !studentId.isEmpty else {
-            vm.errorMessage = "Aluno inválido: id não encontrado."
+            vm.errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            vm.errorMessage = "Não foi possível identificar o professor logado."
+            vm.errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -398,7 +406,13 @@ struct CreateTrainingWeekView: View {
     private func openWeekDays(_ week: TrainingWeekFS) {
         guard let weekId = week.id, !weekId.isEmpty else { return }
         guard let studentId = student.id, !studentId.isEmpty else { return }
-        path.append(.studentWeekDetail(studentId: studentId, weekId: weekId, weekTitle: week.weekTitle))
+        path.append(
+            .studentWorkouts(
+                studentId: studentId,
+                studentName: student.name,
+                initialExpandedWeekId: weekId
+            )
+        )
     }
 
     private func openAddDay(_ week: TrainingWeekFS) {
@@ -418,12 +432,12 @@ struct CreateTrainingWeekView: View {
 
             VStack(alignment: .leading, spacing: 14) {
 
-                Text("Editar título da semana")
+                Text("ui.edit_week_title")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 UnderlineTextField(
-                    title: "Novo título",
+                    title: "ui.new_title",
                     text: $editingTitle,
                     isSecure: false,
                     showPassword: $showPasswordDummy,
@@ -434,7 +448,7 @@ struct CreateTrainingWeekView: View {
 
                 HStack(spacing: 10) {
                     Button { isEditSheetOpen = false } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.90))
                             .padding(.horizontal, 14)
@@ -445,7 +459,7 @@ struct CreateTrainingWeekView: View {
                     .buttonStyle(.plain)
 
                     Button { Task { await saveEditedTitle() } } label: {
-                        Text("Salvar")
+                        Text("common.save")
                             .padding(.horizontal, 14)
                             .primaryGreenActionButton()
                     }
@@ -471,7 +485,7 @@ struct CreateTrainingWeekView: View {
 
         guard let week = editingWeek, let weekId = week.id, !weekId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
             await MainActor.run {
-                errorMessage = "Não foi possível editar: semana inválida."
+                errorMessage = AppLocalization.string("ui.unable_to_edit_invalid_week", locale: locale)
             }
             return
         }
@@ -479,7 +493,7 @@ struct CreateTrainingWeekView: View {
         let trimmed = editingTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             await MainActor.run {
-                errorMessage = "Informe um título válido."
+                errorMessage = AppLocalization.string("ui.enter_a_valid_title", locale: locale)
             }
             return
         }
@@ -497,7 +511,7 @@ struct CreateTrainingWeekView: View {
             try await FirestoreRepository.shared.updateWeekTitle(weekId: weekId, newTitle: trimmed)
 
             await MainActor.run {
-                successMessage = "Título atualizado com sucesso."
+                successMessage = AppLocalization.string("ui.title_updated_successfully", locale: locale)
                 isEditSheetOpen = false
                 editingWeek = nil
             }
@@ -512,8 +526,13 @@ struct CreateTrainingWeekView: View {
     }
 
     private func deleteWeekMessageText() -> String {
-        guard let w = weekPendingDelete else { return "Tem certeza que deseja excluir esta semana?" }
-        return "A semana \"\(w.weekTitle)\" será excluída (dias e progresso também)."
+        guard let w = weekPendingDelete else {
+            return AppLocalization.string("ui.are_you_sure_you_want_to_delete_this_week", locale: locale)
+        }
+        let format = AppLocalization.string("ui.week_will_be_deleted",
+            locale: locale
+        )
+        return String(format: format, locale: locale, arguments: [w.weekTitle])
     }
 
     private func confirmDeleteWeek() async {
@@ -528,7 +547,7 @@ struct CreateTrainingWeekView: View {
 
         do {
             try await FirestoreRepository.shared.deleteTrainingWeekCascade(weekId: weekId)
-            successMessage = "Semana excluída com sucesso."
+            successMessage = AppLocalization.string("ui.week_deleted_successfully", locale: locale)
             weekPendingDelete = nil
             await loadWeeks()
         } catch {
@@ -545,18 +564,18 @@ struct CreateTrainingWeekView: View {
         guard !isSaving else { return }
 
         guard let studentId = student.id, !studentId.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         let trimmedTitle = weekTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedTitle.isEmpty else {
-            errorMessage = "Informe o título da semana."
+            errorMessage = AppLocalization.string("ui.enter_the_week_title", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -577,7 +596,7 @@ struct CreateTrainingWeekView: View {
             )
 
             weekTitle = ""
-            successMessage = "Semana publicada com sucesso."
+            successMessage = AppLocalization.string("ui.week_published_successfully", locale: locale)
             await loadWeeks()
 
         } catch {
@@ -588,9 +607,14 @@ struct CreateTrainingWeekView: View {
     private func weekDateRangeText(_ week: TrainingWeekFS) -> String? {
         guard let s = week.startDate, let e = week.endDate else { return nil }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy"
-        return "\(f.string(from: s)) a \(f.string(from: e))"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyy")
+        let format = AppLocalization.string("ui.value_value", locale: locale)
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [f.string(from: s), f.string(from: e)]
+        )
     }
 
     private func pop() {

@@ -29,8 +29,8 @@ struct TeacherWorkoutsView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
                             quickAccessCard(
-                                title: "Enviar treino",
-                                subtitle: "Envie um treino para seus alunos",
+                                title: "ui.send_workout",
+                                subtitle: "ui.send_a_workout_to_your_students",
                                 icon: "paperplane.fill"
                             ) {
                                 path.append(
@@ -42,40 +42,40 @@ struct TeacherWorkoutsView: View {
                             }
 
                             quickAccessCard(
-                                title: "Criar treino",
-                                subtitle: "Monte um novo treino",
+                                title: "ui.create_workout",
+                                subtitle: "ui.create_a_new_workout",
                                 icon: "plus.circle.fill"
                             ) {
                                 path.append(.teacherMyWorkouts(category: category, mode: .create))
                             }
 
                             quickAccessCard(
-                                title: "Biblioteca de Treinos",
-                                subtitle: "Use modelos prontos",
+                                title: "ui.workout_library",
+                                subtitle: "ui.use_ready_made_templates",
                                 icon: "square.grid.2x2.fill"
                             ) {
                                 path.append(.teacherMyWorkouts(category: category, mode: .library))
                             }
 
                             quickAccessCard(
-                                title: "Importar",
-                                subtitle: "Importe treinos por planilha",
+                                title: "tecnofit_import.import_action",
+                                subtitle: "ui.import_workouts_from_a_spreadsheet",
                                 icon: "doc.text.fill"
                             ) {
                                 path.append(.teacherImportWorkouts(category: category))
                             }
 
                             quickAccessCard(
-                                title: "Meus Recordes",
-                                subtitle: "Acompanhe e registre seus resultados",
+                                title: "ui.my_records",
+                                subtitle: "ui.track_and_record_your_results",
                                 icon: "trophy.fill"
                             ) {
                                 path.append(.teacherPersonalRecords(category: category))
                             }
 
                             quickAccessCard(
-                                title: "Meus Vídeos",
-                                subtitle: "Organize seus vídeos",
+                                title: "workout.my_videos",
+                                subtitle: "ui.organize_your_videos",
                                 icon: "video.fill"
                             ) {
                                 path.append(.teacherImportVideos(category: category))
@@ -127,7 +127,7 @@ struct TeacherWorkoutsView: View {
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Treinos")
+                Text("ui.workouts")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -142,8 +142,8 @@ struct TeacherWorkoutsView: View {
     }
 
     private func quickAccessCard(
-        title: String,
-        subtitle: String,
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
         icon: String,
         action: @escaping () -> Void
     ) -> some View {
@@ -161,12 +161,12 @@ struct TeacherWorkoutsView: View {
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
-                        .font(.system(size: 16, weight: .semibold))
+                        .font(.system(size: 17, weight: .semibold))
                         .foregroundColor(.white.opacity(0.92))
                         .lineLimit(2)
 
                     Text(subtitle)
-                        .font(.system(size: 12))
+                        .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.55))
                         .lineLimit(2)
                 }
@@ -179,11 +179,16 @@ struct TeacherWorkoutsView: View {
             .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
             .padding(.horizontal, 12)
             .padding(.vertical, 8)
-            .background(Theme.Colors.cardBackground)
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

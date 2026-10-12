@@ -15,13 +15,13 @@ struct TeacherYoutubeLockedPlayerSheet: View {
                 .navigationBarTitleDisplayMode(.inline)
                 .toolbar {
                     ToolbarItem(placement: .topBarLeading) {
-                        Button("Fechar") { dismiss() }
+                        Button("common.close") { dismiss() }
                     }
                     
                     ToolbarItem(placement: .topBarTrailing) {
                         AirPlayRoutePicker()
                             .frame(width: 34, height: 34)
-                            .accessibilityLabel("Reproduzir com AirPlay")
+                            .accessibilityLabel("ui.play_with_airplay")
                     }
                 }
                 .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)

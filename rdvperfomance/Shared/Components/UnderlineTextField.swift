@@ -5,7 +5,8 @@ import SwiftUI
 struct UnderlineTextField: View {
 
     // Título exibido acima do campo
-    let title: String
+    let title: LocalizedStringKey
+    let isEmail: Bool
 
     // Texto digitado no campo
     @Binding var text: String
@@ -20,6 +21,32 @@ struct UnderlineTextField: View {
     let lineColor: Color
     let textColor: Color
     let placeholderColor: Color
+    let inputBackground: Color?
+    let inputBorderColor: Color?
+
+    init(
+        title: LocalizedStringKey,
+        text: Binding<String>,
+        isSecure: Bool,
+        showPassword: Binding<Bool>,
+        lineColor: Color,
+        textColor: Color,
+        placeholderColor: Color,
+        inputBackground: Color? = nil,
+        inputBorderColor: Color? = nil,
+        isEmail: Bool = false
+    ) {
+        self.title = title
+        _text = text
+        self.isSecure = isSecure
+        _showPassword = showPassword
+        self.lineColor = lineColor
+        self.textColor = textColor
+        self.placeholderColor = placeholderColor
+        self.inputBackground = inputBackground
+        self.inputBorderColor = inputBorderColor
+        self.isEmail = isEmail
+    }
 
     // Constrói o campo com label, input e linha inferior
     var body: some View {
@@ -42,7 +69,7 @@ struct UnderlineTextField: View {
                 .font(.system(size: 16))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
-                .keyboardType(title == "E-mail" ? .emailAddress : .default)
+                .keyboardType(isEmail ? .emailAddress : .default)
 
                 if isSecure {
                     Button {
@@ -54,6 +81,13 @@ struct UnderlineTextField: View {
                     .buttonStyle(.plain)
                 }
             }
+            .padding(inputBackground == nil ? 0 : 10)
+            .background(inputBackground ?? .clear)
+            .clipShape(RoundedRectangle(cornerRadius: inputBackground == nil ? 0 : 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: inputBackground == nil ? 0 : 12)
+                    .stroke(inputBackground == nil ? .clear : (inputBorderColor ?? Color.white.opacity(0.10)), lineWidth: 1)
+            )
 
             Rectangle()
                 .fill(lineColor)

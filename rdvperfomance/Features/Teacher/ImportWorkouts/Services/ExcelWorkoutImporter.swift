@@ -8,25 +8,28 @@ enum ExcelWorkoutImporter {
         case workbookInvalid
         case worksheetNotFound
         case headerNotFound
-        case missingRequiredColumn(String)
+        case missingRequiredColumn
 
         var errorDescription: String? {
             switch self {
             case .fileUnreadable:
-                return "Não foi possível ler o arquivo Excel selecionado."
+                return AppLocalization.string("ui.unable_to_read_the_selected_excel_file", locale: ExcelWorkoutImporter.localizationLocale)
             case .workbookInvalid:
-                return "Planilha inválida. Verifique se é um arquivo .xlsx."
+                return AppLocalization.string("ui.invalid_spreadsheet_check_that_it_is_an_xlsx_file", locale: ExcelWorkoutImporter.localizationLocale)
             case .worksheetNotFound:
-                return "Não foi possível localizar uma aba de dados na planilha."
+                return AppLocalization.string("ui.unable_to_find_a_data_tab_in_the_spreadsheet", locale: ExcelWorkoutImporter.localizationLocale)
             case .headerNotFound:
-                return "Não foi possível identificar o cabeçalho na planilha. Verifique se a aba IMPORT_TREINOS existe e contém a linha de títulos."
-            case .missingRequiredColumn(let name):
-                return "Coluna obrigatória não encontrada: \(name)."
+                return AppLocalization.string("ui.unable_to_identify_the_spreadsheet_header_check_that_the_import_treinos_tab_exists_and_contains_the_title_row", locale: ExcelWorkoutImporter.localizationLocale)
+            case .missingRequiredColumn:
+                return AppLocalization.string("ui.required_column_not_found_title", locale: ExcelWorkoutImporter.localizationLocale)
             }
         }
     }
 
     private static let preferredSheetName = "IMPORT_TREINOS"
+    private static var localizationLocale: Locale {
+        .autoupdatingCurrent
+    }
 
     static func parseWorkouts(fromXLSX url: URL) throws -> [ImportedWorkoutPayload] {
         guard let file = XLSXFile(filepath: url.path) else {
@@ -77,7 +80,7 @@ enum ExcelWorkoutImporter {
 
         let colTitulo: Int
         do {
-            colTitulo = try requireColumn("titulo", in: headerIndexByName, display: "Título")
+            colTitulo = try requireColumn("titulo", in: headerIndexByName)
         } catch {
             return nil
         }
@@ -148,9 +151,9 @@ enum ExcelWorkoutImporter {
         return map
     }
 
-    private static func requireColumn(_ normalized: String, in map: [String: Int], display: String) throws -> Int {
+    private static func requireColumn(_ normalized: String, in map: [String: Int]) throws -> Int {
         guard let idx = map[normalized] else {
-            throw ImportError.missingRequiredColumn(display)
+            throw ImportError.missingRequiredColumn
         }
         return idx
     }
