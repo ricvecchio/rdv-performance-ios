@@ -1,5 +1,6 @@
 // =============================================================================
 // RDV Performance — Regras para a autorização de cadastro de Professores
+// (implementação sem Cloud Functions — compatível com o plano Spark)
 // =============================================================================
 //
 // ATENÇÃO: este arquivo NÃO é uma substituição completa das regras atuais.
@@ -9,6 +10,12 @@
 //
 // Este arquivo não está referenciado no firebase.json de propósito, para que um
 // "firebase deploy" não sobrescreva as regras de produção.
+//
+// IMPORTANTE: regras do Firestore são combinadas por OU. Se as regras atuais
+// tiverem um curinga amplo, por exemplo:
+//     match /{document=**} { allow read, write: if request.auth != null; }
+// as coleções abaixo ficarão EXPOSTAS e o perfil TRAINER poderá ser criado sem
+// código. Nesse caso, o curinga precisa ser restringido.
 // =============================================================================
 
 rules_version = '2';
@@ -17,55 +24,149 @@ service cloud.firestore {
   match /databases/{database}/documents {
 
     // -------------------------------------------------------------------------
-    // 1) Coleções internas da autorização de Professores.
-    //    Acesso exclusivo pelas Cloud Functions (Admin SDK ignora as regras).
-    //
-    //    IMPORTANTE: regras do Firestore são permissivas por combinação (OR).
-    //    Se as regras atuais tiverem um curinga amplo, por exemplo:
-    //        match /{document=**} { allow read, write: if request.auth != null; }
-    //    estas coleções continuarão EXPOSTAS. Nesse caso, o curinga precisa ser
-    //    restringido para não abranger as coleções abaixo.
+    // Administrador (verificado no servidor pelo token do Firebase Auth).
+    // Mesmo e-mail usado em AppSession.isAdmin; a custom claim { admin: true }
+    // também é aceita, caso venha a ser configurada.
     // -------------------------------------------------------------------------
+    function isTeacherSignupAdmin() {
+      return request.auth != null
+        && (request.auth.token.get('admin', false) == true
+            || request.auth.token.get('email', '') == 'ric.vecchio@gmail.com');
+    }
+
+    function teacherSignupCodePath(codeId) {
+      return /databases/$(database)/documents/teacher_signup_codes/$(codeId);
+    }
+
+    function teacherSignupConfigPath() {
+      return /databases/$(database)/documents/teacher_signup_config/current;
+    }
+
+    // -------------------------------------------------------------------------
+    // 1) Configuração: código vigente em texto (somente administrador).
+    //    Campos: code (RDV-XXXX-XXXX-XXXX), codeId (12 caracteres), version,
+    //    updatedAt, updatedBy.
+    //    - A versão só avança de 1 em 1 (operações concorrentes são rejeitadas).
+    //    - Ao substituir, o documento do código anterior precisa ser removido
+    //      na mesma transação (o código anterior é invalidado imediatamente).
+    // -------------------------------------------------------------------------
+    function validTeacherSignupConfig() {
+      let data = request.resource.data;
+      return data.keys().hasOnly(['code', 'codeId', 'version', 'updatedAt', 'updatedBy'])
+        && data.codeId is string
+        && data.codeId.matches('^[A-HJ-NP-Z2-9]{12}$')
+        && data.code is string
+        && data.code.matches('^RDV-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$')
+        && data.code.replace('-', '') == 'RDV' + data.codeId
+        && data.version is int
+        && data.updatedAt == request.time
+        && data.updatedBy == request.auth.uid
+        && existsAfter(teacherSignupCodePath(data.codeId));
+    }
+
     match /teacher_signup_config/{docId} {
-      allow read, write: if false;
-    }
+      allow get: if docId == 'current' && isTeacherSignupAdmin();
+      allow list: if false;
 
-    match /teacher_signup_tickets/{docId} {
-      allow read, write: if false;
-    }
+      allow create: if docId == 'current'
+        && isTeacherSignupAdmin()
+        && validTeacherSignupConfig()
+        && request.resource.data.version == 1;
 
-    match /teacher_signup_attempts/{docId} {
-      allow read, write: if false;
+      allow update: if docId == 'current'
+        && isTeacherSignupAdmin()
+        && validTeacherSignupConfig()
+        && request.resource.data.version == resource.data.get('version', 0) + 1
+        && (resource.data.get('codeId', '') == ''
+            || !existsAfter(teacherSignupCodePath(resource.data.codeId)));
+
+      allow delete: if false;
     }
 
     // -------------------------------------------------------------------------
-    // 2) Proteção do campo userType em /users/{uid}.
+    // 2) Códigos ativos: o ID do documento É o código (sem prefixo/hífens).
+    //    - "get" é público: só obtém resposta quem já conhece o código
+    //      (60 bits de entropia). "list" é bloqueado (impede enumeração).
+    //    - Somente o administrador cria/remove, sempre de forma consistente
+    //      com teacher_signup_config/current.
+    // -------------------------------------------------------------------------
+    match /teacher_signup_codes/{codeId} {
+      allow get: if true;
+      allow list: if false;
+
+      allow create: if isTeacherSignupAdmin()
+        && request.resource.data.keys().hasOnly(['version', 'createdAt'])
+        && request.resource.data.createdAt == request.time
+        && getAfter(teacherSignupConfigPath()).data.codeId == codeId
+        && getAfter(teacherSignupConfigPath()).data.version == request.resource.data.version;
+
+      allow update: if false;
+
+      allow delete: if isTeacherSignupAdmin()
+        && getAfter(teacherSignupConfigPath()).data.codeId != codeId;
+    }
+
+    // -------------------------------------------------------------------------
+    // 3) Registro de uso do código por conta de professor (auditoria).
+    //    Criado pelo próprio usuário recém-cadastrado, no MESMO lote em que o
+    //    perfil TRAINER é criado, e somente com um código vigente.
+    //    Não pode ser lido por usuários comuns, alterado ou removido.
+    // -------------------------------------------------------------------------
+    match /teacher_signup_redemptions/{uid} {
+      allow get, list: if isTeacherSignupAdmin();
+
+      allow create: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['code', 'createdAt'])
+        && request.resource.data.code is string
+        && request.resource.data.code.matches('^[A-HJ-NP-Z2-9]{12}$')
+        && request.resource.data.createdAt == request.time
+        && exists(teacherSignupCodePath(request.resource.data.code))
+        && !exists(/databases/$(database)/documents/users/$(uid))
+        && getAfter(/databases/$(database)/documents/users/$(uid)).data.get('userType', '') == 'TRAINER';
+
+      allow update, delete: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // 4) Proteção do campo userType em /users/{uid}.
     //
     //    Acrescente (com &&) as condições abaixo às regras de create/update
     //    JÁ EXISTENTES de /users/{uid}. Não remova as condições atuais.
     //
-    //    - Clientes só podem criar o próprio perfil como STUDENT (ou sem userType,
-    //      caso de gravações com merge em documentos ainda inexistentes).
+    //    - Clientes podem criar o próprio perfil como STUDENT (ou sem userType).
+    //    - Perfil TRAINER só é aceito se, no mesmo lote, for criado o registro
+    //      em teacher_signup_redemptions/{uid} com um código vigente.
     //    - Nenhum cliente pode alterar o userType de um perfil existente
-    //      (impede STUDENT -> TRAINER). Perfis TRAINER só são criados pela
-    //      Cloud Function createTeacherAccount.
-    //    - Professores já cadastrados continuam podendo atualizar seus perfis,
-    //      desde que não alterem o userType.
+    //      (impede STUDENT -> TRAINER). Única exceção: perfil sem userType pode
+    //      receber STUDENT (compatibilidade com gravações com merge).
     // -------------------------------------------------------------------------
-    function userTypeAllowedOnCreate() {
+    function teacherSignupAuthorized(uid) {
+      let redemption = /databases/$(database)/documents/teacher_signup_redemptions/$(uid);
+      return request.auth != null
+        && request.auth.uid == uid
+        && !exists(redemption)
+        && existsAfter(redemption)
+        && exists(teacherSignupCodePath(getAfter(redemption).data.code));
+    }
+
+    function userTypeAllowedOnCreate(uid) {
       return !('userType' in request.resource.data)
-        || request.resource.data.userType == 'STUDENT';
+        || request.resource.data.userType == 'STUDENT'
+        || (request.resource.data.userType == 'TRAINER' && teacherSignupAuthorized(uid));
     }
 
     function userTypeUnchanged() {
-      return request.resource.data.get('userType', null) == resource.data.get('userType', null);
+      return request.resource.data.get('userType', null) == resource.data.get('userType', null)
+        || (resource.data.get('userType', null) == null
+            && request.resource.data.get('userType', null) == 'STUDENT');
     }
 
     match /users/{uid} {
       // Exemplo de composição — substitua <REGRA_EXISTENTE_CREATE> e
       // <REGRA_EXISTENTE_UPDATE> pelas condições atualmente publicadas:
       //
-      // allow create: if <REGRA_EXISTENTE_CREATE> && userTypeAllowedOnCreate();
+      // allow create: if <REGRA_EXISTENTE_CREATE> && userTypeAllowedOnCreate(uid);
       // allow update: if <REGRA_EXISTENTE_UPDATE> && userTypeUnchanged();
       //
       // Caso as regras atuais usem "allow write", separe em create/update/delete

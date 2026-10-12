@@ -116,7 +116,7 @@ final class RegisterViewModel: ObservableObject {
         }
     }
 
-    // Cria a conta de professor pela Cloud Function, que valida e consome a autorização
+    // Cria a conta de professor; o perfil TRAINER só é aceito pelas regras do Firestore com código vigente
     private func submitAuthorizedTrainer(form: RegisterFormDTO) async {
         let authorizationStore = TeacherSignupAuthorizationStore.shared
 
