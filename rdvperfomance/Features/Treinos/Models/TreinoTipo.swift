@@ -9,11 +9,7 @@ enum TreinoTipo: String, Hashable {
 
     /// Retorna o nome de exibição do tipo de treino
     var displayName: String {
-        switch self {
-        case .crossfit: return "Crossfit"
-        case .academia: return "Academia"
-        case .emCasa:   return "Treinos em Casa"
-        }
+        localizedDisplayName(locale: Self.localizationLocale)
     }
 
     /// Retorna a chave usada para armazenar o tipo no Firestore
@@ -45,10 +41,22 @@ enum TreinoTipo: String, Hashable {
 
     /// Retorna o título completo usado no cabeçalho das telas
     var titulo: String {
+        localizedTitle(locale: Self.localizationLocale)
+    }
+
+    func localizedDisplayName(locale: Locale) -> String {
         switch self {
-        case .crossfit: return "Treinos Crossfit"
-        case .academia: return "Treinos Academia"
-        case .emCasa:   return "Treinos em Casa"
+        case .crossfit: return AppLocalization.string("video.category.crossfit", locale: locale)
+        case .academia: return AppLocalization.string("video.category.gym", locale: locale)
+        case .emCasa: return AppLocalization.string("ui.home_workouts", locale: locale)
+        }
+    }
+
+    func localizedTitle(locale: Locale) -> String {
+        switch self {
+        case .crossfit: return AppLocalization.string("ui.crossfit_workouts", locale: locale)
+        case .academia: return AppLocalization.string("ui.gym_workouts", locale: locale)
+        case .emCasa: return AppLocalization.string("ui.home_workouts", locale: locale)
         }
     }
 
@@ -64,6 +72,10 @@ enum TreinoTipo: String, Hashable {
         case .academia: return "rdv_treino2_vertical"
         case .emCasa:   return "rdv_treino3_vertical"
         }
+    }
+
+    private static var localizationLocale: Locale {
+        .autoupdatingCurrent
     }
 
     /// Retorna o ícone customizado usado no rodapé da tela

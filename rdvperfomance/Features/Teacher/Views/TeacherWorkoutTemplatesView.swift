@@ -2,9 +2,11 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 import UIKit
+import os.log
 
 extension Notification.Name {
     static let workoutTemplateUpdated = Notification.Name("workoutTemplateUpdated")
+    static let workoutTemplateSelectedForAttachment = Notification.Name("workoutTemplateSelectedForAttachment")
 }
 
 struct TeacherWorkoutTemplatesView: View {
@@ -13,10 +15,21 @@ struct TeacherWorkoutTemplatesView: View {
     let category: TreinoTipo
     let sectionKey: String
     let sectionTitle: String
+    let mode: TeacherWorkoutTemplatesMode
+
+    @Environment(\.locale) private var locale
 
     @State private var templates: [WorkoutTemplateFS] = []
-    @State private var isLoading: Bool = false
+    @State private var isLoading: Bool = true
+    @State private var hasLoadedInitialData: Bool = false
     @State private var errorMessage: String? = nil
+    @State private var isSeedingDefaults: Bool = false
+    @State private var isFetchingTemplates: Bool = false
+
+    private static let debugLog = OSLog(subsystem: "com.rdvperformance.app", category: "TeacherWorkoutTemplatesView")
+    #if DEBUG
+    @State private var loadCallCount: Int = 0
+    #endif
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -24,34 +37,37 @@ struct TeacherWorkoutTemplatesView: View {
         category == .crossfit
     }
 
+    private var isAcademiaOrEmCasaCategory: Bool {
+        category == .academia || category == .emCasa
+    }
+
     private var shouldShowAddButton: Bool {
+        guard mode == .manage else { return false }
+
+        // ✅ Crossfit sempre mostra
         if isCrossfitCategory { return true }
-        return sectionKey == "meusTreinos" && (category == .academia || category == .emCasa)
+
+        // ✅ Academia e Em Casa também devem mostrar (independente da seção)
+        if isAcademiaOrEmCasaCategory { return true }
+
+        return false
     }
 
     private var addButtonTitle: String {
-        isCrossfitCategory ? "Adicionar WOD" : "Adicionar Treino"
-    }
-
-    private var descriptionText: String {
-        if category == .academia || category == .emCasa {
-            return "Cadastre e gerencie os treinos desta seção."
-        }
-        return "Cadastre e gerencie os WODs desta seção."
+        isCrossfitCategory
+            ? AppLocalization.string("ui.add_wod", locale: locale)
+            : AppLocalization.string("ui.add_workout", locale: locale)
     }
 
     @State private var activeSheet: ActiveSheet? = nil
 
     enum ActiveSheet: Identifiable {
         case detail(WorkoutTemplateFS)
-        case send(WorkoutTemplateFS)
 
         var id: String {
             switch self {
             case .detail(let t):
                 return "detail-\(t.id ?? UUID().uuidString)"
-            case .send(let t):
-                return "send-\(t.id ?? UUID().uuidString)"
             }
         }
     }
@@ -78,17 +94,19 @@ struct TeacherWorkoutTemplatesView: View {
 
                             if isCrossfitCategory {
                                 EmptyView()
-                            } else if category == .academia || category == .emCasa {
+                            } else if isAcademiaOrEmCasaCategory {
                                 EmptyView()
                             } else {
-                                Text("\(category.displayName) • \(sectionTitle)")
+                                Text(
+                                    String(
+                                        format: AppLocalization.string("ui.category_section", locale: locale),
+                                        locale: locale,
+                                        arguments: [category.localizedDisplayName(locale: locale), sectionTitle]
+                                    )
+                                )
                                     .font(.system(size: 14, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
                             }
-
-                            Text(descriptionText)
-                                .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.35))
 
                             if shouldShowAddButton {
                                 TeacherWorkoutTemplatesAddButton(
@@ -99,13 +117,20 @@ struct TeacherWorkoutTemplatesView: View {
 
                             TeacherWorkoutTemplatesContentCard(
                                 isLoading: isLoading,
+                                hasLoadedInitialData: hasLoadedInitialData,
                                 templates: templates,
                                 isCrossfitCategory: isCrossfitCategory,
+                                category: category,
+                                showsTemplateActions: mode == .manage,
                                 onTapTemplate: { t in
-                                    activeSheet = .detail(t)
+                                    if mode == .attach {
+                                        selectTemplateForAttachment(t)
+                                    } else {
+                                        activeSheet = .detail(t)
+                                    }
                                 },
                                 onSendTemplate: { t in
-                                    activeSheet = .send(t)
+                                    path.append(.teacherSendWorkout(preselectedTemplate: t))
                                 },
                                 onDeleteTemplate: { t in
                                     Task { await deleteTemplate(template: t) }
@@ -113,7 +138,7 @@ struct TeacherWorkoutTemplatesView: View {
                             )
 
                             if let err = errorMessage {
-                                TeacherWorkoutTemplatesMessageCard(text: err, isError: true)
+                                TeacherWorkoutTemplatesMessageCard(text: err, isError: true, usesApprovedCardStyle: true)
                             }
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -142,12 +167,19 @@ struct TeacherWorkoutTemplatesView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -159,7 +191,7 @@ struct TeacherWorkoutTemplatesView: View {
                     .lineLimit(1)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -167,7 +199,6 @@ struct TeacherWorkoutTemplatesView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadTemplates() }
-        .onAppear { Task { await loadTemplates() } }
         .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateUpdated)) { _ in
             Task { await loadTemplates() }
         }
@@ -175,12 +206,6 @@ struct TeacherWorkoutTemplatesView: View {
             switch sheet {
             case .detail(let t):
                 TeacherWorkoutTemplateDetailSheet(template: t)
-
-            case .send(let t):
-                TeacherSendWorkoutToStudentSheet(
-                    template: t,
-                    category: category
-                )
             }
         }
     }
@@ -198,28 +223,111 @@ struct TeacherWorkoutTemplatesView: View {
     }
 
     private func loadTemplates() async {
+        guard !isFetchingTemplates else { return }
+        isFetchingTemplates = true
+        defer { isFetchingTemplates = false }
         errorMessage = nil
+
+        #if DEBUG
+        loadCallCount += 1
+        let callId = loadCallCount
+        let debugStart = Date()
+        os_log("loadTemplates() call #%d START category=%{public}@ section=%{public}@", log: Self.debugLog, type: .debug, callId, category.rawValue, sectionKey)
+        #endif
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             templates = []
+            isLoading = false
+            hasLoadedInitialData = true
             return
         }
 
         isLoading = true
-        defer { isLoading = false }
 
         do {
-            templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+            let fetched = try await FirestoreRepository.shared.getWorkoutTemplates(
                 teacherId: teacherId,
                 categoryRaw: category.rawValue,
                 sectionKey: sectionKey
             )
+            templates = fetched
+
+            #if DEBUG
+            os_log("loadTemplates() call #%d fetched %d docs in %.0fms", log: Self.debugLog, type: .debug, callId, fetched.count, Date().timeIntervalSince(debugStart) * 1000)
+            #endif
+
+            if fetched.isEmpty {
+                await seedDefaultsIfNeeded(teacherId: teacherId)
+                hasLoadedInitialData = true
+                isLoading = false
+                return
+            }
+
+            // Exibe os templates encontrados enquanto o seed verifica defaults ausentes.
+            isLoading = false
+            hasLoadedInitialData = true
+            await seedDefaultsIfNeeded(teacherId: teacherId)
+
         } catch {
             errorMessage = error.localizedDescription
             templates = []
+            isLoading = false
+            hasLoadedInitialData = true
         }
+
+        #if DEBUG
+        os_log("loadTemplates() call #%d END totalDurationMs=%.0f", log: Self.debugLog, type: .debug, callId, Date().timeIntervalSince(debugStart) * 1000)
+        #endif
+    }
+
+    /// Semeia os treinos padrão (Hero/Tribute, Girls, Open etc.) quando ainda não existirem,
+    /// sem bloquear a exibição da lista já carregada. Idempotente: só roda de fato uma vez
+    /// por professor/seção (ver `WorkoutTemplateDefaultsSeeder`).
+    private func seedDefaultsIfNeeded(teacherId: String) async {
+        guard (category == .crossfit || category == .academia || category == .emCasa),
+              sectionKey != "meusTreinos",
+              !isSeedingDefaults else { return }
+
+        isSeedingDefaults = true
+        defer { isSeedingDefaults = false }
+
+        #if DEBUG
+        let seedStart = Date()
+        #endif
+
+        do {
+            let didInsert = try await WorkoutTemplateDefaultsSeeder.shared.seedMissingDefaultsIfNeeded(
+                teacherId: teacherId,
+                category: category,
+                sectionKey: sectionKey,
+                sectionTitle: sectionTitle,
+                existingTemplates: templates
+            )
+
+            if didInsert {
+                // Atualização silenciosa (sem reexibir o spinner cheio) assim que os
+                // defaults forem inseridos.
+                templates = try await FirestoreRepository.shared.getWorkoutTemplates(
+                    teacherId: teacherId,
+                    categoryRaw: category.rawValue,
+                    sectionKey: sectionKey
+                )
+            }
+
+        } catch {
+            let format = AppLocalization.string("ui.failed_to_add_default_workouts_value", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
+        }
+
+        #if DEBUG
+        os_log("seedDefaultsIfNeeded durationMs=%.0f", log: Self.debugLog, type: .debug, Date().timeIntervalSince(seedStart) * 1000)
+        #endif
     }
 
     private func deleteTemplate(template: WorkoutTemplateFS) async {
@@ -227,13 +335,13 @@ struct TeacherWorkoutTemplatesView: View {
 
         guard let templateId = template.id?.trimmingCharacters(in: .whitespacesAndNewlines),
               !templateId.isEmpty else {
-            errorMessage = "Não foi possível remover: id do treino inválido."
+            errorMessage = AppLocalization.string("ui.unable_to_remove_invalid_workout_id", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -241,16 +349,25 @@ struct TeacherWorkoutTemplatesView: View {
         defer { isLoading = false }
 
         do {
-            // ✅ Agora usa a função corrigida que aponta para "workout_templates"
             try await FirestoreRepository.shared.deleteWorkoutTemplate(templateId: templateId)
 
-            // Remove localmente e recarrega a lista
             templates.removeAll { $0.id == templateId }
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
 
         } catch {
-            errorMessage = "Falha ao remover o treino: \(error.localizedDescription)"
+            let format = AppLocalization.string("ui.failed_to_remove_the_workout_value", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
+    }
+
+    private func selectTemplateForAttachment(_ template: WorkoutTemplateFS) {
+        NotificationCenter.default.post(name: .workoutTemplateSelectedForAttachment, object: template)
+        guard path.count >= 2 else { return }
+        path.removeLast(2)
     }
 
     private func pop() {
@@ -258,4 +375,3 @@ struct TeacherWorkoutTemplatesView: View {
         path.removeLast()
     }
 }
-

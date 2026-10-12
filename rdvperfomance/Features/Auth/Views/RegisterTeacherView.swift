@@ -1,7 +1,7 @@
 // Tela de cadastro para usuários do tipo professor
 import SwiftUI
 
-struct RegisterTrainerView: View {
+struct RegisterTeacherView: View {
 
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
@@ -55,18 +55,25 @@ struct RegisterTrainerView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Cadastro Professor")
+                Text("auth.register_teacher.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
@@ -82,12 +89,12 @@ struct RegisterTrainerView: View {
         }
     }
 
-    // Formulário de cadastro com campos de professor (nome, email, senha, whatsapp, CREF, academia, bio, área de foco, plano)
+    // Formulário de cadastro com campos de professor (nome, email, senha, whatsapp, CREF, academia, bio, área de foco)
     private func formCardTrainer() -> some View {
         VStack(spacing: 18) {
 
             UnderlineTextField(
-                title: "Nome",
+                title: "common.name",
                 text: $vm.name,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -97,17 +104,18 @@ struct RegisterTrainerView: View {
             )
 
             UnderlineTextField(
-                title: "E-mail",
+                title: "common.email",
                 text: $vm.email,
                 isSecure: false,
                 showPassword: .constant(false),
                 lineColor: lineColor,
                 textColor: .white,
-                placeholderColor: textSecondary
+                placeholderColor: textSecondary,
+                isEmail: true
             )
 
             UnderlineTextField(
-                title: "Senha",
+                title: "common.password",
                 text: $vm.password,
                 isSecure: true,
                 showPassword: $showPassword,
@@ -116,18 +124,17 @@ struct RegisterTrainerView: View {
                 placeholderColor: textSecondary
             )
 
-            UnderlineTextField(
-                title: "WhatsApp (opcional)",
-                text: $vm.phone,
-                isSecure: false,
-                showPassword: .constant(false),
+            // ✅ Campo de telefone com máscara brasileira centralizada
+            PhoneTextField(
+                title: "auth.fields.whatsapp_optional",
+                digits: $vm.phone,
                 lineColor: lineColor,
                 textColor: .white,
                 placeholderColor: textSecondary
             )
 
             UnderlineTextField(
-                title: "CREF",
+                title: "auth.fields.cref_optional",
                 text: $vm.cref,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -137,7 +144,7 @@ struct RegisterTrainerView: View {
             )
 
             UnderlineTextField(
-                title: "Nome da academia (opcional)",
+                title: "auth.fields.gym_name_optional",
                 text: $vm.gymName,
                 isSecure: false,
                 showPassword: .constant(false),
@@ -149,29 +156,28 @@ struct RegisterTrainerView: View {
             multilineBioField()
 
             pickerRow(
-                title: "Área de foco",
+                title: "auth.fields.focus_area",
                 selection: $vm.focusArea,
-                options: FocusAreaDTO.allCases
-            )
-
-            pickerRow(
-                title: "Plano",
-                selection: $vm.planType,
-                options: PlanTypeDTO.allCases
+                options: FocusAreaDTO.allCases,
+                displayText: displayTextForFocusArea
             )
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Campo de texto multilinha para biografia do professor
     private func multilineBioField() -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text("Bio (opcional)")
+            Text("auth.fields.bio_optional")
                 .font(.system(size: 14))
                 .foregroundColor(textSecondary)
 
@@ -225,21 +231,14 @@ struct RegisterTrainerView: View {
                             .tint(.white.opacity(0.9))
                     }
 
-                    Text(vm.isLoading ? "Criando..." : "Criar Conta")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
+                    Text(
+                        vm.isLoading
+                            ? LocalizedStringKey("auth.registration.loading")
+                            : LocalizedStringKey("auth.registration.submit")
+                    )
                 }
                 .frame(maxWidth: .infinity)
-                .frame(height: 46)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(vm.isLoading)
@@ -247,7 +246,7 @@ struct RegisterTrainerView: View {
             Button {
                 path.removeAll()
             } label: {
-                Text("Já tenho conta — Voltar ao Login")
+                Text("auth.registration.back_to_login")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white)
                     .underline()
@@ -258,11 +257,24 @@ struct RegisterTrainerView: View {
         .padding(.top, 12)
     }
 
+    private func displayTextForFocusArea(_ opt: FocusAreaDTO) -> String {
+        let locale = Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+        switch opt {
+        case .CROSSFIT: return AppLocalization.string("auth.focus_area.crossfit", locale: locale)
+        case .GYM: return AppLocalization.string("auth.focus_area.gym", locale: locale)
+        case .HOME: return AppLocalization.string("auth.focus_area.home", locale: locale)
+        }
+    }
+
     // Renderiza picker estilizado com linha inferior
     private func pickerRow<T: RawRepresentable & CaseIterable>(
-        title: String,
+        title: LocalizedStringKey,
         selection: Binding<T>,
-        options: [T]
+        options: [T],
+        displayText: ((T) -> String)? = nil
     ) -> some View where T.RawValue == String {
         VStack(alignment: .leading, spacing: 8) {
 
@@ -272,11 +284,11 @@ struct RegisterTrainerView: View {
 
             Menu {
                 ForEach(options, id: \.rawValue) { opt in
-                    Button(opt.rawValue) { selection.wrappedValue = opt }
+                    Button(displayText?(opt) ?? opt.rawValue) { selection.wrappedValue = opt }
                 }
             } label: {
                 HStack {
-                    Text(selection.wrappedValue.rawValue)
+                    Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
                         .foregroundColor(.white.opacity(0.92))
                         .font(.system(size: 16))
 

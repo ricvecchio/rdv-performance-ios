@@ -4,6 +4,7 @@ import SwiftUI
 struct CrossfitMenuView: View {
 
     @Binding var path: [AppRoute]
+    @Environment(\.locale) private var locale
 
     var body: some View {
         ZStack {
@@ -23,11 +24,31 @@ struct CrossfitMenuView: View {
                     let tileHeight = proxy.size.height / 5
 
                     VStack(spacing: 0) {
-                        menuTile(title: "WOD", imageName: "rdv_crossfit_wod_horizontal", height: tileHeight)
-                        menuTile(title: "BENCHMARK", imageName: "rdv_crossfit_benchmark_horizontal", height: tileHeight)
-                        menuTile(title: "MEUS RECORDES", imageName: "rdv_crossfit_meusrecordes_horizontal", height: tileHeight)
-                        menuTile(title: "PROGRESSOS", imageName: "rdv_crossfit_progressos_horizontal", height: tileHeight)
-                        menuTile(title: "MONTE SEU TREINO", imageName: "rdv_crossfit_monteseutreino_horizontal", height: tileHeight)
+                        menuTile(
+                            title: AppLocalization.string("ui.wod", locale: locale),
+                            imageName: "rdv_crossfit_wod_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: AppLocalization.string("ui.benchmark", locale: locale),
+                            imageName: "rdv_crossfit_benchmark_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: AppLocalization.string("ui.my_personal_records", locale: locale),
+                            imageName: "rdv_crossfit_meusrecordes_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: AppLocalization.string("ui.progress", locale: locale),
+                            imageName: "rdv_crossfit_progressos_horizontal",
+                            height: tileHeight
+                        )
+                        menuTile(
+                            title: AppLocalization.string("ui.build_your_workout", locale: locale),
+                            imageName: "rdv_crossfit_monteseutreino_horizontal",
+                            height: tileHeight
+                        )
                     }
                     .frame(width: proxy.size.width, height: proxy.size.height)
                 }
@@ -35,7 +56,7 @@ struct CrossfitMenuView: View {
                 FooterBar(
                     path: $path,
                     kind: .treinosComPerfil(
-                        treinoTitle: TreinoTipo.crossfit.titulo,
+                        treinoTitle: TreinoTipo.crossfit.localizedTitle(locale: locale),
                         treinoIcon: AnyView(TreinoTipo.crossfit.iconeRodapeTreinos),
                         isHomeSelected: false,
                         isTreinoSelected: true,
@@ -50,16 +71,23 @@ struct CrossfitMenuView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_user_default", size: 38)
                     .onTapGesture { }
                     .background(Color.clear)
@@ -149,4 +177,3 @@ struct CrossfitMenuView: View {
         path.removeLast()
     }
 }
-

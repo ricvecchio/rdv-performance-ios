@@ -1,11 +1,13 @@
 import SwiftUI
 import FirebaseAuth
 import UniformTypeIdentifiers
+import FirebaseFirestore
 
 struct TeacherImportWorkoutsView: View {
     
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    @Environment(\.locale) private var locale
     
     private let contentMaxWidth: CGFloat = 380
     
@@ -14,8 +16,7 @@ struct TeacherImportWorkoutsView: View {
     @State private var errorMessage: String? = nil
     
     @State private var isAddSheetPresented: Bool = false
-    @State private var isTemplateSharePresented: Bool = false
-    @State private var templateFileURL: URL? = nil
+    @State private var templateShareItem: TemplateShareItem? = nil
     @State private var isImportPickerPresented: Bool = false
     @State private var isImporting: Bool = false
     @State private var activeSheet: ActiveSheet? = nil
@@ -36,17 +37,22 @@ struct TeacherImportWorkoutsView: View {
             }
         }
     }
+
+    private struct TemplateShareItem: Identifiable {
+        let id = UUID()
+        let url: URL
+    }
     
     private enum SendDestination: CaseIterable {
         case crossfit
         case academia
         case emCasa
         
-        var title: String {
+        func title(locale: Locale) -> String {
             switch self {
-            case .crossfit: return "Treinos Crossfit"
-            case .academia: return "Treinos Academia"
-            case .emCasa:   return "Treinos em Casa"
+            case .crossfit: return AppLocalization.string("ui.crossfit_workouts", locale: locale)
+            case .academia: return AppLocalization.string("ui.gym_workouts", locale: locale)
+            case .emCasa:   return AppLocalization.string("ui.home_workouts", locale: locale)
             }
         }
         
@@ -58,9 +64,6 @@ struct TeacherImportWorkoutsView: View {
             }
         }
         
-        /// ✅ SectionKey onde o TeacherWorkoutTemplatesView busca os itens.
-        /// - Crossfit: precisa cair em "Meus Treinos" do menu Crossfit (sectionKey = "meusTreinos")
-        /// - Academia/EmCasa: sua tela usa "meusTreinos" como seção principal (vide shouldShowAddButton)
         var targetSectionKey: String {
             switch self {
             case .crossfit:
@@ -97,11 +100,17 @@ struct TeacherImportWorkoutsView: View {
                             contentCard
                             
                             if isImporting {
-                                messageCard(text: "Importando planilha... aguarde.", isError: false)
+                                messageCard(
+                                    text: AppLocalization.string("ui.importing_spreadsheet_please_wait", locale: locale),
+                                    isError: false
+                                )
                             }
                             
                             if isSendingToWorkouts {
-                                messageCard(text: "Enviando treino... aguarde.", isError: false)
+                                messageCard(
+                                    text: AppLocalization.string("ui.sending_workout_please_wait", locale: locale),
+                                    isError: false
+                                )
                             }
                             
                             if let ok = successMessage {
@@ -138,23 +147,30 @@ struct TeacherImportWorkoutsView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
             
             ToolbarItem(placement: .principal) {
-                Text("Importar Treinos")
+                Text("ui.import_workouts")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
             }
             
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -162,37 +178,14 @@ struct TeacherImportWorkoutsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadWorkouts() }
-        .onAppear { Task { await loadWorkouts() } }
         .sheet(isPresented: $isAddSheetPresented) {
             TeacherAddWorkoutSheet { title in
                 Task { await addWorkout(title: title) }
             }
         }
-        .sheet(isPresented: $isTemplateSharePresented) {
-            if let url = templateFileURL {
-                ActivityView(activityItems: [url])
-                    .ignoresSafeArea()
-            } else {
-                ZStack {
-                    Color.black.opacity(0.95).ignoresSafeArea()
-                    VStack(spacing: 12) {
-                        Text("Falha ao localizar a planilha no Bundle")
-                            .foregroundColor(.white.opacity(0.90))
-                            .font(.system(size: 16, weight: .semibold))
-                            .multilineTextAlignment(.center)
-                        
-                        Text(errorMessage ?? "Sem detalhes.")
-                            .foregroundColor(.white.opacity(0.70))
-                            .font(.system(size: 13))
-                            .multilineTextAlignment(.center)
-                            .padding(.horizontal, 18)
-                        
-                        Button("Fechar") { isTemplateSharePresented = false }
-                            .foregroundColor(.green)
-                    }
-                    .padding()
-                }
-            }
+        .sheet(item: $templateShareItem) { item in
+            ActivityView(activityItems: [item.url])
+                .ignoresSafeArea()
         }
         .sheet(isPresented: $isImportPickerPresented) {
             DocumentPicker(
@@ -204,9 +197,7 @@ struct TeacherImportWorkoutsView: View {
             )
             .ignoresSafeArea()
         }
-        .sheet(item: $activeSheet, onDismiss: {
-            Task { await loadWorkouts() }
-        }) { sheet in
+        .sheet(item: $activeSheet) { sheet in
             switch sheet {
             case .detail(let w):
                 TeacherImportedWorkoutDetailsSheet(
@@ -217,35 +208,40 @@ struct TeacherImportWorkoutsView: View {
                 )
             }
         }
-        // ✅ Seletor para enviar o treino para: Crossfit / Academia / Em Casa
         .confirmationDialog(
-            "Enviar para Treinos",
+            "ui.send_to_workouts",
             isPresented: $isSendToWorkoutsDialogPresented,
             titleVisibility: .visible
         ) {
-            Button(SendDestination.crossfit.title) {
+            Button(SendDestination.crossfit.title(locale: locale)) {
                 Task { await confirmSend(destination: .crossfit) }
             }
-            Button(SendDestination.academia.title) {
+            Button(SendDestination.academia.title(locale: locale)) {
                 Task { await confirmSend(destination: .academia) }
             }
-            Button(SendDestination.emCasa.title) {
+            Button(SendDestination.emCasa.title(locale: locale)) {
                 Task { await confirmSend(destination: .emCasa) }
             }
-            Button("Cancelar", role: .cancel) { }
+            Button("common.cancel", role: .cancel) { }
         } message: {
             let name = workoutPendingSend?.title.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             if name.isEmpty {
-                Text("Selecione o destino do treino.")
+                Text("ui.select_the_workout_destination")
             } else {
-                Text("Selecione o destino para: \(name)")
+                Text(
+                    String(
+                        format: AppLocalization.string("ui.select_destination_for_value", locale: locale),
+                        locale: locale,
+                        arguments: [name]
+                    )
+                )
             }
         }
     }
     
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Importe treinos via planilha para cadastrar automaticamente.")
+            Text("ui.import_workouts_through_a_spreadsheet_to_add_them_automatically")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.35))
         }
@@ -259,15 +255,12 @@ struct TeacherImportWorkoutsView: View {
                 successMessage = nil
                 isImportPickerPresented = true
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: "plus")
-                    Text("Importar Excel")
+                    Text("ui.import_excel")
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
                 .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
+                .compactPrimaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isImporting || isSendingToWorkouts)
@@ -279,15 +272,12 @@ struct TeacherImportWorkoutsView: View {
                 successMessage = nil
                 prepareTemplateShare()
             } label: {
-                HStack {
+                HStack(spacing: 10) {
                     Image(systemName: "arrow.down.doc")
-                    Text("Baixar Planilha Excel")
+                    Text("ui.download_excel_spreadsheet")
                 }
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
                 .padding(.horizontal, 14)
-                .padding(.vertical, 10)
-                .background(Capsule().fill(Color.green.opacity(0.16)))
+                .compactPrimaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isSendingToWorkouts)
@@ -306,11 +296,11 @@ struct TeacherImportWorkoutsView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     
@@ -340,13 +330,13 @@ struct TeacherImportWorkoutsView: View {
                 .frame(width: 26)
             
             VStack(alignment: .leading, spacing: 4) {
-                Text(w.title.isEmpty ? "Treino" : w.title)
-                    .font(.system(size: 16, weight: .semibold))
+                Text(w.title.isEmpty ? AppLocalization.string("ui.workout", locale: locale) : w.title)
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
                 
-                Text("Importado via Excel")
-                    .font(.system(size: 12))
+                Text("ui.imported_via_excel")
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
             }
@@ -355,16 +345,15 @@ struct TeacherImportWorkoutsView: View {
             
             Menu {
                 Button {
-                    // ✅ Agora abre o seletor (Crossfit / Academia / Em Casa)
                     openSendToWorkoutsPicker(workout: w)
                 } label: {
-                    Label("Enviar para Treinos", systemImage: "paperplane.fill")
+                    Label(LocalizedStringKey("ui.send_to_workouts"), systemImage: "paperplane.fill")
                 }
                 
                 Button(role: .destructive) {
                     Task { await deleteWorkout(workoutId: w.id) }
                 } label: {
-                    Label("Remover", systemImage: "trash.fill")
+                    Label(LocalizedStringKey("ui.remove"), systemImage: "trash.fill")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -386,7 +375,7 @@ struct TeacherImportWorkoutsView: View {
     private var loadingView: some View {
         VStack(spacing: 10) {
             ProgressView()
-            Text("Carregando...")
+            Text("ui.loading")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -396,12 +385,12 @@ struct TeacherImportWorkoutsView: View {
     
     private var emptyView: some View {
         VStack(spacing: 10) {
-            Text("Nenhum treino cadastrado")
-                .font(.system(size: 15, weight: .semibold))
+            Text("ui.no_workout_registered")
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
             
-            Text("Toque em \"Importar Excel\" para cadastrar treinos via planilha.")
-                .font(.system(size: 13))
+            Text("ui.tap_import_excel_to_add_workouts")
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
                 .multilineTextAlignment(.center)
         }
@@ -416,18 +405,18 @@ struct TeacherImportWorkoutsView: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
             
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
     
@@ -441,8 +430,6 @@ struct TeacherImportWorkoutsView: View {
         activeSheet = .detail(workout)
     }
     
-    // MARK: - ✅ Enviar para Treinos
-    
     private func openSendToWorkoutsPicker(workout: TeacherImportedWorkout) {
         errorMessage = nil
         successMessage = nil
@@ -455,7 +442,7 @@ struct TeacherImportWorkoutsView: View {
         successMessage = nil
         
         guard let workout = workoutPendingSend else {
-            errorMessage = "Não foi possível enviar: treino inválido."
+            errorMessage = AppLocalization.string("ui.unable_to_send_invalid_workout", locale: locale)
             return
         }
         
@@ -464,7 +451,7 @@ struct TeacherImportWorkoutsView: View {
     
     private func sendImportedWorkoutToWorkouts(workout: TeacherImportedWorkout, destination: SendDestination) async {
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
         
@@ -474,8 +461,6 @@ struct TeacherImportWorkoutsView: View {
         let descOnly = workout.description.trimmingCharacters(in: .whitespacesAndNewlines)
         let blocks = buildBlocks(from: workout)
         
-        // ✅ Evita salvar o "textão" duplicado quando já existem blocos.
-        // Mantém apenas a descrição (se existir). Caso tudo esteja vazio, salva "-" para não ficar em branco.
         let templateDescription: String = {
             if !descOnly.isEmpty { return descOnly }
             if !blocks.isEmpty { return "" }
@@ -495,11 +480,21 @@ struct TeacherImportWorkoutsView: View {
                 blocks: blocks
             )
             
-            successMessage = "Treino enviado com sucesso para \(destination.title)!"
+            let format = AppLocalization.string("ui.workout_sent_successfully_to_value", locale: locale)
+            successMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [destination.title(locale: locale)]
+            )
             NotificationCenter.default.post(name: .workoutTemplateUpdated, object: nil)
             
         } catch {
-            errorMessage = "Falha ao enviar o treino: \(error.localizedDescription)"
+            let format = AppLocalization.string("ui.failed_to_send_the_workout_value", locale: locale)
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
     }
     
@@ -533,53 +528,61 @@ struct TeacherImportWorkoutsView: View {
         return list
     }
     
-    // MARK: - Import / Template
-    
     private func prepareTemplateShare() {
         errorMessage = nil
-        
-        let expectedFileName = "\(templateResourceName).\(templateResourceExtension)"
-        
-        guard let bundleURL = Bundle.main.resourceURL else {
-            templateFileURL = nil
-            errorMessage = "DEBUG: Bundle.main.resourceURL é nil."
-            isTemplateSharePresented = true
+        templateShareItem = nil
+
+        guard let sourceURL = resolveTemplateURL() else {
+            errorMessage = AppLocalization.string("ui.unable_to_find_the_spreadsheet_template_in_the_app", locale: locale)
             return
         }
-        
-        var foundURL: URL? = nil
-        if let en = FileManager.default.enumerator(at: bundleURL, includingPropertiesForKeys: nil) {
-            for case let u as URL in en {
-                if u.lastPathComponent == expectedFileName {
-                    foundURL = u
-                    break
-                }
-            }
+
+        guard FileManager.default.fileExists(atPath: sourceURL.path) else {
+            errorMessage = AppLocalization.string("ui.unable_to_find_the_spreadsheet_template_in_the_app", locale: locale)
+            return
         }
-        
-        if let foundURL {
-            do {
-                let tmp = FileManager.default.temporaryDirectory.appendingPathComponent(expectedFileName)
-                if FileManager.default.fileExists(atPath: tmp.path) {
-                    try FileManager.default.removeItem(at: tmp)
-                }
-                try FileManager.default.copyItem(at: foundURL, to: tmp)
-                
-                templateFileURL = tmp
-                errorMessage = nil
-                isTemplateSharePresented = true
-                return
-            } catch {
-                templateFileURL = nil
-                errorMessage = "DEBUG: encontrei o arquivo, mas falhei ao copiar para /tmp: \(error.localizedDescription)"
-                isTemplateSharePresented = true
+
+        do {
+            let destinationURL = FileManager.default.temporaryDirectory
+                .appendingPathComponent(sourceURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destinationURL.path) {
+                try FileManager.default.removeItem(at: destinationURL)
+            }
+            try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
+
+            guard FileManager.default.fileExists(atPath: destinationURL.path) else {
+                errorMessage = AppLocalization.string("ui.unable_to_prepare_the_spreadsheet_for_download_the_temporary_copy_was_not_found",
+                    locale: locale
+                )
                 return
             }
+
+            templateShareItem = TemplateShareItem(url: destinationURL)
+        } catch {
+            let format = AppLocalization.string("ui.unable_to_prepare_the_spreadsheet_for_download_value",
+                locale: locale
+            )
+            errorMessage = String(
+                format: format,
+                locale: locale,
+                arguments: [error.localizedDescription]
+            )
         }
-        
-        templateFileURL = nil
-        errorMessage = "Arquivo da planilha não encontrado no bundle."
-        isTemplateSharePresented = true
+    }
+
+    private func resolveTemplateURL() -> URL? {
+        if let url = Bundle.main.url(
+            forResource: templateResourceName,
+            withExtension: templateResourceExtension
+        ) {
+            return url
+        }
+
+        return Bundle.main.url(
+            forResource: templateResourceName,
+            withExtension: templateResourceExtension,
+            subdirectory: "Templates"
+        )
     }
     
     private func handlePickedExcel(url: URL) async {
@@ -587,12 +590,9 @@ struct TeacherImportWorkoutsView: View {
         
         let ext = url.pathExtension.lowercased()
         guard ext == "xlsx" else {
-            errorMessage = """
-            O arquivo selecionado não é um .xlsx.
-
-            Se você editou no Numbers, ele salva como .numbers.
-            Faça: ••• → Exportar → Excel (.xlsx) e selecione o arquivo exportado.
-            """
+            errorMessage = AppLocalization.string("ui.the_selected_file_is_not_an_xlsx_if_you_edited_it_in_numbers_it_saves_as_numbers_do_this_export_excel_xlsx_then_select_the_exported_file",
+                locale: locale
+            )
             return
         }
         
@@ -606,40 +606,56 @@ struct TeacherImportWorkoutsView: View {
         
         do {
             guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-                errorMessage = "Não foi possível identificar o professor logado."
+                errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                 return
             }
             
             let parsed = try ExcelWorkoutImporter.parseWorkouts(fromXLSX: url)
             
             guard !parsed.isEmpty else {
-                errorMessage = "Não foi encontrado nenhum treino válido na planilha."
+                errorMessage = AppLocalization.string("ui.no_valid_workout_was_found_in_the_spreadsheet", locale: locale)
                 return
             }
             
             try await TeacherImportedWorkoutsRepository.saveImportedWorkoutsBatch(teacherId: teacherId, items: parsed)
             await loadWorkouts()
         } catch {
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_import_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                    locale: locale
+                )
+                return
+            }
+            
             let msg = error.localizedDescription
+            if msg.contains("Missing or insufficient permissions") {
+                errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_import_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                    locale: locale
+                )
+                return
+            }
+            
             if msg.contains("CoreXLSX") || msg.contains("CoreXLSXError") {
-                errorMessage = """
-                Não foi possível ler o arquivo .xlsx.
-
-                Dica: se você abriu no Numbers, use:
-                ••• → Exportar → Excel (.xlsx)
-
-                Detalhe técnico:
-                \(msg)
-                """
+                let format = AppLocalization.string("ui.unable_to_read_the_xlsx_file_tip_if_you_opened_it_in_numbers_use_export_excel_xlsx_technical_detail_value",
+                    locale: locale
+                )
+                errorMessage = String(
+                    format: format,
+                    locale: locale,
+                    arguments: [msg]
+                )
             } else {
                 errorMessage = msg
             }
         }
     }
     
-    // ✅ Mantido (não alterei o fluxo antigo; apenas deixei como estava).
     private func sendImportedWorkoutToStudent(workout: TeacherImportedWorkout) {
-        errorMessage = "Enviar para aluno: selecione o fluxo de alunos que você já usa (me diga a rota que abre a lista)."
+        errorMessage = AppLocalization.string("ui.send_to_student_select_the_student_flow_you_already_use_tell_me_which_route_opens_the_list",
+            locale: locale
+        )
     }
     
     private func loadWorkouts() async {
@@ -647,7 +663,7 @@ struct TeacherImportWorkoutsView: View {
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
             workouts = []
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
         
@@ -658,7 +674,22 @@ struct TeacherImportWorkoutsView: View {
             workouts = try await TeacherImportedWorkoutsRepository.loadWorkouts(teacherId: teacherId)
         } catch {
             workouts = []
-            errorMessage = error.localizedDescription
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_access_import_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                    locale: locale
+                )
+            } else {
+                let msg = error.localizedDescription
+                if msg.contains("Missing or insufficient permissions") {
+                    errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_access_import_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                        locale: locale
+                    )
+                } else {
+                    errorMessage = msg
+                }
+            }
         }
     }
     
@@ -666,7 +697,7 @@ struct TeacherImportWorkoutsView: View {
         errorMessage = nil
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
         
@@ -674,10 +705,29 @@ struct TeacherImportWorkoutsView: View {
         defer { isLoading = false }
         
         do {
-            try await TeacherImportedWorkoutsRepository.addWorkout(teacherId: teacherId, title: title)
+            try await TeacherImportedWorkoutsRepository.addWorkout(
+                teacherId: teacherId,
+                title: title,
+                locale: locale
+            )
             await loadWorkouts()
         } catch {
-            errorMessage = error.localizedDescription
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_save_imported_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                    locale: locale
+                )
+            } else {
+                let msg = error.localizedDescription
+                if msg.contains("Missing or insufficient permissions") {
+                    errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_save_imported_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                        locale: locale
+                    )
+                } else {
+                    errorMessage = msg
+                }
+            }
         }
     }
     
@@ -685,7 +735,7 @@ struct TeacherImportWorkoutsView: View {
         errorMessage = nil
         
         guard let teacherId = TeacherImportedWorkoutsRepository.getTeacherId() else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
         
@@ -696,7 +746,22 @@ struct TeacherImportWorkoutsView: View {
             try await TeacherImportedWorkoutsRepository.deleteWorkout(teacherId: teacherId, workoutId: workoutId)
             await loadWorkouts()
         } catch {
-            errorMessage = error.localizedDescription
+            let ns = error as NSError
+            if ns.domain == FirestoreErrorDomain,
+               ns.code == FirestoreErrorCode.permissionDenied.rawValue {
+                errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_remove_imported_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                    locale: locale
+                )
+            } else {
+                let msg = error.localizedDescription
+                if msg.contains("Missing or insufficient permissions") {
+                    errorMessage = AppLocalization.string("ui.you_do_not_have_permission_to_remove_imported_workouts_confirm_that_you_are_signed_in_and_that_your_user_type_is_trainer",
+                        locale: locale
+                    )
+                } else {
+                    errorMessage = msg
+                }
+            }
         }
     }
     
@@ -705,4 +770,3 @@ struct TeacherImportWorkoutsView: View {
         path.removeLast()
     }
 }
-

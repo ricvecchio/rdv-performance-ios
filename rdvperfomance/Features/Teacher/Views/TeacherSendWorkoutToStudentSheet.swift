@@ -3,6 +3,7 @@ import FirebaseAuth
 import FirebaseFirestore
 
 struct TeacherSendWorkoutToStudentSheet: View {
+    @Environment(\.locale) private var locale
 
     let template: WorkoutTemplateFS
     let category: TreinoTipo
@@ -50,11 +51,11 @@ struct TeacherSendWorkoutToStudentSheet: View {
                     .padding(.top, 16)
                 }
             }
-            .navigationTitle("Enviar treino")
+            .navigationTitle("ui.send_workout")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { dismiss() }
+                    Button("common.close") { dismiss() }
                 }
             }
             .task { await bootstrap() }
@@ -67,7 +68,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Escolha o aluno, a semana e o dia onde este treino será aplicado.")
+            Text("ui.choose_the_student_week_and_day_where_this_workout_will_be_applied")
                 .font(.system(size: 13))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -100,7 +101,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
     private var loadingInline: some View {
         HStack(spacing: 10) {
             ProgressView()
-            Text("Carregando...")
+            Text("ui.loading")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
@@ -109,7 +110,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var studentPickerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Aluno")
+            Text("common.student")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -118,7 +119,8 @@ struct TeacherSendWorkoutToStudentSheet: View {
     }
 
     private var studentMenu: some View {
-        let label = selectedStudent?.name ?? "Selecionar aluno"
+        let label = selectedStudent?.name
+            ?? ""
 
         let items: [(id: String, name: String)] = students.compactMap { s in
             guard let id = s.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -162,15 +164,15 @@ struct TeacherSendWorkoutToStudentSheet: View {
         let hasStudent = (selectedStudent != nil)
 
         return VStack(alignment: .leading, spacing: 6) {
-            Text("Semana")
+            Text("ui.week")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
             if !hasStudent {
-                weekMenuDisabledPlaceholder(text: "Selecione um aluno primeiro")
+                weekMenuDisabledPlaceholder(text: "ui.select_a_student_first")
                     .disabled(true)
             } else if isLoading {
-                weekMenuDisabledPlaceholder(text: "Carregando semanas...")
+                weekMenuDisabledPlaceholder(text: "workout.loading_weeks")
                     .disabled(true)
             } else if weeks.isEmpty {
                 weekMenuEmptyButton
@@ -180,7 +182,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
         }
     }
 
-    private func weekMenuDisabledPlaceholder(text: String) -> some View {
+    private func weekMenuDisabledPlaceholder(text: LocalizedStringKey) -> some View {
         HStack {
             Text(text)
                 .foregroundColor(.white.opacity(0.35))
@@ -200,11 +202,11 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var weekMenuEmptyButton: some View {
         Button {
-            errorMessage = "O aluno deve ter uma semana cadastrada."
+            errorMessage = AppLocalization.string("ui.the_student_must_have_a_registered_week", locale: locale)
             successMessage = nil
         } label: {
             HStack {
-                Text("Selecionar semana")
+                Text("ui.select_week")
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
                 Image(systemName: "chevron.down")
@@ -223,7 +225,8 @@ struct TeacherSendWorkoutToStudentSheet: View {
     }
 
     private var weekMenuWithItems: some View {
-        let labelText = selectedWeek?.weekTitle ?? "Selecionar semana"
+        let labelText = selectedWeek?.weekTitle
+            ?? AppLocalization.string("ui.select_week", locale: locale)
 
         let items: [(id: String, title: String)] = weeks.compactMap { w in
             guard let id = w.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return nil }
@@ -263,13 +266,20 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
     private var dayPickerSection: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text("Dia")
+            Text("ui.day")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
-            Picker("Dia", selection: $selectedDayIndex) {
+            Picker(LocalizedStringKey("ui.day"), selection: $selectedDayIndex) {
                 ForEach(dayOptions, id: \.self) { i in
-                    Text("Dia \(i + 1)").tag(i)
+                    Text(
+                        String(
+                            format: AppLocalization.string("ui.day_number_int", locale: locale),
+                            locale: locale,
+                            arguments: [i + 1]
+                        )
+                    )
+                    .tag(i)
                 }
             }
             .pickerStyle(.segmented)
@@ -286,19 +296,11 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 if isSending {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Enviar")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                    Text("ui.send")
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSending || selectedStudent == nil || selectedWeek?.id == nil)
@@ -310,7 +312,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -318,10 +320,35 @@ struct TeacherSendWorkoutToStudentSheet: View {
         defer { isLoading = false }
 
         do {
-            students = try await FirestoreRepository.shared.getStudentsForTeacher(
-                teacherId: teacherId,
-                category: category.rawValue
-            )
+            let allCats: [TreinoTipo] = [.crossfit, .academia, .emCasa]
+
+            let lists = try await withThrowingTaskGroup(of: [AppUser].self) { group in
+                for cat in allCats {
+                    group.addTask {
+                        try await FirestoreRepository.shared.getStudentsForTeacher(
+                            teacherId: teacherId,
+                            category: cat.rawValue
+                        )
+                    }
+                }
+
+                var collected: [[AppUser]] = []
+                for try await arr in group { collected.append(arr) }
+                return collected
+            }
+
+            var dict: [String: AppUser] = [:]
+            for list in lists {
+                for u in list {
+                    if let id = u.id, !id.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                        dict[id] = u
+                    }
+                }
+            }
+
+            let merged = Array(dict.values)
+            students = merged.sorted { $0.name.lowercased() < $1.name.lowercased() }
+
         } catch {
             errorMessage = error.localizedDescription
             students = []
@@ -333,12 +360,22 @@ struct TeacherSendWorkoutToStudentSheet: View {
         successMessage = nil
 
         guard let student = selectedStudent, let sid = student.id, !sid.isEmpty else { return }
+        let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !teacherId.isEmpty else {
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
+            return
+        }
 
         isLoading = true
         defer { isLoading = false }
 
         do {
-            weeks = try await FirestoreRepository.shared.getWeeksForStudent(studentId: sid, onlyPublished: false)
+            weeks = try await FirestoreRepository.shared.getWeeksForStudent(
+                studentId: sid,
+                teacherId: teacherId,
+                categoryRaw: category.rawValue,
+                onlyPublished: false
+            )
         } catch {
             errorMessage = error.localizedDescription
             weeks = []
@@ -350,7 +387,7 @@ struct TeacherSendWorkoutToStudentSheet: View {
         successMessage = nil
 
         guard let weekId = selectedWeek?.id, !weekId.isEmpty else {
-            errorMessage = "Selecione uma semana válida."
+            errorMessage = AppLocalization.string("ui.select_a_valid_week", locale: locale)
             return
         }
 
@@ -371,10 +408,11 @@ struct TeacherSendWorkoutToStudentSheet: View {
                 date: date,
                 title: template.title,
                 description: template.description,
-                blocks: blocks
+                blocks: blocks,
+                categoryRaw: category.rawValue
             )
 
-            successMessage = "Treino enviado com sucesso!"
+            successMessage = AppLocalization.string("ui.workout_sent_successfully", locale: locale)
         } catch {
             errorMessage = error.localizedDescription
         }

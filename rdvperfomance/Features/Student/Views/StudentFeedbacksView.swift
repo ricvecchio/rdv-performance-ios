@@ -7,11 +7,16 @@ struct StudentFeedbacksView: View {
     @Binding var path: [AppRoute]
     let category: TreinoTipo
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
     @State private var feedbacks: [StudentFeedbackFS] = []
+    @State private var teachersById: [String: AppUser] = [:]
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -37,7 +42,6 @@ struct StudentFeedbacksView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            header
                             listCard
 
                             if let err = errorMessage {
@@ -56,8 +60,10 @@ struct StudentFeedbacksView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .agendaSobrePerfil(
-                        isAgendaSelected: false,
+                    kind: .teacherHomeAlunosSobrePerfil(
+                        selectedCategory: category,
+                        isHomeSelected: false,
+                        isAlunosSelected: false,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -69,30 +75,37 @@ struct StudentFeedbacksView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Feedbacks")
+                Text("student_feedbacks.feedbacks")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { Task { await load() } } label: {
                     Image(systemName: "arrow.clockwise")
                         .foregroundColor(.green)
                 }
                 .buttonStyle(.plain)
 
-                MiniProfileHeader(imageName: "rdv_user_default", size: 38)
+                HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -100,26 +113,12 @@ struct StudentFeedbacksView: View {
         .task { await load() }
     }
 
-    // Header de contexto com categoria
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Text("Aqui você vê os feedbacks enviados pelo seu treinador.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
     // Card com lista de feedbacks
     private var listCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("HISTÓRICO")
+                Text("student_feedbacks.history")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(.white.opacity(0.35))
 
@@ -131,25 +130,13 @@ struct StudentFeedbacksView: View {
             }
 
             if feedbacks.isEmpty {
-                Text("Nenhum feedback recebido ainda.")
+                Text("student_feedbacks.no_feedback_received_yet")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(feedbacks.enumerated()), id: \.offset) { idx, fb in
-                        VStack(alignment: .leading, spacing: 6) {
-
-                            Text(fb.text)
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.75))
-
-                            if let date = fb.createdAt {
-                                Text(formatDate(date))
-                                    .font(.system(size: 12, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.45))
-                            }
-                        }
-                        .padding(.vertical, 12)
+                        feedbackRow(fb)
 
                         if idx < feedbacks.count - 1 {
                             Divider()
@@ -163,12 +150,42 @@ struct StudentFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
+    }
+
+    private func feedbackRow(_ fb: StudentFeedbackFS) -> some View {
+        HStack(alignment: .top, spacing: 12) {
+            if let date = fb.createdAt {
+                VStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 14))
+
+                    Text(formatDate(date))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
+                }
+                .frame(width: 76)
+            }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(teachersById[fb.teacherId]?.name ?? AppLocalization.string("common.trainer", locale: locale))
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(fb.text)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.75))
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.vertical, 12)
     }
 
     // Mensagem de erro/aviso estilizada
@@ -198,12 +215,15 @@ struct StudentFeedbacksView: View {
         errorMessage = nil
 
         guard session.isLoggedIn && session.isStudent else {
-            errorMessage = "Apenas aluno pode acessar feedbacks."
+            errorMessage = AppLocalization.string("student_feedbacks.student_only", locale: locale)
             return
         }
 
         guard let sid = Auth.auth().currentUser?.uid, !sid.isEmpty else {
-            errorMessage = "Não foi possível identificar o aluno logado."
+            errorMessage = AppLocalization.string(
+                "student_shared.logged_student_not_found",
+                locale: locale
+            )
             return
         }
 
@@ -212,11 +232,14 @@ struct StudentFeedbacksView: View {
         defer { isLoading = false }
 
         do {
-            feedbacks = try await FirestoreRepository.shared.getFeedbacksForStudent(
+            let loadedFeedbacks = try await FirestoreRepository.shared.getFeedbacksForStudent(
                 studentId: sid,
                 categoryRaw: category.rawValue,
                 limit: 50
             )
+            let teacherIds = Array(Set(loadedFeedbacks.map(\.teacherId).filter { !$0.isEmpty }))
+            teachersById = try await FirestoreRepository.shared.getUsers(byIds: teacherIds)
+            feedbacks = loadedFeedbacks
         } catch {
             errorMessage = (error as NSError).localizedDescription
         }
@@ -225,8 +248,8 @@ struct StudentFeedbacksView: View {
     // Formata data para exibição
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy • HH:mm"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyyHHmm")
         return f.string(from: date)
     }
 

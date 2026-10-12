@@ -9,15 +9,13 @@ struct LoginView: View {
     @StateObject private var vm = LoginViewModel()
 
     @State private var showPassword: Bool = false
+    @Environment(\.locale) private var locale
 
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
 
     @AppStorage("last_login_email") private var lastLoginEmail: String = ""
     @AppStorage("last_login_password") private var lastLoginPassword: String = ""
-
-    // ✅ chave já usada no app
-    private let ultimoTreinoKey: String = "ultimoTreinoSelecionado"
 
     // Interface principal da tela de login
     var body: some View {
@@ -38,7 +36,7 @@ struct LoginView: View {
                     .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
                     .padding(.top, 20)
 
-                Text("Entre com sua conta")
+                Text("auth.login.prompt")
                     .font(.system(size: 17, weight: .medium))
                     .foregroundColor(.white)
                     .padding(.top, 10)
@@ -47,17 +45,18 @@ struct LoginView: View {
                 VStack(spacing: 22) {
 
                     UnderlineTextField(
-                        title: "E-mail",
+                        title: "common.email",
                         text: $vm.email,
                         isSecure: false,
                         showPassword: .constant(false),
                         lineColor: lineColor,
                         textColor: .white,
-                        placeholderColor: textSecondary
+                        placeholderColor: textSecondary,
+                        isEmail: true
                     )
 
                     UnderlineTextField(
-                        title: "Senha",
+                        title: "common.password",
                         text: $vm.password,
                         isSecure: true,
                         showPassword: $showPassword,
@@ -81,7 +80,7 @@ struct LoginView: View {
                 }
 
                 Button { } label: {
-                    Text("Esqueceu a senha?")
+                    Text("auth.login.forgot_password")
                         .font(.system(size: 14))
                         .foregroundColor(textSecondary)
                         .padding(.top, 14)
@@ -92,20 +91,24 @@ struct LoginView: View {
                     Task { await doLogin() }
                 } label: {
                     HStack(spacing: 10) {
+                        Spacer()
+
                         if vm.isLoading {
-                            ProgressView().tint(.white.opacity(0.9))
+                            ProgressView()
+                                .tint(.white.opacity(0.92))
                         }
-                        Text(vm.isLoading ? "Entrando..." : "Acessar")
-                            .font(.system(size: 16, weight: .medium))
-                            .foregroundColor(.white.opacity(0.9))
+
+                        Text(
+                            vm.isLoading
+                                ? LocalizedStringKey("auth.login.loading")
+                                : LocalizedStringKey("auth.login.submit")
+                        )
+
+                        Spacer()
                     }
-                    .frame(width: 260, height: 44)
-                    .background(
-                        Capsule()
-                            .fill(Color.green.opacity(0.28))
-                            .overlay(Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1))
-                    )
-                    .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                    .frame(maxWidth: .infinity)
+                    .frame(width: 260)
+                    .primaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 22)
@@ -114,7 +117,7 @@ struct LoginView: View {
                 Button {
                     path.append(.accountTypeSelection)
                 } label: {
-                    Text("Inscreva-se gratuitamente")
+                    Text("auth.login.sign_up")
                         .font(.system(size: 15, weight: .medium))
                         .foregroundColor(.white)
                         .underline()
@@ -147,31 +150,16 @@ struct LoginView: View {
         lastLoginEmail = vm.email
         lastLoginPassword = vm.password
 
-        for _ in 0..<20 {
-            if session.userType != nil { break }
-            try? await Task.sleep(nanoseconds: 120_000_000) // 0.12s
-        }
+        // ✅ Ajuste mínimo: força o carregamento do perfil após login
+        await session.refreshProfile()
 
-        guard let type = session.userType else {
-            vm.errorMessage = "Seu perfil não foi encontrado no Firestore (users/{uid})."
+        guard session.isLoggedIn else {
+            vm.errorMessage = AppLocalization.string("auth.login.profile_not_found",
+                locale: locale
+            )
             return
         }
 
         path.removeAll()
-
-        if type == .STUDENT {
-            guard let uid = session.uid else {
-                vm.errorMessage = "Não foi possível identificar o usuário logado."
-                return
-            }
-            let name = session.userName ?? "Aluno"
-            path.append(.studentAgenda(studentId: uid, studentName: name))
-        } else {
-            // ✅ SOLICITADO: professor vai direto para TeacherDashboardView
-            let raw = UserDefaults.standard.string(forKey: ultimoTreinoKey) ?? TreinoTipo.crossfit.rawValue
-            let categoria = TreinoTipo(rawValue: raw) ?? .crossfit
-            path.append(.teacherDashboard(category: categoria))
-        }
     }
 }
-

@@ -5,6 +5,7 @@ struct HomeView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     // ✅ Persistência do último treino selecionado (sem UserDefaults manual)
     @AppStorage("ultimoTreinoSelecionado")
@@ -31,26 +32,26 @@ struct HomeView: View {
 
                     VStack(spacing: 0) {
                         programaTile(
-                            title: "Crossfit",
+                            title: TreinoTipo.crossfit.localizedDisplayName(locale: locale),
                             imageName: "rdv_programa_crossfit_horizontal",
                             height: tileHeight,
-                            imageTitle: "Crossfit",
+                            imageTitle: TreinoTipo.crossfit.localizedDisplayName(locale: locale),
                             tipo: .crossfit
                         )
 
                         programaTile(
-                            title: "Academia",
+                            title: TreinoTipo.academia.localizedDisplayName(locale: locale),
                             imageName: "rdv_programa_academia_horizontal",
                             height: tileHeight,
-                            imageTitle: "Academia",
+                            imageTitle: TreinoTipo.academia.localizedDisplayName(locale: locale),
                             tipo: .academia
                         )
 
                         programaTile(
-                            title: "Treinos em casa",
+                            title: TreinoTipo.emCasa.localizedDisplayName(locale: locale),
                             imageName: "rdv_programa_treinos_em_casa_horizontal",
                             height: tileHeight,
-                            imageTitle: "Treinos em casa",
+                            imageTitle: TreinoTipo.emCasa.localizedDisplayName(locale: locale),
                             tipo: .emCasa
                         )
                     }
@@ -66,7 +67,7 @@ struct HomeView: View {
         }
         .navigationBarBackButtonHidden(true)
         .toolbar {
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -102,8 +103,8 @@ struct HomeView: View {
 
             // ✅ HomeView agora é somente do aluno
             guard let uid = session.uid else { return }
-            let name = session.userName ?? "Aluno"
-            path.append(.studentAgenda(studentId: uid, studentName: name))
+            let name = session.userName ?? AppLocalization.string("common.student", locale: locale)
+            path.append(.studentWorkouts(studentId: uid, studentName: name))
         } label: {
             tileLayout(
                 title: title,
@@ -210,4 +211,3 @@ struct HomeView: View {
         .clipped()
     }
 }
-

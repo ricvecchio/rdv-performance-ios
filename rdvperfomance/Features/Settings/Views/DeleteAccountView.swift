@@ -6,6 +6,7 @@ struct DeleteAccountView: View {
 
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     @State private var currentPassword: String = ""
     @State private var confirmText: String = ""
@@ -21,8 +22,13 @@ struct DeleteAccountView: View {
     // Retorna verdadeiro se pode executar a exclusão
     private var canDelete: Bool {
         !currentPassword.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        && confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR"
+        && confirmText.trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare(confirmationKeyword) == .orderedSame
         && !isLoading
+    }
+
+    private var confirmationKeyword: String {
+        AppLocalization.string("settings.delete.confirmation_keyword", locale: locale)
     }
 
     // Constrói a interface com aviso, formulário e ações
@@ -49,7 +55,7 @@ struct DeleteAccountView: View {
 
                             warningCard()
                             formCard()
-                            actionCard()
+                            deleteAccountButton()
 
                             if showError {
                                 Text(errorMessage)
@@ -77,19 +83,26 @@ struct DeleteAccountView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .disabled(isLoading)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Excluir Conta")
+                Text("settings.delete.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -107,36 +120,44 @@ struct DeleteAccountView: View {
             HStack(spacing: 10) {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .foregroundColor(.red.opacity(0.9))
-                Text("Atenção")
-                    .font(.system(size: 16, weight: .semibold))
+                Text("common.warning")
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
             }
 
-            Text("Esta ação é permanente. Seu acesso será removido e você será deslogado do aplicativo.")
-                .font(.system(size: 13))
+            Text("settings.delete.warning_message")
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.60))
                 .multilineTextAlignment(.leading)
 
-            Text("Para confirmar, digite EXCLUIR e informe sua senha atual.")
-                .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.85))
-                .multilineTextAlignment(.leading)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Retorna formulário com senha e confirmação
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            secureUnderlineField(title: "Senha atual", text: $currentPassword)
+            secureUnderlineField(title: "settings.password.current", text: $currentPassword)
 
-            underlineField(title: "Digite EXCLUIR para confirmar", text: $confirmText)
+            underlineField(
+                title: (
+                    Text("settings.delete.confirm_prefix").foregroundColor(textSecondary)
+                    + Text(confirmationKeyword).bold().foregroundColor(.white.opacity(0.92))
+                    + Text("settings.delete.confirm_suffix").foregroundColor(textSecondary)
+                )
+                .font(.system(size: 14)),
+                text: $confirmText
+            )
                 .textInputAutocapitalization(.characters)
                 .autocorrectionDisabled(true)
 
@@ -144,58 +165,42 @@ struct DeleteAccountView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
-    // Retorna card com botões de excluir e cancelar
-    private func actionCard() -> some View {
-        VStack(spacing: 10) {
-
-            Button {
-                Task { await submitDelete() }
-            } label: {
+    private func deleteAccountButton() -> some View {
+        Button {
+            Task { await submitDelete() }
+        } label: {
+            HStack {
+                Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "trash.fill")
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Text(isLoading ? "Excluindo..." : "Excluir minha conta")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Spacer()
+                    Text(
+                        isLoading
+                            ? LocalizedStringKey("settings.delete.loading")
+                            : LocalizedStringKey("settings.delete.submit")
+                    )
                 }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule()
-                        .fill(Color.red.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.red.opacity(0.10), radius: 10, x: 0, y: 6)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                Spacer()
             }
-            .buttonStyle(.plain)
-            .disabled(!canDelete)
-
-            Button { pop() } label: {
-                Text("Cancelar")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .underline()
-                    .padding(.top, 2)
-            }
-            .buttonStyle(.plain)
-            .disabled(isLoading)
+            .padding(.vertical, 14)
+            .background(Color.red.opacity(0.28))
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.red.opacity(0.55), lineWidth: 1)
+            )
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        .buttonStyle(.plain)
+        .disabled(!canDelete)
     }
 
     // Valida e submete a exclusão da conta
@@ -204,18 +209,26 @@ struct DeleteAccountView: View {
         errorMessage = ""
 
         guard session.isLoggedIn else {
-            presentError("Você precisa estar logado.")
+            presentError("auth.errors.login_required")
             return
         }
 
         let pw = currentPassword.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !pw.isEmpty else {
-            presentError("Informe sua senha atual.")
+            presentError("settings.delete.current_password_required")
             return
         }
 
-        guard confirmText.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "EXCLUIR" else {
-            presentError("Digite EXCLUIR para confirmar.")
+        guard confirmText.trimmingCharacters(in: .whitespacesAndNewlines)
+            .caseInsensitiveCompare(confirmationKeyword) == .orderedSame else {
+            let format = AppLocalization.string("settings.delete.confirmation_required", locale: locale)
+            presentError(
+                String(
+                    format: format,
+                    locale: locale,
+                    arguments: [confirmationKeyword]
+                )
+            )
             return
         }
 
@@ -246,12 +259,10 @@ struct DeleteAccountView: View {
     }
 
     // Retorna campo de texto com linha inferior
-    private func underlineField(title: String, text: Binding<String>) -> some View {
+    private func underlineField(title: Text, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
-            Text(title)
-                .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+            title
 
             TextField("", text: text)
                 .foregroundColor(.white.opacity(0.92))
@@ -265,7 +276,7 @@ struct DeleteAccountView: View {
     }
 
     // Retorna campo seguro com linha inferior
-    private func secureUnderlineField(title: String, text: Binding<String>) -> some View {
+    private func secureUnderlineField(title: LocalizedStringKey, text: Binding<String>) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
             Text(title)

@@ -1,8 +1,10 @@
 import SwiftUI
 import SpriteKit
+import Foundation
 
 /// Tela reutilizável para exibição de progresso gamificado para aluno ou professor
 struct ProgressGameView: View {
+    @Environment(\.locale) private var locale
 
     /// Path de navegação para controle de stack
     @Binding var path: [AppRoute]
@@ -40,22 +42,29 @@ struct ProgressGameView: View {
             }
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Progresso")
+                Text("gamification.progress.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -75,14 +84,14 @@ struct ProgressGameView: View {
             }
 
             /// Painel SpriteKit com clipping para evitar overflow visual
-            SpriteKitPanel(metrics: vm.metrics)
+            SpriteKitPanel(metrics: vm.metrics, locale: locale)
                 .frame(height: 340)
                 .padding(.horizontal, 2)
-                .background(Theme.Colors.cardBackground)
+                .background(Color.black.opacity(0.68))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                        .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 14))
 
@@ -94,20 +103,27 @@ struct ProgressGameView: View {
     private var fallbackCard: some View {
         let percent = Int((vm.metrics.weeklyCompletion * 100).rounded())
         return VStack(alignment: .leading, spacing: 8) {
-            Text(vm.metrics.displayName ?? "Progresso do aluno")
-                .font(.system(size: 14, weight: .semibold))
+            Text(vm.metrics.displayName ?? AppLocalization.string("gamification.progress.student_title", locale: locale))
+                .font(.system(size: 17, weight: .semibold))
                 .foregroundColor(.white.opacity(0.92))
 
-            Text("Conclusão: \(percent)% • Streak: \(vm.metrics.streakDays) dias")
-                .font(.system(size: 13))
+            Text(progressSummary(percent: percent, streakDays: vm.metrics.streakDays))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
 
             if !vm.metrics.badges.isEmpty {
-                Text("Badges: \(vm.metrics.badges.map(\.title).joined(separator: ", "))")
+                let format = AppLocalization.string("gamification.badges.summary", locale: locale)
+                Text(
+                    String(
+                        format: format,
+                        locale: locale,
+                        arguments: [localizedBadgeList]
+                    )
+                )
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.45))
             } else {
-                Text("Badges: —")
+                Text("gamification.badges.empty_summary")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.45))
             }
@@ -115,12 +131,32 @@ struct ProgressGameView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
+    }
+
+    private func progressSummary(percent: Int, streakDays: Int) -> String {
+        let format = AppLocalization.string(streakDays == 1
+                ? "gamification.progress.summary.one_day"
+                : "gamification.progress.summary.other_days",
+            locale: locale
+        )
+        return String(
+            format: format,
+            locale: locale,
+            arguments: [Int64(percent), Int64(streakDays)]
+        )
+    }
+
+    private var localizedBadgeList: String {
+        let titles = vm.metrics.badges.map { $0.localizedTitle(locale: locale) }
+        let formatter = ListFormatter()
+        formatter.locale = locale
+        return formatter.string(from: titles) ?? titles.joined(separator: ", ")
     }
 
     /// Remove última rota da pilha de navegação
@@ -134,6 +170,7 @@ struct ProgressGameView: View {
 private struct SpriteKitPanel: View {
 
     let metrics: ProgressMetrics
+    let locale: Locale
 
     /// Cena criada uma única vez e redimensionada pelo container real
     @State private var scene: ProgressGameScene = ProgressGameSceneFactory.makeScene(
@@ -145,13 +182,16 @@ private struct SpriteKitPanel: View {
             SpriteView(scene: scene)
                 .onAppear {
                     applySizeIfNeeded(geo.size)
-                    scene.update(with: metrics, animated: false)
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
                 .onChange(of: geo.size) { _, newSize in
                     applySizeIfNeeded(newSize)
                 }
                 .onChange(of: metrics) { _, newValue in
-                    scene.update(with: newValue, animated: true)
+                    scene.update(with: newValue, locale: locale, animated: true)
+                }
+                .onChange(of: locale) { _, newLocale in
+                    scene.update(with: metrics, locale: newLocale, animated: false)
                 }
         }
         .clipped()

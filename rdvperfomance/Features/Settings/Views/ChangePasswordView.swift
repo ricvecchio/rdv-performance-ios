@@ -19,6 +19,7 @@ struct ChangePasswordView: View {
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
     private let contentMaxWidth: CGFloat = 380
+    @Environment(\.locale) private var locale
 
     // Constrói a interface da tela de alteração de senha
     var body: some View {
@@ -42,16 +43,18 @@ struct ChangePasswordView: View {
 
                         VStack(spacing: 16) {
 
-                            headerCard()
                             formCard()
-                            actionCard()
+                            savePasswordButton()
 
                             if showError {
                                 feedbackCard(text: errorMessage, isError: true)
                             }
 
                             if showSuccess {
-                                feedbackCard(text: "Senha alterada com sucesso.", isError: false)
+                                feedbackCard(
+                                    text: AppLocalization.string("settings.password.changed_success", locale: locale),
+                                    isError: false
+                                )
                             }
 
                             Color.clear.frame(height: 18)
@@ -69,18 +72,25 @@ struct ChangePasswordView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Alterar Senha")
+                Text("settings.password.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
@@ -91,88 +101,45 @@ struct ChangePasswordView: View {
         .toolbarBackground(.visible, for: .navigationBar)
     }
 
-    // Retorna card com texto informativo sobre segurança
-    private func headerCard() -> some View {
-        VStack(spacing: 10) {
-            Text("Segurança")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-
-            Text("Para alterar sua senha, confirme a senha atual e defina uma nova senha.")
-                .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.60))
-                .multilineTextAlignment(.center)
-                .padding(.horizontal, 8)
-        }
-        .padding(.vertical, 18)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
-    }
-
     // Retorna card com campos de senha
     private func formCard() -> some View {
         VStack(spacing: 18) {
 
-            secureUnderlineField(title: "Senha atual", text: $currentPassword)
-            secureUnderlineField(title: "Nova senha", text: $newPassword)
-            secureUnderlineField(title: "Confirmar nova senha", text: $confirmNewPassword)
+            secureUnderlineField(title: "settings.password.current", text: $currentPassword)
+            secureUnderlineField(title: "settings.password.new", text: $newPassword)
+            secureUnderlineField(title: "settings.password.confirm", text: $confirmNewPassword)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
-    // Retorna card com botões de salvar e cancelar
-    private func actionCard() -> some View {
-        VStack(spacing: 10) {
-
-            Button {
-                Task { await submit() }
-            } label: {
+    private func savePasswordButton() -> some View {
+        Button {
+            Task { await submit() }
+        } label: {
+            HStack {
+                Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "key.fill")
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Text(isLoading ? "Salvando..." : "Salvar nova senha")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(.white.opacity(0.9))
-
-                    Spacer()
+                    Text(
+                        isLoading
+                            ? LocalizedStringKey("common.saving")
+                            : LocalizedStringKey("settings.password.save")
+                    )
                 }
-                .padding(.horizontal, 16)
-                .frame(height: 46)
-                .frame(maxWidth: .infinity)
-                .background(
-                    Capsule()
-                        .fill(Color.green.opacity(0.28))
-                        .overlay(
-                            Capsule()
-                                .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                        )
-                )
-                .shadow(color: Color.green.opacity(0.10), radius: 10, x: 0, y: 6)
+                Spacer()
             }
-            .buttonStyle(.plain)
-            .disabled(isLoading)
-
-            Button { pop() } label: {
-                Text("Cancelar")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.85))
-                    .underline()
-                    .padding(.top, 2)
-            }
-            .buttonStyle(.plain)
-            .disabled(isLoading)
+            .primaryGreenActionButton()
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 16)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        .buttonStyle(.plain)
+        .disabled(isLoading)
     }
 
     // Retorna card de feedback de sucesso ou erro
@@ -198,22 +165,22 @@ struct ChangePasswordView: View {
         let cn = confirmNewPassword.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard session.isLoggedIn else {
-            presentError("Você precisa estar logado.")
+            presentError(AppLocalization.string("auth.errors.login_required", locale: locale))
             return
         }
 
         guard !cp.isEmpty, !np.isEmpty, !cn.isEmpty else {
-            presentError("Preencha todos os campos.")
+            presentError(AppLocalization.string("settings.password.fill_all", locale: locale))
             return
         }
 
         guard np.count >= 6 else {
-            presentError("A nova senha deve ter pelo menos 6 caracteres.")
+            presentError(AppLocalization.string("settings.password.min_length", locale: locale))
             return
         }
 
         guard np == cn else {
-            presentError("A confirmação da nova senha não confere.")
+            presentError(AppLocalization.string("settings.password.confirmation_mismatch", locale: locale))
             return
         }
 
@@ -246,7 +213,10 @@ struct ChangePasswordView: View {
     }
 
     // Retorna campo seguro com linha inferior
-    private func secureUnderlineField(title: String, text: Binding<String>) -> some View {
+    private func secureUnderlineField(
+        title: LocalizedStringKey,
+        text: Binding<String>
+    ) -> some View {
         VStack(alignment: .leading, spacing: 8) {
 
             Text(title)

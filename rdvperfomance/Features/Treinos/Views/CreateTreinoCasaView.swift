@@ -3,6 +3,7 @@ import FirebaseAuth
 
 /// Tela para criar um Treino (Em Casa) — layout idêntico ao "Adicionar WOD"
 struct CreateTreinoCasaView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
@@ -15,10 +16,10 @@ struct CreateTreinoCasaView: View {
     @State private var description: String = ""
 
     @State private var blocks: [BlockDraft] = [
-        BlockDraft(name: "Aquecimento", details: ""),
-        BlockDraft(name: "Técnica", details: ""),
-        BlockDraft(name: "Treino", details: ""),
-        BlockDraft(name: "Cargas / Movimentos", details: "")
+        BlockDraft(defaultBlock: .warmup),
+        BlockDraft(defaultBlock: .technique),
+        BlockDraft(defaultBlock: .workout),
+        BlockDraft(defaultBlock: .loadsAndMovements)
     ]
 
     @State private var showPasswordDummy: Bool = false
@@ -26,6 +27,7 @@ struct CreateTreinoCasaView: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
+    @State private var isSelectingTemplateAttachment: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -91,38 +93,53 @@ struct CreateTreinoCasaView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Adicionar Treino")
+                Text("ui.add_workout")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateSelectedForAttachment)) { notification in
+            guard isSelectingTemplateAttachment,
+                  let template = notification.object as? WorkoutTemplateFS else {
+                return
+            }
+            isSelectingTemplateAttachment = false
+            applyTemplate(template)
+        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(category.displayName) • \(sectionTitle)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Text("Crie um treino para aparecer na lista desta seção.")
+            (
+                Text("ui.create_a_new")
+                + Text("ui.home_workout_type").foregroundColor(.green.opacity(0.85))
+                + Text("ui.for_this_section")
+            )
+            .foregroundColor(.white.opacity(0.55))
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -130,48 +147,47 @@ struct CreateTreinoCasaView: View {
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("Treino")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             UnderlineTextField(
-                title: "Título do Treino",
+                title: "ui.workout_title_2",
                 text: $title,
                 isSecure: false,
                 showPassword: $showPasswordDummy,
                 lineColor: Theme.Colors.divider,
                 textColor: .white.opacity(0.92),
-                placeholderColor: .white.opacity(0.55)
+                placeholderColor: .white.opacity(0.55),
+                inputBackground: Color.white.opacity(0.06),
+                inputBorderColor: Theme.Colors.primaryGreen.opacity(0.28)
             )
 
             Divider().background(Theme.Colors.divider)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Descrição")
+                Text("ui.description")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
                 TextEditor(text: $description)
-                    .foregroundColor(.white.opacity(0.92))
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.75))
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Color.black.opacity(0.22))
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -179,13 +195,18 @@ struct CreateTreinoCasaView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
+                WorkoutTemplateAttachmentButton(isLoading: false) {
+                    isSelectingTemplateAttachment = true
+                    path.append(.teacherEmCasaLibrary(mode: .library, templateMode: .attach))
+                }
+
                 Spacer()
                 Button {
-                    blocks.append(BlockDraft(name: "Novo bloco", details: ""))
+                    blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.green.opacity(0.85))
-                        .font(.system(size: 18))
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)
             }
@@ -194,9 +215,24 @@ struct CreateTreinoCasaView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text(b.name.isEmpty ? "Sem nome" : b.name)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.70))
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField(
+                                "ui.new_block",
+                                text: Binding(
+                                    get: { b.displayedName(locale: locale) },
+                                    set: { b.setDisplayedName($0) }
+                                )
+                            )
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 17))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+
+                            Rectangle()
+                                .fill(Theme.Colors.divider)
+                                .frame(height: 1)
+                        }
+                        .frame(maxWidth: .infinity)
 
                         Spacer()
 
@@ -211,31 +247,18 @@ struct CreateTreinoCasaView: View {
                         .buttonStyle(.plain)
                     }
 
-                    UnderlineTextField(
-                        title: "",
-                        text: $b.name,
-                        isSecure: false,
-                        showPassword: $showPasswordDummy,
-                        lineColor: Theme.Colors.divider,
-                        textColor: .white.opacity(0.92),
-                        placeholderColor: .white.opacity(0.55)
-                    )
-
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Detalhes")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
-
                         TextEditor(text: $b.details)
-                            .foregroundColor(.white.opacity(0.92))
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.75))
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Color.black.opacity(0.22))
+                            .background(Color.white.opacity(0.06))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                             )
                     }
 
@@ -245,19 +268,19 @@ struct CreateTreinoCasaView: View {
             }
 
             if blocks.isEmpty {
-                Text("Nenhum bloco adicionado.")
-                    .font(.system(size: 13))
+                Text("ui.no_block_added")
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -270,19 +293,11 @@ struct CreateTreinoCasaView: View {
                 if isSaving {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Salvar Treino")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                    Text("ui.save_workout")
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSaving)
@@ -294,39 +309,49 @@ struct CreateTreinoCasaView: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
 
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
 
             Spacer()
         }
+
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
+    }
+
+    private func applyTemplate(_ template: WorkoutTemplateFS) {
+        let localizedTemplate = DefaultWorkoutLocalization.presentation(for: template, locale: locale)
+        title = localizedTemplate.title
+        description = localizedTemplate.description
+        blocks = (localizedTemplate.blocks ?? []).map {
+            BlockDraft(name: $0.name, details: $0.details)
+        }
     }
 
     private func saveTemplate() async {
         errorMessage = nil
         successMessage = nil
 
-        guard session.userType == .TRAINER else {
-            errorMessage = "Apenas professor pode adicionar treinos."
+        guard session.isTrainer else {
+            errorMessage = AppLocalization.string("ui.only_coaches_can_add_workouts", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = "Informe o título do treino."
+            errorMessage = AppLocalization.string("ui.enter_the_workout_title", locale: locale)
             return
         }
 

@@ -1,4 +1,5 @@
 import Foundation
+import SwiftUI
 
 enum TeacherYoutubeVideoCategory: String, CaseIterable, Identifiable {
     case crossfit = "Crossfit"
@@ -6,6 +7,17 @@ enum TeacherYoutubeVideoCategory: String, CaseIterable, Identifiable {
     case treinosEmCasa = "Treinos em Casa"
     
     var id: String { rawValue }
+
+    var localizedTitle: LocalizedStringKey {
+        switch self {
+        case .crossfit:
+            "video.category.crossfit"
+        case .academia:
+            "video.category.gym"
+        case .treinosEmCasa:
+            "video.category.home"
+        }
+    }
 }
 
 struct TeacherYoutubeVideo: Identifiable, Equatable {

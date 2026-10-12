@@ -3,6 +3,7 @@ import FirebaseAuth
 
 /// Tela para criar um WOD (template) — semelhante ao CreateTrainingDayView, porém sem Data/Ordem/Nome do dia
 struct CreateCrossfitWODView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
@@ -16,10 +17,10 @@ struct CreateCrossfitWODView: View {
 
     // ✅ mesmos blocos do "Criar dia" (inclui Cargas / Movimentos)
     @State private var blocks: [BlockDraft] = [
-        BlockDraft(name: "Aquecimento", details: ""),
-        BlockDraft(name: "Técnica", details: ""),
-        BlockDraft(name: "WOD", details: ""),
-        BlockDraft(name: "Cargas / Movimentos", details: "")
+        BlockDraft(defaultBlock: .warmup),
+        BlockDraft(defaultBlock: .technique),
+        BlockDraft(defaultBlock: .wod),
+        BlockDraft(defaultBlock: .loadsAndMovements)
     ]
 
     @State private var showPasswordDummy: Bool = false
@@ -27,6 +28,7 @@ struct CreateCrossfitWODView: View {
     @State private var isSaving: Bool = false
     @State private var errorMessage: String? = nil
     @State private var successMessage: String? = nil
+    @State private var isSelectingTemplateAttachment: Bool = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -92,38 +94,53 @@ struct CreateCrossfitWODView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Adicionar WOD")
+                Text("ui.add_wod")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateSelectedForAttachment)) { notification in
+            guard isSelectingTemplateAttachment,
+                  let template = notification.object as? WorkoutTemplateFS else {
+                return
+            }
+            isSelectingTemplateAttachment = false
+            applyTemplate(template)
+        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("\(category.displayName) • \(sectionTitle)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Text("Crie um WOD para aparecer na lista desta seção.")
+            (
+                Text("ui.create_a_new")
+                + Text("ui.wod").foregroundColor(.green.opacity(0.85))
+                + Text("ui.for_this_section")
+            )
+            .foregroundColor(.white.opacity(0.55))
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -131,48 +148,47 @@ struct CreateCrossfitWODView: View {
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("Treino")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             UnderlineTextField(
-                title: "Título do WOD",
+                title: "ui.wod_title",
                 text: $title,
                 isSecure: false,
                 showPassword: $showPasswordDummy,
                 lineColor: Theme.Colors.divider,
                 textColor: .white.opacity(0.92),
-                placeholderColor: .white.opacity(0.55)
+                placeholderColor: .white.opacity(0.55),
+                inputBackground: Color.white.opacity(0.06),
+                inputBorderColor: Theme.Colors.primaryGreen.opacity(0.28)
             )
 
             Divider().background(Theme.Colors.divider)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Descrição")
+                Text("ui.description")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
                 TextEditor(text: $description)
-                    .foregroundColor(.white.opacity(0.92))
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.75))
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Color.black.opacity(0.22))
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                     )
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -180,13 +196,24 @@ struct CreateCrossfitWODView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
+                WorkoutTemplateAttachmentButton(isLoading: false) {
+                    isSelectingTemplateAttachment = true
+                    path.append(
+                        .teacherCrossfitLibrary(
+                            section: .benchmarks,
+                            mode: .library,
+                            templateMode: .attach
+                        )
+                    )
+                }
+
                 Spacer()
                 Button {
-                    blocks.append(BlockDraft(name: "Novo bloco", details: ""))
+                    blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(.green.opacity(0.85))
-                        .font(.system(size: 18))
+                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)
             }
@@ -195,9 +222,24 @@ struct CreateCrossfitWODView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text(b.name.isEmpty ? "Sem nome" : b.name)
-                            .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.70))
+                        VStack(alignment: .leading, spacing: 6) {
+                            TextField(
+                                "ui.new_block",
+                                text: Binding(
+                                    get: { b.displayedName(locale: locale) },
+                                    set: { b.setDisplayedName($0) }
+                                )
+                            )
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 17))
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+
+                            Rectangle()
+                                .fill(Theme.Colors.divider)
+                                .frame(height: 1)
+                        }
+                        .frame(maxWidth: .infinity)
 
                         Spacer()
 
@@ -213,31 +255,18 @@ struct CreateCrossfitWODView: View {
                         .buttonStyle(.plain)
                     }
 
-                    UnderlineTextField(
-                        title: "",
-                        text: $b.name,
-                        isSecure: false,
-                        showPassword: $showPasswordDummy,
-                        lineColor: Theme.Colors.divider,
-                        textColor: .white.opacity(0.92),
-                        placeholderColor: .white.opacity(0.55)
-                    )
-
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Detalhes")
-                            .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
-
                         TextEditor(text: $b.details)
-                            .foregroundColor(.white.opacity(0.92))
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.75))
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Color.black.opacity(0.22))
+                            .background(Color.white.opacity(0.06))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
                             )
                     }
 
@@ -247,19 +276,19 @@ struct CreateCrossfitWODView: View {
             }
 
             if blocks.isEmpty {
-                Text("Nenhum bloco adicionado.")
-                    .font(.system(size: 13))
+                Text("ui.no_block_added")
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -272,19 +301,11 @@ struct CreateCrossfitWODView: View {
                 if isSaving {
                     ProgressView().tint(.white)
                 } else {
-                    Text("Salvar WOD")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                    Text("ui.save_wod")
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSaving)
@@ -296,39 +317,49 @@ struct CreateCrossfitWODView: View {
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
 
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
 
             Spacer()
         }
+
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
+    }
+
+    private func applyTemplate(_ template: WorkoutTemplateFS) {
+        let localizedTemplate = DefaultWorkoutLocalization.presentation(for: template, locale: locale)
+        title = localizedTemplate.title
+        description = localizedTemplate.description
+        blocks = (localizedTemplate.blocks ?? []).map {
+            BlockDraft(name: $0.name, details: $0.details)
+        }
     }
 
     private func saveTemplate() async {
         errorMessage = nil
         successMessage = nil
 
-        guard session.userType == .TRAINER else {
-            errorMessage = "Apenas professor pode adicionar WODs."
+        guard session.isTrainer else {
+            errorMessage = AppLocalization.string("ui.only_coaches_can_add_wods", locale: locale)
             return
         }
 
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = "Informe o título do WOD."
+            errorMessage = AppLocalization.string("ui.enter_the_wod_title", locale: locale)
             return
         }
 
@@ -349,8 +380,7 @@ struct CreateCrossfitWODView: View {
                 blocks: payloadBlocks
             )
 
-            // ✅ volta para lista (que recarrega no onAppear)
-            pop()
+            path.removeAll()
 
         } catch {
             errorMessage = error.localizedDescription
@@ -362,4 +392,3 @@ struct CreateCrossfitWODView: View {
         path.removeLast()
     }
 }
-

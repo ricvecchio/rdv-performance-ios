@@ -33,11 +33,11 @@ struct DebugAROverlay: View {
                 .background(Color.black.opacity(0.4))
                 .cornerRadius(6)
 
-            Button("Copiar diagnóstico AR") { onCopyDiagnostic() }
+            Button("ar.debug.copy_diagnostic") { onCopyDiagnostic() }
                 .buttonStyle(.bordered)
                 .padding(.top, 6)
 
-            Button("Salvar/Compartilhar log") { onShareDiagnostic() }
+            Button("ar.debug.share_log") { onShareDiagnostic() }
                 .buttonStyle(.bordered)
 
             Button("Start session (manual - minimal)") { onStartMinimal() }

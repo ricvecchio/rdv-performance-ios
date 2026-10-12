@@ -1,0 +1,76 @@
+// =============================================================================
+// RDV Performance — Regras para a autorização de cadastro de Professores
+// =============================================================================
+//
+// ATENÇÃO: este arquivo NÃO é uma substituição completa das regras atuais.
+// As regras vigentes do projeto não estão versionadas neste repositório.
+// Mescle MANUALMENTE os trechos abaixo nas regras publicadas no Console do
+// Firebase (Firestore Database > Regras), preservando todas as regras existentes.
+//
+// Este arquivo não está referenciado no firebase.json de propósito, para que um
+// "firebase deploy" não sobrescreva as regras de produção.
+// =============================================================================
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------------------------------------------------------
+    // 1) Coleções internas da autorização de Professores.
+    //    Acesso exclusivo pelas Cloud Functions (Admin SDK ignora as regras).
+    //
+    //    IMPORTANTE: regras do Firestore são permissivas por combinação (OR).
+    //    Se as regras atuais tiverem um curinga amplo, por exemplo:
+    //        match /{document=**} { allow read, write: if request.auth != null; }
+    //    estas coleções continuarão EXPOSTAS. Nesse caso, o curinga precisa ser
+    //    restringido para não abranger as coleções abaixo.
+    // -------------------------------------------------------------------------
+    match /teacher_signup_config/{docId} {
+      allow read, write: if false;
+    }
+
+    match /teacher_signup_tickets/{docId} {
+      allow read, write: if false;
+    }
+
+    match /teacher_signup_attempts/{docId} {
+      allow read, write: if false;
+    }
+
+    // -------------------------------------------------------------------------
+    // 2) Proteção do campo userType em /users/{uid}.
+    //
+    //    Acrescente (com &&) as condições abaixo às regras de create/update
+    //    JÁ EXISTENTES de /users/{uid}. Não remova as condições atuais.
+    //
+    //    - Clientes só podem criar o próprio perfil como STUDENT (ou sem userType,
+    //      caso de gravações com merge em documentos ainda inexistentes).
+    //    - Nenhum cliente pode alterar o userType de um perfil existente
+    //      (impede STUDENT -> TRAINER). Perfis TRAINER só são criados pela
+    //      Cloud Function createTeacherAccount.
+    //    - Professores já cadastrados continuam podendo atualizar seus perfis,
+    //      desde que não alterem o userType.
+    // -------------------------------------------------------------------------
+    function userTypeAllowedOnCreate() {
+      return !('userType' in request.resource.data)
+        || request.resource.data.userType == 'STUDENT';
+    }
+
+    function userTypeUnchanged() {
+      return request.resource.data.get('userType', null) == resource.data.get('userType', null);
+    }
+
+    match /users/{uid} {
+      // Exemplo de composição — substitua <REGRA_EXISTENTE_CREATE> e
+      // <REGRA_EXISTENTE_UPDATE> pelas condições atualmente publicadas:
+      //
+      // allow create: if <REGRA_EXISTENTE_CREATE> && userTypeAllowedOnCreate();
+      // allow update: if <REGRA_EXISTENTE_UPDATE> && userTypeUnchanged();
+      //
+      // Caso as regras atuais usem "allow write", separe em create/update/delete
+      // para aplicar as condições acima apenas em create e update.
+    }
+  }
+}
+

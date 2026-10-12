@@ -18,12 +18,17 @@ final class CreateTrainingWeekViewModel: ObservableObject {
     }
 
     // Carrega semanas do aluno incluindo rascunhos
-    func loadWeeks(studentId: String) async {
+    func loadWeeks(studentId: String, teacherId: String, categoryRaw: String) async {
         isLoading = true
         errorMessage = nil
 
         do {
-            let result = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: false)
+            let result = try await repository.getWeeksForStudent(
+                studentId: studentId,
+                teacherId: teacherId,
+                categoryRaw: categoryRaw,
+                onlyPublished: false
+            )
 
             self.weeks = result.sorted { a, b in
                 let ad = a.createdAt?.dateValue() ?? Date.distantPast
@@ -38,30 +43,4 @@ final class CreateTrainingWeekViewModel: ObservableObject {
         isLoading = false
     }
 
-    // Atualiza ranges de datas das semanas baseado nos dias
-    func repairWeekRangesIfNeeded() async {
-        let ids = weeks.compactMap { $0.id }
-        guard !ids.isEmpty else { return }
-
-        await withTaskGroup(of: Void.self) { group in
-            for weekId in ids {
-                group.addTask {
-                    do {
-                        try await FirestoreRepository.shared.updateWeekDateRangeFromDays(weekId: weekId)
-                    } catch {
-                    }
-                }
-            }
-        }
-
-        do {
-            let result = try await repository.getWeeksForStudent(studentId: studentId, onlyPublished: false)
-            self.weeks = result.sorted { a, b in
-                let ad = a.createdAt?.dateValue() ?? Date.distantPast
-                let bd = b.createdAt?.dateValue() ?? Date.distantPast
-                return ad > bd
-            }
-        } catch {
-        }
-    }
 }

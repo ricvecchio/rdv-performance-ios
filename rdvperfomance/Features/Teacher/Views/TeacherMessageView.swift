@@ -1,18 +1,17 @@
-// TeacherSendMessageView.swift — Tela para professor enviar e listar mensagens para um aluno
+// TeacherMessageView.swift — Tela de mensagens entre professor e aluno
 import SwiftUI
 import FirebaseAuth
 
-struct TeacherSendMessageView: View {
+struct TeacherMessageView: View {
 
     @Binding var path: [AppRoute]
     let student: AppUser
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
-    @State private var subject: String = ""
     @State private var message: String = ""
-    @State private var showPasswordDummy: Bool = false
 
     @State private var isLoading: Bool = false
     @State private var isSending: Bool = false
@@ -20,6 +19,10 @@ struct TeacherSendMessageView: View {
     @State private var successMessage: String? = nil
 
     @State private var messages: [TeacherMessageFS] = []
+
+    @FocusState private var isMessageFocused: Bool
+
+    private let successMessageScrollID = "teacherMessageSuccess"
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -39,40 +42,50 @@ struct TeacherSendMessageView: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                ScrollViewReader { proxy in
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
+                            VStack(alignment: .leading, spacing: 14) {
 
-                            header
-                            messagesCard
-                            formCard
+                                header
+                                formCard
+                                messagesCard
 
-                            if let err = errorMessage {
-                                messageCard(text: err, isError: true)
+                                if let err = errorMessage {
+                                    messageCard(text: err, isError: true)
+                                }
+
+                                if let ok = successMessage {
+                                    messageCard(text: ok, isError: false)
+                                        .id(successMessageScrollID)
+                                }
+
+                                Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                             }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
 
-                            if let ok = successMessage {
-                                messageCard(text: ok, isError: false)
-                            }
-
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 16)
-
-                        Spacer(minLength: 0)
+                    }
+                    .onChange(of: successMessage) { _, newValue in
+                        // Rola até a confirmação de sucesso para que fique visível
+                        guard newValue != nil else { return }
+                        withAnimation {
+                            proxy.scrollTo(successMessageScrollID, anchor: .bottom)
+                        }
                     }
                 }
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunoSobrePerfil(
+                    kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
                         isHomeSelected: false,
-                        isAlunoSelected: true,
+                        isAlunosSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -84,31 +97,44 @@ struct TeacherSendMessageView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Enviar mensagem")
+                Text("ui.messages")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
 
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
 
                 Button {
                     Task { await loadMessages() }
                 } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "arrow.clockwise")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
@@ -122,17 +148,15 @@ struct TeacherSendMessageView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aluno: \(student.name)")
+            Text(
+                String(
+                    format: AppLocalization.string("ui.student_value", locale: locale),
+                    locale: locale,
+                    arguments: [student.name]
+                )
+            )
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.70))
-
-            Text("Categoria: \(category.displayName)")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Text("Envie orientações, avisos e recados para o aluno.")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -141,8 +165,8 @@ struct TeacherSendMessageView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("HISTÓRICO")
-                    .font(.system(size: 14, weight: .medium))
+                Text("ui.history")
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.35))
 
                 Spacer()
@@ -153,8 +177,8 @@ struct TeacherSendMessageView: View {
             }
 
             if messages.isEmpty {
-                Text("Nenhuma mensagem enviada ainda.")
-                    .font(.system(size: 13))
+                Text("ui.no_message_has_been_sent_yet")
+                    .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             } else {
                 VStack(spacing: 0) {
@@ -168,44 +192,41 @@ struct TeacherSendMessageView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
     private func messageRow(_ msg: TeacherMessageFS) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
+        HStack(alignment: .top, spacing: 12) {
+            if let date = msg.createdAt {
+                VStack(spacing: 5) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 14))
 
-            HStack(alignment: .top, spacing: 10) {
-                Image(systemName: "paperplane.fill")
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 14))
-                    .frame(width: 20)
-
-                VStack(alignment: .leading, spacing: 4) {
-
-                    let subj = (msg.subject ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-                    Text(subj.isEmpty ? "Sem assunto" : subj)
-                        .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(subj.isEmpty ? .white.opacity(0.70) : .white.opacity(0.92))
-
-                    Text(msg.body)
-                        .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.75))
-                        .lineLimit(3)
-
-                    if let date = msg.createdAt {
-                        Text(formatDate(date))
-                            .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.45))
-                    }
+                    Text(formatDate(date))
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.45))
+                        .multilineTextAlignment(.center)
                 }
-
-                Spacer()
+                .frame(width: 76)
             }
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(session.userName ?? AppLocalization.string("common.trainer", locale: locale))
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Text(msg.body)
+                    .font(.system(size: 14))
+                    .foregroundColor(.white.opacity(0.75))
+                    .lineLimit(3)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 12)
     }
@@ -213,37 +234,31 @@ struct TeacherSendMessageView: View {
     private var formCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("NOVA MENSAGEM")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
+            HStack(spacing: 8) {
+                Image(systemName: "text.bubble.fill")
+                    .foregroundColor(.green.opacity(0.85))
+                    .font(.system(size: 14))
 
-            UnderlineTextField(
-                title: "Assunto (opcional)",
-                text: $subject,
-                isSecure: false,
-                showPassword: $showPasswordDummy,
-                lineColor: Theme.Colors.divider,
-                textColor: .white.opacity(0.92),
-                placeholderColor: .white.opacity(0.55)
-            )
-
-            Divider().background(Theme.Colors.divider)
+                Text("ui.message")
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.35))
+            }
 
             VStack(alignment: .leading, spacing: 8) {
-                Text("Mensagem")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-
                 TextEditor(text: $message)
+                    .focused($isMessageFocused)
                     .scrollContentBackground(.hidden)
                     .foregroundColor(.white.opacity(0.92))
                     .frame(minHeight: 140)
                     .padding(10)
-                    .background(Color.black.opacity(0.25))
+                    .background(Color.white.opacity(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Color.white.opacity(0.06), lineWidth: 1)
+                            .stroke(
+                                Theme.Colors.primaryGreen.opacity(0.28),
+                                lineWidth: 1
+                            )
                     )
             }
 
@@ -255,19 +270,11 @@ struct TeacherSendMessageView: View {
                     if isSending {
                         ProgressView().tint(.white)
                     } else {
-                        Text("Enviar")
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                        Text("ui.send")
                     }
                     Spacer()
                 }
-                .padding(.vertical, 14)
-                .background(Color.green.opacity(0.16))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                )
+                .primaryGreenActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isSending || isLoading)
@@ -275,11 +282,11 @@ struct TeacherSendMessageView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -288,17 +295,17 @@ struct TeacherSendMessageView: View {
             Image(systemName: isError ? "exclamationmark.triangle.fill" : "checkmark.circle.fill")
                 .foregroundColor(isError ? .yellow.opacity(0.85) : .green.opacity(0.85))
             Text(text)
-                .font(.system(size: 13))
+                .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.75))
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Color.black.opacity(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -308,23 +315,36 @@ struct TeacherSendMessageView: View {
             .padding(.leading, leading)
     }
 
+    private func friendlyFirestoreError(_ error: Error) -> String {
+        let msg = (error as NSError).localizedDescription
+        if msg.lowercased().contains("missing or insufficient permissions") {
+            return AppLocalization.string("ui.you_do_not_have_permission_to_access_this_students_messages_confirm_that_you_are_signed_in_as_a_trainer_and_that_firestore_rules_allow_users_alunoid_messages",
+                locale: locale
+            )
+        }
+        return msg
+    }
+
     // Actions: load and send messages
     private func loadMessages() async {
         errorMessage = nil
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode acessar mensagens."
+            errorMessage = AppLocalization.string("ui.only_trainers_can_access_messages", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
@@ -341,7 +361,7 @@ struct TeacherSendMessageView: View {
             )
             self.messages = list
         } catch {
-            self.errorMessage = (error as NSError).localizedDescription
+            self.errorMessage = friendlyFirestoreError(error)
         }
     }
 
@@ -351,27 +371,28 @@ struct TeacherSendMessageView: View {
         successMessage = nil
 
         guard session.isLoggedIn && session.isTrainer else {
-            errorMessage = "Apenas professor pode enviar mensagens."
+            errorMessage = AppLocalization.string("ui.only_trainers_can_send_messages", locale: locale)
             return
         }
 
         guard let sid = student.id, !sid.isEmpty else {
-            errorMessage = "Aluno inválido: id não encontrado."
+            errorMessage = AppLocalization.string("ui.invalid_student_id_not_found", locale: locale)
             return
         }
 
         guard let teacherId = Auth.auth().currentUser?.uid, !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string(
+                "ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
             return
         }
 
         let bodyTrim = message.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !bodyTrim.isEmpty else {
-            errorMessage = "Digite uma mensagem antes de enviar."
+            errorMessage = AppLocalization.string("ui.enter_a_message_before_sending", locale: locale)
             return
         }
-
-        let subjectTrim = subject.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !isSending else { return }
         isSending = true
@@ -382,7 +403,7 @@ struct TeacherSendMessageView: View {
                 teacherId: teacherId,
                 studentId: sid,
                 categoryRaw: category.rawValue,
-                subject: subjectTrim.isEmpty ? nil : subjectTrim,
+                subject: nil,
                 body: bodyTrim
             )
 
@@ -391,29 +412,32 @@ struct TeacherSendMessageView: View {
                 teacherId: teacherId,
                 studentId: sid,
                 categoryRaw: category.rawValue,
-                subject: subjectTrim.isEmpty ? nil : subjectTrim,
+                subject: nil,
                 body: bodyTrim,
                 createdAt: Date(),
                 updatedAt: Date()
             )
             messages.insert(local, at: 0)
 
-            subject = ""
             message = ""
-            successMessage = "Mensagem enviada com sucesso."
+            // Fecha o teclado somente após a gravação bem-sucedida
+            isMessageFocused = false
 
             // ✅ Sincroniza com Firestore
             await loadMessages()
 
+            // Define o sucesso após o recarregamento, que limpa os estados de status
+            successMessage = AppLocalization.string("ui.message_sent_successfully", locale: locale)
+
         } catch {
-            errorMessage = (error as NSError).localizedDescription
+            errorMessage = friendlyFirestoreError(error)
         }
     }
 
     private func formatDate(_ date: Date) -> String {
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
-        f.dateFormat = "dd/MM/yyyy • HH:mm"
+        f.locale = locale
+        f.setLocalizedDateFormatFromTemplate("ddMMyyyyHHmm")
         return f.string(from: date)
     }
 

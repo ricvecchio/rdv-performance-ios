@@ -9,11 +9,29 @@ struct TeacherStudentDetailView: View {
     let category: TreinoTipo
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
+
+    @StateObject private var studentsViewModel: TeacherStudentsListViewModel
 
     private let contentMaxWidth: CGFloat = 380
 
     @State private var progress: Double = 0.0
     @State private var isLoadingProgress: Bool = false
+    @State private var showUnlinkConfirm: Bool = false
+
+    init(
+        path: Binding<[AppRoute]>,
+        student: AppUser,
+        category: TreinoTipo,
+        repository: FirestoreRepository = .shared
+    ) {
+        self._path = path
+        self.student = student
+        self.category = category
+        _studentsViewModel = StateObject(
+            wrappedValue: TeacherStudentsListViewModel(repository: repository)
+        )
+    }
 
     var body: some View {
         ZStack {
@@ -37,7 +55,6 @@ struct TeacherStudentDetailView: View {
                         VStack(spacing: 14) {
 
                             headerCard()
-                            progressCard()
                             actionsCard()
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
@@ -52,10 +69,10 @@ struct TeacherStudentDetailView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunoSobrePerfil(
+                    kind: .teacherHomeAlunosSobrePerfil(
                         selectedCategory: category,
                         isHomeSelected: false,
-                        isAlunoSelected: true,
+                        isAlunosSelected: true,
                         isSobreSelected: false,
                         isPerfilSelected: false
                     )
@@ -67,23 +84,30 @@ struct TeacherStudentDetailView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Aluno")
+                Text("common.student")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -92,26 +116,28 @@ struct TeacherStudentDetailView: View {
         .task {
             await loadProgress()
         }
+        .alert("ui.unlink_student", isPresented: $showUnlinkConfirm) {
+            Button("common.cancel", role: .cancel) {}
+            Button("ui.unlink", role: .destructive) {
+                Task { await confirmUnlink() }
+            }
+        } message: {
+            let format = AppLocalization.string(
+                "ui.student_will_be_unlinked_from_category",
+                locale: locale
+            )
+            Text(String(format: format, locale: locale, arguments: [student.name, category.localizedDisplayName(locale: locale)]))
+        }
     }
 
     // MARK: - Cards
 
     private func headerCard() -> some View {
-        VStack(alignment: .leading, spacing: 10) {
+        let percent = Int((progress * 100.0).rounded())
 
-            Text("Categoria do Treino")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+        return VStack(alignment: .leading, spacing: 10) {
 
-            // ✅ Agora essa categoria vem correta pela navegação (TeacherStudentsListView)
-            Text(category.tituloOverlayImagem)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
-
-            Divider()
-                .background(Theme.Colors.divider)
-
-            Text("Aluno")
+            Text("common.student")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
@@ -119,78 +145,107 @@ struct TeacherStudentDetailView: View {
                 .font(.system(size: 20, weight: .semibold))
                 .foregroundColor(.white.opacity(0.95))
 
-            Text("Plano: \(student.planType ?? "—")")
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.70))
+            Divider()
+                .background(Theme.Colors.divider)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("ui.student_progress")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.55))
+
+                    Spacer()
+
+                    if isLoadingProgress {
+                        ProgressView().tint(.white)
+                    }
+                }
+
+                Text(
+                    String(
+                        format: AppLocalization.string(
+                            "ui.progress_complete_percentage",
+                            locale: locale
+                        ),
+                        locale: locale,
+                        arguments: [percent]
+                    )
+                )
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                ProgressView(value: progress)
+                    .tint(.green.opacity(0.85))
+            }
+
+            Divider()
+                .background(Theme.Colors.divider)
+
+            Text("ui.workout_category")
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.55))
+
+            Text(category.localizedDisplayName(locale: locale))
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundColor(.green.opacity(0.85))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
-    }
-
-    private func progressCard() -> some View {
-
-        let percent = Int((progress * 100.0).rounded())
-
-        return VStack(alignment: .leading, spacing: 12) {
-
-            HStack {
-                Text("Progresso do Aluno")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
-
-                Spacer()
-
-                if isLoadingProgress {
-                    ProgressView().tint(.white)
-                }
-            }
-
-            Text("\(percent)% completo")
-                .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-
-            ProgressView(value: progress)
-                .tint(.green.opacity(0.85))
-        }
-        .padding(16)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func actionsCard() -> some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("Ações")
+            Text("ui.actions")
                 .font(.system(size: 14, weight: .medium))
                 .foregroundColor(.white.opacity(0.55))
 
-            actionButton(title: "Publicar Semana", icon: "square.and.pencil") {
-                path.append(.createTrainingWeek(student: student, category: category))
+            actionButton(title: AppLocalization.string("ui.workouts", locale: locale), icon: "calendar") {
+                openWorkouts()
             }
 
-            actionButton(title: "Ver Agenda do Aluno", icon: "calendar") {
-                openAgenda()
+            Divider()
+                .background(Theme.Colors.divider)
+
+            actionButton(title: AppLocalization.string("ui.messages", locale: locale), icon: "paperplane.fill") {
+                path.append(.teacherMessage(student: student, category: category))
             }
 
-            actionButton(title: "Enviar Mensagem", icon: "paperplane.fill") {
-                path.append(.teacherSendMessage(student: student, category: category))
-            }
+            Divider()
+                .background(Theme.Colors.divider)
 
-            actionButton(title: "Feedbacks", icon: "text.bubble.fill") {
+            actionButton(title: AppLocalization.string("ui.feedbacks", locale: locale), icon: "text.bubble.fill") {
                 path.append(.teacherFeedbacks(student: student, category: category))
             }
 
-            actionButton(title: "Preview do Progresso", icon: "gamecontroller.fill") {
+            Divider()
+                .background(Theme.Colors.divider)
+
+            actionButton(title: AppLocalization.string("ui.progress_preview", locale: locale), icon: "gamecontroller.fill") {
                 path.append(.spriteDemo)
+            }
+
+            Divider()
+                .background(Theme.Colors.divider)
+
+            actionButton(title: AppLocalization.string("ui.unlink", locale: locale), icon: "person.badge.minus") {
+                showUnlinkConfirm = true
             }
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // MARK: - Helpers
@@ -200,23 +255,49 @@ struct TeacherStudentDetailView: View {
             HStack(spacing: 12) {
                 Image(systemName: icon)
                     .foregroundColor(.green.opacity(0.85))
+                    .frame(width: 22, alignment: .center)
                 Text(title)
-                    .font(.system(size: 16, weight: .semibold))
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                 Spacer()
                 Image(systemName: "chevron.right")
                     .foregroundColor(.white.opacity(0.35))
             }
             .padding(14)
-            .background(Color.black.opacity(0.25))
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
             .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }
 
-    private func openAgenda() {
+    private func openWorkouts() {
         guard let sid = student.id, !sid.isEmpty else { return }
-        path.append(.studentAgenda(studentId: sid, studentName: student.name))
+        path.append(.studentWorkouts(studentId: sid, studentName: student.name))
+    }
+
+    private func confirmUnlink() async {
+        guard let teacherId = session.uid, !teacherId.isEmpty,
+              let studentId = student.id, !studentId.isEmpty
+        else {
+            return
+        }
+
+        if await studentsViewModel.unlinkStudent(
+            teacherId: teacherId,
+            studentId: studentId,
+            categoryToRemove: nil
+        ) {
+            pop()
+        }
     }
 
     private func pop() {
@@ -226,7 +307,7 @@ struct TeacherStudentDetailView: View {
 
     // Carrega progresso geral do aluno
     private func loadProgress() async {
-        guard session.userType == .TRAINER else { return }
+        guard session.isTrainer else { return }
         guard let sid = student.id, !sid.isEmpty else { return }
 
         isLoadingProgress = true
@@ -240,4 +321,3 @@ struct TeacherStudentDetailView: View {
         }
     }
 }
-

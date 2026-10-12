@@ -5,18 +5,17 @@ import SpriteKit
 struct SpriteDemoView: View {
 
     @Binding var path: [AppRoute]
-    @EnvironmentObject private var session: AppSession
+
+    init(
+        path: Binding<[AppRoute]>,
+        onSelectSection: @escaping (StudentMainSection) -> Void = { _ in }
+    ) {
+        _path = path
+        _ = onSelectSection
+    }
 
     private let contentMaxWidth: CGFloat = 380
     private let cornerRadius: CGFloat = 14
-
-    @AppStorage("ultimoTreinoSelecionado")
-    private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
-
-    // Retorna a categoria atual do professor
-    private var categoriaAtualProfessor: TreinoTipo {
-        TreinoTipo(rawValue: ultimoTreinoSelecionado) ?? .crossfit
-    }
 
     @StateObject private var vm = ProgressGameViewModel(mode: .preview)
 
@@ -42,7 +41,7 @@ struct SpriteDemoView: View {
 
                         VStack(alignment: .leading, spacing: 14) {
 
-                            Text("Visualize um preview interativo de evolução/consistência.")
+                            Text("sprites.preview.description")
                                 .font(.system(size: 14))
                                 .foregroundColor(.white.opacity(0.55))
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -52,15 +51,12 @@ struct SpriteDemoView: View {
                             Button {
                                 Task { await vm.randomizePreview() }
                             } label: {
-                                HStack {
+                                HStack(spacing: 10) {
                                     Image(systemName: "shuffle")
-                                    Text("Randomizar cenário")
+                                    Text("gamification.preview.randomize")
                                 }
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
                                 .padding(.horizontal, 14)
-                                .padding(.vertical, 10)
-                                .background(Capsule().fill(Color.green.opacity(0.16)))
+                                .primaryGreenActionButton()
                             }
                             .buttonStyle(.plain)
 
@@ -76,31 +72,34 @@ struct SpriteDemoView: View {
                 .frame(maxWidth: .infinity)
                 .frame(maxHeight: .infinity)
 
-                footerForUser()
-                    .frame(height: Theme.Layout.footerHeight)
-                    .frame(maxWidth: .infinity)
-                    .background(Theme.Colors.footerBackground)
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Preview do Progresso")
+                Text("sprites.preview.title")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -109,52 +108,34 @@ struct SpriteDemoView: View {
         .task { await vm.load() }
     }
 
-    // Retorna o footer apropriado conforme tipo de usuário
-    @ViewBuilder
-    private func footerForUser() -> some View {
-        if session.userType == .STUDENT {
-            FooterBar(
-                path: $path,
-                kind: .agendaSobrePerfil(
-                    isAgendaSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                )
-            )
-        } else {
-            FooterBar(
-                path: $path,
-                kind: .teacherHomeAlunosSobrePerfil(
-                    selectedCategory: categoriaAtualProfessor,
-                    isHomeSelected: false,
-                    isAlunosSelected: false,
-                    isSobreSelected: false,
-                    isPerfilSelected: false
-                )
-            )
-        }
-    }
-
     // Retorna card com preview da cena SpriteKit
     private func previewCard() -> some View {
         VStack(spacing: 0) {
 
-            Color.clear.frame(height: 8)
+            Color.clear.frame(height: 12)
 
-            SpriteKitPreviewPanel(metrics: vm.metrics)
-                .frame(height: 420)
-                .frame(maxWidth: .infinity)
-                .clipped()
-                .padding(.horizontal, 2)
+            ZStack {
+                Color.white.opacity(0.06)
 
-            Color.clear.frame(height: 8)
+                SpriteKitPreviewPanel(metrics: vm.metrics)
+            }
+            .frame(height: 480)
+            .frame(maxWidth: .infinity)
+            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .padding(.horizontal, 12)
+
+            Color.clear.frame(height: 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
         )
     }
 
@@ -169,24 +150,26 @@ struct SpriteDemoView: View {
 private struct SpriteKitPreviewPanel: View {
 
     let metrics: ProgressMetrics
+    @Environment(\.locale) private var locale
 
-    @State private var scene: ProgressGameScene = ProgressGameSceneFactory.makeScene(
-        size: CGSize(width: 10, height: 10)
-    )
+    @State private var scene = Self.makePreviewScene()
 
     // Constrói a view do SpriteKit com gerenciamento de tamanho
     var body: some View {
         GeometryReader { geo in
-            SpriteView(scene: scene)
+            SpriteView(scene: scene, options: [.allowsTransparency])
                 .onAppear {
                     applySizeIfNeeded(geo.size)
-                    scene.update(with: metrics, animated: false)
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
                 .onChange(of: geo.size) { _, newSize in
                     applySizeIfNeeded(newSize)
                 }
                 .onChange(of: metrics) { _, newValue in
-                    scene.update(with: newValue, animated: true)
+                    scene.update(with: newValue, locale: locale, animated: true)
+                }
+                .onChange(of: locale.identifier) { _, _ in
+                    scene.update(with: metrics, locale: locale, animated: false)
                 }
         }
         .clipped()
@@ -199,5 +182,10 @@ private struct SpriteKitPreviewPanel: View {
             scene.size = size
         }
     }
-}
 
+    private static func makePreviewScene() -> ProgressGameScene {
+        let scene = ProgressGameSceneFactory.makeScene(size: CGSize(width: 10, height: 10))
+        scene.configurePreviewBadgeLayout()
+        return scene
+    }
+}

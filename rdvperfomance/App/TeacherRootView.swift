@@ -1,0 +1,215 @@
+import SwiftUI
+
+struct TeacherRootView: View {
+    @AppStorage("ultimoTreinoSelecionado")
+    private var lastSelectedTraining: String = TreinoTipo.crossfit.rawValue
+
+    @State private var selectedSection: TeacherMainSection = .home
+    @State private var homePath: [AppRoute] = []
+    @State private var studentsPath: [AppRoute] = []
+    @State private var workoutsPath: [AppRoute] = []
+    @State private var profilePath: [AppRoute] = []
+
+    private var category: TreinoTipo {
+        TreinoTipo(rawValue: lastSelectedTraining) ?? .crossfit
+    }
+
+    var body: some View {
+        Group {
+            switch selectedSection {
+            case .home:
+                NavigationStack(path: $homePath) {
+                    TeacherDashboardView(path: $homePath, category: category)
+                        .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
+            case .students:
+                NavigationStack(path: $studentsPath) {
+                    TeacherStudentsListView(path: $studentsPath, selectedCategory: category, initialFilter: nil, onBack: { select(.home) })
+                        .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
+            case .workouts:
+                NavigationStack(path: $workoutsPath) {
+                    TeacherWorkoutsView(path: $workoutsPath, category: category)
+                        .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
+            case .profile:
+                NavigationStack(path: $profilePath) {
+                    ProfileView(path: $profilePath, onBack: { select(.home) })
+                        .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
+            }
+        }
+        .environment(\.selectTeacherMainSection, select)
+        .environment(\.teacherMainSection, selectedSection)
+    }
+
+    private func select(_ section: TeacherMainSection) {
+        guard selectedSection != section else { return }
+
+        switch section {
+        case .home: homePath.removeAll()
+        case .students: studentsPath.removeAll()
+        case .workouts: workoutsPath.removeAll()
+        case .profile: profilePath.removeAll()
+        }
+
+        selectedSection = section
+    }
+
+    @ViewBuilder
+    private func teacherDestination(_ route: AppRoute) -> some View {
+        switch route {
+        case .teacherPersonalRecords(let category):
+            PersonalRecordsView(
+                path: destinationPath,
+                onBack: { destinationPath.wrappedValue.removeLast() },
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsBarbell:
+            BarbellPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsGymnastic:
+            GymnasticPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsEndurance:
+            EndurancePersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsNotables:
+            NotablesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsGirls:
+            GirlsPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsOpen:
+            OpenPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsHeroes:
+            HeroesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsCampeonatos:
+            CampeonatosPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .studentPersonalRecordsCrossfitGames:
+            CrossfitGamesPersonalRecordsView(
+                path: destinationPath,
+                navigationContext: .teacher(category: category)
+            )
+        case .teacherStudentDetail(let student, let category):
+            TeacherStudentDetailView(path: destinationPath, student: student, category: category)
+        case .teacherMessage(let student, let category):
+            TeacherMessageView(path: destinationPath, student: student, category: category)
+        case .teacherFeedbacks(let student, let category):
+            TeacherFeedbacksView(path: destinationPath, student: student, category: category)
+        case .createTrainingWeek(let student, let category):
+            CreateTrainingWeekView(path: destinationPath, student: student, category: category)
+        case .createTrainingDay(let weekId, let category):
+            CreateTrainingDayView(path: destinationPath, weekId: weekId, category: category)
+        case .teacherMyWorkouts(let category, let mode):
+            TeacherMyWorkoutsView(path: destinationPath, category: category, mode: mode)
+        case .teacherCrossfitLibrary(let section, let mode, let templateMode):
+            TeacherCrossfitLibraryView(
+                path: destinationPath,
+                section: section,
+                mode: mode,
+                templateMode: templateMode
+            )
+        case .teacherAcademiaLibrary(let mode, let templateMode):
+            TeacherAcademiaLibraryView(path: destinationPath, mode: mode, templateMode: templateMode)
+        case .teacherEmCasaLibrary(let mode, let templateMode):
+            TeacherEmCasaLibraryView(path: destinationPath, mode: mode, templateMode: templateMode)
+        case .teacherWorkoutTemplates(let category, let sectionKey, let sectionTitle, let mode):
+            TeacherWorkoutTemplatesView(
+                path: destinationPath,
+                category: category,
+                sectionKey: sectionKey,
+                sectionTitle: sectionTitle,
+                mode: mode
+            )
+        case .teacherSendWorkout(
+            let preselectedStudentID,
+            let startsAtWorkout,
+            let preselectedTemplate,
+            let preselectedVideo
+        ):
+            TeacherSendWorkoutView(
+                path: destinationPath,
+                category: category,
+                preselectedStudentID: preselectedStudentID,
+                startsAtWorkout: startsAtWorkout,
+                preselectedTemplate: preselectedTemplate,
+                preselectedVideo: preselectedVideo?.video
+            )
+        case .teacherImportWorkouts(let category):
+            TeacherImportWorkoutsView(path: destinationPath, category: category)
+        case .teacherImportVideos(let category):
+            TeacherImportVideosView(
+                path: destinationPath,
+                context: .teacher(category: category)
+            )
+        case .createCrossfitWOD(let category, let sectionKey, let sectionTitle):
+            CreateCrossfitWODView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
+        case .createTreinoAcademia(let category, let sectionKey, let sectionTitle):
+            CreateTreinoAcademiaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
+        case .createTreinoCasa(let category, let sectionKey, let sectionTitle):
+            CreateTreinoCasaView(path: destinationPath, category: category, sectionKey: sectionKey, sectionTitle: sectionTitle)
+        case .studentWorkouts(
+            let studentId,
+            let studentName,
+            let initialExpandedWeekId,
+            let initialExpandedDayId
+        ):
+            StudentWorkoutsView(
+                path: destinationPath,
+                studentId: studentId,
+                studentName: studentName,
+                initialExpandedWeekId: initialExpandedWeekId,
+                initialExpandedDayId: initialExpandedDayId
+            )
+        case .studentDayDetail(let weekId, let day, let weekTitle):
+            StudentDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
+        case .configuracoes:
+            SettingsView(path: destinationPath)
+        case .idioma:
+            LanguageSettingsView()
+        case .editarPerfil:
+            EditProfileView(path: destinationPath)
+        case .alterarSenha:
+            ChangePasswordView(path: destinationPath)
+        case .excluirConta:
+            DeleteAccountView(path: destinationPath)
+        case .sobre:
+            AboutView(path: destinationPath)
+        case .infoLegal(let kind):
+            InfoLegalView(path: destinationPath, kind: kind)
+        case .spriteDemo:
+            SpriteDemoView(path: destinationPath)
+        default:
+            EmptyView()
+        }
+    }
+
+    private var destinationPath: Binding<[AppRoute]> {
+        switch selectedSection {
+        case .home: $homePath
+        case .students: $studentsPath
+        case .workouts: $workoutsPath
+        case .profile: $profilePath
+        }
+    }
+}

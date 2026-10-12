@@ -1,0 +1,1445 @@
+import SwiftUI
+import Charts
+
+// Tela do Aluno: Recorde Pessoal > Girls (lista fixa de WODs + score numérico)
+struct GirlsPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
+
+    @Binding var path: [AppRoute]
+
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
+
+    private let contentMaxWidth: CGFloat = 380
+
+    private struct GirlWOD: Identifiable, Hashable {
+        let id = UUID()
+        let name: String
+        let storageKey: String
+    }
+
+
+    private struct CustomGirlWOD: Identifiable, Hashable, Codable {
+        let id: String
+        let name: String
+        let storageKey: String
+        let description: String
+    }
+
+    private struct PRHistoryEntry: Identifiable, Codable, Hashable {
+        let id: String
+        let value: String
+        let createdAt: Date
+    }
+
+    private struct HistoryChartPoint: Identifiable {
+        let id: String
+        let date: Date
+        let value: Double
+    }
+
+    private enum PRMetricComparison: Equatable {
+        case time
+        case higher
+    }
+
+    // ✅ Dados fixos conforme solicitado (ordem + nomes)
+    private let wods: [GirlWOD] = [
+        .init(name: "Amanda", storageKey: "girls_amanda"),
+        .init(name: "Angie", storageKey: "girls_angie"),
+        .init(name: "Annie", storageKey: "girls_annie"),
+        .init(name: "Barbara Ann", storageKey: "girls_barbara_ann"),
+        .init(name: "Barbara", storageKey: "girls_barbara"),
+        .init(name: "Charlotte", storageKey: "girls_charlotte"),
+        .init(name: "Chelsea", storageKey: "girls_chelsea"),
+        .init(name: "Christine", storageKey: "girls_christine"),
+        .init(name: "Cindy", storageKey: "girls_cindy"),
+        .init(name: "Diane", storageKey: "girls_diane"),
+        .init(name: "Elizabeth", storageKey: "girls_elizabeth"),
+        .init(name: "Emily", storageKey: "girls_emily"),
+        .init(name: "Eva", storageKey: "girls_eva"),
+        .init(name: "Fran", storageKey: "girls_fran"),
+        .init(name: "Grettel", storageKey: "girls_grettel"),
+        .init(name: "Grace", storageKey: "girls_grace"),
+        .init(name: "Gwen", storageKey: "girls_gwen"),
+        .init(name: "Helen", storageKey: "girls_helen"),
+        .init(name: "lasmim", storageKey: "girls_lasmim"),
+        .init(name: "Ingrid", storageKey: "girls_ingrid"),
+        .init(name: "Isabel", storageKey: "girls_isabel"),
+        .init(name: "Jackie", storageKey: "girls_jackie"),
+        .init(name: "Karen", storageKey: "girls_karen"),
+        .init(name: "Kelly", storageKey: "girls_kelly"),
+        .init(name: "Lesley", storageKey: "girls_lesley"),
+        .init(name: "Linda", storageKey: "girls_linda"),
+        .init(name: "Lola", storageKey: "girls_lola"),
+        .init(name: "Lyla", storageKey: "girls_lyla"),
+        .init(name: "Lynne", storageKey: "girls_lynne"),
+        .init(name: "Mary", storageKey: "girls_mary"),
+        .init(name: "Megan", storageKey: "girls_megan"),
+        .init(name: "Nancy", storageKey: "girls_nancy"),
+        .init(name: "Nicole", storageKey: "girls_nicole"),
+        .init(name: "Oleta", storageKey: "girls_oleta"),
+        .init(name: "Yvonne", storageKey: "girls_yvonne")
+    ]
+
+    // Persistência simples (UserDefaults via AppStorage)
+    @AppStorage("student_pr_girls_values_v1")
+    private var girlsValuesData: Data = Data()
+
+    @AppStorage("student_pr_girls_history_v1")
+    private var girlsHistoryData: Data = Data()
+
+    @AppStorage("student_pr_girls_custom_items_v1")
+    private var customGirlsItemsData: Data = Data()
+
+    // ✅ Correção: usar o próprio item como gatilho da sheet (igual ao Heroes)
+    @State private var selectedWod: GirlWOD? = nil
+    @State private var inputValue: String = ""
+    @State private var historyWod: GirlWOD?
+    @State private var selectedPRDate: Date = Date()
+    @State private var showPRDatePicker: Bool = false
+    @State private var isEditingExistingPR: Bool = false
+    @State private var editingHistoryEntryID: String? = nil
+    @State private var historyEntryPendingDeletion: PRHistoryEntry? = nil
+    @State private var showHistoryEntryDeletionAlert: Bool = false
+
+    @State private var showAddItemSheet: Bool = false
+    @State private var newItemName: String = ""
+    @State private var newItemDescription: String = ""
+    @State private var newItemValue: String = ""
+    @State private var addItemErrorMessage: String? = nil
+    @State private var showDeleteAlert: Bool = false
+
+    private var allWods: [GirlWOD] {
+        wods + loadCustomItems().map { GirlWOD(name: $0.name, storageKey: $0.storageKey) }
+    }
+
+    private var canDeleteSelectedItem: Bool {
+        selectedWod?.storageKey.hasPrefix("custom_girls_") == true
+    }
+
+    var body: some View {
+        ZStack {
+
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(alignment: .leading, spacing: 14) {
+                            tableContainer()
+
+                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                PersonalRecordsFooter(
+                    path: $path,
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
+                        isPerfilSelected: false
+                    ),
+                    onSelectStudentSection: onSelectSection
+                )
+                .frame(height: Theme.Layout.footerHeight)
+                .background(Theme.Colors.footerBackground)
+            }
+            .ignoresSafeArea(.container, edges: [.bottom])
+        }
+        .blur(radius: (selectedWod != nil || historyWod != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
+        .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+
+            ToolbarItem(placement: .topBarLeading) {
+                Button { pop() } label: {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("personal_records_girls.girls")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 12) {
+                    Button {
+                        addItemErrorMessage = nil
+                        newItemName = ""
+                        newItemDescription = ""
+                        newItemValue = ""
+                        showAddItemSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
+            }
+        }
+        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .sheet(item: $selectedWod, onDismiss: {
+            resetExistingPREditing()
+        }) { wod in
+            editSheet(for: wod)
+        }
+        .sheet(isPresented: $showAddItemSheet) {
+            addItemSheet()
+        }
+    }
+
+    // MARK: - Tabela
+    private func tableContainer() -> some View {
+        VStack(spacing: 0) {
+
+            tableHeader()
+
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
+
+            // ✅ Se não existir treino relacionado (texto vazio), remove o item da lista
+            let list = wods.filter { !wodDetailText(for: $0.storageKey).isEmpty } + loadCustomItems().map { GirlWOD(name: $0.name, storageKey: $0.storageKey) }
+
+            ForEach(Array(list.enumerated()), id: \.element.id) { index, wod in
+
+                tableRow(wod: wod)
+
+                if index != list.count - 1 {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 1)
+                        .padding(.leading, 14)
+                }
+            }
+        }
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private func tableHeader() -> some View {
+        HStack(spacing: 10) {
+
+            Color.clear
+                .frame(width: 26, height: 1)
+
+            Text("personal_records_girls.workout")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white.opacity(0.55))
+
+            Spacer()
+
+            Text("personal_records.time_score_label")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    private func tableRow(wod: GirlWOD) -> some View {
+        let storedValue = bestDisplayValue(for: wod.storageKey, metadata: wodDetailText(for: wod.storageKey))
+
+        return Button {
+            inputValue = ""
+            selectedPRDate = Date()
+            resetExistingPREditing()
+            selectedWod = wod
+        } label: {
+            HStack(spacing: 10) {
+
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: "figure.strengthtraining.traditional")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
+
+                Text(wod.name)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(2)
+
+                Spacer()
+
+                if let storedValue {
+                    Text(storedValue)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.88))
+                } else {
+                    Text("-")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.45))
+                }
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.25))
+                    .font(.system(size: 13, weight: .semibold))
+                    .padding(.leading, 6)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Sheet (editar Score)
+    private func editSheet(for wod: GirlWOD) -> some View {
+        let wodText = wodDetailText(for: wod.storageKey)
+
+        return ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 44, height: 5)
+                    .padding(.top, 10)
+
+                Text(wod.name)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 4)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Text("personal_records_girls.enter_your_time_score_leave_it_blank_to_remove_it")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.60))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+
+                        VStack(alignment: .leading, spacing: 10) {
+
+                            // ✅ Ajuste solicitado: bloco WOD igual ao Notables (com ícone)
+                            if !wodText.isEmpty {
+                                wodCard(title: wod.name, description: wodText)
+                                    .padding(.horizontal, 16)
+                                    .layoutPriority(1)
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                HStack {
+                                    Text("personal_records.time_score_field_label")
+                                        .font(.system(size: 14, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.75))
+                                }
+
+                                TextField("personal_records_girls.e_g_12_34", text: $inputValue)
+                                    .keyboardType(metricComparison(for: wodDetailText(for: wod.storageKey)) == .time ? .numbersAndPunctuation : .decimalPad)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundColor(.white.opacity(0.92))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(Theme.Colors.cardBackground)
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    )
+                            }
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
+                        }
+
+                        dateAndHistorySection(key: wod.storageKey, metadata: wodDetailText(for: wod.storageKey), historyAction: {
+                            historyWod = wod
+                        })
+                        .padding(.horizontal, 16)
+                        .padding(.top, 8)
+                        .sheet(item: $historyWod) { selected in
+                            historySheet(title: selected.name, key: selected.storageKey, metadata: wodDetailText(for: selected.storageKey))
+                        }
+                        .sheet(isPresented: $showPRDatePicker) {
+                            ZStack {
+                                Theme.Colors.headerBackground.ignoresSafeArea()
+                                VStack(spacing: 16) {
+                                    DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                        .datePickerStyle(.graphical)
+                                    Button { showPRDatePicker = false } label: {
+                                        Text("common.confirm")
+                                            .frame(maxWidth: .infinity)
+                                            .primaryGreenActionButton()
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                                .padding(16)
+                            }
+                            .presentationDetents([.medium])
+                        }
+                    }
+                }
+
+                HStack(spacing: 12) {
+
+                    Button {
+                        resetExistingPREditing()
+                        selectedWod = nil
+                    } label: {
+                        Text("common.cancel")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        saveCurrentInput(for: wod)
+                        resetExistingPREditing()
+                        selectedWod = nil
+                    } label: {
+                        Text("common.save")
+                            .frame(maxWidth: .infinity)
+                            .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+
+                    if canDeleteSelectedItem {
+                        Button {
+                            showDeleteAlert = true
+                        } label: {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16, weight: .bold))
+                                .frame(width: 50, height: 50)
+                                .background(Color.red.opacity(0.85))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("personal_records_girls.delete_wod")
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
+            }
+        }
+        .presentationDetents([.fraction(0.80)])
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
+                deleteSelectedItem()
+            }
+        } message: {
+            Text(
+                String(
+                    format: AppLocalization.string("personal_records.delete_record_confirmation", locale: locale),
+                    locale: locale,
+                    arguments: [
+                        selectedWod?.name
+                            ?? AppLocalization.string("personal_records.wod_fallback", locale: locale)
+                    ]
+                )
+            )
+        }
+        .onAppear {
+            inputValue = ""
+            selectedPRDate = Date()
+            resetExistingPREditing()
+        }
+    }
+
+    /// Card visual do WOD dentro do modal (mesmo layout do Notables)
+    private func wodCard(title: String, description: String) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "list.bullet.rectangle")
+                    .foregroundColor(.green.opacity(0.90))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("personal_records_campeonatos.wod")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.60))
+
+                    Text(title)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                }
+
+                Spacer()
+            }
+
+            ScrollView {
+                Text(description)
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.78))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 2)
+            }
+            .frame(height: 140)
+        }
+        .padding(14)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private func beginEditingExistingPR(for wod: GirlWOD) {
+        let metadata = wodDetailText(for: wod.storageKey)
+        guard let value = bestDisplayValue(for: wod.storageKey, metadata: metadata) else { return }
+
+        inputValue = value
+        if let entry = currentPRHistoryEntry(for: wod.storageKey, metadata: metadata),
+           let entryValue = numericValue(entry.value, metadata: metadata),
+           let bestValue = numericValue(value, metadata: metadata),
+           abs(entryValue - bestValue) < 0.000_001 {
+            editingHistoryEntryID = entry.id
+            selectedPRDate = entry.createdAt
+        } else {
+            editingHistoryEntryID = nil
+        }
+        isEditingExistingPR = true
+    }
+
+    private func saveExistingPREdit() {
+        guard let wod = selectedWod else { return }
+
+        let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        let metadata = wodDetailText(for: wod.storageKey)
+        guard (numericValue(trimmed, metadata: metadata) ?? 0) > 0 else { return }
+
+        let key = wod.storageKey
+        var history = loadHistoryMap()
+        var primaryCandidates: [String]
+
+        if let entryID = editingHistoryEntryID {
+            var entries = history[key, default: []]
+            guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
+                primaryCandidates = entries.map(\.value) + [trimmed]
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
+                saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
+                return
+            }
+
+            let entry = entries[index]
+            entries[index] = PRHistoryEntry(
+                id: entry.id,
+                value: trimmed,
+                createdAt: Calendar.current.startOfDay(for: selectedPRDate)
+            )
+            history[key] = entries
+            saveHistoryMap(history)
+            primaryCandidates = entries.map(\.value)
+        } else {
+            primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
+        }
+
+        saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
+    }
+
+    private func resetExistingPREditing() {
+        isEditingExistingPR = false
+        editingHistoryEntryID = nil
+    }
+
+    private func currentPRHistoryEntry(for key: String, metadata: String) -> PRHistoryEntry? {
+        guard let comparison = metricComparison(for: metadata) else { return nil }
+        let candidates = historyEntries(for: key).compactMap { entry -> (PRHistoryEntry, Double)? in
+            numericValue(entry.value, metadata: metadata).map { (entry, $0) }
+        }
+        return candidates.sorted { lhs, rhs in
+            if lhs.1 == rhs.1 { return lhs.0.createdAt > rhs.0.createdAt }
+            return comparison == .time ? lhs.1 < rhs.1 : lhs.1 > rhs.1
+        }.first?.0
+    }
+
+    private func bestNumericValue(from values: [String], metadata: String) -> Double? {
+        guard let comparison = metricComparison(for: metadata) else {
+            return values.last.flatMap { numericValue($0, metadata: metadata) }
+        }
+        let candidates = values.compactMap { numericValue($0, metadata: metadata) }
+        return comparison == .time ? candidates.min() : candidates.max()
+    }
+
+    private func saveCurrentInput(for wod: GirlWOD) {
+        let raw = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if raw.isEmpty {
+            return
+        }
+        let metadata = wodDetailText(for: wod.storageKey)
+        guard let value = numericValue(raw, metadata: metadata), value > 0 else { return }
+        let shouldSave = shouldUpdatePrimary(value, key: wod.storageKey, metadata: metadata)
+        saveHistoryValue(raw, for: wod.storageKey, date: selectedPRDate)
+        if shouldSave {
+            saveValue(raw, for: wod.storageKey)
+        }
+    }
+
+    private func formatNumber(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+        formatter.locale = locale
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+
+    @ViewBuilder
+    private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                showPRDatePicker = true
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                    Text(formatPRDate(selectedPRDate))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.25))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
+
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                Spacer()
+                Button(action: historyAction) {
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.green.opacity(0.90))
+                }
+                .buttonStyle(.plain)
+            }
+            historyChart(for: key, metadata: metadata)
+        }
+    }
+
+    private func historySheet(title: String, key: String, metadata: String) -> some View {
+        let entries = historyEntries(for: key)
+        let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
+        return ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(title)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    if entries.isEmpty {
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.60))
+                    } else {
+                        VStack(spacing: 0) {
+                            ForEach(entries.reversed()) { entry in
+                                HStack {
+                                    Text(entry.value)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                    if entry.id == recordID {
+                                        Text("personal_records_barbell.record")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
+                                    Spacer()
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white.opacity(0.45))
+                                    Button {
+                                        historyEntryPendingDeletion = entry
+                                        showHistoryEntryDeletionAlert = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.85))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                if entry.id != entries.first?.id {
+                                    Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1).padding(.leading, 14)
+                                }
+                            }
+                        }
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    }
+                }
+                .frame(maxWidth: contentMaxWidth)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 24)
+            }
+        }
+        .presentationDetents([.large])
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
+                if let entry = historyEntryPendingDeletion {
+                    deleteHistoryEntry(entry, for: key, metadata: metadata)
+                }
+                historyEntryPendingDeletion = nil
+            }
+        } message: {
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
+        }
+    }
+
+    private func deleteHistoryEntry(_ entry: PRHistoryEntry, for key: String, metadata: String) {
+        var history = loadHistoryMap()
+        var entries = history[key, default: []]
+        entries.removeAll { $0.id == entry.id }
+        if entries.isEmpty {
+            history.removeValue(forKey: key)
+        } else {
+            history[key] = entries
+        }
+
+        var values = loadMap()
+        if let primary = bestValue(from: entries.map(\.value), metadata: metadata) {
+            values[key] = primary
+        } else {
+            values.removeValue(forKey: key)
+        }
+        saveRecords(values: values, history: history, deletedHistoryEntryID: entry.id)
+    }
+
+    @ViewBuilder
+    private func historyChart(for key: String, metadata: String) -> some View {
+        let entries = historyChartPoints(for: key, metadata: metadata)
+        if !entries.isEmpty {
+            Chart(entries) { entry in
+                LineMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
+                    .foregroundStyle(.green)
+                    .interpolationMethod(.linear)
+                PointMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
+                    .foregroundStyle(.green)
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 4)) {
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
+                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Color.white.opacity(0.55))
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) {
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
+                    AxisValueLabel().foregroundStyle(Color.white.opacity(0.55))
+                }
+            }
+            .frame(height: 170)
+            .padding(14)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+    }
+
+    private func formatPRDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
+        return formatter.string(from: date)
+    }
+
+    private func metricComparison(for metadata: String) -> PRMetricComparison? {
+        let normalized = metadata.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current).lowercased()
+        if normalized.contains("for time") || normalized.contains("para tempo") || normalized.contains("por tempo") || normalized.contains("30 reps for time") {
+            return .time
+        }
+        if normalized.contains("max reps") || normalized.contains("max height") || normalized.contains("max distance") || normalized.contains("1 rep max") || normalized.contains("1rm") || normalized.contains("max hold") || normalized.contains("amrap") || normalized.contains("for load") || normalized.contains("max") || normalized.contains("reps") || normalized.contains("score") || normalized.contains("load") {
+            return .higher
+        }
+        return nil
+    }
+
+    private func numericValue(_ value: String, metadata: String) -> Double? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if metricComparison(for: metadata) == .time {
+            let parts = trimmed.split(separator: ":", omittingEmptySubsequences: false)
+            if parts.count == 1 {
+                return Double(trimmed.replacingOccurrences(of: ",", with: "."))
+            }
+            guard (2...3).contains(parts.count), let last = Int(parts.last ?? ""), last >= 0,
+                  let middle = Int(parts[parts.count - 2]), middle >= 0, middle < 60, last < 60 else { return nil }
+            if parts.count == 2 { return Double(middle * 60 + last) }
+            guard let first = Int(parts[0]), first >= 0 else { return nil }
+            return Double(first * 3600 + middle * 60 + last)
+        }
+        let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
+        let suffixes = ["repeticoes", "reps", "rep", "pontos", "pts", "pt", "cals", "cal", "kgs", "kg", "lbs", "lb", "cm", "m"]
+        let numericText = suffixes.first(where: { normalized.lowercased().hasSuffix($0) }).map {
+            String(normalized.dropLast($0.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        } ?? normalized
+        guard let parsed = Double(numericText), parsed.isFinite else { return nil }
+        return parsed
+    }
+
+    private func bestDisplayValue(for key: String, metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else {
+            return loadStoredValue(for: key)
+        }
+        var candidates: [(String, Double)] = historyEntries(for: key).compactMap { entry in
+            numericValue(entry.value, metadata: metadata).map { (entry.value, $0) }
+        }
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            candidates.append((stored, numeric))
+        }
+        guard var best = candidates.first else { return loadStoredValue(for: key) }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 { best = candidate }
+        }
+        return best.0
+    }
+
+    private func bestNumericValue(for key: String, metadata: String) -> Double? {
+        guard let comparison = metricComparison(for: metadata) else {
+            return loadStoredValue(for: key).flatMap { numericValue($0, metadata: metadata) }
+        }
+        var values = historyEntries(for: key).compactMap { numericValue($0.value, metadata: metadata) }
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            values.append(numeric)
+        }
+        return comparison == .time ? values.min() : values.max()
+    }
+
+    private func shouldUpdatePrimary(_ value: Double, key: String, metadata: String) -> Bool {
+        guard let comparison = metricComparison(for: metadata) else { return loadStoredValue(for: key) == nil }
+        var values = historyEntries(for: key).compactMap { numericValue($0.value, metadata: metadata) }
+        if let stored = loadStoredValue(for: key),
+           let numeric = numericValue(stored, metadata: metadata) {
+            values.append(numeric)
+        }
+        guard let best = comparison == .time ? values.min() : values.max() else { return true }
+        return comparison == .time ? value < best : value > best
+    }
+
+    private func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
+    }
+
+    // MARK: - WOD Details (texto fixo por registro)
+    private func wodDetailText(for key: String) -> String {
+        if let custom = loadCustomItems().first(where: { $0.storageKey == key }) {
+            return custom.description
+        }
+
+        switch key {
+
+        case "girls_amanda":
+            return """
+9-7-5
+• Muscle-ups
+• Snatch (61/43 kg)
+"""
+
+        case "girls_angie":
+            return """
+(For Time)
+• 100 Pull-ups
+• 100 Push-ups
+• 100 Sit-ups
+• 100 Air Squats
+"""
+
+        case "girls_annie":
+            return """
+(For Time)
+50-40-30-20-10
+• Double-unders
+• Sit-ups
+"""
+
+        case "girls_barbara_ann":
+            return """
+(For Time)
+• 50 Pull-ups
+• 100 Sit-ups
+• 150 Air Squats
+• 200 Double-unders
+"""
+
+        case "girls_barbara":
+            return """
+(5 Rounds – Rest 3 min entre rounds)
+• 20 Pull-ups
+• 30 Push-ups
+• 40 Sit-ups
+• 50 Air Squats
+"""
+
+        case "girls_charlotte":
+            return """
+(3 Rounds For Time)
+• 21 Overhead Squats (43/30 kg)
+• 21 Sit-ups
+• 21 Clean (43/30 kg)
+"""
+
+        case "girls_chelsea":
+            return """
+(EMOM 30 min)
+A cada minuto:
+• 5 Pull-ups
+• 10 Push-ups
+• 15 Air Squats
+"""
+
+        case "girls_christine":
+            return """
+(3 Rounds For Time)
+• 500m Row
+• 12 Deadlifts (61/43 kg)
+• 21 Box Jumps (61/51 cm)
+"""
+
+        case "girls_cindy":
+            return """
+(AMRAP 20 min)
+• 5 Pull-ups
+• 10 Push-ups
+• 15 Air Squats
+"""
+
+        case "girls_diane":
+            return """
+(For Time)
+21-15-9
+• Deadlift (102/70 kg)
+• Handstand Push-ups
+"""
+
+        case "girls_elizabeth":
+            return """
+(For Time)
+21-15-9
+• Clean (61/43 kg)
+• Ring Dips
+"""
+
+        case "girls_emily":
+            return """
+(For Time)
+• 30 Squat Cleans (43/30 kg)
+• 30 Ring Dips
+• 30 Box Jumps
+"""
+
+        case "girls_eva":
+            return """
+(5 Rounds For Time)
+• 800m Run
+• 30 Kettlebell Swings (24/16 kg)
+• 30 Pull-ups
+"""
+
+        case "girls_fran":
+            return """
+(For Time)
+21-15-9
+• Thrusters (43/30 kg)
+• Pull-ups
+"""
+
+        case "girls_grettel":
+            return """
+(For Time)
+• 3 Rounds:
+  • 10 Deadlifts (102/70 kg)
+  • 3 Handstand Walks (15m)
+"""
+
+        case "girls_grace":
+            return """
+(For Time)
+• 30 Clean & Jerks (61/43 kg)
+"""
+
+        case "girls_gwen":
+            return """
+(For Time – Unbroken)
+15-12-9
+• Clean & Jerk (escolha a carga, sem soltar a barra entre repetições)
+"""
+
+        case "girls_helen":
+            return """
+(3 Rounds For Time)
+• 400m Run
+• 21 Kettlebell Swings (24/16 kg)
+• 12 Pull-ups
+"""
+
+        case "girls_lasmim":
+            return """
+Jasmine (AMRAP 20 min)
+• 10 Push-ups
+• 10 Sit-ups
+• 10 Air Squats
+"""
+
+        case "girls_ingrid":
+            return """
+(For Time)
+• 100 Double-unders
+• 20 Deadlifts (61/43 kg)
+• 100 Double-unders
+• 20 Power Snatches (43/30 kg)
+• 100 Double-unders
+"""
+
+        case "girls_isabel":
+            return """
+(For Time)
+• 30 Snatches (61/43 kg)
+"""
+
+        case "girls_jackie":
+            return """
+(For Time)
+• 1000m Row
+• 50 Thrusters (20/15 kg)
+• 30 Pull-ups
+"""
+
+        case "girls_karen":
+            return """
+(For Time)
+• 150 Wall Balls (9/6 kg)
+"""
+
+        case "girls_kelly":
+            return """
+(5 Rounds For Time)
+• 400m Run
+• 30 Box Jumps (61/51 cm)
+• 30 Wall Balls (9/6 kg)
+"""
+
+        case "girls_lesley":
+            return """
+(5 Rounds For Time)
+• 400m Run
+• 15 Thrusters (43/30 kg)
+• 15 Pull-ups
+"""
+
+        case "girls_linda":
+            return """
+(For Time – “3 Bars of Death”)
+10-9-8-7-6-5-4-3-2-1
+• Deadlift (1.5x BW)
+• Bench Press (BW)
+• Clean (0.75x BW)
+"""
+
+        case "girls_lola":
+            return """
+(5 Rounds For Time)
+• 400m Run
+• 20 Pull-ups
+• 20 Push-ups
+"""
+
+        case "girls_lyla":
+            return """
+(AMRAP 20 min)
+• 10 Toes-to-Bar
+• 10 Thrusters (43/30 kg)
+• 200m Run
+"""
+
+        case "girls_lynne":
+            return """
+(5 Rounds – Max Reps)
+• Max Bench Press (BW)
+• Max Pull-ups
+"""
+
+        case "girls_mary":
+            return """
+(AMRAP 20 min)
+• 5 Handstand Push-ups
+• 10 Pistols
+• 15 Pull-ups
+"""
+
+        case "girls_megan":
+            return """
+(For Time)
+• 21-15-9
+  • Burpees
+  • Kettlebell Swings (24/16 kg)
+"""
+
+        case "girls_nancy":
+            return """
+(5 Rounds For Time)
+• 400m Run
+• 15 Overhead Squats (43/30 kg)
+"""
+
+        case "girls_nicole":
+            return """
+(AMRAP 20 min)
+• 400m Run
+• Max Pull-ups
+"""
+
+        case "girls_oleta":
+            return """
+(For Time)
+• 21-15-9
+  • Deadlift (61/43 kg)
+  • Sit-ups
+"""
+
+        case "girls_yvonne":
+            return """
+(For Time)
+• 5 Rounds:
+  • 25 Wall Balls (9/6 kg)
+  • 25 Sit-ups
+"""
+
+        default:
+            return ""
+        }
+    }
+    private func addItemSheet() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .padding(.top, 10)
+
+                    Text("personal_records_girls.new_girls_wod")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+
+                    Text("personal_records_girls.create_a_wod_and_if_you_want_enter_your_initial_result_now")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                    addItemField("personal_records.girls.wod_name_field", placeholder: "personal_records.placeholder.benchmark_name", text: $newItemName)
+
+                    addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.for_time_21_15_9", text: $newItemDescription)
+
+                    addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time_or_score", text: $newItemValue)
+
+                        if let message = addItemErrorMessage {
+                            Text(message)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            showAddItemSheet = false
+                        } label: {
+                            Text("common.cancel")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            addNewItem()
+                        } label: {
+                            Text("common.add")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 24)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func addItemField(
+        _ label: LocalizedStringKey,
+        placeholder: LocalizedStringKey,
+        text: Binding<String>
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
+            TextField(placeholder, text: text)
+                .textInputAutocapitalization(.sentences)
+                .autocorrectionDisabled(true)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+    }
+
+    private func addNewItem() {
+        addItemErrorMessage = nil
+        let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else {
+            addItemErrorMessage = AppLocalization.string("personal_records.girls.wod_name_required", locale: locale)
+            return
+        }
+
+        let existingNames = allWods.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        guard !existingNames.contains(cleanName.lowercased()) else {
+            addItemErrorMessage = AppLocalization.string("personal_records.girls.duplicate_wod", locale: locale)
+            return
+        }
+
+        let id = UUID().uuidString
+        let key = "custom_girls_\(id)"
+        let customItem = CustomGirlWOD(id: id, name: cleanName, storageKey: key, description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        var list = loadCustomItems()
+        list.append(customItem)
+        saveCustomItems(list)
+
+        let item = GirlWOD(name: customItem.name, storageKey: customItem.storageKey)
+        let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedValue.isEmpty {
+            inputValue = trimmedValue
+            saveCurrentInput(for: item)
+        }
+        showAddItemSheet = false
+    }
+
+    private func deleteSelectedItem() {
+        guard let item = selectedWod, item.storageKey.hasPrefix("custom_girls_") else { return }
+        removeValue(for: item.storageKey)
+        removeHistory(for: item.storageKey)
+        var list = loadCustomItems()
+        list.removeAll { $0.storageKey == item.storageKey }
+        saveCustomItems(list)
+        selectedWod = nil
+    }
+
+    private func loadCustomItems() -> [CustomGirlWOD] {
+        guard !customGirlsItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomGirlWOD].self, from: customGirlsItemsData)) ?? []
+    }
+
+    private func saveCustomItems(_ list: [CustomGirlWOD]) {
+        customGirlsItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+}
+
+// MARK: - Persistência (JSON em Data)
+private extension GirlsPersonalRecordsView {
+
+    func loadMap() -> [String: String] {
+        guard !girlsValuesData.isEmpty else { return [:] }
+        if let values = try? JSONDecoder().decode([String: String].self, from: girlsValuesData) {
+            return values
+        }
+        guard let legacyValues = try? JSONDecoder().decode([String: Double].self, from: girlsValuesData) else {
+            return [:]
+        }
+        return legacyValues.mapValues(formatNumber)
+    }
+
+    func saveMap(_ map: [String: String]) {
+        do {
+            girlsValuesData = try JSONEncoder().encode(map)
+        } catch {
+            girlsValuesData = Data()
+        }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+
+
+    private func loadHistoryMap() -> [String: [PRHistoryEntry]] {
+        guard !girlsHistoryData.isEmpty else { return [:] }
+        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: girlsHistoryData) } catch { return [:] }
+    }
+
+    private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
+        do { girlsHistoryData = try JSONEncoder().encode(map) } catch { girlsHistoryData = Data() }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+    private func saveRecords(
+        values: [String: String],
+        history: [String: [PRHistoryEntry]],
+        deletedHistoryEntryID: String? = nil
+    ) {
+        do {
+            girlsValuesData = try JSONEncoder().encode(values)
+            girlsHistoryData = try JSONEncoder().encode(history)
+        } catch {
+            girlsValuesData = Data()
+            girlsHistoryData = Data()
+        }
+        if let deletedHistoryEntryID {
+            PersonalRecordsSyncService.shared.didDeleteHistoryEntry(
+                id: deletedHistoryEntryID,
+                historyKey: "student_pr_girls_history_v1"
+            )
+        } else {
+            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+        }
+    }
+
+    private func historyEntries(for key: String) -> [PRHistoryEntry] {
+        loadHistoryMap()[key, default: []].sorted { $0.createdAt < $1.createdAt }
+    }
+
+    private func historyChartPoints(for key: String, metadata: String) -> [HistoryChartPoint] {
+        historyEntries(for: key).compactMap { entry in
+            numericValue(entry.value, metadata: metadata).map { HistoryChartPoint(id: entry.id, date: entry.createdAt, value: $0) }
+        }
+    }
+
+    private func saveHistoryValue(_ value: String, for key: String, date: Date) {
+        var map = loadHistoryMap()
+        var entries = map[key, default: []]
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        guard !entries.contains(where: { $0.value == value && Calendar.current.isDate($0.createdAt, inSameDayAs: normalizedDate) }) else { return }
+        entries.append(PRHistoryEntry(id: UUID().uuidString, value: value, createdAt: normalizedDate))
+        map[key] = entries
+        saveHistoryMap(map)
+    }
+
+    private func removeHistory(for key: String) {
+        var map = loadHistoryMap()
+        map.removeValue(forKey: key)
+        saveHistoryMap(map)
+    }
+
+    func loadStoredValue(for key: String) -> String? {
+        loadMap()[key]
+    }
+
+    func saveValue(_ value: String, for key: String) {
+        var map = loadMap()
+        map[key] = value
+        saveMap(map)
+    }
+
+    func removeValue(for key: String) {
+        var map = loadMap()
+        map.removeValue(forKey: key)
+        saveMap(map)
+    }
+
+    private func bestValue(from values: [String], metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else { return values.last }
+        let candidates = values.compactMap { value in
+            numericValue(value, metadata: metadata).map { (value, $0) }
+        }
+        guard var best = candidates.first else { return values.last }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 {
+                best = candidate
+            }
+        }
+        return best.0
+    }
+}

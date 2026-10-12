@@ -4,6 +4,7 @@ struct TreinosView: View {
 
     @Binding var path: [AppRoute]
     let tipo: TreinoTipo
+    @Environment(\.locale) private var locale
 
     var body: some View {
         ZStack {
@@ -32,7 +33,7 @@ struct TreinosView: View {
                                 .frame(maxWidth: maxContentWidth)
                                 .shadow(color: .black.opacity(0.5), radius: 10, y: 6)
 
-                            Text(tipo.tituloOverlayImagem)
+                            Text(tipo.localizedDisplayName(locale: locale))
                                 .font(.system(size: 28, weight: .bold))
                                 .foregroundColor(.white)
                                 .shadow(color: .black.opacity(0.95), radius: 8, x: 0, y: 3)
@@ -50,7 +51,7 @@ struct TreinosView: View {
                 FooterBar(
                     path: $path,
                     kind: .treinosComPerfil(
-                        treinoTitle: tipo.titulo,
+                        treinoTitle: tipo.localizedTitle(locale: locale),
                         treinoIcon: AnyView(tipo.iconeRodapeTreinos),
                         isHomeSelected: false,
                         isTreinoSelected: true,
@@ -65,23 +66,31 @@ struct TreinosView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
+                .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text(tipo.titulo)
+                Text(tipo.localizedTitle(locale: locale))
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 MiniProfileHeader(imageName: "rdv_user_default", size: 38)
                     .onTapGesture { }
             }
@@ -96,4 +105,3 @@ struct TreinosView: View {
         path.removeLast()
     }
 }
-

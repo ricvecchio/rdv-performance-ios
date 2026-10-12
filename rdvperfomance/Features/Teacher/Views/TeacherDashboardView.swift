@@ -1,11 +1,81 @@
 import SwiftUI
 
+enum TeacherQuickAccessItem: String, CaseIterable, Codable, Hashable, Identifiable {
+    case sendWorkout = "sendWorkout"
+    case createWorkout = "createWorkout"
+    case workoutLibrary = "workoutLibrary"
+    case importWorkout = "importWorkout"
+    case personalRecords = "personalRecords"
+    case myVideos = "myVideos"
+
+    var id: String { rawValue }
+
+    static let defaultItems: [TeacherQuickAccessItem] = [
+        .workoutLibrary,
+        .importWorkout,
+        .myVideos
+    ]
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .sendWorkout: "ui.send_workout"
+        case .createWorkout: "ui.create_workout"
+        case .workoutLibrary: "ui.workout_library"
+        case .importWorkout: "tecnofit_import.import_action"
+        case .personalRecords: "ui.my_records"
+        case .myVideos: "workout.my_videos"
+        }
+    }
+
+    var subtitle: LocalizedStringKey {
+        switch self {
+        case .sendWorkout: "ui.send_a_workout_to_your_students"
+        case .createWorkout: "ui.create_a_new_workout"
+        case .workoutLibrary: "ui.use_ready_made_templates"
+        case .importWorkout: "ui.from_competitions_or_libraries"
+        case .personalRecords: "ui.track_and_record_your_results"
+        case .myVideos: "ui.organize_your_movement_videos"
+        }
+    }
+
+    var systemImage: String {
+        switch self {
+        case .sendWorkout: "paperplane.fill"
+        case .createWorkout: "plus.circle.fill"
+        case .workoutLibrary: "square.grid.2x2.fill"
+        case .importWorkout: "tablecells.fill"
+        case .personalRecords: "trophy.fill"
+        case .myVideos: "video.fill"
+        }
+    }
+}
+
 struct TeacherDashboardView: View {
+
+    private struct TodaySummary {
+        let studentsWithWorkout: Int
+        let completedStudents: Int
+        let studentsWithoutWorkout: Int
+    }
 
     @Binding var path: [AppRoute]
     let category: TreinoTipo
+    @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
+    @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
+
+    @State private var todaySummary: TodaySummary?
+    @State private var isLoadingSummary = true
+    @State private var isSummaryLoadInProgress = false
+    @State private var quickAccessItems = TeacherQuickAccessItem.defaultItems
+    @State private var editableQuickAccessItems = TeacherQuickAccessItem.defaultItems
+    @State private var isQuickAccessEditorPresented = false
+    @State private var isSavingQuickAccessItems = false
+    @State private var isLoadingQuickAccessItems = false
+    @State private var quickAccessEditorError: String?
 
     private let contentMaxWidth: CGFloat = 380
+    private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
 
     var body: some View {
         ZStack {
@@ -30,57 +100,9 @@ struct TeacherDashboardView: View {
 
                             header
 
-                            VStack(spacing: 12) {
+                            summaryCard
 
-                                // 1) Biblioteca de Treinos
-                                actionRow(
-                                    title: "Biblioteca de Treinos",
-                                    icon: "square.grid.2x2.fill"
-                                ) {
-                                    path.append(.teacherMyWorkouts(category: category))
-                                }
-
-                                // 2) Meus Alunos
-                                actionRow(
-                                    title: "Meus alunos",
-                                    icon: "person.3.fill"
-                                ) {
-                                    path.append(.teacherStudentsList(selectedCategory: category, initialFilter: nil))
-                                }
-
-                                // 3) Importar Treino -> ✅ AGORA ABRE NOVA TELA (igual Importar Vídeos)
-                                actionRow(
-                                    title: "Importar Treino",
-                                    icon: "tablecells.fill"
-                                ) {
-                                    path.append(.teacherImportWorkouts(category: category))
-                                }
-
-                                // 3.1) Importar Vídeos
-                                actionRow(
-                                    title: "Importar Vídeos",
-                                    icon: "video.fill"
-                                ) {
-                                    path.append(.teacherImportVideos(category: category))
-                                }
-
-                                // 4) Mapa da Academia
-                                actionRow(
-                                    title: "Mapa da Academia",
-                                    icon: "map.fill"
-                                ) {
-                                    path.append(.mapFeature)
-                                }
-
-                                // 5) Visualizar no ambiente
-                                actionRow(
-                                    title: "Visualizar no ambiente",
-                                    icon: "viewfinder"
-                                ) {
-                                    path.append(.arDemo)
-                                }
-                            }
-                            .padding(.top, 8)
+                            quickAccessCard
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
                         }
@@ -113,56 +135,556 @@ struct TeacherDashboardView: View {
         .toolbar {
 
             ToolbarItem(placement: .principal) {
-                Text("Área do Professor")
+                Text("ui.coach_area")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .toolbarColorScheme(.dark, for: .navigationBar)
+        .onAppear {
+            Task { await loadTodaySummary() }
+            Task { await loadQuickAccessItems() }
+        }
+        .sheet(isPresented: $isQuickAccessEditorPresented) {
+            quickAccessEditorSheet
+        }
     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Aqui você gerencia alunos e seus treinos.")
+            DashboardGreeting.styledText(
+                name: session.userName,
+                audience: .teacher,
+                locale: locale
+            )
+                .font(.system(size: 26, weight: .bold))
+
+            Text("ui.tracking_your_class_s_progress")
                 .font(.system(size: 14))
                 .foregroundColor(.white.opacity(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {
-        Button(action: action) {
-            HStack(spacing: 12) {
-                Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
-                    .font(.system(size: 16))
-                    .frame(width: 26)
+    private var summaryCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline) {
+                Text("ui.today_s_summary")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
 
-                Text(title)
+                Spacer()
+
+                Text(todayText)
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.white.opacity(0.55))
+            }
+
+            LazyVGrid(columns: summaryColumns, spacing: 8) {
+                summaryItem(
+                    value: todaySummary?.studentsWithWorkout,
+                    title: "ui.workouts_today",
+                    icon: "person.3.fill"
+                )
+                summaryItem(
+                    value: todaySummary?.completedStudents,
+                    title: "workout.filter.completed",
+                    icon: "checkmark.circle.fill"
+                )
+                summaryItem(
+                    value: todaySummary?.studentsWithoutWorkout,
+                    title: "ui.no_workout",
+                    icon: "exclamationmark.triangle.fill",
+                    iconColor: .red.opacity(0.9)
+                )
+            }
+        }
+        .padding(14)
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private var quickAccessCard: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack {
+                Text("ui.quick_access")
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
+
+                Spacer()
+
+                Button {
+                    editableQuickAccessItems = quickAccessItems
+                    quickAccessEditorError = nil
+                    isQuickAccessEditorPresented = true
+                } label: {
+                    Image(systemName: "pencil")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.55))
+                        .frame(width: 32, height: 32)
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("ui.customize_quick_access")
+                .disabled(isLoadingQuickAccessItems)
+            }
+
+            VStack(spacing: 12) {
+                ForEach(quickAccessItems) { item in
+                    quickAccessItem(
+                        title: item.title,
+                        subtitle: item.subtitle,
+                        icon: item.systemImage
+                    ) {
+                        openQuickAccessItem(item)
+                    }
+                }
+            }
+        }
+        .padding(14)
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private var quickAccessEditorSheet: some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Capsule()
+                            .fill(Color.white.opacity(0.18))
+                            .frame(width: 44, height: 5)
+                            .frame(maxWidth: .infinity)
+                            .padding(.top, 10)
+
+                        Text("ui.customize_quick_access")
+                            .font(.system(size: 18, weight: .bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity, alignment: .center)
+
+                        Text("ui.choose_3_shortcuts_to_show_in_the_coach_area")
+                            .font(.system(size: 14))
+                            .foregroundColor(.white.opacity(0.55))
+
+                        Text("ui.select_3_shortcuts")
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.75))
+
+                        VStack(spacing: 10) {
+                            ForEach(TeacherQuickAccessItem.allCases) { item in
+                                quickAccessEditorItem(item)
+                            }
+                        }
+
+                        if let quickAccessEditorError {
+                            Text(quickAccessEditorError)
+                                .font(.system(size: 13, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
+                }
+
+                HStack(spacing: 12) {
+                    Button("common.cancel") {
+                        isQuickAccessEditorPresented = false
+                    }
+                    .buttonStyle(.plain)
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundColor(.white.opacity(0.85))
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(Color.white.opacity(0.10))
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    )
+                    .disabled(isSavingQuickAccessItems)
+
+                    Button {
+                        Task { await saveQuickAccessItems() }
+                    } label: {
+                        HStack(spacing: 10) {
+                            if isSavingQuickAccessItems {
+                                ProgressView().tint(.white)
+                            } else {
+                                Text("common.save")
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(editableQuickAccessItems.count != 3 || isSavingQuickAccessItems)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
+            }
+        }
+        .interactiveDismissDisabled(isSavingQuickAccessItems)
+    }
+
+    private func quickAccessEditorItem(_ item: TeacherQuickAccessItem) -> some View {
+        let isSelected = editableQuickAccessItems.contains(item)
+
+        return Button {
+            if isSelected {
+                editableQuickAccessItems.removeAll { $0 == item }
+            } else if editableQuickAccessItems.count < 3 {
+                editableQuickAccessItems.append(item)
+            }
+        } label: {
+            HStack(spacing: 12) {
+                Image(systemName: item.systemImage)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundColor(.green.opacity(0.85))
+                    .frame(width: 22)
+
+                Text(item.title)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 Spacer()
 
-                Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                    .font(.system(size: 20))
+                    .foregroundColor(isSelected ? .green : .white.opacity(0.35))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Theme.Colors.cardBackground)
-            .cornerRadius(14)
+            .background(Color.white.opacity(0.06))
+            .cornerRadius(12)
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(
+                        isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08),
+                        lineWidth: 1
+                    )
+            )
+        }
+        .buttonStyle(.plain)
+        .disabled(!isSelected && editableQuickAccessItems.count == 3)
+    }
+
+    private func openQuickAccessItem(_ item: TeacherQuickAccessItem) {
+        switch item {
+        case .sendWorkout:
+            path.append(
+                .teacherSendWorkout(
+                    preselectedStudentID: nil,
+                    startsAtWorkout: false
+                )
+            )
+        case .createWorkout:
+            path.append(.teacherMyWorkouts(category: category, mode: .create))
+        case .workoutLibrary:
+            path.append(.teacherMyWorkouts(category: category, mode: .library))
+        case .importWorkout:
+            path.append(.teacherImportWorkouts(category: category))
+        case .personalRecords:
+            path.append(.teacherPersonalRecords(category: category))
+        case .myVideos:
+            path.append(.teacherImportVideos(category: category))
+        }
+    }
+
+    private func loadQuickAccessItems() async {
+        guard !isLoadingQuickAccessItems else { return }
+        isLoadingQuickAccessItems = true
+        defer { isLoadingQuickAccessItems = false }
+
+        guard let teacherId = session.uid?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !teacherId.isEmpty else {
+            quickAccessItems = TeacherQuickAccessItem.defaultItems
+            return
+        }
+
+        do {
+            let savedItems = try await FirestoreRepository.shared
+                .getTeacherQuickAccessItems(uid: teacherId)
+            quickAccessItems = validQuickAccessItems(from: savedItems)
+                ?? TeacherQuickAccessItem.defaultItems
+        } catch {
+            quickAccessItems = TeacherQuickAccessItem.defaultItems
+        }
+    }
+
+    private func saveQuickAccessItems() async {
+        guard let teacherId = session.uid?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !teacherId.isEmpty else {
+            quickAccessEditorError = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer",
+                locale: locale
+            )
+            return
+        }
+        guard editableQuickAccessItems.count == 3,
+              Set(editableQuickAccessItems).count == 3 else {
+            quickAccessEditorError = AppLocalization.string("ui.select_exactly_3_shortcuts",
+                locale: locale
+            )
+            return
+        }
+
+        isSavingQuickAccessItems = true
+        quickAccessEditorError = nil
+        defer { isSavingQuickAccessItems = false }
+
+        do {
+            try await FirestoreRepository.shared.setTeacherQuickAccessItems(
+                uid: teacherId,
+                items: editableQuickAccessItems.map(\.rawValue)
+            )
+            quickAccessItems = editableQuickAccessItems
+            isQuickAccessEditorPresented = false
+        } catch {
+            quickAccessEditorError = error.localizedDescription
+        }
+    }
+
+    private func validQuickAccessItems(
+        from rawItems: [String]?
+    ) -> [TeacherQuickAccessItem]? {
+        guard let rawItems, rawItems.count == 3 else { return nil }
+        let items = rawItems.compactMap(TeacherQuickAccessItem.init(rawValue:))
+        guard items.count == 3, Set(items).count == 3 else { return nil }
+        return items
+    }
+
+    private var todayText: String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
+        let date = formatter.string(from: Date())
+        guard let first = date.first else { return date }
+        return first.uppercased() + String(date.dropFirst())
+    }
+
+    private func summaryItem(
+        value: Int?,
+        title: LocalizedStringKey,
+        icon: String,
+        iconColor: Color = .green.opacity(0.85)
+    ) -> some View {
+        VStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(iconColor)
+
+            if isLoadingSummary {
+                ProgressView()
+                    .tint(.white.opacity(0.92))
+                    .frame(height: 24)
+            } else {
+                Text(value.map(String.init) ?? "—")
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white.opacity(0.92))
+            }
+
+            Text(title)
+                .font(.system(size: 14, weight: .medium))
+                .foregroundColor(.white.opacity(0.62))
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, minHeight: 118)
+        .padding(.horizontal, 6)
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(12)
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private func loadTodaySummary() async {
+        guard !isSummaryLoadInProgress else { return }
+        isSummaryLoadInProgress = true
+        defer { isSummaryLoadInProgress = false }
+
+        guard let teacherId = session.uid?.trimmingCharacters(in: .whitespacesAndNewlines),
+              !teacherId.isEmpty else {
+            isLoadingSummary = false
+            todaySummary = nil
+            return
+        }
+
+        isLoadingSummary = true
+        defer { isLoadingSummary = false }
+
+        do {
+            let studentsByCategory = try await FirestoreRepository.shared.getStudentsGroupedByTeacher(
+                teacherId: teacherId
+            )
+
+            let linkedStudentIDs = Set(
+                studentsByCategory.values
+                    .flatMap { $0 }
+                    .compactMap { $0.id?.trimmingCharacters(in: .whitespacesAndNewlines) }
+                    .filter { !$0.isEmpty }
+            )
+            guard !linkedStudentIDs.isEmpty else {
+                todaySummary = TodaySummary(
+                    studentsWithWorkout: 0,
+                    completedStudents: 0,
+                    studentsWithoutWorkout: 0
+                )
+                return
+            }
+
+            let publishedWeeks = try await FirestoreRepository.shared.getPublishedWeeksForTeacher(
+                teacherId: teacherId
+            )
+            let calendar = Calendar.current
+            let today = calendar.startOfDay(for: Date())
+            let weeksForToday = publishedWeeks.filter {
+                linkedStudentIDs.contains($0.studentId) && weekCanContainToday($0, today: today, calendar: calendar)
+            }
+
+            let repository = FirestoreRepository.shared
+            let dayData = try await withThrowingTaskGroup(
+                of: (String, [TrainingDayFS], [String: Bool]).self
+            ) { group in
+                for week in weeksForToday {
+                    guard let weekId = week.id?.trimmingCharacters(in: .whitespacesAndNewlines),
+                          !weekId.isEmpty else {
+                        continue
+                    }
+                    let studentId = week.studentId
+                    group.addTask {
+                        async let days = repository.getDaysForWeek(weekId: weekId)
+                        async let completionMap = repository.getDayStatusMap(
+                            weekId: weekId,
+                            studentId: studentId
+                        )
+                        let (loadedDays, loadedCompletionMap) = try await (days, completionMap)
+                        return (studentId, loadedDays, loadedCompletionMap)
+                    }
+                }
+
+                var results: [(String, [TrainingDayFS], [String: Bool])] = []
+                for try await result in group {
+                    results.append(result)
+                }
+                return results
+            }
+
+            var todayWorkoutsByStudent: [String: [Bool]] = [:]
+
+            for (studentId, days, completionMap) in dayData {
+                let todayDays = days.filter {
+                    guard let date = $0.date else { return false }
+                    return calendar.isDate(date, inSameDayAs: today)
+                }
+                guard !todayDays.isEmpty else { continue }
+
+                todayWorkoutsByStudent[studentId, default: []].append(
+                    contentsOf: todayDays.map { day in
+                        day.id.flatMap { completionMap[$0] } == true
+                    }
+                )
+            }
+
+            let studentsWithWorkout = todayWorkoutsByStudent.keys
+            let completedStudents = todayWorkoutsByStudent.values.filter { workouts in
+                !workouts.isEmpty && workouts.allSatisfy { $0 }
+            }.count
+
+            todaySummary = TodaySummary(
+                studentsWithWorkout: studentsWithWorkout.count,
+                completedStudents: completedStudents,
+                studentsWithoutWorkout: max(0, linkedStudentIDs.count - studentsWithWorkout.count)
+            )
+        } catch {
+            #if DEBUG
+            print("[TeacherDashboard] Não foi possível carregar o resumo de hoje: \(error.localizedDescription)")
+            #endif
+            todaySummary = nil
+        }
+    }
+
+    private func weekCanContainToday(
+        _ week: TrainingWeekFS,
+        today: Date,
+        calendar: Calendar
+    ) -> Bool {
+        guard let startDate = week.startDate else { return true }
+        let start = calendar.startOfDay(for: startDate)
+        let end = calendar.startOfDay(
+            for: week.endDate ?? calendar.date(byAdding: .day, value: 6, to: start) ?? start
+        )
+        return today >= start && today <= end
+    }
+
+    private func quickAccessItem(
+        title: LocalizedStringKey,
+        subtitle: LocalizedStringKey,
+        icon: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(alignment: .top, spacing: 10) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: icon)
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(2)
+
+                    Text(subtitle)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.55))
+                        .lineLimit(3)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.35))
+                    .frame(height: 34)
+            }
+            .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+            .background(
+                ZStack {
+                    Color.black.opacity(0.68)
+                    Theme.Colors.primaryGreen.opacity(0.05)
+                }
+            )
+            .cornerRadius(12)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
     }
 }
-

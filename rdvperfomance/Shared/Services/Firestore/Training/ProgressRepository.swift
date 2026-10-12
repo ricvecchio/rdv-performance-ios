@@ -33,6 +33,18 @@ final class ProgressRepository: FirestoreBaseRepository {
         guard !w.isEmpty else { throw FirestoreRepositoryError.missingWeekId }
         guard !s.isEmpty else { throw FirestoreRepositoryError.missingStudentId }
         guard !d.isEmpty else { throw FirestoreRepositoryError.invalidData }
+
+        let weekSnapshot = try await db.collection(TrainingFS.weeksCollection)
+            .document(w)
+            .getDocument()
+        guard weekSnapshot.exists else { throw FirestoreRepositoryError.notFound }
+        let week = try weekSnapshot.data(as: TrainingWeekFS.self)
+        guard clean(week.studentId) == s, let startDate = week.startDate else {
+            throw FirestoreRepositoryError.invalidData
+        }
+        guard Calendar.current.startOfDay(for: Date()) >= Calendar.current.startOfDay(for: startDate) else {
+            throw FirestoreRepositoryError.weekNotStarted
+        }
         
         let ref = db
             .collection(TrainingFS.weeksCollection)

@@ -20,10 +20,10 @@ final class ProgressGameViewModel: ObservableObject {
     /// Inicializa o ViewModel com modo e provider específicos
     init(
         mode: ProgressGameMode,
-        provider: ProgressMetricsProvider = ProgressMetricsProvider()
+        provider: ProgressMetricsProvider? = nil
     ) {
         self.mode = mode
-        self.provider = provider
+        self.provider = provider ?? ProgressMetricsProvider()
     }
 
     /// Carrega métricas baseado no modo configurado

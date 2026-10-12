@@ -11,7 +11,11 @@ struct StudentDayDetailView: View {
     let day: TrainingDayFS
     let weekTitle: String
 
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -28,7 +32,11 @@ struct StudentDayDetailView: View {
 
     @State private var didPrepareEditFields: Bool = false
 
-    private var isTeacherViewing: Bool { session.userType == .TRAINER }
+    private var isTeacherViewing: Bool { session.isTrainer }
+
+    private var presentation: TrainingDayFS {
+        DefaultWorkoutLocalization.presentation(for: day, locale: locale)
+    }
 
     // ✅ Player de vídeo (mesmo comportamento da TeacherImportVideosView)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
@@ -36,6 +44,28 @@ struct StudentDayDetailView: View {
     // ✅ Remoção do vídeo do dia
     @State private var showRemoveVideoConfirm: Bool = false
     @State private var videoPendingRemove: VideoDayItem? = nil
+
+    // MARK: - ✅ Unidade de medida (kg / lbs) vinda do Settings
+    private enum WeightUnit: String {
+        case kg
+        case lbs
+
+        var shortLabel: String {
+            switch self {
+            case .kg: return "kg"
+            case .lbs: return "lbs"
+            }
+        }
+    }
+
+    private let preferredWeightUnitKey: String = "preferredWeightUnit"
+
+    @AppStorage("preferredWeightUnit")
+    private var preferredWeightUnitRawState: String = WeightUnit.kg.rawValue
+
+    private var preferredWeightUnit: WeightUnit {
+        WeightUnit(rawValue: preferredWeightUnitRawState) ?? .kg
+    }
 
     // MARK: - Modelo local para exibir vídeo vindo de BlockFS
     private struct VideoDayItem: Identifiable, Hashable {
@@ -61,9 +91,9 @@ struct StudentDayDetailView: View {
 
     // ✅ Blocos normais (sem os blocos de vídeo)
     private var nonVideoBlocks: [BlockFS] {
-        if videoItems.isEmpty { return day.blocks }
+        if videoItems.isEmpty { return presentation.blocks }
         let videoIds = Set(videoItems.map { $0.blockId })
-        return day.blocks.filter { !videoIds.contains($0.id) }
+        return presentation.blocks.filter { !videoIds.contains($0.id) }
     }
 
     // ✅ Quando existe vídeo no dia: remover "Visualizar no ambiente", blocos e agora também o card "Treino"
@@ -71,7 +101,67 @@ struct StudentDayDetailView: View {
         !isTeacherViewing && !videoItems.isEmpty
     }
 
-    // Corpo principal com header, conteúdo do dia, blocos e footer
+    // MARK: - ✅ NOVO: % do PR (Barbell) no dia
+
+    private struct BarbellMove: Identifiable, Hashable {
+        let id = UUID()
+        let name: String
+        let storageKey: String
+    }
+
+    private let barbellMoves: [BarbellMove] = [
+        .init(name: "Back Squat", storageKey: "back_squat"),
+        .init(name: "Bench Over Row", storageKey: "bench_over_row"),
+        .init(name: "Bench Press", storageKey: "bench_press"),
+        .init(name: "Clean", storageKey: "clean"),
+        .init(name: "Clean & Jerk", storageKey: "clean_and_jerk"),
+        .init(name: "Clean Pull", storageKey: "clean_pull"),
+        .init(name: "Cluster", storageKey: "cluster"),
+        .init(name: "Deadlift", storageKey: "deadlift"),
+        .init(name: "Front Squat", storageKey: "front_squat"),
+        .init(name: "Hang Power Clean", storageKey: "hang_power_clean"),
+        .init(name: "Hang Power Snatch", storageKey: "hang_power_snatch"),
+        .init(name: "Hang Squat Clean", storageKey: "hang_squat_clean"),
+        .init(name: "Hang Squat Snatch", storageKey: "hang_squat_snatch"),
+        .init(name: "Muscle Clean", storageKey: "muscle_clean"),
+        .init(name: "Overhead Lunge", storageKey: "overhead_lunge"),
+        .init(name: "Power Clean", storageKey: "power_clean"),
+        .init(name: "Power Snatch", storageKey: "power_snatch"),
+        .init(name: "Push Jerk", storageKey: "push_jerk"),
+        .init(name: "Push Press", storageKey: "push_press"),
+        .init(name: "Shoulder Press", storageKey: "shoulder_press"),
+        .init(name: "Snatch", storageKey: "snatch"),
+        .init(name: "Snatch Balance", storageKey: "snatch_balance"),
+        .init(name: "Snatch Deadlift", storageKey: "snatch_deadlift"),
+        .init(name: "Snatch Pull", storageKey: "snatch_pull"),
+        .init(name: "Split Jerk", storageKey: "split_jerk"),
+        .init(name: "Squat Jerk", storageKey: "squat_jerk"),
+        .init(name: "Squat Snatch", storageKey: "squat_snatch"),
+        .init(name: "Sumo Deadlift", storageKey: "sumo_deadlift"),
+        .init(name: "Sumo Deadlift High Pull", storageKey: "sumo_deadlift_high_pull"),
+        .init(name: "Thruster", storageKey: "thruster")
+    ]
+
+    // ✅ Fonte do PR (mesma chave usada na tela Barbell)
+    @AppStorage("student_pr_barbell_values_v1")
+    private var barbellValuesData: Data = Data()
+
+    // ✅ Persistência por dia (movimento + porcentagem)
+    @AppStorage("student_day_pr_calc_v1")
+    private var dayCalcData: Data = Data()
+
+    private struct DayCalcState: Codable, Hashable {
+        var movementKey: String
+        var percent: Double
+    }
+
+    @State private var showMovementPicker: Bool = false
+    @State private var selectedMovementKey: String? = nil
+    @State private var selectedMovementName: String? = nil
+    @State private var percentText: String = ""
+    @FocusState private var isPercentFieldFocused: Bool
+
+    // Corpo principal com header, conteúdo do dia e blocos
     var body: some View {
         ZStack {
 
@@ -88,8 +178,6 @@ struct StudentDayDetailView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-                        header
-
                         if let err = errorMessage {
                             messageCard(text: err)
                         }
@@ -108,6 +196,11 @@ struct StudentDayDetailView: View {
                         if !shouldShowOnlyVideoForStudent {
                             blocksCard
                         }
+
+                        // ✅ NOVO: cálculo % PR (somente aluno e quando não é "somente vídeo") — no final
+                        if !isTeacherViewing && !shouldShowOnlyVideoForStudent {
+                            prPercentCard
+                        }
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -115,42 +208,48 @@ struct StudentDayDetailView: View {
                     .padding(.bottom, 28)
                     .frame(maxWidth: .infinity)
                 }
-
-                footer
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
 
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
+            // ✅ ALTERADO: título do cabeçalho agora é o dia (ex: "Dia 1")
             ToolbarItem(placement: .principal) {
-                Text("Dia de treino")
+                Text(trainingDateTitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItemGroup(placement: .navigationBarTrailing) {
+            ToolbarItemGroup(placement: .topBarTrailing) {
                 if isTeacherViewing {
                     Menu {
                         Button {
                             didPrepareEditFields = false
                             showEditSheet = true
                         } label: {
-                            Label("Editar", systemImage: "pencil")
+                            Label(LocalizedStringKey("workout_day_detail.edit"), systemImage: "pencil")
                         }
 
                         Button(role: .destructive) {
                             showDeleteConfirm = true
                         } label: {
-                            Label("Excluir", systemImage: "trash")
+                            Label(LocalizedStringKey("common.delete"), systemImage: "trash")
                         }
                     } label: {
                         Image(systemName: "ellipsis")
@@ -162,27 +261,38 @@ struct StudentDayDetailView: View {
 
                 HeaderAvatarView(size: 38)
             }
+
+            ToolbarItemGroup(placement: .keyboard) {
+                if isPercentFieldFocused {
+                    Spacer()
+                    Button("common.save") {
+                        autoSaveCalcState()
+                        isPercentFieldFocused = false
+                    }
+                }
+            }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .alert("Excluir dia?", isPresented: $showDeleteConfirm) {
-            Button("Cancelar", role: .cancel) {}
-            Button("Excluir", role: .destructive) {
+        .alert("workout_day_detail.delete_day", isPresented: $showDeleteConfirm) {
+            Button("common.cancel", role: .cancel) {}
+            Button("common.delete", role: .destructive) {
                 Task { await deleteDay() }
             }
         } message: {
-            Text("O dia \"\(day.title)\" será excluído.")
+            let format = AppLocalization.string("workout_day_detail.day_delete_confirmation", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [day.title]))
         }
-        .alert("Remover vídeo?", isPresented: $showRemoveVideoConfirm) {
-            Button("Cancelar", role: .cancel) {
+        .alert("workout_day_detail.remove_video", isPresented: $showRemoveVideoConfirm) {
+            Button("common.cancel", role: .cancel) {
                 videoPendingRemove = nil
             }
-            Button("Remover", role: .destructive) {
+            Button("workout_day_detail.remove", role: .destructive) {
                 guard let item = videoPendingRemove else { return }
                 Task { await removeVideoFromDay(item: item) }
             }
         } message: {
-            Text("Este vídeo será removido do dia de treino.")
+            Text("workout_day_detail.this_video_will_be_removed_from_the_training_day")
         }
         .sheet(isPresented: $showEditSheet, onDismiss: {
             didPrepareEditFields = false
@@ -194,52 +304,45 @@ struct StudentDayDetailView: View {
                     didPrepareEditFields = true
                 }
         }
+        .sheet(isPresented: $showMovementPicker) {
+            movementPickerSheet
+        }
         .fullScreenCover(item: $activeLockedPlayer) { item in
             TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
-    }
+        .onAppear {
+            // garante que, se o Settings usar UserDefaults direto, ainda assim sincroniza aqui.
+            let raw = UserDefaults.standard.string(forKey: preferredWeightUnitKey) ?? WeightUnit.kg.rawValue
+            if preferredWeightUnitRawState != raw {
+                preferredWeightUnitRawState = raw
+            }
 
-    // Footer padrão da Agenda
-    private var footer: some View {
-        FooterBar(
-            path: $path,
-            kind: .agendaSobrePerfil(
-                isAgendaSelected: true,
-                isSobreSelected: false,
-                isPerfilSelected: false
-            )
-        )
-        .frame(height: Theme.Layout.footerHeight)
-        .frame(maxWidth: .infinity)
-        .background(Theme.Colors.footerBackground)
-    }
-
-    // Header com título e subtítulo
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
-
-            Text("Semana: \(weekTitle)")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
-
-            Text(day.subtitleText)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+            loadSavedCalcIfExists()
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .onChange(of: selectedMovementKey) { _, _ in
+            autoSaveCalcState()
+        }
+        .onChange(of: percentText) { _, _ in
+            autoSaveCalcState()
+        }
+    }
+
+    private func trainingDateTitle(for date: Date?, fallback: String) -> String {
+        guard let date else { return fallback }
+
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("EEEEddMM")
+        return formatter.string(from: date).capitalized(with: formatter.locale)
     }
 
     // Card principal do treino
     private var trainingCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("Treino")
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
-
             VStack(alignment: .leading, spacing: 6) {
-                Text(day.title)
-                    .font(.system(size: 20, weight: .semibold))
+                Text(presentation.title)
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 if let dateText = formattedDate(day.date) {
@@ -248,8 +351,8 @@ struct StudentDayDetailView: View {
                         .foregroundColor(.white.opacity(0.45))
                 }
 
-                if !day.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-                    Text(day.description)
+                if !presentation.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    Text(presentation.description)
                         .font(.system(size: 14))
                         .foregroundColor(.white.opacity(0.65))
                         .fixedSize(horizontal: false, vertical: true)
@@ -259,8 +362,350 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    // MARK: - ✅ NOVO CARD: cálculo % do PR
+    // ✅ ALTERADO: Movimento em uma linha; % e Peso na linha de baixo; alinhamento/laterais igual aos outros cards.
+
+    private var prPercentCard: some View {
+        VStack(alignment: .leading, spacing: 10) {
+
+            Text("workout_day_detail.calculation_by_pr_barbell")
+                .font(.system(size: 17, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
+            VStack(spacing: 10) {
+
+                // Linha 1: Movimento (full)
+                Button {
+                    showMovementPicker = true
+                } label: {
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "dumbbell.fill")
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 14))
+                            .frame(width: 22)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("personal_records.movement")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.55))
+
+                            Text(selectedMovementName ?? AppLocalization.string("workout_day_detail.select", locale: locale))
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .lineLimit(1)
+                        }
+
+                        Spacer(minLength: 6)
+
+                        Image(systemName: "chevron.right")
+                            .foregroundColor(.white.opacity(0.35))
+                            .font(.system(size: 12, weight: .semibold))
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.03))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    )
+                }
+                .buttonStyle(.plain)
+
+                // Linha 2: Porcentagem + Peso
+                HStack(spacing: 10) {
+
+                    // % (largura fixa)
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "percent")
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 14))
+                            .frame(width: 22)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("%")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.55))
+
+                            TextField("workout_day_detail.e_g_50", text: $percentText)
+                                .keyboardType(.decimalPad)
+                                .focused($isPercentFieldFocused)
+                                .textInputAutocapitalization(.never)
+                                .autocorrectionDisabled(true)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .frame(width: 120)
+                    .background(Color.white.opacity(0.03))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    )
+
+                    // Peso (ocupa o resto)
+                    HStack(spacing: 10) {
+
+                        Image(systemName: "scalemass.fill")
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 14))
+                            .frame(width: 22)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("workout_day_detail.weight")
+                                .font(.system(size: 11, weight: .bold))
+                                .foregroundColor(.white.opacity(0.55))
+
+                            Text(calculatedWeightText())
+                                .font(.system(size: 14, weight: .bold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.85)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 12)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.white.opacity(0.03))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    )
+                }
+            }
+
+            Text("workout_day_detail.data_is_saved_automatically_for_this_day")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.45))
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private var movementPickerSheet: some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 14) {
+
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 44, height: 5)
+                    .padding(.top, 10)
+
+                Text("workout_day_detail.select_movement")
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 4)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 0) {
+                        ForEach(Array(barbellMoves.enumerated()), id: \.element.id) { idx, move in
+
+                            Button {
+                                selectedMovementKey = move.storageKey
+                                selectedMovementName = move.name
+                                showMovementPicker = false
+                            } label: {
+                                HStack(spacing: 12) {
+
+                                    Image(systemName: "dumbbell.fill")
+                                        .foregroundColor(.green.opacity(0.85))
+                                        .font(.system(size: 15))
+                                        .frame(width: 26)
+
+                                    Text(move.name)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                        .lineLimit(1)
+
+                                    Spacer()
+
+                                    if move.storageKey == selectedMovementKey {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(.green.opacity(0.90))
+                                    } else {
+                                        Image(systemName: "circle")
+                                            .foregroundColor(.white.opacity(0.18))
+                                    }
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                .contentShape(Rectangle())
+                            }
+                            .buttonStyle(.plain)
+
+                            if idx < barbellMoves.count - 1 {
+                                Rectangle()
+                                    .fill(Color.white.opacity(0.08))
+                                    .frame(height: 1)
+                                    .padding(.leading, 14)
+                            }
+                        }
+                    }
+                    .background(Theme.Colors.cardBackground)
+                    .cornerRadius(14)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    )
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 18)
+                }
+
+                Button {
+                    showMovementPicker = false
+                } label: {
+                    Text("common.close")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 14)
+                        .background(Color.white.opacity(0.10))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        )
+                        .padding(.horizontal, 16)
+                }
+                .buttonStyle(.plain)
+
+                Spacer(minLength: 10)
+            }
+        }
+        .presentationDetents([.large])
+    }
+
+    private func calculatedWeightText() -> String {
+        guard let key = selectedMovementKey else { return "—" }
+        guard let prKg = loadPR(for: key), prKg > 0 else { return "—" }
+        guard let pct = parsePercent(), pct > 0 else { return "—" }
+
+        let resultKg = prKg * (pct / 100.0)
+        let display = convertFromStorageKgToPreferredUnit(resultKg)
+
+        return "\(formatNumber(display)) \(preferredWeightUnit.shortLabel)"
+    }
+
+    private func convertFromStorageKgToPreferredUnit(_ kg: Double) -> Double {
+        switch preferredWeightUnit {
+        case .kg:
+            return kg
+        case .lbs:
+            return kg * 2.2046226218
+        }
+    }
+
+    private func parsePercent() -> Double? {
+        let trimmed = percentText
+            .replacingOccurrences(of: ",", with: ".")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard !trimmed.isEmpty else { return nil }
+        return Double(trimmed)
+    }
+
+    private func formatNumber(_ value: Double) -> String {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 2
+        formatter.minimumFractionDigits = 0
+        formatter.locale = locale
+        return formatter.string(from: NSNumber(value: value)) ?? "\(value)"
+    }
+
+    private func loadPRMap() -> [String: Double] {
+        guard !barbellValuesData.isEmpty else { return [:] }
+        do {
+            return try JSONDecoder().decode([String: Double].self, from: barbellValuesData)
+        } catch {
+            return [:]
+        }
+    }
+
+    private func loadPR(for key: String) -> Double? {
+        let map = loadPRMap()
+        return map[key]
+    }
+
+    private func calcStorageKeyForThisDay() -> String {
+        let dayId = (day.id ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let safeDayId = dayId.isEmpty ? "dayIndex_\(day.dayIndex)" : dayId
+        return "wk_\(weekId)_\(safeDayId)"
+    }
+
+    private func loadCalcMap() -> [String: DayCalcState] {
+        guard !dayCalcData.isEmpty else { return [:] }
+        do {
+            return try JSONDecoder().decode([String: DayCalcState].self, from: dayCalcData)
+        } catch {
+            return [:]
+        }
+    }
+
+    private func saveCalcMap(_ map: [String: DayCalcState]) {
+        do {
+            dayCalcData = try JSONEncoder().encode(map)
+        } catch {
+            dayCalcData = Data()
+        }
+    }
+
+    private func loadSavedCalcIfExists() {
+        let map = loadCalcMap()
+        let key = calcStorageKeyForThisDay()
+
+        guard let saved = map[key] else { return }
+
+        selectedMovementKey = saved.movementKey
+        selectedMovementName = barbellMoves.first(where: { $0.storageKey == saved.movementKey })?.name
+        percentText = formatNumber(saved.percent)
+    }
+
+    private func autoSaveCalcState() {
+        guard !isTeacherViewing else { return }
+
+        let storageKey = calcStorageKeyForThisDay()
+        var map = loadCalcMap()
+
+        guard let movementKey = selectedMovementKey,
+              let pct = parsePercent() else {
+            map.removeValue(forKey: storageKey)
+            saveCalcMap(map)
+            return
+        }
+
+        map[storageKey] = DayCalcState(movementKey: movementKey, percent: pct)
+        saveCalcMap(map)
     }
 
     // MARK: - ✅ Vídeos (mesma UI da TeacherImportVideosView, só com Remover)
@@ -268,7 +713,7 @@ struct StudentDayDetailView: View {
     private var videosCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("Vídeos")
+            Text("workout.videos")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
@@ -286,13 +731,19 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     private func openLockedPlayer(item: VideoDayItem) {
         let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-        let safeTitle = titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim
+        let safeTitle = titleTrim.isEmpty
+            ? AppLocalization.string("workout.youtube_video", locale: locale)
+            : titleTrim
 
         activeLockedPlayer = LockedPlayerItem(
             title: safeTitle,
@@ -313,12 +764,16 @@ struct StudentDayDetailView: View {
 
             VStack(alignment: .leading, spacing: 4) {
                 let titleTrim = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
-                Text(titleTrim.isEmpty ? "Vídeo do YouTube" : titleTrim)
-                    .font(.system(size: 16, weight: .semibold))
+                Text(
+                    titleTrim.isEmpty
+                        ? AppLocalization.string("workout.youtube_video", locale: locale)
+                        : titleTrim
+                )
+                    .font(.system(size: 17, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
                     .lineLimit(1)
 
-                Text("YouTube")
+                Text("workout.youtube")
                     .font(.system(size: 12))
                     .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
@@ -330,7 +785,7 @@ struct StudentDayDetailView: View {
                 Button(role: .destructive) {
                     requestRemoveVideo(item: item)
                 } label: {
-                    Label("Remover", systemImage: "trash.fill")
+                    Label(LocalizedStringKey("workout_day_detail.remove"), systemImage: "trash.fill")
                 }
             } label: {
                 Image(systemName: "ellipsis")
@@ -408,7 +863,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 
@@ -418,7 +873,7 @@ struct StudentDayDetailView: View {
         do {
             let updatedBlocks = day.blocks.filter { $0.id != item.blockId }
 
-            try await FirestoreRepository.shared.upsertDay(
+            _ = try await FirestoreRepository.shared.upsertDay(
                 weekId: weekId,
                 dayId: dayId,
                 dayIndex: day.dayIndex,
@@ -437,12 +892,19 @@ struct StudentDayDetailView: View {
         }
     }
 
+    private func displayedBlockName(_ block: BlockFS) -> String {
+        guard block.name == DefaultWorkoutBlock.details.persistedName else {
+            return block.displayedName(locale: locale)
+        }
+        return DefaultWorkoutBlock.details.localizedName(locale: locale)
+    }
+
     // Lista de blocos do dia
     private var blocksCard: some View {
         VStack(alignment: .leading, spacing: 10) {
 
             if nonVideoBlocks.isEmpty && videoItems.isEmpty {
-                Text("Nenhum bloco cadastrado.")
+                Text("workout_day_detail.no_block_registered")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else if nonVideoBlocks.isEmpty {
@@ -453,8 +915,8 @@ struct StudentDayDetailView: View {
                     ForEach(Array(nonVideoBlocks.enumerated()), id: \.offset) { idx, block in
                         VStack(alignment: .leading, spacing: 6) {
 
-                            Text(block.name)
-                                .font(.system(size: 16, weight: .semibold))
+                            Text(displayedBlockName(block))
+                                .font(.system(size: 17, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -479,8 +941,12 @@ struct StudentDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(Color.black.opacity(0.68))
         .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
     }
 
     // Mensagem de erro/aviso estilizada
@@ -512,7 +978,7 @@ struct StudentDayDetailView: View {
     private func formattedDate(_ date: Date?) -> String? {
         guard let date else { return nil }
         let f = DateFormatter()
-        f.locale = Locale(identifier: "pt_BR")
+        f.locale = locale
         f.dateStyle = .medium
         return f.string(from: date)
     }
@@ -532,12 +998,12 @@ struct StudentDayDetailView: View {
 
             VStack(alignment: .leading, spacing: 14) {
 
-                Text("Editar dia de treino")
+                Text("workout_day_detail.edit_training_day")
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundColor(.white.opacity(0.92))
 
                 UnderlineTextField(
-                    title: "Título",
+                    title: "workout_day_detail.title_field",
                     text: $editTitle,
                     isSecure: false,
                     showPassword: .constant(false),
@@ -547,7 +1013,7 @@ struct StudentDayDetailView: View {
                 )
 
                 UnderlineTextField(
-                    title: "Descrição",
+                    title: "workout_day_detail.description_field",
                     text: $editDescription,
                     isSecure: false,
                     showPassword: .constant(false),
@@ -566,7 +1032,7 @@ struct StudentDayDetailView: View {
                 HStack(spacing: 10) {
 
                     Button { showEditSheet = false } label: {
-                        Text("Cancelar")
+                        Text("common.cancel")
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.90))
                             .padding(.horizontal, 14)
@@ -578,20 +1044,12 @@ struct StudentDayDetailView: View {
                     .disabled(isSaving)
 
                     Button { Task { await saveDayEdits() } } label: {
-                        HStack(spacing: 8) {
+                        HStack(spacing: 10) {
                             if isSaving { ProgressView().tint(.white) }
-                            Text("Salvar")
+                            Text("common.save")
                         }
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
                         .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                        .background(Color.green.opacity(0.16))
-                        .cornerRadius(12)
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 12)
-                                .stroke(Color.green.opacity(0.35), lineWidth: 1)
-                        )
+                        .primaryGreenActionButton()
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
@@ -610,12 +1068,12 @@ struct StudentDayDetailView: View {
     private var blocksEditorSection: some View {
         VStack(alignment: .leading, spacing: 10) {
 
-            Text("Blocos")
+            Text("workout_day_detail.blocks")
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.white.opacity(0.75))
 
             if editBlocks.isEmpty {
-                Text("Nenhum bloco cadastrado para este dia.")
+                Text("workout_day_detail.no_block_registered_for_this_day")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             } else {
@@ -624,7 +1082,7 @@ struct StudentDayDetailView: View {
                         ForEach(editBlocks.indices, id: \.self) { i in
                             VStack(alignment: .leading, spacing: 8) {
 
-                                Text(editBlocks[i].name)
+                                Text(displayedBlockName(editBlocks[i]))
                                     .font(.system(size: 15, weight: .semibold))
                                     .foregroundColor(.white.opacity(0.92))
 
@@ -656,13 +1114,13 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 
         let t = editTitle.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !t.isEmpty else {
-            errorMessage = "Informe o título do dia."
+            errorMessage = AppLocalization.string("workout_day_detail.title_required", locale: locale)
             return
         }
 
@@ -670,7 +1128,7 @@ struct StudentDayDetailView: View {
         defer { isSaving = false }
 
         do {
-            try await FirestoreRepository.shared.upsertDay(
+            _ = try await FirestoreRepository.shared.upsertDay(
                 weekId: weekId,
                 dayId: dayId,
                 dayIndex: day.dayIndex,
@@ -695,7 +1153,7 @@ struct StudentDayDetailView: View {
         errorMessage = nil
 
         guard let dayId = day.id, !dayId.isEmpty else {
-            errorMessage = "Dia inválido: id não encontrado."
+            errorMessage = AppLocalization.string("workout_day_detail.invalid_day", locale: locale)
             return
         }
 
@@ -715,4 +1173,3 @@ struct StudentDayDetailView: View {
         path.removeLast()
     }
 }
-

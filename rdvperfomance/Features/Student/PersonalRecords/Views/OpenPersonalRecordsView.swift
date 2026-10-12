@@ -1,0 +1,1617 @@
+import SwiftUI
+import Charts
+
+// Tela do Aluno: Recorde Pessoal > Open (lista fixa + PR em texto)
+struct OpenPersonalRecordsView: View {
+    @Environment(\.locale) private var locale
+
+    @Binding var path: [AppRoute]
+
+    /// Presente apenas no contexto de aluno (dentro de `StudentRootView`).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    var navigationContext: PersonalRecordsNavigationContext = .student
+
+    private let contentMaxWidth: CGFloat = 380
+
+    private struct OpenItem: Identifiable, Hashable {
+        let id = UUID()
+        let name: String
+        let storageKey: String
+    }
+
+    private struct OpenWod: Hashable {
+        let titleLine: String
+        let description: String
+    }
+
+
+    private struct CustomOpenItem: Identifiable, Hashable, Codable {
+        let id: String
+        let name: String
+        let storageKey: String
+        let titleLine: String
+        let description: String
+    }
+
+    private struct PRHistoryEntry: Identifiable, Codable, Hashable {
+        let id: String
+        let value: String
+        let createdAt: Date
+    }
+
+    private struct HistoryChartPoint: Identifiable {
+        let id: String
+        let date: Date
+        let value: Double
+    }
+
+    private enum PRMetricComparison: Equatable {
+        case time
+        case higher
+    }
+
+    // ✅ Dados fixos conforme solicitado (ordem exata)
+    private let items: [OpenItem] = [
+        .init(name: "Open 11.1", storageKey: "open_11_1"),
+        .init(name: "Open 11.2", storageKey: "open_11_2"),
+        .init(name: "Open 11.3", storageKey: "open_11_3"),
+        .init(name: "Open 12.1", storageKey: "open_12_1"),
+        .init(name: "Open 12.2", storageKey: "open_12_2"),
+        .init(name: "Open 12.3", storageKey: "open_12_3"),
+        .init(name: "Open 12.4", storageKey: "open_12_4"),
+        .init(name: "Open 12.5", storageKey: "open_12_5"),
+        .init(name: "Open 13.1", storageKey: "open_13_1"),
+        .init(name: "Open 13.2", storageKey: "open_13_2"),
+        .init(name: "Open 13.3", storageKey: "open_13_3"),
+        .init(name: "Open 13.4", storageKey: "open_13_4"),
+        .init(name: "Open 13.5", storageKey: "open_13_5"),
+        .init(name: "Open 14.1", storageKey: "open_14_1"),
+        .init(name: "Open 14.2", storageKey: "open_14_2"),
+        .init(name: "Open 14.3", storageKey: "open_14_3"),
+        .init(name: "Open 14.4", storageKey: "open_14_4"),
+        .init(name: "Open 14.5", storageKey: "open_14_5"),
+        .init(name: "Open 15.1", storageKey: "open_15_1"),
+        .init(name: "Open 15.1a", storageKey: "open_15_1a"),
+        .init(name: "Open 15.2", storageKey: "open_15_2"),
+        .init(name: "Open 15.3", storageKey: "open_15_3"),
+        .init(name: "Open 15.4", storageKey: "open_15_4"),
+        .init(name: "Open 15.5", storageKey: "open_15_5"),
+        .init(name: "Open 16.1", storageKey: "open_16_1"),
+        .init(name: "Open 16.2", storageKey: "open_16_2"),
+        .init(name: "Open 16.3", storageKey: "open_16_3"),
+        .init(name: "Open 16.4", storageKey: "open_16_4"),
+        .init(name: "Open 16.5", storageKey: "open_16_5"),
+
+        .init(name: "Open 17.1 RX", storageKey: "open_17_1_rx"),
+        .init(name: "Open 17.1 SCALE", storageKey: "open_17_1_scale"),
+        .init(name: "Open 17.2 RX", storageKey: "open_17_2_rx"),
+        .init(name: "Open 17.2 SCALE", storageKey: "open_17_2_scale"),
+        .init(name: "Open 17.3 RX", storageKey: "open_17_3_rx"),
+        .init(name: "Open 17.3 SCALE", storageKey: "open_17_3_scale"),
+        .init(name: "Open 17.4 RX", storageKey: "open_17_4_rx"),
+        .init(name: "Open 17.4 SCALE", storageKey: "open_17_4_scale"),
+        .init(name: "Open 17.5 RX", storageKey: "open_17_5_rx"),
+        .init(name: "Open 17.5 SCALE", storageKey: "open_17_5_scale"),
+
+        .init(name: "Open 18.1 RX", storageKey: "open_18_1_rx"),
+        .init(name: "Open 18.1 SCALE", storageKey: "open_18_1_scale"),
+        .init(name: "Open 18.2", storageKey: "open_18_2"),
+        .init(name: "Open 18.2a", storageKey: "open_18_2a"),
+        .init(name: "Open 18.3 RX", storageKey: "open_18_3_rx"),
+        .init(name: "Open 18.3 SCALE", storageKey: "open_18_3_scale"),
+        .init(name: "Open 18.4 RX", storageKey: "open_18_4_rx"),
+        .init(name: "Open 18.4 SCALE", storageKey: "open_18_4_scale"),
+        .init(name: "Open 18.5 RX", storageKey: "open_18_5_rx"),
+        .init(name: "Open 18.5 SCALE", storageKey: "open_18_5_scale"),
+
+        .init(name: "Open 19.1 RX", storageKey: "open_19_1_rx"),
+        .init(name: "Open 19.1 SCALE", storageKey: "open_19_1_scale"),
+        .init(name: "Open 19.2 RX", storageKey: "open_19_2_rx"),
+        .init(name: "Open 19.2 SCALE", storageKey: "open_19_2_scale"),
+        .init(name: "Open 19.3 RX", storageKey: "open_19_3_rx"),
+        .init(name: "Open 19.3 SCALE", storageKey: "open_19_3_scale"),
+        .init(name: "Open 19.4 RX", storageKey: "open_19_4_rx"),
+        .init(name: "Open 19.4 SCALE", storageKey: "open_19_4_scale"),
+        .init(name: "Open 19.5 RX", storageKey: "open_19_5_rx"),
+        .init(name: "Open 19.5 SCALE", storageKey: "open_19_5_scale"),
+
+        .init(name: "Open 20.1 RX", storageKey: "open_20_1_rx"),
+        .init(name: "Open 20.1 SCALE", storageKey: "open_20_1_scale"),
+        .init(name: "Open 20.2 RX", storageKey: "open_20_2_rx"),
+        .init(name: "Open 20.2 SCALE", storageKey: "open_20_2_scale"),
+        .init(name: "Open 20.3 RX", storageKey: "open_20_3_rx"),
+        .init(name: "Open 20.3 SCALE", storageKey: "open_20_3_scale"),
+        .init(name: "Open 20.4 RX", storageKey: "open_20_4_rx"),
+        .init(name: "Open 20.4 SCALE", storageKey: "open_20_4_scale"),
+        .init(name: "Open 20.5 RX", storageKey: "open_20_5_rx"),
+        .init(name: "Open 20.5 SCALE", storageKey: "open_20_5_scale"),
+
+        .init(name: "Open 21.1", storageKey: "open_21_1"),
+        .init(name: "Open 21.2", storageKey: "open_21_2"),
+        .init(name: "Open 21.3", storageKey: "open_21_3"),
+        .init(name: "Open 21.4", storageKey: "open_21_4"),
+
+        .init(name: "Open 22.1 RX", storageKey: "open_22_1_rx"),
+        .init(name: "Open 22.1 SCALE", storageKey: "open_22_1_scale"),
+        .init(name: "Open 22.2 RX", storageKey: "open_22_2_rx"),
+        .init(name: "Open 22.2 SCALE", storageKey: "open_22_2_scale"),
+        .init(name: "Open 22.3 RX", storageKey: "open_22_3_rx"),
+        .init(name: "Open 22.3 SCALE", storageKey: "open_22_3_scale"),
+
+        .init(name: "Open 23.1 RX", storageKey: "open_23_1_rx"),
+        .init(name: "Open 23.1 SCALE", storageKey: "open_23_1_scale"),
+        .init(name: "Open 23.2A RX", storageKey: "open_23_2a_rx"),
+        .init(name: "Open 23.2A SCALE", storageKey: "open_23_2a_scale"),
+        .init(name: "Open 23.2B", storageKey: "open_23_2b"),
+        .init(name: "Open 23.3 RX", storageKey: "open_23_3_rx"),
+        .init(name: "Open 23.3 SCALE", storageKey: "open_23_3_scale"),
+
+        .init(name: "Open 24.1 RX", storageKey: "open_24_1_rx"),
+        .init(name: "Open 24.1 SCALE", storageKey: "open_24_1_scale"),
+        .init(name: "Open 24.2 RX", storageKey: "open_24_2_rx"),
+        .init(name: "Open 24.2 SCALE", storageKey: "open_24_2_scale"),
+        .init(name: "Open 24.3 RX", storageKey: "open_24_3_rx"),
+        .init(name: "Open 24.3 SCALE", storageKey: "open_24_3_scale"),
+
+        .init(name: "Open 25.1 RX", storageKey: "open_25_1_rx"),
+        .init(name: "Open 25.1 SCALE", storageKey: "open_25_1_scale"),
+        .init(name: "Open 25.2 RX", storageKey: "open_25_2_rx"),
+        .init(name: "Open 25.2 SCALE", storageKey: "open_25_2_scale"),
+        .init(name: "Open 25.3 RX", storageKey: "open_25_3_rx"),
+        .init(name: "Open 25.3 SCALE", storageKey: "open_25_3_scale")
+    ]
+
+    // ✅ Descrições exatamente como você enviou
+    private let wodsByKey: [String: OpenWod] = [
+
+        // 2011
+        "open_11_1": .init(
+            titleLine: "Open 11.1 — AMRAP 10 min",
+            description:
+"""
+30 Double-unders
+
+15 Power Snatches (34/25 kg)
+"""
+        ),
+        "open_11_2": .init(
+            titleLine: "Open 11.2 — AMRAP 15 min",
+            description:
+"""
+9 Deadlifts (70/47,5 kg)
+
+12 Push-ups
+
+15 Box Jumps (61/51 cm)
+"""
+        ),
+        "open_11_3": .init(
+            titleLine: "Open 11.3 — AMRAP 5 min",
+            description:
+"""
+Squat Clean (61/43 kg)
+(reps contínuas)
+"""
+        ),
+
+        // 2012
+        "open_12_1": .init(
+            titleLine: "Open 12.1 — AMRAP 7 min",
+            description:
+"""
+Burpees
+"""
+        ),
+        "open_12_2": .init(
+            titleLine: "Open 12.2 — AMRAP 10 min",
+            description:
+"""
+Snatch (34/25 kg)
+(reps contínuas)
+"""
+        ),
+        "open_12_3": .init(
+            titleLine: "Open 12.3 — AMRAP 18 min",
+            description:
+"""
+15 Box Jumps
+
+12 Push Press (52/34 kg)
+
+9 Toes-to-Bar
+"""
+        ),
+        "open_12_4": .init(
+            titleLine: "Open 12.4 — For Time",
+            description:
+"""
+150 Wall Balls (9/6 kg)
+
+90 Double-unders
+
+30 Muscle-ups
+"""
+        ),
+        "open_12_5": .init(
+            titleLine: "Open 12.5 — For Time",
+            description:
+"""
+7 Muscle-ups
+
+50 Wall Balls
+
+100 Double-unders
+
+50 Wall Balls
+
+7 Muscle-ups
+"""
+        ),
+
+        // 2013
+        "open_13_1": .init(
+            titleLine: "Open 13.1 — AMRAP 17 min",
+            description:
+"""
+40 Burpees
+
+30 Snatches (34/25 kg)
+
+30 Burpees
+
+30 Snatches (61/43 kg)
+
+20 Burpees
+
+30 Snatches (75/52 kg)
+
+10 Burpees
+
+Max Snatches (100/70 kg)
+"""
+        ),
+        "open_13_2": .init(
+            titleLine: "Open 13.2 — AMRAP 10 min",
+            description:
+"""
+5 Shoulder-to-Overhead (52/34 kg)
+
+10 Deadlifts (52/34 kg)
+
+15 Box Jumps
+"""
+        ),
+        "open_13_3": .init(
+            titleLine: "Open 13.3 — AMRAP 12 min",
+            description:
+"""
+150 Wall Balls
+
+90 Double-unders
+
+30 Muscle-ups
+"""
+        ),
+        "open_13_4": .init(
+            titleLine: "Open 13.4 — AMRAP 7 min",
+            description:
+"""
+Clean & Jerk (61/43 kg)
+"""
+        ),
+        "open_13_5": .init(
+            titleLine: "Open 13.5 — For Time",
+            description:
+"""
+15 Thrusters (45/30 kg)
+
+15 Chest-to-Bar Pull-ups
+(aumenta 15 reps por movimento até falhar)
+"""
+        ),
+
+        // 2014
+        "open_14_1": .init(
+            titleLine: "Open 14.1 — AMRAP 10 min",
+            description:
+"""
+30 Double-unders
+
+15 Power Snatches (34/25 kg)
+"""
+        ),
+        "open_14_2": .init(
+            titleLine: "Open 14.2 — AMRAP 9 min",
+            description:
+"""
+10 Toes-to-Bar
+
+10 Deadlifts (52/34 kg)
+
+10 Box Jumps
+(aumenta 2 reps por round)
+"""
+        ),
+        "open_14_3": .init(
+            titleLine: "Open 14.3 — AMRAP 8 min",
+            description:
+"""
+10 Deadlifts (61/43 kg)
+
+15 Box Jumps
+
+15 Wall Balls
+"""
+        ),
+        "open_14_4": .init(
+            titleLine: "Open 14.4 — For Time",
+            description:
+"""
+60 Cal Row
+
+50 Toes-to-Bar
+
+40 Wall Balls
+
+30 Cleans (61/43 kg)
+
+20 Muscle-ups
+"""
+        ),
+        "open_14_5": .init(
+            titleLine: "Open 14.5 — For Time",
+            description:
+"""
+21-18-15-12-9-6-3
+
+Thrusters (43/30 kg)
+
+Bar-Facing Burpees
+"""
+        ),
+
+        // 2015
+        "open_15_1": .init(
+            titleLine: "Open 15.1 — AMRAP 9 min",
+            description:
+"""
+15 Toes-to-Bar
+
+10 Deadlifts (52/34 kg)
+
+5 Snatches (52/34 kg)
+"""
+        ),
+        "open_15_1a": .init(
+            titleLine: "Open 15.1a — For Time",
+            description:
+"""
+1RM Clean & Jerk (6 min)
+"""
+        ),
+        "open_15_2": .init(
+            titleLine: "Open 15.2 — AMRAP 8 min",
+            description:
+"""
+10 Power Cleans (52/34 kg)
+
+5 Front Squats
+
+10 Toes-to-Bar
+"""
+        ),
+        "open_15_3": .init(
+            titleLine: "Open 15.3 — For Time",
+            description:
+"""
+14.5 repeat
+"""
+        ),
+        "open_15_4": .init(
+            titleLine: "Open 15.4 — For Time",
+            description:
+"""
+55 Deadlifts (102/70 kg)
+
+55 Wall Balls
+
+55 Row Calories
+
+55 Handstand Push-ups
+"""
+        ),
+        "open_15_5": .init(
+            titleLine: "Open 15.5 — For Time",
+            description:
+"""
+27-21-15-9
+
+Row (cal)
+
+Thrusters (43/30 kg)
+"""
+        ),
+
+        // 2016
+        "open_16_1": .init(
+            titleLine: "Open 16.1 — AMRAP 20 min",
+            description:
+"""
+25-ft Overhead Lunges
+
+8 Bar-Facing Burpees
+
+25-ft Overhead Lunges
+
+8 Chest-to-Bar Pull-ups
+"""
+        ),
+        "open_16_2": .init(
+            titleLine: "Open 16.2 — AMRAP 20 min",
+            description:
+"""
+Toes-to-Bar
+
+Deadlifts
+
+Squat Cleans
+(carga sobe a cada round)
+"""
+        ),
+        "open_16_3": .init(
+            titleLine: "Open 16.3 — For Time",
+            description:
+"""
+10 Power Snatches (34/25 kg)
+
+3 Bar Muscle-ups
+(aumenta reps)
+"""
+        ),
+        "open_16_4": .init(
+            titleLine: "Open 16.4 — For Time",
+            description:
+"""
+55 Deadlifts
+
+55 Wall Balls
+
+55 Cal Row
+
+55 Handstand Push-ups
+"""
+        ),
+        "open_16_5": .init(
+            titleLine: "Open 16.5 — For Time",
+            description:
+"""
+21-18-15-12-9-6-3
+
+Thrusters
+
+Bar-Facing Burpees
+"""
+        ),
+
+        // 2017–2025 (resumo fiel)
+        "open_17_1_rx": .init(titleLine: "17.1 — RX", description: "Dumbbell Snatches + Burpee Box Jump Overs\n(20 min AMRAP)"),
+        "open_17_1_scale": .init(titleLine: "17.1 — SCALE", description: "Dumbbell Snatches + Burpee Box Jump Overs\n(20 min AMRAP)"),
+        "open_17_2_rx": .init(titleLine: "17.2 — RX", description: "Toes-to-Bar / DB Cleans / Bar Muscle-ups"),
+        "open_17_2_scale": .init(titleLine: "17.2 — SCALE", description: "Toes-to-Bar / DB Cleans / Bar Muscle-ups"),
+        "open_17_3_rx": .init(titleLine: "17.3 — RX", description: "Front Squats / Chest-to-Bar / Bar Muscle-ups"),
+        "open_17_3_scale": .init(titleLine: "17.3 — SCALE", description: "Front Squats / Chest-to-Bar / Bar Muscle-ups"),
+        "open_17_4_rx": .init(titleLine: "17.4 — RX", description: "Deadlifts / HSPU / Handstand Walk"),
+        "open_17_4_scale": .init(titleLine: "17.4 — SCALE", description: "Deadlifts / HSPU / Handstand Walk"),
+        "open_17_5_rx": .init(titleLine: "17.5 — RX", description: "Thrusters + Chest-to-Bar Ladder"),
+        "open_17_5_scale": .init(titleLine: "17.5 — SCALE", description: "Thrusters + Chest-to-Bar Ladder"),
+
+        "open_18_1_rx": .init(titleLine: "18.1 — RX", description: "20 min AMRAP\n\nTTB / DB Cleans / Burpees"),
+        "open_18_1_scale": .init(titleLine: "18.1 — SCALE", description: "20 min AMRAP\n\nTTB / DB Cleans / Burpees"),
+        "open_18_2": .init(titleLine: "18.2", description: "Front Squat / Bar-Facing Burpees"),
+        "open_18_2a": .init(titleLine: "18.2a", description: "1RM Clean"),
+        "open_18_3_rx": .init(titleLine: "18.3 — RX", description: "DB Snatch / Box Jumps / HSPU / Ring MU"),
+        "open_18_3_scale": .init(titleLine: "18.3 — SCALE", description: "DB Snatch / Box Jumps / HSPU / Ring MU"),
+        "open_18_4_rx": .init(titleLine: "18.4 — RX", description: "Deadlifts / HSPU / Handstand Walk"),
+        "open_18_4_scale": .init(titleLine: "18.4 — SCALE", description: "Deadlifts / HSPU / Handstand Walk"),
+        "open_18_5_rx": .init(titleLine: "18.5 — RX", description: "Thrusters / Chest-to-Bar Ladder"),
+        "open_18_5_scale": .init(titleLine: "18.5 — SCALE", description: "Thrusters / Chest-to-Bar Ladder"),
+
+        "open_18_4a": .init(titleLine: "18.4a", description: "1RM Clean & Jerk"),
+
+        "open_19_1_rx": .init(titleLine: "19.1 — RX", description: "Clássicos com:\n\nWall Balls + Row"),
+        "open_19_1_scale": .init(titleLine: "19.1 — SCALE", description: "Clássicos com:\n\nWall Balls + Row"),
+        "open_19_2_rx": .init(titleLine: "19.2 — RX", description: "Clássicos com:\n\nTTB + DB Cleans"),
+        "open_19_2_scale": .init(titleLine: "19.2 — SCALE", description: "Clássicos com:\n\nTTB + DB Cleans"),
+        "open_19_3_rx": .init(titleLine: "19.3 — RX", description: "Clássicos com:\n\nSquats + Ring MU"),
+        "open_19_3_scale": .init(titleLine: "19.3 — SCALE", description: "Clássicos com:\n\nSquats + Ring MU"),
+        "open_19_4_rx": .init(titleLine: "19.4 — RX", description: "Clássicos com:\n\nDeadlifts + HSPU"),
+        "open_19_4_scale": .init(titleLine: "19.4 — SCALE", description: "Clássicos com:\n\nDeadlifts + HSPU"),
+        "open_19_5_rx": .init(titleLine: "19.5 — RX", description: "Clássicos com:\n\nThrusters + C2B"),
+        "open_19_5_scale": .init(titleLine: "19.5 — SCALE", description: "Clássicos com:\n\nThrusters + C2B"),
+
+        "open_20_1_rx": .init(titleLine: "20.1 — RX", description: "Incluem:\n\nGround-to-Overhead + Bar-Facing Burpees"),
+        "open_20_1_scale": .init(titleLine: "20.1 — SCALE", description: "Incluem:\n\nGround-to-Overhead + Bar-Facing Burpees"),
+        "open_20_2_rx": .init(titleLine: "20.2 — RX", description: "Incluem:\n\nDB Step Overs"),
+        "open_20_2_scale": .init(titleLine: "20.2 — SCALE", description: "Incluem:\n\nDB Step Overs"),
+        "open_20_3_rx": .init(titleLine: "20.3 — RX", description: "Incluem:\n\nHeavy Deadlift + HSPU"),
+        "open_20_3_scale": .init(titleLine: "20.3 — SCALE", description: "Incluem:\n\nHeavy Deadlift + HSPU"),
+        "open_20_4_rx": .init(titleLine: "20.4 — RX", description: "Incluem:\n\nBox Jumps + Cleans"),
+        "open_20_4_scale": .init(titleLine: "20.4 — SCALE", description: "Incluem:\n\nBox Jumps + Cleans"),
+        "open_20_5_rx": .init(titleLine: "20.5 — RX", description: "Incluem:\n\nThrusters + Pull-ups"),
+        "open_20_5_scale": .init(titleLine: "20.5 — SCALE", description: "Incluem:\n\nThrusters + Pull-ups"),
+
+        "open_21_1": .init(titleLine: "21.1", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
+        "open_21_2": .init(titleLine: "21.2", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
+        "open_21_3": .init(titleLine: "21.3", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
+        "open_21_4": .init(titleLine: "21.4", description: "Formato “quartet”:\n\nWall Walks\n\nDU / TTB\n\nThrusters / Burpees\n\nComplexos com cargas progressivas"),
+
+        "open_22_1_rx": .init(titleLine: "22.1 — RX", description: "Incluem:\n\nDB Snatch + Burpees"),
+        "open_22_1_scale": .init(titleLine: "22.1 — SCALE", description: "Incluem:\n\nDB Snatch + Burpees"),
+        "open_22_2_rx": .init(titleLine: "22.2 — RX", description: "Incluem:\n\nDeadlifts + TTB"),
+        "open_22_2_scale": .init(titleLine: "22.2 — SCALE", description: "Incluem:\n\nDeadlifts + TTB"),
+        "open_22_3_rx": .init(titleLine: "22.3 — RX", description: "Incluem:\n\nPull-ups / Thrusters / Bar MU"),
+        "open_22_3_scale": .init(titleLine: "22.3 — SCALE", description: "Incluem:\n\nPull-ups / Thrusters / Bar MU"),
+
+        "open_23_1_rx": .init(titleLine: "23.1 — RX", description: "Destaques:\n\nTTB + DB Snatch"),
+        "open_23_1_scale": .init(titleLine: "23.1 — SCALE", description: "Destaques:\n\nTTB + DB Snatch"),
+        "open_23_2a_rx": .init(titleLine: "23.2A — RX", description: "Destaques:\n\nShuttle Runs"),
+        "open_23_2a_scale": .init(titleLine: "23.2A — SCALE", description: "Destaques:\n\nShuttle Runs"),
+        "open_23_2b": .init(titleLine: "23.2B", description: "Destaques:\n\nThrusters + Pull-ups"),
+        "open_23_3_rx": .init(titleLine: "23.3 — RX", description: "Destaques:\n\nHeavy Complex"),
+        "open_23_3_scale": .init(titleLine: "23.3 — SCALE", description: "Destaques:\n\nHeavy Complex"),
+
+        "open_24_1_rx": .init(titleLine: "24.1 — RX", description: "Incluem:\n\nDU + Snatch"),
+        "open_24_1_scale": .init(titleLine: "24.1 — SCALE", description: "Incluem:\n\nDU + Snatch"),
+        "open_24_2_rx": .init(titleLine: "24.2 — RX", description: "Incluem:\n\nRow + Deadlift"),
+        "open_24_2_scale": .init(titleLine: "24.2 — SCALE", description: "Incluem:\n\nRow + Deadlift"),
+        "open_24_3_rx": .init(titleLine: "24.3 — RX", description: "Incluem:\n\nThruster / Bar MU Ladder"),
+        "open_24_3_scale": .init(titleLine: "24.3 — SCALE", description: "Incluem:\n\nThruster / Bar MU Ladder"),
+
+        "open_25_1_rx": .init(titleLine: "25.1 — RX", description: "Formato moderno:\n\nGymnastics + Heavy Barbell"),
+        "open_25_1_scale": .init(titleLine: "25.1 — SCALE", description: "Formato moderno:\n\nGymnastics + Heavy Barbell"),
+        "open_25_2_rx": .init(titleLine: "25.2 — RX", description: "Formato moderno:\n\nIntervalos com carga crescente"),
+        "open_25_2_scale": .init(titleLine: "25.2 — SCALE", description: "Formato moderno:\n\nIntervalos com carga crescente"),
+        "open_25_3_rx": .init(titleLine: "25.3 — RX", description: "Formato moderno:\n\nFinal com Lift Máximo"),
+        "open_25_3_scale": .init(titleLine: "25.3 — SCALE", description: "Formato moderno:\n\nFinal com Lift Máximo")
+    ]
+
+    // Persistência simples (UserDefaults via AppStorage)
+    @AppStorage("student_pr_open_values_v1")
+    private var openValuesData: Data = Data()
+
+    @AppStorage("student_pr_open_history_v1")
+    private var openHistoryData: Data = Data()
+
+    @AppStorage("student_pr_open_custom_items_v1")
+    private var customOpenItemsData: Data = Data()
+
+    // ✅ Ajuste do modal: usar o próprio item como gatilho da sheet (igual Heroes)
+    @State private var selectedItem: OpenItem? = nil
+    @State private var inputValue: String = ""
+    @State private var historyItem: OpenItem?
+    @State private var selectedPRDate: Date = Date()
+    @State private var showPRDatePicker: Bool = false
+    @State private var isEditingExistingPR: Bool = false
+    @State private var editingHistoryEntryID: String? = nil
+    @State private var historyEntryPendingDeletion: PRHistoryEntry? = nil
+    @State private var showHistoryEntryDeletionAlert: Bool = false
+
+    @State private var showAddItemSheet: Bool = false
+    @State private var newItemName: String = ""
+    @State private var newItemTitle: String = ""
+    @State private var newItemDescription: String = ""
+    @State private var newItemValue: String = ""
+    @State private var addItemErrorMessage: String? = nil
+    @State private var showDeleteAlert: Bool = false
+
+    private var allItems: [OpenItem] {
+        items + loadCustomItems().map { OpenItem(name: $0.name, storageKey: $0.storageKey) }
+    }
+
+    private var canDeleteSelectedItem: Bool {
+        selectedItem?.storageKey.hasPrefix("custom_open_") == true
+    }
+
+    var body: some View {
+        ZStack {
+
+            Image("rdv_fundo")
+                .resizable()
+                .scaledToFill()
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                Rectangle()
+                    .fill(Theme.Colors.divider)
+                    .frame(height: 1)
+
+                ScrollView(showsIndicators: false) {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        VStack(alignment: .leading, spacing: 14) {
+                            tableContainer()
+
+                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                        }
+                        .frame(maxWidth: contentMaxWidth)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+
+                PersonalRecordsFooter(
+                    path: $path,
+                    navigationContext: navigationContext,
+                    studentFooterKind: .studentHomeTreinosRecordsProfile(
+                        isHomeSelected: false,
+                        isTreinosSelected: false,
+                        isRecordsSelected: true,
+                        isPerfilSelected: false
+                    ),
+                    onSelectStudentSection: onSelectSection
+                )
+                .frame(height: Theme.Layout.footerHeight)
+                .background(Theme.Colors.footerBackground)
+            }
+            .ignoresSafeArea(.container, edges: [.bottom])
+        }
+        .blur(radius: (selectedItem != nil || historyItem != nil || showPRDatePicker || showAddItemSheet) ? 4 : 0)
+        .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+
+            ToolbarItem(placement: .topBarLeading) {
+                Button { pop() } label: {
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            ToolbarItem(placement: .principal) {
+                Text("personal_records_open.open")
+                    .font(Theme.Fonts.headerTitle())
+                    .foregroundColor(.white)
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
+                HStack(spacing: 12) {
+                    Button {
+                        addItemErrorMessage = nil
+                        newItemName = ""
+                        newItemTitle = ""
+                        newItemDescription = ""
+                        newItemValue = ""
+                        showAddItemSheet = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(Color.green.opacity(0.16)))
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
+            }
+        }
+        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        .toolbarBackground(.visible, for: .navigationBar)
+        .sheet(item: $selectedItem, onDismiss: {
+            resetExistingPREditing()
+        }) { item in
+            editSheet(for: item)
+        }
+        .sheet(isPresented: $showAddItemSheet) {
+            addItemSheet()
+        }
+    }
+
+    private func tableContainer() -> some View {
+        VStack(spacing: 0) {
+
+            tableHeader()
+
+            Rectangle()
+                .fill(Color.white.opacity(0.08))
+                .frame(height: 1)
+
+            let list = allItems
+
+            ForEach(Array(list.enumerated()), id: \.element.id) { index, item in
+
+                tableRow(item: item)
+
+                if index != list.count - 1 {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.08))
+                        .frame(height: 1)
+                        .padding(.leading, 14)
+                }
+            }
+        }
+        .background(Color.black.opacity(0.68))
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+    }
+
+    private func tableHeader() -> some View {
+        HStack(spacing: 10) {
+
+            Color.clear
+                .frame(width: 26, height: 1)
+
+            Text("personal_records_open.open")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white.opacity(0.55))
+
+            Spacer()
+
+            Text("personal_records.pr_label")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundColor(.white.opacity(0.55))
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 12)
+    }
+
+    private func tableRow(item: OpenItem) -> some View {
+        let displayValue = bestDisplayValue(for: item.storageKey, metadata: "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")")
+
+        return Button {
+            inputValue = ""
+            selectedPRDate = Date()
+            resetExistingPREditing()
+            selectedItem = item
+        } label: {
+            HStack(spacing: 10) {
+
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color.green.opacity(0.14))
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: "flag.checkered")
+                        .foregroundColor(.green.opacity(0.85))
+                        .font(.system(size: 16, weight: .semibold))
+                }
+
+                Text(item.name)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(2)
+
+                Spacer()
+
+                if let displayValue, !displayValue.isEmpty {
+                    Text(displayValue)
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.88))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                } else {
+                    Text("-")
+                        .font(.system(size: 15, weight: .bold))
+                        .foregroundColor(.white.opacity(0.45))
+                }
+
+                Image(systemName: "chevron.right")
+                    .foregroundColor(.white.opacity(0.25))
+                    .font(.system(size: 13, weight: .semibold))
+                    .padding(.leading, 6)
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 12)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func editSheet(for item: OpenItem) -> some View {
+        let wodDetails: OpenWod? = {
+            return wod(for: item.storageKey)
+        }()
+
+        return ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            VStack(spacing: 0) {
+
+                Capsule()
+                    .fill(Color.white.opacity(0.18))
+                    .frame(width: 44, height: 5)
+                    .padding(.top, 10)
+
+                Text(item.name)
+                    .font(.system(size: 18, weight: .bold))
+                    .foregroundColor(.white)
+                    .padding(.top, 4)
+
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                    Text("personal_records_endurance.enter_your_best_result_leave_it_blank_to_remove_it")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    if let wodDetails {
+                        wodCard(wodDetails)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 2)
+                            .layoutPriority(1)
+                    }
+
+                    VStack(alignment: .leading, spacing: 8) {
+                        HStack {
+                            Text("personal_records.result_field_label")
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.75))
+                        }
+
+                        TextField("personal_records_notables.e_g_7_32_210_reps_or_450_pts", text: $inputValue)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled(true)
+                            .font(.system(size: 16, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.92))
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 14)
+                            .background(Theme.Colors.cardBackground)
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            )
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 4)
+
+                    dateAndHistorySection(key: item.storageKey, metadata: "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")", historyAction: {
+                        historyItem = item
+                    })
+                    .padding(.horizontal, 16)
+                    .padding(.top, 8)
+                    .sheet(item: $historyItem) { selected in
+                        historySheet(title: selected.name, key: selected.storageKey, metadata: metadata(for: selected))
+                    }
+                    .sheet(isPresented: $showPRDatePicker) {
+                        ZStack {
+                            Theme.Colors.headerBackground.ignoresSafeArea()
+                            VStack(spacing: 16) {
+                                DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
+                                    .datePickerStyle(.graphical)
+                                Button { showPRDatePicker = false } label: {
+                                    Text("common.confirm")
+                                        .frame(maxWidth: .infinity)
+                                        .primaryGreenActionButton()
+                                }
+                                .buttonStyle(.plain)
+                            }
+                            .padding(16)
+                        }
+                        .presentationDetents([.medium])
+                    }
+
+                    }
+                }
+
+                HStack(spacing: 12) {
+
+                    Button {
+                        resetExistingPREditing()
+                        selectedItem = nil
+                    } label: {
+                        Text("common.cancel")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundColor(.white.opacity(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        saveCurrentInput(for: item)
+                        resetExistingPREditing()
+                        selectedItem = nil
+                    } label: {
+                        Text("common.save")
+                            .frame(maxWidth: .infinity)
+                            .primaryGreenActionButton()
+                    }
+                    .buttonStyle(.plain)
+
+                    if canDeleteSelectedItem {
+                        Button {
+                            showDeleteAlert = true
+                        } label: {
+                            Image(systemName: "trash.fill")
+                                .foregroundColor(.white.opacity(0.92))
+                                .font(.system(size: 16, weight: .bold))
+                                .frame(width: 50, height: 50)
+                                .background(Color.red.opacity(0.85))
+                                .cornerRadius(14)
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("personal_records_endurance.delete_item")
+                    }
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
+            }
+        }
+        .presentationDetents([.fraction(0.80)])
+        .alert("personal_records_barbell.delete_record", isPresented: $showDeleteAlert) {
+            Button("common.cancel", role: .cancel) { }
+            Button("common.delete", role: .destructive) {
+                deleteSelectedItem()
+            }
+        } message: {
+            let recordName = selectedItem?.name ?? AppLocalization.string("personal_records.item_fallback", locale: locale)
+            let format = AppLocalization.string("personal_records.delete_record_confirmation", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [recordName]))
+        }
+        .onAppear {
+            inputValue = ""
+            selectedPRDate = Date()
+            resetExistingPREditing()
+        }
+    }
+
+    private func wodCard(_ wod: OpenWod) -> some View {
+        VStack(alignment: .leading, spacing: 10) {
+
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Image(systemName: "list.bullet.rectangle")
+                    .foregroundColor(.green.opacity(0.90))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("personal_records_campeonatos.wod")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.60))
+
+                    Text(wod.titleLine)
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer()
+            }
+
+            ScrollView {
+                Text(wod.description)
+                    .font(.system(size: 14, weight: .semibold, design: .monospaced))
+                    .foregroundColor(.white.opacity(0.78))
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.top, 2)
+            }
+            .frame(height: 140)
+        }
+        .padding(14)
+        .background(Theme.Colors.cardBackground)
+        .cornerRadius(14)
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+    }
+
+    private func wod(for key: String) -> OpenWod? {
+        if let wod = wodsByKey[key] { return wod }
+        guard let custom = loadCustomItems().first(where: { $0.storageKey == key }) else { return nil }
+        return OpenWod(titleLine: custom.titleLine, description: custom.description)
+    }
+
+    private func metadata(for item: OpenItem) -> String {
+        let wod = wod(for: item.storageKey)
+        return "\(wod?.titleLine ?? "") \(wod?.description ?? "")"
+    }
+
+    private func beginEditingExistingPR(for item: OpenItem) {
+        let metadata = "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")"
+        guard let value = bestDisplayValue(for: item.storageKey, metadata: metadata) else { return }
+
+        inputValue = value
+        if let entry = currentPRHistoryEntry(for: item.storageKey, metadata: metadata),
+           let entryValue = numericValue(entry.value, metadata: metadata),
+           let bestValue = numericValue(value, metadata: metadata),
+           abs(entryValue - bestValue) < 0.000_001 {
+            editingHistoryEntryID = entry.id
+            selectedPRDate = entry.createdAt
+        } else {
+            editingHistoryEntryID = nil
+        }
+        isEditingExistingPR = true
+    }
+
+    private func saveExistingPREdit() {
+        guard let item = selectedItem else { return }
+
+        let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+
+        let key = item.storageKey
+        let metadata = "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")"
+        var history = loadHistoryMap()
+        var primaryCandidates: [String]
+
+        if let entryID = editingHistoryEntryID {
+            var entries = history[key, default: []]
+            guard let index = entries.firstIndex(where: { $0.id == entryID }) else {
+                primaryCandidates = entries.map(\.value) + [trimmed]
+                saveHistoryValue(trimmed, for: key, date: selectedPRDate)
+                if let primaryValue = bestValue(from: primaryCandidates, metadata: metadata) {
+                    saveValue(primaryValue, for: key)
+                }
+                return
+            }
+
+            let entry = entries[index]
+            entries[index] = PRHistoryEntry(
+                id: entry.id,
+                value: trimmed,
+                createdAt: Calendar.current.startOfDay(for: selectedPRDate)
+            )
+            history[key] = entries
+            saveHistoryMap(history)
+            primaryCandidates = entries.map(\.value)
+        } else {
+            primaryCandidates = history[key, default: []].map(\.value) + [trimmed]
+            saveHistoryValue(trimmed, for: key, date: selectedPRDate)
+        }
+
+        saveValue(bestValue(from: primaryCandidates, metadata: metadata) ?? trimmed, for: key)
+    }
+
+    private func resetExistingPREditing() {
+        isEditingExistingPR = false
+        editingHistoryEntryID = nil
+    }
+
+    private func currentPRHistoryEntry(for key: String, metadata: String) -> PRHistoryEntry? {
+        guard let comparison = metricComparison(for: metadata) else { return nil }
+        let candidates = historyEntries(for: key).compactMap { entry -> (PRHistoryEntry, Double)? in
+            numericValue(entry.value, metadata: metadata).map { (entry, $0) }
+        }
+        return candidates.sorted { lhs, rhs in
+            if lhs.1 == rhs.1 { return lhs.0.createdAt > rhs.0.createdAt }
+            return comparison == .time ? lhs.1 < rhs.1 : lhs.1 > rhs.1
+        }.first?.0
+    }
+
+    private func bestValue(from values: [String], metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else { return values.last }
+        let candidates = values.compactMap { value -> (String, Double)? in
+            numericValue(value, metadata: metadata).map { (value, $0) }
+        }
+        guard var best = candidates.first else { return values.last }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 {
+                best = candidate
+            }
+        }
+        return best.0
+    }
+
+    private func saveCurrentInput(for item: OpenItem) {
+        let trimmed = inputValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty {
+            return
+        }
+        let metadata = "\(wod(for: item.storageKey)?.titleLine ?? "") \(wod(for: item.storageKey)?.description ?? "")"
+        let shouldSave = shouldUpdatePrimary(trimmed, key: item.storageKey, metadata: metadata)
+        saveHistoryValue(trimmed, for: item.storageKey, date: selectedPRDate)
+        if shouldSave {
+            saveValue(trimmed, for: item.storageKey)
+        }
+    }
+
+
+    @ViewBuilder
+    private func dateAndHistorySection(key: String, metadata: String, historyAction: @escaping () -> Void) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Button {
+                showPRDatePicker = true
+            } label: {
+                HStack(spacing: 10) {
+                    Image(systemName: "calendar")
+                        .foregroundColor(.green.opacity(0.85))
+                    Text(formatPRDate(selectedPRDate))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                    Spacer()
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.25))
+                }
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            }
+            .buttonStyle(.plain)
+        }
+
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.75))
+                Spacer()
+                Button(action: historyAction) {
+                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.green.opacity(0.90))
+                }
+                .buttonStyle(.plain)
+            }
+            historyChart(for: key, metadata: metadata)
+        }
+    }
+
+    private func historySheet(title: String, key: String, metadata: String) -> some View {
+        let entries = historyEntries(for: key)
+        let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
+        return ZStack {
+            Theme.Colors.headerBackground.ignoresSafeArea()
+            ScrollView(showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 14) {
+                    Text(title)
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    if entries.isEmpty {
+                        Text("personal_records_barbell.no_progress_history_recorded_yet")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.60))
+                    } else {
+                        VStack(spacing: 0) {
+                            ForEach(entries.reversed()) { entry in
+                                HStack {
+                                    Text(entry.value)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                    if entry.id == recordID {
+                                        Text("personal_records_barbell.record")
+                                            .font(.system(size: 11, weight: .bold))
+                                            .foregroundColor(.green)
+                                    }
+                                    Spacer()
+                                    Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
+                                        .font(.system(size: 14))
+                                        .foregroundColor(.white.opacity(0.45))
+                                    Button {
+                                        historyEntryPendingDeletion = entry
+                                        showHistoryEntryDeletionAlert = true
+                                    } label: {
+                                        Image(systemName: "trash")
+                                            .foregroundColor(.red.opacity(0.85))
+                                    }
+                                    .buttonStyle(.plain)
+                                    .accessibilityLabel("personal_records_barbell.delete_record")
+                                }
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 12)
+                                if entry.id != entries.first?.id {
+                                    Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1).padding(.leading, 14)
+                                }
+                            }
+                        }
+                        .background(Theme.Colors.cardBackground)
+                        .cornerRadius(14)
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                    }
+                }
+                .frame(maxWidth: contentMaxWidth)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 24)
+            }
+        }
+        .presentationDetents([.large])
+        .alert("personal_records_barbell.delete_record", isPresented: $showHistoryEntryDeletionAlert) {
+            Button("common.cancel", role: .cancel) { historyEntryPendingDeletion = nil }
+            Button("common.delete", role: .destructive) {
+                if let entry = historyEntryPendingDeletion {
+                    deleteHistoryEntry(entry, for: key, metadata: metadata)
+                }
+                historyEntryPendingDeletion = nil
+            }
+        } message: {
+            Text("personal_records_barbell.do_you_want_to_delete_this_history_record_this_action_cannot_be_undone")
+        }
+    }
+
+    private func deleteHistoryEntry(_ entry: PRHistoryEntry, for key: String, metadata: String) {
+        var history = loadHistoryMap()
+        var entries = history[key, default: []]
+        entries.removeAll { $0.id == entry.id }
+        if entries.isEmpty {
+            history.removeValue(forKey: key)
+        } else {
+            history[key] = entries
+        }
+
+        var values = loadMap()
+        if let primary = bestValue(from: entries.map(\.value), metadata: metadata) {
+            values[key] = primary
+        } else {
+            values.removeValue(forKey: key)
+        }
+        saveRecords(values: values, history: history, deletedHistoryEntryID: entry.id)
+    }
+
+    @ViewBuilder
+    private func historyChart(for key: String, metadata: String) -> some View {
+        let entries = historyChartPoints(for: key, metadata: metadata)
+        if !entries.isEmpty {
+            Chart(entries) { entry in
+                LineMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
+                    .foregroundStyle(.green)
+                    .interpolationMethod(.linear)
+                PointMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
+                    .foregroundStyle(.green)
+            }
+            .chartXAxis {
+                AxisMarks(values: .automatic(desiredCount: 4)) {
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
+                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Color.white.opacity(0.55))
+                }
+            }
+            .chartYAxis {
+                AxisMarks(position: .leading) {
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
+                    AxisValueLabel().foregroundStyle(Color.white.opacity(0.55))
+                }
+            }
+            .frame(height: 170)
+            .padding(14)
+            .background(Theme.Colors.cardBackground)
+            .cornerRadius(14)
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+    }
+
+    private func formatPRDate(_ date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
+        return formatter.string(from: date)
+    }
+
+    private func metricComparison(for metadata: String) -> PRMetricComparison? {
+        let normalized = metadata.folding(options: [.caseInsensitive, .diacriticInsensitive], locale: .current).lowercased()
+        if normalized.contains("for time") || normalized.contains("para tempo") || normalized.contains("por tempo") || normalized.contains("30 reps for time") {
+            return .time
+        }
+        if normalized.contains("max reps") || normalized.contains("max height") || normalized.contains("max distance") || normalized.contains("1 rep max") || normalized.contains("1rm") || normalized.contains("max hold") || normalized.contains("amrap") || normalized.contains("for load") || normalized.contains("max") || normalized.contains("reps") || normalized.contains("score") || normalized.contains("load") {
+            return .higher
+        }
+        return nil
+    }
+
+    private func numericValue(_ value: String, metadata: String) -> Double? {
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return nil }
+        if metricComparison(for: metadata) == .time {
+            let parts = trimmed.split(separator: ":", omittingEmptySubsequences: false)
+            if parts.count == 1 {
+                return Double(trimmed.replacingOccurrences(of: ",", with: "."))
+            }
+            guard (2...3).contains(parts.count), let last = Int(parts.last ?? ""), last >= 0,
+                  let middle = Int(parts[parts.count - 2]), middle >= 0, middle < 60, last < 60 else { return nil }
+            if parts.count == 2 { return Double(middle * 60 + last) }
+            guard let first = Int(parts[0]), first >= 0 else { return nil }
+            return Double(first * 3600 + middle * 60 + last)
+        }
+        let normalized = trimmed.replacingOccurrences(of: ",", with: ".")
+        let suffixes = ["repeticoes", "reps", "rep", "pontos", "pts", "pt", "cals", "cal", "kgs", "kg", "lbs", "lb", "cm", "m"]
+        let numericText = suffixes.first(where: { normalized.lowercased().hasSuffix($0) }).map {
+            String(normalized.dropLast($0.count)).trimmingCharacters(in: .whitespacesAndNewlines)
+        } ?? normalized
+        guard let parsed = Double(numericText), parsed.isFinite else { return nil }
+        return parsed
+    }
+
+    private func bestDisplayValue(for key: String, metadata: String) -> String? {
+        guard let comparison = metricComparison(for: metadata) else { return loadValue(for: key) }
+        var candidates: [(String, Double)] = historyEntries(for: key).compactMap { entry in
+            numericValue(entry.value, metadata: metadata).map { (entry.value, $0) }
+        }
+        if let legacy = loadValue(for: key), let value = numericValue(legacy, metadata: metadata) {
+            candidates.append((legacy, value))
+        }
+        guard var best = candidates.first else { return loadValue(for: key) }
+        for candidate in candidates.dropFirst() {
+            if comparison == .time ? candidate.1 < best.1 : candidate.1 > best.1 { best = candidate }
+        }
+        return best.0
+    }
+
+    private func shouldUpdatePrimary(_ value: String, key: String, metadata: String) -> Bool {
+        guard let comparison = metricComparison(for: metadata), let incoming = numericValue(value, metadata: metadata) else {
+            return loadValue(for: key) == nil
+        }
+        var values = historyEntries(for: key).compactMap { numericValue($0.value, metadata: metadata) }
+        if let legacy = loadValue(for: key), let legacyValue = numericValue(legacy, metadata: metadata) { values.append(legacyValue) }
+        guard let best = comparison == .time ? values.min() : values.max() else { return true }
+        return comparison == .time ? incoming < best : incoming > best
+    }
+
+    private func pop() {
+        guard !path.isEmpty else { return }
+        path.removeLast()
+    }
+    private func addItemSheet() -> some View {
+        ZStack {
+            Theme.Colors.headerBackground
+                .ignoresSafeArea()
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    Capsule()
+                        .fill(Color.white.opacity(0.18))
+                        .frame(width: 44, height: 5)
+                        .padding(.top, 10)
+
+                    Text("personal_records_open.new_open_item")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundColor(.white)
+                        .padding(.top, 4)
+
+                    Text("personal_records_endurance.create_an_item_and_if_you_want_enter_your_initial_result_now")
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.60))
+                        .multilineTextAlignment(.center)
+                        .padding(.horizontal, 16)
+
+                    VStack(alignment: .leading, spacing: 10) {
+                    addItemField("personal_records.open.item_name_field", placeholder: "personal_records.placeholder.open_item", text: $newItemName)
+
+                    addItemField("personal_records.open.wod_title_optional", placeholder: "personal_records.placeholder.amrap", text: $newItemTitle)
+
+                    addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.burpees", text: $newItemDescription)
+
+                    addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time_or_reps", text: $newItemValue)
+
+                        if let message = addItemErrorMessage {
+                            Text(message)
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.yellow.opacity(0.85))
+                        }
+                    }
+                    .padding(.horizontal, 16)
+
+                    HStack(spacing: 12) {
+                        Button {
+                            showAddItemSheet = false
+                        } label: {
+                            Text("common.cancel")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(.white.opacity(0.85))
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 14)
+                                .background(Color.white.opacity(0.10))
+                                .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+
+                        Button {
+                            addNewItem()
+                        } label: {
+                            Text("common.add")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.top, 6)
+                    .padding(.bottom, 24)
+                }
+            }
+        }
+        .presentationDetents([.medium])
+    }
+
+    private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(label)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.75))
+
+            TextField(placeholder, text: text)
+                .textInputAutocapitalization(.sentences)
+                .autocorrectionDisabled(true)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Theme.Colors.cardBackground)
+                .cornerRadius(14)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+        }
+    }
+
+    private func addNewItem() {
+        addItemErrorMessage = nil
+        let cleanName = newItemName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanName.isEmpty else {
+            addItemErrorMessage = AppLocalization.string("personal_records.open.item_name_required", locale: locale)
+            return
+        }
+
+        let existingNames = allItems.map { $0.name.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() }
+        guard !existingNames.contains(cleanName.lowercased()) else {
+            addItemErrorMessage = AppLocalization.string("personal_records.open.duplicate_item", locale: locale)
+            return
+        }
+
+        let id = UUID().uuidString
+        let key = "custom_open_\(id)"
+        let customItem = CustomOpenItem(id: id, name: cleanName, storageKey: key, titleLine: newItemTitle.trimmingCharacters(in: .whitespacesAndNewlines), description: newItemDescription.trimmingCharacters(in: .whitespacesAndNewlines))
+        var list = loadCustomItems()
+        list.append(customItem)
+        saveCustomItems(list)
+
+        let item = OpenItem(name: customItem.name, storageKey: customItem.storageKey)
+        let trimmedValue = newItemValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !trimmedValue.isEmpty {
+            inputValue = trimmedValue
+            saveCurrentInput(for: item)
+        }
+        showAddItemSheet = false
+    }
+
+    private func deleteSelectedItem() {
+        guard let item = selectedItem, item.storageKey.hasPrefix("custom_open_") else { return }
+        removeValue(for: item.storageKey)
+        removeHistory(for: item.storageKey)
+        var list = loadCustomItems()
+        list.removeAll { $0.storageKey == item.storageKey }
+        saveCustomItems(list)
+        selectedItem = nil
+    }
+
+    private func loadCustomItems() -> [CustomOpenItem] {
+        guard !customOpenItemsData.isEmpty else { return [] }
+        return (try? JSONDecoder().decode([CustomOpenItem].self, from: customOpenItemsData)) ?? []
+    }
+
+    private func saveCustomItems(_ list: [CustomOpenItem]) {
+        customOpenItemsData = (try? JSONEncoder().encode(list)) ?? Data()
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+}
+
+// MARK: - Persistência (JSON em Data)
+private extension OpenPersonalRecordsView {
+
+    func loadMap() -> [String: String] {
+        guard !openValuesData.isEmpty else { return [:] }
+        do {
+            return try JSONDecoder().decode([String: String].self, from: openValuesData)
+        } catch {
+            return [:]
+        }
+    }
+
+    func saveMap(_ map: [String: String]) {
+        do {
+            openValuesData = try JSONEncoder().encode(map)
+        } catch {
+            openValuesData = Data()
+        }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+
+
+    private func loadHistoryMap() -> [String: [PRHistoryEntry]] {
+        guard !openHistoryData.isEmpty else { return [:] }
+        do { return try JSONDecoder().decode([String: [PRHistoryEntry]].self, from: openHistoryData) } catch { return [:] }
+    }
+
+    private func saveHistoryMap(_ map: [String: [PRHistoryEntry]]) {
+        do { openHistoryData = try JSONEncoder().encode(map) } catch { openHistoryData = Data() }
+        PersonalRecordsSyncService.shared.didMutateLocalRecords()
+    }
+
+    private func saveRecords(
+        values: [String: String],
+        history: [String: [PRHistoryEntry]],
+        deletedHistoryEntryID: String? = nil
+    ) {
+        do {
+            openValuesData = try JSONEncoder().encode(values)
+            openHistoryData = try JSONEncoder().encode(history)
+        } catch {
+            openValuesData = Data()
+            openHistoryData = Data()
+        }
+        if let deletedHistoryEntryID {
+            PersonalRecordsSyncService.shared.didDeleteHistoryEntry(
+                id: deletedHistoryEntryID,
+                historyKey: "student_pr_open_history_v1"
+            )
+        } else {
+            PersonalRecordsSyncService.shared.didMutateLocalRecords()
+        }
+    }
+
+    private func historyEntries(for key: String) -> [PRHistoryEntry] {
+        loadHistoryMap()[key, default: []].sorted { $0.createdAt < $1.createdAt }
+    }
+
+    private func historyChartPoints(for key: String, metadata: String) -> [HistoryChartPoint] {
+        historyEntries(for: key).compactMap { entry in
+            numericValue(entry.value, metadata: metadata).map { HistoryChartPoint(id: entry.id, date: entry.createdAt, value: $0) }
+        }
+    }
+
+    private func saveHistoryValue(_ value: String, for key: String, date: Date) {
+        var map = loadHistoryMap()
+        var entries = map[key, default: []]
+        let normalizedDate = Calendar.current.startOfDay(for: date)
+        guard !entries.contains(where: { $0.value == value && Calendar.current.isDate($0.createdAt, inSameDayAs: normalizedDate) }) else { return }
+        entries.append(PRHistoryEntry(id: UUID().uuidString, value: value, createdAt: normalizedDate))
+        map[key] = entries
+        saveHistoryMap(map)
+    }
+
+    private func removeHistory(for key: String) {
+        var map = loadHistoryMap()
+        map.removeValue(forKey: key)
+        saveHistoryMap(map)
+    }
+
+    func loadValue(for key: String) -> String? {
+        let map = loadMap()
+        return map[key]
+    }
+
+    func saveValue(_ value: String, for key: String) {
+        var map = loadMap()
+        map[key] = value
+        saveMap(map)
+    }
+
+    func removeValue(for key: String) {
+        var map = loadMap()
+        map.removeValue(forKey: key)
+        saveMap(map)
+    }
+}

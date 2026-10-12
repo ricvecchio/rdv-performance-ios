@@ -3,6 +3,7 @@ import FirebaseAuth
 
 /// Tela para criar ou editar um dia de treino dentro de uma semana
 struct CreateTrainingDayView: View {
+    @Environment(\.locale) private var locale
 
     @Binding var path: [AppRoute]
     let weekId: String
@@ -12,7 +13,7 @@ struct CreateTrainingDayView: View {
 
     // Form
     @State private var dayIndex: Int = 0
-    @State private var dayName: String = "Dia 1"
+    @State private var dayName: String = ""
     @State private var date: Date = Date()
 
     @State private var title: String = ""
@@ -20,10 +21,10 @@ struct CreateTrainingDayView: View {
 
     // ✅ ALTERADO: adiciona "Cargas / Movimentos" abaixo do WOD
     @State private var blocks: [BlockDraft] = [
-        BlockDraft(name: "Aquecimento", details: ""),
-        BlockDraft(name: "Técnica", details: ""),
-        BlockDraft(name: "WOD", details: ""),
-        BlockDraft(name: "Cargas / Movimentos", details: "")
+        BlockDraft(defaultBlock: .warmup),
+        BlockDraft(defaultBlock: .technique),
+        BlockDraft(defaultBlock: .wod),
+        BlockDraft(defaultBlock: .loadsAndMovements)
     ]
 
     @State private var showPasswordDummy: Bool = false
@@ -113,22 +114,29 @@ struct CreateTrainingDayView: View {
             .ignoresSafeArea(.container, edges: [.bottom])
         }
         .navigationBarBackButtonHidden(true)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
-            ToolbarItem(placement: .navigationBarLeading) {
+            ToolbarItem(placement: .topBarLeading) {
                 Button { pop() } label: {
-                    Image(systemName: "chevron.left")
-                        .foregroundColor(.green)
+                    ZStack {
+                        Color.clear
+                            .frame(width: 44, height: 44)
+
+                        Image(systemName: "chevron.left")
+                            .foregroundColor(.green)
+                    }
+                    .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
             ToolbarItem(placement: .principal) {
-                Text("Criar dia")
+                Text("ui.create_day")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundColor(.white)
             }
 
-            ToolbarItem(placement: .navigationBarTrailing) {
+            ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
             }
         }
@@ -147,16 +155,17 @@ struct CreateTrainingDayView: View {
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 8) {
-            Text("Categoria: \(category.displayName)")
+            let format = AppLocalization.string("ui.category_value", locale: locale)
+            Text(String(format: format, locale: locale, arguments: [category.localizedDisplayName(locale: locale)]))
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundColor(.green.opacity(0.85))
 
             if isLoadingDays {
-                Text("Carregando dias cadastrados...")
+                Text("ui.loading_scheduled_days")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             } else {
-                Text("Adicione ou edite um dia de treino desta semana.")
+                Text("ui.add_or_edit_a_training_day_this_week")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
             }
@@ -168,7 +177,7 @@ struct CreateTrainingDayView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Data")
+                Text("common.date")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
@@ -185,14 +194,34 @@ struct CreateTrainingDayView: View {
             Divider().background(Theme.Colors.divider)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Ordem do dia")
+                Text("ui.day_order")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
-                Picker("Ordem do dia", selection: $dayIndex) {
+                Picker(LocalizedStringKey("ui.day_order"), selection: $dayIndex) {
                     ForEach(0..<7, id: \.self) { i in
                         let exists = existingDaysByIndex[i] != nil
-                        Text(exists ? "Dia \(i + 1) ✓" : "Dia \(i + 1)").tag(i)
+                        if exists {
+                            let format = AppLocalization.string("ui.day_value_ld_2", locale: locale)
+                            Text(
+                                String(
+                                    format: format,
+                                    locale: locale,
+                                    arguments: [Int64(i + 1)]
+                                )
+                            )
+                            .tag(i)
+                        } else {
+                            let format = AppLocalization.string("ui.day_value_ld", locale: locale)
+                            Text(
+                                String(
+                                    format: format,
+                                    locale: locale,
+                                    arguments: [Int64(i + 1)]
+                                )
+                            )
+                            .tag(i)
+                        }
                     }
                 }
                 .pickerStyle(.segmented)
@@ -201,7 +230,7 @@ struct CreateTrainingDayView: View {
             Divider().background(Theme.Colors.divider)
 
             UnderlineTextField(
-                title: "Nome do dia (ex: Segunda-feira)",
+                title: "ui.day_name_e_g_monday",
                 text: $dayName,
                 isSecure: false,
                 showPassword: $showPasswordDummy,
@@ -226,29 +255,26 @@ struct CreateTrainingDayView: View {
 
             // ✅ NOVO: anexar do “Meus Treinos”
             HStack {
-                Text("Treino")
+                Text("ui.workout")
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundColor(.white.opacity(0.75))
                 Spacer()
                 Button {
                     Task { await openTemplates() }
                 } label: {
-                    HStack(spacing: 6) {
+                    HStack(spacing: 10) {
                         Image(systemName: "paperclip")
-                        Text("Anexar de Meus Treinos")
+                        Text("ui.attach_from_my_workouts")
                     }
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
                     .padding(.horizontal, 12)
-                    .padding(.vertical, 8)
-                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                    .primaryGreenActionButton()
                 }
                 .buttonStyle(.plain)
                 .disabled(isLoadingTemplates)
             }
 
             UnderlineTextField(
-                title: "Título do treino",
+                title: "ui.workout_title",
                 text: $title,
                 isSecure: false,
                 showPassword: $showPasswordDummy,
@@ -260,7 +286,7 @@ struct CreateTrainingDayView: View {
             Divider().background(Theme.Colors.divider)
 
             VStack(alignment: .leading, spacing: 6) {
-                Text("Descrição")
+                Text("ui.description")
                     .font(.system(size: 14))
                     .foregroundColor(.white.opacity(0.55))
 
@@ -294,7 +320,7 @@ struct CreateTrainingDayView: View {
             HStack {
                 Spacer()
                 Button {
-                    blocks.append(BlockDraft(name: "Novo bloco", details: ""))
+                    blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
                         .foregroundColor(.green.opacity(0.85))
@@ -307,7 +333,11 @@ struct CreateTrainingDayView: View {
                 VStack(alignment: .leading, spacing: 10) {
 
                     HStack {
-                        Text(b.name.isEmpty ? "Sem nome" : b.name)
+                        Text(
+                            b.name.isEmpty
+                                ? AppLocalization.string("ui.unnamed", locale: locale)
+                                : b.displayedName(locale: locale)
+                        )
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.70))
 
@@ -326,7 +356,10 @@ struct CreateTrainingDayView: View {
 
                     UnderlineTextField(
                         title: "",
-                        text: $b.name,
+                        text: Binding(
+                            get: { b.displayedName(locale: locale) },
+                            set: { b.setDisplayedName($0) }
+                        ),
                         isSecure: false,
                         showPassword: $showPasswordDummy,
                         lineColor: Theme.Colors.divider,
@@ -335,7 +368,7 @@ struct CreateTrainingDayView: View {
                     )
 
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Detalhes")
+                        Text("ui.details")
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.55))
 
@@ -358,7 +391,7 @@ struct CreateTrainingDayView: View {
             }
 
             if blocks.isEmpty {
-                Text("Nenhum bloco adicionado.")
+                Text("ui.no_block_added")
                     .font(.system(size: 13))
                     .foregroundColor(.white.opacity(0.55))
             }
@@ -382,20 +415,14 @@ struct CreateTrainingDayView: View {
                 Spacer()
                 if isSaving {
                     ProgressView().tint(.white)
+                } else if currentEditingDayId == nil {
+                    Text("ui.save_day")
                 } else {
-                    Text(currentEditingDayId == nil ? "Salvar Dia" : "Salvar Alterações")
-                        .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                    Text("ui.save_changes")
                 }
                 Spacer()
             }
-            .padding(.vertical, 14)
-            .background(Color.green.opacity(0.16))
-            .cornerRadius(12)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.green.opacity(0.35), lineWidth: 1)
-            )
+            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isSaving)
@@ -433,17 +460,17 @@ struct CreateTrainingDayView: View {
                     if isLoadingTemplates {
                         VStack(spacing: 10) {
                             ProgressView()
-                            Text("Carregando Meus Treinos...")
+                            Text("ui.loading_my_workouts")
                                 .foregroundColor(.white.opacity(0.7))
                         }
                         .padding(.top, 40)
                     } else if templates.isEmpty {
                         VStack(spacing: 10) {
-                            Text("Nenhum treino encontrado")
+                            Text("ui.no_workout_found")
                                 .font(.system(size: 16, weight: .semibold))
                                 .foregroundColor(.white.opacity(0.92))
 
-                            Text("Crie treinos em “Meus Treinos” do professor.")
+                            Text("ui.create_workouts_in_the_coach_s_my_workouts")
                                 .font(.system(size: 13))
                                 .foregroundColor(.white.opacity(0.55))
                                 .multilineTextAlignment(.center)
@@ -474,10 +501,10 @@ struct CreateTrainingDayView: View {
                     }
                 }
             }
-            .navigationTitle("Meus Treinos")
+            .navigationTitle("ui.my_workouts")
             .toolbar {
                 ToolbarItem(placement: .topBarLeading) {
-                    Button("Fechar") { showTemplatesSheet = false }
+                    Button("common.close") { showTemplatesSheet = false }
                 }
             }
         }
@@ -487,7 +514,7 @@ struct CreateTrainingDayView: View {
         errorMessage = nil
         let teacherId = (Auth.auth().currentUser?.uid ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !teacherId.isEmpty else {
-            errorMessage = "Não foi possível identificar o professor logado."
+            errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
             return
         }
 
@@ -566,10 +593,10 @@ struct CreateTrainingDayView: View {
 
         // ✅ ALTERADO: adiciona "Cargas / Movimentos" abaixo do WOD no reset
         blocks = [
-            BlockDraft(name: "Aquecimento", details: ""),
-            BlockDraft(name: "Técnica", details: ""),
-            BlockDraft(name: "WOD", details: ""),
-            BlockDraft(name: "Cargas / Movimentos", details: "")
+            BlockDraft(defaultBlock: .warmup),
+            BlockDraft(defaultBlock: .technique),
+            BlockDraft(defaultBlock: .wod),
+            BlockDraft(defaultBlock: .loadsAndMovements)
         ]
 
         dayName = ""
@@ -587,26 +614,26 @@ struct CreateTrainingDayView: View {
         errorMessage = nil
         successMessage = nil
 
-        guard session.userType == .TRAINER else {
-            errorMessage = "Apenas professor pode adicionar dias."
+        guard session.isTrainer else {
+            errorMessage = AppLocalization.string("ui.only_coaches_can_add_days", locale: locale)
             return
         }
 
         let cleanWeekId = weekId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanWeekId.isEmpty else {
-            errorMessage = "weekId inválido."
+            errorMessage = AppLocalization.string("ui.invalid_weekid", locale: locale)
             return
         }
 
         let cleanDayName = dayName.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanDayName.isEmpty else {
-            errorMessage = "Informe o nome do dia."
+            errorMessage = AppLocalization.string("ui.enter_the_day_name", locale: locale)
             return
         }
 
         let cleanTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanTitle.isEmpty else {
-            errorMessage = "Informe o título do treino."
+            errorMessage = AppLocalization.string("ui.enter_the_workout_title", locale: locale)
             return
         }
 
@@ -626,10 +653,15 @@ struct CreateTrainingDayView: View {
                 date: date,
                 title: cleanTitle,
                 description: description,
-                blocks: payloadBlocks
+                blocks: payloadBlocks,
+                categoryRaw: category.rawValue
             )
 
-            successMessage = currentEditingDayId == nil ? "Dia salvo com sucesso!" : "Alterações salvas com sucesso!"
+            successMessage = AppLocalization.string(currentEditingDayId == nil
+                    ? "ui.day_saved_successfully"
+                    : "ui.changes_saved_successfully",
+                locale: locale
+            )
 
             didUserManuallyPickDate = false
             await bootstrapDays()
@@ -639,9 +671,33 @@ struct CreateTrainingDayView: View {
         }
     }
 
+    private func weekdayName(for index: Int) -> String {
+        guard (0...6).contains(index) else {
+            let format = AppLocalization.string("ui.day_value_ld", locale: locale)
+            return String(format: format, locale: locale, arguments: [Int64(index + 1)])
+        }
+
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.locale = locale
+        guard
+            let monday = calendar.date(from: DateComponents(year: 2024, month: 1, day: 1)),
+            let date = calendar.date(byAdding: .day, value: index, to: monday)
+        else {
+            let format = AppLocalization.string("ui.day_value_ld", locale: locale)
+            return String(format: format, locale: locale, arguments: [Int64(index + 1)])
+        }
+
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.calendar = calendar
+        formatter.setLocalizedDateFormatFromTemplate("EEEE")
+        return formatter.string(from: date).capitalized(with: locale)
+    }
+
     private func syncDayName() {
-        if dayName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || dayName.hasPrefix("Dia ") {
-            dayName = "Dia \(dayIndex + 1)"
+        let trimmed = dayName.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty || trimmed.hasPrefix("Dia ") {
+            dayName = weekdayName(for: dayIndex)
         }
     }
 
@@ -650,4 +706,3 @@ struct CreateTrainingDayView: View {
         path.removeLast()
     }
 }
-

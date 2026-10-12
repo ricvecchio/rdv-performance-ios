@@ -1,9 +1,14 @@
-// ViewModel para gerenciar estado e validação da tela de login
 import Foundation
 import Combine
 
 @MainActor
 final class LoginViewModel: ObservableObject {
+    private static var localizationLocale: Locale {
+        Locale(
+            identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
+                ?? AppLanguage.portugueseBrazil.rawValue
+        )
+    }
 
     @Published var email: String = ""
     @Published var password: String = ""
@@ -22,12 +27,12 @@ final class LoginViewModel: ObservableObject {
         let passTrim = password.trimmingCharacters(in: .whitespacesAndNewlines)
 
         guard !emailTrim.isEmpty else {
-            errorMessage = "Informe seu e-mail."
+            errorMessage = AppLocalization.string("auth.validation.email_required", locale: Self.localizationLocale)
             return false
         }
 
         guard !passTrim.isEmpty else {
-            errorMessage = "Informe sua senha."
+            errorMessage = AppLocalization.string("auth.validation.password_required", locale: Self.localizationLocale)
             return false
         }
 
@@ -38,7 +43,7 @@ final class LoginViewModel: ObservableObject {
             _ = try await service.login(email: emailTrim, password: passTrim)
             return true
         } catch {
-            errorMessage = "E-mail ou senha inválidos."
+            errorMessage = AppLocalization.string("auth.login.invalid_credentials", locale: Self.localizationLocale)
             return false
         }
     }
