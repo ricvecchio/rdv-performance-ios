@@ -1,9 +1,9 @@
-// StudentDayDetailView.swift — Detalhe de um dia de treino com edição (professor) e visualização (aluno)
+// TrainingDayDetailView.swift — Detalhe de um dia de treino com edição (professor) e visualização (aluno)
 import SwiftUI
 import UIKit
 import Foundation
 
-struct StudentDayDetailView: View {
+struct TrainingDayDetailView: View {
 
     // Bindings e parâmetros necessários (weekId para operações Firestore)
     @Binding var path: [AppRoute]
@@ -38,7 +38,7 @@ struct StudentDayDetailView: View {
         DefaultWorkoutLocalization.presentation(for: day, locale: locale)
     }
 
-    // ✅ Player de vídeo (mesmo comportamento da TeacherImportVideosView)
+    // ✅ Player de vídeo (mesmo comportamento da YoutubeVideosView)
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
 
     // ✅ Remoção do vídeo do dia
@@ -308,7 +308,7 @@ struct StudentDayDetailView: View {
             movementPickerSheet
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
-            TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
+            YoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
         .onAppear {
             // garante que, se o Settings usar UserDefaults direto, ainda assim sincroniza aqui.
@@ -708,7 +708,7 @@ struct StudentDayDetailView: View {
         saveCalcMap(map)
     }
 
-    // MARK: - ✅ Vídeos (mesma UI da TeacherImportVideosView, só com Remover)
+    // MARK: - ✅ Vídeos (mesma UI da YoutubeVideosView, só com Remover)
 
     private var videosCard: some View {
         VStack(alignment: .leading, spacing: 10) {

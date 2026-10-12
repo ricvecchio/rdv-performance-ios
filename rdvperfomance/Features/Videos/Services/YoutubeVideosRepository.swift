@@ -2,25 +2,25 @@ import Foundation
 import FirebaseAuth
 import FirebaseFirestore
 
-struct TeacherYoutubeVideosRepository {
+struct YoutubeVideosRepository {
     
     static func getTeacherId() -> String? {
         guard let uid = Auth.auth().currentUser?.uid else { return nil }
         return uid.trimmingCharacters(in: .whitespacesAndNewlines)
     }
     
-    static func loadVideos(teacherId: String) async throws -> [TeacherYoutubeVideo] {
+    static func loadVideos(teacherId: String) async throws -> [YoutubeVideo] {
         try await loadVideos(ownerCollection: "teachers", ownerId: teacherId)
     }
 
-    static func loadStudentVideos(studentId: String) async throws -> [TeacherYoutubeVideo] {
+    static func loadStudentVideos(studentId: String) async throws -> [YoutubeVideo] {
         try await loadVideos(ownerCollection: "users", ownerId: studentId)
     }
 
     private static func loadVideos(
         ownerCollection: String,
         ownerId: String
-    ) async throws -> [TeacherYoutubeVideo] {
+    ) async throws -> [YoutubeVideo] {
         let snap = try await Firestore.firestore()
             .collection(ownerCollection)
             .document(ownerId)
@@ -28,7 +28,7 @@ struct TeacherYoutubeVideosRepository {
             .order(by: "createdAt", descending: true)
             .getDocuments()
         
-        let parsed: [TeacherYoutubeVideo] = snap.documents.compactMap { doc in
+        let parsed: [YoutubeVideo] = snap.documents.compactMap { doc in
             let data = doc.data()
             
             let title = (data["title"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
@@ -36,11 +36,11 @@ struct TeacherYoutubeVideosRepository {
             let videoId = (data["videoId"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             
             let categoryRaw = (data["category"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-            let videoCategory = TeacherYoutubeVideoCategory(rawValue: categoryRaw) ?? .crossfit
+            let videoCategory = YoutubeVideoCategory(rawValue: categoryRaw) ?? .crossfit
             
             guard !url.isEmpty, !videoId.isEmpty else { return nil }
             
-            return TeacherYoutubeVideo(
+            return YoutubeVideo(
                 id: doc.documentID,
                 title: title,
                 url: url,
@@ -56,7 +56,7 @@ struct TeacherYoutubeVideosRepository {
         teacherId: String,
         title: String,
         url: String,
-        videoCategory: TeacherYoutubeVideoCategory,
+        videoCategory: YoutubeVideoCategory,
         locale: Locale
     ) async throws {
         try await addVideo(
@@ -73,7 +73,7 @@ struct TeacherYoutubeVideosRepository {
         studentId: String,
         title: String,
         url: String,
-        videoCategory: TeacherYoutubeVideoCategory,
+        videoCategory: YoutubeVideoCategory,
         locale: Locale
     ) async throws {
         try await addVideo(
@@ -133,7 +133,7 @@ struct TeacherYoutubeVideosRepository {
         ownerId: String,
         title: String,
         url: String,
-        videoCategory: TeacherYoutubeVideoCategory,
+        videoCategory: YoutubeVideoCategory,
         locale: Locale
     ) async throws {
         let cleanedUrl = url.trimmingCharacters(in: .whitespacesAndNewlines)

@@ -1,7 +1,7 @@
 import SwiftUI
 import AVKit
 
-struct TeacherYoutubeLockedPlayerSheet: View {
+struct YoutubeLockedPlayerSheet: View {
     
     let title: String
     let videoId: String

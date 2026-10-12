@@ -1,7 +1,7 @@
 import Foundation
 import SwiftUI
 
-enum TeacherYoutubeVideoCategory: String, CaseIterable, Identifiable {
+enum YoutubeVideoCategory: String, CaseIterable, Identifiable {
     case crossfit = "Crossfit"
     case academia = "Academia"
     case treinosEmCasa = "Treinos em Casa"
@@ -20,12 +20,12 @@ enum TeacherYoutubeVideoCategory: String, CaseIterable, Identifiable {
     }
 }
 
-struct TeacherYoutubeVideo: Identifiable, Equatable {
+struct YoutubeVideo: Identifiable, Equatable {
     let id: String
     let title: String
     let url: String
     let videoId: String
-    let category: TeacherYoutubeVideoCategory
+    let category: YoutubeVideoCategory
 }
 
 struct LockedPlayerItem: Identifiable {

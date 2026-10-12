@@ -154,7 +154,7 @@ struct TeacherRootView: View {
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)
         case .teacherImportVideos(let category):
-            TeacherImportVideosView(
+            YoutubeVideosView(
                 path: destinationPath,
                 context: .teacher(category: category)
             )
@@ -170,7 +170,7 @@ struct TeacherRootView: View {
             let initialExpandedWeekId,
             let initialExpandedDayId
         ):
-            StudentWorkoutsView(
+            TrainingWeeksView(
                 path: destinationPath,
                 studentId: studentId,
                 studentName: studentName,
@@ -178,7 +178,7 @@ struct TeacherRootView: View {
                 initialExpandedDayId: initialExpandedDayId
             )
         case .studentDayDetail(let weekId, let day, let weekTitle):
-            StudentDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
+            TrainingDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
         case .configuracoes:
             SettingsView(path: destinationPath)
         case .idioma:

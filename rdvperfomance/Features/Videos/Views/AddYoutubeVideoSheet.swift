@@ -1,16 +1,16 @@
 import SwiftUI
 
-struct TeacherAddYoutubeVideoSheet: View {
+struct AddYoutubeVideoSheet: View {
 
     @Environment(\.dismiss) private var dismiss
 
     @State private var title: String = ""
     @State private var url: String = ""
-    @State private var selectedCategory: TeacherYoutubeVideoCategory = .crossfit
+    @State private var selectedCategory: YoutubeVideoCategory = .crossfit
     @State private var sheetMessage: LocalizedStringKey? = nil
     @State private var sheetMessageIsError: Bool = false
 
-    let onSave: (_ title: String, _ url: String, _ category: TeacherYoutubeVideoCategory) -> Void
+    let onSave: (_ title: String, _ url: String, _ category: YoutubeVideoCategory) -> Void
 
     var body: some View {
         ZStack {
@@ -152,7 +152,7 @@ struct TeacherAddYoutubeVideoSheet: View {
                     .foregroundColor(.white.opacity(0.75))
                 
                 Picker("", selection: $selectedCategory) {
-                    ForEach(TeacherYoutubeVideoCategory.allCases) { c in
+                    ForEach(YoutubeVideoCategory.allCases) { c in
                         Text(c.localizedTitle).tag(c)
                     }
                 }

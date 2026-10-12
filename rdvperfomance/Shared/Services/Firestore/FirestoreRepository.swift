@@ -12,7 +12,7 @@ final class FirestoreRepository {
     private let messageRepository = MessageRepository()
     private let feedbackRepository = FeedbackRepository()
     private let workoutTemplateRepository = WorkoutTemplateRepository()
-    private let studentPersonalRecordsRepository = StudentPersonalRecordsRepository()
+    private let personalRecordsRepository = PersonalRecordsRepository()
 
     private init() {}
 
@@ -548,24 +548,24 @@ final class FirestoreRepository {
 
     // MARK: - Student Personal Records
 
-    func getStudentPersonalRecords(uid: String) async throws -> StudentPersonalRecordsCloudDocument? {
-        try await studentPersonalRecordsRepository.getStudentPersonalRecords(uid: uid)
+    func getPersonalRecords(uid: String) async throws -> PersonalRecordsCloudDocument? {
+        try await personalRecordsRepository.getPersonalRecords(uid: uid)
     }
 
     func hasCompletedTecnofitImport(uid: String) async throws -> Bool {
-        try await studentPersonalRecordsRepository.hasCompletedTecnofitImport(uid: uid)
+        try await personalRecordsRepository.hasCompletedTecnofitImport(uid: uid)
     }
 
     func markTecnofitImportCompleted(uid: String) async throws {
-        try await studentPersonalRecordsRepository.markTecnofitImportCompleted(uid: uid)
+        try await personalRecordsRepository.markTecnofitImportCompleted(uid: uid)
     }
 
-    func saveStudentPersonalRecords(
+    func savePersonalRecords(
         uid: String,
         payloads: [String: Data],
         customTombstones: [String: [String]]
-    ) async throws -> StudentPersonalRecordsCloudDocument {
-        try await studentPersonalRecordsRepository.saveStudentPersonalRecords(
+    ) async throws -> PersonalRecordsCloudDocument {
+        try await personalRecordsRepository.savePersonalRecords(
             uid: uid,
             payloads: payloads,
             customTombstones: customTombstones

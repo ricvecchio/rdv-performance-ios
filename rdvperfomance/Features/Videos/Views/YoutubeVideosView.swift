@@ -2,26 +2,26 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
-enum TeacherImportVideosContext {
+enum YoutubeVideosContext {
     case teacher(category: TreinoTipo)
     case student(studentId: String)
 }
 
-struct TeacherImportVideosView: View {
+struct YoutubeVideosView: View {
     @Environment(\.locale) private var locale
     
     @Binding var path: [AppRoute]
-    let context: TeacherImportVideosContext
+    let context: YoutubeVideosContext
     
     private let contentMaxWidth: CGFloat = 380
     
-    @State private var videos: [TeacherYoutubeVideo] = []
+    @State private var videos: [YoutubeVideo] = []
     @State private var isLoading: Bool = false
     @State private var errorMessage: String? = nil
     @State private var isAddSheetPresented: Bool = false
     @State private var activeLockedPlayer: LockedPlayerItem? = nil
     @State private var isEditTitleSheetOpen = false
-    @State private var editingVideo: TeacherYoutubeVideo? = nil
+    @State private var editingVideo: YoutubeVideo? = nil
     @State private var editingVideoTitle = ""
     @State private var isSavingVideoTitle = false
     @State private var editTitleErrorMessage: String? = nil
@@ -100,7 +100,7 @@ struct TeacherImportVideosView: View {
         .toolbarColorScheme(.dark, for: .navigationBar)
         .task { await loadVideos() }
         .sheet(isPresented: $isAddSheetPresented) {
-            TeacherAddYoutubeVideoSheet { title, url, videoCategory in
+            AddYoutubeVideoSheet { title, url, videoCategory in
                 Task { await addVideo(title: title, url: url, videoCategory: videoCategory) }
             }
         }
@@ -108,7 +108,7 @@ struct TeacherImportVideosView: View {
             editVideoTitleSheet
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
-            TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
+            YoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
     }
 
@@ -198,7 +198,7 @@ struct TeacherImportVideosView: View {
         }
     }
     
-    private func openLockedPlayer(for video: TeacherYoutubeVideo) {
+    private func openLockedPlayer(for video: YoutubeVideo) {
         activeLockedPlayer = LockedPlayerItem(
             title: video.title.isEmpty
                 ? AppLocalization.string("workout.youtube_video", locale: locale)
@@ -207,7 +207,7 @@ struct TeacherImportVideosView: View {
         )
     }
     
-    private func openSendToStudent(for video: TeacherYoutubeVideo) {
+    private func openSendToStudent(for video: YoutubeVideo) {
         errorMessage = nil
         path.append(
             .teacherSendWorkout(
@@ -216,7 +216,7 @@ struct TeacherImportVideosView: View {
         )
     }
 
-    private func openEditTitle(for video: TeacherYoutubeVideo) {
+    private func openEditTitle(for video: YoutubeVideo) {
         errorMessage = nil
         editTitleErrorMessage = nil
         editingVideo = video
@@ -322,7 +322,7 @@ struct TeacherImportVideosView: View {
         .presentationDetents([.fraction(0.45)])
     }
     
-    private func videoRow(video v: TeacherYoutubeVideo) -> some View {
+    private func videoRow(video v: YoutubeVideo) -> some View {
         HStack(spacing: 12) {
             thumbnailView(videoId: v.videoId)
             
@@ -502,12 +502,12 @@ struct TeacherImportVideosView: View {
         do {
             switch context {
             case .teacher:
-                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                guard let teacherId = YoutubeVideosRepository.getTeacherId() else {
                     videos = []
                     errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
-                videos = try await TeacherYoutubeVideosRepository.loadVideos(teacherId: teacherId)
+                videos = try await YoutubeVideosRepository.loadVideos(teacherId: teacherId)
             case .student(let studentId):
                 guard let authenticatedStudentId = validatedStudentId(studentId) else {
                     videos = []
@@ -518,7 +518,7 @@ struct TeacherImportVideosView: View {
                 print("[StudentVideos] Student ID: \(studentId)")
                 print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
 #endif
-                videos = try await TeacherYoutubeVideosRepository.loadStudentVideos(
+                videos = try await YoutubeVideosRepository.loadStudentVideos(
                     studentId: authenticatedStudentId
                 )
             }
@@ -536,7 +536,7 @@ struct TeacherImportVideosView: View {
         }
     }
 
-    private func addVideo(title: String, url: String, videoCategory: TeacherYoutubeVideoCategory) async {
+    private func addVideo(title: String, url: String, videoCategory: YoutubeVideoCategory) async {
         errorMessage = nil
         
         isLoading = true
@@ -545,11 +545,11 @@ struct TeacherImportVideosView: View {
         do {
             switch context {
             case .teacher:
-                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                guard let teacherId = YoutubeVideosRepository.getTeacherId() else {
                     errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
-                try await TeacherYoutubeVideosRepository.addVideo(
+                try await YoutubeVideosRepository.addVideo(
                     teacherId: teacherId,
                     title: title,
                     url: url,
@@ -565,7 +565,7 @@ struct TeacherImportVideosView: View {
                 print("[StudentVideos] Student ID: \(studentId)")
                 print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
 #endif
-                try await TeacherYoutubeVideosRepository.addStudentVideo(
+                try await YoutubeVideosRepository.addStudentVideo(
                     studentId: authenticatedStudentId,
                     title: title,
                     url: url,
@@ -597,12 +597,12 @@ struct TeacherImportVideosView: View {
         let updateTitle: () async throws -> Void
         switch context {
         case .teacher:
-            guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+            guard let teacherId = YoutubeVideosRepository.getTeacherId() else {
                 editTitleErrorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                 return
             }
             updateTitle = {
-                try await TeacherYoutubeVideosRepository.updateVideoTitle(
+                try await YoutubeVideosRepository.updateVideoTitle(
                     teacherId: teacherId,
                     videoId: video.id,
                     title: cleanedTitle
@@ -614,7 +614,7 @@ struct TeacherImportVideosView: View {
                 return
             }
             updateTitle = {
-                try await TeacherYoutubeVideosRepository.updateStudentVideoTitle(
+                try await YoutubeVideosRepository.updateStudentVideoTitle(
                     studentId: authenticatedStudentId,
                     videoId: video.id,
                     title: cleanedTitle
@@ -629,7 +629,7 @@ struct TeacherImportVideosView: View {
             try await updateTitle()
 
             if let index = videos.firstIndex(where: { $0.id == video.id }) {
-                videos[index] = TeacherYoutubeVideo(
+                videos[index] = YoutubeVideo(
                     id: video.id,
                     title: cleanedTitle,
                     url: video.url,
@@ -660,11 +660,11 @@ struct TeacherImportVideosView: View {
         do {
             switch context {
             case .teacher:
-                guard let teacherId = TeacherYoutubeVideosRepository.getTeacherId() else {
+                guard let teacherId = YoutubeVideosRepository.getTeacherId() else {
                     errorMessage = AppLocalization.string("ui.unable_to_identify_the_signed_in_trainer", locale: locale)
                     return
                 }
-                try await TeacherYoutubeVideosRepository.deleteVideo(
+                try await YoutubeVideosRepository.deleteVideo(
                     teacherId: teacherId,
                     videoId: videoId
                 )
@@ -677,7 +677,7 @@ struct TeacherImportVideosView: View {
                 print("[StudentVideos] Student ID: \(studentId)")
                 print("[StudentVideos] Firestore path: users/\(authenticatedStudentId)/youtubeVideos")
 #endif
-                try await TeacherYoutubeVideosRepository.deleteStudentVideo(
+                try await YoutubeVideosRepository.deleteStudentVideo(
                     studentId: authenticatedStudentId,
                     videoId: videoId
                 )

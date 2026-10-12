@@ -1,7 +1,7 @@
 import SwiftUI
 import UIKit
 
-struct StudentAvatarView: View {
+struct UserAvatarView: View {
 
     let base64: String?
     var size: CGFloat = 32

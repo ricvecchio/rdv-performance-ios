@@ -64,7 +64,7 @@ struct TeacherSendWorkoutVideo: Hashable {
     let videoId: String
     let categoryRawValue: String
 
-    init(video: TeacherYoutubeVideo) {
+    init(video: YoutubeVideo) {
         id = video.id
         title = video.title
         url = video.url
@@ -72,12 +72,12 @@ struct TeacherSendWorkoutVideo: Hashable {
         categoryRawValue = video.category.rawValue
     }
 
-    var video: TeacherYoutubeVideo? {
-        guard let category = TeacherYoutubeVideoCategory(rawValue: categoryRawValue) else {
+    var video: YoutubeVideo? {
+        guard let category = YoutubeVideoCategory(rawValue: categoryRawValue) else {
             return nil
         }
 
-        return TeacherYoutubeVideo(
+        return YoutubeVideo(
             id: id,
             title: title,
             url: url,

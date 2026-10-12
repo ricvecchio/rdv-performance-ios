@@ -1,7 +1,7 @@
 import Foundation
 import FirebaseFirestore
 
-struct StudentPersonalRecordsCloudDocument: Sendable {
+struct PersonalRecordsCloudDocument: Sendable {
     let payloads: [String: Data]
     let customTombstones: [String: [String]]
     let requiresMigration: Bool
@@ -17,7 +17,7 @@ struct StudentPersonalRecordsCloudDocument: Sendable {
     }
 }
 
-final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
+final class PersonalRecordsRepository: FirestoreBaseRepository {
     let db = Firestore.firestore()
 
     private enum Collections {
@@ -100,7 +100,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
     }
 
     private struct CloudState {
-        let document: StudentPersonalRecordsCloudDocument?
+        let document: PersonalRecordsCloudDocument?
         let metadataVersion: DocumentVersion
         let legacyVersion: DocumentVersion
         let payloadVersions: [String: DocumentVersion]
@@ -124,7 +124,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
     private static let concurrentChangeErrorDomain = "StudentPersonalRecordsRepository.concurrentChange"
     private let defaults = UserDefaults.standard
 
-    func getStudentPersonalRecords(uid: String) async throws -> StudentPersonalRecordsCloudDocument? {
+    func getPersonalRecords(uid: String) async throws -> PersonalRecordsCloudDocument? {
         let cleanUid = clean(uid)
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
 
@@ -209,11 +209,11 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         }
     }
 
-    func saveStudentPersonalRecords(
+    func savePersonalRecords(
         uid: String,
         payloads: [String: Data],
         customTombstones: [String: [String]]
-    ) async throws -> StudentPersonalRecordsCloudDocument {
+    ) async throws -> PersonalRecordsCloudDocument {
         let cleanUid = clean(uid)
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
 
@@ -279,7 +279,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
                 #if DEBUG
                 print("[PersonalRecords] Remote write completed for user \(cleanUid) at users/\(cleanUid)/student_personal_records")
                 #endif
-                return StudentPersonalRecordsCloudDocument(
+                return PersonalRecordsCloudDocument(
                     payloads: mergedPayloads,
                     customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(allTombstones)
                 )
@@ -431,7 +431,7 @@ final class StudentPersonalRecordsRepository: FirestoreBaseRepository {
         )
         let hasValidData = decodedMetadata != nil || legacy != nil || !mergedPayloads.isEmpty
         let document = hasValidData
-            ? StudentPersonalRecordsCloudDocument(
+            ? PersonalRecordsCloudDocument(
                 payloads: mergedPayloads,
                 customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(tombstones),
                 requiresMigration: (

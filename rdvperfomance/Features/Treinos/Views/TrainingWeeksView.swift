@@ -1,9 +1,9 @@
-// StudentWorkoutsView.swift — Treinos do aluno organizados por semanas e dias
+// TrainingWeeksView.swift — Treinos do aluno organizados por semanas e dias
 import SwiftUI
 import Combine
 import UIKit
 
-struct StudentWorkoutsView: View {
+struct TrainingWeeksView: View {
 
     // Bindings, parâmetros e ViewModel
     @Binding var path: [AppRoute]
@@ -180,7 +180,7 @@ struct StudentWorkoutsView: View {
             applyInitialExpansionIfNeeded()
         }
         .fullScreenCover(item: $activeLockedPlayer) { item in
-            TeacherYoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
+            YoutubeLockedPlayerSheet(title: item.title, videoId: item.videoId)
         }
         .alert(
             "workout.my_videos",
@@ -726,7 +726,7 @@ struct StudentWorkoutsView: View {
         defer { isSavingReceivedVideo = false }
 
         do {
-            let savedVideos = try await TeacherYoutubeVideosRepository.loadStudentVideos(
+            let savedVideos = try await YoutubeVideosRepository.loadStudentVideos(
                 studentId: authenticatedStudentId
             )
             guard !savedVideos.contains(where: { $0.videoId == video.videoId }) else {
@@ -737,7 +737,7 @@ struct StudentWorkoutsView: View {
                 return
             }
 
-            try await TeacherYoutubeVideosRepository.addStudentVideo(
+            try await YoutubeVideosRepository.addStudentVideo(
                 studentId: authenticatedStudentId,
                 title: video.title,
                 url: video.url,
