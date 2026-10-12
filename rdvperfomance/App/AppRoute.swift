@@ -94,9 +94,6 @@ enum AppRoute: Hashable {
     case home
     case sobre
 
-    case treinos(TreinoTipo)
-    case crossfitMenu
-
     case perfil
     case configuracoes
     case idioma
@@ -112,8 +109,6 @@ enum AppRoute: Hashable {
 
     case spriteDemo
 
-    case progressGame(mode: ProgressGameMode)
-    case arExercise(weekId: String, dayId: String)
 
     case teacherStudentsList(selectedCategory: TreinoTipo, initialFilter: TreinoTipo?)
     case teacherStudentDetail(AppUser, TreinoTipo)
@@ -146,8 +141,6 @@ enum AppRoute: Hashable {
     case studentVideos
     case teacherPersonalRecords(category: TreinoTipo)
 
-    case createTrainingWeek(student: AppUser, category: TreinoTipo)
-    case createTrainingDay(weekId: String, category: TreinoTipo)
 
     case teacherMyWorkouts(category: TreinoTipo, mode: TeacherWorkoutsMode = .library)
     case teacherCrossfitLibrary(
