@@ -179,6 +179,54 @@ Reversão: `node set-admin-role.js --project rdvperformanceapp --uid <UID> --rev
 - Pré-existente e fora deste escopo: `teachers/{teacherId}` permite ao próprio usuário criar o documento,
   e `exists(teachers/{uid})` concede `isTrainer()` nas regras. Avaliar restringir a criação desse documento.
 
+### 3.4. Correção do login ADMIN ("Seu perfil não foi encontrado") — situação em 2026-10-12
+
+Verificação somente leitura em produção (projeto `rdvperformanceapp`, banco único `(default)`):
+
+| Item | Resultado |
+|------|-----------|
+| Conta no Auth | 1 conta, UID `StkCmATGBiaZJeZPTCtjEpdYwZB3`, provedor senha, ativa |
+| `users/StkCmATGBiaZJeZPTCtjEpdYwZB3` | **existe**, 16 campos, `userType = "ADMIN"` (ID do documento = UID; nenhum outro documento com o mesmo e-mail) |
+| Custom claims | **nenhuma** (`admin: true` ausente) |
+| Ruleset publicado | `c2ec8aef-c879-4619-a70d-87c685da4249` — `isAdmin()` verifica **apenas** `userType == 'ADMIN'` |
+
+**Causa raiz:** o documento existe e o proprietário pode lê-lo (simulado: `get users/{uid}` → permitido).
+O app exige perfil ADMIN **e** claim `admin: true`; como a claim não foi atribuída, `isAdmin = false`, e
+`isLoggedIn` recusa perfil ADMIN não validado. O `LoginView` exibe então a mensagem genérica
+`auth.login.profile_not_found` (a mesma usada para qualquer `isLoggedIn == false`). Não é documento
+inexistente, nem permission-denied, nem projeto/banco/UID divergente.
+
+Divergência: as regras publicadas aceitam ADMIN sem claim; o app exige a claim. Correção (sem remover a claim):
+
+1. **Regras** (Console → Firestore → Regras), alterar somente `isAdmin()`:
+
+   ```
+   function isAdmin() {
+     return isSignedIn()
+       && request.auth.token.get('admin', false) == true
+       && myUserType() == 'ADMIN';
+   }
+   ```
+
+   Simulado na API `projects.test` (sem deploy): 38/38 casos esperados (login de todos os perfis; admin
+   consulta, cria, substitui e remove códigos; ADMIN sem claim, claim sem ADMIN, aluno, professor e não
+   autenticado negados; ninguém atribui ADMIN; cadastro de professor só com código vigente; modos Professor/Aluno do admin).
+
+2. **Claim** (ambiente confiável, seção 3.2, passo 3): `set-admin-role.js --grant --apply` para o UID acima.
+   O `userType` já é `ADMIN` (o script apenas o reafirma com `update()`, preservando os demais campos).
+
+3. **Sair e entrar novamente** no app (o app renova o token com `forcingRefresh: true`).
+
+Ordem sugerida: claim (2) → regras (1) → login (3). Com a ordem inversa, o administrador fica sem acesso
+aos códigos até a claim existir (os demais usuários não são afetados).
+
+Se `users/{uid}` estiver ausente em outra conta: não recriar a conta no Auth. Copiar o UID em
+Authentication → Usuários, criar no Console o documento `users/<UID>` (mesmo ID) com os campos do perfil e
+`userType` adequado; para ADMIN, depois executar `set-admin-role.js --grant --apply`.
+
+Opcional: acrescentar `"ADMIN"` em `targetIsStudent()` para manter o acesso que professores tinham ao perfil
+do administrador quando ele era `STUDENT`.
+
 ## 4. Riscos e limitações
 
 - **Sem as regras publicadas**, o modal do administrador exibe "Você não tem permissão..." (comprovado em

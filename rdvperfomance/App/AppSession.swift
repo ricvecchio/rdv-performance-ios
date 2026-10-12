@@ -150,6 +150,9 @@ final class AppSession: ObservableObject {
             let snap = try await db.collection("users").document(uid).getDocument(source: .server)
 
             guard let data = snap.data() else {
+                #if DEBUG
+                print("[AppSession] Perfil inexistente: users/\(uid) não existe no banco (default).")
+                #endif
                 self.userType = nil
                 self.userName = nil
                 self.isAdmin = false
@@ -187,6 +190,15 @@ final class AppSession: ObservableObject {
                 self.adminProfileMode = nil
             }
 
+            #if DEBUG
+            if typeRaw != nil && self.userType == nil {
+                print("[AppSession] users/\(uid) possui userType não reconhecido.")
+            }
+            if self.userType == .ADMIN && !validatedAdmin {
+                print("[AppSession] users/\(uid) possui userType ADMIN, mas o token não contém a custom claim admin=true. Acesso administrativo negado.")
+            }
+            #endif
+
             self.storedUserName = name ?? ""
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
 
@@ -206,7 +218,8 @@ final class AppSession: ObservableObject {
         } catch {
             self.measurementUnitLoadState = .failed
             #if DEBUG
-            print("[Settings] Falha ao carregar unidade de medida: \(error.localizedDescription)")
+            let ns = error as NSError
+            print("[AppSession] Falha ao ler users/\(uid) (não é perfil inexistente): domain=\(ns.domain) code=\(ns.code) — \(ns.localizedDescription)")
             #endif
         }
     }
@@ -249,8 +262,8 @@ final class AppSession: ObservableObject {
             #if DEBUG
             print("[AppSession] Falha ao validar perfil administrativo: \(error.localizedDescription)")
             #endif
-            // Mantém somente a validação já obtida nesta sessão (em memória) para o mesmo usuário
-            return isAdmin && self.uid == uid
+            // Falha na validação nunca concede nem mantém privilégio administrativo
+            return false
         }
     }
 }

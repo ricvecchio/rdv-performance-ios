@@ -32,8 +32,9 @@ service cloud.firestore {
     //   - users/{uid}.userType == 'ADMIN' (protegido pela seção 4).
     // O app (AppSession.isAdmin) usa exatamente o mesmo critério.
     //
-    // Nas regras publicadas, a função equivalente chama-se isAdmin() (hoje
-    // baseada em UID fixo). Ver TEACHER_AUTHORIZATION.md, seção 3.
+    // Nas regras publicadas, a função equivalente chama-se isAdmin(). No ruleset
+    // c2ec8aef (2026-10-12) ela verifica apenas userType; acrescentar a claim
+    // conforme TEACHER_AUTHORIZATION.md, seção 3.4.
     // -------------------------------------------------------------------------
     function isTeacherSignupAdmin() {
       return request.auth != null
