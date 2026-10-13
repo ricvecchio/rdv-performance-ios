@@ -232,12 +232,16 @@ struct AdminUsersView: View {
                     if index < filteredUsers.count - 1 {
                         Divider()
                             .background(Theme.Colors.divider)
-                            .padding(.leading, 56)
+                            .padding(.leading, 64)
                     }
                 }
             }
-            .background(Theme.Colors.cardBackground)
+            .background(Color.black.opacity(0.68))
             .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
         }
     }
 
@@ -268,20 +272,26 @@ struct AdminUsersView: View {
                 }
             } label: {
                 HStack(spacing: 14) {
-                    Image(systemName: user.isStudentProfile ? "person.fill" : "person.fill.checkmark")
-                        .font(.system(size: 17))
-                        .foregroundColor(.green.opacity(0.85))
-                        .frame(width: 28)
+                    // Mesmo padrão do ícone de BarbellPersonalRecordsView (tableRow)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(Color.green.opacity(0.14))
+                            .frame(width: 34, height: 34)
+
+                        Image(systemName: profileIconName(for: user))
+                            .foregroundColor(.green.opacity(0.85))
+                            .font(.system(size: 16, weight: .semibold))
+                    }
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(user.name)
-                            .font(.system(size: 16, weight: .medium))
+                            .font(.system(size: 17, weight: .semibold))
                             .foregroundColor(.white.opacity(0.92))
                         Text(user.email)
-                            .font(.system(size: 13))
+                            .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.55))
                         Text(user.roleTitleKey)
-                            .font(.system(size: 13, weight: .semibold))
+                            .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
                         accountStatusLine(user)
                         versionLine(user)
@@ -316,6 +326,13 @@ struct AdminUsersView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 13)
+    }
+
+    // Ícone por perfil: ADMIN primeiro, para não ser classificado como professor
+    private func profileIconName(for user: AppUser) -> String {
+        if user.isAdministratorProfile { return "person.crop.circle.badge.checkmark" }
+        if user.isStudentProfile { return "person.fill" }
+        return "person.fill.checkmark"
     }
 
     // Status persistido em users/{uid}.active (nil em registros legados = ativo)
