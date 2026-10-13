@@ -23,7 +23,6 @@ struct AdminUsersView: View {
     @State private var pendingDeletion: AppUser?
     @State private var showDeletionUnavailable = false
     @State private var managedUser: AppUser?
-    @State private var showManageOptions = false
     @State private var showStatusConfirmation = false
 
     private let contentMaxWidth: CGFloat = 380
@@ -71,32 +70,6 @@ struct AdminUsersView: View {
         }
         .task {
             await viewModel.loadUsers()
-        }
-        // Ações da lixeira: desativar/reativar, excluir definitivamente, cancelar
-        .confirmationDialog(
-            "admin.users.manage.title",
-            isPresented: $showManageOptions,
-            titleVisibility: .visible,
-            presenting: managedUser
-        ) { user in
-            if !user.isAdministratorProfile {
-                if user.isAccountActive {
-                    Button("admin.users.deactivate", role: .destructive) {
-                        showStatusConfirmation = true
-                    }
-                } else {
-                    Button("admin.users.reactivate") {
-                        showStatusConfirmation = true
-                    }
-                }
-            }
-            Button("admin.users.delete.permanent", role: .destructive) {
-                pendingDeletion = user
-                showDeletionUnavailable = true
-            }
-            Button("common.cancel", role: .cancel) {
-                managedUser = nil
-            }
         }
         .alert(
             (managedUser?.isAccountActive ?? true)
@@ -311,9 +284,42 @@ struct AdminUsersView: View {
                     ProgressView()
                         .tint(.white)
                 } else {
-                    Button {
-                        managedUser = user
-                        showManageOptions = true
+                    // Ações da lixeira (mesmo padrão de Menu de "Cancelar convite"):
+                    // desativar/reativar, excluir definitivamente, cancelar
+                    Menu {
+                        Section("admin.users.manage.title") {
+                            if !user.isAdministratorProfile {
+                                if user.isAccountActive {
+                                    Button(role: .destructive) {
+                                        managedUser = user
+                                        showStatusConfirmation = true
+                                    } label: {
+                                        Label(LocalizedStringKey("admin.users.deactivate"), systemImage: "person.crop.circle.badge.xmark")
+                                    }
+                                } else {
+                                    Button {
+                                        managedUser = user
+                                        showStatusConfirmation = true
+                                    } label: {
+                                        Label(LocalizedStringKey("admin.users.reactivate"), systemImage: "person.crop.circle.badge.checkmark")
+                                    }
+                                }
+                            }
+                            Button(role: .destructive) {
+                                managedUser = user
+                                pendingDeletion = user
+                                showDeletionUnavailable = true
+                            } label: {
+                                Label(LocalizedStringKey("admin.users.delete.permanent"), systemImage: "trash")
+                            }
+                        }
+                        Section {
+                            Button(role: .cancel) {
+                                managedUser = nil
+                            } label: {
+                                Label(LocalizedStringKey("common.cancel"), systemImage: "xmark.circle")
+                            }
+                        }
                     } label: {
                         Image(systemName: "trash")
                             .font(.system(size: 15))
@@ -330,9 +336,9 @@ struct AdminUsersView: View {
 
     // Ícone por perfil: ADMIN primeiro, para não ser classificado como professor
     private func profileIconName(for user: AppUser) -> String {
-        if user.isAdministratorProfile { return "person.crop.circle.badge.checkmark" }
+        if user.isAdministratorProfile { return "gearshape.fill" }
         if user.isStudentProfile { return "person.fill" }
-        return "person.fill.checkmark"
+        return "graduationcap.fill"
     }
 
     // Status persistido em users/{uid}.active (nil em registros legados = ativo)
