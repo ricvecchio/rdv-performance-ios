@@ -211,10 +211,7 @@ struct ProfileView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -269,7 +266,7 @@ struct ProfileView: View {
             ToolbarItem(placement: .principal) {
                 Text("common.profile")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
@@ -874,7 +871,7 @@ struct ProfileView: View {
             } label: {
                 HeaderAvatarView(size: 92, isNavigationEnabled: false)
                     .clipShape(Circle())
-                    .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                    .overlay(Circle().stroke(Theme.Colors.ink(0.15), lineWidth: 1))
                     .overlay(alignment: .bottomTrailing) {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 13, weight: .semibold))
@@ -882,7 +879,7 @@ struct ProfileView: View {
                             .frame(width: 28, height: 28)
                             .background(Theme.Colors.cardBackground)
                             .clipShape(Circle())
-                            .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                            .overlay(Circle().stroke(Theme.Colors.ink(0.15), lineWidth: 1))
                             .offset(x: 2, y: 2)
                     }
             }
@@ -890,11 +887,11 @@ struct ProfileView: View {
 
             Text(userName.isEmpty ? " " : userName)
                 .font(.system(size: 28, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.Colors.ink())
 
             Text(unitName.isEmpty ? " " : unitName)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             VStack(alignment: .leading, spacing: 4) {
                 Color.clear.frame(height: 16)
@@ -920,7 +917,7 @@ struct ProfileView: View {
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -934,7 +931,7 @@ struct ProfileView: View {
         if !trimmed.isEmpty {
             Text("\(title): \(trimmed)")
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.65))
+                .foregroundStyle(Theme.Colors.ink(0.65))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
     }
@@ -953,7 +950,7 @@ struct ProfileView: View {
 
                 Text(trimmed)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.65))
+                    .foregroundStyle(Theme.Colors.ink(0.65))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -1060,7 +1057,7 @@ struct ProfileView: View {
             }
         }
         .padding(.vertical, 8)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -1135,7 +1132,7 @@ struct ProfileView: View {
 
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundColor(iconColor)
+                .foregroundStyle(AppThemeAdaptiveColor(iconColor))
                 .frame(width: 28)
                 .overlay(alignment: .topTrailing) {
                     if activityBadgeCount > 0 {
@@ -1157,14 +1154,14 @@ struct ProfileView: View {
                 }
             }
                 .font(.system(size: 17, weight: .medium))
-                .foregroundColor(titleColor)
+                .foregroundStyle(AppThemeAdaptiveColor(titleColor))
 
             Spacer()
 
             switch trailing {
             case .chevron:
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
 
             case .text(let value):
                 Text(value)
@@ -1181,7 +1178,7 @@ struct ProfileView: View {
             case .coloredBadge(let value, let fg, let bg):
                 Text(value)
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(fg)
+                    .foregroundStyle(AppThemeAdaptiveColor(fg))
                     .padding(.horizontal, 12)
                     .padding(.vertical, 6)
                     .background(Capsule().fill(bg))
@@ -1190,28 +1187,28 @@ struct ProfileView: View {
                 HStack(spacing: 10) {
                     Text(value)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(fg)
+                        .foregroundStyle(AppThemeAdaptiveColor(fg))
                         .padding(.horizontal, 12)
                         .padding(.vertical, 6)
                         .background(Capsule().fill(bg))
 
                     Image(systemName: "chevron.right")
-                        .foregroundColor(.white.opacity(0.35))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
                 }
 
             case .textWithChevron(let value):
                 HStack(spacing: 10) {
                     Text(value)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
 
                     Image(systemName: "chevron.right")
-                        .foregroundColor(.white.opacity(0.35))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
                 }
 
             case .settings:
                 Image(systemName: "gearshape.fill")
-                    .foregroundColor(.white.opacity(0.60))
+                    .foregroundStyle(Theme.Colors.ink(0.60))
             }
         }
         .padding(.horizontal, 16)
@@ -1248,7 +1245,7 @@ struct ProfileView: View {
                         VStack(alignment: .leading, spacing: 14) {
                             Text("profile.icons.instructions")
                                 .font(.system(size: 14, weight: .medium))
-                                .foregroundColor(.white.opacity(0.65))
+                                .foregroundStyle(Theme.Colors.ink(0.65))
                                 .padding(.top, 12)
 
                             let columns: [GridItem] = [
@@ -1275,7 +1272,7 @@ struct ProfileView: View {
 
                                             Text(iconName)
                                                 .font(.system(size: 14, weight: .semibold))
-                                                .foregroundColor(.white.opacity(0.92))
+                                                .foregroundStyle(Theme.Colors.ink(0.92))
                                                 .lineLimit(1)
                                                 .minimumScaleFactor(0.85)
 
@@ -1311,14 +1308,14 @@ struct ProfileView: View {
                             )
                         )
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
                             .background(
                                 Capsule()
-                                    .fill(Color.black.opacity(0.35))
+                                    .fill(Theme.Colors.glass(0.35))
                                     .overlay(
-                                        Capsule().stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                        Capsule().stroke(Theme.Colors.ink(0.12), lineWidth: 1)
                                     )
                             )
                             .padding(.bottom, 18)

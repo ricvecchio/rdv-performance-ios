@@ -25,13 +25,13 @@ struct TecnofitImportSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("personal_records.import_from_tecnofit")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         importCard
@@ -57,7 +57,7 @@ struct TecnofitImportSheet: View {
         VStack(alignment: .leading, spacing: 14) {
             Text("tecnofit_import.connect_your_account_to_fetch_records_from_the_crossfit_location_your_existing_records_will_be_preserved")
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.45))
+                .foregroundStyle(Theme.Colors.ink(0.45))
 
             credentialsFields
 
@@ -66,7 +66,7 @@ struct TecnofitImportSheet: View {
                     ProgressView().tint(.green)
                     Text("tecnofit_import.fetching_records")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.75))
+                        .foregroundStyle(Theme.Colors.ink(0.75))
                 }
             }
 
@@ -88,7 +88,7 @@ struct TecnofitImportSheet: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
         )
     }
 
@@ -119,18 +119,18 @@ struct TecnofitImportSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             field
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
-                .background(Color.white.opacity(0.10))
+                .background(Theme.Colors.ink(0.10))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
         }
     }
@@ -140,7 +140,7 @@ struct TecnofitImportSheet: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("tecnofit_import.import_summary")
                 .font(.system(size: 16, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.Colors.ink())
             summaryLine(
                 recordsReadyText(preview.recordsReady),
                 icon: "checkmark.circle.fill",
@@ -163,9 +163,9 @@ struct TecnofitImportSheet: View {
         Label {
             Text(text)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.82))
+                .foregroundStyle(Theme.Colors.ink(0.82))
         } icon: {
-            Image(systemName: icon).foregroundColor(color)
+            Image(systemName: icon).foregroundStyle(AppThemeAdaptiveColor(color))
         }
     }
 
@@ -184,20 +184,20 @@ struct TecnofitImportSheet: View {
             )
                 .frame(maxWidth: .infinity)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(actionButtonIsEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
+                .foregroundStyle(AppThemeAdaptiveColor(actionButtonIsEnabled ? .white.opacity(0.92) : .white.opacity(0.55)))
                 .padding(.vertical, 14)
                 .background(
                     actionButtonIsEnabled
-                        ? Theme.Colors.primaryGreen.opacity(0.24)
-                        : Color.white.opacity(0.10)
+                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.24))
+                        : AnyShapeStyle(Theme.Colors.ink(0.10))
                 )
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             actionButtonIsEnabled
-                                ? Theme.Colors.primaryGreen.opacity(0.36)
-                                : Color.white.opacity(0.12),
+                                ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.36))
+                                : AnyShapeStyle(Theme.Colors.ink(0.12)),
                             lineWidth: 1
                         )
                 )
@@ -228,14 +228,14 @@ struct TecnofitImportSheet: View {
                 Text("common.cancel")
             }
             .font(.system(size: 15, weight: .bold))
-            .foregroundColor(.white.opacity(0.85))
+            .foregroundStyle(Theme.Colors.ink(0.85))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(Color.white.opacity(0.10))
+            .background(Theme.Colors.ink(0.10))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
@@ -244,7 +244,7 @@ struct TecnofitImportSheet: View {
     private func messageText(_ text: String, color: Color) -> some View {
         Text(text)
             .font(.system(size: 13, weight: .semibold))
-            .foregroundColor(color)
+            .foregroundStyle(AppThemeAdaptiveColor(color))
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 

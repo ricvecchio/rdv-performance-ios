@@ -130,10 +130,7 @@ struct BarbellPersonalRecordsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -196,7 +193,7 @@ struct BarbellPersonalRecordsView: View {
             ToolbarItem(placement: .principal) {
                 Text("personal_records_barbell.barbell")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -212,7 +209,7 @@ struct BarbellPersonalRecordsView: View {
                             Text("common.add")
                         }
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(Capsule().fill(Color.green.opacity(0.16)))
@@ -248,7 +245,7 @@ struct BarbellPersonalRecordsView: View {
             tableHeader()
 
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(Theme.Colors.ink(0.08))
                 .frame(height: 1)
 
             let list = allMoves
@@ -259,13 +256,13 @@ struct BarbellPersonalRecordsView: View {
 
                 if index != list.count - 1 {
                     Rectangle()
-                        .fill(Color.white.opacity(0.08))
+                        .fill(Theme.Colors.ink(0.08))
                         .frame(height: 1)
                         .padding(.leading, 14)
                 }
             }
         }
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -281,7 +278,7 @@ struct BarbellPersonalRecordsView: View {
 
             Text("personal_records.movement")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Spacer()
 
@@ -293,7 +290,7 @@ struct BarbellPersonalRecordsView: View {
                 )
             )
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -323,7 +320,7 @@ struct BarbellPersonalRecordsView: View {
 
                 Text(move.name)
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
 
@@ -332,15 +329,15 @@ struct BarbellPersonalRecordsView: View {
                 if let displayValue {
                     Text(formatNumber(displayValue))
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.88))
+                        .foregroundStyle(Theme.Colors.ink(0.88))
                 } else {
                     Text("-")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundStyle(Theme.Colors.ink(0.45))
                 }
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.25))
+                    .foregroundStyle(Theme.Colors.ink(0.25))
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.leading, 6)
             }
@@ -360,13 +357,13 @@ struct BarbellPersonalRecordsView: View {
             VStack(spacing: 0) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text(move.name)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 ScrollView(showsIndicators: false) {
@@ -380,7 +377,7 @@ struct BarbellPersonalRecordsView: View {
                             )
                         )
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
 
                         HStack(spacing: 10) {
                             TextField("personal_records_barbell.e_g_90_50", text: $inputValue)
@@ -388,19 +385,19 @@ struct BarbellPersonalRecordsView: View {
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
                                 .background(Theme.Colors.cardBackground)
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                        .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                                 )
 
                             Text(preferredWeightUnit.shortLabel)
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white.opacity(0.70))
+                                .foregroundStyle(Theme.Colors.ink(0.70))
                         }
                     }
                     .padding(.horizontal, 16)
@@ -416,13 +413,13 @@ struct BarbellPersonalRecordsView: View {
 
                                 Text(formatPRDate(selectedPRDate))
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
+                                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                                 Spacer()
 
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.25))
+                                    .foregroundStyle(Theme.Colors.ink(0.25))
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
@@ -430,7 +427,7 @@ struct BarbellPersonalRecordsView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                             )
                         }
                         .buttonStyle(.plain)
@@ -445,7 +442,7 @@ struct BarbellPersonalRecordsView: View {
 
                                 Text("personal_records.progress")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.75))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
                             }
 
                             Spacer()
@@ -468,7 +465,7 @@ struct BarbellPersonalRecordsView: View {
                     if canDeleteSelectedMove {
                         Text("personal_records_barbell.deleting_will_remove_this_record_from_your_history_this_action_cannot_be_undone")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.50))
+                            .foregroundStyle(Theme.Colors.ink(0.50))
                             .multilineTextAlignment(.leading)
                             .padding(.horizontal, 16)
                             .padding(.top, 4)
@@ -485,14 +482,14 @@ struct BarbellPersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -591,28 +588,28 @@ struct BarbellPersonalRecordsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 14) {
                     Capsule()
-                        .fill(Color.white.opacity(0.18))
+                        .fill(Theme.Colors.ink(0.18))
                         .frame(width: 44, height: 5)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 10)
 
                     Text(move.name)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .frame(maxWidth: .infinity, alignment: .center)
 
                     Text("personal_records.history")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
 
                     if entries.isEmpty {
                         Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.60))
+                            .foregroundStyle(Theme.Colors.ink(0.60))
 
                         Text("personal_records_barbell.save_new_prs_to_track_your_progress")
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.45))
+                            .foregroundStyle(Theme.Colors.ink(0.45))
                     } else {
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
@@ -634,7 +631,7 @@ struct BarbellPersonalRecordsView: View {
                                         )
                                     )
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
 
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
@@ -652,7 +649,7 @@ struct BarbellPersonalRecordsView: View {
 
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
                                         .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.45))
+                                        .foregroundStyle(Theme.Colors.ink(0.45))
 
                                     Button {
                                         historyEntryPendingDeletion = entry
@@ -671,7 +668,7 @@ struct BarbellPersonalRecordsView: View {
 
                                 if entry.id != entries.first?.id {
                                     Rectangle()
-                                        .fill(Color.white.opacity(0.08))
+                                        .fill(Theme.Colors.ink(0.08))
                                         .frame(height: 1)
                                         .padding(.leading, 14)
                                 }
@@ -681,7 +678,7 @@ struct BarbellPersonalRecordsView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                     }
                 }
@@ -728,17 +725,17 @@ struct BarbellPersonalRecordsView: View {
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.white.opacity(0.12))
+                        .foregroundStyle(Theme.Colors.ink(0.12))
                     AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year())
-                        .foregroundStyle(Color.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) {
                     AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5))
-                        .foregroundStyle(Color.white.opacity(0.12))
+                        .foregroundStyle(Theme.Colors.ink(0.12))
                     AxisValueLabel()
-                        .foregroundStyle(Color.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .frame(height: 170)
@@ -747,7 +744,7 @@ struct BarbellPersonalRecordsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
             )
         }
     }
@@ -761,13 +758,13 @@ struct BarbellPersonalRecordsView: View {
             VStack(spacing: 14) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text("personal_records_barbell.new_movement")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 Text(
@@ -780,7 +777,7 @@ struct BarbellPersonalRecordsView: View {
                     )
                 )
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.60))
+                    .foregroundStyle(Theme.Colors.ink(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
@@ -789,20 +786,20 @@ struct BarbellPersonalRecordsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_barbell.movement_name")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
 
                         TextField("personal_records_barbell.e_g_bulgarian_split_squat", text: $newMoveName)
                             .textInputAutocapitalization(.words)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
                             .background(Theme.Colors.cardBackground)
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                             )
                     }
 
@@ -817,7 +814,7 @@ struct BarbellPersonalRecordsView: View {
                             )
                         )
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
 
                         HStack(spacing: 10) {
                             TextField("personal_records_barbell.e_g_90_50", text: $newMoveValue)
@@ -825,19 +822,19 @@ struct BarbellPersonalRecordsView: View {
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
                                 .background(Theme.Colors.cardBackground)
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                        .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                                 )
 
                             Text(preferredWeightUnit.shortLabel)
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white.opacity(0.70))
+                                .foregroundStyle(Theme.Colors.ink(0.70))
                         }
                     }
 
@@ -858,14 +855,14 @@ struct BarbellPersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)

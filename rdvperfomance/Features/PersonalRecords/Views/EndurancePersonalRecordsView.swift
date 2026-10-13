@@ -108,10 +108,7 @@ struct EndurancePersonalRecordsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -174,7 +171,7 @@ struct EndurancePersonalRecordsView: View {
             ToolbarItem(placement: .principal) {
                 Text("personal_records_endurance.endurance")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -190,7 +187,7 @@ struct EndurancePersonalRecordsView: View {
                             Text("common.add")
                         }
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(Capsule().fill(Color.green.opacity(0.16)))
@@ -220,7 +217,7 @@ struct EndurancePersonalRecordsView: View {
             tableHeader()
 
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(Theme.Colors.ink(0.08))
                 .frame(height: 1)
 
             let list = allMoves
@@ -231,13 +228,13 @@ struct EndurancePersonalRecordsView: View {
 
                 if index != list.count - 1 {
                     Rectangle()
-                        .fill(Color.white.opacity(0.08))
+                        .fill(Theme.Colors.ink(0.08))
                         .frame(height: 1)
                         .padding(.leading, 14)
                 }
             }
         }
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -253,13 +250,13 @@ struct EndurancePersonalRecordsView: View {
 
             Text("personal_records_endurance.item")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Spacer()
 
             Text("personal_records.pr_label")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -288,7 +285,7 @@ struct EndurancePersonalRecordsView: View {
 
                 Text(move.name)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(2)
 
                 Spacer()
@@ -296,17 +293,17 @@ struct EndurancePersonalRecordsView: View {
                 if let displayValue, !displayValue.isEmpty {
                     Text(displayValue)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.88))
+                        .foregroundStyle(Theme.Colors.ink(0.88))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundStyle(Theme.Colors.ink(0.45))
                 }
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.25))
+                    .foregroundStyle(Theme.Colors.ink(0.25))
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.leading, 6)
             }
@@ -326,18 +323,18 @@ struct EndurancePersonalRecordsView: View {
             VStack(spacing: 14) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text(move.name)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 Text("personal_records_endurance.enter_your_best_result_leave_it_blank_to_remove_it")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.60))
+                    .foregroundStyle(Theme.Colors.ink(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
@@ -345,21 +342,21 @@ struct EndurancePersonalRecordsView: View {
                     HStack {
                         Text("personal_records.result_field_label")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
                     }
 
                     TextField("personal_records_endurance.e_g_3_45_120_or_10_32", text: $inputValue)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                         .background(Theme.Colors.cardBackground)
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                 }
                 .padding(.horizontal, 16)
@@ -399,14 +396,14 @@ struct EndurancePersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -567,7 +564,7 @@ struct EndurancePersonalRecordsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("common.date")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             Button {
                 showPRDatePicker = true
@@ -577,17 +574,17 @@ struct EndurancePersonalRecordsView: View {
                         .foregroundColor(.green.opacity(0.85))
                     Text(formatPRDate(selectedPRDate))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.25))
+                        .foregroundStyle(Theme.Colors.ink(0.25))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -596,7 +593,7 @@ struct EndurancePersonalRecordsView: View {
             HStack {
                 Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundStyle(Theme.Colors.ink(0.75))
                 Spacer()
                 Button(action: historyAction) {
                     Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
@@ -618,19 +615,19 @@ struct EndurancePersonalRecordsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(title)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
                         Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.60))
+                            .foregroundStyle(Theme.Colors.ink(0.60))
                     } else {
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
                                 HStack {
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
@@ -639,7 +636,7 @@ struct EndurancePersonalRecordsView: View {
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
                                         .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.45))
+                                        .foregroundStyle(Theme.Colors.ink(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
                                         showHistoryEntryDeletionAlert = true
@@ -653,13 +650,13 @@ struct EndurancePersonalRecordsView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
                                 if entry.id != entries.first?.id {
-                                    Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1).padding(.leading, 14)
+                                    Rectangle().fill(Theme.Colors.ink(0.08)).frame(height: 1).padding(.leading, 14)
                                 }
                             }
                         }
                         .background(Theme.Colors.cardBackground)
                         .cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
                     }
                 }
                 .frame(maxWidth: contentMaxWidth)
@@ -713,21 +710,21 @@ struct EndurancePersonalRecordsView: View {
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
-                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Color.white.opacity(0.55))
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Theme.Colors.ink(0.12))
+                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) {
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
-                    AxisValueLabel().foregroundStyle(Color.white.opacity(0.55))
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Theme.Colors.ink(0.12))
+                    AxisValueLabel().foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .frame(height: 170)
             .padding(14)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
         }
     }
 
@@ -812,18 +809,18 @@ struct EndurancePersonalRecordsView: View {
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     Capsule()
-                        .fill(Color.white.opacity(0.18))
+                        .fill(Theme.Colors.ink(0.18))
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
                     Text("personal_records_endurance.new_endurance_item")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .padding(.top, 4)
 
                     Text("personal_records_endurance.create_an_item_and_if_you_want_enter_your_initial_result_now")
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.60))
+                        .foregroundStyle(Theme.Colors.ink(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
@@ -846,14 +843,14 @@ struct EndurancePersonalRecordsView: View {
                         } label: {
                             Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.white.opacity(0.85))
+                                .foregroundStyle(Theme.Colors.ink(0.85))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(Color.white.opacity(0.10))
+                                .background(Theme.Colors.ink(0.10))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -880,18 +877,18 @@ struct EndurancePersonalRecordsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             TextField(placeholder, text: text)
                 .textInputAutocapitalization(.sentences)
                 .autocorrectionDisabled(true)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
         }
     }
 

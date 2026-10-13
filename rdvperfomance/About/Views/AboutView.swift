@@ -22,10 +22,7 @@ struct AboutView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -80,7 +77,7 @@ struct AboutView: View {
             ToolbarItem(placement: .principal) {
                 Text("about.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -102,7 +99,7 @@ struct AboutView: View {
         VStack(spacing: 14) {
             Text("about.headline")
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.Colors.ink())
                 .multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 12) {
@@ -113,11 +110,11 @@ struct AboutView: View {
 
             Text("about.description")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .multilineTextAlignment(.center)
         }
         .padding()
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -131,7 +128,7 @@ struct AboutView: View {
             Image(systemName: "checkmark.circle.fill")
                 .foregroundColor(.green)
             Text(text)
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.Colors.ink())
         }
     }
 }

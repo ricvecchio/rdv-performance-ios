@@ -35,10 +35,7 @@ struct StudentDashboardView: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Rectangle()
@@ -85,7 +82,7 @@ struct StudentDashboardView: View {
             ToolbarItem(placement: .principal) {
                 Text("dashboard.student_area")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
             ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
@@ -93,7 +90,7 @@ struct StudentDashboardView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .onAppear {
             Task { await viewModel.load(locale: locale) }
         }
@@ -120,7 +117,7 @@ struct StudentDashboardView: View {
                 .font(.system(size: 26, weight: .bold))
             Text("dashboard.discipline_today_results_tomorrow")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -134,7 +131,7 @@ struct StudentDashboardView: View {
         switch viewModel.teacherLinkState {
         case .loading:
             ProgressView()
-                .tint(.white)
+                .tint(Theme.Colors.ink())
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 28)
         case .unlinked:
@@ -155,7 +152,7 @@ struct StudentDashboardView: View {
                     .foregroundColor(.yellow.opacity(0.85))
                 Text("dashboard.notices")
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
             }
 
             Button {
@@ -173,7 +170,7 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
@@ -202,16 +199,16 @@ struct StudentDashboardView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                 Text(message)
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
 
             Spacer()
 
             Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
         }
         .contentShape(Rectangle())
     }
@@ -230,11 +227,11 @@ struct StudentDashboardView: View {
 
             Text("dashboard.you_do_not_have_a_linked_coach_yet")
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Text("dashboard.link_with_a_coach_to_receive_workouts_and_track_your_progress")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Button {
                 teacherEmailInput = ""
@@ -252,7 +249,7 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
         .onAppear {
@@ -268,24 +265,24 @@ struct StudentDashboardView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("dashboard.request_link")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             Text("dashboard.enter_the_coach_s_email_to_send_the_request")
                                 .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.45))
+                                .foregroundStyle(Theme.Colors.ink(0.45))
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("dashboard.coach_email")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.75))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
 
                                 TextField("dashboard.coach_email_placeholder", text: $teacherEmailInput)
                                     .textInputAutocapitalization(.never)
@@ -294,13 +291,13 @@ struct StudentDashboardView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Color.white.opacity(0.10))
+                                    .background(Theme.Colors.ink(0.10))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                     )
-                                    .foregroundColor(.white.opacity(0.92))
+                                    .foregroundStyle(Theme.Colors.ink(0.92))
                             }
 
                             if let msg = viewModel.linkActionMessage {
@@ -315,7 +312,7 @@ struct StudentDashboardView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -328,14 +325,14 @@ struct StudentDashboardView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -384,16 +381,16 @@ struct StudentDashboardView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("dashboard.weekly_progress_title")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
 
                     if viewModel.isLoading {
                         ProgressView()
-                            .tint(.white)
+                            .tint(Theme.Colors.ink())
                     } else {
                         Text(weeklyProgressText(completed: completed, total: total))
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                             .lineLimit(1)
                     }
                 }
@@ -409,7 +406,7 @@ struct StudentDashboardView: View {
                         )
                     )
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                 }
             }
 
@@ -422,16 +419,16 @@ struct StudentDashboardView: View {
                 if total == 0 {
                     Text("dashboard.you_do_not_have_workouts_scheduled_for_this_week")
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 } else {
                     HStack(spacing: 10) {
                         ForEach(viewModel.currentWeekDaySummaries) { item in
                             VStack(spacing: 6) {
                                 Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
-                                    .foregroundColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                                    .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
                                 Text(weekdayAbbreviation(for: item.date))
                                     .font(.system(size: 12, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.75))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
                             }
                             .frame(maxWidth: .infinity)
                         }
@@ -442,7 +439,7 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
@@ -455,12 +452,12 @@ struct StudentDashboardView: View {
                     .frame(width: 4, height: height)
             }
             RoundedRectangle(cornerRadius: 1.5)
-                .fill(Color.white.opacity(0.75))
+                .fill(Theme.Colors.ink(0.75))
                 .frame(width: 4, height: 11)
         }
         .frame(width: 42, height: 42)
         .background(Theme.Colors.primaryGreen.opacity(0.10))
-        .background(Color.black.opacity(0.55))
+        .background(Theme.Colors.glass(0.55))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -481,16 +478,16 @@ struct StudentDashboardView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("dashboard.weekly_checkins_title")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
 
                     if viewModel.isLoadingCurrentWeekCheckIns {
                         ProgressView()
-                            .tint(.white)
+                            .tint(Theme.Colors.ink())
                     } else {
                         Text(weeklyProgressText(completed: completed, total: total))
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                             .lineLimit(1)
                     }
                 }
@@ -506,7 +503,7 @@ struct StudentDashboardView: View {
                         )
                     )
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                 }
             }
 
@@ -520,10 +517,10 @@ struct StudentDashboardView: View {
                     ForEach(viewModel.currentWeekCheckInSummaries) { item in
                         VStack(spacing: 6) {
                             Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
-                                .foregroundColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                                .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
                             Text(weekdayAbbreviation(for: item.date))
                                 .font(.system(size: 12, weight: .medium))
-                                .foregroundColor(.white.opacity(0.75))
+                                .foregroundStyle(Theme.Colors.ink(0.75))
                         }
                         .frame(maxWidth: .infinity)
                     }
@@ -533,7 +530,7 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
     }
@@ -544,7 +541,7 @@ struct StudentDashboardView: View {
             .foregroundColor(Theme.Colors.primaryGreen)
             .frame(width: 42, height: 42)
             .background(Theme.Colors.primaryGreen.opacity(0.10))
-            .background(Color.black.opacity(0.55))
+            .background(Theme.Colors.glass(0.55))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -605,7 +602,7 @@ struct StudentDashboardView: View {
                     .foregroundColor(Theme.Colors.primaryGreen)
                     .frame(width: 42, height: 42)
                     .background(Theme.Colors.primaryGreen.opacity(0.10))
-                    .background(Color.black.opacity(0.55))
+                    .background(Theme.Colors.glass(0.55))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -615,13 +612,13 @@ struct StudentDashboardView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("dashboard.wod.title")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
 
                     if !viewModel.studentUnitName.isEmpty {
                         Text(verbatim: viewModel.studentUnitName)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
                             .lineLimit(1)
                     }
                 }
@@ -635,7 +632,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .leading)
         .background(
             ZStack {
-                LinearGradient(
+                AppThemeNeutralGradient(
                     colors: [
                         Color.black.opacity(0.82),
                         Color.black.opacity(0.55),
@@ -682,20 +679,20 @@ struct StudentDashboardView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("dashboard.sign_in_to_nextfit")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("common.email")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.75))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
 
                                 TextField("dashboard.nextfit.email_placeholder", text: $nextFitEmailInput)
                                     .textInputAutocapitalization(.never)
@@ -704,19 +701,19 @@ struct StudentDashboardView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Color.white.opacity(0.10))
+                                    .background(Theme.Colors.ink(0.10))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                     )
-                                    .foregroundColor(.white.opacity(0.92))
+                                    .foregroundStyle(Theme.Colors.ink(0.92))
                             }
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("common.password")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.75))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
 
                                 SecureField("dashboard.your_password", text: $nextFitPasswordInput)
                                     .textInputAutocapitalization(.never)
@@ -724,13 +721,13 @@ struct StudentDashboardView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Color.white.opacity(0.10))
+                                    .background(Theme.Colors.ink(0.10))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                     )
-                                    .foregroundColor(.white.opacity(0.92))
+                                    .foregroundStyle(Theme.Colors.ink(0.92))
                             }
 
                             if let error = viewModel.nextFitLoginError {
@@ -745,7 +742,7 @@ struct StudentDashboardView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -758,14 +755,14 @@ struct StudentDashboardView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)

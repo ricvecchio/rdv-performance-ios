@@ -80,10 +80,7 @@ struct TeacherDashboardView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -137,7 +134,7 @@ struct TeacherDashboardView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.coach_area")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -146,7 +143,7 @@ struct TeacherDashboardView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .onAppear {
             Task { await loadTodaySummary() }
             Task { await loadQuickAccessItems() }
@@ -167,7 +164,7 @@ struct TeacherDashboardView: View {
 
             Text("ui.tracking_your_class_s_progress")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -177,13 +174,13 @@ struct TeacherDashboardView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("ui.today_s_summary")
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Spacer()
 
                 Text(todayText)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
 
             LazyVGrid(columns: summaryColumns, spacing: 8) {
@@ -206,7 +203,7 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -219,7 +216,7 @@ struct TeacherDashboardView: View {
             HStack {
                 Text("ui.quick_access")
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Spacer()
 
@@ -230,7 +227,7 @@ struct TeacherDashboardView: View {
                 } label: {
                     Image(systemName: "pencil")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(.plain)
@@ -251,7 +248,7 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -268,23 +265,23 @@ struct TeacherDashboardView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .frame(maxWidth: .infinity)
                             .padding(.top, 10)
 
                         Text("ui.customize_quick_access")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .frame(maxWidth: .infinity, alignment: .center)
 
                         Text("ui.choose_3_shortcuts_to_show_in_the_coach_area")
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
 
                         Text("ui.select_3_shortcuts")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
 
                         VStack(spacing: 10) {
                             ForEach(TeacherQuickAccessItem.allCases) { item in
@@ -308,14 +305,14 @@ struct TeacherDashboardView: View {
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.ink(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.10))
+                    .background(Theme.Colors.ink(0.10))
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                     )
                     .disabled(isSavingQuickAccessItems)
 
@@ -324,7 +321,7 @@ struct TeacherDashboardView: View {
                     } label: {
                         HStack(spacing: 10) {
                             if isSavingQuickAccessItems {
-                                ProgressView().tint(.white)
+                                ProgressView().tint(Theme.Colors.ink())
                             } else {
                                 Text("common.save")
                             }
@@ -361,22 +358,22 @@ struct TeacherDashboardView: View {
 
                 Text(item.title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Spacer()
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
-                    .foregroundColor(isSelected ? .green : .white.opacity(0.35))
+                    .foregroundStyle(AppThemeAdaptiveColor(isSelected ? .green : .white.opacity(0.35)))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Color.white.opacity(0.06))
+            .background(Theme.Colors.ink(0.06))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08),
+                        AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08)),
                         lineWidth: 1
                     )
             )
@@ -487,27 +484,27 @@ struct TeacherDashboardView: View {
         VStack(spacing: 6) {
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(iconColor)
+                .foregroundStyle(AppThemeAdaptiveColor(iconColor))
 
             if isLoadingSummary {
                 ProgressView()
-                    .tint(.white.opacity(0.92))
+                    .tint(Theme.Colors.ink(0.92))
                     .frame(height: 24)
             } else {
                 Text(value.map(String.init) ?? "—")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
             }
 
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.62))
+                .foregroundStyle(Theme.Colors.ink(0.62))
                 .multilineTextAlignment(.center)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity, minHeight: 118)
         .padding(.horizontal, 6)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -655,19 +652,19 @@ struct TeacherDashboardView: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(2)
 
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .lineLimit(3)
                 }
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
                     .frame(height: 34)
             }
             .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
@@ -675,7 +672,7 @@ struct TeacherDashboardView: View {
             .padding(.vertical, 8)
             .background(
                 ZStack {
-                    Color.black.opacity(0.68)
+                    Theme.Colors.glass(0.68)
                     Theme.Colors.primaryGreen.opacity(0.05)
                 }
             )

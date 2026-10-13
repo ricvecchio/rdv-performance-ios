@@ -33,10 +33,7 @@ struct TeacherCrossfitLibraryView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -125,7 +122,7 @@ struct TeacherCrossfitLibraryView: View {
             ToolbarItem(placement: .principal) {
                 Text("video.category.crossfit")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -155,12 +152,12 @@ struct TeacherCrossfitLibraryView: View {
 
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
                     .font(.system(size: 14, weight: .semibold))
             }
             .padding(.horizontal, 16)
@@ -168,7 +165,7 @@ struct TeacherCrossfitLibraryView: View {
             .background(
                 ZStack {
                     // Mesma tonalidade dos botões da TeacherWorkoutsView
-                    Color.black.opacity(0.90)
+                    Theme.Colors.glass(0.90)
                     Theme.Colors.primaryGreen.opacity(0.05)
                 }
             )

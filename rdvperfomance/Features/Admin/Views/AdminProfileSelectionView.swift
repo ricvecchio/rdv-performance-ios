@@ -9,10 +9,7 @@ struct AdminProfileSelectionView: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Image("rdv_logo")
@@ -25,7 +22,7 @@ struct AdminProfileSelectionView: View {
 
                 Text("admin.profile_selection.prompt")
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 10)
                     .padding(.bottom, 22)
 
@@ -55,7 +52,7 @@ struct AdminProfileSelectionView: View {
 
                 Text("admin.profile_selection.change_note")
                     .font(.system(size: 13))
-                    .foregroundColor(textSecondary)
+                    .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
                     .padding(.top, 18)
 
                 if session.isAdmin {
@@ -97,18 +94,18 @@ struct AdminProfileSelectionView: View {
             VStack(spacing: 8) {
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Text(subtitle)
                     .font(.system(size: 13, weight: .regular))
-                    .foregroundColor(.white.opacity(0.65))
+                    .foregroundStyle(Theme.Colors.ink(0.65))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 14)
             }
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.black.opacity(0.68))
+                    .fill(Theme.Colors.glass(0.68))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)

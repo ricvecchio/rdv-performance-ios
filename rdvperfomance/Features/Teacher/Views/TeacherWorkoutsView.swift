@@ -11,10 +11,7 @@ struct TeacherWorkoutsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -129,7 +126,7 @@ struct TeacherWorkoutsView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.workouts")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -138,7 +135,7 @@ struct TeacherWorkoutsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
     }
 
     private func quickAccessCard(
@@ -162,19 +159,19 @@ struct TeacherWorkoutsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(2)
 
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .lineLimit(2)
                 }
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
             }
             .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
             .padding(.horizontal, 12)
@@ -182,7 +179,7 @@ struct TeacherWorkoutsView: View {
             .background(
                 ZStack {
                     // Equivale ao botão (0.68) sobre o card escuro (0.68) do Acesso rápido: 1 - 0.32 * 0.32 ≈ 0.90
-                    Color.black.opacity(0.90)
+                    Theme.Colors.glass(0.90)
                     Theme.Colors.primaryGreen.opacity(0.05)
                 }
             )

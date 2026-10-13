@@ -25,10 +25,7 @@ struct ChangePasswordView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -92,7 +89,7 @@ struct ChangePasswordView: View {
             ToolbarItem(placement: .principal) {
                 Text("settings.password.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
@@ -112,7 +109,7 @@ struct ChangePasswordView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -146,7 +143,7 @@ struct ChangePasswordView: View {
     private func feedbackCard(text: String, isError: Bool) -> some View {
         Text(text)
             .font(.system(size: 13, weight: .medium))
-            .foregroundColor(.white.opacity(0.95))
+            .foregroundStyle(Theme.Colors.ink(0.95))
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .frame(maxWidth: .infinity)
@@ -221,17 +218,17 @@ struct ChangePasswordView: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+                .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             SecureField("", text: text)
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .font(.system(size: 16))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
                 .padding(.vertical, 10)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }

@@ -26,7 +26,7 @@ struct YoutubeLockedPlayerSheet: View {
                 }
                 .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
-                .toolbarColorScheme(.dark, for: .navigationBar)
+                .appThemeNavigationBarColorScheme()
         }
     }
 }

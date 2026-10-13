@@ -81,10 +81,7 @@ struct EditProfileView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -106,7 +103,7 @@ struct EditProfileView: View {
                             if showError {
                                 Text(errorMessage)
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.95))
+                                    .foregroundStyle(Theme.Colors.ink(0.95))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 10)
                                     .frame(maxWidth: .infinity)
@@ -150,7 +147,7 @@ struct EditProfileView: View {
             ToolbarItem(placement: .principal) {
                 Text("auth.edit_profile.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
@@ -214,7 +211,7 @@ struct EditProfileView: View {
                     avatarView()
                         .frame(width: 112, height: 112)
                         .clipShape(Circle())
-                        .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                        .overlay(Circle().stroke(Theme.Colors.ink(0.15), lineWidth: 1))
                         .overlay(alignment: .bottomTrailing) {
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 13, weight: .semibold))
@@ -222,13 +219,13 @@ struct EditProfileView: View {
                                 .frame(width: 28, height: 28)
                                 .background(Theme.Colors.cardBackground)
                                 .clipShape(Circle())
-                                .overlay(Circle().stroke(Color.white.opacity(0.15), lineWidth: 1))
+                                .overlay(Circle().stroke(Theme.Colors.ink(0.15), lineWidth: 1))
                                 .offset(x: 2, y: 2)
                         }
 
                     if isLoadingImage {
                         ProgressView()
-                            .tint(.white.opacity(0.9))
+                            .tint(Theme.Colors.ink(0.9))
                     }
                 }
             }
@@ -237,12 +234,12 @@ struct EditProfileView: View {
 
             Text("auth.profile_photo.title")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -260,13 +257,13 @@ struct EditProfileView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("auth.fields.whatsapp_optional")
                     .font(.system(size: 14))
-                    .foregroundColor(textSecondary)
+                    .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
                 TextField("", text: Binding(
                     get: { BrazilianPhoneFormatter.format(whatsappDigits) },
                     set: { whatsappDigits = BrazilianPhoneFormatter.normalize($0) }
                 ))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .font(.system(size: 16))
                 .keyboardType(.phonePad)
                 .textInputAutocapitalization(.never)
@@ -274,7 +271,7 @@ struct EditProfileView: View {
                 .focused($phoneFieldFocused)
 
                 Rectangle()
-                    .fill(lineColor)
+                    .fill(AppThemeAdaptiveColor(lineColor))
                     .frame(height: 1)
 
                 // Indicador de validação (apenas quando há dígitos e está inválido)
@@ -309,7 +306,7 @@ struct EditProfileView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -328,7 +325,7 @@ struct EditProfileView: View {
                     HStack(spacing: 10) {
                         if isSaving {
                             ProgressView()
-                                .tint(.white.opacity(0.9))
+                                .tint(Theme.Colors.ink(0.9))
                         } else {
                             Image(systemName: "checkmark.circle.fill")
                         }
@@ -340,16 +337,16 @@ struct EditProfileView: View {
                         )
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     Spacer()
                 }
                 .padding(.vertical, 14)
-                .background(canSave ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10))
+                .background(AppThemeAdaptiveColor(canSave ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10)))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            canSave ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.12),
+                            AppThemeAdaptiveColor(canSave ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.12)),
                             lineWidth: 1
                         )
                 )
@@ -382,15 +379,15 @@ struct EditProfileView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+                .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             Text(value)
                 .font(.system(size: 16))
-                .foregroundColor(.white.opacity(0.45))
+                .foregroundStyle(Theme.Colors.ink(0.45))
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }
@@ -399,17 +396,17 @@ struct EditProfileView: View {
         VStack(alignment: .leading, spacing: 6) {
             Text("common.name")
                 .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+                .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             TextField("", text: $userName)
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .font(.system(size: 16))
                 .textContentType(.name)
                 .textInputAutocapitalization(.words)
                 .autocorrectionDisabled(false)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }
@@ -418,17 +415,17 @@ struct EditProfileView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("auth.fields.bio_optional")
                 .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+                .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             TextEditor(text: $bioDraft)
                 .frame(height: 88)
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.Colors.ink())
                 .font(.system(size: 16))
                 .background(Color.clear)
                 .scrollContentBackground(.hidden)
                 .overlay(
                     Rectangle()
-                        .fill(lineColor)
+                        .fill(AppThemeAdaptiveColor(lineColor))
                         .frame(height: 1),
                     alignment: .bottom
                 )
@@ -849,7 +846,7 @@ struct EditProfileView: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+                .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             Menu {
                 ForEach(options, id: \.rawValue) { opt in
@@ -860,13 +857,13 @@ struct EditProfileView: View {
             } label: {
                 HStack {
                     Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .font(.system(size: 16))
 
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, 10)
@@ -875,7 +872,7 @@ struct EditProfileView: View {
             .buttonStyle(.plain)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }

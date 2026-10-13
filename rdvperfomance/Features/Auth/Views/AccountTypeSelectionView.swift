@@ -19,10 +19,7 @@ struct AccountTypeSelectionView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -36,7 +33,7 @@ struct AccountTypeSelectionView: View {
 
                 Text("auth.account_type.prompt")
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 10)
                     .padding(.bottom, 22)
 
@@ -60,7 +57,7 @@ struct AccountTypeSelectionView: View {
 
                 Text("auth.account_type.change_note")
                     .font(.system(size: 13))
-                    .foregroundColor(textSecondary)
+                    .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
                     .padding(.top, 18)
 
                 Spacer()
@@ -88,7 +85,7 @@ struct AccountTypeSelectionView: View {
             ToolbarItem(placement: .principal) {
                 Text("auth.registration.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -109,19 +106,19 @@ struct AccountTypeSelectionView: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("teacher_authorization.title")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             Text("teacher_authorization.prompt")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
+                                .foregroundStyle(Theme.Colors.ink(0.75))
                                 .fixedSize(horizontal: false, vertical: true)
 
                             TextField("teacher_authorization.placeholder", text: $teacherCodeInput)
@@ -131,13 +128,13 @@ struct AccountTypeSelectionView: View {
                                 .font(.system(size: 16, weight: .semibold))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
-                                .background(Color.white.opacity(0.10))
+                                .background(Theme.Colors.ink(0.10))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                 )
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .disabled(isValidatingTeacherCode)
                                 .onSubmit { validateTeacherCode() }
 
@@ -153,7 +150,7 @@ struct AccountTypeSelectionView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -166,14 +163,14 @@ struct AccountTypeSelectionView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -259,18 +256,18 @@ struct AccountTypeSelectionView: View {
             VStack(spacing: 8) {
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Text(subtitle)
                     .font(.system(size: 14, weight: .regular))
-                    .foregroundColor(.white.opacity(0.65))
+                    .foregroundStyle(Theme.Colors.ink(0.65))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 14)
             }
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Color.black.opacity(0.68))
+                    .fill(Theme.Colors.glass(0.68))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)

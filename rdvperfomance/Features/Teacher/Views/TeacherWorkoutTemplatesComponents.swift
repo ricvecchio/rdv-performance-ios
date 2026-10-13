@@ -50,7 +50,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -127,13 +127,13 @@ struct TeacherWorkoutTemplateRow: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(presentation.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 let sub = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !sub.isEmpty {
                     Text(sub)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .lineLimit(2)
                 }
             }
@@ -156,7 +156,7 @@ struct TeacherWorkoutTemplateRow: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)
                         .contentShape(Rectangle())
@@ -165,11 +165,11 @@ struct TeacherWorkoutTemplateRow: View {
             }
 
             Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
-        .background(Color.white.opacity(0.001)) // ✅ Garante área de toque completa
+        .background(Theme.Colors.ink(0.001)) // ✅ Garante área de toque completa
     }
 }
 
@@ -179,7 +179,7 @@ struct TeacherWorkoutTemplatesLoadingView: View {
             ProgressView()
             Text("ui.loading")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -199,7 +199,7 @@ struct TeacherWorkoutTemplatesEmptyView: View {
                     : AppLocalization.string("ui.no_workout_registered", locale: locale)
             )
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Text(
                 isCrossfitCategory
@@ -207,7 +207,7 @@ struct TeacherWorkoutTemplatesEmptyView: View {
                     : AppLocalization.string("ui.create_templates_for_them_to_appear_here", locale: locale)
             )
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -229,20 +229,20 @@ struct TeacherWorkoutTemplatesMessageCard: View {
 
             Text(text)
                 .font(.system(size: usesApprovedCardStyle ? 14 : 13))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(usesApprovedCardStyle ? 0.68 : 0.35))
+        .background(Theme.Colors.glass(usesApprovedCardStyle ? 0.68 : 0.35))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
                     usesApprovedCardStyle
-                        ? Theme.Colors.primaryGreen.opacity(0.28)
-                        : Color.white.opacity(0.10),
+                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.28))
+                        : AnyShapeStyle(Theme.Colors.ink(0.10)),
                     lineWidth: 1
                 )
         )

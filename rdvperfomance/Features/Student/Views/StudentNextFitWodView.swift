@@ -6,14 +6,14 @@ private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.system(size: 15, weight: .semibold))
-            .foregroundColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
+            .foregroundStyle(AppThemeAdaptiveColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55)))
             .padding(.vertical, 9)
-            .background(isEnabled ? Color.red.opacity(0.20) : Color.white.opacity(0.10))
+            .background(AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.20) : Color.white.opacity(0.10)))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12),
+                        AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12)),
                         lineWidth: 1
                     )
             )
@@ -31,7 +31,7 @@ private struct NextFitCardStyle: ViewModifier {
         content
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.black.opacity(0.68))
+            .background(Theme.Colors.glass(0.68))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
@@ -68,10 +68,7 @@ struct StudentNextFitWodView: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Rectangle()
@@ -118,7 +115,7 @@ struct StudentNextFitWodView: View {
             ToolbarItem(placement: .principal) {
                 Text("dashboard.wod.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
@@ -131,7 +128,7 @@ struct StudentNextFitWodView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .onAppear {
             Task {
                 await viewModel.loadNextFit(locale: locale)
@@ -156,7 +153,7 @@ struct StudentNextFitWodView: View {
         } label: {
             Image(systemName: "rectangle.portrait.and.arrow.right")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -185,7 +182,7 @@ struct StudentNextFitWodView: View {
     private var nextFitContent: some View {
         if viewModel.isLoadingNextFitWod || !hasFinishedInitialNextFitLoad {
             ProgressView()
-                .tint(.white)
+                .tint(Theme.Colors.ink())
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
         } else if viewModel.needsNextFitAuthentication {
@@ -194,7 +191,7 @@ struct StudentNextFitWodView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text(error)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 Button {
                     Task { await viewModel.retryNextFitWod(locale: locale) }
@@ -316,7 +313,7 @@ struct StudentNextFitWodView: View {
         } label: {
             nextFitContentOptionLabel(option)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.Colors.ink())
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
@@ -336,7 +333,7 @@ struct StudentNextFitWodView: View {
                                         endPoint: .bottom
                                     )
                                 )
-                                : AnyShapeStyle(Color.black.opacity(0.68))
+                                : AnyShapeStyle(Theme.Colors.glass(0.68))
                         )
                 )
                 .overlay(
@@ -363,14 +360,14 @@ struct StudentNextFitWodView: View {
     private var nextFitSelectedDateWodContent: some View {
         if isLoadingSelectedDateWods {
             ProgressView()
-                .tint(.white)
+                .tint(Theme.Colors.ink())
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
         } else if !isTodayAgendaDateSelected, let error = viewModel.nextFitAgendaWodError {
             VStack(alignment: .leading, spacing: 14) {
                 Text(error)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 Button {
                     Task {
@@ -409,7 +406,7 @@ struct StudentNextFitWodView: View {
                 : LocalizedStringKey("dashboard.no_workout_scheduled")
         )
         .font(.system(size: 14))
-        .foregroundColor(.white.opacity(0.55))
+        .foregroundStyle(Theme.Colors.ink(0.55))
         .modifier(NextFitCardStyle())
     }
 
@@ -431,12 +428,12 @@ struct StudentNextFitWodView: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text("dashboard.wod.banner_title")
                     .font(.system(size: 21, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
 
                 if !unitName.isEmpty {
                     Text(verbatim: unitName)
                         .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.75))
+                        .foregroundStyle(Theme.Colors.ink(0.75))
                 }
             }
             .lineLimit(1)
@@ -451,7 +448,7 @@ struct StudentNextFitWodView: View {
                 .minimumScaleFactor(0.7)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color.black.opacity(0.6))
+                .background(Theme.Colors.glass(0.6))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
@@ -466,7 +463,7 @@ struct StudentNextFitWodView: View {
                     .resizable()
                     .scaledToFill()
 
-                LinearGradient(
+                AppThemeNeutralGradient(
                     colors: [
                         Color.black.opacity(0.92),
                         Color.black.opacity(0.6),
@@ -500,7 +497,7 @@ struct StudentNextFitWodView: View {
 
                 Text(activity.description)
                     .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -508,7 +505,7 @@ struct StudentNextFitWodView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             ZStack {
-                Color.black.opacity(0.68)
+                Theme.Colors.glass(0.68)
                 Theme.Colors.primaryGreen.opacity(0.05)
             }
         )
@@ -546,7 +543,7 @@ struct StudentNextFitWodView: View {
         VStack(alignment: .leading, spacing: 14) {
             if viewModel.isLoadingNextFitAgenda || viewModel.isLoadingNextFitAgendaDetail {
                 ProgressView()
-                    .tint(.white)
+                    .tint(Theme.Colors.ink())
             } else if let detail = viewModel.selectedNextFitAgendaDetail {
                 nextFitAgendaDetailContent(detail)
             } else if let error = viewModel.nextFitAgendaDetailError {
@@ -554,7 +551,7 @@ struct StudentNextFitWodView: View {
             } else if let error = viewModel.nextFitAgendaError {
                 Text(error)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 Button {
                     Task { await viewModel.selectNextFitAgendaDate(viewModel.selectedNextFitAgendaDate, locale: locale) }
@@ -567,7 +564,7 @@ struct StudentNextFitWodView: View {
             } else if viewModel.nextFitAgenda.isEmpty {
                 Text("dashboard.no_time_available_for_this_date")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 VStack(spacing: 10) {
                     ForEach(viewModel.nextFitAgenda) { entry in
@@ -624,7 +621,7 @@ struct StudentNextFitWodView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.white.opacity(0.06))
+                        .background(Theme.Colors.ink(0.06))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
@@ -684,7 +681,7 @@ struct StudentNextFitWodView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .monospacedDigit()
             }
-            .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85))
+            .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85)))
             .frame(minWidth: 58)
             .padding(.horizontal, 10)
             .padding(.vertical, 10)
@@ -692,8 +689,8 @@ struct StudentNextFitWodView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         isSelected
-                            ? Theme.Colors.primaryGreen.opacity(0.18)
-                            : Color.black.opacity(0.68)
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
                     )
             )
             .overlay(
@@ -757,23 +754,23 @@ struct StudentNextFitWodView: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.06))
+            .background(Theme.Colors.ink(0.06))
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
 
             Text("dashboard.participants")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             if detail.participants.isEmpty {
                 Text("dashboard.no_participant_at_this_time")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ForEach(detail.participants) { participant in
                     Text(participant.name)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                 }
             }
 
@@ -805,7 +802,7 @@ struct StudentNextFitWodView: View {
 
             Text(error)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Button {
                 Task { await viewModel.retryNextFitAgendaDetail(locale: locale) }
@@ -832,7 +829,7 @@ struct StudentNextFitWodView: View {
                 .frame(width: 18)
         }
         .font(font)
-        .foregroundColor(textColor)
+        .foregroundStyle(AppThemeAdaptiveColor(textColor))
     }
 
     @ViewBuilder

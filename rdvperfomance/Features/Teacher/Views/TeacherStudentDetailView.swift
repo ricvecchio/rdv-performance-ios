@@ -36,10 +36,7 @@ struct TeacherStudentDetailView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -104,7 +101,7 @@ struct TeacherStudentDetailView: View {
             ToolbarItem(placement: .principal) {
                 Text("common.student")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -139,11 +136,11 @@ struct TeacherStudentDetailView: View {
 
             Text("common.student")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Text(student.name)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white.opacity(0.95))
+                .foregroundStyle(Theme.Colors.ink(0.95))
 
             Divider()
                 .background(Theme.Colors.divider)
@@ -152,12 +149,12 @@ struct TeacherStudentDetailView: View {
                 HStack {
                     Text("ui.student_progress")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
 
                     Spacer()
 
                     if isLoadingProgress {
-                        ProgressView().tint(.white)
+                        ProgressView().tint(Theme.Colors.ink())
                     }
                 }
 
@@ -172,7 +169,7 @@ struct TeacherStudentDetailView: View {
                     )
                 )
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 ProgressView(value: progress)
                     .tint(.green.opacity(0.85))
@@ -183,7 +180,7 @@ struct TeacherStudentDetailView: View {
 
             Text("ui.workout_category")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Text(category.localizedDisplayName(locale: locale))
                 .font(.system(size: 18, weight: .semibold))
@@ -191,7 +188,7 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -204,7 +201,7 @@ struct TeacherStudentDetailView: View {
 
             Text("ui.actions")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             actionButton(title: AppLocalization.string("ui.workouts", locale: locale), icon: "calendar") {
                 openWorkouts()
@@ -240,7 +237,7 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -258,15 +255,15 @@ struct TeacherStudentDetailView: View {
                     .frame(width: 22, alignment: .center)
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
             }
             .padding(14)
             .background(
                 ZStack {
-                    Color.black.opacity(0.68)
+                    Theme.Colors.glass(0.68)
                     Theme.Colors.primaryGreen.opacity(0.05)
                 }
             )

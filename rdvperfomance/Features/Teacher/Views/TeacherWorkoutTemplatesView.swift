@@ -75,10 +75,7 @@ struct TeacherWorkoutTemplatesView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -105,7 +102,7 @@ struct TeacherWorkoutTemplatesView: View {
                                     )
                                 )
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
+                                    .foregroundStyle(Theme.Colors.ink(0.92))
                             }
 
                             if shouldShowAddButton {
@@ -187,7 +184,7 @@ struct TeacherWorkoutTemplatesView: View {
             ToolbarItem(placement: .principal) {
                 Text(sectionTitle)
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
             }
 
@@ -197,7 +194,7 @@ struct TeacherWorkoutTemplatesView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .task { await loadTemplates() }
         .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateUpdated)) { _ in
             Task { await loadTemplates() }

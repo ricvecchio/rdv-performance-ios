@@ -10,13 +10,51 @@ enum Theme {
         static let primaryGreen = Color(red: 0.18, green: 0.85, blue: 0.45)
 
         static let selected = primaryGreen
-        static let unselected = Color.white.opacity(0.7)
 
-        static let headerBackground = Color.black.opacity(0.70)
-        static let footerBackground = Color.black.opacity(0.75)
+        // As cores abaixo se adaptam ao tema do app.
+        // No Tema Escuro preservam exatamente os valores originais.
+        static let unselected = ink(0.7)
 
-        static let divider = Color.white.opacity(0.2)
-        static let cardBackground = Color.black.opacity(0.65)
+        static let headerBackground = AppThemeColor(
+            dark: Color.black.opacity(0.70),
+            light: Color.white.opacity(0.94)
+        )
+        static let footerBackground = AppThemeColor(
+            dark: Color.black.opacity(0.75),
+            light: Color.white.opacity(0.95)
+        )
+
+        static let divider = AppThemeColor(
+            dark: Color.white.opacity(0.2),
+            light: Color.black.opacity(0.12)
+        )
+        static let cardBackground = glass(0.65)
+
+        // Cor de texto principal do Tema Claro (cinza-escuro quase preto)
+        static let lightInk = AppThemePalette.lightInk
+
+        // Cor de fundo usada no cabeçalho nativo (UIKit) conforme o tema
+        static func headerBackgroundColor(for theme: AppTheme) -> Color {
+            theme == .light ? Color.white.opacity(0.94) : Color.black.opacity(0.70)
+        }
+
+        // "Tinta": textos, ícones, bordas e preenchimentos sutis.
+        // Escuro: Color.white.opacity(o) (valor original). Claro: cinza-escuro com contraste reforçado.
+        static func ink(_ opacity: Double = 1) -> AppThemeColor {
+            AppThemeColor(
+                dark: Color.white.opacity(opacity),
+                light: lightInk.opacity(AppThemePalette.lightOpacity(for: opacity))
+            )
+        }
+
+        // "Vidro": fundos de cards, campos e superfícies.
+        // Escuro: Color.black.opacity(o) (valor original). Claro: superfície branca.
+        static func glass(_ opacity: Double) -> AppThemeColor {
+            AppThemeColor(
+                dark: Color.black.opacity(opacity),
+                light: Color.white.opacity(AppThemePalette.lightOpacity(for: opacity))
+            )
+        }
     }
 
     // Dimensões e espaçamentos padronizados para layout

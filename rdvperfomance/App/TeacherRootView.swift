@@ -183,6 +183,8 @@ struct TeacherRootView: View {
             SettingsView(path: destinationPath)
         case .idioma:
             LanguageSettingsView()
+        case .tema:
+            ThemeSettingsView()
         case .editarPerfil:
             EditProfileView(path: destinationPath)
         case .alterarSenha:

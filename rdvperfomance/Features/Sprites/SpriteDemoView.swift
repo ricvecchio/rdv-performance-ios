@@ -23,10 +23,7 @@ struct SpriteDemoView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -43,7 +40,7 @@ struct SpriteDemoView: View {
 
                             Text("sprites.preview.description")
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.55))
+                                .foregroundStyle(Theme.Colors.ink(0.55))
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
                             previewCard()
@@ -96,7 +93,7 @@ struct SpriteDemoView: View {
             ToolbarItem(placement: .principal) {
                 Text("sprites.preview.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -115,7 +112,7 @@ struct SpriteDemoView: View {
             Color.clear.frame(height: 12)
 
             ZStack {
-                Color.white.opacity(0.06)
+                Theme.Colors.ink(0.06)
 
                 SpriteKitPreviewPanel(metrics: vm.metrics)
             }
@@ -124,14 +121,14 @@ struct SpriteDemoView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
             )
             .padding(.horizontal, 12)
 
             Color.clear.frame(height: 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)

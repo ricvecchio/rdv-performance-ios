@@ -30,10 +30,7 @@ struct AdminUsersView: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Image("rdv_fundo")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
+                AppThemeBackgroundImage()
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
@@ -52,7 +49,7 @@ struct AdminUsersView: View {
                 ToolbarItem(placement: .principal) {
                     Text("admin.users.toolbar_title")
                         .font(Theme.Fonts.headerTitle())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                 }
 
                 ToolbarItem(placement: .topBarTrailing) {
@@ -151,20 +148,20 @@ struct AdminUsersView: View {
                 } label: {
                     Text(filter.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
                         .background(
                             selectedFilter == filter
-                                ? Theme.Colors.primaryGreen.opacity(0.18)
-                                : Color.white.opacity(0.10)
+                                ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                                : AnyShapeStyle(Theme.Colors.ink(0.10))
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     selectedFilter == filter
-                                        ? Theme.Colors.primaryGreen.opacity(0.30)
-                                        : Color.white.opacity(0.12),
+                                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.30))
+                                        : AnyShapeStyle(Theme.Colors.ink(0.12)),
                                     lineWidth: 1
                                 )
                         )
@@ -179,12 +176,12 @@ struct AdminUsersView: View {
     private var content: some View {
         if viewModel.isLoading {
             ProgressView()
-                .tint(.white)
+                .tint(Theme.Colors.ink())
                 .padding(.vertical, 32)
         } else if let errorMessage = viewModel.errorMessage {
             Text(errorMessage)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.65))
+                .foregroundStyle(Theme.Colors.ink(0.65))
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(16)
                 .background(Theme.Colors.cardBackground)
@@ -192,7 +189,7 @@ struct AdminUsersView: View {
         } else if filteredUsers.isEmpty {
             Text("admin.users.empty")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
                 .background(Theme.Colors.cardBackground)
@@ -209,7 +206,7 @@ struct AdminUsersView: View {
                     }
                 }
             }
-            .background(Color.black.opacity(0.68))
+            .background(Theme.Colors.glass(0.68))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
@@ -261,7 +258,7 @@ struct AdminUsersView: View {
                         HStack(alignment: .center, spacing: 8) {
                             Text(user.name)
                                 .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .lineLimit(1)
                                 .truncationMode(.tail)
                                 .layoutPriority(1)
@@ -272,10 +269,10 @@ struct AdminUsersView: View {
                         }
                         Text(user.email)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                         Text(user.roleTitleKey)
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                         versionLine(user)
                     }
 
@@ -283,7 +280,7 @@ struct AdminUsersView: View {
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.35))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
                 }
             }
             .buttonStyle(.plain)
@@ -291,7 +288,7 @@ struct AdminUsersView: View {
             if user.id != session.currentUid {
                 if viewModel.updatingUserId != nil && viewModel.updatingUserId == user.id {
                     ProgressView()
-                        .tint(.white)
+                        .tint(Theme.Colors.ink())
                 } else {
                     // Ações da lixeira (mesmo padrão de Menu de "Cancelar convite"):
                     // desativar/reativar, excluir definitivamente, cancelar
@@ -358,13 +355,13 @@ struct AdminUsersView: View {
         guard let installed = AppVersion(installedRaw) else {
             return Text("admin.users.version.not_informed")
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.45))
+                .foregroundStyle(Theme.Colors.ink(0.45))
         }
 
         let format = AppLocalization.string("admin.users.version.value", locale: locale)
         let versionText = Text(verbatim: String(format: format, locale: locale, arguments: [installedRaw]))
-            .foregroundColor(.white.opacity(0.55))
-        let separator = Text(verbatim: " — ").foregroundColor(.white.opacity(0.55))
+            .foregroundStyle(Theme.Colors.ink(0.55))
+        let separator = Text(verbatim: " — ").foregroundStyle(Theme.Colors.ink(0.55))
 
         let statusText: Text
         if let reference = viewModel.versionReference {
@@ -372,7 +369,7 @@ struct AdminUsersView: View {
                 ? Text("admin.users.version.outdated").foregroundColor(Color.yellow.opacity(0.9))
                 : Text("admin.users.version.up_to_date").foregroundColor(Color.green.opacity(0.85))
         } else {
-            statusText = Text("admin.users.version.no_reference").foregroundColor(.white.opacity(0.45))
+            statusText = Text("admin.users.version.no_reference").foregroundStyle(Theme.Colors.ink(0.45))
         }
 
         return (versionText + separator + statusText)
@@ -423,10 +420,10 @@ private struct AdminStudentDetailView: View {
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(week.weekTitle)
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
                                     Text(weekRange(for: week))
                                         .font(.system(size: 13))
-                                        .foregroundColor(.white.opacity(0.55))
+                                        .foregroundStyle(Theme.Colors.ink(0.55))
                                 }
 
                                 Spacer(minLength: 0)
@@ -452,7 +449,7 @@ private struct AdminStudentDetailView: View {
         }
         .overlay {
             if viewModel.isLoading {
-                ProgressView().tint(.white)
+                ProgressView().tint(Theme.Colors.ink())
             }
         }
         .alert("common.error", isPresented: Binding(
@@ -506,7 +503,7 @@ private struct AdminTeacherDetailView: View {
         }
         .overlay {
             if viewModel.isLoading {
-                ProgressView().tint(.white)
+                ProgressView().tint(Theme.Colors.ink())
             }
         }
         .alert("common.error", isPresented: Binding(
@@ -526,10 +523,7 @@ private struct AdminDetailContainer<Content: View>: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
@@ -561,7 +555,7 @@ private struct AdminModeNotice: View {
                     .foregroundColor(.red.opacity(0.95))
                 Text("admin.detail.mode_description")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.72))
+                    .foregroundStyle(Theme.Colors.ink(0.72))
                     .fixedSize(horizontal: false, vertical: true)
             }
 
@@ -572,7 +566,7 @@ private struct AdminModeNotice: View {
         .padding(.vertical, 14)
         .background(
             ZStack {
-                Color.black.opacity(0.68)
+                Theme.Colors.glass(0.68)
                 Color.red.opacity(0.12)
             }
         )
@@ -604,11 +598,11 @@ private struct AdminUserSummary: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(user.name)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(2)
                     Text(user.email)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .lineLimit(1)
                         .truncationMode(.middle)
                     HStack(spacing: 6) {
@@ -617,7 +611,7 @@ private struct AdminUserSummary: View {
                             .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
                         Text(user.roleTitleKey)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.65))
+                            .foregroundStyle(Theme.Colors.ink(0.65))
                     }
                 }
 
@@ -680,7 +674,7 @@ private struct AdminStatusBadge: View {
                     : LocalizedStringKey("admin.users.status.inactive")
             )
             .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(.white.opacity(0.85))
+            .foregroundStyle(Theme.Colors.ink(0.85))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 6)
@@ -711,12 +705,12 @@ private struct AdminInfoTile: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
                 value
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
             }
@@ -725,10 +719,10 @@ private struct AdminInfoTile: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(12)
-        .background(Color.white.opacity(0.06))
+        .background(Theme.Colors.ink(0.06))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
@@ -773,14 +767,14 @@ private struct AdminDeviceCard: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.65))
+                .foregroundStyle(Theme.Colors.ink(0.65))
                 .lineLimit(1)
 
             Spacer(minLength: 8)
 
             value
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .multilineTextAlignment(.trailing)
@@ -848,7 +842,7 @@ private struct AdminCardSection<Content: View>: View {
                     .foregroundColor(Theme.Colors.primaryGreen.opacity(0.95))
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
             }
 
             content
@@ -870,11 +864,11 @@ private struct AdminLinkedUserCard: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(user.name)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(1)
                 Text(user.email)
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .lineLimit(1)
                     .truncationMode(.middle)
             }
@@ -890,7 +884,7 @@ private struct AdminLinkedUserCard: View {
 private extension View {
     func adminCardStyle() -> some View {
         self
-            .background(Color.black.opacity(0.68))
+            .background(Theme.Colors.glass(0.68))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
@@ -900,10 +894,10 @@ private extension View {
 
     func adminInnerListStyle() -> some View {
         self
-            .background(Color.white.opacity(0.06))
+            .background(Theme.Colors.ink(0.06))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
@@ -917,7 +911,7 @@ private struct AdminSection<Content: View>: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
             VStack(alignment: .leading, spacing: 0) {
                 content
             }
@@ -936,10 +930,10 @@ private struct AdminUserListRow: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(user.name)
                 .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
             Text(user.email)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 10)
@@ -952,7 +946,7 @@ private struct AdminEmptyRow: View {
     var body: some View {
         Text(title)
             .font(.system(size: 14))
-            .foregroundColor(.white.opacity(0.55))
+            .foregroundStyle(Theme.Colors.ink(0.55))
             .padding(.vertical, 14)
     }
 }

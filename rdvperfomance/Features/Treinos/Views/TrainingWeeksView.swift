@@ -89,10 +89,7 @@ struct TrainingWeeksView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -140,7 +137,7 @@ struct TrainingWeeksView: View {
             ToolbarItem(placement: .principal) {
                 Text("workout.workouts_this_week")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             // Avatar no cabeçalho mostrando foto do usuário
@@ -268,14 +265,14 @@ struct TrainingWeeksView: View {
         } label: {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 9)
                 .background(
                     selectedFilter == filter
-                        ? Theme.Colors.primaryGreen.opacity(0.18)
-                        : Color.black.opacity(0.68)
+                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                        : AnyShapeStyle(Theme.Colors.glass(0.68))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -400,7 +397,7 @@ struct TrainingWeeksView: View {
                 HStack(spacing: 8) {
                     Text(vm.subtitleForWeek(week, locale: locale))
                         .font(.system(size: 17, weight: .medium))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
 
@@ -428,7 +425,7 @@ struct TrainingWeeksView: View {
                 HStack(spacing: 8) {
                     Text(vm.teacherLineForWeek(week, locale: locale))
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .lineLimit(1)
 
                     Spacer(minLength: 4)
@@ -436,7 +433,7 @@ struct TrainingWeeksView: View {
                     if vm.isUpcoming(week) {
                         Label(LocalizedStringKey("workout.coming_soon"), systemImage: "clock.fill")
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                             .labelStyle(.titleAndIcon)
                             .lineLimit(1)
                     }
@@ -450,7 +447,7 @@ struct TrainingWeeksView: View {
                     )
                 )
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 ProgressView(value: progressValue)
                     .tint(Theme.Colors.primaryGreen)
@@ -461,14 +458,14 @@ struct TrainingWeeksView: View {
 
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                .foregroundStyle(AppThemeAdaptiveColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
                 .padding(.top, 14)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .contentShape(Rectangle())
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
@@ -487,7 +484,7 @@ struct TrainingWeeksView: View {
             VStack(spacing: 8) {
                 Text(message)
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .multilineTextAlignment(.center)
 
                 Button("dashboard.try_again_action") {
@@ -508,7 +505,7 @@ struct TrainingWeeksView: View {
             if days.isEmpty {
                 Text("workout.the_coach_has_not_added_days_for_this_week_yet")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16)
                     .padding(.vertical, 16)
@@ -582,12 +579,12 @@ struct TrainingWeeksView: View {
                 let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
                 Text(title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(1)
 
                 Text("workout.youtube")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .lineLimit(1)
             }
 
@@ -610,7 +607,7 @@ struct TrainingWeeksView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)
                         .contentShape(Rectangle())
@@ -653,7 +650,7 @@ struct TrainingWeeksView: View {
                 openLockedPlayer(for: day, videoId: videoId)
             } label: {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
             }
             .buttonStyle(.plain)
         }
@@ -766,40 +763,40 @@ struct TrainingWeeksView: View {
                 switch phase {
                 case .empty:
                     ZStack {
-                        Color.white.opacity(0.06)
-                        ProgressView().tint(.white.opacity(0.8))
+                        Theme.Colors.ink(0.06)
+                        ProgressView().tint(Theme.Colors.ink(0.8))
                     }
                 case .success(let image):
                     image.resizable().scaledToFill()
                 case .failure:
                     ZStack {
-                        Color.white.opacity(0.06)
+                        Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
                             .foregroundColor(.green.opacity(0.85))
                     }
                 @unknown default:
-                    Color.white.opacity(0.06)
+                    Theme.Colors.ink(0.06)
                 }
             }
             .frame(width: 66, height: 40)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
             )
 
             ZStack {
                 Circle()
-                    .fill(Color.black.opacity(0.45))
+                    .fill(Theme.Colors.glass(0.45))
                 Image(systemName: "play.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white.opacity(0.95))
+                    .foregroundStyle(Theme.Colors.ink(0.95))
                     .padding(.leading, 1)
             }
             .frame(width: 18, height: 18)
             .overlay(
                 Circle()
-                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.18), lineWidth: 1)
             )
             .padding(6)
         }
@@ -836,7 +833,7 @@ struct TrainingWeeksView: View {
 
                     Text(trainingDateSubtitle(for: group.date, fallback: fallback))
                         .font(.system(size: 17, weight: isExpanded ? .semibold : .medium))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
 
@@ -846,12 +843,12 @@ struct TrainingWeeksView: View {
 
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35))
+                        .foregroundStyle(AppThemeAdaptiveColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .contentShape(Rectangle())
-                .background(isExpanded ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.54))
+                .background(AppThemeAdaptiveColor(isExpanded ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.54)))
             }
             .buttonStyle(.plain)
 
@@ -862,12 +859,12 @@ struct TrainingWeeksView: View {
                     }
                 }
                 .padding(10)
-                .background(Color.black.opacity(0.40))
+                .background(Theme.Colors.glass(0.40))
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -900,10 +897,10 @@ struct TrainingWeeksView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(DefaultWorkoutLocalization.presentation(for: day, locale: locale).title)
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                         Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.35))
+                            .foregroundStyle(Theme.Colors.ink(0.35))
                     }
 
                     Spacer()
@@ -929,7 +926,7 @@ struct TrainingWeeksView: View {
                             .fill(isCompleted ? Theme.Colors.primaryGreen : .clear)
                         Circle()
                             .stroke(
-                                isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35),
+                                AppThemeAdaptiveColor(isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)),
                                 lineWidth: 1.5
                             )
                         if isCompleted {
@@ -944,7 +941,7 @@ struct TrainingWeeksView: View {
             }
         }
         .padding(12)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -1063,7 +1060,7 @@ struct TrainingWeeksView: View {
             ProgressView()
             Text("workout.loading_weeks")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -1073,11 +1070,11 @@ struct TrainingWeeksView: View {
         VStack(spacing: 10) {
             Text("workout.oops_unable_to_load")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Text(message)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
 
             Button {
@@ -1104,11 +1101,11 @@ struct TrainingWeeksView: View {
         VStack(spacing: 10) {
             Text("workout.no_week_registered")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Text("workout.the_coach_has_not_published_workouts_for_this_student_yet")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -1129,11 +1126,11 @@ struct TrainingWeeksView: View {
         return VStack(spacing: 10) {
             Text(content.title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Text(content.message)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)

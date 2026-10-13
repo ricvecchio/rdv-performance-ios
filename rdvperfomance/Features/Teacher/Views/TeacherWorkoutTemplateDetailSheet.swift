@@ -35,10 +35,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         NavigationStack {
             ZStack {
 
-                Image("rdv_fundo")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
+                AppThemeBackgroundImage()
 
                 VStack(spacing: 0) {
 
@@ -104,7 +101,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                                 Task { await saveBlocks() }
                             } label: {
                                 if isSaving {
-                                    ProgressView().tint(.white)
+                                    ProgressView().tint(Theme.Colors.ink())
                                 } else {
                                     Text("common.save")
                                 }
@@ -124,7 +121,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
             }
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .appThemeNavigationBarColorScheme()
             .background(NavigationBarNoHairline())
             .onAppear {
                 resetDraftFromTemplate()
@@ -133,7 +130,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
             // ✅ Ajuste solicitado anteriormente: contorno do modal mais aparente (principalmente no cabeçalho)
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.20), lineWidth: 1.25)
+                    .stroke(Theme.Colors.ink(0.20), lineWidth: 1.25)
                     .allowsHitTesting(false)
             )
         }
@@ -143,13 +140,13 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(presentation.title)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             let desc = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
             if !desc.isEmpty {
                 Text(desc)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.70))
+                    .foregroundStyle(Theme.Colors.ink(0.70))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,17 +161,17 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(b.name.isEmpty ? AppLocalization.string("ui.block", locale: locale) : b.displayedName(locale: locale))
                                 .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.85))
+                                .foregroundStyle(Theme.Colors.ink(0.85))
 
                             Text(b.details)
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.70))
+                                .foregroundStyle(Theme.Colors.ink(0.70))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.black.opacity(0.68))
+                        .background(Theme.Colors.glass(0.68))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
@@ -186,11 +183,11 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("ui.no_blocks_registered")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
 
                     Text("ui.this_wod_does_not_yet_have_warm_up_technique_wod_blocks")
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
                 .padding(.vertical, 16)
             }
@@ -213,7 +210,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -225,18 +222,18 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundStyle(Theme.Colors.ink(0.85))
 
             TextEditor(text: text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .frame(minHeight: 110)
                 .scrollContentBackground(.hidden)
-                .background(Color.white.opacity(0.06))
+                .background(Theme.Colors.ink(0.06))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
         }
         .frame(maxWidth: .infinity, alignment: .leading)

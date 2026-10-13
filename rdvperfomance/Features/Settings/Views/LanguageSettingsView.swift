@@ -38,10 +38,7 @@ struct LanguageSettingsView: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Rectangle()
@@ -89,12 +86,12 @@ struct LanguageSettingsView: View {
             ToolbarItem(placement: .principal) {
                 Text("settings.language.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -112,7 +109,7 @@ struct LanguageSettingsView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -133,13 +130,17 @@ struct LanguageSettingsView: View {
 
                 Text(language.localizedName)
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Spacer()
 
                 Image(systemName: selectedAppLanguage == language.rawValue ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
-                    .foregroundColor(selectedAppLanguage == language.rawValue ? .green : .white.opacity(0.35))
+                    .foregroundStyle(
+                        selectedAppLanguage == language.rawValue
+                            ? AnyShapeStyle(Color.green)
+                            : AnyShapeStyle(Theme.Colors.ink(0.35))
+                    )
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)

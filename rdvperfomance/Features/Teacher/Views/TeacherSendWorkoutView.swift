@@ -20,16 +20,16 @@ private struct WorkoutPickerLabel: View {
         HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundColor(.white.opacity(0.92))
+            .foregroundStyle(Theme.Colors.ink(0.92))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25))
+                .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -245,10 +245,7 @@ struct TeacherSendWorkoutView: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Rectangle()
@@ -296,7 +293,7 @@ struct TeacherSendWorkoutView: View {
                 if step != .day {
                     Text("ui.send_workout")
                         .font(Theme.Fonts.headerTitle())
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .lineLimit(1)
                 }
             }
@@ -307,7 +304,7 @@ struct TeacherSendWorkoutView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .task { await bootstrap() }
         .sheet(isPresented: $isWorkoutSelectorPresented, onDismiss: closeWorkoutSelector) {
             if let selectingWorkoutCategory {
@@ -360,15 +357,15 @@ struct TeacherSendWorkoutView: View {
         VStack(spacing: 4) {
             ZStack {
                 Circle()
-                    .fill((isActive || isComplete) ? Color.green.opacity(0.18) : Color.white.opacity(0.10))
+                    .fill(AppThemeAdaptiveColor((isActive || isComplete) ? Color.green.opacity(0.18) : Color.white.opacity(0.10)))
                     .frame(width: 26, height: 26)
                 Text("\(number)")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor((isActive || isComplete) ? .green : .white.opacity(0.55))
+                    .foregroundStyle(AppThemeAdaptiveColor((isActive || isComplete) ? .green : .white.opacity(0.55)))
             }
             title.view()
                 .font(.system(size: 11, weight: .medium))
-            .foregroundColor((isActive || isComplete) ? .white.opacity(0.92) : .white.opacity(0.55))
+            .foregroundStyle(AppThemeAdaptiveColor((isActive || isComplete) ? .white.opacity(0.92) : .white.opacity(0.55)))
         }
     }
 
@@ -524,7 +521,7 @@ struct TeacherSendWorkoutView: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
                 .padding(.horizontal, 6)
@@ -532,8 +529,8 @@ struct TeacherSendWorkoutView: View {
                 .frame(maxWidth: .infinity)
                 .background(
                     isSelected
-                        ? Theme.Colors.primaryGreen.opacity(0.18)
-                        : Color.black.opacity(0.68)
+                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                        : AnyShapeStyle(Theme.Colors.glass(0.68))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
@@ -561,12 +558,12 @@ struct TeacherSendWorkoutView: View {
                 } else {
                     Text("ui.select_all")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.75))
+                        .foregroundStyle(Theme.Colors.ink(0.75))
                 }
 
                 Image(systemName: areAllVisibleStudentsSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
-                    .foregroundColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55))
+                    .foregroundStyle(AppThemeAdaptiveColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55)))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -578,14 +575,14 @@ struct TeacherSendWorkoutView: View {
     private var studentSearchField: some View {
         HStack(spacing: 8) {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
             TextField("ui.search_student", text: $searchText)
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .tint(.green)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
@@ -627,7 +624,7 @@ struct TeacherSendWorkoutView: View {
                 }
             }
         }
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -648,7 +645,7 @@ struct TeacherSendWorkoutView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(student.name)
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                 Text(
                     String(
                         format: AppLocalization.string("ui.category_value", locale: locale),
@@ -657,14 +654,14 @@ struct TeacherSendWorkoutView: View {
                     )
                 )
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
 
             Spacer()
 
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundColor(selectionColor)
+                .foregroundStyle(AppThemeAdaptiveColor(selectionColor))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -680,7 +677,7 @@ struct TeacherSendWorkoutView: View {
                 ForEach(selectedStudents) { student in
                     Text(student.name)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -688,7 +685,7 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -702,7 +699,7 @@ struct TeacherSendWorkoutView: View {
             templateSectionTitle
 
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(Theme.Colors.ink(0.08))
                 .frame(height: 1)
 
             templatePicker(category: .crossfit, title: "video.category.crossfit")
@@ -712,7 +709,7 @@ struct TeacherSendWorkoutView: View {
             templatePicker(category: .emCasa, title: "ui.home_workouts")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -723,7 +720,7 @@ struct TeacherSendWorkoutView: View {
     private var templateSectionTitle: some View {
         Text("ui.select_workout")
             .font(.system(size: 14, weight: .bold))
-            .foregroundColor(.white.opacity(0.55))
+            .foregroundStyle(Theme.Colors.ink(0.55))
             .padding(.horizontal, 14)
             .padding(.vertical, 12)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -745,7 +742,7 @@ struct TeacherSendWorkoutView: View {
 
     private var templatePickerDivider: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.08))
+            .fill(Theme.Colors.ink(0.08))
             .frame(height: 1)
             .padding(.leading, 14)
             .padding(.vertical, 4)
@@ -759,7 +756,7 @@ struct TeacherSendWorkoutView: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
     }
 
@@ -793,16 +790,16 @@ struct TeacherSendWorkoutView: View {
         HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundColor(.white.opacity(0.92))
+            .foregroundStyle(Theme.Colors.ink(0.92))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25))
+                .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68))
+        .background(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68)))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -874,7 +871,7 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -892,17 +889,17 @@ struct TeacherSendWorkoutView: View {
 
                     Text("ui.selected_video")
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
 
                 Text(selectedVideoTitle)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 if !selectedVideoURL.isEmpty {
                     Text(selectedVideoURL)
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .lineLimit(1)
                 }
             }
@@ -915,7 +912,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
         )
     }
 
@@ -931,12 +928,12 @@ struct TeacherSendWorkoutView: View {
 
                 Text(category.localizedDisplayName(locale: locale))
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
 
             Text(template.title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
         }
     }
 
@@ -975,7 +972,7 @@ struct TeacherSendWorkoutView: View {
                     }
                 }
             }
-            .background(Color.black.opacity(0.68))
+            .background(Theme.Colors.glass(0.68))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
@@ -986,7 +983,7 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -998,9 +995,9 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 6) {
             ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { (period: DaySelectionPeriod) in
                 let isSelected: Bool = daySelectionPeriod == period
-                let backgroundColor: Color = isSelected
-                    ? Theme.Colors.primaryGreen.opacity(0.18)
-                    : Color.black.opacity(0.68)
+                let backgroundColor: AnyShapeStyle = isSelected
+                    ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                    : AnyShapeStyle(Theme.Colors.glass(0.68))
                 let borderColor: Color = isSelected
                     ? Theme.Colors.primaryGreen.opacity(0.30)
                     : Theme.Colors.primaryGreen.opacity(0.28)
@@ -1010,7 +1007,7 @@ struct TeacherSendWorkoutView: View {
                 } label: {
                     Text(period.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                         .padding(.horizontal, 6)
@@ -1036,7 +1033,7 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(futureWeekOffset == 0 ? .white.opacity(0.25) : Theme.Colors.primaryGreen)
+                    .foregroundStyle(AppThemeAdaptiveColor(futureWeekOffset == 0 ? .white.opacity(0.25) : Theme.Colors.primaryGreen))
                     .frame(width: 32, height: 28)
             }
             .buttonStyle(.plain)
@@ -1054,7 +1051,7 @@ struct TeacherSendWorkoutView: View {
                     )
                 )
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
 
             Spacer()
@@ -1080,14 +1077,14 @@ struct TeacherSendWorkoutView: View {
         return HStack(spacing: 12) {
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundColor(selectionColor)
+                .foregroundStyle(AppThemeAdaptiveColor(selectionColor))
             Text(weekdayTitle(for: day.date))
                 .font(.system(size: 17, weight: .medium))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
             Spacer()
             Text(dateTitle(for: day.date))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -1125,7 +1122,7 @@ struct TeacherSendWorkoutView: View {
         HStack {
             Spacer()
             if isSending {
-                ProgressView().tint(.white)
+                ProgressView().tint(Theme.Colors.ink())
             } else {
                 Text("ui.send_workout")
             }
@@ -1137,13 +1134,13 @@ struct TeacherSendWorkoutView: View {
     private func sectionTitle(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.system(size: 17, weight: .semibold))
-            .foregroundColor(.white.opacity(0.92))
+            .foregroundStyle(Theme.Colors.ink(0.92))
     }
 
     private func cardSectionTitle(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.system(size: 14, weight: .medium))
-            .foregroundColor(.white.opacity(0.35))
+            .foregroundStyle(Theme.Colors.ink(0.35))
             .padding(.horizontal, 16)
             .padding(.top, 14)
             .padding(.bottom, 18)
@@ -1166,7 +1163,7 @@ struct TeacherSendWorkoutView: View {
             ProgressView()
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .padding(.vertical, 10)
     }
@@ -1176,7 +1173,7 @@ struct TeacherSendWorkoutView: View {
     ) -> some View {
         title.view()
         .font(.system(size: 14))
-        .foregroundColor(.white.opacity(0.55))
+        .foregroundStyle(Theme.Colors.ink(0.55))
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 10)
     }
@@ -1395,17 +1392,17 @@ struct TeacherSendWorkoutView: View {
 
             Text(text)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Theme.Colors.glass(0.35))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
         )
     }
 
@@ -1486,7 +1483,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
             VStack(spacing: 0) {
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .frame(maxWidth: .infinity)
                     .padding(.top, 10)
@@ -1499,7 +1496,7 @@ private struct WorkoutTemplateSelectionSheet: View {
                     )
                 )
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .padding(.top, 4)
 
@@ -1529,7 +1526,7 @@ private struct WorkoutTemplateSelectionSheet: View {
                 bottomActions
             }
         }
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .onAppear {
             pendingSelectedTemplate = templates.first { $0.id == selectedTemplateID }
             if let selectedSectionKey {
@@ -1553,7 +1550,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 13, weight: .semibold))
-            .foregroundColor(.white.opacity(0.75))
+            .foregroundStyle(Theme.Colors.ink(0.75))
             content()
         }
     }
@@ -1610,7 +1607,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -1625,13 +1622,13 @@ private struct WorkoutTemplateSelectionSheet: View {
                 ProgressView()
                 Text("ui.loading_workouts")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
             .padding(.vertical, 14)
         } else if sectionTemplates.isEmpty {
             Text("ui.no_workout_registered_2")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .padding(.vertical, 14)
         } else {
             VStack(spacing: 0) {
@@ -1654,7 +1651,7 @@ private struct WorkoutTemplateSelectionSheet: View {
             }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
-            .background(Color.black.opacity(0.68))
+            .background(Theme.Colors.glass(0.68))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
@@ -1743,12 +1740,12 @@ private struct WorkoutTemplateSelectionSheet: View {
         HStack(spacing: 12) {
             Text(title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Spacer()
 
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.25))
+                .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.25)))
                 .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
         }
         .padding(.horizontal, 14)
@@ -1758,7 +1755,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
     private var selectionDivider: some View {
         Rectangle()
-            .fill(Color.white.opacity(0.08))
+            .fill(Theme.Colors.ink(0.08))
             .frame(height: 1)
             .padding(.leading, 14)
     }
@@ -1770,10 +1767,10 @@ private struct WorkoutTemplateSelectionSheet: View {
             } label: {
                 Text("common.cancel")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.ink(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.black.opacity(0.68))
+                    .background(Theme.Colors.glass(0.68))
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)

@@ -97,6 +97,7 @@ enum AppRoute: Hashable {
     case perfil
     case configuracoes
     case idioma
+    case tema
     case editarPerfil
     case alterarSenha
     case excluirConta

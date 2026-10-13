@@ -165,10 +165,7 @@ struct TrainingDayDetailView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -233,7 +230,7 @@ struct TrainingDayDetailView: View {
             ToolbarItem(placement: .principal) {
                 Text(trainingDateTitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -253,7 +250,7 @@ struct TrainingDayDetailView: View {
                         }
                     } label: {
                         Image(systemName: "ellipsis")
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
@@ -343,18 +340,18 @@ struct TrainingDayDetailView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(presentation.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 if let dateText = formattedDate(day.date) {
                     Text(dateText)
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundStyle(Theme.Colors.ink(0.45))
                 }
 
                 if !presentation.description.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(presentation.description)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.65))
+                        .foregroundStyle(Theme.Colors.ink(0.65))
                         .fixedSize(horizontal: false, vertical: true)
                 }
             }
@@ -362,7 +359,7 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -378,7 +375,7 @@ struct TrainingDayDetailView: View {
 
             Text("workout_day_detail.calculation_by_pr_barbell")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             VStack(spacing: 10) {
 
@@ -396,24 +393,24 @@ struct TrainingDayDetailView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("personal_records.movement")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.white.opacity(0.55))
+                                .foregroundStyle(Theme.Colors.ink(0.55))
 
                             Text(selectedMovementName ?? AppLocalization.string("workout_day_detail.select", locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .lineLimit(1)
                         }
 
                         Spacer(minLength: 6)
 
                         Image(systemName: "chevron.right")
-                            .foregroundColor(.white.opacity(0.35))
+                            .foregroundStyle(Theme.Colors.ink(0.35))
                             .font(.system(size: 12, weight: .semibold))
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .frame(maxWidth: .infinity)
-                    .background(Color.white.opacity(0.03))
+                    .background(Theme.Colors.ink(0.03))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -436,7 +433,7 @@ struct TrainingDayDetailView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("%")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.white.opacity(0.55))
+                                .foregroundStyle(Theme.Colors.ink(0.55))
 
                             TextField("workout_day_detail.e_g_50", text: $percentText)
                                 .keyboardType(.decimalPad)
@@ -444,7 +441,7 @@ struct TrainingDayDetailView: View {
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                         }
 
                         Spacer(minLength: 0)
@@ -452,7 +449,7 @@ struct TrainingDayDetailView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .frame(width: 120)
-                    .background(Color.white.opacity(0.03))
+                    .background(Theme.Colors.ink(0.03))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -470,11 +467,11 @@ struct TrainingDayDetailView: View {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("workout_day_detail.weight")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.white.opacity(0.55))
+                                .foregroundStyle(Theme.Colors.ink(0.55))
 
                             Text(calculatedWeightText())
                                 .font(.system(size: 14, weight: .bold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .lineLimit(1)
                                 .minimumScaleFactor(0.85)
                         }
@@ -484,7 +481,7 @@ struct TrainingDayDetailView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .frame(maxWidth: .infinity)
-                    .background(Color.white.opacity(0.03))
+                    .background(Theme.Colors.ink(0.03))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -495,12 +492,12 @@ struct TrainingDayDetailView: View {
 
             Text("workout_day_detail.data_is_saved_automatically_for_this_day")
                 .font(.system(size: 12))
-                .foregroundColor(.white.opacity(0.45))
+                .foregroundStyle(Theme.Colors.ink(0.45))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -516,13 +513,13 @@ struct TrainingDayDetailView: View {
             VStack(spacing: 14) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text("workout_day_detail.select_movement")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 ScrollView(showsIndicators: false) {
@@ -543,7 +540,7 @@ struct TrainingDayDetailView: View {
 
                                     Text(move.name)
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
                                         .lineLimit(1)
 
                                     Spacer()
@@ -553,7 +550,7 @@ struct TrainingDayDetailView: View {
                                             .foregroundColor(.green.opacity(0.90))
                                     } else {
                                         Image(systemName: "circle")
-                                            .foregroundColor(.white.opacity(0.18))
+                                            .foregroundStyle(Theme.Colors.ink(0.18))
                                     }
                                 }
                                 .padding(.horizontal, 14)
@@ -564,7 +561,7 @@ struct TrainingDayDetailView: View {
 
                             if idx < barbellMoves.count - 1 {
                                 Rectangle()
-                                    .fill(Color.white.opacity(0.08))
+                                    .fill(Theme.Colors.ink(0.08))
                                     .frame(height: 1)
                                     .padding(.leading, 14)
                             }
@@ -574,7 +571,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                     )
                     .padding(.horizontal, 16)
                     .padding(.top, 6)
@@ -586,14 +583,14 @@ struct TrainingDayDetailView: View {
                 } label: {
                     Text("common.close")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.ink(0.85))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Color.white.opacity(0.10))
+                        .background(Theme.Colors.ink(0.10))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                 }
@@ -715,7 +712,7 @@ struct TrainingDayDetailView: View {
 
             Text("workout.videos")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             VStack(spacing: 0) {
                 ForEach(Array(videoItems.enumerated()), id: \.offset) { idx, item in
@@ -731,7 +728,7 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -770,12 +767,12 @@ struct TrainingDayDetailView: View {
                         : titleTrim
                 )
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(1)
 
                 Text("workout.youtube")
                     .font(.system(size: 12))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .lineLimit(1)
             }
 
@@ -790,7 +787,7 @@ struct TrainingDayDetailView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
@@ -801,7 +798,7 @@ struct TrainingDayDetailView: View {
                 openLockedPlayer(item: item)
             } label: {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
             }
             .buttonStyle(.plain)
         }
@@ -820,40 +817,40 @@ struct TrainingDayDetailView: View {
                 switch phase {
                 case .empty:
                     ZStack {
-                        Color.white.opacity(0.06)
-                        ProgressView().tint(.white.opacity(0.8))
+                        Theme.Colors.ink(0.06)
+                        ProgressView().tint(Theme.Colors.ink(0.8))
                     }
                 case .success(let img):
                     img.resizable().scaledToFill()
                 case .failure:
                     ZStack {
-                        Color.white.opacity(0.06)
+                        Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
                             .foregroundColor(.green.opacity(0.85))
                     }
                 @unknown default:
-                    Color.white.opacity(0.06)
+                    Theme.Colors.ink(0.06)
                 }
             }
             .frame(width: 66, height: 40)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
             )
 
             ZStack {
                 Circle()
-                    .fill(Color.black.opacity(0.45))
+                    .fill(Theme.Colors.glass(0.45))
                 Image(systemName: "play.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white.opacity(0.95))
+                    .foregroundStyle(Theme.Colors.ink(0.95))
                     .padding(.leading, 1)
             }
             .frame(width: 18, height: 18)
             .overlay(
                 Circle()
-                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.18), lineWidth: 1)
             )
             .padding(6)
         }
@@ -906,7 +903,7 @@ struct TrainingDayDetailView: View {
             if nonVideoBlocks.isEmpty && videoItems.isEmpty {
                 Text("workout_day_detail.no_block_registered")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else if nonVideoBlocks.isEmpty {
                 // ✅ Se só existem vídeos, não exibe mensagem "nenhum bloco"
                 EmptyView()
@@ -917,13 +914,13 @@ struct TrainingDayDetailView: View {
 
                             Text(displayedBlockName(block))
                                 .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .frame(maxWidth: .infinity, alignment: .leading)
 
                             if !block.details.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                                 Text(block.details)
                                     .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.65))
+                                    .foregroundStyle(Theme.Colors.ink(0.65))
                                     .fixedSize(horizontal: false, vertical: true)
                                     .frame(maxWidth: .infinity, alignment: .leading)
                             }
@@ -941,7 +938,7 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -956,16 +953,16 @@ struct TrainingDayDetailView: View {
                 .foregroundColor(.yellow.opacity(0.85))
             Text(text)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Theme.Colors.glass(0.35))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
         )
     }
 
@@ -994,13 +991,13 @@ struct TrainingDayDetailView: View {
     // Sheet de edição com campos e botões de ação
     private var editDaySheet: some View {
         ZStack {
-            Color.black.opacity(0.92).ignoresSafeArea()
+            Theme.Colors.glass(0.92).ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 14) {
 
                 Text("workout_day_detail.edit_training_day")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 UnderlineTextField(
                     title: "workout_day_detail.title_field",
@@ -1034,10 +1031,10 @@ struct TrainingDayDetailView: View {
                     Button { showEditSheet = false } label: {
                         Text("common.cancel")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.90))
+                            .foregroundStyle(Theme.Colors.ink(0.90))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 10)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(12)
                     }
                     .buttonStyle(.plain)
@@ -1045,7 +1042,7 @@ struct TrainingDayDetailView: View {
 
                     Button { Task { await saveDayEdits() } } label: {
                         HStack(spacing: 10) {
-                            if isSaving { ProgressView().tint(.white) }
+                            if isSaving { ProgressView().tint(Theme.Colors.ink()) }
                             Text("common.save")
                         }
                         .padding(.horizontal, 14)
@@ -1070,12 +1067,12 @@ struct TrainingDayDetailView: View {
 
             Text("workout_day_detail.blocks")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             if editBlocks.isEmpty {
                 Text("workout_day_detail.no_block_registered_for_this_day")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
@@ -1084,21 +1081,21 @@ struct TrainingDayDetailView: View {
 
                                 Text(displayedBlockName(editBlocks[i]))
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.92))
+                                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                                 TextEditor(text: Binding(
                                     get: { editBlocks[i].details },
                                     set: { editBlocks[i].details = $0 }
                                 ))
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.85))
+                                .foregroundStyle(Theme.Colors.ink(0.85))
                                 .scrollContentBackground(.hidden)
-                                .background(Color.white.opacity(0.06))
+                                .background(Theme.Colors.ink(0.06))
                                 .cornerRadius(10)
                                 .frame(minHeight: 70)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                 )
                             }
                         }

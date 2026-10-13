@@ -12,10 +12,7 @@ struct TeacherMyWorkoutsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -126,7 +123,7 @@ struct TeacherMyWorkoutsView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.workout_library")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -158,7 +155,7 @@ struct TeacherMyWorkoutsView: View {
         }
         .buttonStyle(.plain)
         .frame(height: height)
-        .background(Color.black.opacity(0.76))
+        .background(Theme.Colors.glass(0.76))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
@@ -217,7 +214,7 @@ struct TeacherMyWorkoutsView: View {
 
             Text(text)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.95))
+                .foregroundStyle(Theme.Colors.ink(0.95))
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
 
@@ -235,7 +232,7 @@ struct TeacherMyWorkoutsView: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.88))
+        .background(Theme.Colors.glass(0.88))
     }
 
     private func pop() {

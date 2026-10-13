@@ -80,10 +80,7 @@ struct TeacherImportWorkoutsView: View {
     
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
             
             VStack(spacing: 0) {
                 Rectangle()
@@ -166,7 +163,7 @@ struct TeacherImportWorkoutsView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.import_workouts")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
             }
             
@@ -176,7 +173,7 @@ struct TeacherImportWorkoutsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .task { await loadWorkouts() }
         .sheet(isPresented: $isAddSheetPresented) {
             TeacherAddWorkoutSheet { title in
@@ -243,7 +240,7 @@ struct TeacherImportWorkoutsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ui.import_workouts_through_a_spreadsheet_to_add_them_automatically")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -296,7 +293,7 @@ struct TeacherImportWorkoutsView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -332,12 +329,12 @@ struct TeacherImportWorkoutsView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(w.title.isEmpty ? AppLocalization.string("ui.workout", locale: locale) : w.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(1)
                 
                 Text("ui.imported_via_excel")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .lineLimit(1)
             }
             
@@ -358,7 +355,7 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
@@ -366,7 +363,7 @@ struct TeacherImportWorkoutsView: View {
             .buttonStyle(.plain)
             
             Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
@@ -377,7 +374,7 @@ struct TeacherImportWorkoutsView: View {
             ProgressView()
             Text("ui.loading")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -387,11 +384,11 @@ struct TeacherImportWorkoutsView: View {
         VStack(spacing: 10) {
             Text("ui.no_workout_registered")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
             
             Text("ui.tap_import_excel_to_add_workouts")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -406,17 +403,17 @@ struct TeacherImportWorkoutsView: View {
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
         )
     }
     

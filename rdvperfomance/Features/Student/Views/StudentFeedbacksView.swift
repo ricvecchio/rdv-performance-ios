@@ -24,10 +24,7 @@ struct StudentFeedbacksView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -95,7 +92,7 @@ struct StudentFeedbacksView: View {
             ToolbarItem(placement: .principal) {
                 Text("student_feedbacks.feedbacks")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItemGroup(placement: .topBarTrailing) {
@@ -120,19 +117,19 @@ struct StudentFeedbacksView: View {
             HStack {
                 Text("student_feedbacks.history")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
 
                 Spacer()
 
                 if isLoading {
-                    ProgressView().tint(.white)
+                    ProgressView().tint(Theme.Colors.ink())
                 }
             }
 
             if feedbacks.isEmpty {
                 Text("student_feedbacks.no_feedback_received_yet")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(feedbacks.enumerated()), id: \.offset) { idx, fb in
@@ -150,7 +147,7 @@ struct StudentFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -168,7 +165,7 @@ struct StudentFeedbacksView: View {
 
                     Text(formatDate(date))
                         .font(.system(size: 11, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundStyle(Theme.Colors.ink(0.45))
                         .multilineTextAlignment(.center)
                 }
                 .frame(width: 76)
@@ -177,11 +174,11 @@ struct StudentFeedbacksView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(teachersById[fb.teacherId]?.name ?? AppLocalization.string("common.trainer", locale: locale))
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Text(fb.text)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundStyle(Theme.Colors.ink(0.75))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -196,17 +193,17 @@ struct StudentFeedbacksView: View {
 
             Text(text)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.35))
+        .background(Theme.Colors.glass(0.35))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
         )
     }
 

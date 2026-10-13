@@ -93,7 +93,7 @@ struct TeacherStudentsListView: View {
             ToolbarItem(placement: .principal) {
                 Text("common.students")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
@@ -113,7 +113,7 @@ struct TeacherStudentsListView: View {
                             Text("ui.invite")
                         }
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(Capsule().fill(Color.green.opacity(0.16)))
@@ -214,10 +214,7 @@ struct TeacherStudentsListView: View {
     private var mainContent: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -262,7 +259,7 @@ struct TeacherStudentsListView: View {
     private func sectionTitle(_ title: LocalizedStringKey) -> some View {
         Text(title)
             .font(.system(size: 14, weight: .medium))
-            .foregroundColor(.white.opacity(0.35))
+            .foregroundStyle(Theme.Colors.ink(0.35))
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -285,13 +282,13 @@ struct TeacherStudentsListView: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
-                .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68))
+                .background(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
@@ -320,7 +317,7 @@ struct TeacherStudentsListView: View {
             .padding(.vertical, 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -340,7 +337,7 @@ struct TeacherStudentsListView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(student.name)
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
 
                         Text(
                             String(
@@ -350,7 +347,7 @@ struct TeacherStudentsListView: View {
                             )
                         )
                             .font(.system(size: 14, weight: .medium))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                     }
 
                     Spacer()
@@ -368,7 +365,7 @@ struct TeacherStudentsListView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 8)
                             .contentShape(Rectangle())
@@ -377,7 +374,7 @@ struct TeacherStudentsListView: View {
                     .disabled(vm.isChangingStudentCategory)
 
                     Image(systemName: "chevron.right")
-                        .foregroundColor(.white.opacity(0.35))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -409,7 +406,7 @@ struct TeacherStudentsListView: View {
             ProgressView()
             Text("ui.loading_students")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -419,11 +416,11 @@ struct TeacherStudentsListView: View {
         VStack(spacing: 10) {
             Text("workout.oops_unable_to_load")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Text(message)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
 
             Button {
@@ -444,11 +441,11 @@ struct TeacherStudentsListView: View {
         VStack(spacing: 12) {
             Text("ui.no_student_found")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             Text("ui.link_students_to_your_profile_for_them_to_appear_here")
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -542,7 +539,7 @@ struct TeacherStudentsListView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(inv.studentEmail)
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .lineLimit(1)
 
                         HStack(spacing: 6) {
@@ -567,7 +564,7 @@ struct TeacherStudentsListView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.55))
+                            .foregroundStyle(Theme.Colors.ink(0.55))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 8)
                             .contentShape(Rectangle())
@@ -589,7 +586,7 @@ struct TeacherStudentsListView: View {
             Color.clear.frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -608,14 +605,14 @@ struct TeacherStudentsListView: View {
                     ProgressView()
                     Text("ui.loading_requests")
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 14)
             } else if vm.pendingLinkRequests.isEmpty {
                 Text("ui.no_pending_request")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .padding(.horizontal, 16)
                     .padding(.bottom, 14)
             } else {
@@ -633,7 +630,7 @@ struct TeacherStudentsListView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -649,12 +646,12 @@ struct TeacherStudentsListView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.name)
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 if !item.studentEmail.isEmpty {
                     Text(item.studentEmail)
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.35))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
                 }
             }
 
@@ -678,7 +675,7 @@ struct TeacherStudentsListView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
@@ -756,13 +753,13 @@ struct TeacherStudentsListView: View {
 
                 VStack(spacing: 0) {
                     Capsule()
-                        .fill(Color.white.opacity(0.18))
+                        .fill(Theme.Colors.ink(0.18))
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
                     Text("ui.select_link_category")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .padding(.top, 4)
 
                     VStack(spacing: 0) {
@@ -772,16 +769,16 @@ struct TeacherStudentsListView: View {
                             } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: selectedCategories.contains(category) ? "checkmark.square.fill" : "square")
-                                        .foregroundColor(
+                                        .foregroundStyle(AppThemeAdaptiveColor(
                                             selectedCategories.contains(category)
                                                 ? Theme.Colors.primaryGreen
                                                 : .white.opacity(0.35)
-                                        )
+                                        ))
                                         .font(.system(size: 20, weight: .semibold))
 
                                     Text(title(for: category))
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
 
                                     Spacer()
                                 }
@@ -803,7 +800,7 @@ struct TeacherStudentsListView: View {
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                     )
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
@@ -814,10 +811,10 @@ struct TeacherStudentsListView: View {
                         Button(action: onCancel) {
                             Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.white.opacity(0.85))
+                                .foregroundStyle(Theme.Colors.ink(0.85))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(Color.white.opacity(0.10))
+                                .background(Theme.Colors.ink(0.10))
                                 .cornerRadius(14)
                         }
                         .buttonStyle(.plain)
@@ -971,13 +968,13 @@ struct TeacherStudentsListView: View {
                     VStack(spacing: 14) {
 
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("ui.invite_student")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
@@ -1003,7 +1000,7 @@ struct TeacherStudentsListView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -1076,14 +1073,14 @@ struct TeacherStudentsListView: View {
 
             Text("ui.invite_by_email")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
 
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
 
                 TextField("ui.student_email", text: $inviteEmail)
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
@@ -1092,23 +1089,23 @@ struct TeacherStudentsListView: View {
                 if !inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button { inviteEmail = "" } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.white.opacity(0.35))
+                            .foregroundStyle(Theme.Colors.ink(0.35))
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Color.white.opacity(0.10))
+            .background(Theme.Colors.ink(0.10))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
             )
 
             Text("ui.the_student_will_only_appear_in_your_list_after_accepting_the_app_invitation")
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
         }
     }
 
@@ -1118,7 +1115,7 @@ struct TeacherStudentsListView: View {
             HStack {
                 Text("student_teachers.sent_invitations_section")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
 
                 Spacer()
 
@@ -1126,7 +1123,7 @@ struct TeacherStudentsListView: View {
                     Task { await loadInvitesIfPossible(force: true) }
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
                 .buttonStyle(.plain)
                 .disabled(vm.isInvitesLoading)
@@ -1137,18 +1134,18 @@ struct TeacherStudentsListView: View {
                     ProgressView()
                     Text("ui.loading_invitations")
                         .font(.system(size: 13))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
                 .padding(.vertical, 6)
             } else if let msg = vm.invitesErrorMessageInline {
                 Text(msg)
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .multilineTextAlignment(.leading)
             } else if vm.invites.isEmpty {
                 Text("ui.no_invitation_has_been_sent_yet")
                     .font(.system(size: 13))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(vm.invites.enumerated()), id: \.offset) { idx, inv in
@@ -1160,11 +1157,11 @@ struct TeacherStudentsListView: View {
                         }
                     }
                 }
-                .background(Color.white.opacity(0.06))
+                .background(Theme.Colors.ink(0.06))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
             }
         }
@@ -1175,17 +1172,17 @@ struct TeacherStudentsListView: View {
 
         return HStack(spacing: 12) {
             Image(systemName: "envelope")
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(inv.studentEmail)
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .lineLimit(1)
 
                 Text(statusText)
                     .font(.system(size: 12, weight: .medium))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
 
             Spacer()
@@ -1200,7 +1197,7 @@ struct TeacherStudentsListView: View {
                 } label: {
                     Text("common.cancel")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.90))
+                        .foregroundStyle(Theme.Colors.ink(0.90))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
                         .background(Capsule().fill(Color.red.opacity(0.16)))

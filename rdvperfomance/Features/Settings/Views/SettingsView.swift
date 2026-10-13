@@ -20,10 +20,7 @@ struct SettingsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -85,13 +82,13 @@ struct SettingsView: View {
             ToolbarItem(placement: .principal) {
                 Text("settings.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
         }
 
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .navigationBarTitleDisplayMode(.inline)
 
     }
@@ -132,7 +129,7 @@ struct SettingsView: View {
     private func sectionTitle(_ text: LocalizedStringKey) -> some View {
         Text(text)
             .font(.system(size: 14, weight: .medium))
-            .foregroundColor(.white.opacity(0.35))
+            .foregroundStyle(Theme.Colors.ink(0.35))
             .padding(.horizontal, 6)
     }
 
@@ -156,6 +153,10 @@ struct SettingsView: View {
         card {
             cardRow(icon: "globe", title: "settings.language.title") {
                 path.append(.idioma)
+            }
+            divider()
+            cardRow(icon: "circle.lefthalf.filled", title: "settings.theme.title") {
+                path.append(.tema)
             }
         }
     }
@@ -192,7 +193,7 @@ struct SettingsView: View {
         VStack(spacing: 0) { content() }
             .padding(.vertical, 8)
             .frame(maxWidth: .infinity)
-            .background(Color.black.opacity(0.68))
+            .background(Theme.Colors.glass(0.68))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
@@ -217,12 +218,12 @@ struct SettingsView: View {
 
                 Text(title)
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)

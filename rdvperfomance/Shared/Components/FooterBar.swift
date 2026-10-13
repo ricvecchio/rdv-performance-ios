@@ -358,7 +358,7 @@ struct FooterBar: View {
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }
-        .foregroundColor(isSelected ? Theme.Colors.selected : Theme.Colors.unselected)
+        .foregroundStyle(isSelected ? AnyShapeStyle(Theme.Colors.selected) : AnyShapeStyle(Theme.Colors.unselected))
         .frame(width: Theme.Layout.footerItemWidthTreinosComPerfil)
     }
 
@@ -465,7 +465,7 @@ private struct FooterItem: View {
                     .minimumScaleFactor(0.75)
             }
         }
-        .foregroundColor(isSelected ? Theme.Colors.selected : Theme.Colors.unselected)
+        .foregroundStyle(isSelected ? AnyShapeStyle(Theme.Colors.selected) : AnyShapeStyle(Theme.Colors.unselected))
         .frame(width: width)
     }
 }

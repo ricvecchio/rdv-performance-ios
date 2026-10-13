@@ -86,10 +86,7 @@ struct PersonalRecordsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -218,7 +215,7 @@ struct PersonalRecordsView: View {
             ToolbarItem(placement: .principal) {
                 Text("personal_records.personal_record")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -262,13 +259,13 @@ struct PersonalRecordsView: View {
                     }
                 }
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .lineLimit(2)
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
             }
             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
@@ -276,7 +273,7 @@ struct PersonalRecordsView: View {
             .background(
                 ZStack {
                     // Mesma tonalidade dos botões da TeacherWorkoutsView
-                    Color.black.opacity(0.90)
+                    Theme.Colors.glass(0.90)
                     Theme.Colors.primaryGreen.opacity(0.05)
                 }
             )

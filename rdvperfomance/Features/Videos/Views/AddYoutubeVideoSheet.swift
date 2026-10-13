@@ -21,19 +21,19 @@ struct AddYoutubeVideoSheet: View {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("ui.add_video")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             Text("ui.paste_the_youtube_link_and_add_a_title_to_make_it_easier_to_find")
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.45))
+                                .foregroundStyle(Theme.Colors.ink(0.45))
 
                             formFields
 
@@ -43,7 +43,7 @@ struct AddYoutubeVideoSheet: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.black.opacity(0.68))
+                        .background(Theme.Colors.glass(0.68))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
@@ -63,14 +63,14 @@ struct AddYoutubeVideoSheet: View {
                             Text("ui.open_youtube")
                         }
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.ink(0.85))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(Color.white.opacity(0.10))
+                        .background(Theme.Colors.ink(0.10))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                         )
                     }
                     .buttonStyle(.plain)
@@ -104,29 +104,29 @@ struct AddYoutubeVideoSheet: View {
             VStack(alignment: .leading, spacing: 8) {
                 Text("ui.title_optional")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundStyle(Theme.Colors.ink(0.75))
                 
                 ZStack(alignment: .leading) {
                     TextField("", text: $title)
                         .textInputAutocapitalization(.sentences)
                         .autocorrectionDisabled(false)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                 }
-                .background(Color.white.opacity(0.10))
+                .background(Theme.Colors.ink(0.10))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
             }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("ui.youtube_link")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundStyle(Theme.Colors.ink(0.75))
                 
                 ZStack(alignment: .leading) {
                     TextField("", text: $url)
@@ -134,22 +134,22 @@ struct AddYoutubeVideoSheet: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                 }
-                .background(Color.white.opacity(0.10))
+                .background(Theme.Colors.ink(0.10))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
             }
             
             VStack(alignment: .leading, spacing: 8) {
                 Text("ui.video_category")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundStyle(Theme.Colors.ink(0.75))
                 
                 Picker("", selection: $selectedCategory) {
                     ForEach(YoutubeVideoCategory.allCases) { c in
@@ -158,11 +158,11 @@ struct AddYoutubeVideoSheet: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(14)
-                .background(Color.white.opacity(0.10))
+                .background(Theme.Colors.ink(0.10))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
             }
         }

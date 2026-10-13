@@ -29,11 +29,11 @@ struct WorkoutTemplateAttachmentSheet: View {
             ZStack {
                 Theme.Colors.headerBackground.ignoresSafeArea()
                 if isLoading {
-                    ProgressView().tint(.white)
+                    ProgressView().tint(Theme.Colors.ink())
                 } else if templates.isEmpty {
                     Text("workouts.empty")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                 } else {
                     List(templates) { template in
                         Button {

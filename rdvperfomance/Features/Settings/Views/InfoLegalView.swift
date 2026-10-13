@@ -31,10 +31,7 @@ struct InfoLegalView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -87,7 +84,7 @@ struct InfoLegalView: View {
             ToolbarItem(placement: .principal) {
                 Text(LocalizedStringKey(kind.screenTitle))
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -113,14 +110,14 @@ struct InfoLegalView: View {
                 if let title = section.title {
                     Text(LocalizedStringKey(title))
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .padding(.top, 4)
                 }
 
                 if let intro = section.introText {
                     Text(LocalizedStringKey(intro))
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.82))
+                        .foregroundStyle(Theme.Colors.ink(0.82))
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -129,10 +126,10 @@ struct InfoLegalView: View {
                         ForEach(bullets, id: \.self) { b in
                             HStack(alignment: .top, spacing: 8) {
                                 Text("•")
-                                    .foregroundColor(.white.opacity(0.78))
+                                    .foregroundStyle(Theme.Colors.ink(0.78))
                                 Text(LocalizedStringKey(b))
                                     .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.78))
+                                    .foregroundStyle(Theme.Colors.ink(0.78))
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
@@ -146,7 +143,7 @@ struct InfoLegalView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)

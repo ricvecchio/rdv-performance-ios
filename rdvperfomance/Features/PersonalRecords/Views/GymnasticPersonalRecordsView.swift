@@ -118,10 +118,7 @@ struct GymnasticPersonalRecordsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -184,7 +181,7 @@ struct GymnasticPersonalRecordsView: View {
             ToolbarItem(placement: .principal) {
                 Text("personal_records_gymnastic.gymnastic")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -201,7 +198,7 @@ struct GymnasticPersonalRecordsView: View {
                             Text("common.add")
                         }
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(Capsule().fill(Color.green.opacity(0.16)))
@@ -230,7 +227,7 @@ struct GymnasticPersonalRecordsView: View {
             tableHeader()
 
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(Theme.Colors.ink(0.08))
                 .frame(height: 1)
 
             let list = allItems
@@ -241,13 +238,13 @@ struct GymnasticPersonalRecordsView: View {
 
                 if index != list.count - 1 {
                     Rectangle()
-                        .fill(Color.white.opacity(0.08))
+                        .fill(Theme.Colors.ink(0.08))
                         .frame(height: 1)
                         .padding(.leading, 14)
                 }
             }
         }
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -263,13 +260,13 @@ struct GymnasticPersonalRecordsView: View {
 
             Text("personal_records.movement")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Spacer()
 
             Text("personal_records.pr_label")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -299,14 +296,14 @@ struct GymnasticPersonalRecordsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(item.name)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
 
                     if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                         Text(item.metric)
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.45))
+                            .foregroundStyle(Theme.Colors.ink(0.45))
                             .lineLimit(1)
                             .minimumScaleFactor(0.85)
                     }
@@ -317,17 +314,17 @@ struct GymnasticPersonalRecordsView: View {
                 if let value, !value.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(value)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.88))
+                        .foregroundStyle(Theme.Colors.ink(0.88))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 } else {
                     Text("-")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundStyle(Theme.Colors.ink(0.45))
                 }
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.25))
+                    .foregroundStyle(Theme.Colors.ink(0.25))
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.leading, 6)
             }
@@ -348,24 +345,24 @@ struct GymnasticPersonalRecordsView: View {
             VStack(spacing: 14) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text(item.name)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 if !item.metric.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Text(item.metric)
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
 
                 Text("personal_records_gymnastic.enter_your_record_leave_it_blank_to_remove_it")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.60))
+                    .foregroundStyle(Theme.Colors.ink(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
@@ -373,21 +370,21 @@ struct GymnasticPersonalRecordsView: View {
                     HStack {
                         Text("personal_records.result_field_label")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
                     }
 
                     TextField("personal_records_gymnastic.e_g_50_1_90m_3_25", text: $inputValue)
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                         .background(Theme.Colors.cardBackground)
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                 }
                 .padding(.horizontal, 16)
@@ -396,7 +393,7 @@ struct GymnasticPersonalRecordsView: View {
                 if canDelete {
                     Text("personal_records_barbell.deleting_will_remove_this_record_from_your_history_this_action_cannot_be_undone")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.50))
+                        .foregroundStyle(Theme.Colors.ink(0.50))
                         .multilineTextAlignment(.leading)
                         .padding(.horizontal, 16)
                         .padding(.top, 4)
@@ -436,14 +433,14 @@ struct GymnasticPersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -507,18 +504,18 @@ struct GymnasticPersonalRecordsView: View {
             VStack(spacing: 14) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text("personal_records_gymnastic.new_item")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 Text("personal_records_gymnastic.create_an_item_and_if_you_want_enter_your_record_now")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.60))
+                    .foregroundStyle(Theme.Colors.ink(0.60))
                     .multilineTextAlignment(.center)
                     .padding(.horizontal, 16)
 
@@ -527,60 +524,60 @@ struct GymnasticPersonalRecordsView: View {
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_barbell.movement_name")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
 
                         TextField("personal_records_gymnastic.e_g_rope_climb", text: $newItemName)
                             .textInputAutocapitalization(.words)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
                             .background(Theme.Colors.cardBackground)
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                             )
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_gymnastic.type_metric_optional")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
 
                         TextField("personal_records_gymnastic.e_g_max_reps_for_time_max_distance", text: $newItemMetric)
                             .textInputAutocapitalization(.sentences)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
                             .background(Theme.Colors.cardBackground)
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                             )
                     }
 
                     VStack(alignment: .leading, spacing: 8) {
                         Text("personal_records_gymnastic.record_optional")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
 
                         TextField("personal_records_gymnastic.e_g_50_1_90m_3_25", text: $newItemValue)
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
                             .background(Theme.Colors.cardBackground)
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                             )
                     }
 
@@ -601,14 +598,14 @@ struct GymnasticPersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -790,7 +787,7 @@ struct GymnasticPersonalRecordsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("common.date")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             Button {
                 showPRDatePicker = true
@@ -800,17 +797,17 @@ struct GymnasticPersonalRecordsView: View {
                         .foregroundColor(.green.opacity(0.85))
                     Text(formatPRDate(selectedPRDate))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.25))
+                        .foregroundStyle(Theme.Colors.ink(0.25))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -819,7 +816,7 @@ struct GymnasticPersonalRecordsView: View {
             HStack {
                 Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundStyle(Theme.Colors.ink(0.75))
                 Spacer()
                 Button(action: historyAction) {
                     Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
@@ -841,19 +838,19 @@ struct GymnasticPersonalRecordsView: View {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(title)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
                         Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.60))
+                            .foregroundStyle(Theme.Colors.ink(0.60))
                     } else {
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
                                 HStack {
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
@@ -862,7 +859,7 @@ struct GymnasticPersonalRecordsView: View {
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
                                         .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.45))
+                                        .foregroundStyle(Theme.Colors.ink(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
                                         showHistoryEntryDeletionAlert = true
@@ -876,13 +873,13 @@ struct GymnasticPersonalRecordsView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
                                 if entry.id != entries.first?.id {
-                                    Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1).padding(.leading, 14)
+                                    Rectangle().fill(Theme.Colors.ink(0.08)).frame(height: 1).padding(.leading, 14)
                                 }
                             }
                         }
                         .background(Theme.Colors.cardBackground)
                         .cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
                     }
                 }
                 .frame(maxWidth: contentMaxWidth)
@@ -936,21 +933,21 @@ struct GymnasticPersonalRecordsView: View {
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
-                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Color.white.opacity(0.55))
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Theme.Colors.ink(0.12))
+                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) {
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
-                    AxisValueLabel().foregroundStyle(Color.white.opacity(0.55))
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Theme.Colors.ink(0.12))
+                    AxisValueLabel().foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .frame(height: 170)
             .padding(14)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
         }
     }
 

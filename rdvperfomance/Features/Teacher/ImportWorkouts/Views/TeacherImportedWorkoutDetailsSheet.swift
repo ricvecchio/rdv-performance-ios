@@ -25,10 +25,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Image("rdv_fundo")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
+                AppThemeBackgroundImage()
                 
                 VStack(spacing: 0) {
                     Rectangle()
@@ -91,7 +88,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
                                 Task { await saveEdits() }
                             } label: {
                                 if isSaving {
-                                    ProgressView().tint(.white)
+                                    ProgressView().tint(Theme.Colors.ink())
                                 } else {
                                     Text("common.save")
                                 }
@@ -114,14 +111,14 @@ struct TeacherImportedWorkoutDetailsSheet: View {
             }
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .appThemeNavigationBarColorScheme()
             .background(NavigationBarNoHairline())
             .onAppear {
                 resetDraftFromWorkout()
             }
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.20), lineWidth: 1.25)
+                    .stroke(Theme.Colors.ink(0.20), lineWidth: 1.25)
                     .allowsHitTesting(false)
             )
         }
@@ -131,7 +128,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(workout.title.isEmpty ? AppLocalization.string("ui.workout", locale: locale) : workout.title)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .lineLimit(2)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -170,7 +167,7 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -182,18 +179,18 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundStyle(Theme.Colors.ink(0.85))
             
             TextEditor(text: text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .frame(minHeight: 110)
                 .scrollContentBackground(.hidden)
-                .background(Color.white.opacity(0.06))
+                .background(Theme.Colors.ink(0.06))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -203,17 +200,17 @@ struct TeacherImportedWorkoutDetailsSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundStyle(Theme.Colors.ink(0.85))
             
             Text(value.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines).isEmpty ? "-" : value)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.70))
+                .foregroundStyle(Theme.Colors.ink(0.70))
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -228,17 +225,17 @@ struct TeacherImportedWorkoutDetailsSheet: View {
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
         )
     }
     

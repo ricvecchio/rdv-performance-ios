@@ -35,10 +35,7 @@ struct CreateCrossfitWODView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -113,7 +110,7 @@ struct CreateCrossfitWODView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.add_wod")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -139,7 +136,7 @@ struct CreateCrossfitWODView: View {
                 + Text("ui.wod").foregroundColor(.green.opacity(0.85))
                 + Text("ui.for_this_section")
             )
-            .foregroundColor(.white.opacity(0.55))
+            .foregroundStyle(Theme.Colors.ink(0.55))
                 .font(.system(size: 14))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -165,15 +162,15 @@ struct CreateCrossfitWODView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text("ui.description")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 TextEditor(text: $description)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.75))
+                    .foregroundStyle(Theme.Colors.ink(0.75))
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Color.white.opacity(0.06))
+                    .background(Theme.Colors.ink(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -184,7 +181,7 @@ struct CreateCrossfitWODView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -230,7 +227,7 @@ struct CreateCrossfitWODView: View {
                                     set: { b.setDisplayedName($0) }
                                 )
                             )
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .font(.system(size: 17))
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
@@ -258,11 +255,11 @@ struct CreateCrossfitWODView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         TextEditor(text: $b.details)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.75))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Color.white.opacity(0.06))
+                            .background(Theme.Colors.ink(0.06))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
@@ -278,13 +275,13 @@ struct CreateCrossfitWODView: View {
             if blocks.isEmpty {
                 Text("ui.no_block_added")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -299,7 +296,7 @@ struct CreateCrossfitWODView: View {
             HStack {
                 Spacer()
                 if isSaving {
-                    ProgressView().tint(.white)
+                    ProgressView().tint(Theme.Colors.ink())
                 } else {
                     Text("ui.save_wod")
                 }
@@ -318,14 +315,14 @@ struct CreateCrossfitWODView: View {
 
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
 
             Spacer()
         }
 
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
