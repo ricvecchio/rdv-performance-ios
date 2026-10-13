@@ -390,32 +390,59 @@ private struct AdminStudentDetailView: View {
         AdminDetailContainer(title: "common.student") {
             AdminUserSummary(user: user)
 
-            AdminSection(title: "admin.student.linked_trainers") {
+            AdminCardSection(title: "admin.student.linked_trainers", systemImage: "person.2.fill") {
                 if viewModel.teachers.isEmpty {
                     AdminEmptyRow(title: "admin.student.no_linked_trainers")
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 12)
+                        .adminInnerListStyle()
                 } else {
-                    ForEach(viewModel.teachers) { teacher in
-                        AdminUserListRow(user: teacher)
+                    VStack(spacing: 8) {
+                        ForEach(viewModel.teachers) { teacher in
+                            AdminLinkedUserCard(user: teacher)
+                        }
                     }
                 }
             }
 
-            AdminSection(title: "admin.student.workouts") {
+            AdminCardSection(title: "admin.student.workouts", systemImage: "calendar") {
                 if viewModel.weeks.isEmpty {
                     AdminEmptyRow(title: "admin.student.no_workouts")
-                } else {
-                    ForEach(viewModel.weeks) { week in
-                        VStack(alignment: .leading, spacing: 3) {
-                            Text(week.weekTitle)
-                                .font(.system(size: 15, weight: .medium))
-                                .foregroundColor(.white.opacity(0.92))
-                            Text(weekRange(for: week))
-                                .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.55))
-                        }
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.vertical, 10)
+                        .padding(.horizontal, 12)
+                        .adminInnerListStyle()
+                } else {
+                    VStack(spacing: 0) {
+                        ForEach(Array(viewModel.weeks.enumerated()), id: \.element.id) { index, week in
+                            HStack(spacing: 12) {
+                                Image(systemName: "calendar")
+                                    .font(.system(size: 15, weight: .semibold))
+                                    .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                                    .frame(width: 22)
+
+                                VStack(alignment: .leading, spacing: 3) {
+                                    Text(week.weekTitle)
+                                        .font(.system(size: 15, weight: .semibold))
+                                        .foregroundColor(.white.opacity(0.92))
+                                    Text(weekRange(for: week))
+                                        .font(.system(size: 13))
+                                        .foregroundColor(.white.opacity(0.55))
+                                }
+
+                                Spacer(minLength: 0)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 12)
+
+                            if index < viewModel.weeks.count - 1 {
+                                Divider()
+                                    .background(Theme.Colors.divider)
+                                    .padding(.leading, 46)
+                            }
+                        }
                     }
+                    .adminInnerListStyle()
                 }
             }
         }
@@ -506,10 +533,7 @@ private struct AdminDetailContainer<Content: View>: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
-                    Label(LocalizedStringKey("admin.mode_indicator"), systemImage: "exclamationmark.shield.fill")
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundColor(.red.opacity(0.95))
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    AdminModeNotice()
                     content
                 }
                 .frame(maxWidth: 380)
@@ -523,29 +547,314 @@ private struct AdminDetailContainer<Content: View>: View {
     }
 }
 
+// Aviso exclusivamente informativo do modo administrador
+private struct AdminModeNotice: View {
+    var body: some View {
+        HStack(alignment: .center, spacing: 14) {
+            Image(systemName: "exclamationmark.shield.fill")
+                .font(.system(size: 24, weight: .semibold))
+                .foregroundColor(.red.opacity(0.95))
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text("admin.mode_indicator")
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundColor(.red.opacity(0.95))
+                Text("admin.detail.mode_description")
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.72))
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .background(
+            ZStack {
+                Color.black.opacity(0.68)
+                Color.red.opacity(0.12)
+            }
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(Color.red.opacity(0.35), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+}
+
 private struct AdminUserSummary: View {
     let user: AppUser
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 5) {
-            Text(user.name)
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
-            Text(user.email)
-                .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
-            Text(
-                user.isStudentProfile
-                    ? LocalizedStringKey("common.student")
-                    : LocalizedStringKey("common.trainer")
-            )
-                .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.55))
+        VStack(spacing: 16) {
+            mainCard
+            AdminDeviceCard(user: user)
+        }
+    }
+
+    private var mainCard: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            // Identificação (sem navegação: não há ação existente ao tocar no card)
+            HStack(alignment: .center, spacing: 14) {
+                UserAvatarView(base64: user.photoBase64, size: 56)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(user.name)
+                        .font(.system(size: 17, weight: .semibold))
+                        .foregroundColor(.white.opacity(0.92))
+                        .lineLimit(2)
+                    Text(user.email)
+                        .font(.system(size: 14))
+                        .foregroundColor(.white.opacity(0.55))
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                    HStack(spacing: 6) {
+                        Image(systemName: user.roleIconName)
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                        Text(user.roleTitleKey)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(.white.opacity(0.65))
+                    }
+                }
+
+                Spacer(minLength: 8)
+
+                statusBadge
+            }
+
+            Divider()
+                .background(Theme.Colors.divider)
+
+            HStack(spacing: 10) {
+                AdminInfoTile(
+                    systemImage: "cube.fill",
+                    title: "admin.detail.app_version",
+                    value: installedVersionText.map { Text(verbatim: $0) }
+                        ?? Text("admin.detail.not_informed_female")
+                )
+                // Não há dado persistido de último acesso para o usuário consultado
+                AdminInfoTile(
+                    systemImage: "clock.fill",
+                    title: "admin.detail.last_access",
+                    value: Text("admin.detail.not_informed")
+                )
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(16)
-        .background(Theme.Colors.cardBackground)
-        .cornerRadius(14)
+        .adminCardStyle()
+    }
+
+    // Status persistido em users/{uid}.active (nil em registros legados = ativo)
+    private var statusBadge: some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(user.isAccountActive ? Color.green.opacity(0.85) : Color.red.opacity(0.55))
+                .frame(width: 7, height: 7)
+            Text(
+                user.isAccountActive
+                    ? LocalizedStringKey("admin.users.status.active")
+                    : LocalizedStringKey("admin.users.status.inactive")
+            )
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.white.opacity(0.85))
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(
+            Capsule()
+                .fill(user.isAccountActive ? Color.green.opacity(0.14) : Color.red.opacity(0.14))
+        )
+        .overlay(
+            Capsule()
+                .stroke(user.isAccountActive ? Color.green.opacity(0.30) : Color.red.opacity(0.30), lineWidth: 1)
+        )
+        .fixedSize()
+    }
+
+    private var installedVersionText: String? {
+        let version = (user.appVersion ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return version.isEmpty ? nil : version
+    }
+}
+
+private struct AdminInfoTile: View {
+    let systemImage: String
+    let title: LocalizedStringKey
+    let value: Text
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 10) {
+            Image(systemName: systemImage)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                .frame(width: 22)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(title)
+                    .font(.system(size: 12))
+                    .foregroundColor(.white.opacity(0.55))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.85)
+                value
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .background(Color.white.opacity(0.06))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+    }
+}
+
+// Apenas dados persistidos do próprio usuário consultado; nunca dados do aparelho do administrador
+private struct AdminDeviceCard: View {
+    let user: AppUser
+
+    var body: some View {
+        AdminCardSection(title: "admin.detail.device.title", systemImage: "iphone") {
+            VStack(spacing: 0) {
+                row(systemImage: "iphone.gen3", title: "admin.detail.device.model", value: Text("admin.detail.not_informed"))
+                rowDivider
+                row(systemImage: "gearshape.fill", title: "admin.detail.device.system", value: Text("admin.detail.not_informed"))
+                rowDivider
+                row(systemImage: "number", title: "admin.detail.device.identifier", value: Text("admin.detail.not_informed"))
+                rowDivider
+                row(
+                    systemImage: "cube.fill",
+                    title: "admin.detail.device.app_version",
+                    value: versionAndBuildText.map { Text(verbatim: $0) }
+                        ?? Text("admin.detail.not_informed_female")
+                )
+            }
+            .adminInnerListStyle()
+        }
+    }
+
+    private var rowDivider: some View {
+        Divider()
+            .background(Theme.Colors.divider)
+            .padding(.leading, 46)
+    }
+
+    private func row(systemImage: String, title: LocalizedStringKey, value: Text) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: systemImage)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                .frame(width: 22)
+
+            Text(title)
+                .font(.system(size: 14))
+                .foregroundColor(.white.opacity(0.65))
+                .lineLimit(1)
+
+            Spacer(minLength: 8)
+
+            value
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundColor(.white.opacity(0.92))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .multilineTextAlignment(.trailing)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+    }
+
+    // Versão e build informados pelo dispositivo do próprio usuário
+    private var versionAndBuildText: String? {
+        let version = (user.appVersion ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        let build = (user.appBuild ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !version.isEmpty else { return nil }
+        return build.isEmpty ? version : "\(version) (\(build))"
+    }
+}
+
+// Card de seção com título e ícone verdes, no padrão visual da tela de detalhes
+private struct AdminCardSection<Content: View>: View {
+    let title: LocalizedStringKey
+    let systemImage: String
+    @ViewBuilder let content: Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            HStack(spacing: 10) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(Theme.Colors.primaryGreen.opacity(0.95))
+                Text(title)
+                    .font(.system(size: 17, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+            }
+
+            content
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .adminCardStyle()
+    }
+}
+
+// Professor vinculado em card interno (sem navegação: não há ação existente)
+private struct AdminLinkedUserCard: View {
+    let user: AppUser
+
+    var body: some View {
+        HStack(spacing: 12) {
+            UserAvatarView(base64: user.photoBase64, size: 40)
+
+            VStack(alignment: .leading, spacing: 3) {
+                Text(user.name)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundColor(.white.opacity(0.92))
+                    .lineLimit(1)
+                Text(user.email)
+                    .font(.system(size: 13))
+                    .foregroundColor(.white.opacity(0.55))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+            }
+
+            Spacer(minLength: 0)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(12)
+        .adminInnerListStyle()
+    }
+}
+
+private extension View {
+    func adminCardStyle() -> some View {
+        self
+            .background(Color.black.opacity(0.68))
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+    }
+
+    func adminInnerListStyle() -> some View {
+        self
+            .background(Color.white.opacity(0.06))
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+            )
+            .clipShape(RoundedRectangle(cornerRadius: 12))
     }
 }
 
@@ -606,5 +915,12 @@ private extension AppUser {
         if isStudentProfile { return "common.student" }
         if isAdministratorProfile { return "common.administrator" }
         return "common.trainer"
+    }
+
+    // Mesmo mapeamento de ícones por perfil usado na lista de usuários
+    var roleIconName: String {
+        if isAdministratorProfile { return "person.crop.circle.badge.checkmark" }
+        if isStudentProfile { return "person.fill" }
+        return "person.fill.checkmark"
     }
 }
