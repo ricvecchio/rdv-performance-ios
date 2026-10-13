@@ -87,7 +87,7 @@ struct TeacherAuthorizationCodeView: View {
                             if let success = vm.successMessage {
                                 Text(success)
                                     .font(.system(size: 13))
-                                    .foregroundColor(Theme.Colors.primaryGreen)
+                                    .foregroundStyle(Theme.Colors.accentForeground)
                             }
                         }
                         .padding(14)

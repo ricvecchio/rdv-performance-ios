@@ -193,7 +193,7 @@ struct StudentDashboardView: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -217,7 +217,7 @@ struct StudentDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             Image(systemName: "person.crop.circle.badge.exclamationmark")
                 .font(.system(size: 34, weight: .medium))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .scaleEffect(isTeacherLinkIconPulsing ? 1.06 : 0.94)
                 .opacity(isTeacherLinkIconPulsing ? 1 : 0.75)
                 .animation(
@@ -538,7 +538,7 @@ struct StudentDashboardView: View {
     private var weeklyCheckInsIcon: some View {
         Image(systemName: "person.crop.circle.badge.checkmark")
             .font(.system(size: 18, weight: .semibold))
-            .foregroundColor(Theme.Colors.primaryGreen)
+            .foregroundStyle(Theme.Colors.accentForeground)
             .frame(width: 42, height: 42)
             .background(Theme.Colors.primaryGreen.opacity(0.10))
             .background(Theme.Colors.glass(0.55))
@@ -564,7 +564,7 @@ struct StudentDashboardView: View {
                         Image(systemName: "chevron.right")
                     }
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
                 }
             }
             .buttonStyle(.plain)
@@ -599,7 +599,7 @@ struct StudentDashboardView: View {
             HStack(spacing: 12) {
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
                     .frame(width: 42, height: 42)
                     .background(Theme.Colors.primaryGreen.opacity(0.10))
                     .background(Theme.Colors.glass(0.55))

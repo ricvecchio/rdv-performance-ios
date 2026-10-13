@@ -108,7 +108,7 @@ struct TeacherAcademiaLibraryView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -137,7 +137,7 @@ struct TeacherAcademiaLibraryView: View {
                         .fill(Theme.Colors.primaryGreen.opacity(0.14))
 
                     Image(systemName: icon)
-                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .foregroundStyle(Theme.Colors.accentForeground)
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .frame(width: 42, height: 42)

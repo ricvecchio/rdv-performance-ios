@@ -205,7 +205,7 @@ struct PersonalRecordsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -243,10 +243,10 @@ struct PersonalRecordsView: View {
                     if UIImage(named: icon) != nil {
                         Image(icon)
                             .renderingMode(.template)
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     } else {
                         Image(systemName: icon)
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                             .font(.system(size: 16, weight: .semibold))
                     }
                 }

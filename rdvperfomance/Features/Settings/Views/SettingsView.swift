@@ -72,7 +72,7 @@ struct SettingsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -213,7 +213,7 @@ struct SettingsView: View {
 
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundColor(.green.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     .frame(width: 28)
 
                 Text(title)

@@ -105,7 +105,7 @@ struct StudentNextFitWodView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -421,7 +421,7 @@ struct StudentNextFitWodView: View {
                     .stroke(Theme.Colors.primaryGreen.opacity(0.35), lineWidth: 1)
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
             }
             .frame(width: 58, height: 58)
 
@@ -443,7 +443,7 @@ struct StudentNextFitWodView: View {
 
             Text(verbatim: wod.modalityName.uppercased())
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .padding(.horizontal, 12)
@@ -487,13 +487,13 @@ struct StudentNextFitWodView: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: nextFitActivityIconName(for: activity.title))
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .frame(width: 30)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(activity.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
 
                 Text(activity.description)
                     .font(.system(size: 15))
@@ -737,7 +737,7 @@ struct StudentNextFitWodView: View {
             } label: {
                 Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
             }
             .buttonStyle(.plain)
 
@@ -796,7 +796,7 @@ struct StudentNextFitWodView: View {
             } label: {
                 Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
             }
             .buttonStyle(.plain)
 
@@ -825,7 +825,7 @@ struct StudentNextFitWodView: View {
             Text(text)
         } icon: {
             Image(systemName: icon)
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .frame(width: 18)
         }
         .font(font)

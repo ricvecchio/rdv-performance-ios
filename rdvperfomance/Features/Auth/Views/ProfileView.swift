@@ -256,7 +256,7 @@ struct ProfileView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -280,7 +280,7 @@ struct ProfileView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "gearshape.fill")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -875,7 +875,7 @@ struct ProfileView: View {
                     .overlay(alignment: .bottomTrailing) {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                             .frame(width: 28, height: 28)
                             .background(Theme.Colors.cardBackground)
                             .clipShape(Circle())
@@ -946,7 +946,7 @@ struct ProfileView: View {
         if !trimmed.isEmpty {
             HStack(alignment: alignment, spacing: 6) {
                 Image(systemName: icon)
-                    .foregroundColor(.green)
+                    .foregroundStyle(Theme.Colors.systemAccentForeground())
 
                 Text(trimmed)
                     .font(.system(size: 14))
@@ -1165,7 +1165,7 @@ struct ProfileView: View {
 
             case .text(let value):
                 Text(value)
-                    .foregroundColor(.green.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
 
             case .badge(let value):
                 Text(value)
@@ -1331,7 +1331,7 @@ struct ProfileView: View {
                     Button("common.close") {
                         showMeusIconesModal = false
                     }
-                    .foregroundColor(.green)
+                    .foregroundStyle(Theme.Colors.systemAccentForeground())
                 }
             }
         }

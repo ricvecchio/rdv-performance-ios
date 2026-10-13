@@ -127,7 +127,7 @@ struct TrainingWeeksView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -385,7 +385,7 @@ struct TrainingWeeksView: View {
                     .fill(Theme.Colors.primaryGreen.opacity(0.14))
                 Image(systemName: "calendar")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
             }
             .frame(width: 42, height: 42)
             .overlay(
@@ -411,7 +411,7 @@ struct TrainingWeeksView: View {
                         )
                     )
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .foregroundStyle(Theme.Colors.accentForeground)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
                         .background(Theme.Colors.primaryGreen.opacity(0.14))
@@ -491,7 +491,7 @@ struct TrainingWeeksView: View {
                     Task { await vm.loadDaysAndStatus(for: weekId, force: true) }
                 }
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .buttonStyle(.plain)
             }
             .frame(maxWidth: .infinity)
@@ -772,7 +772,7 @@ struct TrainingWeeksView: View {
                     ZStack {
                         Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     }
                 @unknown default:
                     Theme.Colors.ink(0.06)
@@ -827,7 +827,7 @@ struct TrainingWeeksView: View {
                             .fill(Theme.Colors.primaryGreen.opacity(0.14))
                         Image(systemName: "calendar")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(Theme.Colors.primaryGreen)
+                            .foregroundStyle(Theme.Colors.accentForeground)
                     }
                     .frame(width: 34, height: 34)
 
@@ -890,7 +890,7 @@ struct TrainingWeeksView: View {
                             .fill(Theme.Colors.primaryGreen.opacity(0.14))
                         Image(systemName: workoutIconName(for: day, in: week))
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundColor(Theme.Colors.primaryGreen)
+                            .foregroundStyle(Theme.Colors.accentForeground)
                     }
                     .frame(width: 36, height: 36)
 
@@ -955,7 +955,7 @@ struct TrainingWeeksView: View {
         case .completed:
             Label(LocalizedStringKey("common.done"), systemImage: "checkmark.circle.fill")
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .labelStyle(.titleAndIcon)
         case .overdue:
             Label(LocalizedStringKey("workout.overdue"), systemImage: "exclamationmark.triangle.fill")

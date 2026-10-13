@@ -153,7 +153,7 @@ struct TeacherImportWorkoutsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -322,7 +322,7 @@ struct TeacherImportWorkoutsView: View {
     private func importedWorkoutRow(workout w: TeacherImportedWorkout) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "dumbbell.fill")
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                 .font(.system(size: 16))
                 .frame(width: 26)
             

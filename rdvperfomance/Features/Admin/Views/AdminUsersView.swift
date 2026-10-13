@@ -249,7 +249,7 @@ struct AdminUsersView: View {
                             .frame(width: 34, height: 34)
 
                         Image(systemName: profileIconName(for: user))
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                             .font(.system(size: 16, weight: .semibold))
                     }
 

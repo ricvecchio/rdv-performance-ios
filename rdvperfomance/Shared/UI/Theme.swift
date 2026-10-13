@@ -16,8 +16,8 @@ enum Theme {
         static let unselected = ink(0.7)
 
         static let headerBackground = AppThemeColor(
-            dark: Color.black.opacity(0.70),
-            light: Color.white.opacity(0.94)
+            dark: headerBackgroundColor(for: .dark),
+            light: headerBackgroundColor(for: .light)
         )
         static let footerBackground = AppThemeColor(
             dark: Color.black.opacity(0.75),
@@ -33,9 +33,31 @@ enum Theme {
         // Cor de texto principal do Tema Claro (cinza-escuro quase preto)
         static let lightInk = AppThemePalette.lightInk
 
-        // Cor de fundo usada no cabeçalho nativo (UIKit) conforme o tema
+        // Cor de fundo do cabeçalho por tema (definição única, usada por SwiftUI e UIKit)
         static func headerBackgroundColor(for theme: AppTheme) -> Color {
-            theme == .light ? Color.white.opacity(0.94) : Color.black.opacity(0.70)
+            switch theme {
+            case .dark: Color.black.opacity(0.70)
+            case .light: Color.white.opacity(0.94)
+            }
+        }
+
+        // Verde para TEXTOS e ÍCONES (não usar em fundos/bordas).
+        // Escuro: exatamente o verde original. Claro: verde mais escuro para contraste
+        // (~6,7:1 sobre branco e ~4,5:1 sobre o tom médio dos tijolos).
+        private static let accentForegroundLight = Color(red: 0.0, green: 0.42, blue: 0.19)
+
+        // Substitui `Theme.Colors.primaryGreen` quando usado como cor de texto/ícone
+        static let accentForeground = AppThemeColor(
+            dark: primaryGreen,
+            light: accentForegroundLight
+        )
+
+        // Substitui `.green` / `.green.opacity(o)` quando usado como cor de texto/ícone
+        static func systemAccentForeground(_ opacity: Double? = nil) -> AppThemeColor {
+            AppThemeColor(
+                dark: opacity.map { Color.green.opacity($0) } ?? Color.green,
+                light: accentForegroundLight.opacity(AppThemePalette.lightOpacity(for: opacity ?? 1))
+            )
         }
 
         // "Tinta": textos, ícones, bordas e preenchimentos sutis.

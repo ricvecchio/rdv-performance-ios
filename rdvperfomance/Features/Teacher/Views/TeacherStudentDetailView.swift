@@ -91,7 +91,7 @@ struct TeacherStudentDetailView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -184,7 +184,7 @@ struct TeacherStudentDetailView: View {
 
             Text(category.localizedDisplayName(locale: locale))
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -251,7 +251,7 @@ struct TeacherStudentDetailView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     .frame(width: 22, alignment: .center)
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))

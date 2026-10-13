@@ -534,7 +534,7 @@ struct HeroesPersonalRecordsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -653,7 +653,7 @@ struct HeroesPersonalRecordsView: View {
                         .frame(width: 34, height: 34)
 
                     Image(systemName: "shield.fill")
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
@@ -988,7 +988,7 @@ struct HeroesPersonalRecordsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "calendar")
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     Text(formatPRDate(selectedPRDate))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Theme.Colors.ink(0.92))
@@ -1048,7 +1048,7 @@ struct HeroesPersonalRecordsView: View {
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(.green)
+                                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                                     }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
@@ -1120,10 +1120,10 @@ struct HeroesPersonalRecordsView: View {
         if !entries.isEmpty {
             Chart(entries) { entry in
                 LineMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Theme.Colors.systemAccentForeground())
                     .interpolationMethod(.linear)
                 PointMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Theme.Colors.systemAccentForeground())
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {

@@ -22,7 +22,7 @@ enum DashboardGreeting {
         return Text(String(greeting[..<nameRange.lowerBound]))
             .foregroundStyle(Theme.Colors.ink())
             + Text(trimmedName)
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
             + Text(String(greeting[nameRange.upperBound...]))
                 .foregroundStyle(Theme.Colors.ink())
     }

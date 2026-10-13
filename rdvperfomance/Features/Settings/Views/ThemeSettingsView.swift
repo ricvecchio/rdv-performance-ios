@@ -56,7 +56,7 @@ struct ThemeSettingsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -106,8 +106,9 @@ struct ThemeSettingsView: View {
             HStack(spacing: 14) {
                 Image(systemName: theme.iconName)
                     .font(.system(size: 18))
-                    .foregroundColor(.green.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     .frame(width: 28)
+                    .accessibilityHidden(true)
 
                 VStack(alignment: .leading, spacing: 3) {
                     Text(theme.localizedTitle)
@@ -121,20 +122,23 @@ struct ThemeSettingsView: View {
 
                 Spacer()
 
+                // Indicador visual; o estado é anunciado pelo trait `.isSelected`
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
                     .foregroundStyle(
                         isSelected
-                            ? AnyShapeStyle(Color.green)
+                            ? AnyShapeStyle(Theme.Colors.systemAccentForeground())
                             : AnyShapeStyle(Theme.Colors.ink(0.35))
                     )
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .accessibilityAddTraits(isSelected ? .isSelected : [])
+        .accessibilityElement(children: .combine)
+        .accessibilityAddTraits(isSelected ? [.isButton, .isSelected] : .isButton)
     }
 }
 

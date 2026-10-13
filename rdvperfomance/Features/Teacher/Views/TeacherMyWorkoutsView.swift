@@ -113,7 +113,7 @@ struct TeacherMyWorkoutsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -204,7 +204,7 @@ struct TeacherMyWorkoutsView: View {
 
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
             }
             .frame(width: 38, height: 38)
             .overlay(
@@ -226,7 +226,7 @@ struct TeacherMyWorkoutsView: View {
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
             }
             .frame(width: 30, height: 30)
         }

@@ -353,7 +353,7 @@ struct TeacherDashboardView: View {
             HStack(spacing: 12) {
                 Image(systemName: item.systemImage)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.green.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     .frame(width: 22)
 
                 Text(item.title)
@@ -645,7 +645,7 @@ struct TeacherDashboardView: View {
                         .frame(width: 34, height: 34)
 
                     Image(systemName: icon)
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                         .font(.system(size: 16, weight: .semibold))
                 }
 

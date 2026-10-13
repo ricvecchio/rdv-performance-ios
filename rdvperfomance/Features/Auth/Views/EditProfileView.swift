@@ -137,7 +137,7 @@ struct EditProfileView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -215,7 +215,7 @@ struct EditProfileView: View {
                         .overlay(alignment: .bottomTrailing) {
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundColor(.green)
+                                .foregroundStyle(Theme.Colors.systemAccentForeground())
                                 .frame(width: 28, height: 28)
                                 .background(Theme.Colors.cardBackground)
                                 .clipShape(Circle())

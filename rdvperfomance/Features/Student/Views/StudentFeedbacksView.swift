@@ -82,7 +82,7 @@ struct StudentFeedbacksView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -98,7 +98,7 @@ struct StudentFeedbacksView: View {
             ToolbarItemGroup(placement: .topBarTrailing) {
                 Button { Task { await load() } } label: {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundColor(.green)
+                        .foregroundStyle(Theme.Colors.systemAccentForeground())
                 }
                 .buttonStyle(.plain)
 
@@ -160,7 +160,7 @@ struct StudentFeedbacksView: View {
             if let date = fb.createdAt {
                 VStack(spacing: 5) {
                     Image(systemName: "calendar")
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                         .font(.system(size: 14))
 
                     Text(formatDate(date))

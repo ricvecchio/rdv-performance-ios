@@ -282,7 +282,7 @@ struct TeacherSendWorkoutView: View {
                     ZStack {
                         Color.clear.frame(width: 44, height: 44)
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -554,7 +554,7 @@ struct TeacherSendWorkoutView: View {
                 if areAllVisibleStudentsSelected {
                     Text("ui.deselect_all")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.green)
+                        .foregroundStyle(Theme.Colors.systemAccentForeground())
                 } else {
                     Text("ui.select_all")
                         .font(.system(size: 14, weight: .medium))
@@ -752,7 +752,7 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 8) {
             Image(systemName: categoryIcon(for: category))
                 .font(.system(size: 14))
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
 
             Text(title)
                 .font(.system(size: 14))
@@ -885,7 +885,7 @@ struct TeacherSendWorkoutView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "video.fill")
                         .font(.system(size: 13))
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
 
                     Text("ui.selected_video")
                         .font(.system(size: 13, weight: .medium))
@@ -924,7 +924,7 @@ struct TeacherSendWorkoutView: View {
             HStack(spacing: 8) {
                 Image(systemName: categoryIcon(for: category))
                     .font(.system(size: 13))
-                    .foregroundColor(.green.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
 
                 Text(category.localizedDisplayName(locale: locale))
                     .font(.system(size: 14, weight: .medium))
@@ -1062,7 +1062,7 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(Theme.Colors.accentForeground)
                     .frame(width: 32, height: 28)
             }
             .buttonStyle(.plain)

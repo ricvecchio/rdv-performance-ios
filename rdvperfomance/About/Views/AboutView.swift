@@ -67,7 +67,7 @@ struct AboutView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -126,7 +126,7 @@ struct AboutView: View {
     private func featureItem(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+                .foregroundStyle(Theme.Colors.systemAccentForeground())
             Text(text)
                 .foregroundStyle(Theme.Colors.ink())
         }

@@ -64,7 +64,7 @@ struct AdminProfileSelectionView: View {
                             Text("teacher_authorization.admin.entry")
                         }
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .foregroundStyle(Theme.Colors.accentForeground)
                         .padding(.vertical, 8)
                         .contentShape(Rectangle())
                     }

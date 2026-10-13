@@ -120,7 +120,7 @@ struct TeacherWorkoutTemplateRow: View {
         HStack(spacing: 12) {
 
             Image(systemName: categoryIcon)
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                 .font(.system(size: 16))
                 .frame(width: 26)
 

@@ -100,7 +100,7 @@ struct CreateTreinoAcademiaView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -133,7 +133,7 @@ struct CreateTreinoAcademiaView: View {
         VStack(alignment: .leading, spacing: 8) {
             (
                 Text("ui.create_a_new")
-                + Text("ui.gym_workout_type").foregroundColor(.green.opacity(0.85))
+                + Text("ui.gym_workout_type").foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                 + Text("ui.for_this_section")
             )
             .foregroundStyle(Theme.Colors.ink(0.55))
@@ -203,7 +203,7 @@ struct CreateTreinoAcademiaView: View {
                     blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .foregroundStyle(Theme.Colors.accentForeground)
                         .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)

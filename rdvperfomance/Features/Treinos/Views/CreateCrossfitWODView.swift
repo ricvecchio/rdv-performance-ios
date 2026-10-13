@@ -100,7 +100,7 @@ struct CreateCrossfitWODView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -133,7 +133,7 @@ struct CreateCrossfitWODView: View {
         VStack(alignment: .leading, spacing: 8) {
             (
                 Text("ui.create_a_new")
-                + Text("ui.wod").foregroundColor(.green.opacity(0.85))
+                + Text("ui.wod").foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                 + Text("ui.for_this_section")
             )
             .foregroundStyle(Theme.Colors.ink(0.55))
@@ -209,7 +209,7 @@ struct CreateCrossfitWODView: View {
                     blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundColor(Theme.Colors.primaryGreen)
+                        .foregroundStyle(Theme.Colors.accentForeground)
                         .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)

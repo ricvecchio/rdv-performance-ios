@@ -74,7 +74,7 @@ struct YoutubeVideosView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -406,7 +406,7 @@ struct YoutubeVideosView: View {
                     ZStack {
                         Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     }
                 @unknown default:
                     Theme.Colors.ink(0.06)

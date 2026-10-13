@@ -183,7 +183,7 @@ struct BarbellPersonalRecordsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -314,7 +314,7 @@ struct BarbellPersonalRecordsView: View {
                         .frame(width: 34, height: 34)
 
                     Image(systemName: "dumbbell.fill")
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
@@ -409,7 +409,7 @@ struct BarbellPersonalRecordsView: View {
                         } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "calendar")
-                                    .foregroundColor(.green.opacity(0.85))
+                                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
 
                                 Text(formatPRDate(selectedPRDate))
                                     .font(.system(size: 15, weight: .semibold))
@@ -615,7 +615,7 @@ struct BarbellPersonalRecordsView: View {
                             ForEach(entries.reversed()) { entry in
                                 HStack(spacing: 10) {
                                     Image(systemName: entry.id == recordID ? "trophy.fill" : "medal.fill")
-                                        .foregroundColor(.green.opacity(0.85))
+                                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                                         .frame(width: 22)
 
                                     Text(
@@ -636,7 +636,7 @@ struct BarbellPersonalRecordsView: View {
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(.green)
+                                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
                                             .overlay(
@@ -713,14 +713,14 @@ struct BarbellPersonalRecordsView: View {
                     x: .value("Data", entry.createdAt),
                     y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
                 )
-                .foregroundStyle(.green)
+                .foregroundStyle(Theme.Colors.systemAccentForeground())
                 .interpolationMethod(.linear)
 
                 PointMark(
                     x: .value("Data", entry.createdAt),
                     y: .value("Carga", convertFromStorageKgToPreferredUnit(entry.valueKg))
                 )
-                .foregroundStyle(.green)
+                .foregroundStyle(Theme.Colors.systemAccentForeground())
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {

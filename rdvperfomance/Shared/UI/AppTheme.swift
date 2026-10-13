@@ -2,7 +2,8 @@
 import SwiftUI
 
 // Tema visual escolhido pelo usuário. Preferência salva localmente (AppStorage), sem Firebase.
-enum AppTheme: String, CaseIterable, Identifiable {
+// `nonisolated`: tipo de valor puro, lido também em contextos não isolados (ShapeStyle.resolve / EnvironmentKey).
+nonisolated enum AppTheme: String, CaseIterable, Identifiable {
     case dark
     case light
 

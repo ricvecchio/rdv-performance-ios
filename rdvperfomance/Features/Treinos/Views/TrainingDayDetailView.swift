@@ -219,7 +219,7 @@ struct TrainingDayDetailView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -386,7 +386,7 @@ struct TrainingDayDetailView: View {
                     HStack(spacing: 10) {
 
                         Image(systemName: "dumbbell.fill")
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                             .font(.system(size: 14))
                             .frame(width: 22)
 
@@ -426,7 +426,7 @@ struct TrainingDayDetailView: View {
                     HStack(spacing: 10) {
 
                         Image(systemName: "percent")
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                             .font(.system(size: 14))
                             .frame(width: 22)
 
@@ -460,7 +460,7 @@ struct TrainingDayDetailView: View {
                     HStack(spacing: 10) {
 
                         Image(systemName: "scalemass.fill")
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                             .font(.system(size: 14))
                             .frame(width: 22)
 
@@ -534,7 +534,7 @@ struct TrainingDayDetailView: View {
                                 HStack(spacing: 12) {
 
                                     Image(systemName: "dumbbell.fill")
-                                        .foregroundColor(.green.opacity(0.85))
+                                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                                         .font(.system(size: 15))
                                         .frame(width: 26)
 
@@ -826,7 +826,7 @@ struct TrainingDayDetailView: View {
                     ZStack {
                         Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     }
                 @unknown default:
                     Theme.Colors.ink(0.06)
