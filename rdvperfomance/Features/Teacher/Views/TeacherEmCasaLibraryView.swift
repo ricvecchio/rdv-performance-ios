@@ -163,7 +163,8 @@ struct TeacherEmCasaLibraryView: View {
             .padding(.vertical, 12)
             .background(
                 ZStack {
-                    Color.black.opacity(0.68)
+                    // Mesma tonalidade dos botões da TeacherWorkoutsView
+                    Color.black.opacity(0.90)
                     Theme.Colors.primaryGreen.opacity(0.05)
                 }
             )
