@@ -2,9 +2,12 @@
 import Foundation
 
 // Tipos de usuário disponíveis no sistema
+// ADMIN não é oferecido no cadastro público: é atribuído somente por procedimento
+// administrativo confiável (Admin SDK / Console), protegido pelas regras do Firestore.
 enum UserTypeDTO: String, Codable, CaseIterable {
     case TRAINER
     case STUDENT
+    case ADMIN
 }
 
 // Áreas de foco para os treinos do usuário

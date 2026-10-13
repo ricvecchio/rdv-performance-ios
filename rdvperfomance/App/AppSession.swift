@@ -25,11 +25,19 @@ final class AppSession: ObservableObject {
     @Published private(set) var isAdmin: Bool = false
     @Published private(set) var adminProfileMode: AdminProfileMode? = nil
     @Published private(set) var measurementUnitLoadState: MeasurementUnitLoadState = .idle
+    /// Conta marcada como inativa (`users/{uid}.active == false`) na última tentativa de acesso
+    @Published private(set) var isAccountDisabled: Bool = false
+    /// Restauração inicial em andamento: verdadeiro até a primeira resposta do Firebase Auth
+    /// (e, havendo usuário, até a resolução do perfil usado na navegação). Nunca volta a ser verdadeiro.
+    @Published private(set) var isRestoringSession: Bool = true
 
 
     private var authListener: AuthStateDidChangeListenerHandle?
     private let db = Firestore.firestore()
-    private let administratorEmail = "ric.vecchio@gmail.com"
+    // Custom claim emitida somente pelo Firebase Admin SDK (ambiente confiável)
+    private let administratorClaim = "admin"
+    // Evita gravações repetidas da mesma versão instalada (somente em memória)
+    private var reportedAppVersionKey: String?
 
     enum MeasurementUnitLoadState {
         case idle
@@ -73,8 +81,12 @@ final class AppSession: ObservableObject {
     }
 
     // Retorna verdadeiro se existe um usuário autenticado
+    // Perfil ADMIN só é aceito após validação no servidor (perfil + custom claim)
     var isLoggedIn: Bool {
-        uid != nil && (userType != nil || isAdmin)
+        guard uid != nil, !isAccountDisabled else { return false }
+        if isAdmin { return true }
+        guard let userType else { return false }
+        return userType != .ADMIN
     }
 
     // Retorna o identificador único do usuário autenticado
@@ -120,14 +132,19 @@ final class AppSession: ObservableObject {
                     self.preferredWeightUnit = "kg"
                     self.measurementUnitLoadState = .loading
                     self.uid = user.uid
-                    self.isAdmin = self.isAuthenticatedAdministrator()
+                    self.isAdmin = false
+                    self.isAccountDisabled = false
                     self.adminProfileMode = nil
                     self.storedUid = user.uid
                     await self.loadUserProfile(uid: user.uid)
+                    // Perfil resolvido (sucesso, inexistente, inativo ou falha): a navegação já pode decidir.
+                    // A sincronização de recordes não bloqueia a abertura.
+                    self.isRestoringSession = false
                     await PersonalRecordsSyncService.shared.synchronizeForAuthenticatedUser(uid: user.uid)
                 } else {
                     PersonalRecordsSyncService.shared.handleLogout()
                     self.clearSession()
+                    self.isRestoringSession = false
                 }
             }
         }
@@ -141,14 +158,17 @@ final class AppSession: ObservableObject {
 
     // Carrega nome e tipo de usuário do documento Firestore
     func loadUserProfile(uid: String) async {
-        isAdmin = isAuthenticatedAdministrator()
-
         do {
             let snap = try await db.collection("users").document(uid).getDocument(source: .server)
 
             guard let data = snap.data() else {
+                #if DEBUG
+                print("[AppSession] Perfil inexistente: users/\(uid) não existe no banco (default).")
+                #endif
                 self.userType = nil
                 self.userName = nil
+                self.isAdmin = false
+                self.adminProfileMode = nil
                 self.measurementUnitLoadState = .failed
 
                 self.storedUserTypeRaw = ""
@@ -158,6 +178,26 @@ final class AppSession: ObservableObject {
 
             let name = data["name"] as? String
             let typeRaw = data["userType"] as? String
+
+            // Conta inativa: não concede acesso. `nil`/ausente (registros legados) = ativa.
+            // O bloqueio efetivo dos dados é feito pelas regras do Firestore.
+            if (data["active"] as? Bool) == false {
+                #if DEBUG
+                print("[AppSession] users/\(uid) está inativa (active == false). Sessão encerrada.")
+                #endif
+                self.isAccountDisabled = true
+                self.userType = nil
+                self.userName = nil
+                self.isAdmin = false
+                self.adminProfileMode = nil
+                self.measurementUnitLoadState = .failed
+                self.storedUserTypeRaw = ""
+                self.storedUserName = ""
+                try? Auth.auth().signOut()
+                return
+            }
+            self.isAccountDisabled = false
+
             let remotePhotoBase64 = (data["photoBase64"] as? String ?? "")
                 .trimmingCharacters(in: .whitespacesAndNewlines)
             let remoteMeasurementUnit = (data["measurementUnit"] as? String ?? "")
@@ -171,8 +211,30 @@ final class AppSession: ObservableObject {
             self.userName = name
             self.userType = typeRaw.flatMap { UserTypeDTO(rawValue: $0) }
 
+            // Administrador: perfil ADMIN (lido do servidor) + custom claim "admin" no token do Firebase Auth.
+            // A alternância de modo (AdminProfileMode) é preservada enquanto o usuário continuar administrador.
+            var validatedAdmin = false
+            if self.userType == .ADMIN {
+                validatedAdmin = await self.hasAdministratorClaim(uid: uid)
+            }
+            self.isAdmin = validatedAdmin
+            if !validatedAdmin {
+                self.adminProfileMode = nil
+            }
+
+            #if DEBUG
+            if typeRaw != nil && self.userType == nil {
+                print("[AppSession] users/\(uid) possui userType não reconhecido.")
+            }
+            if self.userType == .ADMIN && !validatedAdmin {
+                print("[AppSession] users/\(uid) possui userType ADMIN, mas o token não contém a custom claim admin=true. Acesso administrativo negado.")
+            }
+            #endif
+
             self.storedUserName = name ?? ""
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
+
+            self.reportInstalledAppVersionIfNeeded(uid: uid, profileData: data)
 
             switch remoteMeasurementUnit {
             case "kg", "lbs":
@@ -190,7 +252,8 @@ final class AppSession: ObservableObject {
         } catch {
             self.measurementUnitLoadState = .failed
             #if DEBUG
-            print("[Settings] Falha ao carregar unidade de medida: \(error.localizedDescription)")
+            let ns = error as NSError
+            print("[AppSession] Falha ao ler users/\(uid) (não é perfil inexistente): domain=\(ns.domain) code=\(ns.code) — \(ns.localizedDescription)")
             #endif
         }
     }
@@ -220,10 +283,49 @@ final class AppSession: ObservableObject {
         storedUserName = ""
     }
 
-    private func isAuthenticatedAdministrator() -> Bool {
-        let email = (Auth.auth().currentUser?.email ?? "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-            .lowercased()
-        return email == administratorEmail
+    // Registra a versão instalada no perfil do próprio usuário somente quando ela muda.
+    // Não bloqueia a sessão: falhas são ignoradas (nova tentativa no próximo carregamento do perfil).
+    private func reportInstalledAppVersionIfNeeded(uid: String, profileData data: [String: Any]) {
+        guard let version = AppVersionService.installedVersionString() else { return }
+        let build = AppVersionService.installedBuildString()
+
+        let storedVersion = data["appVersion"] as? String
+        let storedBuild = data["appBuild"] as? String
+        guard storedVersion != version || storedBuild != build else { return }
+
+        let key = "\(uid)|\(version)|\(build ?? "")"
+        guard reportedAppVersionKey != key else { return }
+        reportedAppVersionKey = key
+
+        Task { @MainActor [weak self] in
+            do {
+                try await FirestoreRepository.shared.setInstalledAppVersion(uid: uid, version: version, build: build)
+            } catch {
+                if self?.reportedAppVersionKey == key {
+                    self?.reportedAppVersionKey = nil
+                }
+                #if DEBUG
+                print("[AppSession] Não foi possível registrar a versão instalada: \(error.localizedDescription)")
+                #endif
+            }
+        }
+    }
+
+    // Verifica a custom claim administrativa no token emitido pelo Firebase Auth.
+    // A renovação forçada garante que concessões/revogações recentes sejam refletidas
+    // (inclusive no token usado pelo Firestore para avaliar as regras).
+    private func hasAdministratorClaim(uid: String) async -> Bool {
+        guard let user = Auth.auth().currentUser, user.uid == uid else { return false }
+
+        do {
+            let tokenResult = try await user.getIDTokenResult(forcingRefresh: true)
+            return (tokenResult.claims[administratorClaim] as? Bool) == true
+        } catch {
+            #if DEBUG
+            print("[AppSession] Falha ao validar perfil administrativo: \(error.localizedDescription)")
+            #endif
+            // Falha na validação nunca concede nem mantém privilégio administrativo
+            return false
+        }
     }
 }

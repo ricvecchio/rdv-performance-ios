@@ -71,7 +71,7 @@ struct TeacherSendWorkoutView: View {
     let category: TreinoTipo
     let preselectedStudentID: String?
     let startsAtWorkout: Bool
-    let preselectedVideo: TeacherYoutubeVideo?
+    let preselectedVideo: YoutubeVideo?
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
     @State private var students: [AppUser] = []
@@ -104,7 +104,7 @@ struct TeacherSendWorkoutView: View {
         preselectedStudentID: String? = nil,
         startsAtWorkout: Bool = false,
         preselectedTemplate: WorkoutTemplateFS? = nil,
-        preselectedVideo: TeacherYoutubeVideo? = nil
+        preselectedVideo: YoutubeVideo? = nil
     ) {
         self._path = path
         self.category = category
@@ -642,7 +642,7 @@ struct TeacherSendWorkoutView: View {
         let selectionColor: Color = selected ? .green : .white.opacity(0.35)
 
         return HStack(spacing: 14) {
-            StudentAvatarView(base64: student.photoBase64, size: 28)
+            UserAvatarView(base64: student.photoBase64, size: 28)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {

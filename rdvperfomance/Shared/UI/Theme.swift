@@ -34,18 +34,22 @@ enum Theme {
         static let footerVerticalPadding: CGFloat = 10
         static let footerItemIconSize: CGFloat = 20
         static let footerItemTitleSize: CGFloat = 11
+
+        // Tamanhos usados exclusivamente nos rodapés principais (Aluno e Professor)
+        static let mainFooterItemIconSize: CGFloat = 23
+        static let mainFooterItemTitleSize: CGFloat = 12
     }
 
     // Fontes padronizadas para diferentes elementos da interface
     enum Fonts {
         // Retorna a fonte para títulos do footer
-        static func footerTitle() -> Font {
-            .system(size: Layout.footerItemTitleSize, weight: .medium)
+        static func footerTitle(size: CGFloat = Layout.footerItemTitleSize) -> Font {
+            .system(size: size, weight: .medium)
         }
 
         // Retorna a fonte para ícones do footer
-        static func footerIcon() -> Font {
-            .system(size: Layout.footerItemIconSize)
+        static func footerIcon(size: CGFloat = Layout.footerItemIconSize) -> Font {
+            .system(size: size)
         }
 
         // Retorna a fonte para títulos do header

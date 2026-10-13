@@ -116,10 +116,6 @@ struct TeacherRootView: View {
             TeacherMessageView(path: destinationPath, student: student, category: category)
         case .teacherFeedbacks(let student, let category):
             TeacherFeedbacksView(path: destinationPath, student: student, category: category)
-        case .createTrainingWeek(let student, let category):
-            CreateTrainingWeekView(path: destinationPath, student: student, category: category)
-        case .createTrainingDay(let weekId, let category):
-            CreateTrainingDayView(path: destinationPath, weekId: weekId, category: category)
         case .teacherMyWorkouts(let category, let mode):
             TeacherMyWorkoutsView(path: destinationPath, category: category, mode: mode)
         case .teacherCrossfitLibrary(let section, let mode, let templateMode):
@@ -158,7 +154,7 @@ struct TeacherRootView: View {
         case .teacherImportWorkouts(let category):
             TeacherImportWorkoutsView(path: destinationPath, category: category)
         case .teacherImportVideos(let category):
-            TeacherImportVideosView(
+            YoutubeVideosView(
                 path: destinationPath,
                 context: .teacher(category: category)
             )
@@ -174,7 +170,7 @@ struct TeacherRootView: View {
             let initialExpandedWeekId,
             let initialExpandedDayId
         ):
-            StudentWorkoutsView(
+            TrainingWeeksView(
                 path: destinationPath,
                 studentId: studentId,
                 studentName: studentName,
@@ -182,7 +178,7 @@ struct TeacherRootView: View {
                 initialExpandedDayId: initialExpandedDayId
             )
         case .studentDayDetail(let weekId, let day, let weekTitle):
-            StudentDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
+            TrainingDayDetailView(path: destinationPath, weekId: weekId, day: day, weekTitle: weekTitle)
         case .configuracoes:
             SettingsView(path: destinationPath)
         case .idioma:

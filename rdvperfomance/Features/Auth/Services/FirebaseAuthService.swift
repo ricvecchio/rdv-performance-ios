@@ -32,6 +32,11 @@ final class FirebaseAuthService {
             throw TeacherAuthorizationError.authorizationRequired
         }
 
+        // O perfil ADMIN nunca é criado pelo app (atribuição somente administrativa).
+        guard form.userType != .ADMIN else {
+            throw TeacherAuthorizationError.permissionDenied
+        }
+
         let result = try await Auth.auth().createUser(withEmail: form.email, password: form.password)
         let uid = result.user.uid
 

@@ -1,0 +1,6 @@
+node_modules/
+package-lock.json
+# Nunca versionar chaves de conta de serviço
+*.json
+!package.json
+

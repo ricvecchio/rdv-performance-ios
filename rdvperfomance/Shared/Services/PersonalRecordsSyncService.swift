@@ -265,7 +265,7 @@ final class PersonalRecordsSyncService {
         let localTombstones = pendingTombstones()[uid] ?? [:]
 
         do {
-            let remoteDocument = try await firestoreRepository.getStudentPersonalRecords(uid: uid)
+            let remoteDocument = try await firestoreRepository.getPersonalRecords(uid: uid)
             guard isCurrentAuthenticatedUser(uid), !Task.isCancelled else { return }
 
             let remoteSnapshot = remoteDocument?.payloads ?? [:]
@@ -286,7 +286,7 @@ final class PersonalRecordsSyncService {
 
             if needsUpload {
                 guard isCurrentAuthenticatedUser(uid), !Task.isCancelled else { return }
-                let committedDocument = try await firestoreRepository.saveStudentPersonalRecords(
+                let committedDocument = try await firestoreRepository.savePersonalRecords(
                     uid: uid,
                     payloads: mergedSnapshot,
                     customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(allTombstones)
@@ -328,7 +328,7 @@ final class PersonalRecordsSyncService {
 
         do {
             guard isCurrentAuthenticatedOwner(uid), !Task.isCancelled else { return }
-            let committedDocument = try await firestoreRepository.saveStudentPersonalRecords(
+            let committedDocument = try await firestoreRepository.savePersonalRecords(
                 uid: uid,
                 payloads: pendingSnapshot,
                 customTombstones: PersonalRecordsPayloadMerger.tombstonesForFirestore(localTombstones)

@@ -137,7 +137,7 @@ struct StudentRootView: View {
 
     private var workoutsTab: some View {
         NavigationStack(path: $workoutsPath) {
-            StudentWorkoutsView(
+            TrainingWeeksView(
                 path: $workoutsPath,
                 studentId: studentId,
                 studentName: studentName,
@@ -161,7 +161,7 @@ struct StudentRootView: View {
         switch route {
 
         case .studentDayDetail(let weekId, let day, let weekTitle):
-            StudentDayDetailView(
+            TrainingDayDetailView(
                 path: path,
                 weekId: weekId,
                 day: day,
@@ -169,8 +169,6 @@ struct StudentRootView: View {
                 onSelectSection: selectSection
             )
 
-        case .arExercise(let weekId, let dayId):
-            ARExerciseView(path: path, weekId: weekId, dayId: dayId)
 
         case .studentTeachers(let studentEmail):
             StudentTeachersView(
@@ -238,7 +236,7 @@ struct StudentRootView: View {
             CrossfitGamesPersonalRecordsView(path: $recordsPath, onSelectSection: selectSection)
 
         case .studentVideos:
-            TeacherImportVideosView(
+            YoutubeVideosView(
                 path: $recordsPath,
                 context: .student(studentId: studentId)
             )

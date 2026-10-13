@@ -334,7 +334,7 @@ struct TeacherStudentsListView: View {
 
                 HStack(spacing: 14) {
 
-                    StudentAvatarView(base64: student.photoBase64, size: 28)
+                    UserAvatarView(base64: student.photoBase64, size: 28)
                         .frame(width: 28)
 
                     VStack(alignment: .leading, spacing: 3) {
@@ -643,7 +643,7 @@ struct TeacherStudentsListView: View {
 
     private func linkRequestRow(_ item: StudentLinkItem) -> some View {
         HStack(spacing: 14) {
-            StudentAvatarView(base64: item.photoBase64, size: 28)
+            UserAvatarView(base64: item.photoBase64, size: 28)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {

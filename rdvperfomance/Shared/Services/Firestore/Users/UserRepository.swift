@@ -1117,6 +1117,46 @@ final class UserRepository: FirestoreBaseRepository {
             )
     }
 
+    // MARK: - Administração / Versão instalada
+
+    /// Ativa/desativa a conta (somente campos de status). A autorização é validada pelas regras
+    /// do Firestore (claim admin + perfil ADMIN; nunca a própria conta nem outro ADMIN).
+    func setUserAccountActive(uid: String, active: Bool, adminUid: String) async throws {
+        let cleanUid = clean(uid)
+        let cleanAdminUid = clean(adminUid)
+        guard !cleanUid.isEmpty, !cleanAdminUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+        guard cleanUid != cleanAdminUid else { throw FirestoreRepositoryError.invalidData }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .updateData([
+                "active": active,
+                "activeUpdatedAt": FieldValue.serverTimestamp(),
+                "activeUpdatedBy": cleanAdminUid
+            ])
+    }
+
+    /// Registra a versão instalada informada pelo dispositivo do próprio usuário
+    func setInstalledAppVersion(uid: String, version: String, build: String?) async throws {
+        let cleanUid = clean(uid)
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+
+        let buildValue: Any
+        if let build, !build.isEmpty {
+            buildValue = build
+        } else {
+            buildValue = FieldValue.delete()
+        }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .updateData([
+                "appVersion": version,
+                "appBuild": buildValue,
+                "appVersionUpdatedAt": FieldValue.serverTimestamp()
+            ])
+    }
+
     func setStudentUnitName(uid: String, unitName: String?) async throws {
         let cleanUid = clean(uid)
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }

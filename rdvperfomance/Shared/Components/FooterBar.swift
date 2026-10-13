@@ -210,22 +210,22 @@ struct FooterBar: View {
         ):
             HStack(spacing: 16) {
                 Button { goStudentHome() } label: {
-                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                 }
                 .buttonStyle(.plain)
 
                 Button { goTreinosAluno() } label: {
-                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: isTreinosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: isTreinosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                 }
                 .buttonStyle(.plain)
 
                 Button { goPersonalRecords() } label: {
-                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                 }
                 .buttonStyle(.plain)
 
                 Button { goPerfilStudent() } label: {
-                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                 }
                 .buttonStyle(.plain)
             }
@@ -234,7 +234,7 @@ struct FooterBar: View {
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
             HStack(spacing: 16) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                 }
                 .buttonStyle(.plain)
 
@@ -244,12 +244,12 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
 
                 Button { goTeacherWorkouts(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: teacherMainSection == .workouts, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: teacherMainSection == .workouts, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                 }
                 .buttonStyle(.plain)
 
                 Button { goTeacherPerfil(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                 }
                 .buttonStyle(.plain)
             }
@@ -340,7 +340,7 @@ struct FooterBar: View {
     private func teacherStudentsFooterItem(isSelected: Bool) -> some View {
         VStack(spacing: 6) {
             Image(systemName: "person.3")
-                .font(Theme.Fonts.footerIcon())
+                .font(Theme.Fonts.footerIcon(size: Theme.Layout.mainFooterItemIconSize))
                 .overlay(alignment: .topTrailing) {
                     if teacherStudentActivityCount > 0 && !isSelected {
                         Text("\(teacherStudentActivityCount)")
@@ -354,7 +354,7 @@ struct FooterBar: View {
                 }
 
             Text("common.students")
-                .font(Theme.Fonts.footerTitle())
+                .font(Theme.Fonts.footerTitle(size: Theme.Layout.mainFooterItemTitleSize))
                 .lineLimit(1)
                 .minimumScaleFactor(0.75)
         }
@@ -415,13 +415,24 @@ private struct FooterItem: View {
     private let verbatimTitle: String?
     let isSelected: Bool
     let width: CGFloat
+    private var iconSize: CGFloat = Theme.Layout.footerItemIconSize
+    private var titleSize: CGFloat = Theme.Layout.footerItemTitleSize
 
-    init(icon: Icon, title: LocalizedStringKey, isSelected: Bool, width: CGFloat) {
+    init(
+        icon: Icon,
+        title: LocalizedStringKey,
+        isSelected: Bool,
+        width: CGFloat,
+        iconSize: CGFloat = Theme.Layout.footerItemIconSize,
+        titleSize: CGFloat = Theme.Layout.footerItemTitleSize
+    ) {
         self.icon = icon
         self.title = title
         self.verbatimTitle = nil
         self.isSelected = isSelected
         self.width = width
+        self.iconSize = iconSize
+        self.titleSize = titleSize
     }
 
     init(icon: Icon, verbatimTitle: String, isSelected: Bool, width: CGFloat) {
@@ -437,19 +448,19 @@ private struct FooterItem: View {
             switch icon {
             case .system(let name):
                 Image(systemName: name)
-                    .font(Theme.Fonts.footerIcon())
+                    .font(Theme.Fonts.footerIcon(size: iconSize))
             case .custom(let view):
                 view
             }
 
             if let title {
                 Text(title)
-                    .font(Theme.Fonts.footerTitle())
+                    .font(Theme.Fonts.footerTitle(size: titleSize))
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             } else if let verbatimTitle {
                 Text(verbatim: verbatimTitle)
-                    .font(Theme.Fonts.footerTitle())
+                    .font(Theme.Fonts.footerTitle(size: titleSize))
                     .lineLimit(1)
                     .minimumScaleFactor(0.75)
             }
