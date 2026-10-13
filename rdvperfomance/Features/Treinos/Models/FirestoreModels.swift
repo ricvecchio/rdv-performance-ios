@@ -28,6 +28,12 @@ struct AppUser: Identifiable, Codable, Hashable {
     var appVersion: String?
     var appBuild: String?
     var appVersionUpdatedAt: Date?
+
+    // Último acesso e aparelho informados pelo próprio dispositivo do usuário (ausentes em registros antigos)
+    var lastAccessAt: Date?
+    var deviceModel: String?
+    var deviceSystem: String?
+    var deviceIdentifier: String?
 }
 
 extension AppUser {

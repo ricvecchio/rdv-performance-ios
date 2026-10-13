@@ -328,6 +328,15 @@ service cloud.firestore {
         && (!('appVersionUpdatedAt' in d) || d.appVersionUpdatedAt is timestamp);
     }
 
+    // Ultimo acesso e aparelho gravados pelo proprio usuario (campos opcionais).
+    function accessAndDeviceValid() {
+      let d = request.resource.data;
+      return (!('lastAccessAt' in d) || d.lastAccessAt is timestamp)
+        && (!('deviceModel' in d) || (d.deviceModel is string && d.deviceModel.size() <= 64))
+        && (!('deviceSystem' in d) || (d.deviceSystem is string && d.deviceSystem.size() <= 64))
+        && (!('deviceIdentifier' in d) || (d.deviceIdentifier is string && d.deviceIdentifier.size() <= 64));
+    }
+
     // ADMIN altera somente status de outro usuario nao ADMIN.
     function adminChangesAccountStatus(userId) {
       return isAdmin()
@@ -360,13 +369,15 @@ service cloud.firestore {
       allow create: if isOwner(userId)
         && userTypeAllowedOnCreate(userId)
         && activeAllowedOnCreate()
-        && installedVersionValid();
+        && installedVersionValid()
+        && accessAndDeviceValid();
 
       allow update: if (
           isOwner(userId)
           && userTypeUnchanged()
           && accountStatusUnchanged()
           && installedVersionValid()
+          && accessAndDeviceValid()
         ) || adminChangesAccountStatus(userId);
 
       // Preservada a politica de exclusao do proprio perfil das regras recebidas.
