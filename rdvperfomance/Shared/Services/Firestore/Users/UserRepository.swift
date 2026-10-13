@@ -1157,6 +1157,26 @@ final class UserRepository: FirestoreBaseRepository {
             ])
     }
 
+    /// Registra o último acesso (horário do servidor) e o aparelho informados pelo dispositivo do próprio usuário
+    func setLastAccessAndDevice(uid: String, model: String?, system: String?, identifier: String?) async throws {
+        let cleanUid = clean(uid)
+        guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }
+
+        func value(_ raw: String?) -> Any {
+            let trimmed = (raw ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            return trimmed.isEmpty ? FieldValue.delete() : trimmed
+        }
+
+        try await db.collection(Collections.users)
+            .document(cleanUid)
+            .updateData([
+                "lastAccessAt": FieldValue.serverTimestamp(),
+                "deviceModel": value(model),
+                "deviceSystem": value(system),
+                "deviceIdentifier": value(identifier)
+            ])
+    }
+
     func setStudentUnitName(uid: String, unitName: String?) async throws {
         let cleanUid = clean(uid)
         guard !cleanUid.isEmpty else { throw FirestoreRepositoryError.missingUserId }

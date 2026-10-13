@@ -143,6 +143,10 @@ final class FirestoreRepository {
         try await userRepository.setInstalledAppVersion(uid: uid, version: version, build: build)
     }
 
+    func setLastAccessAndDevice(uid: String, model: String?, system: String?, identifier: String?) async throws {
+        try await userRepository.setLastAccessAndDevice(uid: uid, model: model, system: system, identifier: identifier)
+    }
+
     func setStudentUnitName(uid: String, unitName: String?) async throws {
         try await userRepository.setStudentUnitName(uid: uid, unitName: unitName)
     }

@@ -257,16 +257,25 @@ struct AdminUsersView: View {
                     }
 
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(user.name)
-                            .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                        // 1ª linha: nome + status (mesmo badge do detalhe do usuário)
+                        HStack(alignment: .center, spacing: 8) {
+                            Text(user.name)
+                                .font(.system(size: 17, weight: .semibold))
+                                .foregroundColor(.white.opacity(0.92))
+                                .lineLimit(1)
+                                .truncationMode(.tail)
+                                .layoutPriority(1)
+
+                            Spacer(minLength: 4)
+
+                            AdminStatusBadge(isActive: user.isAccountActive)
+                        }
                         Text(user.email)
                             .font(.system(size: 14))
                             .foregroundColor(.white.opacity(0.55))
                         Text(user.roleTitleKey)
                             .font(.system(size: 14, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
-                        accountStatusLine(user)
                         versionLine(user)
                     }
 
@@ -341,21 +350,6 @@ struct AdminUsersView: View {
         return "graduationcap.fill"
     }
 
-    // Status persistido em users/{uid}.active (nil em registros legados = ativo)
-    private func accountStatusLine(_ user: AppUser) -> some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(user.isAccountActive ? Color.green.opacity(0.85) : Color.red.opacity(0.55))
-                .frame(width: 7, height: 7)
-            Text(
-                user.isAccountActive
-                    ? LocalizedStringKey("admin.users.status.active")
-                    : LocalizedStringKey("admin.users.status.inactive")
-            )
-            .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(.white.opacity(0.55))
-        }
-    }
 
     // Versão informada pelo dispositivo do usuário, comparada com latestVersion de app_config/ios
     private func versionLine(_ user: AppUser) -> some View {
@@ -592,6 +586,7 @@ private struct AdminModeNotice: View {
 
 private struct AdminUserSummary: View {
     let user: AppUser
+    @Environment(\.locale) private var locale
 
     var body: some View {
         VStack(spacing: 16) {
@@ -628,7 +623,7 @@ private struct AdminUserSummary: View {
 
                 Spacer(minLength: 8)
 
-                statusBadge
+                AdminStatusBadge(isActive: user.isAccountActive)
             }
 
             Divider()
@@ -641,11 +636,12 @@ private struct AdminUserSummary: View {
                     value: installedVersionText.map { Text(verbatim: $0) }
                         ?? Text("admin.detail.not_informed_female")
                 )
-                // Não há dado persistido de último acesso para o usuário consultado
+                // users/{uid}.lastAccessAt, gravado pelo próprio usuário (ausente em registros antigos)
                 AdminInfoTile(
                     systemImage: "clock.fill",
                     title: "admin.detail.last_access",
-                    value: Text("admin.detail.not_informed")
+                    value: lastAccessText.map { Text(verbatim: $0) }
+                        ?? Text("admin.detail.not_informed")
                 )
             }
         }
@@ -654,14 +650,32 @@ private struct AdminUserSummary: View {
         .adminCardStyle()
     }
 
-    // Status persistido em users/{uid}.active (nil em registros legados = ativo)
-    private var statusBadge: some View {
+    private var installedVersionText: String? {
+        let version = (user.appVersion ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return version.isEmpty ? nil : version
+    }
+
+    // Data e horário do último acesso, conforme a localização do app
+    private var lastAccessText: String? {
+        guard let date = user.lastAccessAt else { return nil }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.setLocalizedDateFormatFromTemplate("ddMMyyjjmm")
+        return formatter.string(from: date)
+    }
+}
+
+// Badge de status da conta: users/{uid}.active (nil em registros legados = ativo)
+private struct AdminStatusBadge: View {
+    let isActive: Bool
+
+    var body: some View {
         HStack(spacing: 6) {
             Circle()
-                .fill(user.isAccountActive ? Color.green.opacity(0.85) : Color.red.opacity(0.55))
+                .fill(isActive ? Color.green.opacity(0.85) : Color.red.opacity(0.55))
                 .frame(width: 7, height: 7)
             Text(
-                user.isAccountActive
+                isActive
                     ? LocalizedStringKey("admin.users.status.active")
                     : LocalizedStringKey("admin.users.status.inactive")
             )
@@ -672,18 +686,13 @@ private struct AdminUserSummary: View {
         .padding(.vertical, 6)
         .background(
             Capsule()
-                .fill(user.isAccountActive ? Color.green.opacity(0.14) : Color.red.opacity(0.14))
+                .fill(isActive ? Color.green.opacity(0.14) : Color.red.opacity(0.14))
         )
         .overlay(
             Capsule()
-                .stroke(user.isAccountActive ? Color.green.opacity(0.30) : Color.red.opacity(0.30), lineWidth: 1)
+                .stroke(isActive ? Color.green.opacity(0.30) : Color.red.opacity(0.30), lineWidth: 1)
         )
         .fixedSize()
-    }
-
-    private var installedVersionText: String? {
-        let version = (user.appVersion ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        return version.isEmpty ? nil : version
     }
 }
 
@@ -732,11 +741,11 @@ private struct AdminDeviceCard: View {
     var body: some View {
         AdminCardSection(title: "admin.detail.device.title", systemImage: "iphone") {
             VStack(spacing: 0) {
-                row(systemImage: "iphone.gen3", title: "admin.detail.device.model", value: Text("admin.detail.not_informed"))
+                row(systemImage: "iphone.gen3", title: "admin.detail.device.model", value: storedText(user.deviceModel))
                 rowDivider
-                row(systemImage: "gearshape.fill", title: "admin.detail.device.system", value: Text("admin.detail.not_informed"))
+                row(systemImage: "gearshape.fill", title: "admin.detail.device.system", value: storedText(user.deviceSystem))
                 rowDivider
-                row(systemImage: "number", title: "admin.detail.device.identifier", value: Text("admin.detail.not_informed"))
+                row(systemImage: "number", title: "admin.detail.device.identifier", value: storedText(user.deviceIdentifier))
                 rowDivider
                 row(
                     systemImage: "cube.fill",
@@ -778,6 +787,12 @@ private struct AdminDeviceCard: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
+    }
+
+    // Valor persistido em users/{uid} pelo próprio usuário; ausente = "Não informado"
+    private func storedText(_ raw: String?) -> Text {
+        let value = (raw ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+        return value.isEmpty ? Text("admin.detail.not_informed") : Text(verbatim: value)
     }
 
     // Versão e build informados pelo dispositivo do próprio usuário
