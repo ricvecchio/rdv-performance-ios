@@ -240,6 +240,7 @@ final class AppSession: ObservableObject {
             self.storedUserTypeRaw = self.userType?.rawValue ?? ""
 
             self.reportInstalledAppVersionIfNeeded(uid: uid, profileData: data)
+            self.reportLastAccessAndDeviceIfNeeded(uid: uid, profileData: data)
 
             switch remoteMeasurementUnit {
             case "kg", "lbs":
