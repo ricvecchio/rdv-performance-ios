@@ -19,9 +19,30 @@ final class FirebaseAuthService {
 
     // Realiza login com email e senha, retorna UID do usuário
     func login(email: String, password: String) async throws -> String {
-        let result = try await Auth.auth().signIn(withEmail: email, password: password)
-        return result.user.uid
+        do {
+            let result = try await Auth.auth().signIn(withEmail: email, password: password)
+            return result.user.uid
+        } catch {
+            #if DEBUG
+            Self.debugLogSignInError(error)
+            #endif
+            throw error
+        }
     }
+
+    #if DEBUG
+    // Instrumentação temporária (somente DEBUG): registra apenas metadados do erro do Firebase.
+    // Não registra e-mail, senha, tokens nem o userInfo completo.
+    private static func debugLogSignInError(_ error: Error) {
+        let nsError = error as NSError
+        let typedCode = AuthErrorCode(rawValue: nsError.code).map { String(describing: $0) } ?? "n/a"
+        var line = "[AuthDebug] etapa=signIn domain=\(nsError.domain) code=\(nsError.code) authErrorCode=\(typedCode)"
+        if let underlying = nsError.userInfo[NSUnderlyingErrorKey] as? NSError {
+            line += " underlyingDomain=\(underlying.domain) underlyingCode=\(underlying.code)"
+        }
+        print(line)
+    }
+    #endif
 
     // Cria usuário no Firebase Auth e salva perfil no Firestore
     func register(_ form: RegisterFormDTO) async throws -> String {
