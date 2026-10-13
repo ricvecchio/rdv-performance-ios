@@ -3,7 +3,8 @@
 // A proteção efetiva é feita pelas regras do Firestore (ver firebase/firestore-teacher-authorization.rules):
 //  - somente o administrador lê/gera o código;
 //  - o código só é verificável por quem já o conhece (leitura por ID, listagem bloqueada);
-//  - um perfil TRAINER só pode ser criado junto com o registro de um código vigente.
+//  - um perfil TRAINER só pode ser criado junto com o registro de um código vigente;
+//  - cada código autoriza um único cadastro concluído (teacher_signup_code_uses/{código}, imutável).
 import Foundation
 import Security
 import FirebaseAuth
@@ -15,6 +16,8 @@ enum TeacherAuthorizationError: LocalizedError, Equatable {
     case tooManyAttempts
     case authorizationRequired
     case authorizationExpired
+    // Código já consumido por um cadastro de professor concluído (uso único)
+    case codeAlreadyUsed
     case notConfigured
     case permissionDenied
     case emailAlreadyInUse
@@ -44,6 +47,8 @@ enum TeacherAuthorizationError: LocalizedError, Equatable {
             return AppLocalization.string("teacher_authorization.error.authorization_required", locale: locale)
         case .authorizationExpired:
             return AppLocalization.string("teacher_authorization.error.authorization_expired", locale: locale)
+        case .codeAlreadyUsed:
+            return AppLocalization.string("teacher_authorization.error.code_already_used", locale: locale)
         case .notConfigured:
             return AppLocalization.string("teacher_authorization.error.not_configured", locale: locale)
         case .permissionDenied:
@@ -99,8 +104,15 @@ final class TeacherAuthorizationService {
         static let configDocument = "current"
         static let codes = "teacher_signup_codes"
         static let redemptions = "teacher_signup_redemptions"
+        // Consumo definitivo e permanente: um documento por código (ID = código), criado uma única vez
+        static let codeUses = "teacher_signup_code_uses"
         static let users = "users"
     }
+
+    // Erros de consumo sinalizados de dentro da transação de cadastro
+    private static let consumptionErrorDomain = "TeacherAuthorization.consumption"
+    private static let consumptionAlreadyUsed = 1
+    private static let consumptionExpired = 2
 
     // Alfabeto sem caracteres ambíguos (sem I, O, 0 e 1): 32 símbolos => 5 bits por caractere
     private static let codeAlphabet: [Character] = Array("ABCDEFGHJKLMNPQRSTUVWXYZ23456789")
@@ -132,11 +144,23 @@ final class TeacherAuthorizationService {
         guard exists else {
             throw TeacherAuthorizationError.invalidCode
         }
+
+        // Código vigente, mas já consumido por um cadastro concluído
+        let used: Bool
+        do {
+            used = try await codeUseExists(normalized)
+        } catch {
+            throw mapFirestoreError(error, operation: "validate", permissionDenied: .notConfigured)
+        }
+        guard !used else {
+            throw TeacherAuthorizationError.codeAlreadyUsed
+        }
         return normalized
     }
 
     // Cria a conta de professor: Firebase Auth + perfil TRAINER no Firestore.
-    // A criação do perfil é aceita pelas regras somente se o código ainda estiver vigente.
+    // A criação do perfil é aceita pelas regras somente se o código ainda estiver vigente
+    // e ainda não tiver sido consumido (teacher_signup_code_uses/{código} criado uma única vez).
     func createTeacherAccount(ticket: String, form: RegisterFormDTO) async throws -> String {
         guard let code = Self.normalize(ticket) else {
             throw TeacherAuthorizationError.authorizationExpired
@@ -144,13 +168,20 @@ final class TeacherAuthorizationService {
 
         // 1) Revalida no servidor antes de criar a conta no Auth (evita contas sem perfil)
         let stillValid: Bool
+        var alreadyUsed = false
         do {
             stillValid = try await codeExists(code)
+            if stillValid {
+                alreadyUsed = try await codeUseExists(code)
+            }
         } catch {
             throw mapFirestoreError(error, operation: "precheck", permissionDenied: .notConfigured)
         }
         guard stillValid else {
             throw TeacherAuthorizationError.authorizationExpired
+        }
+        guard !alreadyUsed else {
+            throw TeacherAuthorizationError.codeAlreadyUsed
         }
 
         // 2) Cria a conta no Firebase Authentication
@@ -161,38 +192,73 @@ final class TeacherAuthorizationService {
             throw mapAuthError(error)
         }
 
-        // 3) Grava, de forma atômica, o registro de uso do código e o perfil TRAINER
+        // 3) Grava, em uma única transação, o consumo definitivo do código, o registro de uso
+        //    (auditoria por UID) e o perfil TRAINER. A transação relê o consumo no servidor:
+        //    se outro cadastro consumir o código antes, a confirmação falha (pré-condição) e,
+        //    na nova tentativa, o código é recusado. As regras impõem a mesma unicidade.
         let uid = user.uid
-        let batch = db.batch()
+        let db = self.db
+        let codeRef = db.collection(Path.codes).document(code)
+        let codeUseRef = db.collection(Path.codeUses).document(code)
+        let redemptionRef = db.collection(Path.redemptions).document(uid)
+        let userRef = db.collection(Path.users).document(uid)
 
-        batch.setData(
-            [
-                "code": code,
-                "createdAt": FieldValue.serverTimestamp()
-            ],
-            forDocument: db.collection(Path.redemptions).document(uid)
-        )
-
-        batch.setData(
-            [
-                "name": form.name,
-                "email": form.email,
-                "userType": UserTypeDTO.TRAINER.rawValue,
-                "phone": Self.optionalValue(form.phone),
-                "focusArea": form.focusArea ?? FocusAreaDTO.CROSSFIT.rawValue,
-                "cref": Self.optionalValue(form.cref),
-                "bio": Self.optionalValue(form.bio),
-                "gymName": Self.optionalValue(form.gymName),
-                "defaultCategory": NSNull(),
-                "active": NSNull(),
-                "createdAt": FieldValue.serverTimestamp(),
-                "updatedAt": FieldValue.serverTimestamp()
-            ],
-            forDocument: db.collection(Path.users).document(uid)
-        )
+        let profile: [String: Any] = [
+            "name": form.name,
+            "email": form.email,
+            "userType": UserTypeDTO.TRAINER.rawValue,
+            "phone": Self.optionalValue(form.phone),
+            "focusArea": form.focusArea ?? FocusAreaDTO.CROSSFIT.rawValue,
+            "cref": Self.optionalValue(form.cref),
+            "bio": Self.optionalValue(form.bio),
+            "gymName": Self.optionalValue(form.gymName),
+            "defaultCategory": NSNull(),
+            "active": NSNull(),
+            "createdAt": FieldValue.serverTimestamp(),
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
 
         do {
-            try await batch.commit()
+            _ = try await db.runTransaction { transaction, errorPointer in
+                do {
+                    let useSnapshot = try transaction.getDocument(codeUseRef)
+                    if useSnapshot.exists {
+                        errorPointer?.pointee = NSError(
+                            domain: Self.consumptionErrorDomain,
+                            code: Self.consumptionAlreadyUsed
+                        )
+                        return nil
+                    }
+
+                    let codeSnapshot = try transaction.getDocument(codeRef)
+                    guard codeSnapshot.exists else {
+                        errorPointer?.pointee = NSError(
+                            domain: Self.consumptionErrorDomain,
+                            code: Self.consumptionExpired
+                        )
+                        return nil
+                    }
+
+                    transaction.setData(
+                        ["usedAt": FieldValue.serverTimestamp()],
+                        forDocument: codeUseRef
+                    )
+
+                    transaction.setData(
+                        [
+                            "code": code,
+                            "createdAt": FieldValue.serverTimestamp()
+                        ],
+                        forDocument: redemptionRef
+                    )
+
+                    transaction.setData(profile, forDocument: userRef)
+                    return nil
+                } catch {
+                    errorPointer?.pointee = error as NSError
+                    return nil
+                }
+            }
         } catch {
             let mapped = await mapProfileCreationError(error, code: code)
             await rollback(user)
@@ -226,6 +292,7 @@ final class TeacherAuthorizationService {
         let db = self.db
         let configRef = db.collection(Path.config).document(Path.configDocument)
         let codes = db.collection(Path.codes)
+        let codeUses = db.collection(Path.codeUses)
         let operation = rotate ? "rotate" : "fetch"
 
         let result: Any?
@@ -239,16 +306,30 @@ final class TeacherAuthorizationService {
                     let currentCodeId = (data["codeId"] as? String).flatMap { Self.isValidRawCode($0) ? $0 : nil }
 
                     // Consulta: retorna o código vigente se estiver íntegro (documento do código existente)
+                    // e ainda não consumido. Código já utilizado nunca é reapresentado como disponível:
+                    // um novo código é gerado (o histórico de consumo é preservado).
                     if !rotate, let currentCodeId, let currentDisplay, !currentDisplay.isEmpty {
                         let codeSnapshot = try transaction.getDocument(codes.document(currentCodeId))
-                        if codeSnapshot.exists {
+                        let useSnapshot = try transaction.getDocument(codeUses.document(currentCodeId))
+                        if codeSnapshot.exists && !useSnapshot.exists {
                             let current: [String: Any] = ["code": currentDisplay, "version": currentVersion]
                             return current
                         }
                     }
 
-                    // Geração (primeiro acesso, substituição ou estado inconsistente)
-                    guard let rawCode = Self.generateRawCode() else {
+                    // Geração (primeiro acesso, substituição, código consumido ou estado inconsistente).
+                    // Nunca reutiliza um código já emitido ou consumido: em colisão, gera outro.
+                    var generatedCode: String?
+                    for _ in 0..<5 {
+                        guard let candidate = Self.generateRawCode() else { break }
+                        let existing = try transaction.getDocument(codes.document(candidate))
+                        let consumed = try transaction.getDocument(codeUses.document(candidate))
+                        if !existing.exists && !consumed.exists {
+                            generatedCode = candidate
+                            break
+                        }
+                    }
+                    guard let rawCode = generatedCode else {
                         errorPointer?.pointee = NSError(domain: "TeacherAuthorization", code: -1)
                         return nil
                     }
@@ -350,6 +431,12 @@ final class TeacherAuthorizationService {
         return snapshot.exists
     }
 
+    // Consumo definitivo do código (leitura sempre no servidor)
+    private func codeUseExists(_ code: String) async throws -> Bool {
+        let snapshot = try await db.collection(Path.codeUses).document(code).getDocument(source: .server)
+        return snapshot.exists
+    }
+
     // MARK: - Erros e consistência
 
     // Desfaz a conta criada no Auth quando o perfil não pôde ser gravado
@@ -364,6 +451,17 @@ final class TeacherAuthorizationService {
 
     private func mapProfileCreationError(_ error: Error, code: String) async -> TeacherAuthorizationError {
         let ns = error as NSError
+
+        // Recusa determinada pela própria transação (leitura no servidor)
+        if ns.domain == Self.consumptionErrorDomain {
+            if ns.code == Self.consumptionAlreadyUsed {
+                logDiagnostic("create", "code already consumed")
+                return .codeAlreadyUsed
+            }
+            logDiagnostic("create", "code no longer active")
+            return .authorizationExpired
+        }
+
         guard
             ns.domain == FirestoreErrorDomain,
             ns.code == FirestoreErrorCode.permissionDenied.rawValue
@@ -371,7 +469,11 @@ final class TeacherAuthorizationService {
             return mapFirestoreError(error, operation: "create", permissionDenied: .notConfigured)
         }
 
-        // Negado pelas regras: diferencia código substituído de regras não publicadas
+        // Negado pelas regras: diferencia código consumido, código substituído e regras não publicadas
+        if let used = try? await codeUseExists(code), used {
+            logDiagnostic("create", "permission denied: code already consumed")
+            return .codeAlreadyUsed
+        }
         if let exists = try? await codeExists(code), !exists {
             logDiagnostic("create", "permission denied: code no longer active")
             return .authorizationExpired

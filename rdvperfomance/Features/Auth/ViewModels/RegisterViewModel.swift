@@ -129,7 +129,7 @@ final class RegisterViewModel: ObservableObject {
             _ = try await teacherAuthorizationService.createTeacherAccount(ticket: ticket, form: form)
             authorizationStore.clear()
         } catch let error as TeacherAuthorizationError {
-            if error == .authorizationExpired {
+            if error == .authorizationExpired || error == .codeAlreadyUsed {
                 authorizationStore.clear()
             }
             errorMessage = error.localizedDescription

@@ -37,14 +37,18 @@ Seleção de tipo de conta
   └─ Professor -> modal "Código de autorização"
                    -> get teacher_signup_codes/{código} (servidor, sem cache)
                         ├─ inexistente -> "Código inválido", sem navegação
-                        └─ existente   -> código mantido apenas em memória
+                        └─ existente   -> get teacher_signup_code_uses/{código} (servidor)
+                             ├─ existente  -> "Código já utilizado", sem navegação
+                             └─ inexistente -> código mantido apenas em memória
                                           -> RegisterTeacherView (campos inalterados)
-                                               -> revalida o código no servidor
+                                               -> revalida código e consumo no servidor
                                                -> cria a conta no Firebase Auth
-                                               -> lote atômico:
+                                               -> transação (relê o consumo no servidor):
+                                                    teacher_signup_code_uses/{código} {usedAt}
                                                     teacher_signup_redemptions/{uid} {code}
                                                     users/{uid} {userType: TRAINER, ...}
-                                                  (aceito pelas regras SOMENTE com código vigente)
+                                                  (aceita pelas regras SOMENTE com código vigente
+                                                   e ainda não consumido)
                                                -> em falha: remove a conta do Auth
                                                -> login automático
 ```
@@ -227,6 +231,57 @@ Authentication → Usuários, criar no Console o documento `users/<UID>` (mesmo 
 Opcional: acrescentar `"ADMIN"` em `targetIsStudent()` para manter o acesso que professores tinham ao perfil
 do administrador quando ele era `STUDENT`.
 
+### 3.5. Código de uso único (`teacher_signup_code_uses`)
+
+**Diagnóstico (comprovado):** o registro de uso era `teacher_signup_redemptions/{uid}` — um documento por
+**professor**, não por **código**. As regras só exigiam que o código existisse; como o documento do código
+permanece até a substituição, cada novo UID podia criar seu próprio registro com o mesmo código. Simulação no
+ruleset publicado `ae27d509-…` (2026-10-12): perfil TRAINER com código já consumido → **permitido**.
+
+**Solução:**
+
+| Item | Detalhe |
+|------|---------|
+| Coleção nova | `teacher_signup_code_uses/{codeId}` — ID = código (12 caracteres, sem prefixo/hífens). |
+| Documento | `{ usedAt: timestamp }` (somente; `serverTimestamp()` validado como `request.time`). |
+| Vínculo com o professor | `teacher_signup_redemptions/{uid}.code` (criado na mesma operação; imutável; leitura do administrador). |
+| Unicidade (servidor) | A regra só tem `create`; `update`/`delete` são negados. Um `set` sobre documento existente é avaliado como `update` → **negado**. O perfil TRAINER e o registro de uso exigem `!exists(consumo)` (antes) **e** `existsAfter(consumo)` (depois) — logo, o consumo precisa ser criado na mesma operação e não pode existir antes. |
+| Concorrência | O app usa **transação** que lê o consumo no servidor; o SDK envia a pré-condição "documento inexistente" na confirmação. Se outro cadastro consumir antes, a confirmação falha, a transação é repetida e o código é recusado (`codeAlreadyUsed`). Mesmo sem essa pré-condição, a regra acima recusa o segundo. |
+| Consumo somente na conclusão | Validar o código, abrir `RegisterTeacherView`, cancelar ou voltar **não grava nada**. O consumo nasce somente na transação que cria o perfil TRAINER; se ela falhar, nada é gravado (atômica) e a conta recém-criada no Auth é removida (compensação, como antes — Auth e Firestore não compartilham transação). |
+| Permanência | O consumo não depende do código vigente nem do perfil: sobrevive a substituição do código, logout, reabertura do app e exclusão do professor. |
+| Geração de códigos | A transação do administrador sorteia até 5 candidatos e descarta qualquer um que já tenha documento em `teacher_signup_codes` ou `teacher_signup_code_uses` (nunca sobrescreve). A regra de criação de código exige `!exists(consumo)`. Formato inalterado. |
+| Consulta pelo administrador | Se o código vigente já foi consumido, ele não é reapresentado: a consulta gera um novo código (mesmo caminho já usado para estado inconsistente). Sem alteração visual. |
+| Mensagens | Novo `TeacherAuthorizationError.codeAlreadyUsed` → `teacher_authorization.error.code_already_used` (pt-BR/en/es). Código inexistente continua "Código inválido"; substituído durante o preenchimento continua "autorização expirou"; falha de rede/permissão continuam com as mensagens próprias (permissão negada só vira "já utilizado" se o consumo for confirmado em nova leitura). |
+
+**Publicação manual (ordem obrigatória — junto com a versão do app):**
+
+1. Console → Firestore → `(default)` → Regras. Confirmar que a versão vigente é `ae27d509-…`.
+   - Se for: colar `firebase/firestore-production-proposed.rules` inteiro e publicar.
+   - Se não for: aplicar sobre as regras vigentes somente os 5 trechos marcados abaixo (idênticos aos de
+     `firebase/firestore-teacher-authorization.rules`).
+2. Os 5 trechos (sobre `ae27d509`):
+   1. função `teacherSignupCodeUsePath(codeId)`;
+   2. `teacher_signup_codes` `create`: `&& !exists(teacherSignupCodeUsePath(codeId))`;
+   3. `teacher_signup_redemptions` `create`: `&& !exists(teacherSignupCodeUsePath(request.resource.data.code))
+      && existsAfter(teacherSignupCodeUsePath(request.resource.data.code))`;
+   4. novo `match /teacher_signup_code_uses/{codeId}` (get público, list admin, só create, sem update/delete);
+   5. `teacherSignupAuthorized(uid)`: `&& !exists(...consumo...) && existsAfter(...consumo...)`.
+3. **Compatibilidade de ordem:** com as regras novas, um build que ainda grava o cadastro sem o consumo
+   (código anterior desta branch) é recusado; com as regras atuais, o build novo é recusado (coleção sem regra
+   → curinga `if false`, mensagem "ainda não está disponível"). Publicar as regras no momento da distribuição
+   do build novo. A versão da App Store (Cloud Functions inexistentes) já não cadastra professores — sem impacto.
+
+Simulação (`projects.test`, sem deploy): proposta **18/18**; publicado 11/18 (permite reutilização, não tem a
+coleção). O arquivo complementar não compila isoladamente por causa do bloco ilustrativo vazio de `users`
+(pré-existente; o arquivo não é publicável sozinho).
+
+**Dados existentes (leitura 2026-10-12):** 1 registro em `teacher_signup_redemptions`, cujo código **já foi
+substituído** (não é o vigente; seu documento em `teacher_signup_codes` não existe mais) — portanto já é
+inválido. O código vigente (versão 2) não tem registro de uso. **Nenhuma migração é necessária.** Se houver
+dúvida sobre o histórico em outro momento, basta o administrador gerar um novo código (rotação). Opcional e
+idempotente: para cada `teacher_signup_redemptions/{uid}`, criar pelo Console/Admin SDK
+`teacher_signup_code_uses/{code}` com `usedAt` = `createdAt` do registro, **somente se ainda não existir**.
+
 ## 4. Riscos e limitações
 
 - **Sem as regras publicadas**, o modal do administrador exibe "Você não tem permissão..." (comprovado em
@@ -261,4 +316,13 @@ do administrador quando ele era `STUDENT`.
 7. Conta com claim mas `userType` diferente de ADMIN: entra no fluxo normal do seu tipo, sem opções de admin.
 8. Fechar e reabrir o app (build Release/TestFlight) com o administrador logado.
 9. Antes da migração, a nova versão **não** reconhece o administrador (perfil `STUDENT`): executar a seção 3.2 antes dos testes.
+10. Uso único (após publicar a seção 3.5): código A cadastra o professor 1 → `teacher_signup_code_uses/A` criado;
+    professor 2 com A → "Este código de autorização já foi utilizado..." já no modal; reabrir o app → A continua recusado.
+11. Código B: abrir o cadastro e cancelar/voltar → B continua aceito (nenhum documento em `teacher_signup_code_uses`).
+12. Código B com falha na gravação (ex.: modo avião após criar a conta) → nenhum consumo gravado; conta do Auth removida.
+13. Concorrência: dois aparelhos validam B, preenchem e confirmam quase juntos → um conclui; o outro recebe
+    "já utilizado" e sua conta do Auth é removida; só um `users/{uid}` TRAINER com B em `teacher_signup_redemptions`.
+14. Administrador reabre a tela após o uso de A → um novo código é exibido; gerar C → C funciona uma vez; A e B seguem recusados.
+15. Console/Playground: criar `users/{uid}` TRAINER sem `teacher_signup_code_uses` no mesmo lote → negado;
+    excluir/alterar `teacher_signup_code_uses/{id}` como cliente → negado.
 

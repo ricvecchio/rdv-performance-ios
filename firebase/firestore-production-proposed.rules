@@ -1,8 +1,9 @@
 // =============================================================================
 // RDV Performance — PROPOSTA COMPLETA de regras do Firestore (publicação MANUAL)
-// Base: ruleset publicado projects/rdvperformanceapp/rulesets/c2ec8aef-c879-4619-a70d-87c685da4249
-// Alterações: ver firebase/ADMIN_USER_MANAGEMENT.md, seção 5. Não referenciado no firebase.json.
-// Antes de publicar, compare com as regras vigentes no Console (podem ter mudado).
+// Base: ruleset publicado projects/rdvperformanceapp/rulesets/ae27d509-69f6-4235-a529-01014ffdb216
+// Alteração sobre a base: código de autorização de professor de USO ÚNICO
+// (teacher_signup_code_uses) — ver firebase/TEACHER_AUTHORIZATION.md, seção 3.5.
+// Não referenciado no firebase.json. Antes de publicar, compare com as regras vigentes.
 // =============================================================================
 rules_version = '2';
 
@@ -13,16 +14,17 @@ service cloud.firestore {
     // 1. FUNCOES GERAIS
     // =========================================================
 
-    function isSignedIn() {
-      return request.auth != null && accountActive();
+    // Contas com active == false nao acessam dados protegidos.
+    // Perfis legados sem active e cadastros ainda sem perfil permanecem compativeis.
+    function accountActive() {
+      return request.auth != null && (
+        !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('active', true) != false
+      );
     }
 
-    // Conta desativada pelo administrador (users/{uid}.active == false) perde acesso a
-    // todos os recursos que usam isSignedIn()/isOwner(). Registros legados (ausente/null) = ativa.
-    // Perfil ainda inexistente (cadastro em andamento) = ativa.
-    function accountActive() {
-      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('active', true) != false;
+    function isSignedIn() {
+      return request.auth != null && accountActive();
     }
 
     function isOwner(userId) {
@@ -107,6 +109,11 @@ service cloud.firestore {
       return /databases/$(database)/documents/teacher_signup_redemptions/$(uid);
     }
 
+    // Consumo definitivo de um codigo (uso unico)
+    function teacherSignupCodeUsePath(codeId) {
+      return /databases/$(database)/documents/teacher_signup_code_uses/$(codeId);
+    }
+
     function validTeacherSignupConfig() {
       let data = request.resource.data;
 
@@ -179,6 +186,7 @@ service cloud.firestore {
         ])
         && request.resource.data.version is int
         && request.resource.data.createdAt == request.time
+        && !exists(teacherSignupCodeUsePath(codeId))
         && getAfter(
           teacherSignupConfigPath()
         ).data.codeId == codeId
@@ -217,9 +225,43 @@ service cloud.firestore {
             request.resource.data.code
           )
         )
+        && !exists(
+          teacherSignupCodeUsePath(request.resource.data.code)
+        )
+        && existsAfter(
+          teacherSignupCodeUsePath(request.resource.data.code)
+        )
         && !exists(userPath(uid))
         && getAfter(
           userPath(uid)
+        ).data.get('userType', '') == 'TRAINER';
+
+      allow update, delete: if false;
+    }
+
+    // Consumo definitivo do codigo: um documento por codigo (ID = codigo).
+    // Somente criacao (set sobre documento existente = update = negado), na
+    // mesma operacao atomica do perfil TRAINER e do registro de utilizacao.
+    // Permanente: clientes nunca alteram nem removem.
+
+    match /teacher_signup_code_uses/{codeId} {
+
+      allow get: if true;
+
+      allow list: if isAdmin();
+
+      allow create: if isSignedIn()
+        && codeId.matches('^[A-HJ-NP-Z2-9]{12}$')
+        && request.resource.data.keys().hasOnly(['usedAt'])
+        && request.resource.data.usedAt == request.time
+        && exists(teacherSignupCodePath(codeId))
+        && !exists(teacherSignupRedemptionPath(request.auth.uid))
+        && getAfter(
+          teacherSignupRedemptionPath(request.auth.uid)
+        ).data.code == codeId
+        && !exists(userPath(request.auth.uid))
+        && getAfter(
+          userPath(request.auth.uid)
         ).data.get('userType', '') == 'TRAINER';
 
       allow update, delete: if false;
@@ -239,6 +281,12 @@ service cloud.firestore {
           teacherSignupCodePath(
             getAfter(redemption).data.code
           )
+        )
+        && !exists(
+          teacherSignupCodeUsePath(getAfter(redemption).data.code)
+        )
+        && existsAfter(
+          teacherSignupCodeUsePath(getAfter(redemption).data.code)
         );
     }
 
@@ -261,19 +309,18 @@ service cloud.firestore {
         );
     }
 
+    // Somente o servidor administrativo pode criar/desativar status inicial.
     function activeAllowedOnCreate() {
       return request.resource.data.get('active', null) in [null, true]
         && !('activeUpdatedAt' in request.resource.data)
         && !('activeUpdatedBy' in request.resource.data);
     }
 
-    // O próprio usuário não altera os campos de status da conta
     function accountStatusUnchanged() {
       return !request.resource.data.diff(resource.data).affectedKeys()
         .hasAny(['active', 'activeUpdatedAt', 'activeUpdatedBy']);
     }
 
-    // Versão instalada: somente o próprio usuário informa; tipos e tamanhos validados
     function installedVersionValid() {
       let d = request.resource.data;
       return (!('appVersion' in d) || (d.appVersion is string && d.appVersion.size() <= 32))
@@ -281,8 +328,7 @@ service cloud.firestore {
         && (!('appVersionUpdatedAt' in d) || d.appVersionUpdatedAt is timestamp);
     }
 
-    // Administrador ativa/desativa outra conta (nunca a própria nem outro ADMIN),
-    // alterando somente os campos de status
+    // ADMIN altera somente status de outro usuario nao ADMIN.
     function adminChangesAccountStatus(userId) {
       return isAdmin()
         && request.auth.uid != userId
@@ -300,7 +346,7 @@ service cloud.firestore {
 
     match /users/{userId} {
 
-      // O próprio usuário lê o perfil mesmo desativado (o app identifica a conta inativa)
+      // Leitura do proprio perfil permanece permitida para informar conta inativa.
       allow get: if (request.auth != null && request.auth.uid == userId)
         || isAdmin()
         || canTrainerAccessStudent(userId)
@@ -321,9 +367,9 @@ service cloud.firestore {
           && userTypeUnchanged()
           && accountStatusUnchanged()
           && installedVersionValid()
-        )
-        || adminChangesAccountStatus(userId);
+        ) || adminChangesAccountStatus(userId);
 
+      // Preservada a politica de exclusao do proprio perfil das regras recebidas.
       allow delete: if isOwner(userId);
     }
 
@@ -493,11 +539,11 @@ service cloud.firestore {
     }
 
     // =========================================================
-    // 12.1 CONFIGURACAO DO APP (verificacao de versao)
+    // 12.1 CONFIGURACAO DO APP (versao iOS)
     // =========================================================
 
     match /app_config/{docId} {
-      allow get: if true;
+      allow get: if docId == 'ios';
       allow list, write: if false;
     }
 

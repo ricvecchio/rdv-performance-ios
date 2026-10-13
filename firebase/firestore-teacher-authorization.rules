@@ -50,6 +50,11 @@ service cloud.firestore {
       return /databases/$(database)/documents/teacher_signup_config/current;
     }
 
+    // Consumo definitivo de um código (uso único). NOVO.
+    function teacherSignupCodeUsePath(codeId) {
+      return /databases/$(database)/documents/teacher_signup_code_uses/$(codeId);
+    }
+
     // -------------------------------------------------------------------------
     // 1) Configuração: código vigente em texto (somente administrador).
     //    Campos: code (RDV-XXXX-XXXX-XXXX), codeId (12 caracteres), version,
@@ -159,7 +164,9 @@ service cloud.firestore {
         && request.auth.uid == uid
         && !exists(redemption)
         && existsAfter(redemption)
-        && exists(teacherSignupCodePath(getAfter(redemption).data.code));
+        && exists(teacherSignupCodePath(getAfter(redemption).data.code))
+        && !exists(teacherSignupCodeUsePath(getAfter(redemption).data.code))
+        && existsAfter(teacherSignupCodeUsePath(getAfter(redemption).data.code));
     }
 
     function userTypeAllowedOnCreate(uid) {

@@ -88312,6 +88312,29 @@
         }
       }
     },
+    "teacher_authorization.error.code_already_used" : {
+      "comment" : "Teacher authorization: Este código de autorização já foi utilizado. Solicite um novo código ao administrador.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This authorization code has already been used. Ask the administrator for a new code."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este código de autorización ya fue utilizado. Solicita un nuevo código al administrador."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este código de autorização já foi utilizado. Solicite um novo código ao administrador."
+          }
+        }
+      }
+    },
     "teacher_authorization.error.email_in_use" : {
       "comment" : "Teacher authorization: Este e-mail já está em uso.",
       "localizations" : {
