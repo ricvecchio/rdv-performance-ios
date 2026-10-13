@@ -27,6 +27,9 @@ final class AppSession: ObservableObject {
     @Published private(set) var measurementUnitLoadState: MeasurementUnitLoadState = .idle
     /// Conta marcada como inativa (`users/{uid}.active == false`) na última tentativa de acesso
     @Published private(set) var isAccountDisabled: Bool = false
+    /// Restauração inicial em andamento: verdadeiro até a primeira resposta do Firebase Auth
+    /// (e, havendo usuário, até a resolução do perfil usado na navegação). Nunca volta a ser verdadeiro.
+    @Published private(set) var isRestoringSession: Bool = true
 
 
     private var authListener: AuthStateDidChangeListenerHandle?
@@ -134,10 +137,14 @@ final class AppSession: ObservableObject {
                     self.adminProfileMode = nil
                     self.storedUid = user.uid
                     await self.loadUserProfile(uid: user.uid)
+                    // Perfil resolvido (sucesso, inexistente, inativo ou falha): a navegação já pode decidir.
+                    // A sincronização de recordes não bloqueia a abertura.
+                    self.isRestoringSession = false
                     await PersonalRecordsSyncService.shared.synchronizeForAuthenticatedUser(uid: user.uid)
                 } else {
                     PersonalRecordsSyncService.shared.handleLogout()
                     self.clearSession()
+                    self.isRestoringSession = false
                 }
             }
         }

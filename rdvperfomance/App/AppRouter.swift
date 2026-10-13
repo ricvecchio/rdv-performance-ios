@@ -2,7 +2,8 @@ import SwiftUI
 
 struct AppRouter: View {
     @State private var authenticationPath: [AppRoute] = []
-    @StateObject private var session = AppSession()
+    // Mesma instância criada em rdvperfomanceApp (evita uma segunda sessão/listener independente)
+    @EnvironmentObject private var session: AppSession
 
     var body: some View {
         Group {
