@@ -1964,6 +1964,121 @@
         }
       }
     },
+    "admin.users.copy_uid" : {
+      "comment" : "Stable semantic key for: Copiar UID",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copy UID"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar UID"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Copiar UID"
+          }
+        }
+      }
+    },
+    "admin.users.deactivate" : {
+      "comment" : "Stable semantic key for: Desativar conta",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deactivate account"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar cuenta"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar conta"
+          }
+        }
+      }
+    },
+    "admin.users.deactivate.confirm" : {
+      "comment" : "Stable semantic key for: Desativar",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deactivate"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactivar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar"
+          }
+        }
+      }
+    },
+    "admin.users.deactivate.confirmation_message" : {
+      "comment" : "Stable semantic key for: O usuário perderá o acesso ao aplicativo e aos dados até ser reativado. Nenhum dado será excluído.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The user will lose access to the app and its data until reactivated. No data will be deleted."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El usuario perderá el acceso a la aplicación y a los datos hasta ser reactivado. No se eliminará ningún dato."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O usuário perderá o acesso ao aplicativo e aos dados até ser reativado. Nenhum dado será excluído."
+          }
+        }
+      }
+    },
+    "admin.users.deactivate.confirmation_title" : {
+      "comment" : "Stable semantic key for: Desativar conta?",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Deactivate account?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Desactivar cuenta?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desativar conta?"
+          }
+        }
+      }
+    },
     "admin.users.delete.confirmation_message" : {
       "comment" : "Stable semantic key for: Esta ação removerá permanentemente o usuário e seus dados relacionados. Esta operação não poderá ser desfeita.",
       "localizations" : {
@@ -2006,6 +2121,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Excluir usuário?"
+          }
+        }
+      }
+    },
+    "admin.users.delete.permanent" : {
+      "comment" : "Stable semantic key for: Excluir definitivamente",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Delete permanently"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Eliminar definitivamente"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Excluir definitivamente"
           }
         }
       }
@@ -2079,6 +2217,167 @@
         }
       }
     },
+    "admin.users.manage.title" : {
+      "comment" : "Stable semantic key for: Gerenciar conta",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Manage account"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gestionar cuenta"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Gerenciar conta"
+          }
+        }
+      }
+    },
+    "admin.users.reactivate" : {
+      "comment" : "Stable semantic key for: Reativar conta",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reactivate account"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reactivar cuenta"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reativar conta"
+          }
+        }
+      }
+    },
+    "admin.users.reactivate.confirm" : {
+      "comment" : "Stable semantic key for: Reativar",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reactivate"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reactivar"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reativar"
+          }
+        }
+      }
+    },
+    "admin.users.reactivate.confirmation_message" : {
+      "comment" : "Stable semantic key for: O usuário poderá acessar o aplicativo novamente, com os mesmos dados.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The user will be able to access the app again, with the same data."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El usuario podrá acceder de nuevo a la aplicación, con los mismos datos."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O usuário poderá acessar o aplicativo novamente, com os mesmos dados."
+          }
+        }
+      }
+    },
+    "admin.users.reactivate.confirmation_title" : {
+      "comment" : "Stable semantic key for: Reativar conta?",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reactivate account?"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "¿Reactivar cuenta?"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reativar conta?"
+          }
+        }
+      }
+    },
+    "admin.users.status.active" : {
+      "comment" : "Stable semantic key for: Ativo",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Active"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Activo"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ativo"
+          }
+        }
+      }
+    },
+    "admin.users.status.inactive" : {
+      "comment" : "Stable semantic key for: Inativo",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inactive"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inactivo"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Inativo"
+          }
+        }
+      }
+    },
     "admin.users.title" : {
       "comment" : "Stable semantic key for: Usuários",
       "localizations" : {
@@ -2121,6 +2420,121 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Administração"
+          }
+        }
+      }
+    },
+    "admin.users.version.no_reference" : {
+      "comment" : "Stable semantic key for: Sem informação",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No information"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sin información"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sem informação"
+          }
+        }
+      }
+    },
+    "admin.users.version.not_informed" : {
+      "comment" : "Stable semantic key for: Versão não informada",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version not reported"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión no informada"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versão não informada"
+          }
+        }
+      }
+    },
+    "admin.users.version.outdated" : {
+      "comment" : "Stable semantic key for: Desatualizado",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Outdated"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desactualizado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Desatualizado"
+          }
+        }
+      }
+    },
+    "admin.users.version.up_to_date" : {
+      "comment" : "Stable semantic key for: Atualizado",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Up to date"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Actualizado"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atualizado"
+          }
+        }
+      }
+    },
+    "admin.users.version.value" : {
+      "comment" : "Stable semantic key for: Versão %@",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Version %@"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versión %@"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Versão %@"
           }
         }
       }
@@ -3870,6 +4284,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Em Casa"
+          }
+        }
+      }
+    },
+    "auth.login.account_disabled" : {
+      "comment" : "Stable semantic key for: Esta conta está desativada. Entre em contato com o administrador.",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This account is deactivated. Please contact the administrator."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta cuenta está desactivada. Comuníquese con el administrador."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esta conta está desativada. Entre em contato com o administrador."
           }
         }
       }
@@ -5627,6 +6064,29 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Adicionar"
+          }
+        }
+      }
+    },
+    "common.administrator" : {
+      "comment" : "Stable semantic key for: Administrador",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administrator"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administrador"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Administrador"
           }
         }
       }

@@ -1,0 +1,512 @@
+// =============================================================================
+// RDV Performance — PROPOSTA COMPLETA de regras do Firestore (publicação MANUAL)
+// Base: ruleset publicado projects/rdvperformanceapp/rulesets/c2ec8aef-c879-4619-a70d-87c685da4249
+// Alterações: ver firebase/ADMIN_USER_MANAGEMENT.md, seção 5. Não referenciado no firebase.json.
+// Antes de publicar, compare com as regras vigentes no Console (podem ter mudado).
+// =============================================================================
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // =========================================================
+    // 1. FUNCOES GERAIS
+    // =========================================================
+
+    function isSignedIn() {
+      return request.auth != null && accountActive();
+    }
+
+    // Conta desativada pelo administrador (users/{uid}.active == false) perde acesso a
+    // todos os recursos que usam isSignedIn()/isOwner(). Registros legados (ausente/null) = ativa.
+    // Perfil ainda inexistente (cadastro em andamento) = ativa.
+    function accountActive() {
+      return !exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        || get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('active', true) != false;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function userPath(userId) {
+      return /databases/$(database)/documents/users/$(userId);
+    }
+
+    function myUserType() {
+      return isSignedIn()
+        && exists(userPath(request.auth.uid))
+        ? get(userPath(request.auth.uid)).data.get('userType', null)
+        : null;
+    }
+
+    // O perfil ADMIN deve ser atribuido exclusivamente
+    // por um administrador confiavel no Firebase Console
+    // ou por Firebase Admin SDK.
+    //
+    // Nenhum cliente pode criar ou alterar seu userType
+    // para ADMIN.
+
+    function isAdmin() {
+      return isSignedIn()
+        && request.auth.token.get('admin', false) == true
+        && myUserType() == 'ADMIN';
+    }
+
+    function isTrainer() {
+      return isSignedIn() && (
+        isAdmin()
+        || myUserType() in [
+          'TRAINER', 'PROFESSOR', 'TEACHER',
+          'trainer', 'professor', 'teacher',
+          'Trainer', 'Professor', 'Teacher'
+        ]
+        || exists(
+          /databases/$(database)/documents/teachers/$(request.auth.uid)
+        )
+      );
+    }
+
+    function targetIsStudent(userId) {
+      return get(userPath(userId)).data.userType in [
+        'STUDENT', 'student', 'Student',
+        'ALUNO', 'aluno', 'Aluno'
+      ];
+    }
+
+    function canTrainerAccessStudent(userId) {
+      return isTrainer() && targetIsStudent(userId);
+    }
+
+    function targetIsTrainer(userId) {
+      return (
+        get(userPath(userId)).data.userType in [
+          'TRAINER', 'PROFESSOR', 'TEACHER',
+          'trainer', 'professor', 'teacher',
+          'Trainer', 'Professor', 'Teacher'
+        ]
+        || exists(
+          /databases/$(database)/documents/teachers/$(userId)
+        )
+      );
+    }
+
+    // =========================================================
+    // 2. AUTORIZACAO PARA CADASTRO DE PROFESSORES
+    // =========================================================
+
+    function teacherSignupConfigPath() {
+      return /databases/$(database)/documents/teacher_signup_config/current;
+    }
+
+    function teacherSignupCodePath(codeId) {
+      return /databases/$(database)/documents/teacher_signup_codes/$(codeId);
+    }
+
+    function teacherSignupRedemptionPath(uid) {
+      return /databases/$(database)/documents/teacher_signup_redemptions/$(uid);
+    }
+
+    function validTeacherSignupConfig() {
+      let data = request.resource.data;
+
+      return isAdmin()
+        && data.keys().hasOnly([
+          'code',
+          'codeId',
+          'version',
+          'updatedAt',
+          'updatedBy'
+        ])
+        && data.codeId is string
+        && data.codeId.matches(
+          '^[A-HJ-NP-Z2-9]{12}$'
+        )
+        && data.code is string
+        && data.code.matches(
+          '^RDV-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}-[A-HJ-NP-Z2-9]{4}$'
+        )
+        && data.version is int
+        && data.updatedAt == request.time
+        && data.updatedBy == request.auth.uid
+        && existsAfter(
+          teacherSignupCodePath(data.codeId)
+        );
+    }
+
+    // Codigo vigente do administrador
+
+    match /teacher_signup_config/{docId} {
+
+      allow get: if docId == 'current'
+        && isAdmin();
+
+      allow list: if false;
+
+      allow create: if docId == 'current'
+        && validTeacherSignupConfig()
+        && request.resource.data.version == 1;
+
+      allow update: if docId == 'current'
+        && validTeacherSignupConfig()
+        && request.resource.data.version ==
+           resource.data.get('version', 0) + 1
+        && (
+          resource.data.get('codeId', '') == ''
+          || !existsAfter(
+            teacherSignupCodePath(resource.data.codeId)
+          )
+        );
+
+      allow delete: if false;
+    }
+
+    // Codigos ativos
+    // A consulta individual permite validar um codigo.
+    // A listagem continua bloqueada.
+
+    match /teacher_signup_codes/{codeId} {
+
+      allow get: if true;
+
+      allow list: if false;
+
+      allow create: if isAdmin()
+        && codeId.matches('^[A-HJ-NP-Z2-9]{12}$')
+        && request.resource.data.keys().hasOnly([
+          'version',
+          'createdAt'
+        ])
+        && request.resource.data.version is int
+        && request.resource.data.createdAt == request.time
+        && getAfter(
+          teacherSignupConfigPath()
+        ).data.codeId == codeId
+        && getAfter(
+          teacherSignupConfigPath()
+        ).data.version ==
+           request.resource.data.version;
+
+      allow update: if false;
+
+      allow delete: if isAdmin()
+        && getAfter(
+          teacherSignupConfigPath()
+        ).data.codeId != codeId;
+    }
+
+    // Registro de utilizacao do codigo
+    // Criado no mesmo lote do perfil TRAINER.
+
+    match /teacher_signup_redemptions/{uid} {
+
+      allow get, list: if isAdmin();
+
+      allow create: if isOwner(uid)
+        && request.resource.data.keys().hasOnly([
+          'code',
+          'createdAt'
+        ])
+        && request.resource.data.code is string
+        && request.resource.data.code.matches(
+          '^[A-HJ-NP-Z2-9]{12}$'
+        )
+        && request.resource.data.createdAt == request.time
+        && exists(
+          teacherSignupCodePath(
+            request.resource.data.code
+          )
+        )
+        && !exists(userPath(uid))
+        && getAfter(
+          userPath(uid)
+        ).data.get('userType', '') == 'TRAINER';
+
+      allow update, delete: if false;
+    }
+
+    // =========================================================
+    // 3. PROTECAO DOS PERFIS
+    // =========================================================
+
+    function teacherSignupAuthorized(uid) {
+      let redemption = teacherSignupRedemptionPath(uid);
+
+      return isOwner(uid)
+        && !exists(redemption)
+        && existsAfter(redemption)
+        && exists(
+          teacherSignupCodePath(
+            getAfter(redemption).data.code
+          )
+        );
+    }
+
+    function userTypeAllowedOnCreate(uid) {
+      return !('userType' in request.resource.data)
+        || request.resource.data.userType == 'STUDENT'
+        || (
+          request.resource.data.userType == 'TRAINER'
+          && teacherSignupAuthorized(uid)
+        );
+    }
+
+    function userTypeUnchanged() {
+      return request.resource.data.get('userType', null)
+        == resource.data.get('userType', null)
+        || (
+          resource.data.get('userType', null) == null
+          && request.resource.data.get('userType', null)
+             == 'STUDENT'
+        );
+    }
+
+    function activeAllowedOnCreate() {
+      return request.resource.data.get('active', null) in [null, true]
+        && !('activeUpdatedAt' in request.resource.data)
+        && !('activeUpdatedBy' in request.resource.data);
+    }
+
+    // O próprio usuário não altera os campos de status da conta
+    function accountStatusUnchanged() {
+      return !request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['active', 'activeUpdatedAt', 'activeUpdatedBy']);
+    }
+
+    // Versão instalada: somente o próprio usuário informa; tipos e tamanhos validados
+    function installedVersionValid() {
+      let d = request.resource.data;
+      return (!('appVersion' in d) || (d.appVersion is string && d.appVersion.size() <= 32))
+        && (!('appBuild' in d) || (d.appBuild is string && d.appBuild.size() <= 32))
+        && (!('appVersionUpdatedAt' in d) || d.appVersionUpdatedAt is timestamp);
+    }
+
+    // Administrador ativa/desativa outra conta (nunca a própria nem outro ADMIN),
+    // alterando somente os campos de status
+    function adminChangesAccountStatus(userId) {
+      return isAdmin()
+        && request.auth.uid != userId
+        && resource.data.get('userType', '') != 'ADMIN'
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['active', 'activeUpdatedAt', 'activeUpdatedBy'])
+        && request.resource.data.active is bool
+        && request.resource.data.activeUpdatedAt == request.time
+        && request.resource.data.activeUpdatedBy == request.auth.uid;
+    }
+
+    // =========================================================
+    // 4. USUARIOS
+    // =========================================================
+
+    match /users/{userId} {
+
+      // O próprio usuário lê o perfil mesmo desativado (o app identifica a conta inativa)
+      allow get: if (request.auth != null && request.auth.uid == userId)
+        || isAdmin()
+        || canTrainerAccessStudent(userId)
+        || (
+          isSignedIn()
+          && targetIsTrainer(userId)
+        );
+
+      allow list: if isSignedIn();
+
+      allow create: if isOwner(userId)
+        && userTypeAllowedOnCreate(userId)
+        && activeAllowedOnCreate()
+        && installedVersionValid();
+
+      allow update: if (
+          isOwner(userId)
+          && userTypeUnchanged()
+          && accountStatusUnchanged()
+          && installedVersionValid()
+        )
+        || adminChangesAccountStatus(userId);
+
+      allow delete: if isOwner(userId);
+    }
+
+    // =========================================================
+    // 5. SUBCOLECOES DE USUARIOS
+    // =========================================================
+
+    match /users/{userId}/training_weeks/{docId} {
+      allow read, write: if isOwner(userId)
+        || canTrainerAccessStudent(userId);
+    }
+
+    match /users/{userId}/training_days/{docId} {
+      allow read, write: if isOwner(userId)
+        || canTrainerAccessStudent(userId);
+    }
+
+    match /users/{userId}/progress/{docId} {
+      allow read, write: if isOwner(userId)
+        || canTrainerAccessStudent(userId);
+    }
+
+    match /users/{userId}/messages/{document=**} {
+      allow read, write: if isOwner(userId)
+        || isTrainer();
+    }
+
+    match /users/{userId}/feedbacks/{document=**} {
+      allow read, write: if isOwner(userId)
+        || isTrainer();
+    }
+
+    match /users/{userId}/student_personal_records/{document=**} {
+      allow read, write: if isOwner(userId);
+    }
+
+    // Biblioteca pessoal de videos do aluno
+
+    match /users/{userId}/youtubeVideos/{videoId} {
+      allow read, create, update, delete:
+        if isOwner(userId);
+    }
+
+    // =========================================================
+    // 6. MENSAGENS DOS PROFESSORES
+    // =========================================================
+
+    match /teacher_messages/{docId} {
+
+      allow get, list: if isSignedIn() && (
+        resource.data.teacherId == request.auth.uid
+        || resource.data.studentId == request.auth.uid
+      );
+
+      allow create: if isTrainer()
+        && request.resource.data.teacherId ==
+           request.auth.uid;
+
+      allow update, delete: if isTrainer()
+        && resource.data.teacherId ==
+           request.auth.uid;
+    }
+
+    // =========================================================
+    // 7. FEEDBACKS DOS ALUNOS
+    // =========================================================
+
+    match /student_feedbacks/{docId} {
+
+      allow get, list: if isSignedIn() && (
+        resource.data.teacherId == request.auth.uid
+        || resource.data.studentId == request.auth.uid
+      );
+
+      allow create: if isTrainer()
+        && request.resource.data.teacherId ==
+           request.auth.uid;
+
+      allow update, delete: if isTrainer()
+        && resource.data.teacherId ==
+           request.auth.uid;
+    }
+
+    // =========================================================
+    // 8. TREINOS
+    // =========================================================
+
+    match /training_weeks/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /training_weeks/{weekId}/training_days/{dayId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /training_weeks/{weekId}/days/{dayId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /training_weeks/{weekId}/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /training_days/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /training_days/{dayId}/{document=**} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /progress/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // =========================================================
+    // 9. RELACIONAMENTO PROFESSOR E ALUNO
+    // =========================================================
+
+    match /teacher_students/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /teacher_student_relations/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /teacher_student_invites/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /teacher_student_link_requests/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // =========================================================
+    // 10. MENSAGENS E FEEDBACKS
+    // =========================================================
+
+    match /messages/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    match /feedbacks/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // =========================================================
+    // 11. BIBLIOTECA DE TREINOS
+    // =========================================================
+
+    match /workout_templates/{docId} {
+      allow read, write: if isSignedIn();
+    }
+
+    // =========================================================
+    // 12. PROFESSORES
+    // =========================================================
+
+    match /teachers/{teacherId} {
+
+      allow read, write: if isOwner(teacherId);
+
+      match /{document=**} {
+        allow read, write: if isOwner(teacherId);
+      }
+    }
+
+    // =========================================================
+    // 12.1 CONFIGURACAO DO APP (verificacao de versao)
+    // =========================================================
+
+    match /app_config/{docId} {
+      allow get: if true;
+      allow list, write: if false;
+    }
+
+    // =========================================================
+    // 13. BLOQUEIO PADRAO
+    // =========================================================
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

@@ -135,6 +135,14 @@ final class FirestoreRepository {
         try await userRepository.clearUserPhotoBase64(uid: uid)
     }
 
+    func setUserAccountActive(uid: String, active: Bool, adminUid: String) async throws {
+        try await userRepository.setUserAccountActive(uid: uid, active: active, adminUid: adminUid)
+    }
+
+    func setInstalledAppVersion(uid: String, version: String, build: String?) async throws {
+        try await userRepository.setInstalledAppVersion(uid: uid, version: version, build: build)
+    }
+
     func setStudentUnitName(uid: String, unitName: String?) async throws {
         try await userRepository.setStudentUnitName(uid: uid, unitName: unitName)
     }

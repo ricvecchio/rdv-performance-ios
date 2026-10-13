@@ -15,6 +15,7 @@ struct AppUser: Identifiable, Codable, Hashable {
     var gymName: String?
 
     var defaultCategory: String?
+    /// Situação da conta. `nil` (registros legados, ex.: professores) = ativa; somente `false` = inativa.
     var active: Bool?
 
     var unitName: String?
@@ -22,6 +23,18 @@ struct AppUser: Identifiable, Codable, Hashable {
 
     // ✅ foto persistida no Firestore (Base64)
     var photoBase64: String?
+
+    // Versão do app informada pelo próprio dispositivo do usuário (ausente em versões antigas)
+    var appVersion: String?
+    var appBuild: String?
+    var appVersionUpdatedAt: Date?
+}
+
+extension AppUser {
+    /// Conta ativa, com compatibilidade para registros legados (`active == nil`)
+    var isAccountActive: Bool {
+        active != false
+    }
 }
 
 /// Modelo de relação entre professor e aluno com categorias vinculadas

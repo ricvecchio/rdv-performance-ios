@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 struct AdminUsersView: View {
     private enum UserFilter: CaseIterable {
@@ -16,11 +17,14 @@ struct AdminUsersView: View {
     }
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.locale) private var locale
     @StateObject private var viewModel = AdminUsersViewModel()
     @State private var selectedFilter: UserFilter = .all
     @State private var pendingDeletion: AppUser?
-    @State private var showDeletionConfirmation = false
     @State private var showDeletionUnavailable = false
+    @State private var managedUser: AppUser?
+    @State private var showManageOptions = false
+    @State private var showStatusConfirmation = false
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -68,22 +72,86 @@ struct AdminUsersView: View {
         .task {
             await viewModel.loadUsers()
         }
-        .alert("admin.users.delete.confirmation_title", isPresented: $showDeletionConfirmation) {
-            Button("common.cancel", role: .cancel) {
-                pendingDeletion = nil
+        // Ações da lixeira: desativar/reativar, excluir definitivamente, cancelar
+        .confirmationDialog(
+            "admin.users.manage.title",
+            isPresented: $showManageOptions,
+            titleVisibility: .visible,
+            presenting: managedUser
+        ) { user in
+            if !user.isAdministratorProfile {
+                if user.isAccountActive {
+                    Button("admin.users.deactivate", role: .destructive) {
+                        showStatusConfirmation = true
+                    }
+                } else {
+                    Button("admin.users.reactivate") {
+                        showStatusConfirmation = true
+                    }
+                }
             }
-            Button("common.delete", role: .destructive) {
+            Button("admin.users.delete.permanent", role: .destructive) {
+                pendingDeletion = user
                 showDeletionUnavailable = true
             }
-        } message: {
-            Text("admin.users.delete.confirmation_message")
+            Button("common.cancel", role: .cancel) {
+                managedUser = nil
+            }
         }
+        .alert(
+            (managedUser?.isAccountActive ?? true)
+                ? LocalizedStringKey("admin.users.deactivate.confirmation_title")
+                : LocalizedStringKey("admin.users.reactivate.confirmation_title"),
+            isPresented: $showStatusConfirmation,
+            presenting: managedUser
+        ) { user in
+            Button("common.cancel", role: .cancel) {
+                managedUser = nil
+            }
+            Button(
+                user.isAccountActive
+                    ? LocalizedStringKey("admin.users.deactivate.confirm")
+                    : LocalizedStringKey("admin.users.reactivate.confirm"),
+                role: user.isAccountActive ? .destructive : nil
+            ) {
+                let activate = !user.isAccountActive
+                managedUser = nil
+                Task {
+                    await viewModel.setAccountActive(user, active: activate, adminUid: session.currentUid)
+                }
+            }
+        } message: { user in
+            Text(
+                user.isAccountActive
+                    ? LocalizedStringKey("admin.users.deactivate.confirmation_message")
+                    : LocalizedStringKey("admin.users.reactivate.confirmation_message")
+            )
+        }
+        // Exclusão definitiva exige operação administrativa no servidor (Admin SDK):
+        // não é executada pelo app (ver firebase/admin-tools/delete-user.js)
         .alert("admin.users.delete.unavailable_title", isPresented: $showDeletionUnavailable) {
+            if let uid = pendingDeletion?.id, !uid.isEmpty {
+                Button("admin.users.copy_uid") {
+                    UIPasteboard.general.string = uid
+                    pendingDeletion = nil
+                    managedUser = nil
+                }
+            }
             Button("common.ok", role: .cancel) {
                 pendingDeletion = nil
+                managedUser = nil
             }
         } message: {
             Text("admin.users.delete.unavailable_message")
+                + Text(verbatim: "\n\nUID: \(pendingDeletion?.id ?? "")")
+        }
+        .alert("common.error", isPresented: Binding(
+            get: { viewModel.actionErrorMessage != nil },
+            set: { if !$0 { viewModel.actionErrorMessage = nil } }
+        )) {
+            Button("common.ok", role: .cancel) { viewModel.actionErrorMessage = nil }
+        } message: {
+            Text(viewModel.actionErrorMessage ?? "")
         }
     }
 
@@ -180,7 +248,8 @@ struct AdminUsersView: View {
         case .students:
             return viewModel.users.filter(\.isStudentProfile)
         case .trainers:
-            return viewModel.users.filter { !$0.isStudentProfile }
+            // ADMIN não é professor: aparece somente em "Todos"
+            return viewModel.users.filter { !$0.isStudentProfile && !$0.isAdministratorProfile }
         }
     }
 
@@ -206,13 +275,11 @@ struct AdminUsersView: View {
                         Text(user.email)
                             .font(.system(size: 13))
                             .foregroundColor(.white.opacity(0.55))
-                        Text(
-                            user.isStudentProfile
-                                ? LocalizedStringKey("common.student")
-                                : LocalizedStringKey("common.trainer")
-                        )
+                        Text(user.roleTitleKey)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundColor(.white.opacity(0.55))
+                        accountStatusLine(user)
+                        versionLine(user)
                     }
 
                     Spacer()
@@ -225,19 +292,69 @@ struct AdminUsersView: View {
             .buttonStyle(.plain)
 
             if user.id != session.currentUid {
-                Button {
-                    pendingDeletion = user
-                    showDeletionConfirmation = true
-                } label: {
-                    Image(systemName: "trash")
-                        .font(.system(size: 15))
-                        .foregroundColor(.red.opacity(0.9))
+                if viewModel.updatingUserId != nil && viewModel.updatingUserId == user.id {
+                    ProgressView()
+                        .tint(.white)
+                } else {
+                    Button {
+                        managedUser = user
+                        showManageOptions = true
+                    } label: {
+                        Image(systemName: "trash")
+                            .font(.system(size: 15))
+                            .foregroundColor(.red.opacity(0.9))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(viewModel.updatingUserId != nil)
                 }
-                .buttonStyle(.plain)
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 13)
+    }
+
+    // Status persistido em users/{uid}.active (nil em registros legados = ativo)
+    private func accountStatusLine(_ user: AppUser) -> some View {
+        HStack(spacing: 6) {
+            Circle()
+                .fill(user.isAccountActive ? Color.green.opacity(0.85) : Color.red.opacity(0.55))
+                .frame(width: 7, height: 7)
+            Text(
+                user.isAccountActive
+                    ? LocalizedStringKey("admin.users.status.active")
+                    : LocalizedStringKey("admin.users.status.inactive")
+            )
+            .font(.system(size: 12, weight: .semibold))
+            .foregroundColor(.white.opacity(0.55))
+        }
+    }
+
+    // Versão informada pelo dispositivo do usuário, comparada com latestVersion de app_config/ios
+    private func versionLine(_ user: AppUser) -> some View {
+        let installedRaw = (user.appVersion ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+
+        guard let installed = AppVersion(installedRaw) else {
+            return Text("admin.users.version.not_informed")
+                .font(.system(size: 12))
+                .foregroundColor(.white.opacity(0.45))
+        }
+
+        let format = AppLocalization.string("admin.users.version.value", locale: locale)
+        let versionText = Text(verbatim: String(format: format, locale: locale, arguments: [installedRaw]))
+            .foregroundColor(.white.opacity(0.55))
+        let separator = Text(verbatim: " — ").foregroundColor(.white.opacity(0.55))
+
+        let statusText: Text
+        if let reference = viewModel.versionReference {
+            statusText = installed < reference.latestVersion
+                ? Text("admin.users.version.outdated").foregroundColor(Color.yellow.opacity(0.9))
+                : Text("admin.users.version.up_to_date").foregroundColor(Color.green.opacity(0.85))
+        } else {
+            statusText = Text("admin.users.version.no_reference").foregroundColor(.white.opacity(0.45))
+        }
+
+        return (versionText + separator + statusText)
+            .font(.system(size: 12))
     }
 }
 
@@ -461,5 +578,11 @@ private struct AdminEmptyRow: View {
 private extension AppUser {
     var isStudentProfile: Bool {
         userType.trimmingCharacters(in: .whitespacesAndNewlines).uppercased() == "STUDENT"
+    }
+
+    var roleTitleKey: LocalizedStringKey {
+        if isStudentProfile { return "common.student" }
+        if isAdministratorProfile { return "common.administrator" }
+        return "common.trainer"
     }
 }
