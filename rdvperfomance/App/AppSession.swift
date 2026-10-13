@@ -39,6 +39,10 @@ final class AppSession: ObservableObject {
     private let administratorClaim = "admin"
     // Evita gravações repetidas da mesma versão instalada (somente em memória)
     private var reportedAppVersionKey: String?
+    // Evita gravações repetidas do último acesso/aparelho na mesma sessão (somente em memória)
+    private var reportedAccessUid: String?
+    // Intervalo mínimo entre registros de último acesso quando o aparelho não mudou
+    private let lastAccessMinimumInterval: TimeInterval = 15 * 60
 
     enum MeasurementUnitLoadState {
         case idle
