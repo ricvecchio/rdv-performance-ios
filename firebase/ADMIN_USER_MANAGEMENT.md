@@ -3,6 +3,28 @@
 > Nenhum deploy, migração ou exclusão é feito automaticamente. Regras e ferramentas abaixo são
 > aplicadas **manualmente** pelo responsável pelo projeto.
 
+## 0. Situação verificada em produção (2026-10-12, somente leitura) — o que falta para funcionar
+
+| Sintoma no app | Causa comprovada | Ação necessária (manual) |
+|----------------|------------------|--------------------------|
+| "Desativar conta" → `Missing or insufficient permissions.` | O ruleset **publicado** ainda é `c2ec8aef-…`: `users/{userId}` só permite `update` ao **dono** (`isOwner(userId) && userTypeUnchanged()`) e não contém `accountActive`, `accountStatusUnchanged`, `installedVersionValid`, `adminChangesAccountStatus` nem `app_config`. O payload do app (`active`, `activeUpdatedAt` = `serverTimestamp()`, `activeUpdatedBy` = UID do admin) e o token (`admin: true`) estão corretos. Simulação (`projects.test`, mesmo payload): publicado **nega** desativar/reativar aluno e professor; proposta **permite** — 18/18 casos esperados (proposta) × 10/18 (publicado). | Publicar `firestore-production-proposed.rules` (seção 5). Nenhuma alteração no Swift é necessária. |
+| "Excluir definitivamente" → "Exclusão indisponível" | Não existe backend confiável: `firebase functions:list` → *No functions found*; plano Spark não permite Cloud Functions. O SDK iOS não pode excluir outra conta do Authentication. | Usar `admin-tools/delete-user.js` (seção 4) **ou** implantar o backend descrito na seção 4.1. O app continua não declarando exclusão. |
+| Quase todos "Versão não informada" | O registro da versão existe somente nos commits de 2026-10-12 (17dd1d8 em diante), **posteriores** à versão publicada na App Store (lançada em 2026-10-11 22:13 UTC). Nenhum binário publicado grava a versão. A gravação pelo próprio usuário já é aceita pelas regras publicadas (simulado). | Nenhuma: cada usuário passa a informar a versão ao abrir uma versão contendo esta implementação. Não há dados históricos para preencher. |
+| Admin: "Versão 1.0.23 — Sem informação" | `app_config/ios` **não existe** e as regras publicadas **não permitem lê-lo**. | Publicar as regras e criar `app_config/ios` (seção 6). |
+
+**Atenção — divergência de versão (verificar antes de criar `app_config/ios`):** a App Store (consulta pública
+`itunes.apple.com/lookup?bundleId=br.com.rdvperfomance`) informa a versão **`10.0.22`**, mas o projeto Xcode
+está com `MARKETING_VERSION = 1.0.23` (histórico do repositório: 1.0.22 → 1.0.23). A comparação é numérica:
+`1.0.23 < 10.0.22`. Consequências se nada for ajustado:
+
+- com `latestVersion = "10.0.22"`, dispositivos que informarem `1.0.23` aparecerão **Desatualizado**;
+- com `forceUpdate: true` e `minimumVersion` ≥ `10.0.x`, um binário `1.0.23` seria **bloqueado** pela atualização obrigatória;
+- o App Store Connect exige versão superior à já aprovada: um envio como `1.0.23` tende a ser recusado.
+
+Confirme no App Store Connect qual `CFBundleShortVersionString` foi publicado e alinhe `MARKETING_VERSION`
+(decisão do responsável; este repositório não altera a versão automaticamente) **antes** de definir
+`latestVersion`/`minimumVersion`.
+
 ## 1. Diagnóstico (2026-10-12, leitura somente)
 
 - `AdminUsersView`: a lixeira abria uma confirmação e, ao confirmar, apenas exibia
@@ -102,6 +124,29 @@ Dados que **permanecem** após a exclusão (decisão de retenção, sem alteraç
 Alterar essa política (por exemplo, apagar treinos criados por um professor excluído) removeria dados
 de alunos ativos e não é recomendado.
 
+### 4.1. O que falta para excluir pelo próprio app (alternativa futura)
+
+Pré-requisito: plano **Blaze** (cobrança habilitada; Cloud Functions tem cota gratuita mensal, mas exige
+conta de faturamento) ou outro servidor HTTPS com credencial do Admin SDK guardada no servidor.
+
+Desenho seguro (não implementado nem implantado):
+
+1. Função *callable* `adminDeleteUser({ uid, confirmUid })` (região `us-central1`), com App Check recomendado.
+2. No servidor: `request.auth` obrigatório; token com `admin == true`; `users/{request.auth.uid}.userType == 'ADMIN'`
+   e conta ativa; `uid != request.auth.uid`; alvo não ADMIN (Firestore **e** claim); `confirmUid == uid`.
+3. Executar a mesma sequência de `delete-user.js` (bloqueio → dados relacionados → `users/{uid}` →
+   Authentication por último), com o diário `admin_account_deletions/{uid}` para retomada.
+4. Responder sucesso **somente** após `auth.deleteUser`; o app remove o item da lista apenas nesse caso
+   e, em falha parcial, exibe o erro e mantém o usuário.
+5. No app: trocar o alerta "Exclusão indisponível" por confirmação explícita + chamada da função
+   (exige adicionar o produto `FirebaseFunctions` do pacote Firebase — hoje o app usa somente
+   `FirebaseAuth`, `FirebaseCore` e `FirebaseFirestore`; o SDK iOS nunca usa Admin SDK).
+
+**Não implantar `functions/index.js` atual:** é a implementação antiga do cadastro de professores e aceita
+administrador por e-mail (`ADMIN_EMAILS`, padrão `ric.vecchio@gmail.com`), o que reintroduziria a
+identificação por e-mail. O `firebase.json` aponta para essa pasta; um `firebase deploy` sem `--only`
+tentaria implantá-la.
+
 ## 5. Regras do Firestore (publicação manual)
 
 Proposta completa, derivada do ruleset publicado `c2ec8aef-c879-4619-a70d-87c685da4249`:
@@ -132,6 +177,17 @@ Custo: `accountActive()` consulta o perfil do solicitante em cada requisição (
 dependentes são cobradas e contam na cota diária do Spark — 50 mil leituras/dia; repetidas no mesmo
 pedido são reaproveitadas).
 
+**Procedimento de publicação (manual, Console):**
+
+1. Console Firebase → projeto `rdvperformanceapp` → Firestore Database → banco `(default)` → aba **Regras**.
+2. Confirmar que a versão vigente é a de `c2ec8aef-…` (histórico de regras). Se tiver mudado, **não** colar:
+   reaplicar somente as 5 alterações acima sobre as regras vigentes.
+3. Copiar o conteúdo integral de `firebase/firestore-production-proposed.rules` (o cabeçalho de comentários
+   pode ser mantido), colar, clicar em **Publicar**. Rollback: histórico de regras → versão anterior.
+4. Aguardar ~1 minuto (propagação) e, no app (ADMIN), fazer logout/login (renova o token com a claim).
+5. Testar no Playground de regras: `update` em `/users/<UID aluno de teste>` autenticado como o UID ADMIN
+   com claim `{"admin": true}` alterando somente `active` → permitido; o mesmo como aluno → negado.
+
 ## 6. Versão instalada
 
 - Registro: `AppSession.loadUserProfile` (após login ou ao restaurar sessão) compara `appVersion`/`appBuild`
@@ -152,8 +208,8 @@ pedido são reaproveitadas).
 
      | Campo | Tipo | Exemplo | Regra |
      |-------|------|---------|-------|
-     | `minimumVersion` | string | `"1.0.23"` | obrigatório; números separados por ponto; ≤ `latestVersion` |
-     | `latestVersion` | string | `"1.0.23"` | obrigatório; referência de "Atualizado" na lista |
+     | `minimumVersion` | string | versão mais antiga aceita (ver seção 0) | obrigatório; números separados por ponto; ≤ `latestVersion` |
+     | `latestVersion` | string | versão vigente na App Store, **igual** ao `CFBundleShortVersionString` publicado | obrigatório; referência de "Atualizado" na lista |
      | `forceUpdate` | boolean | `false` | obrigatório; `true` bloqueia versões abaixo de `minimumVersion` |
      | `appStoreURL` | string | link do app na App Store | obrigatório e não vazio |
      | `minimumBuild` | number | `25` | opcional; só usado com `forceUpdate` quando a versão instalada = `minimumVersion` |
