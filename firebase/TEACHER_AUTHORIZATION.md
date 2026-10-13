@@ -270,6 +270,12 @@ ruleset publicado `ae27d509-…` (2026-10-12): perfil TRAINER com código já co
    (código anterior desta branch) é recusado; com as regras atuais, o build novo é recusado (coleção sem regra
    → curinga `if false`, mensagem "ainda não está disponível"). Publicar as regras no momento da distribuição
    do build novo. A versão da App Store (Cloud Functions inexistentes) já não cadastra professores — sem impacto.
+4. **Sintoma quando o passo 1 não foi feito** (comprovado em 2026-10-12, ruleset publicado `ae27d509-…`,
+   sem `teacher_signup_code_uses`): o build com uso único lê `teacher_signup_code_uses/{código}` dentro da
+   transação do administrador; a leitura cai no curinga `if false` → `permission-denied` →
+   **"Você não tem permissão para realizar esta operação."** na tela do código. Com o mesmo ruleset, a
+   validação do professor mostra "ainda não está disponível" e o cadastro é recusado. Perfil ADMIN e claim
+   `admin: true` estão corretos; nenhuma alteração no app é necessária — apenas publicar as regras.
 
 Simulação (`projects.test`, sem deploy): proposta **18/18**; publicado 11/18 (permite reutilização, não tem a
 coleção). O arquivo complementar não compila isoladamente por causa do bloco ilustrativo vazio de `users`
