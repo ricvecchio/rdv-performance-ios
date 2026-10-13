@@ -181,7 +181,8 @@ struct TeacherWorkoutsView: View {
             .padding(.vertical, 8)
             .background(
                 ZStack {
-                    Color.black.opacity(0.68)
+                    // Equivale ao botão (0.68) sobre o card escuro (0.68) do Acesso rápido: 1 - 0.32 * 0.32 ≈ 0.90
+                    Color.black.opacity(0.90)
                     Theme.Colors.primaryGreen.opacity(0.05)
                 }
             )

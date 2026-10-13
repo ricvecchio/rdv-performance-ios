@@ -220,6 +220,25 @@ pedido são reaproveitadas).
   3. Ao publicar uma nova versão na App Store, atualizar `latestVersion`; usar `forceUpdate: true` somente
      quando a atualização obrigatória for desejada.
 
+## 6.1. Último acesso e aparelho do usuário
+
+- Campos opcionais em `users/{uid}`, gravados somente pelo app do **próprio** usuário em
+  `AppSession.loadUserProfile` (login ou restauração de sessão), em tarefa separada (falha não bloqueia o acesso):
+  - `lastAccessAt` (timestamp do servidor — `FieldValue.serverTimestamp()`);
+  - `deviceModel`: identificador técnico do hardware (`utsname.machine`, ex.: `iPhone16,1`); não é convertido
+    para nome comercial;
+  - `deviceSystem`: `UIDevice.systemName` + `systemVersion` (ex.: `iOS 26.1`);
+  - `deviceIdentifier`: `UIDevice.identifierForVendor` — UUID por fornecedor/instalação. Muda se todos os apps
+    do mesmo fornecedor forem removidos do aparelho; não identifica o hardware, não é IDFA e não permite
+    rastreamento entre apps. Não é o UID da conta.
+- Gravação: no máximo uma vez por sessão e somente se o aparelho mudou ou o último registro tem mais de 15 minutos.
+- Registros antigos não possuem esses campos: o detalhe mostra "Não informado" até o próximo acesso do usuário
+  com uma versão contendo esta implementação. Nenhuma data é inventada.
+- Regras: as regras publicadas já permitem ao dono atualizar o próprio perfil; `firestore-production-proposed.rules`
+  adiciona `accessAndDeviceValid()` (tipos e tamanho ≤ 64). Publicação manual (seção 5).
+- A classificação Atualizado/Desatualizado não usa a versão do aparelho do administrador: a referência é
+  somente `latestVersion` de `app_config/ios`. Ao publicar `1.0.24`, atualizar `latestVersion` para `"1.0.24"`.
+
 ## 7. Limitações
 
 - Exclusão definitiva e bloqueio no Authentication dependem da execução manual das ferramentas
