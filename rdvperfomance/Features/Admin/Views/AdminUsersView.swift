@@ -258,6 +258,11 @@ struct AdminUsersView: View {
             NavigationLink {
                 if user.isStudentProfile {
                     AdminStudentDetailView(user: user)
+                } else if user.isAdministratorProfile {
+                    // ADMIN não é professor: exibe somente o resumo com os componentes existentes
+                    AdminDetailContainer(title: "common.administrator") {
+                        AdminUserSummary(user: user)
+                    }
                 } else {
                     AdminTeacherDetailView(user: user)
                 }

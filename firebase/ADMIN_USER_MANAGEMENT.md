@@ -79,7 +79,28 @@ executada; repetir o mesmo comando continua com segurança (etapas idempotentes)
 | `teacher_signup_redemptions/{uid}` | — | **mantém** (auditoria, sem dados pessoais) |
 
 Coleções legadas sem campos de vínculo conhecidos (`progress`, `messages`, `feedbacks`, `training_days`
-na raiz) não são tratadas pela ferramenta.
+na raiz) não são tratadas pela ferramenta. Verificado em 2026-10-12 (leitura): essas coleções **não
+existem** em produção; as coleções raiz existentes são todas cobertas pela política acima.
+
+Observações da revisão (2026-10-12, somente leitura):
+
+- `teacher_student_invites` não possui `studentId`: o vínculo com o aluno é `studentEmail`
+  (todos gravados em minúsculas); a ferramenta exclui por `studentEmail` e por `teacherId`.
+- `teachers/{uid}` pode existir apenas como caminho de subcoleções (documento-pai inexistente);
+  `listCollections()` + `recursiveDelete()` cobrem esse caso.
+
+Dados que **permanecem** após a exclusão (decisão de retenção, sem alteração nesta revisão):
+
+| Dado | Conteúdo remanescente | Motivo / consequência |
+|------|----------------------|------------------------|
+| Professor excluído: `training_weeks`, `teacher_messages`, `student_feedbacks` (teacherId) | UID do professor e textos/treinos que ele escreveu | Pertencem aos alunos; excluir apagaria o histórico deles. O app do aluno pode encontrar um `teacherId` sem perfil (validar no Xcode). |
+| `teacher_signup_redemptions/{uid}` | UID + código usado + data | Auditoria do cadastro de professores; sem nome/e-mail. |
+| `admin_account_deletions/{uid}` | UID, tipo, datas e etapas (e-mail temporário é removido ao concluir) | Recuperação segura de execuções parciais. |
+| Dispositivo do usuário | Cache local (perfil/foto/recordes) | Fora do alcance do servidor. |
+| Backups/PITR do Firestore (se ativados) | Cópias anteriores | Expiram conforme a configuração do projeto. |
+
+Alterar essa política (por exemplo, apagar treinos criados por um professor excluído) removeria dados
+de alunos ativos e não é recomendado.
 
 ## 5. Regras do Firestore (publicação manual)
 
@@ -124,10 +145,24 @@ pedido são reaproveitadas).
   - versão não registrada → "Versão não informada".
   O build não é usado: `latestVersion` não tem build associado (o `minimumBuild` existente só se aplica
   à atualização obrigatória).
-- **Pendência externa:** criar `app_config/ios` (Console → Firestore), por exemplo:
-  `minimumVersion: "1.0.23"`, `latestVersion: "1.0.23"`, `forceUpdate: false`,
-  `appStoreURL: "<link da App Store>"` (opcionais: `minimumBuild`, `message`).
-  Atenção: `forceUpdate: true` com `minimumVersion` maior que a instalada **bloqueia** o app.
+- **Pendência externa:** criar `app_config/ios` manualmente (o app nunca o cria). Ordem recomendada:
+  1. Publicar as regras propostas (sem `match /app_config/{docId}` com leitura, o documento é ilegível
+     para o app e a lista mostra "Sem informação").
+  2. Console → Firestore Database → Iniciar coleção `app_config` → ID do documento `ios`, campos:
+
+     | Campo | Tipo | Exemplo | Regra |
+     |-------|------|---------|-------|
+     | `minimumVersion` | string | `"1.0.23"` | obrigatório; números separados por ponto; ≤ `latestVersion` |
+     | `latestVersion` | string | `"1.0.23"` | obrigatório; referência de "Atualizado" na lista |
+     | `forceUpdate` | boolean | `false` | obrigatório; `true` bloqueia versões abaixo de `minimumVersion` |
+     | `appStoreURL` | string | link do app na App Store | obrigatório e não vazio |
+     | `minimumBuild` | number | `25` | opcional; só usado com `forceUpdate` quando a versão instalada = `minimumVersion` |
+     | `message` | string | — | opcional |
+
+     Documento sem um campo obrigatório ou com versões inválidas é **ignorado** (o app segue normalmente e
+     a lista mostra "Sem informação" — nunca "Atualizado").
+  3. Ao publicar uma nova versão na App Store, atualizar `latestVersion`; usar `forceUpdate: true` somente
+     quando a atualização obrigatória for desejada.
 
 ## 7. Limitações
 
@@ -137,4 +172,11 @@ pedido são reaproveitadas).
   que é o efetivamente aplicado pelas regras. Use `--check-all` para detectar divergências.
 - Versões já publicadas (sem esta implementação) não informam versão e não mostram a mensagem de
   conta desativada; ainda assim, as regras bloqueiam os dados de uma conta inativa.
+- Sessão aberta antes da desativação: não há listener do perfil (por decisão de desempenho). As regras
+  negam os dados imediatamente; o app só identifica a conta inativa e encerra a sessão no próximo
+  carregamento do perfil (login ou reabertura). Até lá, as telas exibem erros de permissão.
+- Até a publicação das regras propostas, "Desativar/Reativar" no app falha com erro de permissão
+  (a regra publicada só permite ao dono alterar o próprio perfil) — nenhuma alteração é simulada.
+- Pré-existente e fora deste escopo: `users/{uid}/notification_state/profile` é usado pelo app, mas não
+  há regra para esse caminho (publicada nem proposta), logo é negado pela regra padrão.
 

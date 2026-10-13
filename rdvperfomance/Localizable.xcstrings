@@ -2081,6 +2081,7 @@
     },
     "admin.users.delete.confirmation_message" : {
       "comment" : "Stable semantic key for: Esta ação removerá permanentemente o usuário e seus dados relacionados. Esta operação não poderá ser desfeita.",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -2104,6 +2105,7 @@
     },
     "admin.users.delete.confirmation_title" : {
       "comment" : "Stable semantic key for: Excluir usuário?",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
