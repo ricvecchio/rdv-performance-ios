@@ -35,7 +35,7 @@
         </scene>
     </scenes>
     <resources>
-        <image name="rdv_splash" width="924" height="992"/>
+        <image name="rdv_splash" width="850" height="1850"/>
     </resources>
 </document>
 
