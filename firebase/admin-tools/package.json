@@ -1,0 +1,12 @@
+{
+  "name": "rdvperformance-admin-tools",
+  "private": true,
+  "description": "Ferramentas administrativas MANUAIS do RDV Performance (executar somente em ambiente confiável)",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0"
+  }
+}
+

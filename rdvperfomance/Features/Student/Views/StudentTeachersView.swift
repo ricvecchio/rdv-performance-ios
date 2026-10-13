@@ -314,7 +314,7 @@ struct StudentTeachersView: View {
                 selectedTeacher = teacher
             } label: {
                 HStack(spacing: 14) {
-                    StudentAvatarView(base64: teacher.photoBase64, size: 28)
+                    UserAvatarView(base64: teacher.photoBase64, size: 28)
                         .frame(width: 28)
 
                     VStack(alignment: .leading, spacing: 3) {
@@ -399,7 +399,7 @@ struct StudentTeachersView: View {
                 openTeacherDetails(teacher)
             } label: {
                 HStack(spacing: 14) {
-                    StudentAvatarView(base64: teacher?.photoBase64, size: 28)
+                    UserAvatarView(base64: teacher?.photoBase64, size: 28)
                         .frame(width: 28)
 
                     VStack(alignment: .leading, spacing: 3) {
@@ -465,7 +465,7 @@ struct StudentTeachersView: View {
                             .font(Theme.Fonts.headerTitle())
                             .foregroundColor(.white)
 
-                        StudentAvatarView(base64: teacher.photoBase64, size: 72)
+                        UserAvatarView(base64: teacher.photoBase64, size: 72)
 
                         Text(teacher.name)
                             .font(.system(size: 18, weight: .semibold))

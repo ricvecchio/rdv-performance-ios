@@ -64,7 +64,7 @@ struct TeacherSendWorkoutVideo: Hashable {
     let videoId: String
     let categoryRawValue: String
 
-    init(video: TeacherYoutubeVideo) {
+    init(video: YoutubeVideo) {
         id = video.id
         title = video.title
         url = video.url
@@ -72,12 +72,12 @@ struct TeacherSendWorkoutVideo: Hashable {
         categoryRawValue = video.category.rawValue
     }
 
-    var video: TeacherYoutubeVideo? {
-        guard let category = TeacherYoutubeVideoCategory(rawValue: categoryRawValue) else {
+    var video: YoutubeVideo? {
+        guard let category = YoutubeVideoCategory(rawValue: categoryRawValue) else {
             return nil
         }
 
-        return TeacherYoutubeVideo(
+        return YoutubeVideo(
             id: id,
             title: title,
             url: url,
@@ -94,9 +94,6 @@ enum AppRoute: Hashable {
     case home
     case sobre
 
-    case treinos(TreinoTipo)
-    case crossfitMenu
-
     case perfil
     case configuracoes
     case idioma
@@ -112,8 +109,6 @@ enum AppRoute: Hashable {
 
     case spriteDemo
 
-    case progressGame(mode: ProgressGameMode)
-    case arExercise(weekId: String, dayId: String)
 
     case teacherStudentsList(selectedCategory: TreinoTipo, initialFilter: TreinoTipo?)
     case teacherStudentDetail(AppUser, TreinoTipo)
@@ -146,8 +141,6 @@ enum AppRoute: Hashable {
     case studentVideos
     case teacherPersonalRecords(category: TreinoTipo)
 
-    case createTrainingWeek(student: AppUser, category: TreinoTipo)
-    case createTrainingDay(weekId: String, category: TreinoTipo)
 
     case teacherMyWorkouts(category: TreinoTipo, mode: TeacherWorkoutsMode = .library)
     case teacherCrossfitLibrary(

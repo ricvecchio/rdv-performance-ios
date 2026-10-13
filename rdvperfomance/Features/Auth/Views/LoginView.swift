@@ -154,6 +154,10 @@ struct LoginView: View {
         await session.refreshProfile()
 
         guard session.isLoggedIn else {
+            if session.isAccountDisabled {
+                vm.errorMessage = AppLocalization.string("auth.login.account_disabled", locale: locale)
+                return
+            }
             vm.errorMessage = AppLocalization.string("auth.login.profile_not_found",
                 locale: locale
             )

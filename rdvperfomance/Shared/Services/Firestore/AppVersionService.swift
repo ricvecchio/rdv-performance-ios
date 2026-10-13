@@ -180,6 +180,45 @@ final class AppVersionService {
         return Int(value.trimmingCharacters(in: .whitespacesAndNewlines))
     }
 
+    // MARK: - Administração (lista de usuários) e registro da versão instalada
+
+    /// Versão instalada (CFBundleShortVersionString), somente se válida no formato numérico
+    static func installedVersionString() -> String? {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String else {
+            return nil
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return AppVersion(trimmed) == nil ? nil : trimmed
+    }
+
+    /// Build instalado (CFBundleVersion)
+    static func installedBuildString() -> String? {
+        guard let value = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String else {
+            return nil
+        }
+        let trimmed = value.trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
+    }
+
+    /// Configuração de referência de app_config/ios, validada; `nil` se ausente, inválida ou inacessível
+    func referenceConfig() async -> AppVersionConfig? {
+        do {
+            let snapshot = try await Firestore.firestore()
+                .collection(FirestorePath.collection)
+                .document(FirestorePath.document)
+                .getDocument()
+
+            guard snapshot.exists, let data = snapshot.data(), let config = AppVersionConfig(data: data) else {
+                log("Configuração de referência app_config/ios ausente ou inválida.")
+                return nil
+            }
+            return config
+        } catch {
+            log("Não foi possível consultar app_config/ios: \(error.localizedDescription)")
+            return nil
+        }
+    }
+
     private func log(_ message: String) {
         #if DEBUG
         print("[AppVersionService] \(message)")
