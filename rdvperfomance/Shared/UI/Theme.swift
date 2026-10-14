@@ -57,7 +57,7 @@ enum Theme {
         }
 
         // Verde para TEXTOS e ÍCONES (não usar em fundos/bordas).
-        // Escuro: exatamente o verde original. Claro: verde intermediário (#00843D).
+        // Escuro: exatamente o verde original. Claro: verde forte (#008C43).
         private static let accentForegroundLight = AppThemePalette.lightAccent
 
         // Substitui `Theme.Colors.primaryGreen` quando usado como cor de texto/ícone
@@ -84,12 +84,36 @@ enum Theme {
         }
 
         // "Vidro": fundos de cards, campos e superfícies.
-        // Escuro: Color.black.opacity(o) (valor original). Claro: verde muito claro (#EAF8F1),
+        // Escuro: Color.black.opacity(o) (valor original). Claro: verde pastel (#D5F1DC),
         // preservando as diferenças de opacidade entre os componentes.
         static func glass(_ opacity: Double) -> AppThemeColor {
             AppThemeColor(
                 dark: Color.black.opacity(opacity),
                 light: AppThemePalette.lightSurface.opacity(AppThemePalette.lightOpacity(for: opacity))
+            )
+        }
+
+        // Borda fina dos cards. Escuro: `primaryGreen.opacity(0.28)` (valor original). Claro: #ABDABC.
+        static let cardBorder = AppThemeColor(
+            dark: primaryGreen.opacity(0.28),
+            light: AppThemePalette.lightCardBorder
+        )
+
+        // Superfície de fundo dos ícones dos cards.
+        // Escuro: exatamente a cor original recebida. Claro: verde mais destacado (#AAF0C5).
+        static func iconSurface(_ dark: Color) -> AppThemeColor {
+            AppThemeColor(
+                dark: dark,
+                light: AppThemePalette.lightIconSurface
+            )
+        }
+
+        // Setas de navegação (chevron) dos cards.
+        // Escuro: Color.white.opacity(o) (valor original, igual a `ink(o)`). Claro: verde forte.
+        static func chevron(_ opacity: Double) -> AppThemeColor {
+            AppThemeColor(
+                dark: Color.white.opacity(opacity),
+                light: AppThemePalette.lightAccent
             )
         }
     }

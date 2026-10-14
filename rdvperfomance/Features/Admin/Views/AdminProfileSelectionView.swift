@@ -108,7 +108,7 @@ struct AdminProfileSelectionView: View {
                     .fill(Theme.Colors.glass(0.68))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                     )
             )
             .shadow(color: .black.opacity(0.25), radius: 10, y: 6)

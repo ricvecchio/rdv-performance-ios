@@ -193,7 +193,7 @@ struct TeacherStudentDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -242,7 +242,7 @@ struct TeacherStudentDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -259,7 +259,7 @@ struct TeacherStudentDetailView: View {
                     .foregroundStyle(Theme.Colors.ink(0.92))
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
             }
             .padding(14)
             .background(
@@ -271,7 +271,7 @@ struct TeacherStudentDetailView: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

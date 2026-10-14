@@ -364,7 +364,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -405,7 +405,7 @@ struct TrainingDayDetailView: View {
                         Spacer(minLength: 6)
 
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(Theme.Colors.ink(0.35))
+                            .foregroundStyle(Theme.Colors.chevron(0.35))
                             .font(.system(size: 12, weight: .semibold))
                     }
                     .padding(.horizontal, 12)
@@ -415,7 +415,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -454,7 +454,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                     )
 
                     // Peso (ocupa o resto)
@@ -486,7 +486,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                     )
                 }
             }
@@ -502,7 +502,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -733,7 +733,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -799,7 +799,7 @@ struct TrainingDayDetailView: View {
                 openLockedPlayer(item: item)
             } label: {
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
             }
             .buttonStyle(.plain)
         }
@@ -943,7 +943,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 

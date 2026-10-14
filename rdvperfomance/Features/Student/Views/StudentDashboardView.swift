@@ -172,7 +172,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
     }
 
     private var inviteNoticeMessage: String {
@@ -208,7 +208,7 @@ struct StudentDashboardView: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .foregroundStyle(Theme.Colors.ink(0.35))
+                .foregroundStyle(Theme.Colors.chevron(0.35))
         }
         .contentShape(Rectangle())
     }
@@ -251,7 +251,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
         .onAppear {
             isTeacherLinkIconPulsing = true
         }
@@ -441,7 +441,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
         .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
     }
 
     private var weeklyProgressIcon: some View {
@@ -456,12 +456,12 @@ struct StudentDashboardView: View {
                 .frame(width: 4, height: 11)
         }
         .frame(width: 42, height: 42)
-        .background(Theme.Colors.primaryGreen.opacity(0.10))
+        .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
         .background(Theme.Colors.glass(0.55))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
         .accessibilityHidden(true)
     }
@@ -532,7 +532,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
         .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
     }
 
     private var weeklyCheckInsIcon: some View {
@@ -540,12 +540,12 @@ struct StudentDashboardView: View {
             .font(.system(size: 18, weight: .semibold))
             .foregroundStyle(Theme.Colors.accentForeground)
             .frame(width: 42, height: 42)
-            .background(Theme.Colors.primaryGreen.opacity(0.10))
+            .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
             .background(Theme.Colors.glass(0.55))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
             .accessibilityHidden(true)
     }
@@ -601,12 +601,12 @@ struct StudentDashboardView: View {
                     .font(.system(size: 18, weight: .semibold))
                     .foregroundStyle(Theme.Colors.accentForeground)
                     .frame(width: 42, height: 42)
-                    .background(Theme.Colors.primaryGreen.opacity(0.10))
+                    .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
                     .background(Theme.Colors.glass(0.55))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                     )
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -650,7 +650,7 @@ struct StudentDashboardView: View {
                 .scaledToFill()
         )
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
         .contentShape(RoundedRectangle(cornerRadius: 14))
     }
 

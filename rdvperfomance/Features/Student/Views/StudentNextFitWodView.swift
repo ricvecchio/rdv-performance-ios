@@ -35,7 +35,7 @@ private struct NextFitCardStyle: ViewModifier {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
     }
 }
@@ -479,7 +479,7 @@ struct StudentNextFitWodView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -512,7 +512,7 @@ struct StudentNextFitWodView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -625,7 +625,7 @@ struct StudentNextFitWodView: View {
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                         )
                     }
                 }

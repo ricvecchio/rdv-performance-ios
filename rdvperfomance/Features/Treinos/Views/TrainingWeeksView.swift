@@ -383,7 +383,7 @@ struct TrainingWeeksView: View {
         return HStack(alignment: .top, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 11)
-                    .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                    .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
                 Image(systemName: "calendar")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Theme.Colors.accentForeground)
@@ -552,7 +552,7 @@ struct TrainingWeeksView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -651,7 +651,7 @@ struct TrainingWeeksView: View {
                 openLockedPlayer(for: day, videoId: videoId)
             } label: {
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
             }
             .buttonStyle(.plain)
         }
@@ -825,7 +825,7 @@ struct TrainingWeeksView: View {
                 HStack(spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 9)
-                            .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                            .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
                         Image(systemName: "calendar")
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.Colors.accentForeground)
@@ -888,7 +888,7 @@ struct TrainingWeeksView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 9)
-                            .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                            .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
                         Image(systemName: workoutIconName(for: day, in: week))
                             .font(.system(size: 15, weight: .semibold))
                             .foregroundStyle(Theme.Colors.accentForeground)
@@ -946,7 +946,7 @@ struct TrainingWeeksView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 

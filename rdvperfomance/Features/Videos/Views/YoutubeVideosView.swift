@@ -176,7 +176,7 @@ struct YoutubeVideosView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
     
@@ -270,7 +270,7 @@ struct YoutubeVideosView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -378,7 +378,7 @@ struct YoutubeVideosView: View {
                 openLockedPlayer(for: v)
             } label: {
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
             }
             .buttonStyle(.plain)
         }

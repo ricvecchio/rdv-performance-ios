@@ -174,7 +174,7 @@ struct CreateTreinoCasaView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                     )
             }
         }
@@ -185,7 +185,7 @@ struct CreateTreinoCasaView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -256,7 +256,7 @@ struct CreateTreinoCasaView: View {
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                             )
                     }
 
@@ -278,7 +278,7 @@ struct CreateTreinoCasaView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -319,7 +319,7 @@ struct CreateTreinoCasaView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 

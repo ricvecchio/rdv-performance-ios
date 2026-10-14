@@ -922,7 +922,7 @@ struct ProfileView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -1062,7 +1062,7 @@ struct ProfileView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -1162,7 +1162,7 @@ struct ProfileView: View {
             switch trailing {
             case .chevron:
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
 
             case .text(let value):
                 Text(value)
@@ -1194,7 +1194,7 @@ struct ProfileView: View {
                         .background(Capsule().fill(bg))
 
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(Theme.Colors.ink(0.35))
+                        .foregroundStyle(Theme.Colors.chevron(0.35))
                 }
 
             case .textWithChevron(let value):
@@ -1204,7 +1204,7 @@ struct ProfileView: View {
                         .foregroundStyle(Theme.Colors.ink(0.55))
 
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(Theme.Colors.ink(0.35))
+                        .foregroundStyle(Theme.Colors.chevron(0.35))
                 }
 
             case .settings:

@@ -238,7 +238,7 @@ struct PersonalRecordsView: View {
             HStack(alignment: .center, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Color.green.opacity(0.14))
+                        .fill(Theme.Colors.iconSurface(Color.green.opacity(0.14)))
                         .frame(width: 34, height: 34)
 
                     if UIImage(named: icon) != nil {
@@ -266,7 +266,7 @@ struct PersonalRecordsView: View {
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
             }
             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
@@ -281,7 +281,7 @@ struct PersonalRecordsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

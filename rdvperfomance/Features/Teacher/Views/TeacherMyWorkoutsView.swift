@@ -160,7 +160,7 @@ struct TeacherMyWorkoutsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
         .shadow(color: Theme.Colors.primaryGreen.opacity(0.12), radius: 6, y: 2)
     }
@@ -201,7 +201,7 @@ struct TeacherMyWorkoutsView: View {
         HStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 10)
-                    .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                    .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
 
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))

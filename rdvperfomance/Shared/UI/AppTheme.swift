@@ -152,17 +152,23 @@ nonisolated enum AppThemePalette {
     // Cor de texto principal do Tema Claro (preto suave esverdeado, #101714)
     static let lightInk = Color(red: 0x10 / 255, green: 0x17 / 255, blue: 0x14 / 255)
 
-    // Superfície dos cards do Tema Claro (verde muito claro, #EAF8F1)
-    static let lightSurface = Color(red: 0xEA / 255, green: 0xF8 / 255, blue: 0xF1 / 255)
+    // Superfície dos cards do Tema Claro (verde pastel, #D5F1DC)
+    static let lightSurface = Color(red: 0xD5 / 255, green: 0xF1 / 255, blue: 0xDC / 255)
 
-    // Cabeçalho e rodapé do Tema Claro (verde-escuro, #00462D)
-    static let lightBar = Color(red: 0x00 / 255, green: 0x46 / 255, blue: 0x2D / 255)
+    // Cabeçalho e rodapé do Tema Claro (verde militar, #29452C)
+    static let lightBar = Color(red: 0x29 / 255, green: 0x45 / 255, blue: 0x2C / 255)
 
-    // Verde de destaque para textos/ícones do Tema Claro (#00843D)
-    static let lightAccent = Color(red: 0x00 / 255, green: 0x84 / 255, blue: 0x3D / 255)
+    // Verde de destaque para textos/ícones/setas do Tema Claro (#008C43)
+    static let lightAccent = Color(red: 0x00 / 255, green: 0x8C / 255, blue: 0x43 / 255)
 
-    // Verde vibrante dos itens selecionados no rodapé do Tema Claro (#1CF28B)
-    static let lightSelected = Color(red: 0x1C / 255, green: 0xF2 / 255, blue: 0x8B / 255)
+    // Verde vibrante dos itens selecionados no rodapé do Tema Claro (#5AFF98)
+    static let lightSelected = Color(red: 0x5A / 255, green: 0xFF / 255, blue: 0x98 / 255)
+
+    // Superfície dos ícones dentro dos cards do Tema Claro (#AAF0C5)
+    static let lightIconSurface = Color(red: 0xAA / 255, green: 0xF0 / 255, blue: 0xC5 / 255)
+
+    // Borda fina dos cards do Tema Claro (#ABDABC)
+    static let lightCardBorder = Color(red: 0xAB / 255, green: 0xDA / 255, blue: 0xBC / 255)
 
     // Reforça a opacidade no Tema Claro para manter legibilidade sobre o fundo branco
     static func lightOpacity(for opacity: Double) -> Double {

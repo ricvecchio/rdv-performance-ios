@@ -207,7 +207,7 @@ struct TeacherDashboardView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -252,7 +252,7 @@ struct TeacherDashboardView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -508,7 +508,7 @@ struct TeacherDashboardView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -641,7 +641,7 @@ struct TeacherDashboardView: View {
             HStack(alignment: .top, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Color.green.opacity(0.14))
+                        .fill(Theme.Colors.iconSurface(Color.green.opacity(0.14)))
                         .frame(width: 34, height: 34)
 
                     Image(systemName: icon)
@@ -664,7 +664,7 @@ struct TeacherDashboardView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
                     .frame(height: 34)
             }
             .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
@@ -679,7 +679,7 @@ struct TeacherDashboardView: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

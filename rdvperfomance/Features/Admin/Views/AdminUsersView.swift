@@ -211,7 +211,7 @@ struct AdminUsersView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
         }
     }
@@ -246,7 +246,7 @@ struct AdminUsersView: View {
                     // Mesmo padrão do ícone de BarbellPersonalRecordsView (tableRow)
                     ZStack {
                         RoundedRectangle(cornerRadius: 9)
-                            .fill(Color.green.opacity(0.14))
+                            .fill(Theme.Colors.iconSurface(Color.green.opacity(0.14)))
                             .frame(width: 34, height: 34)
 
                         Image(systemName: profileIconName(for: user))
@@ -281,7 +281,7 @@ struct AdminUsersView: View {
 
                     Image(systemName: "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.35))
+                        .foregroundStyle(Theme.Colors.chevron(0.35))
                 }
             }
             .buttonStyle(.plain)
@@ -889,7 +889,7 @@ private extension View {
             .background(Theme.Colors.glass(0.68))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 14))
     }

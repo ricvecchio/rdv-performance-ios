@@ -747,7 +747,7 @@ Bar-Facing Burpees
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -784,7 +784,7 @@ Bar-Facing Burpees
 
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Color.green.opacity(0.14))
+                        .fill(Theme.Colors.iconSurface(Color.green.opacity(0.14)))
                         .frame(width: 34, height: 34)
 
                     Image(systemName: "flag.checkered")
@@ -812,7 +812,7 @@ Bar-Facing Burpees
                 }
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.25))
+                    .foregroundStyle(Theme.Colors.chevron(0.25))
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.leading, 6)
             }
@@ -1148,7 +1148,7 @@ Bar-Facing Burpees
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.25))
+                        .foregroundStyle(Theme.Colors.chevron(0.25))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)

@@ -139,7 +139,7 @@ struct TeacherCrossfitLibraryView: View {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 11)
-                        .fill(Theme.Colors.primaryGreen.opacity(0.14))
+                        .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
 
                     Image(systemName: icon)
                         .foregroundStyle(Theme.Colors.accentForeground)
@@ -158,7 +158,7 @@ struct TeacherCrossfitLibraryView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.chevron(0.35))
                     .font(.system(size: 14, weight: .semibold))
             }
             .padding(.horizontal, 16)
@@ -173,7 +173,7 @@ struct TeacherCrossfitLibraryView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

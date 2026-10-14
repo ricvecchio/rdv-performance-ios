@@ -322,7 +322,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -375,7 +375,7 @@ struct TeacherStudentsListView: View {
                     .disabled(vm.isChangingStudentCategory)
 
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(Theme.Colors.ink(0.35))
+                        .foregroundStyle(Theme.Colors.chevron(0.35))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -591,7 +591,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -635,7 +635,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
