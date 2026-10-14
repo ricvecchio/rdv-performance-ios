@@ -9,7 +9,12 @@ enum Theme {
         // Cor verde principal do aplicativo
         static let primaryGreen = Color(red: 0.18, green: 0.85, blue: 0.45)
 
-        static let selected = primaryGreen
+        // Item selecionado no rodapé. Escuro: verde original. Claro: verde vibrante sobre o rodapé verde-escuro.
+        static let selected = AppThemeColor(
+            dark: primaryGreen,
+            light: AppThemePalette.lightSelected,
+            followsBarColorScheme: false
+        )
 
         // As cores abaixo se adaptam ao tema do app.
         // No Tema Escuro preservam exatamente os valores originais.
@@ -17,11 +22,21 @@ enum Theme {
 
         static let headerBackground = AppThemeColor(
             dark: headerBackgroundColor(for: .dark),
-            light: headerBackgroundColor(for: .light)
+            light: headerBackgroundColor(for: .light),
+            followsBarColorScheme: false
         )
         static let footerBackground = AppThemeColor(
             dark: Color.black.opacity(0.75),
-            light: Color.white.opacity(0.95)
+            light: AppThemePalette.lightBar,
+            followsBarColorScheme: false
+        )
+
+        // Fundo de tela cheia de sheets/modais (antes usavam `headerBackground`).
+        // Escuro: idêntico ao cabeçalho original. Claro: mantém a superfície clara.
+        static let sheetBackground = AppThemeColor(
+            dark: headerBackgroundColor(for: .dark),
+            light: Color.white.opacity(0.94),
+            followsBarColorScheme: false
         )
 
         static let divider = AppThemeColor(
@@ -37,14 +52,13 @@ enum Theme {
         static func headerBackgroundColor(for theme: AppTheme) -> Color {
             switch theme {
             case .dark: Color.black.opacity(0.70)
-            case .light: Color.white.opacity(0.94)
+            case .light: AppThemePalette.lightBar
             }
         }
 
         // Verde para TEXTOS e ÍCONES (não usar em fundos/bordas).
-        // Escuro: exatamente o verde original. Claro: verde mais escuro para contraste
-        // (~6,7:1 sobre branco e ~4,5:1 sobre o tom médio dos tijolos).
-        private static let accentForegroundLight = Color(red: 0.0, green: 0.42, blue: 0.19)
+        // Escuro: exatamente o verde original. Claro: verde intermediário (#00843D).
+        private static let accentForegroundLight = AppThemePalette.lightAccent
 
         // Substitui `Theme.Colors.primaryGreen` quando usado como cor de texto/ícone
         static let accentForeground = AppThemeColor(
@@ -70,11 +84,12 @@ enum Theme {
         }
 
         // "Vidro": fundos de cards, campos e superfícies.
-        // Escuro: Color.black.opacity(o) (valor original). Claro: superfície branca.
+        // Escuro: Color.black.opacity(o) (valor original). Claro: verde muito claro (#EAF8F1),
+        // preservando as diferenças de opacidade entre os componentes.
         static func glass(_ opacity: Double) -> AppThemeColor {
             AppThemeColor(
                 dark: Color.black.opacity(opacity),
-                light: Color.white.opacity(AppThemePalette.lightOpacity(for: opacity))
+                light: AppThemePalette.lightSurface.opacity(AppThemePalette.lightOpacity(for: opacity))
             )
         }
     }

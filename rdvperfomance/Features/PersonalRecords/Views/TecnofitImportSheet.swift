@@ -18,7 +18,7 @@ struct TecnofitImportSheet: View {
 
     var body: some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {

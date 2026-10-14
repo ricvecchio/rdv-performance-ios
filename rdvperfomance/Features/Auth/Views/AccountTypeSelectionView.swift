@@ -90,6 +90,7 @@ struct AccountTypeSelectionView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .sheet(isPresented: $isTeacherCodeSheetPresented, onDismiss: handleTeacherCodeSheetDismiss) {
             teacherCodeSheet
                 .presentationDetents([.fraction(0.50)])
@@ -100,7 +101,7 @@ struct AccountTypeSelectionView: View {
     // Modal para informar o código de autorização de professor
     private var teacherCodeSheet: some View {
         ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {

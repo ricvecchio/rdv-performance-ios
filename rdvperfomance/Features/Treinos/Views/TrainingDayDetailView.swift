@@ -271,6 +271,7 @@ struct TrainingDayDetailView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .alert("workout_day_detail.delete_day", isPresented: $showDeleteConfirm) {
             Button("common.cancel", role: .cancel) {}
             Button("common.delete", role: .destructive) {
@@ -507,7 +508,7 @@ struct TrainingDayDetailView: View {
 
     private var movementPickerSheet: some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 14) {

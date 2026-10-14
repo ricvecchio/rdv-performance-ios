@@ -224,6 +224,7 @@ struct PersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
     }
 

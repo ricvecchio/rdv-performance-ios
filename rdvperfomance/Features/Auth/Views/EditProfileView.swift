@@ -154,6 +154,7 @@ struct EditProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         // ✅ Botão "common.done" na toolbar do teclado para fechar o .phonePad
         .toolbar {
             ToolbarItemGroup(placement: .keyboard) {
@@ -795,7 +796,7 @@ struct EditProfileView: View {
         var body: some View {
             NavigationStack {
                 ZStack {
-                    Theme.Colors.headerBackground
+                    Theme.Colors.sheetBackground
                         .ignoresSafeArea()
 
                     ScrollView(showsIndicators: false) {
@@ -831,6 +832,7 @@ struct EditProfileView: View {
                 }
                 .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
                 .toolbarBackground(.visible, for: .navigationBar)
+                .appThemeLightHeaderColorScheme()
             }
         }
     }

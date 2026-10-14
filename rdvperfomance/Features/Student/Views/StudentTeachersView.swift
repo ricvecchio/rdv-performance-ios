@@ -453,7 +453,7 @@ struct StudentTeachersView: View {
     private func teacherDetailsSheet(_ teacher: AppUser) -> some View {
         let title = AppLocalization.string("common.trainer", locale: locale)
         return ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
@@ -571,7 +571,7 @@ struct StudentTeachersView: View {
 
     private func requestLinkModalView() -> some View {
         ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {

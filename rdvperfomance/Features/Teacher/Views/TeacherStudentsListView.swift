@@ -126,6 +126,7 @@ struct TeacherStudentsListView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
         // ✅ Cancelamento de convite pendente com confirmação
         .alert("ui.cancel_invitation_2", isPresented: $showCancelInviteConfirm) {
@@ -748,7 +749,7 @@ struct TeacherStudentsListView: View {
 
         var body: some View {
             ZStack {
-                Theme.Colors.headerBackground
+                Theme.Colors.sheetBackground
                     .ignoresSafeArea()
 
                 VStack(spacing: 0) {
@@ -959,7 +960,7 @@ struct TeacherStudentsListView: View {
 
     private var inviteSheet: some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {

@@ -96,6 +96,7 @@ struct ChangePasswordView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 
     // Retorna card com campos de senha

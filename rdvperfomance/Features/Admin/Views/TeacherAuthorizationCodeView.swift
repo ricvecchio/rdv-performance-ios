@@ -10,7 +10,7 @@ struct TeacherAuthorizationCodeView: View {
 
     var body: some View {
         ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {

@@ -322,6 +322,7 @@ struct CampeonatosPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .sheet(item: $selectedWod, onDismiss: {
             resetExistingPREditing()
         }) { wod in
@@ -438,7 +439,7 @@ struct CampeonatosPersonalRecordsView: View {
     // MARK: - Sheet (editar PR)
     private func editSheet(for wod: CampeonatoWOD) -> some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -498,7 +499,7 @@ struct CampeonatosPersonalRecordsView: View {
                     }
                     .sheet(isPresented: $showPRDatePicker) {
                         ZStack {
-                            Theme.Colors.headerBackground.ignoresSafeArea()
+                            Theme.Colors.sheetBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
                                 DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
@@ -776,7 +777,7 @@ struct CampeonatosPersonalRecordsView: View {
         let entries = historyEntries(for: key)
         let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
         return ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(title)
@@ -966,7 +967,7 @@ struct CampeonatosPersonalRecordsView: View {
     }
     private func addItemSheet() -> some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {

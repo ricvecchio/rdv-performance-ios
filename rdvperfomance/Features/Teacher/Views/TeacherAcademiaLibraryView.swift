@@ -127,6 +127,7 @@ struct TeacherAcademiaLibraryView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 
     private func actionRow(title: String, icon: String, action: @escaping () -> Void) -> some View {

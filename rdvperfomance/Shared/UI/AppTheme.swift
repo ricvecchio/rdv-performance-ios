@@ -28,11 +28,13 @@ nonisolated enum AppTheme: String, CaseIterable, Identifiable {
         }
     }
 
-    // Esquema de cores aplicado à barra de navegação nas telas que já o definiam
+    // Esquema de cores aplicado à barra de navegação nas telas que já o definiam.
+    // No Tema Claro o cabeçalho é verde-escuro, por isso a barra usa esquema escuro
+    // (títulos, botões e Status Bar claros).
     var navigationBarColorScheme: ColorScheme {
         switch self {
         case .dark: .dark
-        case .light: .light
+        case .light: .dark
         }
     }
 
@@ -84,16 +86,24 @@ extension EnvironmentValues {
 
 // Cor que se resolve conforme o tema do app (não depende do tema configurado no iOS).
 // No Tema Escuro retorna exatamente a cor original informada em `dark`.
+// No Tema Claro, conteúdos exibidos sobre as barras verde-escuras (cabeçalho com esquema
+// escuro e rodapé) usam os mesmos valores do Tema Escuro (texto branco, verde original),
+// exceto as cores de fundo das próprias barras (`followsBarColorScheme: false`).
 nonisolated struct AppThemeColor: ShapeStyle {
     let dark: Color
     let light: Color
+    var followsBarColorScheme: Bool = true
 
     func resolve(in environment: EnvironmentValues) -> Color.Resolved {
         switch environment.appTheme {
         case .dark:
             dark.resolve(in: environment)
         case .light:
-            light.resolve(in: environment)
+            if followsBarColorScheme && environment.colorScheme == .dark {
+                dark.resolve(in: environment)
+            } else {
+                light.resolve(in: environment)
+            }
         }
     }
 }
@@ -120,6 +130,8 @@ nonisolated struct AppThemeAdaptiveColor: ShapeStyle {
     func resolve(in environment: EnvironmentValues) -> Color.Resolved {
         let resolved = base.resolve(in: environment)
         guard environment.appTheme == .light else { return resolved }
+        // Sobre as barras verde-escuras do Tema Claro mantém a cor original (igual ao Tema Escuro)
+        if environment.colorScheme == .dark { return resolved }
 
         let opacity = Double(resolved.opacity)
         let isWhite = resolved.red > 0.95 && resolved.green > 0.95 && resolved.blue > 0.95
@@ -129,7 +141,7 @@ nonisolated struct AppThemeAdaptiveColor: ShapeStyle {
             return AppThemePalette.lightInk.opacity(AppThemePalette.lightOpacity(for: opacity)).resolve(in: environment)
         }
         if isBlack {
-            return Color.white.opacity(AppThemePalette.lightOpacity(for: opacity)).resolve(in: environment)
+            return AppThemePalette.lightSurface.opacity(AppThemePalette.lightOpacity(for: opacity)).resolve(in: environment)
         }
         return resolved
     }
@@ -137,8 +149,20 @@ nonisolated struct AppThemeAdaptiveColor: ShapeStyle {
 
 // Valores base da paleta clara compartilhados pelos estilos dinâmicos
 nonisolated enum AppThemePalette {
-    // Cor de texto principal do Tema Claro (cinza-escuro quase preto)
-    static let lightInk = Color(red: 0.10, green: 0.12, blue: 0.11)
+    // Cor de texto principal do Tema Claro (preto suave esverdeado, #101714)
+    static let lightInk = Color(red: 0x10 / 255, green: 0x17 / 255, blue: 0x14 / 255)
+
+    // Superfície dos cards do Tema Claro (verde muito claro, #EAF8F1)
+    static let lightSurface = Color(red: 0xEA / 255, green: 0xF8 / 255, blue: 0xF1 / 255)
+
+    // Cabeçalho e rodapé do Tema Claro (verde-escuro, #00462D)
+    static let lightBar = Color(red: 0x00 / 255, green: 0x46 / 255, blue: 0x2D / 255)
+
+    // Verde de destaque para textos/ícones do Tema Claro (#00843D)
+    static let lightAccent = Color(red: 0x00 / 255, green: 0x84 / 255, blue: 0x3D / 255)
+
+    // Verde vibrante dos itens selecionados no rodapé do Tema Claro (#1CF28B)
+    static let lightSelected = Color(red: 0x1C / 255, green: 0xF2 / 255, blue: 0x8B / 255)
 
     // Reforça a opacidade no Tema Claro para manter legibilidade sobre o fundo branco
     static func lightOpacity(for opacity: Double) -> Double {
@@ -196,9 +220,45 @@ private struct AppThemeNavigationBarColorSchemeModifier: ViewModifier {
 }
 
 extension View {
-    // Substitui `.toolbarColorScheme(.dark, for: .navigationBar)`: Escuro no tema escuro, Claro no tema claro
+    // Substitui `.toolbarColorScheme(.dark, for: .navigationBar)`: esquema escuro em ambos os temas
+    // (no Tema Claro o cabeçalho é verde-escuro)
     func appThemeNavigationBarColorScheme() -> some View {
         modifier(AppThemeNavigationBarColorSchemeModifier())
+    }
+
+    // Para telas que não definiam esquema de cores na barra: no Tema Escuro mantém o
+    // comportamento padrão (nil); no Tema Claro aplica esquema escuro ao cabeçalho verde-escuro.
+    func appThemeLightHeaderColorScheme() -> some View {
+        modifier(AppThemeLightHeaderColorSchemeModifier())
+    }
+}
+
+private struct AppThemeLightHeaderColorSchemeModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+
+    func body(content: Content) -> some View {
+        content
+            .toolbarColorScheme(appTheme == .light ? .dark : nil, for: .navigationBar)
+    }
+}
+
+// MARK: - Rodapé
+
+private struct AppThemeFooterColorSchemeModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.colorScheme) private var colorScheme
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.colorScheme, appTheme == .light ? .dark : colorScheme)
+    }
+}
+
+extension View {
+    // No Tema Claro o rodapé é verde-escuro: o conteúdo usa os valores do Tema Escuro
+    // (ícones/textos brancos). No Tema Escuro o ambiente permanece inalterado.
+    func appThemeFooterColorScheme() -> some View {
+        modifier(AppThemeFooterColorSchemeModifier())
     }
 }
 

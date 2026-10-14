@@ -108,6 +108,7 @@ struct DeleteAccountView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 
     // Retorna card de aviso sobre a ação permanente

@@ -709,6 +709,7 @@ Bar-Facing Burpees
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .sheet(item: $selectedItem, onDismiss: {
             resetExistingPREditing()
         }) { item in
@@ -828,7 +829,7 @@ Bar-Facing Burpees
         }()
 
         return ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -892,7 +893,7 @@ Bar-Facing Burpees
                     }
                     .sheet(isPresented: $showPRDatePicker) {
                         ZStack {
-                            Theme.Colors.headerBackground.ignoresSafeArea()
+                            Theme.Colors.sheetBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
                                 DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
@@ -1179,7 +1180,7 @@ Bar-Facing Burpees
         let entries = historyEntries(for: key)
         let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
         return ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(title)
@@ -1369,7 +1370,7 @@ Bar-Facing Burpees
     }
     private func addItemSheet() -> some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {

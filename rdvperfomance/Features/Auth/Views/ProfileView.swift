@@ -289,6 +289,7 @@ struct ProfileView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
         .alert(LocalizedStringKey("profile.unit.change_title"), isPresented: $showTrocarUnidadeAlert) {
             TextField("profile.unit.placeholder", text: $unidadeDraft)
@@ -1235,7 +1236,7 @@ struct ProfileView: View {
     private func meusIconesModal() -> some View {
         NavigationStack {
             ZStack {
-                Theme.Colors.headerBackground
+                Theme.Colors.sheetBackground
                     .ignoresSafeArea()
 
                 ScrollView(showsIndicators: false) {

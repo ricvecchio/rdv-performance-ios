@@ -78,6 +78,7 @@ struct RegisterStudentView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .onChange(of: vm.successMessage) { _, newValue in
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {

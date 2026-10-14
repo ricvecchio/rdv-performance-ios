@@ -64,6 +64,7 @@ struct AdminUsersView: View {
             }
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
+            .appThemeLightHeaderColorScheme()
         }
         .task {
             await viewModel.loadUsers()
@@ -538,6 +539,7 @@ private struct AdminDetailContainer<Content: View>: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 }
 

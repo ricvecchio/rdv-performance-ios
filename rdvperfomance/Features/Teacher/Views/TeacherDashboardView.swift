@@ -258,7 +258,7 @@ struct TeacherDashboardView: View {
 
     private var quickAccessEditorSheet: some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {

@@ -222,6 +222,7 @@ struct BarbellPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .sheet(item: $selectedMove, onDismiss: {
             resetExistingPREditing()
         }) { move in
@@ -351,7 +352,7 @@ struct BarbellPersonalRecordsView: View {
     // MARK: - Sheet (editar PR)
     private func editSheet(move: BarbellMove) -> some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
@@ -548,7 +549,7 @@ struct BarbellPersonalRecordsView: View {
         }
         .sheet(isPresented: $showPRDatePicker) {
             ZStack {
-                Theme.Colors.headerBackground
+                Theme.Colors.sheetBackground
                     .ignoresSafeArea()
 
                 VStack(spacing: 16) {
@@ -582,7 +583,7 @@ struct BarbellPersonalRecordsView: View {
         }
 
         return ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
@@ -752,7 +753,7 @@ struct BarbellPersonalRecordsView: View {
     // MARK: - Sheet (adicionar movimento)
     private func addMoveSheet() -> some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 14) {

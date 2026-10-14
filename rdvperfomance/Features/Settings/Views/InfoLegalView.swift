@@ -93,6 +93,7 @@ struct InfoLegalView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 
     // Remove a última rota da pilha de navegação

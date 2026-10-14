@@ -103,6 +103,7 @@ struct FooterBar: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
         .background(Theme.Colors.footerBackground)
+        .appThemeFooterColorScheme()
         .task(id: session.uid ?? "") {
             await loadTeacherStudentActivityCount()
         }

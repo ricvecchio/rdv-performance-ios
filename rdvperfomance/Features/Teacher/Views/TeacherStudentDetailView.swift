@@ -110,6 +110,7 @@ struct TeacherStudentDetailView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .task {
             await loadProgress()
         }

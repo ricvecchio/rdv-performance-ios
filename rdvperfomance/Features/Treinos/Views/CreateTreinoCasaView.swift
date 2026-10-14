@@ -118,6 +118,7 @@ struct CreateTreinoCasaView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .onReceive(NotificationCenter.default.publisher(for: .workoutTemplateSelectedForAttachment)) { notification in
             guard isSelectingTemplateAttachment,
                   let template = notification.object as? WorkoutTemplateFS else {

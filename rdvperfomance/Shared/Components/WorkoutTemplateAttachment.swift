@@ -27,7 +27,7 @@ struct WorkoutTemplateAttachmentSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Colors.headerBackground.ignoresSafeArea()
+                Theme.Colors.sheetBackground.ignoresSafeArea()
                 if isLoading {
                     ProgressView().tint(Theme.Colors.ink())
                 } else if templates.isEmpty {

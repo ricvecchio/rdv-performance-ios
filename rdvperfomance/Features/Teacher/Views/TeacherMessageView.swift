@@ -140,6 +140,7 @@ struct TeacherMessageView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .task { await loadMessages() }
     }
 
