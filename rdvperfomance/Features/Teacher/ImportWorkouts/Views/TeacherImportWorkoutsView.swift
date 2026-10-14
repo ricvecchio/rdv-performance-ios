@@ -254,6 +254,7 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "plus")
+                        .appThemeIconForeground()
                     Text("ui.import_excel")
                 }
                 .padding(.horizontal, 14)
@@ -271,6 +272,7 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "arrow.down.doc")
+                        .appThemeIconForeground()
                     Text("ui.download_excel_spreadsheet")
                 }
                 .padding(.horizontal, 14)
@@ -322,7 +324,7 @@ struct TeacherImportWorkoutsView: View {
     private func importedWorkoutRow(workout w: TeacherImportedWorkout) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "dumbbell.fill")
-                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                 .font(.system(size: 16))
                 .frame(width: 26)
             
@@ -355,7 +357,7 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())

@@ -199,7 +199,7 @@ struct TeacherFeedbacksView: View {
             if let date = fb.createdAt {
                 VStack(spacing: 5) {
                     Image(systemName: "calendar")
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                         .font(.system(size: 14))
 
                     Text(formatDate(date))
@@ -229,7 +229,7 @@ struct TeacherFeedbacksView: View {
 
             HStack(spacing: 8) {
                 Image(systemName: "text.bubble.fill")
-                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     .font(.system(size: 14))
 
                 Text("ui.feedback")

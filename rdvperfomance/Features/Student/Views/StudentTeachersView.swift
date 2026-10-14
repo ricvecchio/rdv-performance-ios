@@ -90,6 +90,7 @@ struct StudentTeachersView: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "person.badge.plus")
+                                        .appThemeIconForeground()
 
                                     Text("dashboard.invite_coach")
                                 }
@@ -531,7 +532,7 @@ struct StudentTeachersView: View {
     private var menuIcon: some View {
         Image(systemName: "ellipsis")
             .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(Theme.Colors.ink(0.55))
+            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
             .contentShape(Rectangle())

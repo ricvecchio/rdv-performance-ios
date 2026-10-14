@@ -153,7 +153,7 @@ struct StudentNextFitWodView: View {
         } label: {
             Image(systemName: "rectangle.portrait.and.arrow.right")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.55))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -421,7 +421,7 @@ struct StudentNextFitWodView: View {
                     .stroke(Theme.Colors.primaryGreen.opacity(0.35), lineWidth: 1)
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
             }
             .frame(width: 58, height: 58)
 
@@ -487,7 +487,7 @@ struct StudentNextFitWodView: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: nextFitActivityIconName(for: activity.title))
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundStyle(Theme.Colors.accentForeground)
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                 .frame(width: 30)
 
             VStack(alignment: .leading, spacing: 8) {
@@ -735,9 +735,14 @@ struct StudentNextFitWodView: View {
             Button {
                 viewModel.clearNextFitAgendaDetail()
             } label: {
-                Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                Label {
+                    Text(LocalizedStringKey("dashboard.back_to_schedule"))
+                } icon: {
+                    Image(systemName: "chevron.left")
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.accentForeground)
             }
             .buttonStyle(.plain)
 
@@ -794,9 +799,14 @@ struct StudentNextFitWodView: View {
             Button {
                 viewModel.clearNextFitAgendaDetail()
             } label: {
-                Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                Label {
+                    Text(LocalizedStringKey("dashboard.back_to_schedule"))
+                } icon: {
+                    Image(systemName: "chevron.left")
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.accentForeground)
             }
             .buttonStyle(.plain)
 
@@ -825,7 +835,7 @@ struct StudentNextFitWodView: View {
             Text(text)
         } icon: {
             Image(systemName: icon)
-                .foregroundStyle(Theme.Colors.accentForeground)
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                 .frame(width: 18)
         }
         .font(font)
@@ -901,6 +911,7 @@ struct StudentNextFitWodView: View {
                         ProgressView()
                     } else {
                         Image(systemName: "calendar.badge.plus")
+                            .appThemeIconForeground()
                     }
                     Text("dashboard.schedule")
                 }

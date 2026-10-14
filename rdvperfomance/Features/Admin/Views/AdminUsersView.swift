@@ -250,7 +250,7 @@ struct AdminUsersView: View {
                             .frame(width: 34, height: 34)
 
                         Image(systemName: profileIconName(for: user))
-                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                             .font(.system(size: 16, weight: .semibold))
                     }
 
@@ -415,7 +415,7 @@ private struct AdminStudentDetailView: View {
                             HStack(spacing: 12) {
                                 Image(systemName: "calendar")
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.primaryGreen.opacity(0.9)))
                                     .frame(width: 22)
 
                                 VStack(alignment: .leading, spacing: 3) {
@@ -610,7 +610,7 @@ private struct AdminUserSummary: View {
                     HStack(spacing: 6) {
                         Image(systemName: user.roleIconName)
                             .font(.system(size: 12, weight: .semibold))
-                            .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.primaryGreen.opacity(0.9)))
                         Text(user.roleTitleKey)
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Theme.Colors.ink(0.65))
@@ -701,7 +701,7 @@ private struct AdminInfoTile: View {
         HStack(alignment: .center, spacing: 10) {
             Image(systemName: systemImage)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.primaryGreen.opacity(0.9)))
                 .frame(width: 22)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -764,7 +764,7 @@ private struct AdminDeviceCard: View {
         HStack(spacing: 12) {
             Image(systemName: systemImage)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen.opacity(0.9))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.primaryGreen.opacity(0.9)))
                 .frame(width: 22)
 
             Text(title)
@@ -841,7 +841,7 @@ private struct AdminCardSection<Content: View>: View {
             HStack(spacing: 10) {
                 Image(systemName: systemImage)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen.opacity(0.95))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.primaryGreen.opacity(0.95)))
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Theme.Colors.ink(0.92))

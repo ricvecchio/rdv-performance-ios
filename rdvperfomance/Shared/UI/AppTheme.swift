@@ -268,3 +268,28 @@ extension View {
     }
 }
 
+// MARK: - Ícones internos
+
+// Para ícones internos que herdam a cor do contêiner (ex.: ícone + texto em botões).
+// No Tema Escuro (e sobre as barras) não altera nada; no Tema Claro aplica o verde militar
+// das barras somente ao ícone, preservando o estado desabilitado original.
+private struct AppThemeIconForegroundModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && colorScheme != .dark && isEnabled {
+            content.foregroundStyle(AppThemePalette.lightBar)
+        } else {
+            content
+        }
+    }
+}
+
+extension View {
+    func appThemeIconForeground() -> some View {
+        modifier(AppThemeIconForegroundModifier())
+    }
+}
+

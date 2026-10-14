@@ -152,6 +152,7 @@ struct YoutubeVideosView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
+                    .appThemeIconForeground()
                 Text("ui.add_video")
             }
             .padding(.horizontal, 14)
@@ -302,6 +303,7 @@ struct YoutubeVideosView: View {
                                 ProgressView().tint(Theme.Colors.ink())
                             } else {
                                 Image(systemName: "checkmark")
+                                    .appThemeIconForeground()
                                 Text("common.save")
                             }
                         }
@@ -367,7 +369,7 @@ struct YoutubeVideosView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
@@ -406,7 +408,7 @@ struct YoutubeVideosView: View {
                     ZStack {
                         Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
-                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     }
                 @unknown default:
                     Theme.Colors.ink(0.06)
@@ -424,7 +426,7 @@ struct YoutubeVideosView: View {
                     .fill(Theme.Colors.glass(0.45))
                 Image(systemName: "play.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink(0.95))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.95)))
                     .padding(.leading, 1)
             }
             .frame(width: 18, height: 18)

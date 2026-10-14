@@ -296,7 +296,7 @@ struct GirlsPersonalRecordsView: View {
                         .frame(width: 34, height: 34)
 
                     Image(systemName: "figure.strengthtraining.traditional")
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
@@ -502,7 +502,7 @@ struct GirlsPersonalRecordsView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "list.bullet.rectangle")
-                    .foregroundColor(.green.opacity(0.90))
+                    .foregroundStyle(Theme.Colors.icon(.green.opacity(0.90)))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("personal_records_campeonatos.wod")
@@ -647,7 +647,7 @@ struct GirlsPersonalRecordsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "calendar")
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     Text(formatPRDate(selectedPRDate))
                         .font(.system(size: 15, weight: .semibold))
                         .foregroundStyle(Theme.Colors.ink(0.92))
@@ -667,14 +667,24 @@ struct GirlsPersonalRecordsView: View {
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.75))
+                Label {
+                    Text(LocalizedStringKey("personal_records.progress"))
+                } icon: {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.75)))
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.ink(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.green.opacity(0.90))
+                    Label {
+                        Text(LocalizedStringKey("personal_records.history"))
+                    } icon: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundStyle(Theme.Colors.icon(.green.opacity(0.90)))
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
             }

@@ -152,7 +152,7 @@ struct TeacherWorkoutsView: View {
                         .frame(width: 34, height: 34)
 
                     Image(systemName: icon)
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                         .font(.system(size: 16, weight: .semibold))
                 }
 

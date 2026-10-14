@@ -109,12 +109,24 @@ enum Theme {
         }
 
         // Setas de navegação (chevron) dos cards.
-        // Escuro: Color.white.opacity(o) (valor original, igual a `ink(o)`). Claro: verde forte.
+        // Escuro: Color.white.opacity(o) (valor original, igual a `ink(o)`). Claro: verde militar das barras.
         static func chevron(_ opacity: Double) -> AppThemeColor {
+            icon(Color.white.opacity(opacity))
+        }
+
+        // Ícones internos das telas (conteúdo; não usar no cabeçalho/rodapé).
+        // Escuro: exatamente a cor original recebida. Claro: verde militar sólido das barras.
+        static func icon(_ dark: Color) -> AppThemeColor {
             AppThemeColor(
-                dark: Color.white.opacity(opacity),
-                light: AppThemePalette.lightAccent
+                dark: dark,
+                light: AppThemePalette.lightBar
             )
+        }
+
+        // Mesmo comportamento de `icon(_:)` para ícones que já usavam uma cor dinâmica:
+        // preserva o valor original do Tema Escuro.
+        static func icon(_ original: AppThemeColor) -> AppThemeColor {
+            icon(original.dark)
         }
     }
 

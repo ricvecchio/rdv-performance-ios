@@ -193,7 +193,7 @@ struct StudentDashboardView: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundStyle(Theme.Colors.accentForeground)
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
@@ -217,7 +217,7 @@ struct StudentDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             Image(systemName: "person.crop.circle.badge.exclamationmark")
                 .font(.system(size: 34, weight: .medium))
-                .foregroundStyle(Theme.Colors.accentForeground)
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                 .scaleEffect(isTeacherLinkIconPulsing ? 1.06 : 0.94)
                 .opacity(isTeacherLinkIconPulsing ? 1 : 0.75)
                 .animation(
@@ -239,6 +239,7 @@ struct StudentDashboardView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "person.badge.plus")
+                        .appThemeIconForeground()
 
                     Text("dashboard.invite_coach")
                 }
@@ -538,7 +539,7 @@ struct StudentDashboardView: View {
     private var weeklyCheckInsIcon: some View {
         Image(systemName: "person.crop.circle.badge.checkmark")
             .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(Theme.Colors.accentForeground)
+            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
             .frame(width: 42, height: 42)
             .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
             .background(Theme.Colors.glass(0.55))
@@ -562,6 +563,7 @@ struct StudentDashboardView: View {
 
                         Text("dashboard.wod.view_details")
                         Image(systemName: "chevron.right")
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                     }
                     .font(.system(size: 14, weight: .semibold))
                     .foregroundStyle(Theme.Colors.accentForeground)
@@ -580,6 +582,7 @@ struct StudentDashboardView: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "link")
+                                .appThemeIconForeground()
 
                             Text("dashboard.connect_nextfit")
                         }
@@ -599,7 +602,7 @@ struct StudentDashboardView: View {
             HStack(spacing: 12) {
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                     .frame(width: 42, height: 42)
                     .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
                     .background(Theme.Colors.glass(0.55))

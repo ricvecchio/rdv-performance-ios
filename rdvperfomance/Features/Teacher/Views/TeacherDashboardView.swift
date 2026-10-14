@@ -227,7 +227,7 @@ struct TeacherDashboardView: View {
                 } label: {
                     Image(systemName: "pencil")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(.plain)
@@ -353,7 +353,7 @@ struct TeacherDashboardView: View {
             HStack(spacing: 12) {
                 Image(systemName: item.systemImage)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     .frame(width: 22)
 
                 Text(item.title)
@@ -364,7 +364,7 @@ struct TeacherDashboardView: View {
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
-                    .foregroundStyle(AppThemeAdaptiveColor(isSelected ? .green : .white.opacity(0.35)))
+                    .foregroundStyle(Theme.Colors.icon(isSelected ? .green : .white.opacity(0.35)))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
@@ -479,12 +479,16 @@ struct TeacherDashboardView: View {
         value: Int?,
         title: LocalizedStringKey,
         icon: String,
-        iconColor: Color = .green.opacity(0.85)
+        iconColor: Color? = nil
     ) -> some View {
         VStack(spacing: 6) {
+            // Sem cor explícita: ícone interno padrão. Cor explícita (ex.: alerta vermelho) é preservada.
             Image(systemName: icon)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(AppThemeAdaptiveColor(iconColor))
+                .foregroundStyle(
+                    iconColor.map { AnyShapeStyle(AppThemeAdaptiveColor($0)) }
+                        ?? AnyShapeStyle(Theme.Colors.icon(.green.opacity(0.85)))
+                )
 
             if isLoadingSummary {
                 ProgressView()
@@ -645,7 +649,7 @@ struct TeacherDashboardView: View {
                         .frame(width: 34, height: 34)
 
                     Image(systemName: icon)
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                         .font(.system(size: 16, weight: .semibold))
                 }
 

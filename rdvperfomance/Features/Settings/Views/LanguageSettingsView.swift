@@ -138,8 +138,8 @@ struct LanguageSettingsView: View {
                     .font(.system(size: 20))
                     .foregroundStyle(
                         selectedAppLanguage == language.rawValue
-                            ? AnyShapeStyle(Theme.Colors.systemAccentForeground())
-                            : AnyShapeStyle(Theme.Colors.ink(0.35))
+                            ? AnyShapeStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground()))
+                            : AnyShapeStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
                     )
             }
             .padding(.horizontal, 16)

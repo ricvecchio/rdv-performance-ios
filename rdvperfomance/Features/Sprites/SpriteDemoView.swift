@@ -50,6 +50,7 @@ struct SpriteDemoView: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "shuffle")
+                                        .appThemeIconForeground()
                                     Text("gamification.preview.randomize")
                                 }
                                 .padding(.horizontal, 14)

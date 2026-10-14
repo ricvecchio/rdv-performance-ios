@@ -366,7 +366,7 @@ struct TeacherStudentsListView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.55))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 8)
                             .contentShape(Rectangle())
@@ -565,7 +565,7 @@ struct TeacherStudentsListView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.55))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 8)
                             .contentShape(Rectangle())
@@ -676,7 +676,7 @@ struct TeacherStudentsListView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
@@ -770,7 +770,7 @@ struct TeacherStudentsListView: View {
                             } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: selectedCategories.contains(category) ? "checkmark.square.fill" : "square")
-                                        .foregroundStyle(AppThemeAdaptiveColor(
+                                        .foregroundStyle(Theme.Colors.icon(
                                             selectedCategories.contains(category)
                                                 ? Theme.Colors.primaryGreen
                                                 : .white.opacity(0.35)
@@ -1033,6 +1033,7 @@ struct TeacherStudentsListView: View {
                                 ProgressView()
                             } else {
                                 Image(systemName: "paperplane.fill")
+                                    .appThemeIconForeground()
                                 Text("ui.send_invitation")
                             }
                             Spacer()
@@ -1078,7 +1079,7 @@ struct TeacherStudentsListView: View {
 
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
 
                 TextField("ui.student_email", text: $inviteEmail)
                     .foregroundStyle(Theme.Colors.ink(0.92))
@@ -1090,7 +1091,7 @@ struct TeacherStudentsListView: View {
                 if !inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button { inviteEmail = "" } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Theme.Colors.ink(0.35))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
                     }
                     .buttonStyle(.plain)
                 }
@@ -1124,7 +1125,7 @@ struct TeacherStudentsListView: View {
                     Task { await loadInvitesIfPossible(force: true) }
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                 }
                 .buttonStyle(.plain)
                 .disabled(vm.isInvitesLoading)
@@ -1173,7 +1174,7 @@ struct TeacherStudentsListView: View {
 
         return HStack(spacing: 12) {
             Image(systemName: "envelope")
-                .foregroundStyle(Theme.Colors.ink(0.55))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(inv.studentEmail)

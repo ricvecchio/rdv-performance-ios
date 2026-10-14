@@ -106,7 +106,7 @@ struct ThemeSettingsView: View {
             HStack(spacing: 14) {
                 Image(systemName: theme.iconName)
                     .font(.system(size: 18))
-                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     .frame(width: 28)
                     .accessibilityHidden(true)
 
@@ -127,8 +127,8 @@ struct ThemeSettingsView: View {
                     .font(.system(size: 20))
                     .foregroundStyle(
                         isSelected
-                            ? AnyShapeStyle(Theme.Colors.systemAccentForeground())
-                            : AnyShapeStyle(Theme.Colors.ink(0.35))
+                            ? AnyShapeStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground()))
+                            : AnyShapeStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
                     )
                     .accessibilityHidden(true)
             }

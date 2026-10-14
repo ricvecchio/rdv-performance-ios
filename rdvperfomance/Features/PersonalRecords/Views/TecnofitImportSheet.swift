@@ -225,6 +225,7 @@ struct TecnofitImportSheet: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "xmark")
+                    .appThemeIconForeground()
                 Text("common.cancel")
             }
             .font(.system(size: 15, weight: .bold))

@@ -252,7 +252,7 @@ struct TeacherStudentDetailView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     .frame(width: 22, alignment: .center)
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))

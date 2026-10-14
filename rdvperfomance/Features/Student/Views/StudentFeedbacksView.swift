@@ -161,7 +161,7 @@ struct StudentFeedbacksView: View {
             if let date = fb.createdAt {
                 VStack(spacing: 5) {
                     Image(systemName: "calendar")
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                         .font(.system(size: 14))
 
                     Text(formatDate(date))

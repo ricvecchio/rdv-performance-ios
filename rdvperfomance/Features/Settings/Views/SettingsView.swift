@@ -213,7 +213,7 @@ struct SettingsView: View {
 
                 Image(systemName: icon)
                     .font(.system(size: 18))
-                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     .frame(width: 28)
 
                 Text(title)

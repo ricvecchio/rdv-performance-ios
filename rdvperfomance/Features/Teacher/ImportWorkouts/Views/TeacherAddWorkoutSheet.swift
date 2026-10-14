@@ -50,6 +50,7 @@ struct TeacherAddWorkoutSheet: View {
                                     } label: {
                                         HStack(spacing: 10) {
                                             Image(systemName: "checkmark")
+                                                .appThemeIconForeground()
                                             Text("common.save")
                                         }
                                         .padding(.horizontal, 14)

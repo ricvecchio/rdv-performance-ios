@@ -54,7 +54,12 @@ struct TeacherAuthorizationCodeView: View {
                                         Button {
                                             vm.copyCode()
                                         } label: {
-                                            Label("teacher_authorization.admin.copy", systemImage: "doc.on.doc")
+                                            Label {
+                                                Text("teacher_authorization.admin.copy")
+                                            } icon: {
+                                                Image(systemName: "doc.on.doc")
+                                                    .appThemeIconForeground()
+                                            }
                                                 .padding(.horizontal, 12)
                                                 .compactPrimaryGreenActionButton()
                                         }

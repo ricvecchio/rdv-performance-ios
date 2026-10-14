@@ -247,7 +247,7 @@ struct PersonalRecordsView: View {
                             .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
                     } else {
                         Image(systemName: icon)
-                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                             .font(.system(size: 16, weight: .semibold))
                     }
                 }
@@ -294,6 +294,7 @@ struct PersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
+                    .appThemeIconForeground()
                 Text("personal_records.import_from_tecnofit")
             }
             .padding(.horizontal, 14)

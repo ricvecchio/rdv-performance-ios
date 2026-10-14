@@ -252,7 +252,7 @@ struct RegisterStudentView: View {
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, 10)

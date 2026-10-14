@@ -67,11 +67,11 @@ struct WeightUnitSheetView: View {
 
                                     if unit == selectedUnit {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(Theme.Colors.accentForeground)
+                                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                                             .font(.system(size: 18, weight: .semibold))
                                     } else {
                                         Image(systemName: "circle")
-                                            .foregroundStyle(Theme.Colors.ink(0.25))
+                                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.25)))
                                             .font(.system(size: 18, weight: .regular))
                                     }
                                 }

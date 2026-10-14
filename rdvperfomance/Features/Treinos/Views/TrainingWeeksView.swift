@@ -386,7 +386,7 @@ struct TrainingWeeksView: View {
                     .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
                 Image(systemName: "calendar")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
             }
             .frame(width: 42, height: 42)
             .overlay(
@@ -459,7 +459,7 @@ struct TrainingWeeksView: View {
 
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(AppThemeAdaptiveColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                .foregroundStyle(Theme.Colors.icon(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
                 .padding(.top, 14)
         }
         .padding(.horizontal, 16)
@@ -530,6 +530,7 @@ struct TrainingWeeksView: View {
             HStack(spacing: 10) {
                 Image(systemName: "video.fill")
                     .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.icon(.orange.opacity(0.9)))
                 Text("workout.videos")
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
@@ -608,7 +609,7 @@ struct TrainingWeeksView: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)
                         .contentShape(Rectangle())
@@ -773,7 +774,7 @@ struct TrainingWeeksView: View {
                     ZStack {
                         Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
-                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     }
                 @unknown default:
                     Theme.Colors.ink(0.06)
@@ -791,7 +792,7 @@ struct TrainingWeeksView: View {
                     .fill(Theme.Colors.glass(0.45))
                 Image(systemName: "play.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink(0.95))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.95)))
                     .padding(.leading, 1)
             }
             .frame(width: 18, height: 18)
@@ -828,7 +829,7 @@ struct TrainingWeeksView: View {
                             .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
                         Image(systemName: "calendar")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.accentForeground)
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                     }
                     .frame(width: 34, height: 34)
 
@@ -844,7 +845,7 @@ struct TrainingWeeksView: View {
 
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppThemeAdaptiveColor(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                        .foregroundStyle(Theme.Colors.icon(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -891,7 +892,7 @@ struct TrainingWeeksView: View {
                             .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
                         Image(systemName: workoutIconName(for: day, in: week))
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.accentForeground)
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                     }
                     .frame(width: 36, height: 36)
 

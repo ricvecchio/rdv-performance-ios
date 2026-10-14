@@ -315,7 +315,7 @@ struct BarbellPersonalRecordsView: View {
                         .frame(width: 34, height: 34)
 
                     Image(systemName: "dumbbell.fill")
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
@@ -410,7 +410,7 @@ struct BarbellPersonalRecordsView: View {
                         } label: {
                             HStack(spacing: 10) {
                                 Image(systemName: "calendar")
-                                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
 
                                 Text(formatPRDate(selectedPRDate))
                                     .font(.system(size: 15, weight: .semibold))
@@ -439,7 +439,7 @@ struct BarbellPersonalRecordsView: View {
                         HStack {
                             HStack(spacing: 6) {
                                 Image(systemName: "chart.line.uptrend.xyaxis")
-                                    .foregroundColor(.green.opacity(0.90))
+                                    .foregroundStyle(Theme.Colors.icon(.green.opacity(0.90)))
 
                                 Text("personal_records.progress")
                                     .font(.system(size: 14, weight: .semibold))
@@ -451,9 +451,14 @@ struct BarbellPersonalRecordsView: View {
                             Button {
                                 historyMove = move
                             } label: {
-                                Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
-                                    .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.green.opacity(0.90))
+                                Label {
+                                    Text(LocalizedStringKey("personal_records.history"))
+                                } icon: {
+                                    Image(systemName: "clock.arrow.circlepath")
+                                        .foregroundStyle(Theme.Colors.icon(.green.opacity(0.90)))
+                                }
+                                .font(.system(size: 14, weight: .semibold))
+                                .foregroundColor(.green.opacity(0.90))
                             }
                             .buttonStyle(.plain)
                         }
@@ -616,7 +621,7 @@ struct BarbellPersonalRecordsView: View {
                             ForEach(entries.reversed()) { entry in
                                 HStack(spacing: 10) {
                                     Image(systemName: entry.id == recordID ? "trophy.fill" : "medal.fill")
-                                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                                         .frame(width: 22)
 
                                     Text(

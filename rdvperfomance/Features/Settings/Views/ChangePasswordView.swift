@@ -126,6 +126,7 @@ struct ChangePasswordView: View {
                 Spacer()
                 HStack(spacing: 10) {
                     Image(systemName: "key.fill")
+                        .appThemeIconForeground()
                     Text(
                         isLoading
                             ? LocalizedStringKey("common.saving")

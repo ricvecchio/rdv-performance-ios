@@ -210,7 +210,7 @@ struct CreateCrossfitWODView: View {
                     blocks.append(BlockDraft(defaultBlock: .newBlock))
                 } label: {
                     Image(systemName: "plus.circle.fill")
-                        .foregroundStyle(Theme.Colors.accentForeground)
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                         .font(.system(size: 17))
                 }
                 .buttonStyle(.plain)

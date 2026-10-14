@@ -8,6 +8,7 @@ struct WorkoutTemplateAttachmentButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: "paperclip")
+                    .appThemeIconForeground()
                 Text("workouts.attach_from_my_workouts")
             }
             .padding(.horizontal, 12)

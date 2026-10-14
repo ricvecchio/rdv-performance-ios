@@ -205,7 +205,7 @@ struct TeacherMyWorkoutsView: View {
 
                 Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
             }
             .frame(width: 38, height: 38)
             .overlay(
@@ -227,7 +227,7 @@ struct TeacherMyWorkoutsView: View {
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
             }
             .frame(width: 30, height: 30)
         }

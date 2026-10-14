@@ -142,7 +142,7 @@ struct TeacherCrossfitLibraryView: View {
                         .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
 
                     Image(systemName: icon)
-                        .foregroundStyle(Theme.Colors.accentForeground)
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .frame(width: 42, height: 42)

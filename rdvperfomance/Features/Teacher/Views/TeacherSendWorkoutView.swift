@@ -25,7 +25,7 @@ private struct WorkoutPickerLabel: View {
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                .foregroundStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
@@ -563,7 +563,7 @@ struct TeacherSendWorkoutView: View {
 
                 Image(systemName: areAllVisibleStudentsSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
-                    .foregroundStyle(AppThemeAdaptiveColor(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55)))
+                    .foregroundStyle(Theme.Colors.icon(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55)))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -661,7 +661,7 @@ struct TeacherSendWorkoutView: View {
 
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundStyle(AppThemeAdaptiveColor(selectionColor))
+                .foregroundStyle(Theme.Colors.icon(selectionColor))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -752,7 +752,7 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 8) {
             Image(systemName: categoryIcon(for: category))
                 .font(.system(size: 14))
-                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
 
             Text(title)
                 .font(.system(size: 14))
@@ -795,7 +795,7 @@ struct TeacherSendWorkoutView: View {
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                .foregroundStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -885,7 +885,7 @@ struct TeacherSendWorkoutView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "video.fill")
                         .font(.system(size: 13))
-                        .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
 
                     Text("ui.selected_video")
                         .font(.system(size: 13, weight: .medium))
@@ -924,7 +924,7 @@ struct TeacherSendWorkoutView: View {
             HStack(spacing: 8) {
                 Image(systemName: categoryIcon(for: category))
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
 
                 Text(category.localizedDisplayName(locale: locale))
                     .font(.system(size: 14, weight: .medium))
@@ -1033,7 +1033,11 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 Image(systemName: "chevron.left")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(AppThemeAdaptiveColor(futureWeekOffset == 0 ? .white.opacity(0.25) : Theme.Colors.primaryGreen))
+                    .foregroundStyle(
+                        futureWeekOffset == 0
+                            ? AnyShapeStyle(AppThemeAdaptiveColor(.white.opacity(0.25)))
+                            : AnyShapeStyle(Theme.Colors.icon(Theme.Colors.primaryGreen))
+                    )
                     .frame(width: 32, height: 28)
             }
             .buttonStyle(.plain)
@@ -1062,7 +1066,7 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.accentForeground)
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                     .frame(width: 32, height: 28)
             }
             .buttonStyle(.plain)
@@ -1077,7 +1081,7 @@ struct TeacherSendWorkoutView: View {
         return HStack(spacing: 12) {
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundStyle(AppThemeAdaptiveColor(selectionColor))
+                .foregroundStyle(Theme.Colors.icon(selectionColor))
             Text(weekdayTitle(for: day.date))
                 .font(.system(size: 17, weight: .medium))
                 .foregroundStyle(Theme.Colors.ink(0.92))
@@ -1745,7 +1749,7 @@ private struct WorkoutTemplateSelectionSheet: View {
             Spacer()
 
             Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
-                .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.25)))
+                .foregroundStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.25)))
                 .font(.system(size: 18, weight: isSelected ? .semibold : .regular))
         }
         .padding(.horizontal, 14)

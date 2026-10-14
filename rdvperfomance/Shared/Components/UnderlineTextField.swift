@@ -81,7 +81,7 @@ struct UnderlineTextField: View {
                         showPassword.toggle()
                     } label: {
                         Image(systemName: showPassword ? "eye.slash" : "eye")
-                            .foregroundStyle(AppThemeAdaptiveColor(placeholderColor))
+                            .foregroundStyle(Theme.Colors.icon(placeholderColor))
                     }
                     .buttonStyle(.plain)
                 }

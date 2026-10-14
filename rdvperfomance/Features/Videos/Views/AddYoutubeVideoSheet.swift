@@ -60,6 +60,7 @@ struct AddYoutubeVideoSheet: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "doc.on.doc")
+                                .appThemeIconForeground()
                             Text("ui.open_youtube")
                         }
                         .font(.system(size: 15, weight: .bold))
@@ -83,6 +84,7 @@ struct AddYoutubeVideoSheet: View {
                     } label: {
                         HStack(spacing: 10) {
                             Image(systemName: "checkmark")
+                                .appThemeIconForeground()
                             Text("common.save")
                         }
                         .frame(maxWidth: .infinity)

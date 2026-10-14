@@ -127,7 +127,7 @@ struct AboutView: View {
     private func featureItem(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundStyle(Theme.Colors.systemAccentForeground())
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground()))
             Text(text)
                 .foregroundStyle(Theme.Colors.ink())
         }

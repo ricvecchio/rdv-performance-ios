@@ -216,7 +216,7 @@ struct EditProfileView: View {
                         .overlay(alignment: .bottomTrailing) {
                             Image(systemName: "camera.fill")
                                 .font(.system(size: 13, weight: .semibold))
-                                .foregroundStyle(Theme.Colors.systemAccentForeground())
+                                .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground()))
                                 .frame(width: 28, height: 28)
                                 .background(Theme.Colors.cardBackground)
                                 .clipShape(Circle())
@@ -329,6 +329,7 @@ struct EditProfileView: View {
                                 .tint(Theme.Colors.ink(0.9))
                         } else {
                             Image(systemName: "checkmark.circle.fill")
+                                .appThemeIconForeground()
                         }
 
                         Text(
@@ -865,7 +866,7 @@ struct EditProfileView: View {
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, 10)

@@ -9,6 +9,7 @@ struct TeacherWorkoutTemplatesAddButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
+                    .appThemeIconForeground()
                 Text(title)
             }
             .padding(.horizontal, 14)
@@ -120,7 +121,7 @@ struct TeacherWorkoutTemplateRow: View {
         HStack(spacing: 12) {
 
             Image(systemName: categoryIcon)
-                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                 .font(.system(size: 16))
                 .frame(width: 26)
 
@@ -156,7 +157,7 @@ struct TeacherWorkoutTemplateRow: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)
                         .contentShape(Rectangle())

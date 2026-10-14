@@ -61,6 +61,7 @@ struct AdminProfileSelectionView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "key.fill")
+                                .appThemeIconForeground()
                             Text("teacher_authorization.admin.entry")
                         }
                         .font(.system(size: 14, weight: .medium))

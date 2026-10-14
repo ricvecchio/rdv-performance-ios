@@ -876,7 +876,7 @@ struct ProfileView: View {
                     .overlay(alignment: .bottomTrailing) {
                         Image(systemName: "camera.fill")
                             .font(.system(size: 13, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.systemAccentForeground())
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground()))
                             .frame(width: 28, height: 28)
                             .background(Theme.Colors.cardBackground)
                             .clipShape(Circle())
@@ -947,7 +947,7 @@ struct ProfileView: View {
         if !trimmed.isEmpty {
             HStack(alignment: alignment, spacing: 6) {
                 Image(systemName: icon)
-                    .foregroundStyle(Theme.Colors.systemAccentForeground())
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground()))
 
                 Text(trimmed)
                     .font(.system(size: 14))
@@ -1088,7 +1088,7 @@ struct ProfileView: View {
         localizedTitle: String? = nil,
         trailing: Trailing,
         activityBadgeCount: Int = 0,
-        iconColor: Color = .green.opacity(0.85),
+        iconColor: Color? = nil,
         titleColor: Color = .white.opacity(0.95),
         onTap: (() -> Void)? = nil
     ) -> some View {
@@ -1126,14 +1126,18 @@ struct ProfileView: View {
         localizedTitle: String?,
         trailing: Trailing,
         activityBadgeCount: Int,
-        iconColor: Color,
+        iconColor: Color?,
         titleColor: Color
     ) -> some View {
         HStack(spacing: 14) {
 
+            // Sem cor explícita: ícone interno padrão. Cor explícita (ex.: vermelho do Admin) é preservada.
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundStyle(AppThemeAdaptiveColor(iconColor))
+                .foregroundStyle(
+                    iconColor.map { AnyShapeStyle(AppThemeAdaptiveColor($0)) }
+                        ?? AnyShapeStyle(Theme.Colors.icon(.green.opacity(0.85)))
+                )
                 .frame(width: 28)
                 .overlay(alignment: .topTrailing) {
                     if activityBadgeCount > 0 {
@@ -1209,7 +1213,7 @@ struct ProfileView: View {
 
             case .settings:
                 Image(systemName: "gearshape.fill")
-                    .foregroundStyle(Theme.Colors.ink(0.60))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.60)))
             }
         }
         .padding(.horizontal, 16)
@@ -1268,7 +1272,7 @@ struct ProfileView: View {
                                         HStack(spacing: 12) {
                                             Image(systemName: iconName)
                                                 .font(.system(size: 18, weight: .semibold))
-                                                .foregroundColor(.green.opacity(0.9))
+                                                .foregroundStyle(Theme.Colors.icon(.green.opacity(0.9)))
                                                 .frame(width: 28)
 
                                             Text(iconName)
