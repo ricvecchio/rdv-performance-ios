@@ -77,6 +77,25 @@ struct TrainingWeeksView: View {
         _vm = StateObject(wrappedValue: viewModel ?? StudentWorkoutsViewModel(studentId: studentId, repository: repository))
     }
 
+    // Cores locais exclusivas do Tema Claro desta tela (Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        // Verde quase branco: filtros não selecionados e card do treino individual
+        static let chipSurface = Color(red: 0xEE / 255, green: 0xF8 / 255, blue: 0xF0 / 255)
+        static let rowSurface = Color(red: 0xF6 / 255, green: 0xFC / 255, blue: 0xF7 / 255)
+        // Verde pastel muito claro: card principal da semana
+        static let weekSurface = Color(red: 0xE6 / 255, green: 0xF6 / 255, blue: 0xEA / 255)
+        // Verde pastel suave (ligeiramente mais intenso): cabeçalho do agrupador do dia
+        static let dayHeaderSurface = Color(red: 0xD9 / 255, green: 0xF1 / 255, blue: 0xDF / 255)
+        // Verde muito claro: conteúdo inferior do agrupador do dia
+        static let dayContentSurface = Color(red: 0xF1 / 255, green: 0xFA / 255, blue: 0xF3 / 255)
+        // Cinza intermediário: texto de progresso
+        static let secondaryText = Color(red: 0x5E / 255, green: 0x6B / 255, blue: 0x63 / 255)
+        // Trilho cinza-esverdeado da barra de progresso
+        static let progressTrack = Color(red: 0xC9 / 255, green: 0xD8 / 255, blue: 0xCE / 255)
+        // Bordas discretas
+        static let subtleBorder = AppThemePalette.lightCardBorder.opacity(0.55)
+    }
+
     private var isTeacherViewing: Bool { session.isTrainer }
     private var viewingTeacherId: String? {
         isTeacherViewing ? (session.uid ?? "") : nil
@@ -127,7 +146,8 @@ struct TrainingWeeksView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundStyle(Theme.Colors.systemAccentForeground())
+                            // Tema Escuro: verde original (systemAccentForeground). Tema Claro: branco sobre o cabeçalho verde militar.
+                            .foregroundStyle(AppThemeColor(dark: Color.green, light: .white, followsBarColorScheme: false))
                     }
                     .contentShape(Rectangle())
                 }
@@ -278,14 +298,14 @@ struct TrainingWeeksView: View {
                 .background(
                     selectedFilter == filter
                         ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.18), light: AppThemePalette.lightBar))
-                        : AnyShapeStyle(Theme.Colors.glass(0.68))
+                        : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.chipSurface))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             selectedFilter == filter
                                 ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: AppThemePalette.lightBar)
-                                : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AppThemePalette.lightCardBorder),
+                                : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.subtleBorder),
                             lineWidth: 1
                         )
                 )
@@ -479,7 +499,7 @@ struct TrainingWeeksView: View {
         .padding(.vertical, 16)
         .contentShape(Rectangle())
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.weekSurface))
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
@@ -974,11 +994,14 @@ struct TrainingWeeksView: View {
             }
         }
         .padding(12)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.rowSurface))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AppThemePalette.lightCardBorder.opacity(0.75)),
+                    lineWidth: 1
+                )
         )
     }
 
