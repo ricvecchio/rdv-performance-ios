@@ -604,11 +604,16 @@ struct TrainingWeeksView: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.dayHeaderSurface))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -636,7 +641,7 @@ struct TrainingWeeksView: View {
                 let title = day.title.trimmingCharacters(in: .whitespacesAndNewlines)
                 Text(title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(1)
 
                 Text("workout.youtube")
@@ -707,7 +712,7 @@ struct TrainingWeeksView: View {
                 openLockedPlayer(for: day, videoId: videoId)
             } label: {
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.chevron(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.militaryText))
             }
             .buttonStyle(.plain)
         }

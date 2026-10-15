@@ -4,6 +4,17 @@ import Charts
 // Tela do Aluno: Recorde Pessoal > Girls (lista fixa de WODs + score numérico)
 struct GirlsPersonalRecordsView: View {
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     @Binding var path: [AppRoute]
 
@@ -251,11 +262,16 @@ struct GirlsPersonalRecordsView: View {
                 }
             }
         }
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -267,13 +283,13 @@ struct GirlsPersonalRecordsView: View {
 
             Text("personal_records_girls.workout")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Theme.Colors.ink(0.55))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: LightColors.primaryText))
 
             Spacer()
 
             Text("personal_records.time_score_label")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Theme.Colors.ink(0.55))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: LightColors.primaryText))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -292,17 +308,17 @@ struct GirlsPersonalRecordsView: View {
 
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Theme.Colors.iconSurface(Color.green.opacity(0.14)))
+                        .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
                         .frame(width: 34, height: 34)
 
                     Image(systemName: "figure.strengthtraining.traditional")
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                        .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
                 Text(wod.name)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(2)
 
                 Spacer()
@@ -318,7 +334,7 @@ struct GirlsPersonalRecordsView: View {
                 }
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.chevron(0.25))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.25), light: LightColors.chevron))
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.leading, 6)
             }
@@ -502,7 +518,7 @@ struct GirlsPersonalRecordsView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "list.bullet.rectangle")
-                    .foregroundStyle(Theme.Colors.icon(.green.opacity(0.90)))
+                    .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.90), light: LightColors.iconInk))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("personal_records_campeonatos.wod")
@@ -529,11 +545,16 @@ struct GirlsPersonalRecordsView: View {
             .frame(height: 140)
         }
         .padding(14)
-        .background(Theme.Colors.cardBackground)
+        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 

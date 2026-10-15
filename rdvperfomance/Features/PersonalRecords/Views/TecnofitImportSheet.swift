@@ -4,6 +4,14 @@ struct TecnofitImportSheet: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
     let onImportCompleted: () -> Void
 
     @State private var email = ""
@@ -84,11 +92,16 @@ struct TecnofitImportSheet: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -140,7 +153,7 @@ struct TecnofitImportSheet: View {
         VStack(alignment: .leading, spacing: 10) {
             Text("tecnofit_import.import_summary")
                 .font(.system(size: 16, weight: .bold))
-                .foregroundStyle(Theme.Colors.ink())
+                .foregroundStyle(AppThemeColor(dark: Color.white, light: LightColors.primaryText))
             summaryLine(
                 recordsReadyText(preview.recordsReady),
                 icon: "checkmark.circle.fill",
@@ -201,6 +214,11 @@ struct TecnofitImportSheet: View {
                             lineWidth: 1
                         )
                 )
+                .shadow(
+                    color: appTheme == .light && actionButtonIsEnabled ? .black.opacity(0.25) : .clear,
+                    radius: appTheme == .light && actionButtonIsEnabled ? 10 : 0,
+                    y: appTheme == .light && actionButtonIsEnabled ? 6 : 0
+                )
         }
         .buttonStyle(.plain)
         .disabled(!actionButtonIsEnabled)
@@ -229,14 +247,19 @@ struct TecnofitImportSheet: View {
                 Text("common.cancel")
             }
             .font(.system(size: 15, weight: .bold))
-            .foregroundStyle(Theme.Colors.ink(0.85))
+            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: LightColors.primaryText))
             .frame(maxWidth: .infinity)
             .padding(.vertical, 14)
-            .background(Theme.Colors.ink(0.10))
+            .background(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.cardSurface))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.border), lineWidth: 1)
+            )
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
             )
         }
         .buttonStyle(.plain)

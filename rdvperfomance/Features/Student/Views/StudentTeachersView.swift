@@ -9,6 +9,14 @@ struct StudentTeachersView: View {
 
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     private let contentMaxWidth: CGFloat = 380
     private let repository: FirestoreRepository
@@ -298,11 +306,16 @@ struct StudentTeachersView: View {
             Color.clear.frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -318,7 +331,7 @@ struct StudentTeachersView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher.name)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(teacher.email)
@@ -364,7 +377,7 @@ struct StudentTeachersView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(request.teacherEmail)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(1)
                     .truncationMode(.tail)
                 pendingStatus
@@ -403,7 +416,7 @@ struct StudentTeachersView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher?.name ?? invite.teacherEmail)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(invite.teacherEmail)
