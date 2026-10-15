@@ -8,6 +8,8 @@ struct StudentDashboardView: View {
 
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.colorScheme) private var colorScheme
     @StateObject private var viewModel: StudentDashboardViewModel
     @State private var isTeacherLinkIconPulsing = false
     @State private var isRequestLinkSheetPresented = false
@@ -83,6 +85,9 @@ struct StudentDashboardView: View {
                 Text("dashboard.student_area")
                     .font(Theme.Fonts.headerTitle())
                     .foregroundStyle(Theme.Colors.ink())
+                    // Tema Claro: resolve a cor do título já com o esquema escuro do cabeçalho verde,
+                    // sem depender da propagação tardia do `toolbarColorScheme` na primeira exibição.
+                    .environment(\.colorScheme, appTheme == .light ? .dark : colorScheme)
             }
             ToolbarItem(placement: .topBarTrailing) {
                 HeaderAvatarView(size: 38)
@@ -635,15 +640,29 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .leading)
         .background(
             ZStack {
-                AppThemeNeutralGradient(
-                    colors: [
-                        Color.black.opacity(0.82),
-                        Color.black.opacity(0.55),
-                        Color.black.opacity(0.25)
-                    ],
-                    startPoint: .leading,
-                    endPoint: .trailing
-                )
+                if appTheme == .light {
+                    // Tema Claro: escurece a foto e mantém o pastel apenas à esquerda (legibilidade dos textos)
+                    Color.black.opacity(0.35)
+                    LinearGradient(
+                        colors: [
+                            AppThemePalette.lightSurface.opacity(0.94),
+                            AppThemePalette.lightSurface.opacity(0.65),
+                            AppThemePalette.lightSurface.opacity(0.20)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                } else {
+                    AppThemeNeutralGradient(
+                        colors: [
+                            Color.black.opacity(0.82),
+                            Color.black.opacity(0.55),
+                            Color.black.opacity(0.25)
+                        ],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                }
                 Theme.Colors.primaryGreen.opacity(0.05)
             }
         )
