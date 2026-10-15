@@ -41,6 +41,7 @@ struct PersonalRecordsView: View {
     @Binding var path: [AppRoute]
     let onBack: () -> Void
     @EnvironmentObject private var session: AppSession
+    @Environment(\.appTheme) private var appTheme
 
     /// Sempre fornecido pelo `StudentRootView`. Usado tanto pelo rodapé
     /// quanto pelo botão `<` desta tela: como esta view é a RAIZ da seção
@@ -293,6 +294,12 @@ struct PersonalRecordsView: View {
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
+            )
+            // Tema Claro: mesma profundidade dos botoes da AdminProfileSelectionView (Tema Escuro: sem sombra)
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
             )
         }
         .buttonStyle(.plain)
