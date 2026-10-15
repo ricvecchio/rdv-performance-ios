@@ -630,24 +630,29 @@ struct StudentDashboardView: View {
                             .lineLimit(1)
                     }
                 }
+                // Tema Claro: textos sobre a foto escurecida usam os valores do esquema escuro (legibilidade)
+                .environment(\.colorScheme, appTheme == .light ? .dark : colorScheme)
             }
 
             Spacer(minLength: 18)
 
             action()
+                // Tema Claro: ação sobre a foto escurecida usa os valores do esquema escuro (legibilidade)
+                .environment(\.colorScheme, appTheme == .light ? .dark : colorScheme)
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .leading)
         .background(
             ZStack {
                 if appTheme == .light {
-                    // Tema Claro: escurece a foto e mantém o pastel apenas à esquerda (legibilidade dos textos)
-                    Color.black.opacity(0.35)
+                    // Tema Claro: escurece a foto com preto translúcido e verde-escuro (verde militar das barras),
+                    // mais intenso à esquerda (textos) e mais leve à direita (detalhes da fotografia)
+                    Color.black.opacity(0.30)
                     LinearGradient(
                         colors: [
-                            AppThemePalette.lightSurface.opacity(0.94),
-                            AppThemePalette.lightSurface.opacity(0.65),
-                            AppThemePalette.lightSurface.opacity(0.20)
+                            AppThemePalette.lightBar.opacity(0.85),
+                            AppThemePalette.lightBar.opacity(0.55),
+                            AppThemePalette.lightBar.opacity(0.25)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
