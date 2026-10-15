@@ -21,6 +21,22 @@ struct StudentDashboardView: View {
     private let contentMaxWidth: CGFloat = 380
     private let summaryCardHeight: CGFloat = 132
 
+    // Cores locais exclusivas do Tema Claro (padrao da TrainingWeeksView; Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)   // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255)  // #F0F7EF
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)   // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)       // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)       // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)        // #C9DFC9
+    }
+
+    // Profundidade dos cards: mesma sombra da AdminProfileSelectionView no Tema Claro; Tema Escuro sem sombra
+    private var cardShadowColor: Color { appTheme == .light ? .black.opacity(0.25) : .clear }
+    private var cardShadowRadius: CGFloat { appTheme == .light ? 10 : 0 }
+    private var cardShadowY: CGFloat { appTheme == .light ? 6 : 0 }
+
     init(
         path: Binding<[AppRoute]>,
         studentId: String,
@@ -157,7 +173,7 @@ struct StudentDashboardView: View {
                     .foregroundColor(.yellow.opacity(0.85))
                 Text("dashboard.notices")
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
             }
 
             Button {
@@ -175,9 +191,10 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
     private var inviteNoticeMessage: String {
@@ -198,13 +215,13 @@ struct StudentDashboardView: View {
         HStack(spacing: 14) {
             Image(systemName: icon)
                 .font(.system(size: 18))
-                .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 3) {
                 Text(title)
                     .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 Text(message)
                     .font(.system(size: 13))
                     .foregroundStyle(Theme.Colors.ink(0.55))
@@ -213,7 +230,7 @@ struct StudentDashboardView: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .foregroundStyle(Theme.Colors.chevron(0.35))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
         }
         .contentShape(Rectangle())
     }
@@ -222,7 +239,7 @@ struct StudentDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             Image(systemName: "person.crop.circle.badge.exclamationmark")
                 .font(.system(size: 34, weight: .medium))
-                .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                 .scaleEffect(isTeacherLinkIconPulsing ? 1.06 : 0.94)
                 .opacity(isTeacherLinkIconPulsing ? 1 : 0.75)
                 .animation(
@@ -232,7 +249,7 @@ struct StudentDashboardView: View {
 
             Text("dashboard.you_do_not_have_a_linked_coach_yet")
                 .font(.system(size: 17, weight: .bold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
             Text("dashboard.link_with_a_coach_to_receive_workouts_and_track_your_progress")
                 .font(.system(size: 14))
@@ -255,9 +272,10 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
         .onAppear {
             isTeacherLinkIconPulsing = true
         }
@@ -387,7 +405,7 @@ struct StudentDashboardView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("dashboard.weekly_progress_title")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         .lineLimit(1)
 
                     if viewModel.isLoading {
@@ -412,7 +430,7 @@ struct StudentDashboardView: View {
                         )
                     )
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 }
             }
 
@@ -445,16 +463,17 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
     private var weeklyProgressIcon: some View {
         HStack(alignment: .bottom, spacing: 2.5) {
             ForEach([CGFloat(9), 14, 19], id: \.self) { height in
                 RoundedRectangle(cornerRadius: 1.5)
-                    .fill(Theme.Colors.primaryGreen)
+                    .fill(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                     .frame(width: 4, height: height)
             }
             RoundedRectangle(cornerRadius: 1.5)
@@ -462,12 +481,12 @@ struct StudentDashboardView: View {
                 .frame(width: 4, height: 11)
         }
         .frame(width: 42, height: 42)
-        .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
+        .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.10), light: LightColors.iconSurface))
         .background(Theme.Colors.glass(0.55))
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
         )
         .accessibilityHidden(true)
     }
@@ -484,7 +503,7 @@ struct StudentDashboardView: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text("dashboard.weekly_checkins_title")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         .lineLimit(1)
 
                     if viewModel.isLoadingCurrentWeekCheckIns {
@@ -509,7 +528,7 @@ struct StudentDashboardView: View {
                         )
                     )
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 }
             }
 
@@ -536,22 +555,23 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
     private var weeklyCheckInsIcon: some View {
         Image(systemName: "person.crop.circle.badge.checkmark")
             .font(.system(size: 18, weight: .semibold))
-            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+            .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
             .frame(width: 42, height: 42)
-            .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
+            .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.10), light: LightColors.iconSurface))
             .background(Theme.Colors.glass(0.55))
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
             )
             .accessibilityHidden(true)
     }
@@ -607,14 +627,14 @@ struct StudentDashboardView: View {
             HStack(spacing: 12) {
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                     .frame(width: 42, height: 42)
-                    .background(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.10)))
+                    .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.10), light: LightColors.iconSurface))
                     .background(Theme.Colors.glass(0.55))
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
                     )
 
                 VStack(alignment: .leading, spacing: 3) {
@@ -677,8 +697,9 @@ struct StudentDashboardView: View {
                 .scaledToFill()
         )
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.cardBorder, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
         .contentShape(RoundedRectangle(cornerRadius: 14))
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
     private func weeklyProgressText(completed: Int, total: Int) -> String {

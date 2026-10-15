@@ -63,6 +63,7 @@ struct TeacherDashboardView: View {
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
 
     @State private var todaySummary: TodaySummary?
     @State private var isLoadingSummary = true
@@ -76,6 +77,22 @@ struct TeacherDashboardView: View {
 
     private let contentMaxWidth: CGFloat = 380
     private let summaryColumns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 3)
+
+    // Cores locais exclusivas do Tema Claro (padrao da TrainingWeeksView; Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)   // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255)  // #F0F7EF
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)   // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)       // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)       // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)        // #C9DFC9
+    }
+
+    // Profundidade dos cards: mesma sombra da AdminProfileSelectionView no Tema Claro; Tema Escuro sem sombra
+    private var cardShadowColor: Color { appTheme == .light ? .black.opacity(0.25) : .clear }
+    private var cardShadowRadius: CGFloat { appTheme == .light ? 10 : 0 }
+    private var cardShadowY: CGFloat { appTheme == .light ? 6 : 0 }
 
     var body: some View {
         ZStack {
@@ -174,7 +191,7 @@ struct TeacherDashboardView: View {
             HStack(alignment: .firstTextBaseline) {
                 Text("ui.today_s_summary")
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 Spacer()
 
@@ -203,12 +220,13 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
         )
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
     private var quickAccessCard: some View {
@@ -216,7 +234,7 @@ struct TeacherDashboardView: View {
             HStack {
                 Text("ui.quick_access")
                     .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 Spacer()
 
@@ -227,7 +245,7 @@ struct TeacherDashboardView: View {
                 } label: {
                     Image(systemName: "pencil")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: LightColors.iconInk))
                         .frame(width: 32, height: 32)
                 }
                 .buttonStyle(.plain)
@@ -248,12 +266,13 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
         )
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
     private var quickAccessEditorSheet: some View {
@@ -487,7 +506,7 @@ struct TeacherDashboardView: View {
                 .font(.system(size: 14, weight: .semibold))
                 .foregroundStyle(
                     iconColor.map { AnyShapeStyle(AppThemeAdaptiveColor($0)) }
-                        ?? AnyShapeStyle(Theme.Colors.icon(.green.opacity(0.85)))
+                        ?? AnyShapeStyle(AppThemeColor(dark: .green.opacity(0.85), light: LightColors.iconInk))
                 )
 
             if isLoadingSummary {
@@ -497,7 +516,7 @@ struct TeacherDashboardView: View {
             } else {
                 Text(value.map(String.init) ?? "—")
                     .font(.system(size: 20, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
             }
 
             Text(title)
@@ -508,11 +527,11 @@ struct TeacherDashboardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 118)
         .padding(.horizontal, 6)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
         )
     }
 
@@ -645,18 +664,18 @@ struct TeacherDashboardView: View {
             HStack(alignment: .top, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Theme.Colors.iconSurface(Color.green.opacity(0.14)))
+                        .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
                         .frame(width: 34, height: 34)
 
                     Image(systemName: icon)
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                        .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(title)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         .lineLimit(2)
 
                     Text(subtitle)
@@ -668,7 +687,7 @@ struct TeacherDashboardView: View {
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.chevron(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
                     .frame(height: 34)
             }
             .frame(maxWidth: .infinity, minHeight: 68, alignment: .leading)
@@ -676,15 +695,16 @@ struct TeacherDashboardView: View {
             .padding(.vertical, 8)
             .background(
                 ZStack {
-                    Theme.Colors.glass(0.68)
-                    Theme.Colors.primaryGreen.opacity(0.05)
+                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface)
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
             )
+            .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
         }
         .buttonStyle(.plain)
     }
