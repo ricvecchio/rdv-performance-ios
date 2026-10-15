@@ -7,6 +7,17 @@ struct TeacherCrossfitLibraryView: View {
     let mode: TeacherWorkoutsMode
     let templateMode: TeacherWorkoutTemplatesMode
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Cores locais exclusivas do Tema Claro (padrao da TrainingWeeksView; Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)   // #DDEDDC
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)   // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)       // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)       // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)        // #C9DFC9
+    }
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -139,10 +150,10 @@ struct TeacherCrossfitLibraryView: View {
             HStack(spacing: 14) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 11)
-                        .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
+                        .fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.iconSurface))
 
                     Image(systemName: icon)
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                         .font(.system(size: 17, weight: .semibold))
                 }
                 .frame(width: 42, height: 42)
@@ -153,12 +164,12 @@ struct TeacherCrossfitLibraryView: View {
 
                 Text(title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 Spacer()
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.chevron(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
                     .font(.system(size: 14, weight: .semibold))
             }
             .padding(.horizontal, 16)
@@ -166,14 +177,20 @@ struct TeacherCrossfitLibraryView: View {
             .background(
                 ZStack {
                     // Mesma tonalidade dos botões da TeacherWorkoutsView
-                    Theme.Colors.glass(0.90)
-                    Theme.Colors.primaryGreen.opacity(0.05)
+                    AppThemeColor(dark: Color.black.opacity(0.90), light: LightColors.cardSurface)
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+            )
+            // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
             )
         }
         .buttonStyle(.plain)

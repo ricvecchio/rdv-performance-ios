@@ -1,5 +1,15 @@
 import SwiftUI
 
+// Cores locais exclusivas do Tema Claro (padrao da TrainingWeeksView; Tema Escuro usa sempre os valores originais)
+private enum TemplatesLightColors {
+    static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)   // #DDEDDC
+    static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)   // #85C995
+    static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)       // #25482B
+    static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
+    static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)       // #294A2F
+    static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)        // #C9DFC9
+}
+
 struct TeacherWorkoutTemplatesAddButton: View {
 
     let title: String
@@ -20,6 +30,7 @@ struct TeacherWorkoutTemplatesAddButton: View {
 }
 
 struct TeacherWorkoutTemplatesContentCard: View {
+    @Environment(\.appTheme) private var appTheme
 
     let isLoading: Bool
     let hasLoadedInitialData: Bool
@@ -51,11 +62,17 @@ struct TeacherWorkoutTemplatesContentCard: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: TemplatesLightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: TemplatesLightColors.border), lineWidth: 1)
+        )
+        // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 }
@@ -121,14 +138,14 @@ struct TeacherWorkoutTemplateRow: View {
         HStack(spacing: 12) {
 
             Image(systemName: categoryIcon)
-                .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: TemplatesLightColors.iconInk))
                 .font(.system(size: 16))
                 .frame(width: 26)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text(presentation.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: TemplatesLightColors.primaryText))
 
                 let sub = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
                 if !sub.isEmpty {
@@ -157,7 +174,7 @@ struct TeacherWorkoutTemplateRow: View {
                 } label: {
                     Image(systemName: "ellipsis")
                         .font(.system(size: 18, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: TemplatesLightColors.iconInk))
                         .padding(.vertical, 6)
                         .padding(.horizontal, 8)
                         .contentShape(Rectangle())
@@ -166,7 +183,7 @@ struct TeacherWorkoutTemplateRow: View {
             }
 
             Image(systemName: "chevron.right")
-                .foregroundStyle(Theme.Colors.chevron(0.35))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: TemplatesLightColors.chevron))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
@@ -200,7 +217,7 @@ struct TeacherWorkoutTemplatesEmptyView: View {
                     : AppLocalization.string("ui.no_workout_registered", locale: locale)
             )
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: TemplatesLightColors.primaryText))
 
             Text(
                 isCrossfitCategory
@@ -218,6 +235,7 @@ struct TeacherWorkoutTemplatesEmptyView: View {
 }
 
 struct TeacherWorkoutTemplatesMessageCard: View {
+    @Environment(\.appTheme) private var appTheme
 
     let text: String
     let isError: Bool
@@ -236,16 +254,22 @@ struct TeacherWorkoutTemplatesMessageCard: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Theme.Colors.glass(usesApprovedCardStyle ? 0.68 : 0.35))
+        .background(usesApprovedCardStyle ? AppThemeColor(dark: Color.black.opacity(0.68), light: TemplatesLightColors.cardSurface) : Theme.Colors.glass(0.35))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
                     usesApprovedCardStyle
-                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.28))
+                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: TemplatesLightColors.border))
                         : AnyShapeStyle(Theme.Colors.ink(0.10)),
                     lineWidth: 1
                 )
+        )
+        // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
+        .shadow(
+            color: usesApprovedCardStyle && appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: usesApprovedCardStyle && appTheme == .light ? 10 : 0,
+            y: usesApprovedCardStyle && appTheme == .light ? 6 : 0
         )
     }
 }
