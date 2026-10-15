@@ -81,17 +81,23 @@ struct TrainingWeeksView: View {
     private enum LightColors {
         // Verde quase branco: filtros não selecionados e card do treino individual
         static let chipSurface = Color(red: 0xEE / 255, green: 0xF8 / 255, blue: 0xF0 / 255)
-        static let rowSurface = Color(red: 0xF6 / 255, green: 0xFC / 255, blue: 0xF7 / 255)
-        // Verde pastel muito claro: card principal da semana
-        static let weekSurface = Color(red: 0xE6 / 255, green: 0xF6 / 255, blue: 0xEA / 255)
-        // Verde pastel suave (ligeiramente mais intenso): cabeçalho do agrupador do dia
-        static let dayHeaderSurface = Color(red: 0xD9 / 255, green: 0xF1 / 255, blue: 0xDF / 255)
-        // Verde muito claro: conteúdo inferior do agrupador do dia
-        static let dayContentSurface = Color(red: 0xF1 / 255, green: 0xFA / 255, blue: 0xF3 / 255)
-        // Cinza intermediário: texto de progresso
-        static let secondaryText = Color(red: 0x5E / 255, green: 0x6B / 255, blue: 0x63 / 255)
-        // Trilho cinza-esverdeado da barra de progresso
-        static let progressTrack = Color(red: 0xC9 / 255, green: 0xD8 / 255, blue: 0xCE / 255)
+        static let rowSurface = Color(red: 0xF1 / 255, green: 0xF7 / 255, blue: 0xF0 / 255)       // #F1F7F0
+        static let rowBorder = Color(red: 0xC4 / 255, green: 0xE7 / 255, blue: 0xCC / 255)        // #C4E7CC
+        static let rowSecondaryText = Color(red: 0x77 / 255, green: 0x7D / 255, blue: 0x77 / 255) // #777D77
+        static let pendingBorder = Color(red: 0x7E / 255, green: 0x85 / 255, blue: 0x7E / 255)    // #7E857E
+        // Card principal da semana (cores solidas, sem mistura com o fundo)
+        static let weekSurface = Color(red: 0xF1 / 255, green: 0xF7 / 255, blue: 0xF0 / 255)      // #F1F7F0
+        static let cardBorder = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let calendarSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)          // #25482B
+        static let pastelSurface = Color(red: 0xDC / 255, green: 0xEE / 255, blue: 0xDD / 255)    // #DCEEDD
+        static let militaryText = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)     // #294A2F
+        static let progressTrack = Color(red: 0xD5 / 255, green: 0xE2 / 255, blue: 0xD5 / 255)    // #D5E2D5
+        // Agrupador do dia: cabecalho pastel mais intenso e area inferior mais clara
+        static let dayHeaderSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255) // #DDEDDC
+        static let dayContentSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+        // Texto principal preto
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)      // #171C17
         // Bordas discretas
         static let subtleBorder = AppThemePalette.lightCardBorder.opacity(0.55)
     }
@@ -410,16 +416,16 @@ struct TrainingWeeksView: View {
         return HStack(alignment: .top, spacing: 12) {
             ZStack {
                 RoundedRectangle(cornerRadius: 11)
-                    .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
+                    .fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.calendarSurface))
                 Image(systemName: "calendar")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
             }
             .frame(width: 42, height: 42)
             .overlay(
                 RoundedRectangle(cornerRadius: 11)
                     .stroke(
-                        AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.22), light: AppThemePalette.lightCardBorder),
+                        AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.22), light: LightColors.cardBorder),
                         lineWidth: 1
                     )
             )
@@ -442,15 +448,15 @@ struct TrainingWeeksView: View {
                         )
                     )
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.accentForeground)
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.militaryText))
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
-                        .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: AppThemePalette.lightIconSurface))
+                        .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.pastelSurface))
                         .clipShape(Capsule())
                         .overlay(
                             Capsule()
                                 .stroke(
-                                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.25), light: AppThemePalette.lightCardBorder),
+                                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.25), light: LightColors.cardBorder),
                                     lineWidth: 1
                                 )
                         )
@@ -485,6 +491,10 @@ struct TrainingWeeksView: View {
 
                 ProgressView(value: progressValue)
                     .tint(AppThemeColor(dark: Theme.Colors.primaryGreen, light: AppThemePalette.lightAccent))
+                    // Tema Claro: trilho verde-acinzentado sólido (Tema Escuro: transparente, sem alteração)
+                    .background(
+                        Capsule().fill(AppThemeColor(dark: .clear, light: LightColors.progressTrack))
+                    )
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -492,7 +502,7 @@ struct TrainingWeeksView: View {
 
             Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundStyle(Theme.Colors.icon(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                .foregroundStyle(AppThemeColor(dark: isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35), light: LightColors.militaryText))
                 .padding(.top, 14)
         }
         .padding(.horizontal, 16)
@@ -506,7 +516,7 @@ struct TrainingWeeksView: View {
                 .stroke(
                     AppThemeColor(
                         dark: Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.28),
-                        light: AppThemePalette.lightCardBorder
+                        light: LightColors.cardBorder
                     ),
                     lineWidth: 1
                 )
@@ -865,16 +875,16 @@ struct TrainingWeeksView: View {
                 HStack(spacing: 14) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 9)
-                            .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
+                            .fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.calendarSurface))
                         Image(systemName: "calendar")
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                     }
                     .frame(width: 34, height: 34)
 
                     Text(trainingDateSubtitle(for: group.date, fallback: fallback))
                         .font(.system(size: 17, weight: isExpanded ? .semibold : .medium))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         .lineLimit(1)
                         .minimumScaleFactor(0.75)
 
@@ -884,7 +894,7 @@ struct TrainingWeeksView: View {
 
                     Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.icon(isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                        .foregroundStyle(AppThemeColor(dark: isExpanded ? Theme.Colors.primaryGreen : .white.opacity(0.35), light: LightColors.militaryText))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -893,7 +903,7 @@ struct TrainingWeeksView: View {
                 .background(
                     AppThemeColor(
                         dark: isExpanded ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.54),
-                        light: AppThemePalette.lightIconSurface.opacity(0.30)
+                        light: LightColors.dayHeaderSurface
                     )
                 )
             }
@@ -906,19 +916,19 @@ struct TrainingWeeksView: View {
                     }
                 }
                 .padding(10)
-                .background(Theme.Colors.glass(0.40))
+                .background(AppThemeColor(dark: Color.black.opacity(0.40), light: LightColors.dayContentSurface))
                 .transition(.opacity.combined(with: .move(edge: .top)))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.dayContentSurface))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
                     AppThemeColor(
                         dark: isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Theme.Colors.primaryGreen.opacity(0.28),
-                        light: AppThemePalette.lightCardBorder
+                        light: LightColors.cardBorder
                     ),
                     lineWidth: 1
                 )
@@ -937,20 +947,20 @@ struct TrainingWeeksView: View {
                 HStack(spacing: 12) {
                     ZStack {
                         RoundedRectangle(cornerRadius: 9)
-                            .fill(Theme.Colors.iconSurface(Theme.Colors.primaryGreen.opacity(0.14)))
+                            .fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.pastelSurface))
                         Image(systemName: workoutIconName(for: day, in: week))
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                     }
                     .frame(width: 36, height: 36)
 
                     VStack(alignment: .leading, spacing: 3) {
                         Text(DefaultWorkoutLocalization.presentation(for: day, locale: locale).title)
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                             .font(.system(size: 14))
-                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: AppThemePalette.lightInk.opacity(0.65)))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.rowSecondaryText))
                     }
 
                     Spacer()
@@ -979,7 +989,7 @@ struct TrainingWeeksView: View {
                                 // Tema Claro: borda cinza-esverdeada quando pendente; concluído mantém o verde original
                                 isCompleted
                                     ? AppThemeColor(dark: Theme.Colors.primaryGreen, light: Theme.Colors.primaryGreen)
-                                    : AppThemeColor(dark: Color.white.opacity(0.35), light: AppThemePalette.lightBar.opacity(0.45)),
+                                    : AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.pendingBorder),
                                 lineWidth: 1.5
                             )
                         if isCompleted {
@@ -999,7 +1009,7 @@ struct TrainingWeeksView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AppThemePalette.lightCardBorder.opacity(0.75)),
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.rowBorder),
                     lineWidth: 1
                 )
         )
