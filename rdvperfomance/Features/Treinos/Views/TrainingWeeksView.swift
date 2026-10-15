@@ -266,19 +266,26 @@ struct TrainingWeeksView: View {
         } label: {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(
+                    // Tema Claro: texto branco no selecionado (fundo verde militar)
+                    selectedFilter == filter
+                        ? AppThemeColor(dark: Color.white.opacity(0.92), light: .white)
+                        : Theme.Colors.ink(0.92)
+                )
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 8)
                 .padding(.vertical, 9)
                 .background(
                     selectedFilter == filter
-                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.18), light: AppThemePalette.lightBar))
                         : AnyShapeStyle(Theme.Colors.glass(0.68))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            selectedFilter == filter ? Theme.Colors.primaryGreen.opacity(0.55) : Theme.Colors.primaryGreen.opacity(0.28),
+                            selectedFilter == filter
+                                ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: AppThemePalette.lightBar)
+                                : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AppThemePalette.lightCardBorder),
                             lineWidth: 1
                         )
                 )
@@ -391,7 +398,10 @@ struct TrainingWeeksView: View {
             .frame(width: 42, height: 42)
             .overlay(
                 RoundedRectangle(cornerRadius: 11)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+                    .stroke(
+                        AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.22), light: AppThemePalette.lightCardBorder),
+                        lineWidth: 1
+                    )
             )
 
             VStack(alignment: .leading, spacing: 7) {
@@ -415,18 +425,21 @@ struct TrainingWeeksView: View {
                         .foregroundStyle(Theme.Colors.accentForeground)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 5)
-                        .background(Theme.Colors.primaryGreen.opacity(0.14))
+                        .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: AppThemePalette.lightIconSurface))
                         .clipShape(Capsule())
                         .overlay(
                             Capsule()
-                                .stroke(Theme.Colors.primaryGreen.opacity(0.25), lineWidth: 1)
+                                .stroke(
+                                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.25), light: AppThemePalette.lightCardBorder),
+                                    lineWidth: 1
+                                )
                         )
                 }
 
                 HStack(spacing: 8) {
                     Text(vm.teacherLineForWeek(week, locale: locale))
                         .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: AppThemePalette.lightInk))
                         .lineLimit(1)
 
                     Spacer(minLength: 4)
@@ -451,7 +464,7 @@ struct TrainingWeeksView: View {
                     .foregroundStyle(Theme.Colors.ink(0.55))
 
                 ProgressView(value: progressValue)
-                    .tint(Theme.Colors.primaryGreen)
+                    .tint(AppThemeColor(dark: Theme.Colors.primaryGreen, light: AppThemePalette.lightAccent))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -470,7 +483,13 @@ struct TrainingWeeksView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.28), lineWidth: 1)
+                .stroke(
+                    AppThemeColor(
+                        dark: Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.28),
+                        light: AppThemePalette.lightCardBorder
+                    ),
+                    lineWidth: 1
+                )
         )
     }
 
@@ -850,7 +869,13 @@ struct TrainingWeeksView: View {
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
                 .contentShape(Rectangle())
-                .background(AppThemeAdaptiveColor(isExpanded ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.54)))
+                // Tema Escuro: expressão original. Tema Claro: verde pastel suave, igual nos estados expandido/recolhido.
+                .background(
+                    AppThemeColor(
+                        dark: isExpanded ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.54),
+                        light: AppThemePalette.lightIconSurface.opacity(0.30)
+                    )
+                )
             }
             .buttonStyle(.plain)
 
@@ -871,7 +896,10 @@ struct TrainingWeeksView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Theme.Colors.primaryGreen.opacity(0.28),
+                    AppThemeColor(
+                        dark: isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Theme.Colors.primaryGreen.opacity(0.28),
+                        light: AppThemePalette.lightCardBorder
+                    ),
                     lineWidth: 1
                 )
         )
@@ -902,7 +930,7 @@ struct TrainingWeeksView: View {
                             .foregroundStyle(Theme.Colors.ink(0.92))
                         Text(trainingDateSubtitle(for: day.date, fallback: day.subtitleText(locale: locale)))
                             .font(.system(size: 14))
-                            .foregroundStyle(Theme.Colors.ink(0.35))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: AppThemePalette.lightInk.opacity(0.65)))
                     }
 
                     Spacer()
@@ -928,7 +956,10 @@ struct TrainingWeeksView: View {
                             .fill(isCompleted ? Theme.Colors.primaryGreen : .clear)
                         Circle()
                             .stroke(
-                                AppThemeAdaptiveColor(isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)),
+                                // Tema Claro: borda cinza-esverdeada quando pendente; concluído mantém o verde original
+                                isCompleted
+                                    ? AppThemeColor(dark: Theme.Colors.primaryGreen, light: Theme.Colors.primaryGreen)
+                                    : AppThemeColor(dark: Color.white.opacity(0.35), light: AppThemePalette.lightBar.opacity(0.45)),
                                 lineWidth: 1.5
                             )
                         if isCompleted {
