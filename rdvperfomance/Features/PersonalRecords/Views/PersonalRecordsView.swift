@@ -51,6 +51,16 @@ struct PersonalRecordsView: View {
 
     private let contentMaxWidth: CGFloat = 380
     private let repository = FirestoreRepository.shared
+
+    // Cores locais exclusivas do Tema Claro dos cards do menu (Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let cardBorder = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)   // #C9DFC9
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+    }
     @State private var isTecnofitImportPresented = false
     @State private var hasCompletedTecnofitImport = false
     @State private var hasLoadedTecnofitImportStatus = false
@@ -238,16 +248,16 @@ struct PersonalRecordsView: View {
             HStack(alignment: .center, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Theme.Colors.iconSurface(Color.green.opacity(0.14)))
+                        .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
                         .frame(width: 34, height: 34)
 
                     if UIImage(named: icon) != nil {
                         Image(icon)
                             .renderingMode(.template)
-                            .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
+                            .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                     } else {
                         Image(systemName: icon)
-                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                            .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                             .font(.system(size: 16, weight: .semibold))
                     }
                 }
@@ -260,13 +270,13 @@ struct PersonalRecordsView: View {
                     }
                 }
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 .lineLimit(2)
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .foregroundStyle(Theme.Colors.chevron(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
             }
             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
@@ -274,14 +284,15 @@ struct PersonalRecordsView: View {
             .background(
                 ZStack {
                     // Mesma tonalidade dos botões da TeacherWorkoutsView
-                    Theme.Colors.glass(0.90)
-                    Theme.Colors.primaryGreen.opacity(0.05)
+                    // Tema Claro: verde pastel solido, sem sobreposicao
+                    AppThemeColor(dark: Color.black.opacity(0.90), light: LightColors.cardSurface)
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)
