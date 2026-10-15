@@ -40,6 +40,18 @@ private struct WorkoutPickerLabel: View {
 
 struct TeacherSendWorkoutView: View {
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     private enum Step: Equatable {
         case student
@@ -563,7 +575,7 @@ struct TeacherSendWorkoutView: View {
 
                 Image(systemName: areAllVisibleStudentsSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 18))
-                    .foregroundStyle(Theme.Colors.icon(areAllVisibleStudentsSelected ? .green : .white.opacity(0.55)))
+                    .foregroundStyle(AppThemeColor(dark: areAllVisibleStudentsSelected ? .green : .white.opacity(0.55), light: LightColors.iconInk))
             }
             .frame(maxWidth: .infinity, alignment: .trailing)
         }
@@ -624,11 +636,16 @@ struct TeacherSendWorkoutView: View {
                 }
             }
         }
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
         .disabled(isSending)
     }
@@ -645,7 +662,7 @@ struct TeacherSendWorkoutView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(student.name)
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 Text(
                     String(
                         format: AppLocalization.string("ui.category_value", locale: locale),
@@ -661,7 +678,7 @@ struct TeacherSendWorkoutView: View {
 
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundStyle(Theme.Colors.icon(selectionColor))
+                .foregroundStyle(AppThemeColor(dark: selectionColor, light: LightColors.iconInk))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
@@ -685,11 +702,16 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
         .disabled(isSending)
     }
@@ -709,11 +731,16 @@ struct TeacherSendWorkoutView: View {
             templatePicker(category: .emCasa, title: "ui.home_workouts")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -752,7 +779,7 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 8) {
             Image(systemName: categoryIcon(for: category))
                 .font(.system(size: 14))
-                .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
 
             Text(title)
                 .font(.system(size: 14))
@@ -795,7 +822,7 @@ struct TeacherSendWorkoutView: View {
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                .foregroundStyle(AppThemeColor(dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25), light: LightColors.iconInk))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -871,11 +898,16 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -885,7 +917,7 @@ struct TeacherSendWorkoutView: View {
                 HStack(spacing: 8) {
                     Image(systemName: "video.fill")
                         .font(.system(size: 13))
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
 
                     Text("ui.selected_video")
                         .font(.system(size: 13, weight: .medium))
@@ -894,7 +926,7 @@ struct TeacherSendWorkoutView: View {
 
                 Text(selectedVideoTitle)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 if !selectedVideoURL.isEmpty {
                     Text(selectedVideoURL)
@@ -908,11 +940,16 @@ struct TeacherSendWorkoutView: View {
             .padding(.vertical, 14)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.cardBackground)
+        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -924,7 +961,7 @@ struct TeacherSendWorkoutView: View {
             HStack(spacing: 8) {
                 Image(systemName: categoryIcon(for: category))
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
 
                 Text(category.localizedDisplayName(locale: locale))
                     .font(.system(size: 14, weight: .medium))
@@ -933,7 +970,7 @@ struct TeacherSendWorkoutView: View {
 
             Text(template.title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
         }
     }
 
@@ -972,22 +1009,27 @@ struct TeacherSendWorkoutView: View {
                     }
                 }
             }
-            .background(Theme.Colors.glass(0.68))
+            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
             )
             .disabled(isSending)
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -1036,7 +1078,7 @@ struct TeacherSendWorkoutView: View {
                     .foregroundStyle(
                         futureWeekOffset == 0
                             ? AnyShapeStyle(AppThemeAdaptiveColor(.white.opacity(0.25)))
-                            : AnyShapeStyle(Theme.Colors.icon(Theme.Colors.primaryGreen))
+                            : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
                     )
                     .frame(width: 32, height: 28)
             }
@@ -1066,7 +1108,7 @@ struct TeacherSendWorkoutView: View {
             } label: {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.accentForeground.dark, light: LightColors.iconInk))
                     .frame(width: 32, height: 28)
             }
             .buttonStyle(.plain)
@@ -1081,10 +1123,10 @@ struct TeacherSendWorkoutView: View {
         return HStack(spacing: 12) {
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundStyle(Theme.Colors.icon(selectionColor))
+                .foregroundStyle(AppThemeColor(dark: selectionColor, light: LightColors.iconInk))
             Text(weekdayTitle(for: day.date))
                 .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
             Spacer()
             Text(dateTitle(for: day.date))
                 .font(.system(size: 14, weight: .medium))
@@ -1120,6 +1162,11 @@ struct TeacherSendWorkoutView: View {
             Spacer()
         }
         .primaryGreenActionButton()
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
+        )
     }
 
     private var sendButtonContent: some View {
@@ -1133,6 +1180,11 @@ struct TeacherSendWorkoutView: View {
             Spacer()
         }
         .primaryGreenActionButton()
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
+        )
     }
 
     private func sectionTitle(_ title: LocalizedStringKey) -> some View {
@@ -1402,11 +1454,16 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Theme.Colors.glass(0.35))
+        .background(AppThemeColor(dark: Color.black.opacity(0.35), light: LightColors.cardSurface))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 

@@ -11,6 +11,18 @@ struct TeacherStudentsListView: View {
 
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
     @StateObject private var vm: TeacherStudentsListViewModel
 
     @State private var filter: TreinoTipo? = nil
@@ -318,11 +330,16 @@ struct TeacherStudentsListView: View {
             .padding(.vertical, 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -338,7 +355,7 @@ struct TeacherStudentsListView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(student.name)
                             .font(.system(size: 17, weight: .medium))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                         Text(
                             String(
@@ -366,7 +383,7 @@ struct TeacherStudentsListView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.iconInk))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 8)
                             .contentShape(Rectangle())
@@ -375,7 +392,7 @@ struct TeacherStudentsListView: View {
                     .disabled(vm.isChangingStudentCategory)
 
                     Image(systemName: "chevron.right")
-                        .foregroundStyle(Theme.Colors.chevron(0.35))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
                 }
                 .padding(.horizontal, 16)
                 .padding(.vertical, 14)
@@ -417,7 +434,7 @@ struct TeacherStudentsListView: View {
         VStack(spacing: 10) {
             Text("workout.oops_unable_to_load")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
             Text(message)
                 .font(.system(size: 13))
@@ -442,7 +459,7 @@ struct TeacherStudentsListView: View {
         VStack(spacing: 12) {
             Text("ui.no_student_found")
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
             Text("ui.link_students_to_your_profile_for_them_to_appear_here")
                 .font(.system(size: 13))
@@ -540,7 +557,7 @@ struct TeacherStudentsListView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(inv.studentEmail)
                             .font(.system(size: 15, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                             .lineLimit(1)
 
                         HStack(spacing: 6) {
@@ -565,7 +582,7 @@ struct TeacherStudentsListView: View {
                     } label: {
                         Image(systemName: "ellipsis")
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.iconInk))
                             .padding(.vertical, 6)
                             .padding(.horizontal, 8)
                             .contentShape(Rectangle())
@@ -587,11 +604,16 @@ struct TeacherStudentsListView: View {
             Color.clear.frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -631,11 +653,16 @@ struct TeacherStudentsListView: View {
             }
         }
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -647,7 +674,7 @@ struct TeacherStudentsListView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(item.name)
                     .font(.system(size: 18, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 if !item.studentEmail.isEmpty {
                     Text(item.studentEmail)
@@ -676,7 +703,7 @@ struct TeacherStudentsListView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.iconInk))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())

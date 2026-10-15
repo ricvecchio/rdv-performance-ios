@@ -20,6 +20,7 @@ struct TrainingWeeksView: View {
 
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
 
     @AppStorage("ultimoTreinoSelecionado")
     private var ultimoTreinoSelecionado: String = TreinoTipo.crossfit.rawValue
@@ -521,6 +522,11 @@ struct TrainingWeeksView: View {
                     lineWidth: 1
                 )
         )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
+        )
     }
 
     @ViewBuilder
@@ -932,6 +938,11 @@ struct TrainingWeeksView: View {
                     ),
                     lineWidth: 1
                 )
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
