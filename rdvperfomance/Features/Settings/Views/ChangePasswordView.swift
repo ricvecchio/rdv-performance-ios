@@ -5,6 +5,15 @@ import SwiftUI
 struct ChangePasswordView: View {
 
     @Binding var path: [AppRoute]
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
     @EnvironmentObject private var session: AppSession
 
     @State private var currentPassword: String = ""
@@ -110,11 +119,16 @@ struct ChangePasswordView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -223,7 +237,7 @@ struct ChangePasswordView: View {
                 .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             SecureField("", text: text)
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 .font(.system(size: 16))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
