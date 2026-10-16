@@ -6,15 +6,24 @@ struct TeacherWorkoutsView: View {
     let category: TreinoTipo
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
 
+    @Environment(\.appTheme) private var appTheme
+
     private let contentMaxWidth: CGFloat = 380
+
+    // Cores locais exclusivas do Tema Claro (padrao da TrainingWeeksView; Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)   // #DDEDDC
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)   // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)       // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)       // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)        // #C9DFC9
+    }
 
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -119,7 +128,7 @@ struct TeacherWorkoutsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -129,7 +138,7 @@ struct TeacherWorkoutsView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.workouts")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -138,7 +147,7 @@ struct TeacherWorkoutsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
     }
 
     private func quickAccessCard(
@@ -151,30 +160,30 @@ struct TeacherWorkoutsView: View {
             HStack(alignment: .center, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Color.green.opacity(0.14))
+                        .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
                         .frame(width: 34, height: 34)
 
                     Image(systemName: icon)
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         .lineLimit(2)
 
                     Text(subtitle)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                         .lineLimit(2)
                 }
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
             }
             .frame(maxWidth: .infinity, minHeight: 80, alignment: .leading)
             .padding(.horizontal, 12)
@@ -182,14 +191,20 @@ struct TeacherWorkoutsView: View {
             .background(
                 ZStack {
                     // Equivale ao botão (0.68) sobre o card escuro (0.68) do Acesso rápido: 1 - 0.32 * 0.32 ≈ 0.90
-                    Color.black.opacity(0.90)
-                    Theme.Colors.primaryGreen.opacity(0.05)
+                    AppThemeColor(dark: Color.black.opacity(0.90), light: LightColors.cardSurface)
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+            )
+            // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
             )
         }
         .buttonStyle(.plain)

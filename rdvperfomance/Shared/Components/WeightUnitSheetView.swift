@@ -36,19 +36,19 @@ struct WeightUnitSheetView: View {
     var body: some View {
         ZStack {
 
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text("settings.weight_unit.title")
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 ScrollView(showsIndicators: false) {
@@ -61,17 +61,17 @@ struct WeightUnitSheetView: View {
                                 HStack(spacing: 12) {
                                     Text(unit.title)
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
 
                                     Spacer()
 
                                     if unit == selectedUnit {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundColor(Theme.Colors.primaryGreen)
+                                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
                                             .font(.system(size: 18, weight: .semibold))
                                     } else {
                                         Image(systemName: "circle")
-                                            .foregroundColor(.white.opacity(0.25))
+                                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.25)))
                                             .font(.system(size: 18, weight: .regular))
                                     }
                                 }
@@ -93,12 +93,12 @@ struct WeightUnitSheetView: View {
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                            .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                     )
 
                     Text("settings.weight_unit.description")
                         .font(.system(size: 13, weight: .regular))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundStyle(Theme.Colors.ink(0.45))
                         .padding(.horizontal, 6)
                     }
                     .padding(.horizontal, 16)
@@ -109,14 +109,14 @@ struct WeightUnitSheetView: View {
                     Button(action: onCancel) {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -133,6 +133,6 @@ struct WeightUnitSheetView: View {
                 .padding(.bottom, 16)
             }
         }
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
     }
 }

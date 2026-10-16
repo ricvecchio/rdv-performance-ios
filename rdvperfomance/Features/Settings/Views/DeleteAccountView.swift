@@ -5,6 +5,15 @@ import SwiftUI
 struct DeleteAccountView: View {
 
     @Binding var path: [AppRoute]
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
 
@@ -35,10 +44,7 @@ struct DeleteAccountView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -60,7 +66,7 @@ struct DeleteAccountView: View {
                             if showError {
                                 Text(errorMessage)
                                     .font(.system(size: 13, weight: .medium))
-                                    .foregroundColor(.white.opacity(0.95))
+                                    .foregroundStyle(Theme.Colors.ink(0.95))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 10)
                                     .frame(maxWidth: .infinity)
@@ -93,7 +99,7 @@ struct DeleteAccountView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -104,13 +110,14 @@ struct DeleteAccountView: View {
             ToolbarItem(placement: .principal) {
                 Text("settings.delete.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 
     // Retorna card de aviso sobre a ação permanente
@@ -122,24 +129,29 @@ struct DeleteAccountView: View {
                     .foregroundColor(.red.opacity(0.9))
                 Text("common.warning")
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 Spacer()
             }
 
             Text("settings.delete.warning_message")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.60))
+                .foregroundStyle(Theme.Colors.ink(0.60))
                 .multilineTextAlignment(.leading)
 
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -151,9 +163,9 @@ struct DeleteAccountView: View {
 
             underlineField(
                 title: (
-                    Text("settings.delete.confirm_prefix").foregroundColor(textSecondary)
-                    + Text(confirmationKeyword).bold().foregroundColor(.white.opacity(0.92))
-                    + Text("settings.delete.confirm_suffix").foregroundColor(textSecondary)
+                    Text("settings.delete.confirm_prefix").foregroundStyle(AppThemeAdaptiveColor(textSecondary))
+                    + Text(confirmationKeyword).bold().foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                    + Text("settings.delete.confirm_suffix").foregroundStyle(AppThemeAdaptiveColor(textSecondary))
                 )
                 .font(.system(size: 14)),
                 text: $confirmText
@@ -165,11 +177,16 @@ struct DeleteAccountView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -188,7 +205,7 @@ struct DeleteAccountView: View {
                     )
                 }
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 Spacer()
             }
             .padding(.vertical, 14)
@@ -265,12 +282,12 @@ struct DeleteAccountView: View {
             title
 
             TextField("", text: text)
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 .font(.system(size: 16))
                 .padding(.vertical, 10)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }
@@ -281,17 +298,17 @@ struct DeleteAccountView: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+                .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             SecureField("", text: text)
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 .font(.system(size: 16))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
                 .padding(.vertical, 10)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }

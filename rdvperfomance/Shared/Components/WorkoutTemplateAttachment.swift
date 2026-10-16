@@ -8,6 +8,7 @@ struct WorkoutTemplateAttachmentButton: View {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: "paperclip")
+                    .appThemeIconForeground()
                 Text("workouts.attach_from_my_workouts")
             }
             .padding(.horizontal, 12)
@@ -27,13 +28,13 @@ struct WorkoutTemplateAttachmentSheet: View {
     var body: some View {
         NavigationStack {
             ZStack {
-                Theme.Colors.headerBackground.ignoresSafeArea()
+                Theme.Colors.sheetBackground.ignoresSafeArea()
                 if isLoading {
-                    ProgressView().tint(.white)
+                    ProgressView().tint(Theme.Colors.ink())
                 } else if templates.isEmpty {
                     Text("workouts.empty")
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                 } else {
                     List(templates) { template in
                         Button {

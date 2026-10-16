@@ -9,6 +9,14 @@ struct StudentTeachersView: View {
 
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     private let contentMaxWidth: CGFloat = 380
     private let repository: FirestoreRepository
@@ -72,10 +80,7 @@ struct StudentTeachersView: View {
     var body: some View {
         GeometryReader { viewport in
             ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Rectangle()
@@ -93,6 +98,7 @@ struct StudentTeachersView: View {
                             } label: {
                                 HStack(spacing: 10) {
                                     Image(systemName: "person.badge.plus")
+                                        .appThemeIconForeground()
 
                                     Text("dashboard.invite_coach")
                                 }
@@ -130,7 +136,7 @@ struct StudentTeachersView: View {
             }
 
             if showRequestLinkModal {
-                Color.black.opacity(0.25)
+                Theme.Colors.glass(0.25)
                     .ignoresSafeArea()
                     .transition(.opacity)
                     .allowsHitTesting(false)
@@ -153,7 +159,7 @@ struct StudentTeachersView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -163,14 +169,14 @@ struct StudentTeachersView: View {
             ToolbarItem(placement: .principal) {
                 Text("student_teachers.my_coaches")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .sheet(isPresented: $showRequestLinkModal) {
             requestLinkModalView()
                 .presentationDetents([.fraction(0.50)])
@@ -290,7 +296,7 @@ struct StudentTeachersView: View {
         VStack(alignment: .leading, spacing: 0) {
             Text(title)
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
                 .padding(.horizontal, 16)
                 .padding(.top, 14)
                 .padding(.bottom, 10)
@@ -300,11 +306,16 @@ struct StudentTeachersView: View {
             Color.clear.frame(height: 8)
         }
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -320,12 +331,12 @@ struct StudentTeachersView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher.name)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(teacher.email)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.35))
+                            .foregroundStyle(Theme.Colors.ink(0.35))
                             .lineLimit(1)
                             .truncationMode(.tail)
                     }
@@ -366,7 +377,7 @@ struct StudentTeachersView: View {
             VStack(alignment: .leading, spacing: 3) {
                 Text(request.teacherEmail)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(1)
                     .truncationMode(.tail)
                 pendingStatus
@@ -405,12 +416,12 @@ struct StudentTeachersView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(teacher?.name ?? invite.teacherEmail)
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                             .lineLimit(1)
                             .truncationMode(.tail)
                         Text(invite.teacherEmail)
                             .font(.system(size: 14))
-                            .foregroundColor(.white.opacity(0.35))
+                            .foregroundStyle(Theme.Colors.ink(0.35))
                             .lineLimit(1)
                             .truncationMode(.tail)
                     }
@@ -456,20 +467,20 @@ struct StudentTeachersView: View {
     private func teacherDetailsSheet(_ teacher: AppUser) -> some View {
         let title = AppLocalization.string("common.trainer", locale: locale)
         return ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 16) {
                     VStack(spacing: 10) {
                         Text(title)
                             .font(Theme.Fonts.headerTitle())
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
 
                         UserAvatarView(base64: teacher.photoBase64, size: 72)
 
                         Text(teacher.name)
                             .font(.system(size: 18, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .multilineTextAlignment(.center)
                     }
                     .frame(maxWidth: .infinity)
@@ -511,11 +522,11 @@ struct StudentTeachersView: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(title)
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 Text(trimmedValue)
                     .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .fixedSize(horizontal: false, vertical: true)
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -534,7 +545,7 @@ struct StudentTeachersView: View {
     private var menuIcon: some View {
         Image(systemName: "ellipsis")
             .font(.system(size: 18, weight: .semibold))
-            .foregroundColor(.white.opacity(0.55))
+            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
             .padding(.vertical, 6)
             .padding(.horizontal, 8)
             .contentShape(Rectangle())
@@ -551,7 +562,7 @@ struct StudentTeachersView: View {
             ProgressView()
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -561,10 +572,10 @@ struct StudentTeachersView: View {
         VStack(spacing: 12) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
             Text(message)
                 .font(.system(size: 13))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -574,30 +585,30 @@ struct StudentTeachersView: View {
 
     private func requestLinkModalView() -> some View {
         ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("dashboard.invite_coach")
                             .font(.system(size: 18, weight: .bold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
                             Text("dashboard.enter_the_coach_s_email_to_send_the_request")
                                 .font(.system(size: 13))
-                                .foregroundColor(.white.opacity(0.45))
+                                .foregroundStyle(Theme.Colors.ink(0.45))
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("dashboard.coach_email")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundColor(.white.opacity(0.75))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
 
                                 TextField("dashboard.coach_email_placeholder", text: $teacherEmailInput)
                                     .textInputAutocapitalization(.never)
@@ -606,13 +617,13 @@ struct StudentTeachersView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Color.white.opacity(0.10))
+                                    .background(Theme.Colors.ink(0.10))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                     )
-                                    .foregroundColor(.white.opacity(0.92))
+                                    .foregroundStyle(Theme.Colors.ink(0.92))
                             }
 
                             if let message = linkActionMessage {
@@ -627,7 +638,7 @@ struct StudentTeachersView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -640,14 +651,14 @@ struct StudentTeachersView: View {
                     } label: {
                         Text("student_teachers.back")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)

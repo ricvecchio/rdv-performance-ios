@@ -18,7 +18,7 @@ struct UnderlineTextField: View {
     @Binding var showPassword: Bool
 
     // Cores configuráveis do componente
-    let lineColor: Color
+    let lineColor: AnyShapeStyle
     let textColor: Color
     let placeholderColor: Color
     let inputBackground: Color?
@@ -29,7 +29,7 @@ struct UnderlineTextField: View {
         text: Binding<String>,
         isSecure: Bool,
         showPassword: Binding<Bool>,
-        lineColor: Color,
+        lineColor: some ShapeStyle,
         textColor: Color,
         placeholderColor: Color,
         inputBackground: Color? = nil,
@@ -40,7 +40,12 @@ struct UnderlineTextField: View {
         _text = text
         self.isSecure = isSecure
         _showPassword = showPassword
-        self.lineColor = lineColor
+        // Cores recebidas como `Color` se adaptam ao tema (inalteradas no Tema Escuro)
+        if let lineColor = lineColor as? Color {
+            self.lineColor = AnyShapeStyle(AppThemeAdaptiveColor(lineColor))
+        } else {
+            self.lineColor = AnyShapeStyle(lineColor)
+        }
         self.textColor = textColor
         self.placeholderColor = placeholderColor
         self.inputBackground = inputBackground
@@ -54,7 +59,7 @@ struct UnderlineTextField: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(placeholderColor)
+                .foregroundStyle(AppThemeAdaptiveColor(placeholderColor))
 
             ZStack(alignment: .trailing) {
 
@@ -65,7 +70,7 @@ struct UnderlineTextField: View {
                         TextField("", text: $text)
                     }
                 }
-                .foregroundColor(textColor)
+                .foregroundStyle(AppThemeAdaptiveColor(textColor))
                 .font(.system(size: 16))
                 .textInputAutocapitalization(.never)
                 .autocorrectionDisabled(true)
@@ -76,17 +81,17 @@ struct UnderlineTextField: View {
                         showPassword.toggle()
                     } label: {
                         Image(systemName: showPassword ? "eye.slash" : "eye")
-                            .foregroundColor(placeholderColor)
+                            .foregroundStyle(Theme.Colors.icon(placeholderColor))
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(inputBackground == nil ? 0 : 10)
-            .background(inputBackground ?? .clear)
+            .background(AppThemeAdaptiveColor(inputBackground ?? .clear))
             .clipShape(RoundedRectangle(cornerRadius: inputBackground == nil ? 0 : 12))
             .overlay(
                 RoundedRectangle(cornerRadius: inputBackground == nil ? 0 : 12)
-                    .stroke(inputBackground == nil ? .clear : (inputBorderColor ?? Color.white.opacity(0.10)), lineWidth: 1)
+                    .stroke(AppThemeAdaptiveColor(inputBackground == nil ? .clear : (inputBorderColor ?? Color.white.opacity(0.10))), lineWidth: 1)
             )
 
             Rectangle()

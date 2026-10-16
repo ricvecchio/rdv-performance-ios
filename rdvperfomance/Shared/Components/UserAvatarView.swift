@@ -13,7 +13,7 @@ struct UserAvatarView: View {
                 .scaledToFill()
                 .frame(width: size, height: size)
                 .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                .overlay(Circle().stroke(Theme.Colors.ink(0.12), lineWidth: 1))
         } else {
             // ✅ Ajuste pedido: avatar_default (rdv_user_default) em vez do ícone verde
             Image("rdv_user_default")
@@ -21,7 +21,7 @@ struct UserAvatarView: View {
                 .scaledToFill()
                 .frame(width: size, height: size)
                 .clipShape(Circle())
-                .overlay(Circle().stroke(Color.white.opacity(0.12), lineWidth: 1))
+                .overlay(Circle().stroke(Theme.Colors.ink(0.12), lineWidth: 1))
         }
     }
 

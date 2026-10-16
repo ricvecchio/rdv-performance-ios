@@ -67,7 +67,7 @@ struct HeaderAvatarView: View {
                 .overlay(
                     Group {
                         if showStroke {
-                            Circle().stroke(Color.white.opacity(strokeOpacity), lineWidth: 1)
+                            Circle().stroke(Theme.Colors.ink(strokeOpacity), lineWidth: 1)
                         }
                     }
                 )

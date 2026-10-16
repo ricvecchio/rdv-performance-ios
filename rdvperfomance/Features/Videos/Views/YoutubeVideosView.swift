@@ -9,6 +9,18 @@ enum YoutubeVideosContext {
 
 struct YoutubeVideosView: View {
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
     
     @Binding var path: [AppRoute]
     let context: YoutubeVideosContext
@@ -28,10 +40,7 @@ struct YoutubeVideosView: View {
     
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
             
             VStack(spacing: 0) {
                 Rectangle()
@@ -77,7 +86,7 @@ struct YoutubeVideosView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -87,7 +96,7 @@ struct YoutubeVideosView: View {
             ToolbarItem(placement: .principal) {
                 Text("workout.my_videos")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
             }
             
@@ -97,7 +106,7 @@ struct YoutubeVideosView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .task { await loadVideos() }
         .sheet(isPresented: $isAddSheetPresented) {
             AddYoutubeVideoSheet { title, url, videoCategory in
@@ -143,7 +152,7 @@ struct YoutubeVideosView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ui.save_youtube_links_to_view_later")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -155,10 +164,16 @@ struct YoutubeVideosView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
+                    .appThemeIconForeground()
                 Text("ui.add_video")
             }
             .padding(.horizontal, 14)
             .compactPrimaryGreenActionButton()
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
+            )
         }
         .buttonStyle(.plain)
     }
@@ -175,11 +190,16 @@ struct YoutubeVideosView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
     
@@ -226,39 +246,39 @@ struct YoutubeVideosView: View {
 
     private var editVideoTitleSheet: some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 14) {
                         Capsule()
-                            .fill(Color.white.opacity(0.18))
+                            .fill(Theme.Colors.ink(0.18))
                             .frame(width: 44, height: 5)
                             .padding(.top, 10)
 
                         Text("ui.edit_title")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundColor(.white)
+                            .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
                             Text("ui.title")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
+                                .foregroundStyle(Theme.Colors.ink(0.75))
 
                             TextField("", text: $editingVideoTitle)
                                 .textInputAutocapitalization(.sentences)
                                 .autocorrectionDisabled(false)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.92))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
-                                .background(Color.white.opacity(0.10))
+                                .background(Theme.Colors.ink(0.10))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                 )
 
                             if let editTitleErrorMessage {
@@ -269,11 +289,11 @@ struct YoutubeVideosView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.black.opacity(0.68))
+                        .background(Theme.Colors.glass(0.68))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -286,14 +306,14 @@ struct YoutubeVideosView: View {
                     }
                     .buttonStyle(.plain)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundColor(.white.opacity(0.85))
+                    .foregroundStyle(Theme.Colors.ink(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Color.white.opacity(0.10))
+                    .background(Theme.Colors.ink(0.10))
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                     )
                     .disabled(isSavingVideoTitle)
 
@@ -302,9 +322,10 @@ struct YoutubeVideosView: View {
                     } label: {
                         HStack(spacing: 10) {
                             if isSavingVideoTitle {
-                                ProgressView().tint(.white)
+                                ProgressView().tint(Theme.Colors.ink())
                             } else {
                                 Image(systemName: "checkmark")
+                                    .appThemeIconForeground()
                                 Text("common.save")
                             }
                         }
@@ -329,12 +350,12 @@ struct YoutubeVideosView: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(v.title.isEmpty ? AppLocalization.string("workout.youtube_video", locale: locale) : v.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(1)
                 
                 Text(v.category.localizedTitle)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .lineLimit(1)
             }
             
@@ -370,7 +391,7 @@ struct YoutubeVideosView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.iconInk))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
@@ -381,7 +402,7 @@ struct YoutubeVideosView: View {
                 openLockedPlayer(for: v)
             } label: {
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
             }
             .buttonStyle(.plain)
         }
@@ -400,40 +421,40 @@ struct YoutubeVideosView: View {
                 switch phase {
                 case .empty:
                     ZStack {
-                        Color.white.opacity(0.06)
-                        ProgressView().tint(.white.opacity(0.8))
+                        Theme.Colors.ink(0.06)
+                        ProgressView().tint(Theme.Colors.ink(0.8))
                     }
                 case .success(let img):
                     img.resizable().scaledToFill()
                 case .failure:
                     ZStack {
-                        Color.white.opacity(0.06)
+                        Theme.Colors.ink(0.06)
                         Image(systemName: "video.fill")
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     }
                 @unknown default:
-                    Color.white.opacity(0.06)
+                    Theme.Colors.ink(0.06)
                 }
             }
             .frame(width: 66, height: 40)
             .clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
             )
             
             ZStack {
                 Circle()
-                    .fill(Color.black.opacity(0.45))
+                    .fill(Theme.Colors.glass(0.45))
                 Image(systemName: "play.fill")
                     .font(.system(size: 10, weight: .bold))
-                    .foregroundColor(.white.opacity(0.95))
+                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.95)))
                     .padding(.leading, 1)
             }
             .frame(width: 18, height: 18)
             .overlay(
                 Circle()
-                    .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                    .stroke(Theme.Colors.ink(0.18), lineWidth: 1)
             )
             .padding(6)
         }
@@ -444,7 +465,7 @@ struct YoutubeVideosView: View {
             ProgressView()
             Text("ui.loading")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -454,11 +475,11 @@ struct YoutubeVideosView: View {
         VStack(spacing: 10) {
             Text("ui.no_video_registered")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
             
             Text("ui.tap_add_video_to_save_youtube_link")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -473,17 +494,22 @@ struct YoutubeVideosView: View {
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
     
