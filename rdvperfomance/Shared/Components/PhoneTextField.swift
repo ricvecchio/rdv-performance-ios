@@ -32,13 +32,13 @@ struct PhoneTextField: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(placeholderColor)
+                .foregroundStyle(AppThemeAdaptiveColor(placeholderColor))
 
             BrazilianPhoneTextField(digits: $digits, textColor: textColor)
                 .frame(height: 22)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }
@@ -52,7 +52,7 @@ struct PhoneTextField: View {
             let textField = UITextField()
             textField.delegate = context.coordinator
             textField.font = .systemFont(ofSize: 16)
-            textField.textColor = UIColor(textColor)
+            textField.textColor = themedTextColor(in: context.environment)
             textField.keyboardType = .phonePad
             textField.autocorrectionType = .no
             textField.autocapitalizationType = .none
@@ -66,7 +66,13 @@ struct PhoneTextField: View {
             if textField.text != formatted {
                 textField.text = formatted
             }
-            textField.textColor = UIColor(textColor)
+            textField.textColor = themedTextColor(in: context.environment)
+        }
+
+        // Mantém a cor original no Tema Escuro e adapta tons neutros no Tema Claro
+        private func themedTextColor(in environment: EnvironmentValues) -> UIColor {
+            guard environment.appTheme == .light else { return UIColor(textColor) }
+            return UIColor(Color(AppThemeAdaptiveColor(textColor).resolve(in: environment)))
         }
 
         func makeCoordinator() -> Coordinator {

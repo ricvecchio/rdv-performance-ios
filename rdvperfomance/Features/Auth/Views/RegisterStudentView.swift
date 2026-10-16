@@ -19,10 +19,7 @@ struct RegisterStudentView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -66,7 +63,7 @@ struct RegisterStudentView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -76,11 +73,12 @@ struct RegisterStudentView: View {
             ToolbarItem(placement: .principal) {
                 Text("auth.register_student.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .onChange(of: vm.successMessage) { _, newValue in
             if newValue != nil {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
@@ -144,11 +142,11 @@ struct RegisterStudentView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(Theme.Colors.glass(0.68))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
         )
     }
 
@@ -159,7 +157,7 @@ struct RegisterStudentView: View {
             if let err = vm.errorMessage {
                 Text(err)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.95))
+                    .foregroundStyle(Theme.Colors.ink(0.95))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity)
@@ -170,7 +168,7 @@ struct RegisterStudentView: View {
             if let ok = vm.successMessage {
                 Text(ok)
                     .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.white.opacity(0.95))
+                    .foregroundStyle(Theme.Colors.ink(0.95))
                     .padding(.horizontal, 14)
                     .padding(.vertical, 10)
                     .frame(maxWidth: .infinity)
@@ -184,7 +182,7 @@ struct RegisterStudentView: View {
                 HStack(spacing: 10) {
                     if vm.isLoading {
                         ProgressView()
-                            .tint(.white.opacity(0.9))
+                            .tint(Theme.Colors.ink(0.9))
                     }
 
                     Text(
@@ -204,7 +202,7 @@ struct RegisterStudentView: View {
             } label: {
                 Text("auth.registration.back_to_login")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .underline()
                     .padding(.top, 4)
             }
@@ -237,7 +235,7 @@ struct RegisterStudentView: View {
 
             Text(title)
                 .font(.system(size: 14))
-                .foregroundColor(textSecondary)
+                .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
 
             Menu {
                 ForEach(options, id: \.rawValue) { opt in
@@ -248,13 +246,13 @@ struct RegisterStudentView: View {
             } label: {
                 HStack {
                     Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .font(.system(size: 16))
 
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, 10)
@@ -263,7 +261,7 @@ struct RegisterStudentView: View {
             .buttonStyle(.plain)
 
             Rectangle()
-                .fill(lineColor)
+                .fill(AppThemeAdaptiveColor(lineColor))
                 .frame(height: 1)
         }
     }

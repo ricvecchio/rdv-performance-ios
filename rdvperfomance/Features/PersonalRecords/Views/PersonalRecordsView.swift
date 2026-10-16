@@ -41,6 +41,7 @@ struct PersonalRecordsView: View {
     @Binding var path: [AppRoute]
     let onBack: () -> Void
     @EnvironmentObject private var session: AppSession
+    @Environment(\.appTheme) private var appTheme
 
     /// Sempre fornecido pelo `StudentRootView`. Usado tanto pelo rodapé
     /// quanto pelo botão `<` desta tela: como esta view é a RAIZ da seção
@@ -51,6 +52,16 @@ struct PersonalRecordsView: View {
 
     private let contentMaxWidth: CGFloat = 380
     private let repository = FirestoreRepository.shared
+
+    // Cores locais exclusivas do Tema Claro dos cards do menu (Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let cardBorder = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)   // #C9DFC9
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+    }
     @State private var isTecnofitImportPresented = false
     @State private var hasCompletedTecnofitImport = false
     @State private var hasLoadedTecnofitImportStatus = false
@@ -86,10 +97,7 @@ struct PersonalRecordsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -208,7 +216,7 @@ struct PersonalRecordsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -218,7 +226,7 @@ struct PersonalRecordsView: View {
             ToolbarItem(placement: .principal) {
                 Text("personal_records.personal_record")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -227,6 +235,7 @@ struct PersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
     }
 
@@ -240,16 +249,16 @@ struct PersonalRecordsView: View {
             HStack(alignment: .center, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Color.green.opacity(0.14))
+                        .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
                         .frame(width: 34, height: 34)
 
                     if UIImage(named: icon) != nil {
                         Image(icon)
                             .renderingMode(.template)
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                     } else {
                         Image(systemName: icon)
-                            .foregroundColor(.green.opacity(0.85))
+                            .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                             .font(.system(size: 16, weight: .semibold))
                     }
                 }
@@ -262,13 +271,13 @@ struct PersonalRecordsView: View {
                     }
                 }
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 .lineLimit(2)
 
                 Spacer(minLength: 0)
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
             }
             .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .padding(.horizontal, 12)
@@ -276,14 +285,21 @@ struct PersonalRecordsView: View {
             .background(
                 ZStack {
                     // Mesma tonalidade dos botões da TeacherWorkoutsView
-                    Color.black.opacity(0.90)
-                    Theme.Colors.primaryGreen.opacity(0.05)
+                    // Tema Claro: verde pastel solido, sem sobreposicao
+                    AppThemeColor(dark: Color.black.opacity(0.90), light: LightColors.cardSurface)
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
+            )
+            // Tema Claro: mesma profundidade dos botoes da AdminProfileSelectionView (Tema Escuro: sem sombra)
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
             )
         }
         .buttonStyle(.plain)
@@ -296,6 +312,7 @@ struct PersonalRecordsView: View {
         } label: {
             HStack(spacing: 10) {
                 Image(systemName: "plus")
+                    .appThemeIconForeground()
                 Text("personal_records.import_from_tecnofit")
             }
             .padding(.horizontal, 14)

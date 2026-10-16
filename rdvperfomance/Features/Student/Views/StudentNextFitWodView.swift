@@ -6,14 +6,14 @@ private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.system(size: 15, weight: .semibold))
-            .foregroundColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
+            .foregroundStyle(AppThemeAdaptiveColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55)))
             .padding(.vertical, 9)
-            .background(isEnabled ? Color.red.opacity(0.20) : Color.white.opacity(0.10))
+            .background(AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.20) : Color.white.opacity(0.10)))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12),
+                        AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12)),
                         lineWidth: 1
                     )
             )
@@ -26,16 +26,34 @@ private extension View {
     }
 }
 
+// Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+private enum NextFitLightColors {
+    static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+    static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+    static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+    static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+    static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+    static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+    static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+}
+
 private struct NextFitCardStyle: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+
     func body(content: Content) -> some View {
         content
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.black.opacity(0.68))
+            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+            )
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
             )
     }
 }
@@ -46,6 +64,7 @@ struct StudentNextFitWodView: View {
     let onSelectSection: (StudentMainSection) -> Void
 
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
     @StateObject private var viewModel: StudentDashboardViewModel
     @State private var isNextFitLogoutConfirmationPresented = false
     @State private var isNextFitLogoutErrorPresented = false
@@ -68,10 +87,7 @@ struct StudentNextFitWodView: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Rectangle()
@@ -108,7 +124,7 @@ struct StudentNextFitWodView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -118,7 +134,7 @@ struct StudentNextFitWodView: View {
             ToolbarItem(placement: .principal) {
                 Text("dashboard.wod.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
             }
@@ -131,7 +147,7 @@ struct StudentNextFitWodView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .onAppear {
             Task {
                 await viewModel.loadNextFit(locale: locale)
@@ -156,7 +172,7 @@ struct StudentNextFitWodView: View {
         } label: {
             Image(systemName: "rectangle.portrait.and.arrow.right")
                 .font(.system(size: 15, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
                 .frame(width: 44, height: 44)
                 .contentShape(Rectangle())
         }
@@ -185,7 +201,7 @@ struct StudentNextFitWodView: View {
     private var nextFitContent: some View {
         if viewModel.isLoadingNextFitWod || !hasFinishedInitialNextFitLoad {
             ProgressView()
-                .tint(.white)
+                .tint(Theme.Colors.ink())
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
         } else if viewModel.needsNextFitAuthentication {
@@ -194,7 +210,7 @@ struct StudentNextFitWodView: View {
             VStack(alignment: .leading, spacing: 14) {
                 Text(error)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 Button {
                     Task { await viewModel.retryNextFitWod(locale: locale) }
@@ -316,7 +332,7 @@ struct StudentNextFitWodView: View {
         } label: {
             nextFitContentOptionLabel(option)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundColor(.white)
+                .foregroundStyle(AppThemeColor(dark: Color.white, light: NextFitLightColors.primaryText))
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
@@ -336,21 +352,23 @@ struct StudentNextFitWodView: View {
                                         endPoint: .bottom
                                     )
                                 )
-                                : AnyShapeStyle(Color.black.opacity(0.68))
+                                : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
                         )
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             isSelected
-                                ? Theme.Colors.primaryGreen.opacity(0.85)
-                                : Theme.Colors.primaryGreen.opacity(0.28),
+                                ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
+                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
                             lineWidth: 1
                         )
                 )
+                // Selecionado: brilho verde original (ambos os temas). Nao selecionado: profundidade apenas no Tema Claro
                 .shadow(
-                    color: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : .clear,
-                    radius: 8
+                    color: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : (appTheme == .light ? .black.opacity(0.25) : .clear),
+                    radius: isSelected ? 8 : (appTheme == .light ? 10 : 0),
+                    y: isSelected ? 0 : (appTheme == .light ? 6 : 0)
                 )
                 .contentShape(Rectangle())
         }
@@ -363,14 +381,14 @@ struct StudentNextFitWodView: View {
     private var nextFitSelectedDateWodContent: some View {
         if isLoadingSelectedDateWods {
             ProgressView()
-                .tint(.white)
+                .tint(Theme.Colors.ink())
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 24)
         } else if !isTodayAgendaDateSelected, let error = viewModel.nextFitAgendaWodError {
             VStack(alignment: .leading, spacing: 14) {
                 Text(error)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 Button {
                     Task {
@@ -409,7 +427,7 @@ struct StudentNextFitWodView: View {
                 : LocalizedStringKey("dashboard.no_workout_scheduled")
         )
         .font(.system(size: 14))
-        .foregroundColor(.white.opacity(0.55))
+        .foregroundStyle(Theme.Colors.ink(0.55))
         .modifier(NextFitCardStyle())
     }
 
@@ -419,24 +437,24 @@ struct StudentNextFitWodView: View {
         return HStack(spacing: 14) {
             ZStack {
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(Theme.Colors.primaryGreen.opacity(0.16))
+                    .fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.16), light: NextFitLightColors.iconSurface))
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.35), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.35), light: NextFitLightColors.border), lineWidth: 1)
                 Image(systemName: "dumbbell.fill")
                     .font(.system(size: 24, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: NextFitLightColors.iconInk))
             }
             .frame(width: 58, height: 58)
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("dashboard.wod.banner_title")
                     .font(.system(size: 21, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
 
                 if !unitName.isEmpty {
                     Text(verbatim: unitName)
                         .font(.system(size: 16))
-                        .foregroundColor(.white.opacity(0.75))
+                        .foregroundStyle(Theme.Colors.ink(0.75))
                 }
             }
             .lineLimit(1)
@@ -446,12 +464,12 @@ struct StudentNextFitWodView: View {
 
             Text(verbatim: wod.modalityName.uppercased())
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
-                .background(Color.black.opacity(0.6))
+                .background(Theme.Colors.glass(0.6))
                 .clipShape(RoundedRectangle(cornerRadius: 10))
                 .overlay(
                     RoundedRectangle(cornerRadius: 10)
@@ -466,7 +484,7 @@ struct StudentNextFitWodView: View {
                     .resizable()
                     .scaledToFill()
 
-                LinearGradient(
+                AppThemeNeutralGradient(
                     colors: [
                         Color.black.opacity(0.92),
                         Color.black.opacity(0.6),
@@ -482,7 +500,12 @@ struct StudentNextFitWodView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -490,17 +513,17 @@ struct StudentNextFitWodView: View {
         HStack(alignment: .top, spacing: 14) {
             Image(systemName: nextFitActivityIconName(for: activity.title))
                 .font(.system(size: 22, weight: .semibold))
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: NextFitLightColors.iconInk))
                 .frame(width: 30)
 
             VStack(alignment: .leading, spacing: 8) {
                 Text(activity.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: NextFitLightColors.primaryText))
 
                 Text(activity.description)
                     .font(.system(size: 15))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
                     .frame(maxWidth: .infinity, alignment: .leading)
             }
         }
@@ -508,14 +531,20 @@ struct StudentNextFitWodView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(
             ZStack {
-                Color.black.opacity(0.68)
-                Theme.Colors.primaryGreen.opacity(0.05)
+                // Tema Claro: verde pastel solido, sem sobreposicao
+                AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface)
+                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
             }
         )
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -546,7 +575,7 @@ struct StudentNextFitWodView: View {
         VStack(alignment: .leading, spacing: 14) {
             if viewModel.isLoadingNextFitAgenda || viewModel.isLoadingNextFitAgendaDetail {
                 ProgressView()
-                    .tint(.white)
+                    .tint(Theme.Colors.ink())
             } else if let detail = viewModel.selectedNextFitAgendaDetail {
                 nextFitAgendaDetailContent(detail)
             } else if let error = viewModel.nextFitAgendaDetailError {
@@ -554,7 +583,7 @@ struct StudentNextFitWodView: View {
             } else if let error = viewModel.nextFitAgendaError {
                 Text(error)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
 
                 Button {
                     Task { await viewModel.selectNextFitAgendaDate(viewModel.selectedNextFitAgendaDate, locale: locale) }
@@ -567,7 +596,7 @@ struct StudentNextFitWodView: View {
             } else if viewModel.nextFitAgenda.isEmpty {
                 Text("dashboard.no_time_available_for_this_date")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 VStack(spacing: 10) {
                     ForEach(viewModel.nextFitAgenda) { entry in
@@ -624,11 +653,11 @@ struct StudentNextFitWodView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.white.opacity(0.06))
+                        .background(AppThemeColor(dark: Color.white.opacity(0.06), light: NextFitLightColors.innerSurface))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
                         )
                     }
                 }
@@ -684,7 +713,7 @@ struct StudentNextFitWodView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .monospacedDigit()
             }
-            .foregroundColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85))
+            .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85)))
             .frame(minWidth: 58)
             .padding(.horizontal, 10)
             .padding(.vertical, 10)
@@ -692,22 +721,24 @@ struct StudentNextFitWodView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
                         isSelected
-                            ? Theme.Colors.primaryGreen.opacity(0.18)
-                            : Color.black.opacity(0.68)
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                            : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
                     )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         isSelected
-                            ? Theme.Colors.primaryGreen.opacity(0.85)
-                            : Theme.Colors.primaryGreen.opacity(0.28),
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
+                            : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
                         lineWidth: 1
                     )
             )
+            // Selecionado: brilho verde original (ambos os temas). Nao selecionado: profundidade apenas no Tema Claro
             .shadow(
-                color: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : .clear,
-                radius: 6
+                color: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : (appTheme == .light ? .black.opacity(0.25) : .clear),
+                radius: isSelected ? 6 : (appTheme == .light ? 10 : 0),
+                y: isSelected ? 0 : (appTheme == .light ? 6 : 0)
             )
             .contentShape(Rectangle())
         }
@@ -738,9 +769,14 @@ struct StudentNextFitWodView: View {
             Button {
                 viewModel.clearNextFitAgendaDetail()
             } label: {
-                Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                Label {
+                    Text(LocalizedStringKey("dashboard.back_to_schedule"))
+                } icon: {
+                    Image(systemName: "chevron.left")
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: NextFitLightColors.chevron))
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.accentForeground)
             }
             .buttonStyle(.plain)
 
@@ -757,23 +793,23 @@ struct StudentNextFitWodView: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Color.white.opacity(0.06))
+            .background(AppThemeColor(dark: Color.white.opacity(0.06), light: NextFitLightColors.innerSurface))
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: NextFitLightColors.border), lineWidth: 1))
 
             Text("dashboard.participants")
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             if detail.participants.isEmpty {
                 Text("dashboard.no_participant_at_this_time")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ForEach(detail.participants) { participant in
                     Text(participant.name)
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                 }
             }
 
@@ -797,15 +833,20 @@ struct StudentNextFitWodView: View {
             Button {
                 viewModel.clearNextFitAgendaDetail()
             } label: {
-                Label(LocalizedStringKey("dashboard.back_to_schedule"), systemImage: "chevron.left")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(Theme.Colors.primaryGreen)
+                Label {
+                    Text(LocalizedStringKey("dashboard.back_to_schedule"))
+                } icon: {
+                    Image(systemName: "chevron.left")
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: NextFitLightColors.chevron))
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.accentForeground)
             }
             .buttonStyle(.plain)
 
             Text(error)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Button {
                 Task { await viewModel.retryNextFitAgendaDetail(locale: locale) }
@@ -828,11 +869,11 @@ struct StudentNextFitWodView: View {
             Text(text)
         } icon: {
             Image(systemName: icon)
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: NextFitLightColors.iconInk))
                 .frame(width: 18)
         }
         .font(font)
-        .foregroundColor(textColor)
+        .foregroundStyle(AppThemeAdaptiveColor(textColor))
     }
 
     @ViewBuilder
@@ -904,6 +945,7 @@ struct StudentNextFitWodView: View {
                         ProgressView()
                     } else {
                         Image(systemName: "calendar.badge.plus")
+                            .appThemeIconForeground()
                     }
                     Text("dashboard.schedule")
                 }

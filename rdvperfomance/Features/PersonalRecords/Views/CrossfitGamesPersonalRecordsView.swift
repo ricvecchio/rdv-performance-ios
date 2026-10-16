@@ -4,6 +4,17 @@ import Charts
 // Tela do Aluno: Recorde Pessoal > Crossfit Games (lista fixa por ano + PR de tempo)
 struct CrossfitGamesPersonalRecordsView: View {
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     @Binding var path: [AppRoute]
 
@@ -560,10 +571,7 @@ struct CrossfitGamesPersonalRecordsView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -616,7 +624,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -626,7 +634,7 @@ struct CrossfitGamesPersonalRecordsView: View {
             ToolbarItem(placement: .principal) {
                 Text("personal_records_crossfit_games.crossfit_games")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -644,7 +652,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                             Text("common.add")
                         }
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .padding(.horizontal, 10)
                         .padding(.vertical, 8)
                         .background(Capsule().fill(Color.green.opacity(0.16)))
@@ -657,6 +665,7 @@ struct CrossfitGamesPersonalRecordsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .sheet(item: $selectedWod, onDismiss: {
             resetExistingPREditing()
         }) { wod in
@@ -673,7 +682,7 @@ struct CrossfitGamesPersonalRecordsView: View {
             tableHeader()
 
             Rectangle()
-                .fill(Color.white.opacity(0.08))
+                .fill(Theme.Colors.ink(0.08))
                 .frame(height: 1)
 
             ForEach(Array(allSections.enumerated()), id: \.element.id) { sectionIndex, section in
@@ -681,7 +690,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                 sectionHeader(title: section.localizedTitle(locale: locale))
 
                 Rectangle()
-                    .fill(Color.white.opacity(0.08))
+                    .fill(Theme.Colors.ink(0.08))
                     .frame(height: 1)
 
                 ForEach(Array(section.items.enumerated()), id: \.element.id) { itemIndex, wod in
@@ -693,22 +702,27 @@ struct CrossfitGamesPersonalRecordsView: View {
 
                     if !isLastItemInSection {
                         Rectangle()
-                            .fill(Color.white.opacity(0.08))
+                            .fill(Theme.Colors.ink(0.08))
                             .frame(height: 1)
                             .padding(.leading, 14)
                     } else if !isLastSection {
                         Rectangle()
-                            .fill(Color.white.opacity(0.08))
+                            .fill(Theme.Colors.ink(0.08))
                             .frame(height: 1)
                     }
                 }
             }
         }
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -720,13 +734,13 @@ struct CrossfitGamesPersonalRecordsView: View {
 
             Text("personal_records_crossfit_games.event")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: LightColors.primaryText))
 
             Spacer()
 
             Text("personal_records_campeonatos.pr_time")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: LightColors.primaryText))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
@@ -736,12 +750,12 @@ struct CrossfitGamesPersonalRecordsView: View {
         HStack {
             Text(title)
                 .font(.system(size: 14, weight: .bold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.75), light: LightColors.primaryText))
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 10)
-        .background(Color.white.opacity(0.04))
+        .background(Theme.Colors.ink(0.04))
     }
 
     private func tableRow(wod: GamesWOD) -> some View {
@@ -757,17 +771,17 @@ struct CrossfitGamesPersonalRecordsView: View {
 
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
-                        .fill(Color.green.opacity(0.14))
+                        .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
                         .frame(width: 34, height: 34)
 
                     Image(systemName: "globe")
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                         .font(.system(size: 16, weight: .semibold))
                 }
 
                 Text(wod.name)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(2)
 
                 Spacer()
@@ -775,15 +789,15 @@ struct CrossfitGamesPersonalRecordsView: View {
                 if let stored, !stored.isEmpty {
                     Text(stored)
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.88))
+                        .foregroundStyle(Theme.Colors.ink(0.88))
                 } else {
                     Text("-")
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white.opacity(0.45))
+                        .foregroundStyle(Theme.Colors.ink(0.45))
                 }
 
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.25))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.25), light: LightColors.chevron))
                     .font(.system(size: 13, weight: .semibold))
                     .padding(.leading, 6)
             }
@@ -796,19 +810,19 @@ struct CrossfitGamesPersonalRecordsView: View {
 
     private func editSheet(for wod: GamesWOD) -> some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             VStack(spacing: 0) {
 
                 Capsule()
-                    .fill(Color.white.opacity(0.18))
+                    .fill(Theme.Colors.ink(0.18))
                     .frame(width: 44, height: 5)
                     .padding(.top, 10)
 
                 Text(wod.name)
                     .font(.system(size: 18, weight: .bold))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 4)
 
                 ScrollView(showsIndicators: false) {
@@ -825,7 +839,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                         HStack {
                             Text("personal_records.result_field_label")
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.75))
+                                .foregroundStyle(Theme.Colors.ink(0.75))
                         }
 
                         TextField("personal_records_campeonatos.e_g_12_34", text: $inputValue)
@@ -833,14 +847,14 @@ struct CrossfitGamesPersonalRecordsView: View {
                             .textInputAutocapitalization(.never)
                             .autocorrectionDisabled(true)
                             .font(.system(size: 16, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.92))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
                             .background(Theme.Colors.cardBackground)
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
                             )
                     }
                     .padding(.horizontal, 16)
@@ -856,7 +870,7 @@ struct CrossfitGamesPersonalRecordsView: View {
                     }
                     .sheet(isPresented: $showPRDatePicker) {
                         ZStack {
-                            Theme.Colors.headerBackground.ignoresSafeArea()
+                            Theme.Colors.sheetBackground.ignoresSafeArea()
                             VStack(spacing: 16) {
                                 DatePicker(LocalizedStringKey("personal_records_campeonatos.pr_date"), selection: $selectedPRDate, in: ...Date(), displayedComponents: .date)
                                     .datePickerStyle(.graphical)
@@ -883,14 +897,14 @@ struct CrossfitGamesPersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundColor(.white.opacity(0.85))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Color.white.opacity(0.10))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -952,16 +966,16 @@ struct CrossfitGamesPersonalRecordsView: View {
 
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Image(systemName: "list.bullet.rectangle")
-                    .foregroundColor(.green.opacity(0.90))
+                    .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.90), light: LightColors.iconInk))
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("personal_records_campeonatos.wod")
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.60))
+                        .foregroundStyle(Theme.Colors.ink(0.60))
 
                     Text(wod.name)
                         .font(.system(size: 14, weight: .bold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                 }
@@ -972,18 +986,23 @@ struct CrossfitGamesPersonalRecordsView: View {
             ScrollView {
                 Text(description)
                     .font(.system(size: 14, weight: .semibold, design: .monospaced))
-                    .foregroundColor(.white.opacity(0.78))
+                    .foregroundStyle(Theme.Colors.ink(0.78))
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 2)
             }
             .frame(height: 140)
         }
         .padding(14)
-        .background(Theme.Colors.cardBackground)
+        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -1139,34 +1158,44 @@ struct CrossfitGamesPersonalRecordsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "calendar")
-                        .foregroundColor(.green.opacity(0.85))
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
                     Text(formatPRDate(selectedPRDate))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.25))
+                        .foregroundStyle(Theme.Colors.chevron(0.25))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
 
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label(LocalizedStringKey("personal_records.progress"), systemImage: "chart.line.uptrend.xyaxis")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.75))
+                Label {
+                    Text(LocalizedStringKey("personal_records.progress"))
+                } icon: {
+                    Image(systemName: "chart.line.uptrend.xyaxis")
+                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.75)))
+                }
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.ink(0.75))
                 Spacer()
                 Button(action: historyAction) {
-                    Label(LocalizedStringKey("personal_records.history"), systemImage: "clock.arrow.circlepath")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.green.opacity(0.90))
+                    Label {
+                        Text(LocalizedStringKey("personal_records.history"))
+                    } icon: {
+                        Image(systemName: "clock.arrow.circlepath")
+                            .foregroundStyle(Theme.Colors.icon(.green.opacity(0.90)))
+                    }
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(.green.opacity(0.90))
                 }
                 .buttonStyle(.plain)
             }
@@ -1178,33 +1207,33 @@ struct CrossfitGamesPersonalRecordsView: View {
         let entries = historyEntries(for: key)
         let recordID = currentPRHistoryEntry(for: key, metadata: metadata)?.id
         return ZStack {
-            Theme.Colors.headerBackground.ignoresSafeArea()
+            Theme.Colors.sheetBackground.ignoresSafeArea()
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 14) {
                     Text(title)
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .frame(maxWidth: .infinity, alignment: .center)
                     if entries.isEmpty {
                         Text("personal_records_barbell.no_progress_history_recorded_yet")
                             .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.white.opacity(0.60))
+                            .foregroundStyle(Theme.Colors.ink(0.60))
                     } else {
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
                                 HStack {
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundColor(.white.opacity(0.92))
+                                        .foregroundStyle(Theme.Colors.ink(0.92))
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
-                                            .foregroundColor(.green)
+                                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                                     }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
                                         .font(.system(size: 14))
-                                        .foregroundColor(.white.opacity(0.45))
+                                        .foregroundStyle(Theme.Colors.ink(0.45))
                                     Button {
                                         historyEntryPendingDeletion = entry
                                         showHistoryEntryDeletionAlert = true
@@ -1218,13 +1247,13 @@ struct CrossfitGamesPersonalRecordsView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 12)
                                 if entry.id != entries.first?.id {
-                                    Rectangle().fill(Color.white.opacity(0.08)).frame(height: 1).padding(.leading, 14)
+                                    Rectangle().fill(Theme.Colors.ink(0.08)).frame(height: 1).padding(.leading, 14)
                                 }
                             }
                         }
                         .background(Theme.Colors.cardBackground)
                         .cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
                     }
                 }
                 .frame(maxWidth: contentMaxWidth)
@@ -1271,28 +1300,28 @@ struct CrossfitGamesPersonalRecordsView: View {
         if !entries.isEmpty {
             Chart(entries) { entry in
                 LineMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Theme.Colors.systemAccentForeground())
                     .interpolationMethod(.linear)
                 PointMark(x: .value("Data", entry.date), y: .value("Resultado", entry.value))
-                    .foregroundStyle(.green)
+                    .foregroundStyle(Theme.Colors.systemAccentForeground())
             }
             .chartXAxis {
                 AxisMarks(values: .automatic(desiredCount: 4)) {
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
-                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Color.white.opacity(0.55))
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Theme.Colors.ink(0.12))
+                    AxisValueLabel(format: .dateTime.day(.twoDigits).month(.twoDigits).year()).foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .chartYAxis {
                 AxisMarks(position: .leading) {
-                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Color.white.opacity(0.12))
-                    AxisValueLabel().foregroundStyle(Color.white.opacity(0.55))
+                    AxisGridLine(stroke: StrokeStyle(lineWidth: 0.5)).foregroundStyle(Theme.Colors.ink(0.12))
+                    AxisValueLabel().foregroundStyle(Theme.Colors.ink(0.55))
                 }
             }
             .frame(height: 170)
             .padding(14)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
         }
     }
 
@@ -1368,24 +1397,24 @@ struct CrossfitGamesPersonalRecordsView: View {
     }
     private func addItemSheet() -> some View {
         ZStack {
-            Theme.Colors.headerBackground
+            Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 14) {
                     Capsule()
-                        .fill(Color.white.opacity(0.18))
+                        .fill(Theme.Colors.ink(0.18))
                         .frame(width: 44, height: 5)
                         .padding(.top, 10)
 
                     Text("personal_records_crossfit_games.new_crossfit_games_event")
                         .font(.system(size: 18, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .padding(.top, 4)
 
                     Text("personal_records_crossfit_games.create_an_event_and_if_you_want_enter_your_initial_result_now")
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.60))
+                        .foregroundStyle(Theme.Colors.ink(0.60))
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 16)
 
@@ -1407,14 +1436,14 @@ struct CrossfitGamesPersonalRecordsView: View {
                         Button { showAddItemSheet = false } label: {
                             Text("common.cancel")
                                 .font(.system(size: 15, weight: .bold))
-                                .foregroundColor(.white.opacity(0.85))
+                                .foregroundStyle(Theme.Colors.ink(0.85))
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 14)
-                                .background(Color.white.opacity(0.10))
+                                .background(Theme.Colors.ink(0.10))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -1439,17 +1468,17 @@ struct CrossfitGamesPersonalRecordsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(label)
                 .font(.system(size: 14, weight: .semibold))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
             TextField(placeholder, text: text)
                 .textInputAutocapitalization(.sentences)
                 .autocorrectionDisabled(true)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
         }
     }
 

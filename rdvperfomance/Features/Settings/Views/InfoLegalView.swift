@@ -12,6 +12,15 @@ struct InfoLegalSection: Hashable {
 struct InfoLegalView: View {
 
     @Binding var path: [AppRoute]
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     let kind: InfoLegalKind
 
@@ -31,10 +40,7 @@ struct InfoLegalView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -77,7 +83,7 @@ struct InfoLegalView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -87,7 +93,7 @@ struct InfoLegalView: View {
             ToolbarItem(placement: .principal) {
                 Text(LocalizedStringKey(kind.screenTitle))
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -96,6 +102,7 @@ struct InfoLegalView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 
     // Remove a última rota da pilha de navegação
@@ -113,14 +120,14 @@ struct InfoLegalView: View {
                 if let title = section.title {
                     Text(LocalizedStringKey(title))
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .padding(.top, 4)
                 }
 
                 if let intro = section.introText {
                     Text(LocalizedStringKey(intro))
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.82))
+                        .foregroundStyle(Theme.Colors.ink(0.82))
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
@@ -129,10 +136,10 @@ struct InfoLegalView: View {
                         ForEach(bullets, id: \.self) { b in
                             HStack(alignment: .top, spacing: 8) {
                                 Text("•")
-                                    .foregroundColor(.white.opacity(0.78))
+                                    .foregroundStyle(Theme.Colors.ink(0.78))
                                 Text(LocalizedStringKey(b))
                                     .font(.system(size: 14))
-                                    .foregroundColor(.white.opacity(0.78))
+                                    .foregroundStyle(Theme.Colors.ink(0.78))
                                     .fixedSize(horizontal: false, vertical: true)
                             }
                         }
@@ -146,11 +153,16 @@ struct InfoLegalView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 }

@@ -16,15 +16,15 @@ enum DashboardGreeting {
         let trimmedName = name?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
         guard !trimmedName.isEmpty, let nameRange = greeting.range(of: trimmedName) else {
-            return Text(greeting).foregroundColor(.white)
+            return Text(greeting).foregroundStyle(Theme.Colors.ink())
         }
 
         return Text(String(greeting[..<nameRange.lowerBound]))
-            .foregroundColor(.white)
+            .foregroundStyle(Theme.Colors.ink())
             + Text(trimmedName)
-                .foregroundColor(Theme.Colors.primaryGreen)
+                .foregroundStyle(Theme.Colors.accentForeground)
             + Text(String(greeting[nameRange.upperBound...]))
-                .foregroundColor(.white)
+                .foregroundStyle(Theme.Colors.ink())
     }
 
     static func text(

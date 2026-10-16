@@ -7,10 +7,7 @@ struct ForceUpdateView: View {
 
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 24) {
                 Image("rdv_logo")
@@ -22,17 +19,17 @@ struct ForceUpdateView: View {
                 VStack(spacing: 12) {
                     Text("update.required.title")
                         .font(.system(size: 24, weight: .bold))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
 
                     if let message = config.message {
                         Text(message)
                             .font(.system(size: 16))
-                            .foregroundColor(.white.opacity(0.82))
+                            .foregroundStyle(Theme.Colors.ink(0.82))
                             .multilineTextAlignment(.center)
                     } else {
                         Text("update.required.message")
                             .font(.system(size: 16))
-                            .foregroundColor(.white.opacity(0.82))
+                            .foregroundStyle(Theme.Colors.ink(0.82))
                             .multilineTextAlignment(.center)
                     }
                 }

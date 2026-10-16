@@ -10,6 +10,18 @@ struct TeacherStudentDetailView: View {
 
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     @StateObject private var studentsViewModel: TeacherStudentsListViewModel
 
@@ -36,10 +48,7 @@ struct TeacherStudentDetailView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -94,7 +103,7 @@ struct TeacherStudentDetailView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -104,7 +113,7 @@ struct TeacherStudentDetailView: View {
             ToolbarItem(placement: .principal) {
                 Text("common.student")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -113,6 +122,7 @@ struct TeacherStudentDetailView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
         .task {
             await loadProgress()
         }
@@ -139,11 +149,11 @@ struct TeacherStudentDetailView: View {
 
             Text("common.student")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Text(student.name)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white.opacity(0.95))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.95), light: LightColors.primaryText))
 
             Divider()
                 .background(Theme.Colors.divider)
@@ -152,12 +162,12 @@ struct TeacherStudentDetailView: View {
                 HStack {
                     Text("ui.student_progress")
                         .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
 
                     Spacer()
 
                     if isLoadingProgress {
-                        ProgressView().tint(.white)
+                        ProgressView().tint(Theme.Colors.ink())
                     }
                 }
 
@@ -172,7 +182,7 @@ struct TeacherStudentDetailView: View {
                     )
                 )
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 ProgressView(value: progress)
                     .tint(.green.opacity(0.85))
@@ -183,19 +193,24 @@ struct TeacherStudentDetailView: View {
 
             Text("ui.workout_category")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Text(category.localizedDisplayName(locale: locale))
                 .font(.system(size: 18, weight: .semibold))
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundStyle(Theme.Colors.systemAccentForeground(0.85))
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -204,7 +219,7 @@ struct TeacherStudentDetailView: View {
 
             Text("ui.actions")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
 
             actionButton(title: AppLocalization.string("ui.workouts", locale: locale), icon: "calendar") {
                 openWorkouts()
@@ -240,11 +255,16 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -254,26 +274,26 @@ struct TeacherStudentDetailView: View {
         Button(action: action) {
             HStack(spacing: 12) {
                 Image(systemName: icon)
-                    .foregroundColor(.green.opacity(0.85))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
                     .frame(width: 22, alignment: .center)
                 Text(title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 Spacer()
                 Image(systemName: "chevron.right")
-                    .foregroundColor(.white.opacity(0.35))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
             }
             .padding(14)
             .background(
                 ZStack {
-                    Color.black.opacity(0.68)
-                    Theme.Colors.primaryGreen.opacity(0.05)
+                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface)
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
             )
         }
         .buttonStyle(.plain)

@@ -21,10 +21,7 @@ struct LoginView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -38,7 +35,7 @@ struct LoginView: View {
 
                 Text("auth.login.prompt")
                     .font(.system(size: 17, weight: .medium))
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .padding(.top, 10)
                     .padding(.bottom, 18)
 
@@ -70,7 +67,7 @@ struct LoginView: View {
                 if let errorMessage = vm.errorMessage {
                     Text(errorMessage)
                         .font(.system(size: 13, weight: .medium))
-                        .foregroundColor(.white.opacity(0.95))
+                        .foregroundStyle(Theme.Colors.ink(0.95))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 10)
                         .frame(width: 260)
@@ -82,7 +79,7 @@ struct LoginView: View {
                 Button { } label: {
                     Text("auth.login.forgot_password")
                         .font(.system(size: 14))
-                        .foregroundColor(textSecondary)
+                        .foregroundStyle(AppThemeAdaptiveColor(textSecondary))
                         .padding(.top, 14)
                 }
                 .buttonStyle(.plain)
@@ -95,7 +92,7 @@ struct LoginView: View {
 
                         if vm.isLoading {
                             ProgressView()
-                                .tint(.white.opacity(0.92))
+                                .tint(Theme.Colors.ink(0.92))
                         }
 
                         Text(
@@ -119,7 +116,7 @@ struct LoginView: View {
                 } label: {
                     Text("auth.login.sign_up")
                         .font(.system(size: 15, weight: .medium))
-                        .foregroundColor(.white)
+                        .foregroundStyle(Theme.Colors.ink())
                         .underline()
                         .padding(.top, 18)
                 }

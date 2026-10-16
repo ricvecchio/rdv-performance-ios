@@ -4,6 +4,17 @@ import UIKit
 
 struct TeacherWorkoutTemplateDetailSheet: View {
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Cores locais exclusivas do Tema Claro (padrao da TrainingWeeksView; Tema Escuro usa sempre os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)   // #DDEDDC
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)   // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)       // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)       // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)        // #C9DFC9
+    }
 
     let template: WorkoutTemplateFS
     @Environment(\.dismiss) private var dismiss
@@ -35,10 +46,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         NavigationStack {
             ZStack {
 
-                Image("rdv_fundo")
-                    .resizable()
-                    .scaledToFill()
-                    .ignoresSafeArea()
+                AppThemeBackgroundImage()
 
                 VStack(spacing: 0) {
 
@@ -104,7 +112,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                                 Task { await saveBlocks() }
                             } label: {
                                 if isSaving {
-                                    ProgressView().tint(.white)
+                                    ProgressView().tint(Theme.Colors.ink())
                                 } else {
                                     Text("common.save")
                                 }
@@ -124,7 +132,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
             }
             .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
             .toolbarBackground(.visible, for: .navigationBar)
-            .toolbarColorScheme(.dark, for: .navigationBar)
+            .appThemeNavigationBarColorScheme()
             .background(NavigationBarNoHairline())
             .onAppear {
                 resetDraftFromTemplate()
@@ -133,7 +141,7 @@ struct TeacherWorkoutTemplateDetailSheet: View {
             // ✅ Ajuste solicitado anteriormente: contorno do modal mais aparente (principalmente no cabeçalho)
             .overlay(
                 RoundedRectangle(cornerRadius: 16, style: .continuous)
-                    .stroke(Color.white.opacity(0.20), lineWidth: 1.25)
+                    .stroke(Theme.Colors.ink(0.20), lineWidth: 1.25)
                     .allowsHitTesting(false)
             )
         }
@@ -143,13 +151,13 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(presentation.title)
                 .font(.system(size: 20, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
 
             let desc = presentation.description.trimmingCharacters(in: .whitespacesAndNewlines)
             if !desc.isEmpty {
                 Text(desc)
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.70))
+                    .foregroundStyle(Theme.Colors.ink(0.70))
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -164,21 +172,27 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(b.name.isEmpty ? AppLocalization.string("ui.block", locale: locale) : b.displayedName(locale: locale))
                                 .font(.system(size: 17, weight: .semibold))
-                                .foregroundColor(.white.opacity(0.85))
+                                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: LightColors.primaryText))
 
                             Text(b.details)
                                 .font(.system(size: 14))
-                                .foregroundColor(.white.opacity(0.70))
+                                .foregroundStyle(Theme.Colors.ink(0.70))
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Color.black.opacity(0.68))
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                        )
+                        // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
                         )
                     }
                 }
@@ -186,11 +200,11 @@ struct TeacherWorkoutTemplateDetailSheet: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("ui.no_blocks_registered")
                         .font(.system(size: 17, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.92))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
 
                     Text("ui.this_wod_does_not_yet_have_warm_up_technique_wod_blocks")
                         .font(.system(size: 14))
-                        .foregroundColor(.white.opacity(0.55))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
                 }
                 .padding(.vertical, 16)
             }
@@ -213,11 +227,17 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -225,18 +245,18 @@ struct TeacherWorkoutTemplateDetailSheet: View {
         VStack(alignment: .leading, spacing: 8) {
             Text(title)
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.85))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: LightColors.primaryText))
 
             TextEditor(text: text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(Theme.Colors.ink(0.92))
                 .frame(minHeight: 110)
                 .scrollContentBackground(.hidden)
-                .background(Color.white.opacity(0.06))
+                .background(Theme.Colors.ink(0.06))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.10), lineWidth: 1)
+                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
                 )
         }
         .frame(maxWidth: .infinity, alignment: .leading)

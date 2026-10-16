@@ -5,6 +5,15 @@ import SwiftUI
 struct AboutView: View {
 
     @Binding var path: [AppRoute]
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
 
     init(
         path: Binding<[AppRoute]>,
@@ -22,10 +31,7 @@ struct AboutView: View {
     var body: some View {
         ZStack {
 
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -70,7 +76,7 @@ struct AboutView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -80,7 +86,7 @@ struct AboutView: View {
             ToolbarItem(placement: .principal) {
                 Text("about.title")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -89,6 +95,7 @@ struct AboutView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
+        .appThemeLightHeaderColorScheme()
     }
 
     // Remove a última rota da pilha para voltar
@@ -102,7 +109,7 @@ struct AboutView: View {
         VStack(spacing: 14) {
             Text("about.headline")
                 .font(.system(size: 17, weight: .bold))
-                .foregroundColor(.white)
+                .foregroundStyle(AppThemeColor(dark: Color.white, light: LightColors.primaryText))
                 .multilineTextAlignment(.center)
 
             VStack(alignment: .leading, spacing: 12) {
@@ -113,15 +120,20 @@ struct AboutView: View {
 
             Text("about.description")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                 .multilineTextAlignment(.center)
         }
         .padding()
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -129,9 +141,9 @@ struct AboutView: View {
     private func featureItem(_ text: LocalizedStringKey) -> some View {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: "checkmark.circle.fill")
-                .foregroundColor(.green)
+                .foregroundStyle(AppThemeColor(dark: Color.green, light: LightColors.iconInk))
             Text(text)
-                .foregroundColor(.white)
+                .foregroundStyle(AppThemeColor(dark: Color.white, light: LightColors.primaryText))
         }
     }
 }

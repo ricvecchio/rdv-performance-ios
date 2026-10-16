@@ -6,20 +6,20 @@ private struct PrimaryGreenActionButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.system(size: 16, weight: .semibold))
-            .foregroundColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
+            .foregroundStyle(isEnabled ? Theme.Colors.ink(0.92) : Theme.Colors.ink(0.55))
             .padding(.vertical, 14)
             .background(
                 isEnabled
-                    ? Theme.Colors.primaryGreen.opacity(0.18)
-                    : Color.white.opacity(0.10)
+                    ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                    : AnyShapeStyle(Theme.Colors.ink(0.10))
             )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         isEnabled
-                            ? Theme.Colors.primaryGreen.opacity(0.30)
-                            : Color.white.opacity(0.12),
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.30))
+                            : AnyShapeStyle(Theme.Colors.ink(0.12)),
                         lineWidth: 1
                     )
             )
@@ -32,20 +32,20 @@ private struct CompactPrimaryGreenActionButtonModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .font(.system(size: 15, weight: .semibold))
-            .foregroundColor(isEnabled ? .white.opacity(0.92) : .white.opacity(0.55))
+            .foregroundStyle(isEnabled ? Theme.Colors.ink(0.92) : Theme.Colors.ink(0.55))
             .padding(.vertical, 9)
             .background(
                 isEnabled
-                    ? Theme.Colors.primaryGreen.opacity(0.18)
-                    : Color.white.opacity(0.10)
+                    ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                    : AnyShapeStyle(Theme.Colors.ink(0.10))
             )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         isEnabled
-                            ? Theme.Colors.primaryGreen.opacity(0.30)
-                            : Color.white.opacity(0.12),
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.30))
+                            : AnyShapeStyle(Theme.Colors.ink(0.12)),
                         lineWidth: 1
                     )
             )

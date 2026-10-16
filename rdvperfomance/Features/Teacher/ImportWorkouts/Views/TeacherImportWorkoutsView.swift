@@ -8,6 +8,18 @@ struct TeacherImportWorkoutsView: View {
     @Binding var path: [AppRoute]
     let category: TreinoTipo
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+        static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)  // #85C995
+        static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
     
     private let contentMaxWidth: CGFloat = 380
     
@@ -80,10 +92,7 @@ struct TeacherImportWorkoutsView: View {
     
     var body: some View {
         ZStack {
-            Image("rdv_fundo")
-                .resizable()
-                .scaledToFill()
-                .ignoresSafeArea()
+            AppThemeBackgroundImage()
             
             VStack(spacing: 0) {
                 Rectangle()
@@ -156,7 +165,7 @@ struct TeacherImportWorkoutsView: View {
                             .frame(width: 44, height: 44)
 
                         Image(systemName: "chevron.left")
-                            .foregroundColor(.green)
+                            .foregroundStyle(Theme.Colors.systemAccentForeground())
                     }
                     .contentShape(Rectangle())
                 }
@@ -166,7 +175,7 @@ struct TeacherImportWorkoutsView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.import_workouts")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundColor(.white)
+                    .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
             }
             
@@ -176,7 +185,7 @@ struct TeacherImportWorkoutsView: View {
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarColorScheme(.dark, for: .navigationBar)
+        .appThemeNavigationBarColorScheme()
         .task { await loadWorkouts() }
         .sheet(isPresented: $isAddSheetPresented) {
             TeacherAddWorkoutSheet { title in
@@ -243,7 +252,7 @@ struct TeacherImportWorkoutsView: View {
         VStack(alignment: .leading, spacing: 8) {
             Text("ui.import_workouts_through_a_spreadsheet_to_add_them_automatically")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(Theme.Colors.ink(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
@@ -257,10 +266,16 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "plus")
+                        .appThemeIconForeground()
                     Text("ui.import_excel")
                 }
                 .padding(.horizontal, 14)
                 .compactPrimaryGreenActionButton()
+                .shadow(
+                    color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                    radius: appTheme == .light ? 10 : 0,
+                    y: appTheme == .light ? 6 : 0
+                )
             }
             .buttonStyle(.plain)
             .disabled(isImporting || isSendingToWorkouts)
@@ -274,10 +289,16 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "arrow.down.doc")
+                        .appThemeIconForeground()
                     Text("ui.download_excel_spreadsheet")
                 }
                 .padding(.horizontal, 14)
                 .compactPrimaryGreenActionButton()
+                .shadow(
+                    color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                    radius: appTheme == .light ? 10 : 0,
+                    y: appTheme == .light ? 6 : 0
+                )
             }
             .buttonStyle(.plain)
             .disabled(isSendingToWorkouts)
@@ -296,11 +317,16 @@ struct TeacherImportWorkoutsView: View {
         }
         .padding(.vertical, 8)
         .frame(maxWidth: .infinity)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
     
@@ -325,19 +351,19 @@ struct TeacherImportWorkoutsView: View {
     private func importedWorkoutRow(workout w: TeacherImportedWorkout) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "dumbbell.fill")
-                .foregroundColor(.green.opacity(0.85))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
                 .font(.system(size: 16))
                 .frame(width: 26)
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(w.title.isEmpty ? AppLocalization.string("ui.workout", locale: locale) : w.title)
                     .font(.system(size: 17, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(1)
                 
                 Text("ui.imported_via_excel")
                     .font(.system(size: 14))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
                     .lineLimit(1)
             }
             
@@ -358,7 +384,7 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 Image(systemName: "ellipsis")
                     .font(.system(size: 18, weight: .semibold))
-                    .foregroundColor(.white.opacity(0.55))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.iconInk))
                     .padding(.vertical, 6)
                     .padding(.horizontal, 8)
                     .contentShape(Rectangle())
@@ -366,7 +392,7 @@ struct TeacherImportWorkoutsView: View {
             .buttonStyle(.plain)
             
             Image(systemName: "chevron.right")
-                .foregroundColor(.white.opacity(0.35))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
@@ -377,7 +403,7 @@ struct TeacherImportWorkoutsView: View {
             ProgressView()
             Text("ui.loading")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 18)
@@ -387,11 +413,11 @@ struct TeacherImportWorkoutsView: View {
         VStack(spacing: 10) {
             Text("ui.no_workout_registered")
                 .font(.system(size: 17, weight: .semibold))
-                .foregroundColor(.white.opacity(0.92))
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
             
             Text("ui.tap_import_excel_to_add_workouts")
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.55))
+                .foregroundStyle(Theme.Colors.ink(0.55))
                 .multilineTextAlignment(.center)
         }
         .frame(maxWidth: .infinity)
@@ -406,17 +432,22 @@ struct TeacherImportWorkoutsView: View {
             
             Text(text)
                 .font(.system(size: 14))
-                .foregroundColor(.white.opacity(0.75))
+                .foregroundStyle(Theme.Colors.ink(0.75))
             
             Spacer()
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(Color.black.opacity(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
     
