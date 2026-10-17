@@ -170,7 +170,7 @@ struct StudentDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.yellow.opacity(0.85))
+                    .foregroundColor(appTheme == .light ? Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) : .yellow.opacity(0.85)) // Claro: #B77900
                 Text("dashboard.notices")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
@@ -536,13 +536,13 @@ struct StudentDashboardView: View {
                 Spacer(minLength: 0)
 
                 ProgressView(value: progress)
-                    .tint(Theme.Colors.primaryGreen)
+                    .tint(appTheme == .light ? AppThemePalette.lightBar : Theme.Colors.primaryGreen)
 
                 HStack(spacing: 10) {
                     ForEach(viewModel.currentWeekCheckInSummaries) { item in
                         VStack(spacing: 6) {
                             Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
-                                .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? (appTheme == .light ? AppThemePalette.lightBar : Theme.Colors.primaryGreen) : .white.opacity(0.35)))
                             Text(weekdayAbbreviation(for: item.date))
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(Theme.Colors.ink(0.75))
