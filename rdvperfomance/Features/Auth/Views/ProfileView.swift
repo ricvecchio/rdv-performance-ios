@@ -1244,20 +1244,20 @@ struct ProfileView: View {
             session.logout()
         } label: {
             if appTheme == .light {
-                // Tema Claro: mesmas dimensões/raio do `primaryGreenActionButton()`, com verde militar (#29452C) translúcido no fundo e texto verde militar sólido
+                // Tema Claro: mesmas dimensões/raio do `primaryGreenActionButton()`, com verde militar (#29452C) translúcido mais escuro no fundo e texto branco para melhor contraste
                 HStack {
                     Spacer()
                     Text("auth.logout")
                     Spacer()
                 }
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(AppThemePalette.lightBar)
+                .foregroundStyle(Color.white)
                 .padding(.vertical, 14)
-                .background(AppThemePalette.lightBar.opacity(0.60))
+                .background(AppThemePalette.lightBar.opacity(0.80))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.80), lineWidth: 1)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
                 )
             } else {
                 HStack {
