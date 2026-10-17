@@ -323,6 +323,8 @@ struct StudentNextFitWodView: View {
             }
         }()
 
+        let isLightSelected = appTheme == .light && isSelected
+
         return Button {
             let selection = option.selection
             viewModel.selectedNextFitContent = selection
@@ -332,7 +334,12 @@ struct StudentNextFitWodView: View {
         } label: {
             nextFitContentOptionLabel(option)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(AppThemeColor(dark: Color.white, light: NextFitLightColors.primaryText))
+                // Tema Claro: aba selecionada com o padrão do botão Sair (verde militar 80%/90% e texto branco)
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: Color.white, light: NextFitLightColors.primaryText))
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
@@ -341,7 +348,9 @@ struct StudentNextFitWodView: View {
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(
-                            isSelected
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                : isSelected
                                 ? AnyShapeStyle(
                                     LinearGradient(
                                         colors: [
@@ -358,7 +367,9 @@ struct StudentNextFitWodView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            isSelected
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                                : isSelected
                                 ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
                                 : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
                             lineWidth: 1
@@ -484,12 +495,19 @@ struct StudentNextFitWodView: View {
                     .resizable()
                     .scaledToFill()
 
+                // Tema Claro: camada mais leve para deixar a foto mais viva (mais intensa à esquerda, nos textos)
                 AppThemeNeutralGradient(
-                    colors: [
-                        Color.black.opacity(0.92),
-                        Color.black.opacity(0.6),
-                        Color.black.opacity(0.35)
-                    ],
+                    colors: appTheme == .light
+                        ? [
+                            Color.black.opacity(0.70),
+                            Color.black.opacity(0.35),
+                            Color.black.opacity(0.12)
+                        ]
+                        : [
+                            Color.black.opacity(0.92),
+                            Color.black.opacity(0.6),
+                            Color.black.opacity(0.35)
+                        ],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
