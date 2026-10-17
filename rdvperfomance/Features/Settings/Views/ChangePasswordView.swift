@@ -136,20 +136,42 @@ struct ChangePasswordView: View {
         Button {
             Task { await submit() }
         } label: {
-            HStack {
-                Spacer()
-                HStack(spacing: 10) {
-                    Image(systemName: "key.fill")
-                        .appThemeIconForeground()
-                    Text(
-                        isLoading
-                            ? LocalizedStringKey("common.saving")
-                            : LocalizedStringKey("settings.password.save")
-                    )
+            if appTheme == .light && !isLoading {
+                // Tema Claro (habilitado): mesmo padrão de cores do botão Sair da ProfileView, com as dimensões do `primaryGreenActionButton()`
+                HStack {
+                    Spacer()
+                    HStack(spacing: 10) {
+                        Image(systemName: "key.fill")
+                            .foregroundStyle(Color.white)
+                        Text("settings.password.save")
+                    }
+                    Spacer()
                 }
-                Spacer()
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+            } else {
+                HStack {
+                    Spacer()
+                    HStack(spacing: 10) {
+                        Image(systemName: "key.fill")
+                            .appThemeIconForeground()
+                        Text(
+                            isLoading
+                                ? LocalizedStringKey("common.saving")
+                                : LocalizedStringKey("settings.password.save")
+                        )
+                    }
+                    Spacer()
+                }
+                .primaryGreenActionButton()
             }
-            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
         .disabled(isLoading)
