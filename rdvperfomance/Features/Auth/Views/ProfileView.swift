@@ -1253,11 +1253,11 @@ struct ProfileView: View {
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(AppThemePalette.lightBar)
                 .padding(.vertical, 14)
-                .background(AppThemePalette.lightBar.opacity(0.20))
+                .background(AppThemePalette.lightBar.opacity(0.40))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.40), lineWidth: 1)
+                        .stroke(AppThemePalette.lightBar.opacity(0.60), lineWidth: 1)
                 )
             } else {
                 HStack {
