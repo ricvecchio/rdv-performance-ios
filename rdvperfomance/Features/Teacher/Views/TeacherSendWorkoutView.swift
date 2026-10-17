@@ -11,25 +11,37 @@ private struct WorkoutSectionOption: Identifiable, Hashable {
 private struct WorkoutPickerLabel: View {
     let title: DisplayText
     let isSelected: Bool
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
-        let borderColor: Color = isSelected
-            ? Theme.Colors.primaryGreen.opacity(0.35)
-            : Theme.Colors.primaryGreen.opacity(0.28)
+        let borderColor: Color = appTheme == .light
+            ? AppThemePalette.lightBar.opacity(0.90)
+            : isSelected
+                ? Theme.Colors.primaryGreen.opacity(0.35)
+                : Theme.Colors.primaryGreen.opacity(0.28)
 
+        // Tema Claro: verde militar translúcido (padrão do botão Sair) com texto e ícone brancos
         HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Theme.Colors.ink(0.92))
+            .foregroundStyle(appTheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                .foregroundStyle(
+                    appTheme == .light
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                )
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
-        .background(Theme.Colors.glass(0.68))
+        .background(
+            appTheme == .light
+                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                : AnyShapeStyle(Theme.Colors.glass(0.68))
+        )
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -392,12 +404,21 @@ struct TeacherSendWorkoutView: View {
     ) -> some View {
         VStack(spacing: 4) {
             ZStack {
+                // Tema Claro: etapa ativa/concluída em verde militar translúcido com número branco; pendente mantém o estilo discreto original
                 Circle()
-                    .fill(AppThemeAdaptiveColor((isActive || isComplete) ? Color.green.opacity(0.18) : Color.white.opacity(0.10)))
+                    .fill(
+                        appTheme == .light && (isActive || isComplete)
+                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                            : AnyShapeStyle(AppThemeAdaptiveColor((isActive || isComplete) ? Color.green.opacity(0.18) : Color.white.opacity(0.10)))
+                    )
                     .frame(width: 26, height: 26)
                 Text("\(number)")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(AppThemeAdaptiveColor((isActive || isComplete) ? .green : .white.opacity(0.55)))
+                    .foregroundStyle(
+                        appTheme == .light && (isActive || isComplete)
+                            ? AnyShapeStyle(Color.white)
+                            : AnyShapeStyle(AppThemeAdaptiveColor((isActive || isComplete) ? .green : .white.opacity(0.55)))
+                    )
             }
             title.view()
                 .font(.system(size: 11, weight: .medium))
@@ -555,25 +576,34 @@ struct TeacherSendWorkoutView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
+            // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair); não selecionado em verde pastel
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(
+                    appTheme == .light
+                        ? AnyShapeStyle(isSelected ? Color.white : LightColors.primaryText)
+                        : AnyShapeStyle(Theme.Colors.ink(0.92))
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
                 .background(
-                    isSelected
-                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
-                        : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    appTheme == .light
+                        ? AnyShapeStyle(isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.cardSurface)
+                        : isSelected
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            isSelected
-                                ? Theme.Colors.primaryGreen.opacity(0.30)
-                                : Theme.Colors.primaryGreen.opacity(0.28),
+                            appTheme == .light
+                                ? (isSelected ? AppThemePalette.lightBar.opacity(0.90) : LightColors.border)
+                                : isSelected
+                                    ? Theme.Colors.primaryGreen.opacity(0.30)
+                                    : Theme.Colors.primaryGreen.opacity(0.28),
                             lineWidth: 1
                         )
                 )
@@ -841,21 +871,32 @@ struct TeacherSendWorkoutView: View {
         HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Theme.Colors.ink(0.92))
+            .foregroundStyle(appTheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AppThemeColor(dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25), light: LightColors.iconInk))
+                .foregroundStyle(
+                    appTheme == .light
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25), light: LightColors.iconInk))
+                )
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68)))
+        // Tema Claro: verde militar translúcido (padrão do botão Sair), com ou sem treino escolhido
+        .background(
+            appTheme == .light
+                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                : AnyShapeStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68)))
+        )
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28),
+                    appTheme == .light
+                        ? AppThemePalette.lightBar.opacity(0.90)
+                        : isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28),
                     lineWidth: 1
                 )
         )
@@ -1061,19 +1102,28 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 6) {
             ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { (period: DaySelectionPeriod) in
                 let isSelected: Bool = daySelectionPeriod == period
-                let backgroundColor: AnyShapeStyle = isSelected
-                    ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
-                    : AnyShapeStyle(Theme.Colors.glass(0.68))
-                let borderColor: Color = isSelected
-                    ? Theme.Colors.primaryGreen.opacity(0.30)
-                    : Theme.Colors.primaryGreen.opacity(0.28)
+                // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair); não selecionado em verde pastel
+                let isLight: Bool = appTheme == .light
+                let backgroundColor: AnyShapeStyle = isLight
+                    ? AnyShapeStyle(isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.cardSurface)
+                    : isSelected
+                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                        : AnyShapeStyle(Theme.Colors.glass(0.68))
+                let borderColor: Color = isLight
+                    ? (isSelected ? AppThemePalette.lightBar.opacity(0.90) : LightColors.border)
+                    : isSelected
+                        ? Theme.Colors.primaryGreen.opacity(0.30)
+                        : Theme.Colors.primaryGreen.opacity(0.28)
+                let textStyle: AnyShapeStyle = isLight
+                    ? AnyShapeStyle(isSelected ? Color.white : LightColors.primaryText)
+                    : AnyShapeStyle(Theme.Colors.ink(0.92))
 
                 Button {
                     daySelectionPeriod = period
                 } label: {
                     Text(period.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(textStyle)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                         .padding(.horizontal, 6)
