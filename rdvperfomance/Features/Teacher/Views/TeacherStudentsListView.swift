@@ -22,6 +22,8 @@ struct TeacherStudentsListView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        // Ícone e texto do status Pendente (laranja mostarda)
+        static let pendingStatus = Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) // #B77900
     }
     @StateObject private var vm: TeacherStudentsListViewModel
 
@@ -569,7 +571,7 @@ struct TeacherStudentsListView: View {
                 HStack(spacing: 12) {
 
                     Image(systemName: "clock.fill")
-                        .foregroundColor(.yellow.opacity(0.75))
+                        .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.75))
                         .font(.system(size: 15))
                         .frame(width: 26)
 
@@ -582,7 +584,7 @@ struct TeacherStudentsListView: View {
                         HStack(spacing: 6) {
                             Text("ui.pending")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.yellow.opacity(0.85))
+                                .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.85))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(Capsule().fill(Color.yellow.opacity(0.12)))
