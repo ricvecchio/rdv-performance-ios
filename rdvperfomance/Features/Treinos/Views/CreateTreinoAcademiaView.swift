@@ -1,6 +1,30 @@
 import SwiftUI
 import FirebaseAuth
 
+// Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `primaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado: mantém exatamente o `primaryGreenActionButton()` original.
+private struct LightMilitaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
 /// Tela para criar um Treino (Academia) — layout idêntico ao "Adicionar WOD"
 struct CreateTreinoAcademiaView: View {
     @Environment(\.locale) private var locale
@@ -318,7 +342,7 @@ struct CreateTreinoAcademiaView: View {
                 }
                 Spacer()
             }
-            .primaryGreenActionButton()
+            .modifier(LightMilitaryActionButtonModifier())
             .shadow(
                 color: appTheme == .light ? .black.opacity(0.25) : .clear,
                 radius: appTheme == .light ? 10 : 0,

@@ -38,6 +38,30 @@ private struct WorkoutPickerLabel: View {
     }
 }
 
+// Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `primaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado: mantém exatamente o `primaryGreenActionButton()` original.
+private struct LightMilitaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
 struct TeacherSendWorkoutView: View {
     @Environment(\.locale) private var locale
     @Environment(\.appTheme) private var appTheme
@@ -944,7 +968,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1161,7 +1185,7 @@ struct TeacherSendWorkoutView: View {
             Text("ui.next")
             Spacer()
         }
-        .primaryGreenActionButton()
+        .modifier(LightMilitaryActionButtonModifier())
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
             radius: appTheme == .light ? 10 : 0,
@@ -1179,7 +1203,7 @@ struct TeacherSendWorkoutView: View {
             }
             Spacer()
         }
-        .primaryGreenActionButton()
+        .modifier(LightMilitaryActionButtonModifier())
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
             radius: appTheme == .light ? 10 : 0,

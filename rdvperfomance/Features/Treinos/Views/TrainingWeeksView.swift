@@ -3,6 +3,30 @@ import SwiftUI
 import Combine
 import UIKit
 
+// Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `primaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado: mantém exatamente o `primaryGreenActionButton()` original.
+private struct LightMilitaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
 struct TrainingWeeksView: View {
 
     // Bindings, parâmetros e ViewModel
@@ -273,7 +297,7 @@ struct TrainingWeeksView: View {
                 Text("workout.publish_workout")
                 Spacer()
             }
-            .primaryGreenActionButton()
+            .modifier(LightMilitaryActionButtonModifier())
         }
         .buttonStyle(.plain)
     }
@@ -1170,7 +1194,7 @@ struct TrainingWeeksView: View {
             } label: {
                 Text("dashboard.try_again_action")
                     .padding(.horizontal, 14)
-                    .primaryGreenActionButton()
+                    .modifier(LightMilitaryActionButtonModifier())
             }
             .buttonStyle(.plain)
         }
