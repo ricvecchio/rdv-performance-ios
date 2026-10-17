@@ -11,6 +11,7 @@ struct ProfileView: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -1226,12 +1227,30 @@ struct ProfileView: View {
         Button {
             session.logout()
         } label: {
-            HStack {
-                Spacer()
-                Text("auth.logout")
-                Spacer()
+            if appTheme == .light {
+                // Tema Claro: mesmas dimensões/raio do `primaryGreenActionButton()`, com fundo verde militar sólido (#29452C) e texto branco
+                HStack {
+                    Spacer()
+                    Text("auth.logout")
+                    Spacer()
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar, lineWidth: 1)
+                )
+            } else {
+                HStack {
+                    Spacer()
+                    Text("auth.logout")
+                    Spacer()
+                }
+                .primaryGreenActionButton()
             }
-            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
     }
