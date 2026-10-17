@@ -346,7 +346,7 @@ struct TeacherDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(DashboardPrimaryActionButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(editableQuickAccessItems.count != 3 || isSavingQuickAccessItems)
@@ -372,27 +372,30 @@ struct TeacherDashboardView: View {
             HStack(spacing: 12) {
                 Image(systemName: item.systemImage)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                    .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                     .frame(width: 22)
 
                 Text(item.title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 Spacer()
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
-                    .foregroundStyle(Theme.Colors.icon(isSelected ? .green : .white.opacity(0.35)))
+                    .foregroundStyle(AppThemeColor(dark: isSelected ? .green : .white.opacity(0.35), light: LightColors.chevron))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Theme.Colors.ink(0.06))
+            .background(AppThemeColor(dark: Color.white.opacity(0.06), light: LightColors.innerSurface))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08)),
+                        AppThemeColor(
+                            dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08),
+                            light: isSelected ? LightColors.chevron : LightColors.border
+                        ),
                         lineWidth: 1
                     )
             )
@@ -709,3 +712,32 @@ struct TeacherDashboardView: View {
         .buttonStyle(.plain)
     }
 }
+
+// Botão principal da dashboard (uso exclusivo deste arquivo).
+// Escuro: aplica exatamente o estilo original (`primaryGreenActionButton`).
+// Claro: mesmo formato e dimensões, com fundo verde militar sólido (#29452C), conteúdo claro e sombra.
+private struct DashboardPrimaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(isEnabled ? 0.92 : 0.55))
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
+                // Conteúdo sobre o verde militar usa os valores claros (ProgressView)
+                .environment(\.colorScheme, .dark)
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+

@@ -266,7 +266,7 @@ struct StudentDashboardView: View {
                     Text("dashboard.invite_coach")
                 }
                 .padding(.horizontal, 14)
-                .compactPrimaryGreenActionButton()
+                .modifier(DashboardPrimaryActionButtonModifier(isCompact: true))
             }
             .buttonStyle(.plain)
         }
@@ -332,11 +332,11 @@ struct StudentDashboardView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -381,7 +381,7 @@ struct StudentDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(DashboardPrimaryActionButtonModifier(isCompact: false))
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isProcessingLinkAction)
@@ -612,7 +612,7 @@ struct StudentDashboardView: View {
                             Text("dashboard.connect_nextfit")
                         }
                         .padding(.horizontal, 14)
-                        .compactPrimaryGreenActionButton()
+                        .modifier(DashboardPrimaryActionButtonModifier(isCompact: true))
                     }
                     .buttonStyle(.plain)
                 }
@@ -786,11 +786,11 @@ struct StudentDashboardView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -835,7 +835,7 @@ struct StudentDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(DashboardPrimaryActionButtonModifier(isCompact: false))
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isAuthenticatingNextFit)
@@ -852,3 +852,36 @@ struct StudentDashboardView: View {
         nextFitPasswordInput = ""
     }
 }
+
+// Botões principais da dashboard (uso exclusivo deste arquivo).
+// Escuro: aplica exatamente o estilo original (`primaryGreenActionButton` / `compactPrimaryGreenActionButton`).
+// Claro: mesmo formato e dimensões, com fundo verde militar sólido (#29452C), conteúdo claro e sombra.
+private struct DashboardPrimaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    let isCompact: Bool
+
+    func body(content: Content) -> some View {
+        if appTheme == .light {
+            content
+                .font(.system(size: isCompact ? 15 : 16, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(isEnabled ? 0.92 : 0.55))
+                .padding(.vertical, isCompact ? 9 : 14)
+                .background(AppThemePalette.lightBar)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
+                // Conteúdo sobre o verde militar usa os valores claros (ícones, ProgressView)
+                .environment(\.colorScheme, .dark)
+        } else if isCompact {
+            content.compactPrimaryGreenActionButton()
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
