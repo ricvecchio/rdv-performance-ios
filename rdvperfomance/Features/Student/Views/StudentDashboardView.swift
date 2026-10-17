@@ -438,7 +438,7 @@ struct StudentDashboardView: View {
                 Spacer(minLength: 0)
 
                 ProgressView(value: progress)
-                    .tint(Theme.Colors.primaryGreen)
+                    .tint(appTheme == .light ? AppThemePalette.lightBar.opacity(0.80) : Theme.Colors.primaryGreen)
 
                 if total == 0 {
                     Text("dashboard.you_do_not_have_workouts_scheduled_for_this_week")
@@ -449,7 +449,12 @@ struct StudentDashboardView: View {
                         ForEach(viewModel.currentWeekDaySummaries) { item in
                             VStack(spacing: 6) {
                                 Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
-                                    .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                    .foregroundStyle(
+                                        // Tema Claro: dia concluído em verde militar translúcido (80%); pendente mantém o original
+                                        appTheme == .light && item.isCompleted
+                                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                            : AnyShapeStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                    )
                                 Text(weekdayAbbreviation(for: item.date))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(Theme.Colors.ink(0.75))
@@ -665,14 +670,14 @@ struct StudentDashboardView: View {
         .background(
             ZStack {
                 if appTheme == .light {
-                    // Tema Claro: escurece a foto com preto translúcido e verde-escuro (verde militar das barras),
+                    // Tema Claro: escurecimento moderado (preto e verde militar das barras) para manter a foto mais viva,
                     // mais intenso à esquerda (textos) e mais leve à direita (detalhes da fotografia)
-                    Color.black.opacity(0.30)
+                    Color.black.opacity(0.15)
                     LinearGradient(
                         colors: [
-                            AppThemePalette.lightBar.opacity(0.85),
-                            AppThemePalette.lightBar.opacity(0.55),
-                            AppThemePalette.lightBar.opacity(0.25)
+                            AppThemePalette.lightBar.opacity(0.65),
+                            AppThemePalette.lightBar.opacity(0.35),
+                            AppThemePalette.lightBar.opacity(0.10)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
