@@ -163,11 +163,14 @@ struct RegisterTeacherView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: AuthLightPalette.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.cardBorder),
+                    lineWidth: 1
+                )
         )
     }
 
@@ -236,7 +239,7 @@ struct RegisterTeacherView: View {
                     )
                 }
                 .frame(maxWidth: .infinity)
-                .primaryGreenActionButton()
+                .authPrimaryActionButton()
             }
             .buttonStyle(.plain)
             .disabled(vm.isLoading)
@@ -287,13 +290,13 @@ struct RegisterTeacherView: View {
             } label: {
                 HStack {
                     Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: AuthLightPalette.primaryText))
                         .font(.system(size: 16))
 
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: AuthLightPalette.indicator))
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, 10)

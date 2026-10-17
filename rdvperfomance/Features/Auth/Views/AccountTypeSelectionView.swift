@@ -147,11 +147,11 @@ struct AccountTypeSelectionView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: AuthLightPalette.cardSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: AuthLightPalette.cardBorder), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -188,7 +188,7 @@ struct AccountTypeSelectionView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .authPrimaryActionButton()
                     }
                     .buttonStyle(.plain)
                     .disabled(
@@ -268,13 +268,17 @@ struct AccountTypeSelectionView: View {
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Theme.Colors.glass(0.68))
+                    .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: AuthLightPalette.buttonSurface, followsBarColorScheme: false))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(
+                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.cardBorder, followsBarColorScheme: false),
+                                lineWidth: 1
+                            )
                     )
             )
             .shadow(color: .black.opacity(0.25), radius: 10, y: 6)
+            .authLightOnMilitaryGreen()
         }
         .buttonStyle(.plain)
     }
