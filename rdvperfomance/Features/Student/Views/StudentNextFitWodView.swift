@@ -700,6 +700,8 @@ struct StudentNextFitWodView: View {
         formatter.locale = Locale(identifier: "pt_BR")
         formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "dd/MM"
+        // Tema Claro: data selecionada com o padrão do botão Sair (verde militar 80%/90% e texto branco)
+        let isLightSelected = appTheme == .light && isSelected
         return Button {
             Task { await viewModel.selectNextFitAgendaDate(date, locale: locale) }
         } label: {
@@ -713,24 +715,32 @@ struct StudentNextFitWodView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .monospacedDigit()
             }
-            .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85)))
+            .foregroundStyle(
+                isLightSelected
+                    ? AnyShapeStyle(Color.white)
+                    : AnyShapeStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85)))
+            )
             .frame(minWidth: 58)
             .padding(.horizontal, 10)
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
-                        isSelected
-                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
-                            : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
+                        isLightSelected
+                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                            : isSelected
+                                ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                                : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
                     )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        isSelected
-                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
-                            : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
+                        isLightSelected
+                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                            : isSelected
+                                ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
+                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
                         lineWidth: 1
                     )
             )
