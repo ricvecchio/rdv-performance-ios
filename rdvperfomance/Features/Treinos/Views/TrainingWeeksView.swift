@@ -328,14 +328,14 @@ struct TrainingWeeksView: View {
                 .padding(.vertical, 9)
                 .background(
                     selectedFilter == filter
-                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.18), light: AppThemePalette.lightBar))
+                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.18), light: AppThemePalette.lightBar.opacity(0.80)))
                         : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.chipSurface))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             selectedFilter == filter
-                                ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: AppThemePalette.lightBar)
+                                ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: AppThemePalette.lightBar.opacity(0.90))
                                 : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.subtleBorder),
                             lineWidth: 1
                         )
@@ -1023,22 +1023,28 @@ struct TrainingWeeksView: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(isCompleted ? Theme.Colors.primaryGreen : .clear)
+                            // Tema Claro: concluído em verde militar translúcido (padrão do botão Sair)
+                            .fill(isCompleted ? (appTheme == .light ? AppThemePalette.lightBar.opacity(0.80) : Theme.Colors.primaryGreen) : .clear)
                         Circle()
                             .stroke(
-                                // Tema Claro: borda cinza-esverdeada quando pendente; concluído mantém o verde original
+                                // Tema Claro: borda cinza-esverdeada quando pendente; concluído em verde militar (90%)
                                 isCompleted
-                                    ? AppThemeColor(dark: Theme.Colors.primaryGreen, light: Theme.Colors.primaryGreen)
+                                    ? AppThemeColor(dark: Theme.Colors.primaryGreen, light: AppThemePalette.lightBar.opacity(0.90))
                                     : AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.pendingBorder),
                                 lineWidth: 1.5
                             )
                         if isCompleted {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.black.opacity(0.78))
+                                .foregroundColor(appTheme == .light ? .white : .black.opacity(0.78))
                         }
                     }
                     .frame(width: 24, height: 24)
+                    // Área de toque de 44×44 (o círculo pendente tem fundo `.clear`, que não recebe toques;
+                    // só o anel de 1,5pt respondia). O padding negativo mantém o layout original de 24×24.
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                    .padding(-10)
                 }
                 .buttonStyle(.plain)
             }
