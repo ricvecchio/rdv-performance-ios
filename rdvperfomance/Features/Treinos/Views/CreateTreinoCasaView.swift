@@ -25,6 +25,39 @@ private struct LightMilitaryActionButtonModifier: ViewModifier {
     }
 }
 
+// Tema Claro (habilitado): mesma estrutura e medidas do `WorkoutTemplateAttachmentButton` (`compactPrimaryGreenActionButton()`),
+// com as cores do botão Sair da ProfileView. Tema Escuro e carregando: usa exatamente o componente compartilhado original.
+private struct LightThemeAttachmentButton: View {
+    @Environment(\.appTheme) private var appTheme
+    let isLoading: Bool
+    let action: () -> Void
+
+    var body: some View {
+        if appTheme == .light && !isLoading {
+            Button(action: action) {
+                HStack(spacing: 10) {
+                    Image(systemName: "paperclip")
+                    Text("workouts.attach_from_my_workouts")
+                }
+                .padding(.horizontal, 12)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 9)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoading)
+        } else {
+            WorkoutTemplateAttachmentButton(isLoading: isLoading, action: action)
+        }
+    }
+}
+
 /// Tela para criar um Treino (Em Casa) — layout idêntico ao "Adicionar WOD"
 struct CreateTreinoCasaView: View {
     @Environment(\.locale) private var locale
@@ -39,6 +72,7 @@ struct CreateTreinoCasaView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let pendingStatus = Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) // #B77900 (status Pendente da TeacherStudentsListView)
     }
 
     @Binding var path: [AppRoute]
@@ -234,7 +268,7 @@ struct CreateTreinoCasaView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                WorkoutTemplateAttachmentButton(isLoading: false) {
+                LightThemeAttachmentButton(isLoading: false) {
                     isSelectingTemplateAttachment = true
                     path.append(.teacherEmCasaLibrary(mode: .library, templateMode: .attach))
                 }
@@ -281,7 +315,7 @@ struct CreateTreinoCasaView: View {
                             }
                         } label: {
                             Image(systemName: "trash")
-                                .foregroundColor(.yellow.opacity(0.85))
+                                .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.85))
                         }
                         .buttonStyle(.plain)
                     }
