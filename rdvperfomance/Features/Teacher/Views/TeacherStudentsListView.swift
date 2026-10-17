@@ -295,18 +295,37 @@ struct TeacherStudentsListView: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                // Tema Claro: selecionado em verde militar (#29452C) com texto branco; demais em verde claro com texto escuro.
+                // Tema Escuro: valores originais.
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: isSelected ? Color.white : LightColors.primaryText))
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
-                .background(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68)))
+                .background(
+                    AppThemeColor(
+                        dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68),
+                        light: isSelected ? AppThemePalette.lightBar : LightColors.innerSurface
+                    )
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                        .stroke(
+                            AppThemeColor(
+                                dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28),
+                                light: isSelected ? Color.white.opacity(0.12) : LightColors.border
+                            ),
+                            lineWidth: 1
+                        )
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                // Profundidade somente no Tema Claro (referência: AdminProfileSelectionView); Tema Escuro sem sombra
+                .shadow(
+                    color: appTheme == .light ? .black.opacity(isSelected ? 0.25 : 0.10) : .clear,
+                    radius: appTheme == .light ? (isSelected ? 10 : 4) : 0,
+                    y: appTheme == .light ? (isSelected ? 6 : 2) : 0
+                )
         }
         .buttonStyle(.plain)
     }
