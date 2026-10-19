@@ -657,11 +657,21 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
-        .background(Theme.Colors.glass(0.68))
+        // Tema Claro: mesmo cinza do "Selecionar treino" não selecionado. Tema Escuro: valores originais.
+        .background(
+            appTheme == .light
+                ? AnyShapeStyle(Theme.Colors.ink(0.10))
+                : AnyShapeStyle(Theme.Colors.glass(0.68))
+        )
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(Theme.Colors.ink(0.12))
+                        : AnyShapeStyle(Theme.Colors.cardBorder),
+                    lineWidth: 1
+                )
         )
     }
 
@@ -1922,13 +1932,13 @@ private struct WorkoutTemplateSelectionSheet: View {
             } label: {
                 Text("common.cancel")
                     .font(.system(size: 15, weight: .bold))
-                    // Tema Claro: cores do botão Sair da ProfileView (medidas originais). Tema Escuro: valores originais.
-                    .foregroundStyle(appTheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.85)))
+                    // Tema Claro: mesmo cinza do Cancelar da CategoryMultiSelectionSheet (sem borda). Tema Escuro: valores originais.
+                    .foregroundStyle(Theme.Colors.ink(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
                     .background(
                         appTheme == .light
-                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                            ? AnyShapeStyle(Theme.Colors.ink(0.10))
                             : AnyShapeStyle(Theme.Colors.glass(0.68))
                     )
                     .cornerRadius(14)
@@ -1936,7 +1946,7 @@ private struct WorkoutTemplateSelectionSheet: View {
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(
                                 appTheme == .light
-                                    ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                                    ? AnyShapeStyle(Color.clear)
                                     : AnyShapeStyle(Theme.Colors.cardBorder),
                                 lineWidth: 1
                             )
