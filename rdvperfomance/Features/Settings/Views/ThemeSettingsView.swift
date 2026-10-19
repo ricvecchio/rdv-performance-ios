@@ -78,7 +78,8 @@ struct ThemeSettingsView: View {
                     .foregroundStyle(Theme.Colors.ink())
             }
         }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme`: o valor muda ao alternar o tema e a barra é atualizada imediatamente
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeNavigationBarColorScheme()
         .navigationBarTitleDisplayMode(.inline)
