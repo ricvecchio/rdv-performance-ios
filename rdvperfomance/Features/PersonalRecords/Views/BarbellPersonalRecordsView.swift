@@ -661,8 +661,9 @@ struct BarbellPersonalRecordsView: View {
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
                                 HStack(spacing: 10) {
+                                    // Tema Claro: paleta da TrainingWeeksView. Tema Escuro: valores originais.
                                     Image(systemName: entry.id == recordID ? "trophy.fill" : "medal.fill")
-                                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)).dark, light: LightColors.iconInk))
                                         .frame(width: 22)
 
                                     Text(
@@ -678,17 +679,17 @@ struct BarbellPersonalRecordsView: View {
                                         )
                                     )
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(Theme.Colors.ink(0.92))
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
 
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
-                                            .foregroundStyle(Theme.Colors.systemAccentForeground())
+                                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground().dark, light: LightColors.chevron))
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 6)
-                                                    .stroke(Color.green.opacity(0.70), lineWidth: 1)
+                                                    .stroke(AppThemeColor(dark: Color.green.opacity(0.70), light: LightColors.chevron.opacity(0.70)), lineWidth: 1)
                                             )
                                     }
 
@@ -721,11 +722,12 @@ struct BarbellPersonalRecordsView: View {
                                 }
                             }
                         }
-                        .background(Theme.Colors.cardBackground)
+                        // Tema Claro: fundo #F0F7EF e borda #C9DFC9 (TrainingWeeksView). Tema Escuro: valores originais.
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.border), lineWidth: 1)
                         )
                     }
                 }
