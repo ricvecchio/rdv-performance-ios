@@ -267,7 +267,7 @@ struct GirlsPersonalRecordsView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -403,7 +403,7 @@ struct GirlsPersonalRecordsView: View {
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.border), lineWidth: 1)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
                                     )
                             }
                             .padding(.horizontal, 16)
@@ -453,7 +453,7 @@ struct GirlsPersonalRecordsView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.10)), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -475,7 +475,7 @@ struct GirlsPersonalRecordsView: View {
                                 .cornerRadius(12)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 12)
-                                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                                        .stroke(appTheme == .light ? LightColors.chevron : AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
                                 )
                         } else {
                             Text("common.save")
@@ -567,7 +567,7 @@ struct GirlsPersonalRecordsView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -706,7 +706,7 @@ struct GirlsPersonalRecordsView: View {
                 .padding(.vertical, 14)
                 .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.cardSurface))
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.border), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -790,7 +790,7 @@ struct GirlsPersonalRecordsView: View {
                         // Tema Claro: fundo #F0F7EF e borda #C9DFC9 (TrainingWeeksView). Tema Escuro: valores originais.
                         .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                         .cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.border), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1))
                     }
                 }
                 .frame(maxWidth: contentMaxWidth)
@@ -858,7 +858,7 @@ struct GirlsPersonalRecordsView: View {
             .padding(14)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1))
         }
     }
 
@@ -1288,7 +1288,7 @@ Jasmine (AMRAP 20 min)
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                        .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.10)), lineWidth: 1)
                                 )
                         }
                         .buttonStyle(.plain)
@@ -1330,7 +1330,7 @@ Jasmine (AMRAP 20 min)
                 .padding(.vertical, 14)
                 .background(Theme.Colors.cardBackground)
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1))
         }
     }
 
