@@ -295,6 +295,12 @@ struct TeacherStudentDetailView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
             )
+            // Profundidade somente no Tema Claro (referência: AdminProfileSelectionView); Tema Escuro sem sombra
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
+            )
         }
         .buttonStyle(.plain)
     }
