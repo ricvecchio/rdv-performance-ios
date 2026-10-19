@@ -14,6 +14,7 @@ struct EditProfileView: View {
     private enum LightColors {
         static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
     }
 
     @State private var selectedItem: PhotosPickerItem? = nil
@@ -254,7 +255,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -326,7 +327,7 @@ struct EditProfileView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -378,8 +379,10 @@ struct EditProfileView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            isLightEnabled
-                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                            appTheme == .light
+                                ? AnyShapeStyle(LightColors.darkGreenBorder)
+                                : isLightEnabled
+                                    ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
                                 : AnyShapeStyle(AppThemeAdaptiveColor(canSave ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.12))),
                             lineWidth: 1
                         )
