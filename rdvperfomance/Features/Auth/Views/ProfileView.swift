@@ -294,7 +294,8 @@ struct ProfileView: View {
                 .buttonStyle(.plain)
             }
         }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme`: atualiza a barra imediatamente ao alternar o tema
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
