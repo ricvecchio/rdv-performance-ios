@@ -19,7 +19,8 @@ private struct LightMilitaryActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        // Tema Claro: contorno verde-escuro #294A2F (mesmo valor de `LightColors.militaryText`)
+                        .stroke(Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255), lineWidth: 1)
                 )
         } else {
             content.primaryGreenActionButton()
@@ -335,8 +336,8 @@ struct TrainingWeeksView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             selectedFilter == filter
-                                ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: AppThemePalette.lightBar.opacity(0.90))
-                                : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.subtleBorder),
+                                ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: LightColors.militaryText)
+                                : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.militaryText),
                             lineWidth: 1
                         )
                 )
@@ -541,7 +542,7 @@ struct TrainingWeeksView: View {
                 .stroke(
                     AppThemeColor(
                         dark: Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.28),
-                        light: LightColors.cardBorder
+                        light: LightColors.militaryText
                     ),
                     lineWidth: 1
                 )
@@ -632,7 +633,7 @@ struct TrainingWeeksView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.militaryText), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -963,7 +964,7 @@ struct TrainingWeeksView: View {
                 .stroke(
                     AppThemeColor(
                         dark: isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Theme.Colors.primaryGreen.opacity(0.28),
-                        light: LightColors.cardBorder
+                        light: LightColors.militaryText
                     ),
                     lineWidth: 1
                 )
@@ -1055,7 +1056,7 @@ struct TrainingWeeksView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.rowBorder),
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.militaryText),
                     lineWidth: 1
                 )
         )
