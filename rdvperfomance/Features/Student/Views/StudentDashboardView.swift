@@ -470,7 +470,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
         .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
@@ -562,7 +562,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
         .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
@@ -702,7 +702,7 @@ struct StudentDashboardView: View {
                 .scaledToFill()
         )
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .contentShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
