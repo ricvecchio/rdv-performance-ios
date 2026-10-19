@@ -1,6 +1,7 @@
 import SwiftUI
 
 private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
     @Environment(\.isEnabled) private var isEnabled
 
     func body(content: Content) -> some View {
@@ -13,7 +14,10 @@ private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12)),
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro mantém o original
+                        appTheme == .light
+                            ? AnyShapeStyle(NextFitLightColors.chevron)
+                            : AnyShapeStyle(AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12))),
                         lineWidth: 1
                     )
             )
@@ -37,7 +41,15 @@ private struct CompactScheduleAgendaActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(NextFitLightColors.chevron, lineWidth: 1)
+                )
+        } else if appTheme == .light {
+            // Tema Claro (desabilitado/processando): estilo original com contorno verde-escuro (#294A2F)
+            content
+                .compactPrimaryGreenActionButton()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(NextFitLightColors.chevron, lineWidth: 1)
                 )
         } else {
             content
@@ -78,7 +90,7 @@ private struct NextFitCardStyle: ViewModifier {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
             )
             .shadow(
                 color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -248,6 +260,8 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             }
@@ -398,10 +412,10 @@ struct StudentNextFitWodView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             isLightSelected
-                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                                ? AnyShapeStyle(NextFitLightColors.chevron)
                                 : isSelected
                                 ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
-                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
+                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron)),
                             lineWidth: 1
                         )
                 )
@@ -442,6 +456,8 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             }
@@ -548,7 +564,7 @@ struct StudentNextFitWodView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -587,7 +603,7 @@ struct StudentNextFitWodView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -639,6 +655,8 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             } else if viewModel.nextFitAgenda.isEmpty {
@@ -705,7 +723,7 @@ struct StudentNextFitWodView: View {
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
                         )
                         // Profundidade apenas no Tema Claro (padrão da AdminProfileSelectionView)
                         .shadow(
@@ -791,10 +809,10 @@ struct StudentNextFitWodView: View {
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         isLightSelected
-                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                            ? AnyShapeStyle(NextFitLightColors.chevron)
                             : isSelected
                                 ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
-                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
+                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron)),
                         lineWidth: 1
                     )
             )
@@ -859,7 +877,7 @@ struct StudentNextFitWodView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(AppThemeColor(dark: Color.white.opacity(0.06), light: NextFitLightColors.innerSurface))
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: NextFitLightColors.border), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: NextFitLightColors.chevron), lineWidth: 1))
 
             Text("dashboard.participants")
                 .font(.system(size: 14, weight: .bold))
@@ -918,6 +936,8 @@ struct StudentNextFitWodView: View {
                 Text("dashboard.try_again_action")
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
+                    // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -958,6 +978,8 @@ struct StudentNextFitWodView: View {
                 }
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
+                    // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
             }
             .buttonStyle(.plain)
             .disabled(true)
