@@ -246,7 +246,13 @@ struct NextFitService {
         try await loadAgenda(for: Date(), sessionAccount: sessionAccount)
     }
 
-    func loadAgenda(for date: Date, sessionAccount: String) async throws -> [NextFitAgendaDisplay] {
+    /// - Parameter includeHistory: uso exclusivo do resumo semanal de Check-in da Home
+    ///   (envia `FiltrarHistorico=true`). O padrão `false` mantém a consulta original da Agenda.
+    func loadAgenda(
+        for date: Date,
+        sessionAccount: String,
+        includeHistory: Bool = false
+    ) async throws -> [NextFitAgendaDisplay] {
         guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
             throw NextFitServiceError.missingSession
         }
@@ -261,7 +267,8 @@ struct NextFitService {
                 let request = try agendaRequest(
                     date: selectedDate,
                     page: page,
-                    token: token
+                    token: token,
+                    includeHistory: includeHistory
                 )
                 let data = try await responseData(for: request)
                 let response = try JSONDecoder().decode(NextFitAgendaResponse.self, from: data)
@@ -768,7 +775,12 @@ struct NextFitService {
         )
     }
 
-    private func agendaRequest(date: String, page: Int, token: String) throws -> URLRequest {
+    private func agendaRequest(
+        date: String,
+        page: Int,
+        token: String,
+        includeHistory: Bool = false
+    ) throws -> URLRequest {
         var components = URLComponents(
             url: Self.baseURL.appending(path: "AgendaV2"),
             resolvingAgainstBaseURL: false
@@ -777,7 +789,7 @@ struct NextFitService {
             URLQueryItem(name: "DataInicialStr", value: date),
             URLQueryItem(name: "DataFinalStr", value: date),
             URLQueryItem(name: "FiltrarMeusAgendamentos", value: "false"),
-            URLQueryItem(name: "FiltrarHistorico", value: "false"),
+            URLQueryItem(name: "FiltrarHistorico", value: includeHistory ? "true" : "false"),
             URLQueryItem(name: "PeriodosStr", value: "[]"),
             URLQueryItem(name: "CodigosModalidadesStr", value: "[]"),
             URLQueryItem(name: "page", value: String(page)),

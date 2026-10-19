@@ -341,13 +341,53 @@ final class StudentDashboardViewModel: ObservableObject {
                 #if DEBUG
                 print("[StudentDashboard] Check-ins: \(agenda.count) aula(s) retornada(s) para \(date).")
                 #endif
-                let participation = try await weeklyCheckInParticipation(
+                // Aulas cuja lista de participantes já foi verificada nesta data (evita chamadas repetidas)
+                var verifiedAgendaIds = Set<Int>()
+                var participation = try await weeklyCheckInParticipation(
                     in: agenda,
                     on: date,
                     calendar: calendar,
-                    identity: &participantIdentity
+                    identity: &participantIdentity,
+                    verifiedAgendaIds: &verifiedAgendaIds
                 )
                 if Task.isCancelled { return }
+                // Dias anteriores: a consulta padrão da Agenda (FiltrarHistorico=false) pode não
+                // retornar as aulas já encerradas. Somente para este resumo, e apenas quando a
+                // participação ainda não foi confirmada, consulta também o histórico da data.
+                // A conclusão continua exigindo FezCheckin ou o aluno na lista de participantes.
+                if participation != .confirmed, date < today {
+                    let historyParticipation: WeeklyCheckInDayParticipation
+                    do {
+                        let history = try await nextFitService.loadAgenda(
+                            for: date,
+                            sessionAccount: studentId,
+                            includeHistory: true
+                        )
+                        #if DEBUG
+                        print("[StudentDashboard] Check-ins (histórico): \(history.count) aula(s) retornada(s) para \(date).")
+                        #endif
+                        historyParticipation = try await weeklyCheckInParticipation(
+                            in: history,
+                            on: date,
+                            calendar: calendar,
+                            identity: &participantIdentity,
+                            verifiedAgendaIds: &verifiedAgendaIds
+                        )
+                    } catch NextFitServiceError.missingSession {
+                        throw NextFitServiceError.missingSession
+                    } catch NextFitServiceError.invalidSession {
+                        throw NextFitServiceError.invalidSession
+                    } catch {
+                        // Falha temporária no histórico não confirma ausência
+                        historyParticipation = .indeterminate
+                    }
+                    if Task.isCancelled { return }
+                    if historyParticipation == .confirmed {
+                        participation = .confirmed
+                    } else if historyParticipation == .indeterminate {
+                        participation = .indeterminate
+                    }
+                }
                 switch participation {
                 case .confirmed:
                     checkedInDays.insert(date)
@@ -411,7 +451,8 @@ final class StudentDashboardViewModel: ObservableObject {
         in agenda: [NextFitAgendaDisplay],
         on date: Date,
         calendar: Calendar,
-        identity: inout WeeklyCheckInParticipantIdentity
+        identity: inout WeeklyCheckInParticipantIdentity,
+        verifiedAgendaIds: inout Set<Int>
     ) async throws -> WeeklyCheckInDayParticipation {
         let dayEntries = agenda.filter {
             calendar.isDate($0.startDate, inSameDayAs: date)
@@ -437,7 +478,7 @@ final class StudentDashboardViewModel: ObservableObject {
             }
 
         var hasFailedLookup = false
-        for entry in candidates {
+        for entry in candidates where !verifiedAgendaIds.contains(entry.id) {
             if Task.isCancelled { return .indeterminate }
             let detail: NextFitAgendaDetailDisplay
             do {
@@ -456,6 +497,7 @@ final class StudentDashboardViewModel: ObservableObject {
 
             // Desistência do aluno nesta aula não é participação confirmada
             if detail.statusAgendaParticipante == Self.weeklyCheckInWithdrawnStatus {
+                verifiedAgendaIds.insert(entry.id)
                 continue
             }
             if detail.hasCheckIn == true {
@@ -475,6 +517,8 @@ final class StudentDashboardViewModel: ObservableObject {
             }
             if hasUnverifiedParticipant {
                 hasFailedLookup = true
+            } else {
+                verifiedAgendaIds.insert(entry.id)
             }
         }
 

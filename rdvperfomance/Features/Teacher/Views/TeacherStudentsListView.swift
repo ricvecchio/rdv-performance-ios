@@ -310,7 +310,8 @@ struct TeacherStudentsListView: View {
                 .background(
                     AppThemeColor(
                         dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68),
-                        light: isSelected ? AppThemePalette.lightBar : LightColors.innerSurface
+                        // Tema Claro (selecionado): mesmo verde militar/transparência do botão Sair da ProfileView.
+                        light: isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.innerSurface
                     )
                 )
                 .overlay(
@@ -318,7 +319,7 @@ struct TeacherStudentsListView: View {
                         .stroke(
                             AppThemeColor(
                                 dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28),
-                                light: isSelected ? Color.white.opacity(0.12) : LightColors.border
+                                light: isSelected ? AppThemePalette.lightBar.opacity(0.90) : LightColors.border
                             ),
                             lineWidth: 1
                         )
@@ -882,7 +883,8 @@ struct TeacherStudentsListView: View {
                         Button(action: onSave) {
                             Text("common.save")
                                 .frame(maxWidth: .infinity)
-                                .primaryGreenActionButton()
+                                // Tema Claro (habilitado): cores do botão Sair da ProfileView. Demais casos: `primaryGreenActionButton()` original.
+                                .modifier(TeacherStudentsLightBarActionButtonModifier())
                         }
                         .buttonStyle(.plain)
                         .disabled(selectedCategories.isEmpty || isSaving)
@@ -1094,13 +1096,19 @@ struct TeacherStudentsListView: View {
                             if vm.isInvitesLoading {
                                 ProgressView()
                             } else {
-                                Image(systemName: "paperplane.fill")
-                                    .appThemeIconForeground()
+                                // Tema Claro: ícone herda o branco do botão; Tema Escuro: comportamento original.
+                                if appTheme == .light {
+                                    Image(systemName: "paperplane.fill")
+                                } else {
+                                    Image(systemName: "paperplane.fill")
+                                        .appThemeIconForeground()
+                                }
                                 Text("ui.send_invitation")
                             }
                             Spacer()
                         }
-                        .primaryGreenActionButton()
+                        // Tema Claro (habilitado): cores do botão Sair da ProfileView. Demais casos: `primaryGreenActionButton()` original.
+                        .modifier(TeacherStudentsLightBarActionButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -1281,5 +1289,31 @@ struct TeacherStudentsListView: View {
     private func loadInvitesIfPossible(force: Bool = false) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else { return }
         await vm.loadInvites(teacherId: teacherId, force: force)
+    }
+}
+
+// Tema Claro + habilitado: mesmas cores/transparências do botão Sair da ProfileView,
+// preservando fonte, padding e arredondamento de `primaryGreenActionButton()`.
+// Tema Escuro ou desabilitado: aplica exatamente o `primaryGreenActionButton()` original.
+private struct TeacherStudentsLightBarActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
     }
 }
