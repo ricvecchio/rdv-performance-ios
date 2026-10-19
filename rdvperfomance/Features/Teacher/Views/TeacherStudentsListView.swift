@@ -814,54 +814,50 @@ struct TeacherStudentsListView: View {
                         .foregroundStyle(Theme.Colors.ink())
                         .padding(.top, 4)
 
-                    VStack(spacing: 0) {
+                    // Itens individuais no mesmo padrão visual de `quickAccessEditorItem(_:)` da TeacherDashboardView
+                    VStack(spacing: 10) {
                         ForEach(categories, id: \.self) { category in
+                            let isSelected = selectedCategories.contains(category)
+
                             Button {
                                 toggle(category)
                             } label: {
                                 HStack(spacing: 12) {
-                                    Image(systemName: selectedCategories.contains(category) ? "checkmark.square.fill" : "square")
-                                        // Tema Claro: branco (selecionado) / branco translúcido (não selecionado) sobre o verde militar.
-                                        // Tema Escuro: valores originais.
-                                        .foregroundStyle(AppThemeColor(
-                                            dark: Theme.Colors.icon(
-                                                selectedCategories.contains(category)
-                                                    ? Theme.Colors.primaryGreen
-                                                    : .white.opacity(0.35)
-                                            ).dark,
-                                            light: selectedCategories.contains(category)
-                                                ? Color.white
-                                                : Color.white.opacity(0.55)
-                                        ))
-                                        .font(.system(size: 20, weight: .semibold))
+                                    Image(systemName: iconName(for: category))
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
+                                        .frame(width: 22)
 
                                     Text(title(for: category))
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: Color.white))
+                                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                                     Spacer()
+
+                                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(AppThemeColor(dark: isSelected ? .green : .white.opacity(0.35), light: LightColors.chevron))
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
+                                .background(AppThemeColor(dark: Color.white.opacity(0.06), light: LightColors.innerSurface))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            AppThemeColor(
+                                                dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08),
+                                                light: isSelected ? LightColors.chevron : LightColors.border
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                )
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                             .disabled(isSaving)
-
-                            if category != categories.last {
-                                Divider()
-                                    .background(AppThemeColor(dark: Theme.Colors.divider.dark, light: Color.white.opacity(0.25)))
-                                    .padding(.leading, 16)
-                            }
                         }
                     }
-                    // Tema Claro: mesmo verde militar/transparência do botão Sair da ProfileView. Tema Escuro: valores originais.
-                    .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: AppThemePalette.lightBar.opacity(0.80)))
-                    .cornerRadius(14)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: AppThemePalette.lightBar.opacity(0.90)), lineWidth: 1)
-                    )
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
 
@@ -910,6 +906,15 @@ struct TeacherStudentsListView: View {
             case .crossfit: "video.category.crossfit"
             case .academia: "video.category.gym"
             case .emCasa: "video.category.home"
+            }
+        }
+
+        // Mesmos SF Symbols das categorias usados em TeacherWorkoutTemplatesComponents
+        private func iconName(for category: TreinoTipo) -> String {
+            switch category {
+            case .crossfit: "figure.strengthtraining.traditional"
+            case .academia: "dumbbell"
+            case .emCasa: "house.fill"
             }
         }
     }
