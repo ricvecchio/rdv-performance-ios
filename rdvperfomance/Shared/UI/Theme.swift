@@ -27,7 +27,7 @@ enum Theme {
         )
         static let footerBackground = AppThemeColor(
             dark: Color.black.opacity(0.75),
-            light: AppThemePalette.lightBar,
+            light: Color.black.opacity(0.75),
             followsBarColorScheme: false
         )
 
@@ -52,7 +52,7 @@ enum Theme {
         static func headerBackgroundColor(for theme: AppTheme) -> Color {
             switch theme {
             case .dark: Color.black.opacity(0.70)
-            case .light: AppThemePalette.lightBar
+            case .light: Color.black.opacity(0.70)
             }
         }
 
