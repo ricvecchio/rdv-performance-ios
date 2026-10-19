@@ -44,6 +44,8 @@ struct EditProfileView: View {
 
     // ✅ FocusState para fechar o teclado do campo de telefone
     @FocusState private var phoneFieldFocused: Bool
+    // ✅ FocusState para fechar o teclado do campo Bio
+    @FocusState private var bioFieldFocused: Bool
 
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
@@ -168,6 +170,7 @@ struct EditProfileView: View {
                 Spacer()
                 Button("common.done") {
                     phoneFieldFocused = false
+                    bioFieldFocused = false
                 }
             }
         }
@@ -454,6 +457,7 @@ struct EditProfileView: View {
                 .font(.system(size: 16))
                 .background(Color.clear)
                 .scrollContentBackground(.hidden)
+                .focused($bioFieldFocused)
                 .overlay(
                     Rectangle()
                         .fill(AppThemeAdaptiveColor(lineColor))
@@ -533,6 +537,7 @@ struct EditProfileView: View {
         guard !isSaving else { return }
         isSaving = true
         phoneFieldFocused = false  // Fecha teclado antes de salvar
+        bioFieldFocused = false
         defer { isSaving = false }
 
         do {
