@@ -1,6 +1,35 @@
 import SwiftUI
 
+// Tema Claro (habilitado): padrão do botão Sair da ProfileView (verde militar 80%/90% e texto branco),
+// mantendo as dimensões do `primaryGreenActionButton()`. Tema Escuro e estado desabilitado: estilo original.
+private struct LightBarSaveButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
+    }
+}
+
 struct AddYoutubeVideoSheet: View {
+    // `changeCount` da área de transferência já utilizado (colado pelo botão ou salvo).
+    // Mantido apenas em memória; nunca armazena o conteúdo copiado.
+    @MainActor private static var consumedPasteboardChangeCount: Int? = nil
+
     @Environment(\.appTheme) private var appTheme
 
     // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
@@ -39,7 +68,7 @@ struct AddYoutubeVideoSheet: View {
 
                         Text("ui.add_video")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink())
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink().dark, light: LightColors.primaryText))
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
@@ -101,16 +130,24 @@ struct AddYoutubeVideoSheet: View {
                     Button {
                         let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
                         let u = url.trimmingCharacters(in: .whitespacesAndNewlines)
+                        // O conteúdo atual da área de transferência passa a ser considerado já utilizado
+                        // (leitura apenas do contador, sem acessar o conteúdo e sem solicitar permissão).
+                        Self.consumedPasteboardChangeCount = UIPasteboard.general.changeCount
                         onSave(t, u, selectedCategory)
                         dismiss()
                     } label: {
                         HStack(spacing: 10) {
-                            Image(systemName: "checkmark")
-                                .appThemeIconForeground()
+                            if appTheme == .light {
+                                // Tema Claro: ícone herda a cor do botão (branco quando habilitado)
+                                Image(systemName: "checkmark")
+                            } else {
+                                Image(systemName: "checkmark")
+                                    .appThemeIconForeground()
+                            }
                             Text("common.save")
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(LightBarSaveButtonModifier())
                         .shadow(
                             color: appTheme == .light ? .black.opacity(0.25) : .clear,
                             radius: appTheme == .light ? 10 : 0,
@@ -140,15 +177,15 @@ struct AddYoutubeVideoSheet: View {
                         .textInputAutocapitalization(.sentences)
                         .autocorrectionDisabled(false)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                 }
-                .background(Theme.Colors.ink(0.10))
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.innerSurface))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
                 )
             }
             
@@ -163,15 +200,15 @@ struct AddYoutubeVideoSheet: View {
                         .textInputAutocapitalization(.never)
                         .autocorrectionDisabled(true)
                         .font(.system(size: 16, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                         .padding(.horizontal, 14)
                         .padding(.vertical, 14)
                 }
-                .background(Theme.Colors.ink(0.10))
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.innerSurface))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
                 )
             }
             
@@ -187,11 +224,11 @@ struct AddYoutubeVideoSheet: View {
                 }
                 .pickerStyle(.segmented)
                 .padding(14)
-                .background(Theme.Colors.ink(0.10))
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.innerSurface))
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
                 )
             }
         }
@@ -208,13 +245,21 @@ struct AddYoutubeVideoSheet: View {
         sheetMessage = nil
         sheetMessageIsError = false
         
-        let clipboard = (UIPasteboard.general.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if YouTubeVideoImporter.isValidYoutubeUrl(clipboard) {
-            url = clipboard
-            sheetMessage = "video.link.pasted"
-            sheetMessageIsError = false
-            return
+        // Evita reler (e solicitar "Permitir Colar") o mesmo conteúdo já utilizado em um vídeo anterior.
+        // `changeCount` e `hasStrings` não acessam o conteúdo e não disparam a solicitação do iOS.
+        let pasteboard = UIPasteboard.general
+        let isNewPasteboardContent = pasteboard.changeCount != Self.consumedPasteboardChangeCount
+
+        if isNewPasteboardContent && pasteboard.hasStrings {
+            let clipboard = (pasteboard.string ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
+            Self.consumedPasteboardChangeCount = pasteboard.changeCount
+
+            if YouTubeVideoImporter.isValidYoutubeUrl(clipboard) {
+                url = clipboard
+                sheetMessage = "video.link.pasted"
+                sheetMessageIsError = false
+                return
+            }
         }
         
         openYoutubeExternal()
