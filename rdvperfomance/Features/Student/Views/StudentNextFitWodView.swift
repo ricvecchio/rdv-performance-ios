@@ -20,9 +20,39 @@ private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
     }
 }
 
+// Botão "Agendar": no Tema Claro (habilitado) usa o padrão do botão Sair da ProfileView
+// (verde militar 80%/90% e texto branco), mantendo as dimensões do `compactPrimaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado permanecem com o estilo original.
+private struct CompactScheduleAgendaActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 9)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else {
+            content
+                .compactPrimaryGreenActionButton()
+        }
+    }
+}
+
 private extension View {
     func compactDestructiveAgendaActionButton() -> some View {
         modifier(CompactDestructiveAgendaActionButtonModifier())
+    }
+
+    func compactScheduleAgendaActionButton() -> some View {
+        modifier(CompactScheduleAgendaActionButtonModifier())
     }
 }
 
@@ -677,6 +707,12 @@ struct StudentNextFitWodView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
                         )
+                        // Profundidade apenas no Tema Claro (padrão da AdminProfileSelectionView)
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
                     }
                 }
             }
@@ -971,6 +1007,9 @@ struct StudentNextFitWodView: View {
                 HStack(spacing: 10) {
                     if isProcessing {
                         ProgressView()
+                    } else if appTheme == .light {
+                        // Tema Claro: ícone herda o branco do botão (contraste sobre o verde militar)
+                        Image(systemName: "calendar.badge.plus")
                     } else {
                         Image(systemName: "calendar.badge.plus")
                             .appThemeIconForeground()
@@ -978,7 +1017,7 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.schedule")
                 }
                 .padding(.horizontal, 14)
-                .compactPrimaryGreenActionButton()
+                .compactScheduleAgendaActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isProcessing || !viewModel.canScheduleAgendaCheckIn(agendaId))
