@@ -27,7 +27,9 @@ enum Theme {
         )
         static let footerBackground = AppThemeColor(
             dark: Color.black.opacity(0.75),
-            light: Color.black.opacity(0.75),
+            // Tema Claro: cinza opaco equivalente ao cabeçalho (preto 70% sobre fundo claro = branco 30%).
+            // Opaco para não escurecer quando o fundo do rodapé é aplicado em camadas sobrepostas.
+            light: Color(white: 0.30),
             followsBarColorScheme: false
         )
 
