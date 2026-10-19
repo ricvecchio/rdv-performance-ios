@@ -376,7 +376,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -432,7 +432,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -471,7 +471,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                     )
 
                     // Peso (ocupa o resto)
@@ -503,7 +503,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                     )
                 }
             }
@@ -519,7 +519,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -755,7 +755,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -970,7 +970,7 @@ struct TrainingDayDetailView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -995,7 +995,8 @@ struct TrainingDayDetailView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro mantém o original
+                .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.10)), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1074,6 +1075,8 @@ struct TrainingDayDetailView: View {
                             .padding(.vertical, 10)
                             .background(Theme.Colors.ink(0.10))
                             .cornerRadius(12)
+                            // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: LightColors.chevron), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
@@ -1085,6 +1088,8 @@ struct TrainingDayDetailView: View {
                         }
                         .padding(.horizontal, 14)
                         .primaryGreenActionButton()
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: LightColors.chevron), lineWidth: 1))
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
