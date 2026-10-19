@@ -14,33 +14,42 @@ private struct WorkoutPickerLabel: View {
     @Environment(\.appTheme) private var appTheme
 
     var body: some View {
-        let borderColor: Color = appTheme == .light
-            ? AppThemePalette.lightBar.opacity(0.90)
-            : isSelected
-                ? Theme.Colors.primaryGreen.opacity(0.35)
-                : Theme.Colors.primaryGreen.opacity(0.28)
+        // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair) com texto/ícone brancos;
+        // sem seleção em cinza claro (mesmos tons do botão Próximo desabilitado) com texto/ícone escuros.
+        let isLightSelected = appTheme == .light && isSelected
+        let isLightUnselected = appTheme == .light && !isSelected
+        let borderColor: AnyShapeStyle = isLightSelected
+            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+            : isLightUnselected
+                ? AnyShapeStyle(Theme.Colors.ink(0.12))
+                : isSelected
+                    ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.35))
+                    : AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.28))
 
-        // Tema Claro: verde militar translúcido (padrão do botão Sair) com texto e ícone brancos
         HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(appTheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
+            .foregroundStyle(isLightSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(
-                    appTheme == .light
+                    isLightSelected
                         ? AnyShapeStyle(Color.white)
-                        : AnyShapeStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                        : isLightUnselected
+                            ? AnyShapeStyle(Theme.Colors.ink(0.70))
+                            : AnyShapeStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
                 )
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
         .background(
-            appTheme == .light
+            isLightSelected
                 ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
-                : AnyShapeStyle(Theme.Colors.glass(0.68))
+                : isLightUnselected
+                    ? AnyShapeStyle(Theme.Colors.ink(0.10))
+                    : AnyShapeStyle(Theme.Colors.glass(0.68))
         )
         .cornerRadius(14)
         .overlay(
@@ -868,35 +877,45 @@ struct TeacherSendWorkoutView: View {
         title: DisplayText,
         isSelected: Bool
     ) -> some View {
-        HStack {
+        // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair) com texto/seta brancos;
+        // sem treino escolhido (ou carregando) em cinza claro (mesmos tons do botão Próximo desabilitado).
+        let isLightSelected = appTheme == .light && isSelected
+        let isLightUnselected = appTheme == .light && !isSelected
+
+        return HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(appTheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
+            .foregroundStyle(isLightSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
                 .foregroundStyle(
-                    appTheme == .light
+                    isLightSelected
                         ? AnyShapeStyle(Color.white)
-                        : AnyShapeStyle(AppThemeColor(dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25), light: LightColors.iconInk))
+                        : isLightUnselected
+                            ? AnyShapeStyle(Theme.Colors.ink(0.70))
+                            : AnyShapeStyle(AppThemeColor(dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25), light: LightColors.iconInk))
                 )
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        // Tema Claro: verde militar translúcido (padrão do botão Sair), com ou sem treino escolhido
         .background(
-            appTheme == .light
+            isLightSelected
                 ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
-                : AnyShapeStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68)))
+                : isLightUnselected
+                    ? AnyShapeStyle(Theme.Colors.ink(0.10))
+                    : AnyShapeStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68)))
         )
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    appTheme == .light
-                        ? AppThemePalette.lightBar.opacity(0.90)
-                        : isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28),
+                    isLightSelected
+                        ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                        : isLightUnselected
+                            ? AnyShapeStyle(Theme.Colors.ink(0.12))
+                            : AnyShapeStyle(isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28)),
                     lineWidth: 1
                 )
         )
@@ -1572,6 +1591,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
     @State private var expandedPicker: ExpandedPicker?
     @State private var pendingSelectedTemplate: WorkoutTemplateFS?
     @State private var loadedSectionTemplates: [WorkoutTemplateFS] = []
@@ -1902,14 +1922,24 @@ private struct WorkoutTemplateSelectionSheet: View {
             } label: {
                 Text("common.cancel")
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink(0.85))
+                    // Tema Claro: cores do botão Sair da ProfileView (medidas originais). Tema Escuro: valores originais.
+                    .foregroundStyle(appTheme == .light ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.85)))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Theme.Colors.glass(0.68))
+                    .background(
+                        appTheme == .light
+                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    )
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(
+                                appTheme == .light
+                                    ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                                    : AnyShapeStyle(Theme.Colors.cardBorder),
+                                lineWidth: 1
+                            )
                     )
             }
             .buttonStyle(.plain)
@@ -1921,7 +1951,8 @@ private struct WorkoutTemplateSelectionSheet: View {
             } label: {
                 Text("ui.select")
                     .frame(maxWidth: .infinity)
-                    .primaryGreenActionButton()
+                    // Tema Claro (habilitado): cores do botão Sair. Desabilitado/Tema Escuro: `primaryGreenActionButton()` original.
+                    .modifier(LightMilitaryActionButtonModifier())
             }
             .buttonStyle(.plain)
             .disabled(!canConfirmSelection)
