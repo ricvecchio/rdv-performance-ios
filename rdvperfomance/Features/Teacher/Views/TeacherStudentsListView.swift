@@ -12,6 +12,8 @@ struct TeacherStudentsListView: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
     @Environment(\.appTheme) private var appTheme
+    // Usado apenas para manter o esquema atual do seletor de abas do convite fora do Tema Claro
+    @Environment(\.colorScheme) private var colorScheme
 
     // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
     private enum LightColors {
@@ -818,16 +820,23 @@ struct TeacherStudentsListView: View {
                             } label: {
                                 HStack(spacing: 12) {
                                     Image(systemName: selectedCategories.contains(category) ? "checkmark.square.fill" : "square")
-                                        .foregroundStyle(Theme.Colors.icon(
-                                            selectedCategories.contains(category)
-                                                ? Theme.Colors.primaryGreen
-                                                : .white.opacity(0.35)
+                                        // Tema Claro: branco (selecionado) / branco translúcido (não selecionado) sobre o verde militar.
+                                        // Tema Escuro: valores originais.
+                                        .foregroundStyle(AppThemeColor(
+                                            dark: Theme.Colors.icon(
+                                                selectedCategories.contains(category)
+                                                    ? Theme.Colors.primaryGreen
+                                                    : .white.opacity(0.35)
+                                            ).dark,
+                                            light: selectedCategories.contains(category)
+                                                ? Color.white
+                                                : Color.white.opacity(0.55)
                                         ))
                                         .font(.system(size: 20, weight: .semibold))
 
                                     Text(title(for: category))
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(Theme.Colors.ink(0.92))
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: Color.white))
 
                                     Spacer()
                                 }
@@ -840,16 +849,17 @@ struct TeacherStudentsListView: View {
 
                             if category != categories.last {
                                 Divider()
-                                    .background(Theme.Colors.divider)
+                                    .background(AppThemeColor(dark: Theme.Colors.divider.dark, light: Color.white.opacity(0.25)))
                                     .padding(.leading, 16)
                             }
                         }
                     }
-                    .background(Theme.Colors.cardBackground)
+                    // Tema Claro: mesmo verde militar/transparência do botão Sair da ProfileView. Tema Escuro: valores originais.
+                    .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: AppThemePalette.lightBar.opacity(0.80)))
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: AppThemePalette.lightBar.opacity(0.90)), lineWidth: 1)
                     )
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
@@ -1033,6 +1043,9 @@ struct TeacherStudentsListView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
+                            // Tema Claro: aparência escura nativa do seletor para manter contraste e a
+                            // distinção entre aba selecionada/não selecionada sobre o verde militar.
+                            .environment(\.colorScheme, appTheme == .light ? .dark : colorScheme)
 
                             Group {
                                 switch inviteTab {
@@ -1045,11 +1058,12 @@ struct TeacherStudentsListView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        // Tema Claro: mesmo verde militar/transparência do botão Sair da ProfileView. Tema Escuro: valores originais.
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: AppThemePalette.lightBar.opacity(0.80)))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: AppThemePalette.lightBar.opacity(0.90)), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -1123,14 +1137,15 @@ struct TeacherStudentsListView: View {
 
             Text("ui.invite_by_email")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.35))
+                // Tema Claro: texto claro sobre o card verde militar. Tema Escuro: valor original.
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.35).dark, light: Color.white.opacity(0.85)))
 
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.35)).dark, light: LightColors.iconInk))
 
                 TextField("ui.student_email", text: $inviteEmail)
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                     .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
@@ -1139,23 +1154,24 @@ struct TeacherStudentsListView: View {
                 if !inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button { inviteEmail = "" } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.35)).dark, light: LightColors.iconInk))
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Theme.Colors.ink(0.10))
+            // Tema Claro: campo em verde pastel (#DDEDDC) com borda #C9DFC9 para permanecer identificável. Tema Escuro: valores originais.
+            .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.cardSurface))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
             )
 
             Text("ui.the_student_will_only_appear_in_your_list_after_accepting_the_app_invitation")
                 .font(.system(size: 13))
-                .foregroundStyle(Theme.Colors.ink(0.35))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.35).dark, light: Color.white.opacity(0.85)))
         }
     }
 
@@ -1165,7 +1181,8 @@ struct TeacherStudentsListView: View {
             HStack {
                 Text("student_teachers.sent_invitations_section")
                     .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                    // Tema Claro: textos/ícones claros sobre o card verde militar. Tema Escuro: valores originais.
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.35).dark, light: Color.white.opacity(0.85)))
 
                 Spacer()
 
@@ -1173,7 +1190,7 @@ struct TeacherStudentsListView: View {
                     Task { await loadInvitesIfPossible(force: true) }
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.55)).dark, light: Color.white))
                 }
                 .buttonStyle(.plain)
                 .disabled(vm.isInvitesLoading)
@@ -1184,18 +1201,18 @@ struct TeacherStudentsListView: View {
                     ProgressView()
                     Text("ui.loading_invitations")
                         .font(.system(size: 13))
-                        .foregroundStyle(Theme.Colors.ink(0.55))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: Color.white.opacity(0.85)))
                 }
                 .padding(.vertical, 6)
             } else if let msg = vm.invitesErrorMessageInline {
                 Text(msg)
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: Color.white.opacity(0.85)))
                     .multilineTextAlignment(.leading)
             } else if vm.invites.isEmpty {
                 Text("ui.no_invitation_has_been_sent_yet")
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: Color.white.opacity(0.85)))
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(vm.invites.enumerated()), id: \.offset) { idx, inv in
@@ -1207,11 +1224,12 @@ struct TeacherStudentsListView: View {
                         }
                     }
                 }
-                .background(Theme.Colors.ink(0.06))
+                // Tema Claro: lista em verde pastel (#DDEDDC) com borda #C9DFC9 para manter a legibilidade das linhas. Tema Escuro: valores originais.
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.06).dark, light: LightColors.cardSurface))
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
                 )
             }
         }
