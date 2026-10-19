@@ -1,6 +1,37 @@
 import SwiftUI
 import FirebaseFirestore
 
+// Tema Claro (habilitado): padrão do botão Sair da ProfileView (verde militar 80%/90% e texto branco),
+// mantendo as dimensões dos estilos originais. Tema Escuro e estado desabilitado: estilo original.
+private struct StudentTeachersLightBarButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    /// `true`: dimensões do `compactPrimaryGreenActionButton()`; `false`: do `primaryGreenActionButton()`.
+    let compact: Bool
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: compact ? 15 : 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, compact ? 9 : 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else if compact {
+            content
+                .compactPrimaryGreenActionButton()
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
+    }
+}
+
 struct StudentTeachersView: View {
 
     @Binding var path: [AppRoute]
@@ -16,6 +47,7 @@ struct StudentTeachersView: View {
         static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let pendingStatus = Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) // #B77900 (mesmo da TeacherStudentsListView)
     }
 
     private let contentMaxWidth: CGFloat = 380
@@ -97,13 +129,18 @@ struct StudentTeachersView: View {
                                 showRequestLinkModal = true
                             } label: {
                                 HStack(spacing: 10) {
-                                    Image(systemName: "person.badge.plus")
-                                        .appThemeIconForeground()
+                                    if appTheme == .light {
+                                        // Tema Claro: ícone herda o branco do botão (contraste sobre o verde militar)
+                                        Image(systemName: "person.badge.plus")
+                                    } else {
+                                        Image(systemName: "person.badge.plus")
+                                            .appThemeIconForeground()
+                                    }
 
                                     Text("dashboard.invite_coach")
                                 }
                                 .padding(.horizontal, 14)
-                                .compactPrimaryGreenActionButton()
+                                .modifier(StudentTeachersLightBarButtonModifier(compact: true))
                             }
                             .buttonStyle(.plain)
                             .disabled(isProcessingLinkAction)
@@ -370,7 +407,8 @@ struct StudentTeachersView: View {
     private func sentRequestRow(_ request: TeacherStudentLinkRequestFS) -> some View {
         HStack(spacing: 12) {
             Image(systemName: "clock.fill")
-                .foregroundColor(.yellow.opacity(0.75))
+                // Tema Claro: mesmo laranja do status Pendente da TeacherStudentsListView (#B77900)
+                .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.75))
                 .font(.system(size: 15))
                 .frame(width: 26)
 
@@ -536,7 +574,8 @@ struct StudentTeachersView: View {
     private var pendingStatus: some View {
         Text("student_teachers.pending")
             .font(.system(size: 12, weight: .semibold))
-            .foregroundColor(.yellow.opacity(0.85))
+            // Tema Claro: #B77900 (TeacherStudentsListView). Tema Escuro: amarelo original.
+            .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.85))
             .padding(.horizontal, 8)
             .padding(.vertical, 3)
             .background(Capsule().fill(Color.yellow.opacity(0.12)))
@@ -600,15 +639,17 @@ struct StudentTeachersView: View {
                             .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
+                        // Tema Claro: card em verde militar (padrão do botão Sair) com textos claros para contraste.
+                        // Tema Escuro: valores originais.
                         VStack(alignment: .leading, spacing: 14) {
                             Text("dashboard.enter_the_coach_s_email_to_send_the_request")
                                 .font(.system(size: 13))
-                                .foregroundStyle(Theme.Colors.ink(0.45))
+                                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.45).dark, light: Color.white.opacity(0.85)))
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("dashboard.coach_email")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Theme.Colors.ink(0.75))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.75).dark, light: Color.white))
 
                                 TextField("dashboard.coach_email_placeholder", text: $teacherEmailInput)
                                     .textInputAutocapitalization(.never)
@@ -617,28 +658,32 @@ struct StudentTeachersView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Theme.Colors.ink(0.10))
+                                    .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.cardSurface))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
                                     )
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                             }
 
                             if let message = linkActionMessage {
                                 Text(message)
                                     .font(.system(size: 13))
-                                    .foregroundColor(linkActionMessageIsError ? .yellow.opacity(0.95) : .green.opacity(0.95))
+                                    .foregroundColor(
+                                        linkActionMessageIsError
+                                            ? .yellow.opacity(0.95)
+                                            : (appTheme == .light ? Color.white : .green.opacity(0.95))
+                                    )
                             }
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: AppThemePalette.lightBar.opacity(0.80)))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: AppThemePalette.lightBar.opacity(0.90)), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -680,7 +725,7 @@ struct StudentTeachersView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(StudentTeachersLightBarButtonModifier(compact: false))
                     }
                     .buttonStyle(.plain)
                     .disabled(isProcessingLinkAction)
