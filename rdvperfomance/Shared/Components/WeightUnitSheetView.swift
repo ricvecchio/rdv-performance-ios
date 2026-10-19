@@ -29,6 +29,16 @@ struct WeightUnitSheetView: View {
     let onCancel: () -> Void
     let onSave: () -> Void
 
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da TeacherDashboardView)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+    }
+
     private var selectedUnit: WeightUnit {
         WeightUnit(rawValue: selectedUnitRaw) ?? .kg
     }
@@ -61,17 +71,25 @@ struct WeightUnitSheetView: View {
                                 HStack(spacing: 12) {
                                     Text(unit.title)
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(Theme.Colors.ink(0.92))
+                                        // Tema Claro: texto principal #171C17. Tema Escuro: valor original.
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
 
                                     Spacer()
 
+                                    // Tema Claro: indicadores em verde militar #294A2F (não selecionado translúcido). Tema Escuro: valores originais.
                                     if unit == selectedUnit {
                                         Image(systemName: "checkmark.circle.fill")
-                                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.accentForeground))
+                                            .foregroundStyle(AppThemeColor(
+                                                dark: Theme.Colors.icon(Theme.Colors.accentForeground).dark,
+                                                light: LightColors.chevron
+                                            ))
                                             .font(.system(size: 18, weight: .semibold))
                                     } else {
                                         Image(systemName: "circle")
-                                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.25)))
+                                            .foregroundStyle(AppThemeColor(
+                                                dark: Theme.Colors.icon(Theme.Colors.ink(0.25)).dark,
+                                                light: LightColors.chevron.opacity(0.45)
+                                            ))
                                             .font(.system(size: 18, weight: .regular))
                                     }
                                 }
@@ -89,11 +107,12 @@ struct WeightUnitSheetView: View {
                         }
                     }
                     .frame(maxWidth: .infinity)
-                    .background(Theme.Colors.cardBackground)
+                    // Tema Claro: fundo #DDEDDC e borda #C9DFC9 (padrão TeacherDashboardView). Tema Escuro: valores originais.
+                    .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.cardSurface))
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.border), lineWidth: 1)
                     )
 
                     Text("settings.weight_unit.description")
@@ -124,7 +143,9 @@ struct WeightUnitSheetView: View {
                     Button(action: onSave) {
                         Text("common.save")
                             .frame(maxWidth: .infinity)
-                            .primaryGreenActionButton()
+                            // Tema Claro: cores do botão Sair da ProfileView, preservando as medidas de
+                            // `primaryGreenActionButton()`. Tema Escuro: estilo original.
+                            .modifier(WeightUnitSaveButtonModifier(appTheme: appTheme))
                     }
                     .buttonStyle(.plain)
                 }
@@ -136,3 +157,30 @@ struct WeightUnitSheetView: View {
         .appThemeNavigationBarColorScheme()
     }
 }
+
+// Tema Claro + habilitado: mesmas cores/transparências do botão Sair da ProfileView, preservando
+// fonte, padding e arredondamento de `primaryGreenActionButton()`.
+// Tema Escuro ou desabilitado: aplica exatamente o `primaryGreenActionButton()` original.
+private struct WeightUnitSaveButtonModifier: ViewModifier {
+    let appTheme: AppTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                )
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
+    }
+}
+
