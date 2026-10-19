@@ -293,7 +293,7 @@ struct PersonalRecordsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
             // Tema Claro: mesma profundidade dos botoes da AdminProfileSelectionView (Tema Escuro: sem sombra)
             .shadow(
@@ -317,6 +317,8 @@ struct PersonalRecordsView: View {
             }
             .padding(.horizontal, 14)
             .compactPrimaryGreenActionButton()
+            // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: LightColors.chevron), lineWidth: 1))
         }
         .buttonStyle(.plain)
     }
