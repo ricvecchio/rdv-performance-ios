@@ -294,9 +294,6 @@ struct TeacherDashboardView: View {
                             .foregroundStyle(Theme.Colors.ink())
                             .frame(maxWidth: .infinity, alignment: .center)
 
-                        Text("ui.choose_3_shortcuts_to_show_in_the_coach_area")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Theme.Colors.ink(0.55))
 
                         Text("ui.select_3_shortcuts")
                             .font(.system(size: 13, weight: .semibold))
