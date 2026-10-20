@@ -1,6 +1,9 @@
 import SwiftUI
 import FirebaseFirestore
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView.
+private let studentTeachersDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 // Tema Claro (habilitado): padrão do botão Sair da ProfileView (verde militar 80%/90% e texto branco),
 // mantendo as dimensões dos estilos originais. Tema Escuro e estado desabilitado: estilo original.
 private struct StudentTeachersLightBarButtonModifier: ViewModifier {
@@ -20,14 +23,22 @@ private struct StudentTeachersLightBarButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(studentTeachersDarkGreenBorder, lineWidth: 1)
                 )
         } else if compact {
             content
                 .compactPrimaryGreenActionButton()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(appTheme == .light ? studentTeachersDarkGreenBorder : Color.clear, lineWidth: 1)
+                )
         } else {
             content
                 .primaryGreenActionButton()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(appTheme == .light ? studentTeachersDarkGreenBorder : Color.clear, lineWidth: 1)
+                )
         }
     }
 }
@@ -48,6 +59,7 @@ struct StudentTeachersView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
         static let pendingStatus = Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) // #B77900 (mesmo da TeacherStudentsListView)
+        static let darkGreenBorder = studentTeachersDarkGreenBorder                               // #294A2F (contorno dos cards e botões)
     }
 
     private let contentMaxWidth: CGFloat = 380
@@ -347,7 +359,7 @@ struct StudentTeachersView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -532,6 +544,10 @@ struct StudentTeachersView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(Theme.Colors.cardBackground)
                         .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(AppThemeColor(dark: Color.clear, light: LightColors.darkGreenBorder), lineWidth: 1)
+                        )
                     }
 
                     Button("common.close") {
@@ -539,6 +555,10 @@ struct StudentTeachersView: View {
                     }
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppThemeColor(dark: Color.clear, light: LightColors.darkGreenBorder), lineWidth: 1)
+                    )
                     .frame(maxWidth: .infinity)
                     .buttonStyle(.plain)
                 }
@@ -662,7 +682,7 @@ struct StudentTeachersView: View {
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.darkGreenBorder), lineWidth: 1)
                                     )
                                     .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                             }
@@ -683,7 +703,7 @@ struct StudentTeachersView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: AppThemePalette.lightBar.opacity(0.90)), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.darkGreenBorder), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -703,7 +723,7 @@ struct StudentTeachersView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.darkGreenBorder), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
