@@ -390,12 +390,14 @@ struct NextFitAgendaDetailResponse: Decodable {
             let nomeParticipante: String
             let codigoContratoCliente: Int?
             let codigoCliente: Int?
+            let status: Int?
 
             enum CodingKeys: String, CodingKey {
                 case id = "Id"
                 case nomeParticipante = "NomeParticipante"
                 case codigoContratoCliente = "CodigoContratoCliente"
                 case codigoCliente = "CodigoCliente"
+                case status = "Status"
             }
         }
 
