@@ -349,15 +349,107 @@ struct StudentNextFitWodView: View {
 
     // MARK: - Abas
 
+    // Apresentação: modalidades agrupadas em um único controle segmentado e AGENDA como botão independente.
+    // Ordem e montagem das opções permanecem as de `nextFitTabOptions`.
     private var nextFitTabSelector: some View {
-        HStack(spacing: 8) {
-            ForEach(nextFitTabOptions) { option in
-                nextFitTabButton(option)
+        let options = nextFitTabOptions
+        let modalityOptions = options.filter { $0.selection != .agenda }
+        let agendaOptions = options.filter { $0.selection == .agenda }
+
+        return HStack(spacing: 8) {
+            if !modalityOptions.isEmpty {
+                HStack(spacing: 0) {
+                    ForEach(modalityOptions) { option in
+                        nextFitSegmentButton(option)
+                    }
+                }
+                .padding(3)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
+                        // Profundidade apenas no Tema Claro (mesmo padrão dos botões não selecionados)
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
+                )
+
+                ForEach(agendaOptions) { option in
+                    nextFitTabButton(option, horizontalPadding: 16)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+            } else {
+                ForEach(agendaOptions) { option in
+                    nextFitTabButton(option)
+                }
             }
         }
     }
 
-    private func nextFitTabButton(_ option: StudentDashboardNextFitContentOption) -> some View {
+    // Segmento de modalidade dentro do contêiner agrupado: selecionado com preenchimento
+    // (verde militar no Tema Claro / verde original no Tema Escuro); não selecionado transparente, sem borda.
+    private func nextFitSegmentButton(_ option: StudentDashboardNextFitContentOption) -> some View {
+        let isSelected: Bool = {
+            switch option.selection {
+            case .agenda:
+                return viewModel.isNextFitAgendaSelected
+            case .wod(let modalityId):
+                return highlightedNextFitModalityId == modalityId
+            }
+        }()
+
+        let isLightSelected = appTheme == .light && isSelected
+
+        return Button {
+            let selection = option.selection
+            viewModel.selectedNextFitContent = selection
+            if selection != .agenda {
+                viewModel.clearNextFitAgendaDetail()
+            }
+        } label: {
+            nextFitContentOptionLabel(option)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: Color.white, light: NextFitLightColors.primaryText))
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                : isSelected
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Theme.Colors.primaryGreen.opacity(0.55),
+                                            Theme.Colors.primaryGreen.opacity(0.25)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                : AnyShapeStyle(Color.clear)
+                        )
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func nextFitTabButton(_ option: StudentDashboardNextFitContentOption, horizontalPadding: CGFloat = 6) -> some View {
         let isSelected: Bool = {
             switch option.selection {
             case .agenda:
@@ -388,7 +480,7 @@ struct StudentNextFitWodView: View {
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .padding(.horizontal, 6)
+                .padding(.horizontal, horizontalPadding)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(
@@ -690,7 +782,10 @@ struct StudentNextFitWodView: View {
                                         icon: "dumbbell.fill",
                                         text: entry.modalityName,
                                         font: .system(size: 16, weight: .semibold),
-                                        textColor: Theme.Colors.primaryGreen
+                                        // Tema Claro: verde militar do botão Agendar habilitado; Tema Escuro inalterado
+                                        textColor: appTheme == .light
+                                            ? AppThemePalette.lightBar.opacity(0.80)
+                                            : Theme.Colors.primaryGreen
                                     )
                                     nextFitAgendaDetailRow(
                                         icon: "person.fill",
