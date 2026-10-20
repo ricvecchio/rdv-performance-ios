@@ -174,12 +174,10 @@ struct StudentDashboardView: View {
             noLinkedTeacherCard
             weeklyCheckInsCard
             nextFitWodEntryCard
-            todayCheckInReminderCards
         case .linked, .failed:
             progressCard
             weeklyCheckInsCard
             nextFitWodEntryCard
-            todayCheckInReminderCards
         }
     }
 
@@ -598,8 +596,26 @@ struct StudentDashboardView: View {
             .accessibilityHidden(true)
     }
 
-    @ViewBuilder
+    // Card WOD do dia + faixa integrada do lembrete "Seu check-in de hoje" (Sugestão 3).
+    // Sem check-in confirmado o conjunto contém somente o WOD, com exatamente o visual original
+    // (cantos de 14, contorno e sombra únicos). A faixa fica fora do Button: não dispara a navegação.
     private var nextFitWodEntryCard: some View {
+        let reminders = viewModel.hasNextFitSession ? viewModel.todayConfirmedCheckIns : []
+
+        return VStack(spacing: 0) {
+            nextFitWodEntryCardTop
+
+            if !reminders.isEmpty {
+                todayCheckInReminderStrip(reminders)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
+    }
+
+    @ViewBuilder
+    private var nextFitWodEntryCardTop: some View {
         if viewModel.hasNextFitSession {
             Button {
                 path.append(.studentNextFitWod)
@@ -718,84 +734,116 @@ struct StudentDashboardView: View {
                 .resizable()
                 .scaledToFill()
         )
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
+        // Recorta a foto na área original do WOD (132 pt) para não invadir a faixa do lembrete;
+        // o arredondamento, o contorno e a sombra são aplicados ao conjunto em `nextFitWodEntryCard`.
+        .clipped()
         .contentShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
-    // MARK: - Lembrete "Seu check-in de hoje" (informativo; somente agendamentos confirmados de hoje)
+    // MARK: - Lembrete "Seu check-in de hoje" (faixa integrada ao WOD do dia; informativo)
 
-    // Cores locais exclusivas do lembrete (Tema Claro — Opção 3: layout compacto e limpo)
+    // Cores locais exclusivas da faixa do lembrete (Tema Claro — Sugestão 3)
     private enum TodayCheckInColors {
-        static let background = Color.white                                                    // #FFFFFF
-        static let border = Color(red: 0x28 / 255, green: 0xC7 / 255, blue: 0x6F / 255)        // #28C76F
-        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
-        static let secondaryText = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
-        static let modality = Color(red: 0x07 / 255, green: 0xB9 / 255, blue: 0x66 / 255)      // #07B966
+        static let modality = Color(red: 0x07 / 255, green: 0xB9 / 255, blue: 0x66 / 255)        // #07B966
         static let badgeBackground = Color(red: 0xBA / 255, green: 0xF1 / 255, blue: 0xD0 / 255) // #BAF1D0
-        static let badgeText = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)     // #25482B
     }
 
-    @ViewBuilder
-    private var todayCheckInReminderCards: some View {
-        if viewModel.hasNextFitSession {
-            ForEach(viewModel.todayConfirmedCheckIns) { entry in
-                todayCheckInReminderCard(entry)
+    // Tema Claro: #F0F7EF / #85C995 / #171C17 / #294A2F / #25482B (valores já presentes em `LightColors`)
+    private var todayCheckInDividerColor: AppThemeColor {
+        AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.iconSurface)
+    }
+
+    private func todayCheckInReminderStrip(_ reminders: [NextFitAgendaDisplay]) -> some View {
+        VStack(spacing: 0) {
+            // Divisor horizontal discreto entre o WOD e o lembrete
+            Rectangle()
+                .fill(todayCheckInDividerColor)
+                .frame(height: 1)
+
+            VStack(alignment: .leading, spacing: 8) {
+                // Linha superior: título + indicador visual "Lembrete" (sem notificação nem ação)
+                HStack(alignment: .center, spacing: 8) {
+                    Text("dashboard.today_checkin.title")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+
+                    Spacer(minLength: 0)
+
+                    HStack(spacing: 4) {
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 10, weight: .semibold))
+                            .accessibilityHidden(true)
+                        Text("dashboard.today_checkin.reminder_badge")
+                            .font(.system(size: 11, weight: .semibold))
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 3)
+                    .background(
+                        Capsule().fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.16), light: TodayCheckInColors.badgeBackground))
+                    )
+                }
+
+                // Um bloco por agendamento confirmado (ordem cronológica do ViewModel), com divisor interno
+                ForEach(Array(reminders.enumerated()), id: \.element.id) { index, entry in
+                    if index > 0 {
+                        Rectangle()
+                            .fill(todayCheckInDividerColor)
+                            .frame(height: 1)
+                    }
+                    todayCheckInReminderRow(entry)
+                }
             }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
+        .accessibilityElement(children: .combine)
     }
 
-    private func todayCheckInReminderCard(_ entry: NextFitAgendaDisplay) -> some View {
-        let isLight = appTheme == .light
-        // Tema Claro: cores da Opção 3. Tema Escuro: adaptação exclusiva deste card (base escura dos demais cards).
-        let primaryTextColor = isLight ? TodayCheckInColors.primaryText : Color.white.opacity(0.92)
-        let secondaryTextColor = isLight ? TodayCheckInColors.secondaryText : Color.white.opacity(0.75)
-        let modalityColor = isLight ? TodayCheckInColors.modality : Theme.Colors.primaryGreen
-        let badgeBackground = isLight ? TodayCheckInColors.badgeBackground : Theme.Colors.primaryGreen.opacity(0.16)
-        let badgeText = isLight ? TodayCheckInColors.badgeText : Theme.Colors.primaryGreen
+    private func todayCheckInReminderRow(_ entry: NextFitAgendaDisplay) -> some View {
         let modalityName = entry.modalityName.trimmingCharacters(in: .whitespacesAndNewlines)
         let locationName = entry.locationName.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return VStack(alignment: .leading, spacing: 7) {
-            // Linha superior: título + indicador visual "Lembrete" (sem notificação real)
-            HStack(alignment: .center, spacing: 8) {
-                Text("dashboard.today_checkin.title")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(primaryTextColor)
-                    .lineLimit(1)
+        return HStack(alignment: .center, spacing: 10) {
+            // Bloco esquerdo: ícone + horário (prioridade) e local
+            Image(systemName: "calendar.badge.clock")
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
+                .frame(width: 34, height: 34)
+                .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.iconSurface))
+                .clipShape(RoundedRectangle(cornerRadius: 9))
+                .accessibilityHidden(true)
 
-                Spacer(minLength: 0)
-
-                HStack(spacing: 4) {
-                    Image(systemName: "bell.fill")
-                        .font(.system(size: 10, weight: .semibold))
-                        .accessibilityHidden(true)
-                    Text("dashboard.today_checkin.reminder_badge")
-                        .font(.system(size: 11, weight: .semibold))
-                        .lineLimit(1)
-                }
-                .foregroundStyle(badgeText)
-                .padding(.horizontal, 8)
-                .padding(.vertical, 3)
-                .background(Capsule().fill(badgeBackground))
-            }
-
-            // Horário
-            HStack(spacing: 6) {
-                Image(systemName: "clock")
-                    .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(secondaryTextColor)
-                    .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: entry.scheduleText(locale: locale))
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(primaryTextColor)
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
-            }
 
-            // Modalidade
+                if !locationName.isEmpty {
+                    Text(verbatim: locationName)
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.70), light: LightColors.chevron))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                }
+            }
+            .fixedSize(horizontal: false, vertical: true)
+            .layoutPriority(1)
+
             if !modalityName.isEmpty {
+                // Divisor vertical discreto
+                Rectangle()
+                    .fill(todayCheckInDividerColor)
+                    .frame(width: 1, height: 30)
+
+                // Bloco direito: modalidade
                 HStack(spacing: 6) {
                     Image(systemName: "dumbbell.fill")
                         .font(.system(size: 12, weight: .semibold))
@@ -803,36 +851,14 @@ struct StudentDashboardView: View {
                     Text(verbatim: modalityName)
                         .font(.system(size: 14, weight: .semibold))
                         .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
-                .foregroundStyle(modalityColor)
-            }
-
-            // Local
-            if !locationName.isEmpty {
-                HStack(spacing: 6) {
-                    Image(systemName: "mappin.and.ellipse")
-                        .font(.system(size: 12, weight: .semibold))
-                        .accessibilityHidden(true)
-                    Text(verbatim: locationName)
-                        .font(.system(size: 13, weight: .medium))
-                        .lineLimit(1)
-                }
-                .foregroundStyle(secondaryTextColor)
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: TodayCheckInColors.modality))
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                Spacer(minLength: 0)
             }
         }
-        .padding(12)
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .background(isLight ? TodayCheckInColors.background : Color.black.opacity(0.68))
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(
-                    isLight ? TodayCheckInColors.border : Theme.Colors.primaryGreen.opacity(0.45),
-                    lineWidth: isLight ? 1.5 : 1
-                )
-        )
-        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
-        .accessibilityElement(children: .combine)
     }
 
     private func weeklyProgressText(completed: Int, total: Int) -> String {
