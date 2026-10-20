@@ -10092,6 +10092,29 @@
         }
       }
     },
+    "dashboard.today_checkin.reminder_badge" : {
+      "comment" : "Stable semantic key for: Lembrete",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Reminder"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Recordatorio"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Lembrete"
+          }
+        }
+      }
+    },
     "dashboard.today_checkin.title" : {
       "comment" : "Stable semantic key for: Seu check-in de hoje",
       "localizations" : {

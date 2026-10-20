@@ -726,12 +726,15 @@ struct StudentDashboardView: View {
 
     // MARK: - Lembrete "Seu check-in de hoje" (informativo; somente agendamentos confirmados de hoje)
 
-    // Cores locais exclusivas do lembrete (Tema Claro — Sugestão 2)
+    // Cores locais exclusivas do lembrete (Tema Claro — Opção 3: layout compacto e limpo)
     private enum TodayCheckInColors {
-        static let darkGreen = Color(red: 0x16 / 255, green: 0x4D / 255, blue: 0x31 / 255)   // #164D31
-        static let midGreen = Color(red: 0x24 / 255, green: 0x64 / 255, blue: 0x42 / 255)    // #246442
-        static let accent = Color(red: 0x51 / 255, green: 0xE5 / 255, blue: 0x8B / 255)      // #51E58B
-        static let mint = Color(red: 0x85 / 255, green: 0xE5 / 255, blue: 0xA7 / 255)        // #85E5A7
+        static let background = Color.white                                                    // #FFFFFF
+        static let border = Color(red: 0x28 / 255, green: 0xC7 / 255, blue: 0x6F / 255)        // #28C76F
+        static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
+        static let secondaryText = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+        static let modality = Color(red: 0x07 / 255, green: 0xB9 / 255, blue: 0x66 / 255)      // #07B966
+        static let badgeBackground = Color(red: 0xBA / 255, green: 0xF1 / 255, blue: 0xD0 / 255) // #BAF1D0
+        static let badgeText = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)     // #25482B
     }
 
     @ViewBuilder
@@ -745,95 +748,88 @@ struct StudentDashboardView: View {
 
     private func todayCheckInReminderCard(_ entry: NextFitAgendaDisplay) -> some View {
         let isLight = appTheme == .light
-        let accentColor = isLight ? TodayCheckInColors.accent : Theme.Colors.primaryGreen
+        // Tema Claro: cores da Opção 3. Tema Escuro: adaptação exclusiva deste card (base escura dos demais cards).
+        let primaryTextColor = isLight ? TodayCheckInColors.primaryText : Color.white.opacity(0.92)
+        let secondaryTextColor = isLight ? TodayCheckInColors.secondaryText : Color.white.opacity(0.75)
+        let modalityColor = isLight ? TodayCheckInColors.modality : Theme.Colors.primaryGreen
+        let badgeBackground = isLight ? TodayCheckInColors.badgeBackground : Theme.Colors.primaryGreen.opacity(0.16)
+        let badgeText = isLight ? TodayCheckInColors.badgeText : Theme.Colors.primaryGreen
         let modalityName = entry.modalityName.trimmingCharacters(in: .whitespacesAndNewlines)
         let locationName = entry.locationName.trimmingCharacters(in: .whitespacesAndNewlines)
 
-        return HStack(alignment: .top, spacing: 12) {
-            Image(systemName: "clock.fill")
-                .font(.system(size: 18, weight: .semibold))
-                .foregroundStyle(isLight ? TodayCheckInColors.darkGreen : Theme.Colors.primaryGreen)
-                .frame(width: 42, height: 42)
-                .background(isLight ? TodayCheckInColors.mint : Theme.Colors.primaryGreen.opacity(0.14))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(isLight ? Color.white.opacity(0.18) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
-                )
-                .accessibilityHidden(true)
+        return VStack(alignment: .leading, spacing: 7) {
+            // Linha superior: título + indicador visual "Lembrete" (sem notificação real)
+            HStack(alignment: .center, spacing: 8) {
+                Text("dashboard.today_checkin.title")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundStyle(primaryTextColor)
+                    .lineLimit(1)
 
-            VStack(alignment: .leading, spacing: 4) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    Text("dashboard.today_checkin.title")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(Color.white.opacity(0.80))
-                        .lineLimit(1)
+                Spacer(minLength: 0)
 
-                    Spacer(minLength: 0)
-
-                    // Indicador discreto de lembrete
+                HStack(spacing: 4) {
                     Image(systemName: "bell.fill")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(accentColor)
+                        .font(.system(size: 10, weight: .semibold))
                         .accessibilityHidden(true)
+                    Text("dashboard.today_checkin.reminder_badge")
+                        .font(.system(size: 11, weight: .semibold))
+                        .lineLimit(1)
                 }
+                .foregroundStyle(badgeText)
+                .padding(.horizontal, 8)
+                .padding(.vertical, 3)
+                .background(Capsule().fill(badgeBackground))
+            }
 
+            // Horário
+            HStack(spacing: 6) {
+                Image(systemName: "clock")
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(secondaryTextColor)
+                    .accessibilityHidden(true)
                 Text(verbatim: entry.scheduleText(locale: locale))
-                    .font(.system(size: 17, weight: .bold))
-                    .foregroundStyle(Color.white)
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(primaryTextColor)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
+            }
 
-                if !modalityName.isEmpty {
-                    HStack(spacing: 6) {
-                        Image(systemName: "dumbbell.fill")
-                            .font(.system(size: 12, weight: .semibold))
-                            .accessibilityHidden(true)
-                        Text(verbatim: modalityName)
-                            .font(.system(size: 14, weight: .semibold))
-                            .lineLimit(1)
-                    }
-                    .foregroundStyle(accentColor)
+            // Modalidade
+            if !modalityName.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "dumbbell.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .accessibilityHidden(true)
+                    Text(verbatim: modalityName)
+                        .font(.system(size: 14, weight: .semibold))
+                        .lineLimit(1)
                 }
+                .foregroundStyle(modalityColor)
+            }
 
-                if !locationName.isEmpty {
-                    HStack(spacing: 6) {
-                        Image(systemName: "mappin.and.ellipse")
-                            .font(.system(size: 12, weight: .semibold))
-                            .accessibilityHidden(true)
-                        Text(verbatim: locationName)
-                            .font(.system(size: 14, weight: .medium))
-                            .lineLimit(1)
-                    }
-                    .foregroundStyle(Color.white.opacity(0.85))
+            // Local
+            if !locationName.isEmpty {
+                HStack(spacing: 6) {
+                    Image(systemName: "mappin.and.ellipse")
+                        .font(.system(size: 12, weight: .semibold))
+                        .accessibilityHidden(true)
+                    Text(verbatim: locationName)
+                        .font(.system(size: 13, weight: .medium))
+                        .lineLimit(1)
                 }
+                .foregroundStyle(secondaryTextColor)
             }
         }
-        .padding(14)
+        .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            ZStack {
-                if isLight {
-                    LinearGradient(
-                        colors: [TodayCheckInColors.darkGreen, TodayCheckInColors.midGreen],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                } else {
-                    // Tema Escuro: mesma base escura dos demais cards com leve realce verde
-                    Color.black.opacity(0.68)
-                    LinearGradient(
-                        colors: [Theme.Colors.primaryGreen.opacity(0.22), Theme.Colors.primaryGreen.opacity(0.06)],
-                        startPoint: .leading,
-                        endPoint: .trailing
-                    )
-                }
-            }
-        )
+        .background(isLight ? TodayCheckInColors.background : Color.black.opacity(0.68))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(isLight ? LightColors.chevron : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                .stroke(
+                    isLight ? TodayCheckInColors.border : Theme.Colors.primaryGreen.opacity(0.45),
+                    lineWidth: isLight ? 1.5 : 1
+                )
         )
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
         .accessibilityElement(children: .combine)
