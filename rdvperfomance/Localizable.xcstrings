@@ -88996,6 +88996,28 @@
         }
       }
     },
+    "teacher_students.invites_sent_card_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent invitations"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitaciones enviadas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convites enviados"
+          }
+        }
+      }
+    },
     "Técnica" : {
       "extractionState" : "stale",
       "localizations" : {

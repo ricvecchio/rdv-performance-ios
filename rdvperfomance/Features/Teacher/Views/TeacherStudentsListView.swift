@@ -1189,10 +1189,6 @@ struct TeacherStudentsListView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
             )
-
-            Text("ui.the_student_will_only_appear_in_your_list_after_accepting_the_app_invitation")
-                .font(.system(size: 13))
-                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.35).dark, light: Color.white.opacity(0.85)))
         }
     }
 
@@ -1200,7 +1196,7 @@ struct TeacherStudentsListView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("student_teachers.sent_invitations_section")
+                Text("teacher_students.invites_sent_card_title")
                     .font(.system(size: 14, weight: .medium))
                     // Tema Claro: textos/ícones claros sobre o card verde militar. Tema Escuro: valores originais.
                     .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.35).dark, light: Color.white.opacity(0.85)))

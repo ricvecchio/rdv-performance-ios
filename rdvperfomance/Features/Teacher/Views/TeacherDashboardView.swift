@@ -258,7 +258,8 @@ struct TeacherDashboardView: View {
                     quickAccessItem(
                         title: item.title,
                         subtitle: item.subtitle,
-                        icon: item.systemImage
+                        icon: item.systemImage,
+                        centersGraphicsVertically: item == .myVideos
                     ) {
                         openQuickAccessItem(item)
                     }
@@ -658,10 +659,12 @@ struct TeacherDashboardView: View {
         title: LocalizedStringKey,
         subtitle: LocalizedStringKey,
         icon: String,
+        centersGraphicsVertically: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(alignment: .top, spacing: 10) {
+            // "Meus Vídeos": ícone e seta centralizados verticalmente; demais atalhos mantêm o alinhamento original.
+            HStack(alignment: centersGraphicsVertically ? .center : .top, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
                         .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
