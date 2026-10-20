@@ -2,6 +2,9 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let youtubeVideosDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 enum YoutubeVideosContext {
     case teacher(category: TreinoTipo)
     case student(studentId: String)
@@ -27,7 +30,7 @@ private struct LightBarActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(youtubeVideosDarkGreenBorder, lineWidth: 1)
                 )
         } else if compact {
             content
@@ -234,7 +237,7 @@ struct YoutubeVideosView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -314,12 +317,12 @@ struct YoutubeVideosView: View {
                                 .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
-                                // Tema Claro: área interna #F0F7EF e borda #C9DFC9 (TrainingWeeksView). Tema Escuro: valores originais.
+                                // Tema Claro: área interna #F0F7EF e borda #294A2F. Tema Escuro: valores originais.
                                 .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.innerSurface))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                                 )
 
                             if let editTitleErrorMessage {
@@ -330,12 +333,12 @@ struct YoutubeVideosView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        // Tema Claro: mesmo card do Adicionar Vídeo (#DDEDDC, borda #C9DFC9 e sombra). Tema Escuro: valores originais.
+                        // Tema Claro: mesmo card do Adicionar Vídeo (#DDEDDC, borda #294A2F e sombra). Tema Escuro: valores originais.
                         .background(AppThemeColor(dark: Theme.Colors.glass(0.68).dark, light: LightColors.cardSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: LightColors.border), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: LightColors.chevron), lineWidth: 1)
                         )
                         .shadow(
                             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -360,7 +363,7 @@ struct YoutubeVideosView: View {
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                     )
                     .disabled(isSavingVideoTitle)
 
@@ -556,7 +559,12 @@ struct YoutubeVideosView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(LightColors.chevron)
+                        : AnyShapeStyle(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28))),
+                    lineWidth: 1
+                )
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,

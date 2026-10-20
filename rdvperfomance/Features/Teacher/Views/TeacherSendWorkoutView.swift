@@ -1,6 +1,9 @@
 import SwiftUI
 import FirebaseAuth
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let sendWorkoutDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 private struct WorkoutSectionOption: Identifiable, Hashable {
     let title: String
     let sectionKey: String
@@ -19,9 +22,9 @@ private struct WorkoutPickerLabel: View {
         let isLightSelected = appTheme == .light && isSelected
         let isLightUnselected = appTheme == .light && !isSelected
         let borderColor: AnyShapeStyle = isLightSelected
-            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+            ? AnyShapeStyle(sendWorkoutDarkGreenBorder)
             : isLightUnselected
-                ? AnyShapeStyle(Theme.Colors.ink(0.12))
+                ? AnyShapeStyle(sendWorkoutDarkGreenBorder)
                 : isSelected
                     ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.35))
                     : AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.28))
@@ -75,7 +78,7 @@ private struct LightMilitaryActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(sendWorkoutDarkGreenBorder, lineWidth: 1)
                 )
         } else {
             content.primaryGreenActionButton()
@@ -609,7 +612,7 @@ struct TeacherSendWorkoutView: View {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             appTheme == .light
-                                ? (isSelected ? AppThemePalette.lightBar.opacity(0.90) : LightColors.border)
+                                ? LightColors.chevron
                                 : isSelected
                                     ? Theme.Colors.primaryGreen.opacity(0.30)
                                     : Theme.Colors.primaryGreen.opacity(0.28),
@@ -713,7 +716,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -779,7 +782,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -808,7 +811,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -922,9 +925,9 @@ struct TeacherSendWorkoutView: View {
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
                     isLightSelected
-                        ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                        ? AnyShapeStyle(LightColors.chevron)
                         : isLightUnselected
-                            ? AnyShapeStyle(Theme.Colors.ink(0.12))
+                            ? AnyShapeStyle(LightColors.chevron)
                             : AnyShapeStyle(isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28)),
                     lineWidth: 1
                 )
@@ -996,7 +999,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1038,7 +1041,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1107,7 +1110,7 @@ struct TeacherSendWorkoutView: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
             .disabled(isSending)
             .padding(.horizontal, 16)
@@ -1118,7 +1121,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1139,7 +1142,7 @@ struct TeacherSendWorkoutView: View {
                         ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
                         : AnyShapeStyle(Theme.Colors.glass(0.68))
                 let borderColor: Color = isLight
-                    ? (isSelected ? AppThemePalette.lightBar.opacity(0.90) : LightColors.border)
+                    ? LightColors.chevron
                     : isSelected
                         ? Theme.Colors.primaryGreen.opacity(0.30)
                         : Theme.Colors.primaryGreen.opacity(0.28)
@@ -1561,7 +1564,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1776,7 +1779,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: sendWorkoutDarkGreenBorder), lineWidth: 1)
         )
     }
 
@@ -1820,7 +1823,7 @@ private struct WorkoutTemplateSelectionSheet: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: sendWorkoutDarkGreenBorder), lineWidth: 1)
             )
         }
     }
@@ -1932,7 +1935,7 @@ private struct WorkoutTemplateSelectionSheet: View {
             } label: {
                 Text("common.cancel")
                     .font(.system(size: 15, weight: .bold))
-                    // Tema Claro: mesmo cinza do Cancelar da CategoryMultiSelectionSheet (sem borda). Tema Escuro: valores originais.
+                    // Tema Claro: mesmo cinza do Cancelar da CategoryMultiSelectionSheet, com contorno #294A2F. Tema Escuro: valores originais.
                     .foregroundStyle(Theme.Colors.ink(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -1946,7 +1949,7 @@ private struct WorkoutTemplateSelectionSheet: View {
                         RoundedRectangle(cornerRadius: 14)
                             .stroke(
                                 appTheme == .light
-                                    ? AnyShapeStyle(Color.clear)
+                                    ? AnyShapeStyle(sendWorkoutDarkGreenBorder)
                                     : AnyShapeStyle(Theme.Colors.cardBorder),
                                 lineWidth: 1
                             )

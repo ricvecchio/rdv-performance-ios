@@ -1,6 +1,9 @@
 import SwiftUI
 import FirebaseAuth
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let createWorkoutDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 // Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `primaryGreenActionButton()`.
 // Tema Escuro e estado desabilitado: mantém exatamente o `primaryGreenActionButton()` original.
 private struct LightMilitaryActionButtonModifier: ViewModifier {
@@ -17,7 +20,7 @@ private struct LightMilitaryActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(createWorkoutDarkGreenBorder, lineWidth: 1)
                 )
         } else {
             content.primaryGreenActionButton()
@@ -47,7 +50,7 @@ private struct LightThemeAttachmentButton: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(createWorkoutDarkGreenBorder, lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
@@ -245,7 +248,7 @@ struct CreateTreinoAcademiaView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: LightColors.chevron), lineWidth: 1)
                     )
             }
         }
@@ -256,7 +259,7 @@ struct CreateTreinoAcademiaView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -332,7 +335,7 @@ struct CreateTreinoAcademiaView: View {
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
 
@@ -354,7 +357,7 @@ struct CreateTreinoAcademiaView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -405,7 +408,7 @@ struct CreateTreinoAcademiaView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,

@@ -1,5 +1,8 @@
 import SwiftUI
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let addVideoDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 // Tema Claro (habilitado): padrão do botão Sair da ProfileView (verde militar 80%/90% e texto branco),
 // mantendo as dimensões do `primaryGreenActionButton()`. Tema Escuro e estado desabilitado: estilo original.
 private struct LightBarSaveButtonModifier: ViewModifier {
@@ -16,7 +19,7 @@ private struct LightBarSaveButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(addVideoDarkGreenBorder, lineWidth: 1)
                 )
         } else {
             content
@@ -88,7 +91,7 @@ struct AddYoutubeVideoSheet: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                         )
                         .shadow(
                             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -117,7 +120,7 @@ struct AddYoutubeVideoSheet: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.border), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.chevron), lineWidth: 1)
                         )
                         .shadow(
                             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -185,7 +188,7 @@ struct AddYoutubeVideoSheet: View {
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                 )
             }
             
@@ -208,7 +211,7 @@ struct AddYoutubeVideoSheet: View {
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                 )
             }
             
@@ -228,7 +231,7 @@ struct AddYoutubeVideoSheet: View {
                 .cornerRadius(14)
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
-                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                 )
             }
         }
