@@ -1026,7 +1026,7 @@ struct TeacherStudentsListView: View {
             case .invite:
                 AppLocalization.string("ui.invite", locale: locale)
             case .sent:
-                AppLocalization.string("student_teachers.sent_invitations_section", locale: locale)
+                AppLocalization.string("teacher_students.invites_sent_card_title", locale: locale)
             }
         }
     }
