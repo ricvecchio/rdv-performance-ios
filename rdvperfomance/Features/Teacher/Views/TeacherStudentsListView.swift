@@ -1156,11 +1156,6 @@ struct TeacherStudentsListView: View {
     private var inviteByEmailCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            Text("ui.invite_by_email")
-                .font(.system(size: 14, weight: .medium))
-                // Tema Claro: texto claro sobre o card verde militar. Tema Escuro: valor original.
-                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.35).dark, light: Color.white.opacity(0.85)))
-
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
                     .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.35)).dark, light: LightColors.iconInk))
@@ -1196,11 +1191,6 @@ struct TeacherStudentsListView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("teacher_students.invites_sent_card_title")
-                    .font(.system(size: 14, weight: .medium))
-                    // Tema Claro: textos/ícones claros sobre o card verde militar. Tema Escuro: valores originais.
-                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.35).dark, light: Color.white.opacity(0.85)))
-
                 Spacer()
 
                 Button {
