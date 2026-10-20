@@ -23,13 +23,17 @@ private struct AuthPrimaryActionButtonModifier: ViewModifier {
     @Environment(\.appTheme) private var appTheme
     @Environment(\.isEnabled) private var isEnabled
 
+    // `true`: fundo do Tema Claro igual ao botão "Sair" da ProfileView (verde militar #29452C a 80%).
+    // `false` (padrão): fundo verde militar sólido original.
+    var usesLogoutButtonBackground: Bool = false
+
     func body(content: Content) -> some View {
         if appTheme == .light {
             content
                 .font(.system(size: 16, weight: .semibold))
                 .foregroundStyle(isEnabled ? Color.white.opacity(0.92) : Color.white.opacity(0.55))
                 .padding(.vertical, 14)
-                .background(AuthLightPalette.buttonSurface)
+                .background(usesLogoutButtonBackground ? AppThemePalette.lightBar.opacity(0.80) : AuthLightPalette.buttonSurface)
                 .cornerRadius(12)
                 .overlay(
                     // Contorno verde-escuro #294A2F (mesmo tom do card "Acesso rápido" da TeacherDashboardView)
@@ -59,8 +63,8 @@ private struct AuthLightOnMilitaryGreenModifier: ViewModifier {
 
 extension View {
     // Uso exclusivo das telas de autenticação
-    func authPrimaryActionButton() -> some View {
-        modifier(AuthPrimaryActionButtonModifier())
+    func authPrimaryActionButton(usesLogoutButtonBackground: Bool = false) -> some View {
+        modifier(AuthPrimaryActionButtonModifier(usesLogoutButtonBackground: usesLogoutButtonBackground))
     }
 
     // Uso exclusivo das telas de autenticação

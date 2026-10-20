@@ -200,7 +200,7 @@ struct RegisterStudentView: View {
                     )
                 }
                 .frame(maxWidth: .infinity)
-                .authPrimaryActionButton()
+                .authPrimaryActionButton(usesLogoutButtonBackground: true)
             }
             .buttonStyle(.plain)
             .disabled(vm.isLoading)

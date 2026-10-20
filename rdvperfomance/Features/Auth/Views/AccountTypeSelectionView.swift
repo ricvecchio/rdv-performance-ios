@@ -268,7 +268,7 @@ struct AccountTypeSelectionView: View {
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: AuthLightPalette.buttonSurface, followsBarColorScheme: false))
+                    .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: AppThemePalette.lightBar.opacity(0.80), followsBarColorScheme: false))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(

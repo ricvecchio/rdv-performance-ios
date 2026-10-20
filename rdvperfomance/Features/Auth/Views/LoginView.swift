@@ -105,7 +105,7 @@ struct LoginView: View {
                     }
                     .frame(maxWidth: .infinity)
                     .frame(width: 260)
-                    .authPrimaryActionButton()
+                    .authPrimaryActionButton(usesLogoutButtonBackground: true)
                 }
                 .buttonStyle(.plain)
                 .padding(.top, 22)
