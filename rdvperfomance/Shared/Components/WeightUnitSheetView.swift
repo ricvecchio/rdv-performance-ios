@@ -1,5 +1,8 @@
 import SwiftUI
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView.
+private let weightUnitDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 enum WeightUnit: String, CaseIterable {
     case kg
     case lbs
@@ -37,6 +40,7 @@ struct WeightUnitSheetView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let darkGreenBorder = weightUnitDarkGreenBorder                                  // #294A2F (contorno dos cards e botões)
     }
 
     private var selectedUnit: WeightUnit {
@@ -112,7 +116,7 @@ struct WeightUnitSheetView: View {
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.border), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.darkGreenBorder), lineWidth: 1)
                     )
 
                     Text("settings.weight_unit.description")
@@ -135,7 +139,7 @@ struct WeightUnitSheetView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.darkGreenBorder), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -175,11 +179,15 @@ private struct WeightUnitSaveButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(weightUnitDarkGreenBorder, lineWidth: 1)
                 )
         } else {
             content
                 .primaryGreenActionButton()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(appTheme == .light ? weightUnitDarkGreenBorder : Color.clear, lineWidth: 1)
+                )
         }
     }
 }
