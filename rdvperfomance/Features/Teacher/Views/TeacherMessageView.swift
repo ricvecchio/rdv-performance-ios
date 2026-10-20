@@ -206,7 +206,7 @@ struct TeacherMessageView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -272,7 +272,7 @@ struct TeacherMessageView: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border),
+                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron),
                                 lineWidth: 1
                             )
                     )
@@ -304,7 +304,7 @@ struct TeacherMessageView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -328,7 +328,12 @@ struct TeacherMessageView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(LightColors.chevron)
+                        : AnyShapeStyle(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28))),
+                    lineWidth: 1
+                )
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -475,6 +480,9 @@ struct TeacherMessageView: View {
     }
 }
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let teacherMessageDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 // Tema Claro + habilitado: mesmas cores/transparências do botão Sair da ProfileView e sombra da
 // AdminProfileSelectionView, preservando fonte, padding e arredondamento de `primaryGreenActionButton()`.
 // Tema Escuro ou desabilitado: aplica exatamente o `primaryGreenActionButton()` original.
@@ -492,7 +500,7 @@ private struct TeacherMessageLightBarActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(teacherMessageDarkGreenBorder, lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(0.25), radius: 10, y: 6)
         } else {

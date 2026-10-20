@@ -319,7 +319,7 @@ struct TeacherStudentsListView: View {
                         .stroke(
                             AppThemeColor(
                                 dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28),
-                                light: isSelected ? AppThemePalette.lightBar.opacity(0.90) : LightColors.border
+                                light: LightColors.chevron
                             ),
                             lineWidth: 1
                         )
@@ -358,7 +358,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -471,6 +471,10 @@ struct TeacherStudentsListView: View {
                 Text("ui.try_again")
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
+                    )
             }
             .buttonStyle(.plain)
         }
@@ -632,7 +636,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -681,7 +685,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -847,7 +851,7 @@ struct TeacherStudentsListView: View {
                                         .stroke(
                                             AppThemeColor(
                                                 dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08),
-                                                light: isSelected ? LightColors.chevron : LightColors.border
+                                                light: LightColors.chevron
                                             ),
                                             lineWidth: 1
                                         )
@@ -872,6 +876,10 @@ struct TeacherStudentsListView: View {
                                 .padding(.vertical, 14)
                                 .background(Theme.Colors.ink(0.10))
                                 .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
+                                )
                         }
                         .buttonStyle(.plain)
                         .disabled(isSaving)
@@ -1070,7 +1078,7 @@ struct TeacherStudentsListView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: AppThemePalette.lightBar.opacity(0.90)), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -1179,7 +1187,7 @@ struct TeacherStudentsListView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
             )
 
             Text("ui.the_student_will_only_appear_in_your_list_after_accepting_the_app_invitation")
@@ -1242,7 +1250,7 @@ struct TeacherStudentsListView: View {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.border), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                 )
             }
         }
@@ -1282,6 +1290,10 @@ struct TeacherStudentsListView: View {
                         .padding(.horizontal, 10)
                         .padding(.vertical, 7)
                         .background(Capsule().fill(Color.red.opacity(0.16)))
+                        .overlay(
+                            Capsule()
+                                .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
+                        )
                 }
                 .buttonStyle(.plain)
                 .disabled(vm.isInvitesLoading)
@@ -1296,6 +1308,9 @@ struct TeacherStudentsListView: View {
         await vm.loadInvites(teacherId: teacherId, force: force)
     }
 }
+
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let teacherStudentsDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
 
 // Tema Claro + habilitado: mesmas cores/transparências do botão Sair da ProfileView,
 // preservando fonte, padding e arredondamento de `primaryGreenActionButton()`.
@@ -1314,7 +1329,7 @@ private struct TeacherStudentsLightBarActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                        .stroke(teacherStudentsDarkGreenBorder, lineWidth: 1)
                 )
         } else {
             content
