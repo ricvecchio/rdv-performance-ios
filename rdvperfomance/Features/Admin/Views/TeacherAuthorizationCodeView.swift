@@ -8,6 +8,9 @@ struct TeacherAuthorizationCodeView: View {
 
     @State private var isRotateConfirmationPresented = false
 
+    // Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+    private let lightDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
     var body: some View {
         ZStack {
             Theme.Colors.sheetBackground.ignoresSafeArea()
@@ -62,6 +65,10 @@ struct TeacherAuthorizationCodeView: View {
                                             }
                                                 .padding(.horizontal, 12)
                                                 .compactPrimaryGreenActionButton()
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(AppThemeColor(dark: Color.clear, light: lightDarkGreenBorder), lineWidth: 1)
+                                                )
                                         }
                                         .buttonStyle(.plain)
                                         .disabled(vm.isBusy)
@@ -79,7 +86,7 @@ struct TeacherAuthorizationCodeView: View {
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: lightDarkGreenBorder), lineWidth: 1)
                                 )
                             }
 
@@ -101,7 +108,7 @@ struct TeacherAuthorizationCodeView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: lightDarkGreenBorder), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -121,7 +128,7 @@ struct TeacherAuthorizationCodeView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: lightDarkGreenBorder), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -139,6 +146,10 @@ struct TeacherAuthorizationCodeView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .primaryGreenActionButton()
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(AppThemeColor(dark: Color.clear, light: lightDarkGreenBorder), lineWidth: 1)
+                        )
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isBusy)

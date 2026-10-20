@@ -179,8 +179,8 @@ struct AdminUsersView: View {
                             RoundedRectangle(cornerRadius: 12)
                                 .stroke(
                                     selectedFilter == filter
-                                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.30), light: AppThemePalette.lightBar))
-                                        : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.12), light: AdminLightColors.chipBorder)),
+                                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.30), light: AdminLightColors.chevron))
+                                        : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.12), light: AdminLightColors.chevron)),
                                     lineWidth: 1
                                 )
                         )
@@ -205,6 +205,10 @@ struct AdminUsersView: View {
                 .padding(16)
                 .background(AppThemeColor(dark: Color.black.opacity(0.65), light: AdminLightColors.cardSurface))
                 .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(AppThemeColor(dark: Color.clear, light: AdminLightColors.chevron), lineWidth: 1)
+                )
         } else if filteredUsers.isEmpty {
             Text("admin.users.empty")
                 .font(.system(size: 14))
@@ -213,6 +217,10 @@ struct AdminUsersView: View {
                 .padding(.vertical, 24)
                 .background(AppThemeColor(dark: Color.black.opacity(0.65), light: AdminLightColors.cardSurface))
                 .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(AppThemeColor(dark: Color.clear, light: AdminLightColors.chevron), lineWidth: 1)
+                )
         } else {
             VStack(spacing: 0) {
                 ForEach(Array(filteredUsers.enumerated()), id: \.element.id) { index, user in
@@ -229,7 +237,7 @@ struct AdminUsersView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AdminLightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AdminLightColors.chevron), lineWidth: 1)
             )
         }
     }
@@ -742,7 +750,7 @@ private struct AdminInfoTile: View {
         .background(AppThemeColor(dark: Color.white.opacity(0.06), light: AdminLightColors.innerSurface))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: AdminLightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: AdminLightColors.chevron), lineWidth: 1)
         )
         .clipShape(RoundedRectangle(cornerRadius: 12))
     }
@@ -907,7 +915,7 @@ private extension View {
             .background(AppThemeColor(dark: Color.black.opacity(0.68), light: AdminLightColors.cardSurface))
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AdminLightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AdminLightColors.chevron), lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 14))
     }
@@ -917,7 +925,7 @@ private extension View {
             .background(AppThemeColor(dark: Color.white.opacity(0.06), light: AdminLightColors.innerSurface))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: AdminLightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: AdminLightColors.chevron), lineWidth: 1)
             )
             .clipShape(RoundedRectangle(cornerRadius: 12))
     }
@@ -938,6 +946,10 @@ private struct AdminSection<Content: View>: View {
             .padding(.horizontal, 16)
             .background(AppThemeColor(dark: Color.black.opacity(0.65), light: AdminLightColors.cardSurface))
             .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(AppThemeColor(dark: Color.clear, light: AdminLightColors.chevron), lineWidth: 1)
+            )
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }

@@ -7,6 +7,9 @@ struct AdminProfileSelectionView: View {
 
     private let textSecondary = Color.white.opacity(0.60)
 
+    // Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+    private let lightDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
     var body: some View {
         ZStack {
             AppThemeBackgroundImage()
@@ -109,7 +112,7 @@ struct AdminProfileSelectionView: View {
                     .fill(Theme.Colors.glass(0.68))
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: lightDarkGreenBorder), lineWidth: 1)
                     )
             )
             .shadow(color: .black.opacity(0.25), radius: 10, y: 6)
