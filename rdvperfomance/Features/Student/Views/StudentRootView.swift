@@ -184,6 +184,10 @@ struct StudentRootView: View {
                 onSelectSection: selectSection
             )
 
+        // Aberta pelo aviso de novidade de temas (1.0.25) na Home do aluno
+        case .tema:
+            ThemeSettingsView()
+
         default:
             EmptyView()
         }

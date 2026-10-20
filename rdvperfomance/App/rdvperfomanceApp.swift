@@ -59,6 +59,8 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         FirebaseApp.configure()
+        // Data de corte do aviso de temas (1.0.25): gravada somente na primeira abertura desta versão
+        ThemeAnnouncementStore.recordReleaseCutoffIfNeeded()
         return true
     }
 }

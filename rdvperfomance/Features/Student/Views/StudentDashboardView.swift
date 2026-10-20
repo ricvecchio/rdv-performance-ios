@@ -126,6 +126,10 @@ struct StudentDashboardView: View {
             nextFitLoginSheet
                 .presentationDetents([.fraction(0.50)])
         }
+        // Aviso único da novidade de temas (1.0.25); "Escolher meu tema" abre a ThemeSettingsView na pilha da Home
+        .themeAnnouncement {
+            path.append(.tema)
+        }
     }
 
     private var header: some View {

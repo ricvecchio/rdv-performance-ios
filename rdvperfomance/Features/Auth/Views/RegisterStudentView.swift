@@ -5,6 +5,7 @@ struct RegisterStudentView: View {
 
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showPassword: Bool = false
 
@@ -36,6 +37,9 @@ struct RegisterStudentView: View {
 
                             formCardStudent()
                                 .padding(.top, 24)
+
+                            // Escolha do tema (preferência local, aplicada imediatamente)
+                            RegisterThemeSelectionSection()
 
                             actionArea()
 
@@ -76,7 +80,8 @@ struct RegisterStudentView: View {
                     .foregroundStyle(Theme.Colors.ink())
             }
         }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme` (mesmos valores de `headerBackground`): a barra acompanha a troca de tema imediatamente
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .onChange(of: vm.successMessage) { _, newValue in
