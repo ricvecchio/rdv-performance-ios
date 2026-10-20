@@ -151,7 +151,7 @@ struct TeacherDashboardView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.coach_area")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundStyle(Theme.Colors.ink())
+                    .foregroundStyle(Color.white)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
