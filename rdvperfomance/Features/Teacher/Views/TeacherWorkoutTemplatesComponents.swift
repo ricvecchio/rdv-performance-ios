@@ -24,6 +24,11 @@ struct TeacherWorkoutTemplatesAddButton: View {
             }
             .padding(.horizontal, 14)
             .compactPrimaryGreenActionButton()
+            // Tema Claro: contorno verde-escuro (#294A2F). Tema Escuro: transparente (estilo original preservado)
+            .overlay(
+                RoundedRectangle(cornerRadius: 12)
+                    .stroke(AppThemeColor(dark: Color.clear, light: TemplatesLightColors.chevron), lineWidth: 1)
+            )
         }
         .buttonStyle(.plain)
     }
@@ -66,7 +71,7 @@ struct TeacherWorkoutTemplatesContentCard: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: TemplatesLightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: TemplatesLightColors.chevron), lineWidth: 1)
         )
         // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
         .shadow(
@@ -260,7 +265,7 @@ struct TeacherWorkoutTemplatesMessageCard: View {
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
                     usesApprovedCardStyle
-                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: TemplatesLightColors.border))
+                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: TemplatesLightColors.chevron))
                         : AnyShapeStyle(Theme.Colors.ink(0.10)),
                     lineWidth: 1
                 )
