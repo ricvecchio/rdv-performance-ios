@@ -57,6 +57,8 @@ struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
     let name: String
     let clientId: Int?
     let contractClientId: Int?
+    /// `Participantes[].Status` individual (1: mensalista; 2: acesso flexível, ex.: Wellhub/TotalPass)
+    let status: Int?
 }
 
 struct NextFitAgendaDetailDisplay: Equatable {

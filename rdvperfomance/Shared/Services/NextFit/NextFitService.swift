@@ -603,7 +603,8 @@ struct NextFitService {
                         id: $0.id,
                         name: $0.nomeParticipante,
                         clientId: $0.codigoCliente,
-                        contractClientId: $0.codigoContratoCliente
+                        contractClientId: $0.codigoContratoCliente,
+                        status: $0.status
                     )
                 }
             )

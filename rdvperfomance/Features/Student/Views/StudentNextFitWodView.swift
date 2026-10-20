@@ -984,9 +984,28 @@ struct StudentNextFitWodView: View {
                     .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ForEach(detail.participants) { participant in
-                    Text(participant.name)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                    // Ícone conforme `Participantes[].Status` individual (1: mensalista; 2: acesso flexível).
+                    // Status ausente ou desconhecido: somente o nome, como antes.
+                    let statusSymbol: String? = {
+                        switch participant.status {
+                        case 1: return "checkmark.seal.fill"
+                        case 2: return "point.3.connected.trianglepath.dotted"
+                        default: return nil
+                        }
+                    }()
+
+                    HStack(spacing: 6) {
+                        if let statusSymbol {
+                            Image(systemName: statusSymbol)
+                                .font(.system(size: 12))
+                                .foregroundStyle(Theme.Colors.ink(0.92))
+                                .accessibilityHidden(true)
+                        }
+
+                        Text(participant.name)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
+                    }
                 }
             }
 
