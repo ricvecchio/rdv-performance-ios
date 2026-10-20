@@ -17,6 +17,8 @@ struct StudentDashboardView: View {
     @State private var isNextFitLoginSheetPresented = false
     @State private var nextFitEmailInput = ""
     @State private var nextFitPasswordInput = ""
+    // Indica que a Home já foi exibida (as reexibições, ex.: retorno do WOD do dia, atualizam o lembrete de check-in)
+    @State private var hasAppearedOnce = false
 
     private let contentMaxWidth: CGFloat = 380
     private let summaryCardHeight: CGFloat = 132
@@ -114,9 +116,18 @@ struct StudentDashboardView: View {
         .appThemeNavigationBarColorScheme()
         .onAppear {
             Task { await viewModel.load(locale: locale) }
+            // Retorno à Home (ex.: após agendar/cancelar no WOD do dia): atualiza o lembrete de check-in.
+            // A primeira exibição é atendida pela `.task(id:)` abaixo (evita consulta duplicada).
+            if hasAppearedOnce {
+                Task { await viewModel.loadTodayConfirmedCheckIns() }
+            }
+            hasAppearedOnce = true
         }
         .task(id: viewModel.hasNextFitSession) {
             await viewModel.loadCurrentWeekCheckIns()
+        }
+        .task(id: viewModel.hasNextFitSession) {
+            await viewModel.loadTodayConfirmedCheckIns()
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -163,10 +174,12 @@ struct StudentDashboardView: View {
             noLinkedTeacherCard
             weeklyCheckInsCard
             nextFitWodEntryCard
+            todayCheckInReminderCards
         case .linked, .failed:
             progressCard
             weeklyCheckInsCard
             nextFitWodEntryCard
+            todayCheckInReminderCards
         }
     }
 
@@ -709,6 +722,121 @@ struct StudentDashboardView: View {
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .contentShape(RoundedRectangle(cornerRadius: 14))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
+    }
+
+    // MARK: - Lembrete "Seu check-in de hoje" (informativo; somente agendamentos confirmados de hoje)
+
+    // Cores locais exclusivas do lembrete (Tema Claro — Sugestão 2)
+    private enum TodayCheckInColors {
+        static let darkGreen = Color(red: 0x16 / 255, green: 0x4D / 255, blue: 0x31 / 255)   // #164D31
+        static let midGreen = Color(red: 0x24 / 255, green: 0x64 / 255, blue: 0x42 / 255)    // #246442
+        static let accent = Color(red: 0x51 / 255, green: 0xE5 / 255, blue: 0x8B / 255)      // #51E58B
+        static let mint = Color(red: 0x85 / 255, green: 0xE5 / 255, blue: 0xA7 / 255)        // #85E5A7
+    }
+
+    @ViewBuilder
+    private var todayCheckInReminderCards: some View {
+        if viewModel.hasNextFitSession {
+            ForEach(viewModel.todayConfirmedCheckIns) { entry in
+                todayCheckInReminderCard(entry)
+            }
+        }
+    }
+
+    private func todayCheckInReminderCard(_ entry: NextFitAgendaDisplay) -> some View {
+        let isLight = appTheme == .light
+        let accentColor = isLight ? TodayCheckInColors.accent : Theme.Colors.primaryGreen
+        let modalityName = entry.modalityName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let locationName = entry.locationName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return HStack(alignment: .top, spacing: 12) {
+            Image(systemName: "clock.fill")
+                .font(.system(size: 18, weight: .semibold))
+                .foregroundStyle(isLight ? TodayCheckInColors.darkGreen : Theme.Colors.primaryGreen)
+                .frame(width: 42, height: 42)
+                .background(isLight ? TodayCheckInColors.mint : Theme.Colors.primaryGreen.opacity(0.14))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(isLight ? Color.white.opacity(0.18) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                )
+                .accessibilityHidden(true)
+
+            VStack(alignment: .leading, spacing: 4) {
+                HStack(alignment: .firstTextBaseline, spacing: 8) {
+                    Text("dashboard.today_checkin.title")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(Color.white.opacity(0.80))
+                        .lineLimit(1)
+
+                    Spacer(minLength: 0)
+
+                    // Indicador discreto de lembrete
+                    Image(systemName: "bell.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(accentColor)
+                        .accessibilityHidden(true)
+                }
+
+                Text(verbatim: entry.scheduleText(locale: locale))
+                    .font(.system(size: 17, weight: .bold))
+                    .foregroundStyle(Color.white)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+
+                if !modalityName.isEmpty {
+                    HStack(spacing: 6) {
+                        Image(systemName: "dumbbell.fill")
+                            .font(.system(size: 12, weight: .semibold))
+                            .accessibilityHidden(true)
+                        Text(verbatim: modalityName)
+                            .font(.system(size: 14, weight: .semibold))
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(accentColor)
+                }
+
+                if !locationName.isEmpty {
+                    HStack(spacing: 6) {
+                        Image(systemName: "mappin.and.ellipse")
+                            .font(.system(size: 12, weight: .semibold))
+                            .accessibilityHidden(true)
+                        Text(verbatim: locationName)
+                            .font(.system(size: 14, weight: .medium))
+                            .lineLimit(1)
+                    }
+                    .foregroundStyle(Color.white.opacity(0.85))
+                }
+            }
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(
+            ZStack {
+                if isLight {
+                    LinearGradient(
+                        colors: [TodayCheckInColors.darkGreen, TodayCheckInColors.midGreen],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                } else {
+                    // Tema Escuro: mesma base escura dos demais cards com leve realce verde
+                    Color.black.opacity(0.68)
+                    LinearGradient(
+                        colors: [Theme.Colors.primaryGreen.opacity(0.22), Theme.Colors.primaryGreen.opacity(0.06)],
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                }
+            }
+        )
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .stroke(isLight ? LightColors.chevron : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+        )
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
+        .accessibilityElement(children: .combine)
     }
 
     private func weeklyProgressText(completed: Int, total: Int) -> String {

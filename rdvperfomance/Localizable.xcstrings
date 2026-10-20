@@ -10092,6 +10092,29 @@
         }
       }
     },
+    "dashboard.today_checkin.title" : {
+      "comment" : "Stable semantic key for: Seu check-in de hoje",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Your check-in today"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tu check-in de hoy"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Seu check-in de hoje"
+          }
+        }
+      }
+    },
     "dashboard.try_again_action" : {
       "localizations" : {
         "en" : {

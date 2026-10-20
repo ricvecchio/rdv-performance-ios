@@ -116,8 +116,12 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var currentWeekCheckInSummaries: [StudentDashboardDaySummary] =
         StudentDashboardViewModel.makeCurrentWeekCheckInSummaries(checkedInDays: [])
     @Published private(set) var isLoadingCurrentWeekCheckIns = false
+    /// Aulas de hoje com participação confirmada do aluno autenticado (lembrete "Seu check-in de hoje" da Home)
+    @Published private(set) var todayConfirmedCheckIns: [NextFitAgendaDisplay] = []
 
     private let studentId: String
+    // Identifica a consulta mais recente do lembrete de check-in (descarta resultados antigos)
+    private var todayConfirmedCheckInsGeneration = 0
     private let repository: FirestoreRepository
     private let nextFitService: NextFitService
     private var isLoadingData = false
@@ -559,6 +563,91 @@ final class StudentDashboardViewModel: ObservableObject {
         }
 
         return identity.contractClientIds?.contains(participantContractId) == true
+    }
+
+    // MARK: - Lembrete "Seu check-in de hoje" (exclusivo da Home do aluno)
+
+    /// Carrega as aulas de hoje em que o aluno autenticado está confirmado na NextFit.
+    /// Usa os mesmos critérios do resumo semanal (FezCheckin do próprio aluno ou o aluno na lista
+    /// de participantes por CodigoCliente/CodigoContratoCliente; nunca por nome nem por quantidade
+    /// de inscritos; desistência ignorada). Falhas nunca são tratadas como confirmação.
+    func loadTodayConfirmedCheckIns() async {
+        todayConfirmedCheckInsGeneration += 1
+        let generation = todayConfirmedCheckInsGeneration
+
+        guard nextFitService.hasSession(sessionAccount: studentId) else {
+            todayConfirmedCheckIns = []
+            return
+        }
+
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        do {
+            let agenda = try await nextFitService.loadAgenda(for: today, sessionAccount: studentId)
+            guard !Task.isCancelled, generation == todayConfirmedCheckInsGeneration else { return }
+
+            var identity = WeeklyCheckInParticipantIdentity(
+                clientId: try? nextFitService.clientId(sessionAccount: studentId)
+            )
+            let dayEntries = agenda.filter {
+                calendar.isDate($0.startDate, inSameDayAs: today)
+                    && $0.statusAgendaParticipante != Self.weeklyCheckInWithdrawnStatus
+            }
+
+            var confirmed: [NextFitAgendaDisplay] = []
+            for entry in dayEntries {
+                if Task.isCancelled || generation != todayConfirmedCheckInsGeneration { return }
+
+                // Check-in formal (FezCheckin) do próprio aluno
+                if entry.hasCheckIn {
+                    confirmed.append(entry)
+                    continue
+                }
+
+                // Sem identificador NextFit confiável ou sem inscritos não há como o aluno constar na aula
+                guard identity.clientId != nil, entry.enrolledStudents > 0 else { continue }
+
+                let detail: NextFitAgendaDetailDisplay
+                do {
+                    detail = try await nextFitService.loadAgendaDetail(
+                        agendaId: entry.id,
+                        sessionAccount: studentId
+                    )
+                } catch NextFitServiceError.missingSession {
+                    throw NextFitServiceError.missingSession
+                } catch NextFitServiceError.invalidSession {
+                    throw NextFitServiceError.invalidSession
+                } catch {
+                    // Falha temporária não confirma participação
+                    continue
+                }
+
+                if detail.statusAgendaParticipante == Self.weeklyCheckInWithdrawnStatus {
+                    continue
+                }
+                if detail.hasCheckIn == true {
+                    confirmed.append(entry)
+                    continue
+                }
+                for participant in detail.participants {
+                    if try await isAuthenticatedStudent(participant, identity: &identity) == true {
+                        confirmed.append(entry)
+                        break
+                    }
+                }
+            }
+
+            guard !Task.isCancelled, generation == todayConfirmedCheckInsGeneration else { return }
+            todayConfirmedCheckIns = confirmed.sorted { $0.startDate < $1.startDate }
+        } catch {
+            guard !Task.isCancelled, generation == todayConfirmedCheckInsGeneration else { return }
+            // Sessão ausente/expirada ou falha na consulta: não exibe dados não confirmados
+            todayConfirmedCheckIns = []
+            #if DEBUG
+            print("[StudentDashboard] Não foi possível carregar o check-in de hoje: \(error.localizedDescription)")
+            #endif
+        }
     }
 
     func loadNextFit(locale: Locale) async {
