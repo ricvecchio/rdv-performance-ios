@@ -151,7 +151,7 @@ struct AccountTypeSelectionView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: AuthLightPalette.cardBorder), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: AuthLightPalette.indicator), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -171,7 +171,7 @@ struct AccountTypeSelectionView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: AuthLightPalette.indicator), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -272,7 +272,7 @@ struct AccountTypeSelectionView: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
                             .stroke(
-                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.cardBorder, followsBarColorScheme: false),
+                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.indicator, followsBarColorScheme: false),
                                 lineWidth: 1
                             )
                     )

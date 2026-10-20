@@ -152,7 +152,7 @@ struct RegisterStudentView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.cardBorder),
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.indicator),
                     lineWidth: 1
                 )
         )

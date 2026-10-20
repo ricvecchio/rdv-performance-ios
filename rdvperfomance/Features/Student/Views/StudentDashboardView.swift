@@ -385,7 +385,7 @@ struct StudentDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .modifier(DashboardPrimaryActionButtonModifier(isCompact: false))
+                        .modifier(DashboardSendRequestButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isProcessingLinkAction)
@@ -888,6 +888,37 @@ private struct DashboardPrimaryActionButtonModifier: ViewModifier {
                 .environment(\.colorScheme, .dark)
         } else if isCompact {
             content.compactPrimaryGreenActionButton()
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
+// Botão "Enviar solicitação" (modal de vínculo da Home).
+// Tema Claro: mesmo padrão do botão "Sair" da ProfileView — verde militar (#29452C) a 80%, texto branco
+// e contorno #294A2F — com as mesmas medidas, sombra e estados do `DashboardPrimaryActionButtonModifier`.
+// Tema Escuro: exatamente o `primaryGreenActionButton()` original.
+private struct DashboardSendRequestButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    private static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+
+    func body(content: Content) -> some View {
+        if appTheme == .light {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(isEnabled ? 1 : 0.55))
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Self.darkGreenBorder, lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
+                // Conteúdo sobre o verde militar usa os valores claros (ProgressView)
+                .environment(\.colorScheme, .dark)
         } else {
             content.primaryGreenActionButton()
         }

@@ -32,8 +32,9 @@ private struct AuthPrimaryActionButtonModifier: ViewModifier {
                 .background(AuthLightPalette.buttonSurface)
                 .cornerRadius(12)
                 .overlay(
+                    // Contorno verde-escuro #294A2F (mesmo tom do card "Acesso rápido" da TeacherDashboardView)
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(AuthLightPalette.buttonSurface, lineWidth: 1)
+                        .stroke(AuthLightPalette.indicator, lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
                 .authLightOnMilitaryGreen()
