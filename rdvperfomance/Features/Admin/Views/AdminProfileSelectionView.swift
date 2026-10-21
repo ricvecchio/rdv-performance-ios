@@ -115,8 +115,8 @@ struct AdminProfileSelectionView: View {
                     Text(subtitle)
                         .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(Theme.Colors.ink(0.65))
-                        .multilineTextAlignment(.center)
-                        .frame(maxWidth: .infinity)
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
             .padding(.horizontal, 14)
