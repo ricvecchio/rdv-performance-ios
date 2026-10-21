@@ -568,7 +568,7 @@ struct GymnasticPersonalRecordsView: View {
                             .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
+                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
@@ -588,7 +588,7 @@ struct GymnasticPersonalRecordsView: View {
                             .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
+                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
@@ -608,7 +608,7 @@ struct GymnasticPersonalRecordsView: View {
                             .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
+                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
