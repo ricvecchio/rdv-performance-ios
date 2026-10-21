@@ -32,21 +32,24 @@ struct AdminProfileSelectionView: View {
                 VStack(spacing: 14) {
                     selectionButton(
                         title: "admin.profile_selection.administrator.title",
-                        subtitle: "admin.profile_selection.administrator.subtitle"
+                        subtitle: "admin.profile_selection.administrator.subtitle",
+                        icon: "person.crop.circle.badge.checkmark"
                     ) {
                         session.selectAdminProfile(.administrator)
                     }
 
                     selectionButton(
                         title: "admin.profile_selection.student.title",
-                        subtitle: "admin.profile_selection.student.subtitle"
+                        subtitle: "admin.profile_selection.student.subtitle",
+                        icon: "person.crop.circle"
                     ) {
                         session.selectAdminProfile(.student)
                     }
 
                     selectionButton(
                         title: "admin.profile_selection.trainer.title",
-                        subtitle: "admin.profile_selection.trainer.subtitle"
+                        subtitle: "admin.profile_selection.trainer.subtitle",
+                        icon: "person.2.circle"
                     ) {
                         session.selectAdminProfile(.trainer)
                     }
@@ -92,18 +95,29 @@ struct AdminProfileSelectionView: View {
     private func selectionButton(
         title: LocalizedStringKey,
         subtitle: LocalizedStringKey,
+        icon: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             VStack(spacing: 8) {
-                Text(title)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                // Ícone + título alinhados à esquerda (mesma posição inicial nos três cards)
+                HStack(spacing: 8) {
+                    Image(systemName: icon)
+                        .font(.system(size: 16, weight: .semibold))
+                        .frame(width: 22)
+
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .foregroundStyle(Theme.Colors.ink(0.92))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.horizontal, 14)
 
                 Text(subtitle)
                     .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(Theme.Colors.ink(0.65))
                     .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
                     .padding(.horizontal, 14)
             }
             .frame(width: 300, height: 74)
