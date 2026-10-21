@@ -174,7 +174,11 @@ struct TeacherMessageView: View {
     private var messagesCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            HStack {
+            HStack(spacing: 8) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
+                    .font(.system(size: 14))
+
                 Text("ui.history")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Theme.Colors.ink(0.35))
