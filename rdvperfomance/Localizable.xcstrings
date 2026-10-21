@@ -89042,6 +89042,28 @@
         }
       }
     },
+    "teacher_students.invites_received_card_title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Received invitations"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitaciones recibidas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convites recebidos"
+          }
+        }
+      }
+    },
     "teacher_students.invites_sent_card_title" : {
       "localizations" : {
         "en" : {
