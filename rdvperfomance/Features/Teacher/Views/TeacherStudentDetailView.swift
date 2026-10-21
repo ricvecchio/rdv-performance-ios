@@ -147,9 +147,6 @@ struct TeacherStudentDetailView: View {
 
         return VStack(alignment: .leading, spacing: 10) {
 
-            Text("common.student")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Text(student.name)
                 .font(.system(size: 20, weight: .semibold))
