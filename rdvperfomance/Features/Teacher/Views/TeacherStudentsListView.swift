@@ -52,6 +52,15 @@ struct TeacherStudentsListView: View {
     @State private var linkRequestPendingDecline: StudentLinkItem? = nil
     @State private var showDeclineLinkRequestConfirm: Bool = false
 
+    // Abas do corpo da tela (somente apresentação; não afeta carregamento de dados)
+    private enum StudentsSection: Hashable {
+        case linked
+        case sentInvites
+        case receivedInvites
+    }
+
+    @State private var selectedStudentsSection: StudentsSection = .linked
+
     init(
         path: Binding<[AppRoute]>,
         selectedCategory: TreinoTipo,
@@ -241,12 +250,17 @@ struct TeacherStudentsListView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-                        filterRow
-                        contentCard
-                        if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
+                        studentsSectionSelector
+
+                        switch selectedStudentsSection {
+                        case .linked:
+                            filterRow
+                            contentCard
+                        case .sentInvites:
                             pendingInvitesCard
+                        case .receivedInvites:
+                            pendingLinkRequestsCard
                         }
-                        pendingLinkRequestsCard
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -279,6 +293,80 @@ struct TeacherStudentsListView: View {
             .foregroundStyle(Theme.Colors.ink(0.35))
             .padding(.horizontal, 16)
             .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Abas (mesmo padrão visual de `nextFitTabSelector` da StudentNextFitWodView)
+
+    private var studentsSectionSelector: some View {
+        HStack(spacing: 0) {
+            studentsSectionSegmentButton(title: "ui.linked_students", section: .linked)
+            studentsSectionSegmentButton(title: "student_teachers.sent_invitations_section", section: .sentInvites)
+            studentsSectionSegmentButton(title: "student_teachers.received_invitations_section", section: .receivedInvites)
+        }
+        // Mesma altura nos três segmentos, mesmo quando algum título quebra em duas linhas
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(3)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+                // Profundidade apenas no Tema Claro
+                .shadow(
+                    color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                    radius: appTheme == .light ? 10 : 0,
+                    y: appTheme == .light ? 6 : 0
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+        )
+    }
+
+    // Segmento: selecionado com preenchimento (verde militar no Tema Claro / verde original no Tema Escuro);
+    // não selecionado transparente, sem borda.
+    private func studentsSectionSegmentButton(title: LocalizedStringKey, section: StudentsSection) -> some View {
+        let isSelected = selectedStudentsSection == section
+        let isLightSelected = appTheme == .light && isSelected
+
+        return Button {
+            selectedStudentsSection = section
+        } label: {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: Color.white, light: LightColors.primaryText))
+                )
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.vertical, 9)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                : isSelected
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Theme.Colors.primaryGreen.opacity(0.55),
+                                            Theme.Colors.primaryGreen.opacity(0.25)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                : AnyShapeStyle(Color.clear)
+                        )
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var filterRow: some View {
@@ -573,6 +661,16 @@ struct TeacherStudentsListView: View {
                 .padding(.bottom, 10)
 
             let pending = vm.pendingInvites
+
+            // Estado vazio (mesmo padrão visual da mensagem de "Convites recebidos")
+            if pending.isEmpty && !vm.isInvitesLoading {
+                Text("student_teachers.no_pending_invitation")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 6)
+            }
+
             ForEach(Array(pending.enumerated()), id: \.offset) { idx, inv in
 
                 HStack(spacing: 12) {
