@@ -810,40 +810,45 @@ struct StudentDashboardView: View {
         let locationName = entry.locationName.trimmingCharacters(in: .whitespacesAndNewlines)
 
         return HStack(alignment: .center, spacing: 10) {
-            // Bloco esquerdo: ícone + horário (prioridade) e local
-            Image(systemName: "calendar.badge.clock")
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
-                .frame(width: 34, height: 34)
-                .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.iconSurface))
-                .clipShape(RoundedRectangle(cornerRadius: 9))
-                .accessibilityHidden(true)
-
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: entry.scheduleText(locale: locale))
+            // Metade esquerda: ícone + horário (prioridade) e local, alinhados à esquerda.
+            // `minWidth: 0` + `maxWidth: .infinity` nas duas metades garante a mesma flexibilidade,
+            // fazendo o HStack dividir a largura igualmente e manter o divisor no centro.
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: "calendar.badge.clock")
                     .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
+                    .frame(width: 34, height: 34)
+                    .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.iconSurface))
+                    .clipShape(RoundedRectangle(cornerRadius: 9))
+                    .accessibilityHidden(true)
 
-                if !locationName.isEmpty {
-                    Text(verbatim: locationName)
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.70), light: LightColors.chevron))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: entry.scheduleText(locale: locale))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
+
+                    if !locationName.isEmpty {
+                        Text(verbatim: locationName)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.70), light: LightColors.chevron))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
                 }
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
             }
-            .fixedSize(horizontal: false, vertical: true)
-            .layoutPriority(1)
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
 
             if !modalityName.isEmpty {
-                // Divisor vertical discreto
+                // Divisor vertical discreto (centralizado entre as duas metades)
                 Rectangle()
                     .fill(todayCheckInDividerColor)
                     .frame(width: 1, height: 30)
 
-                // Bloco direito: modalidade
+                // Metade direita: conjunto ícone + modalidade centralizado
                 HStack(spacing: 6) {
                     Image(systemName: "dumbbell.fill")
                         .font(.system(size: 12, weight: .semibold))
@@ -854,9 +859,7 @@ struct StudentDashboardView: View {
                         .minimumScaleFactor(0.75)
                 }
                 .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: TodayCheckInColors.modality))
-                .frame(maxWidth: .infinity, alignment: .leading)
-            } else {
-                Spacer(minLength: 0)
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
             }
         }
     }
