@@ -201,7 +201,7 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: Theme.Colors.ink(0.10).light))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -255,7 +255,7 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -286,7 +286,7 @@ struct TeacherStudentDetailView: View {
             .padding(14)
             .background(
                 ZStack {
-                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface)
+                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface)
                     AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
