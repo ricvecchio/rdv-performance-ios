@@ -754,37 +754,45 @@ struct StudentDashboardView: View {
     }
 
     private func todayCheckInReminderStrip(_ reminders: [NextFitAgendaDisplay]) -> some View {
-        VStack(spacing: 0) {
+        // Indicador visual "Lembrete" (sem notificação nem ação)
+        let reminderBadge = HStack(spacing: 4) {
+            Image(systemName: "bell.fill")
+                .font(.system(size: 10, weight: .semibold))
+                .accessibilityHidden(true)
+            Text("dashboard.today_checkin.reminder_badge")
+                .font(.system(size: 11, weight: .semibold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(
+            Capsule().fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.16), light: TodayCheckInColors.badgeBackground))
+        )
+
+        return VStack(spacing: 0) {
             // Divisor horizontal discreto entre o WOD e o lembrete
             Rectangle()
                 .fill(todayCheckInDividerColor)
                 .frame(height: 1)
 
             VStack(alignment: .leading, spacing: 8) {
-                // Linha superior: título + indicador visual "Lembrete" (sem notificação nem ação)
+                // Linha superior: título centralizado + indicador "Lembrete" à direita.
+                // Uma cópia invisível do indicador à esquerda reserva a mesma largura,
+                // mantendo o título centralizado na faixa sem sobreposição.
                 HStack(alignment: .center, spacing: 8) {
+                    reminderBadge
+                        .hidden()
+                        .accessibilityHidden(true)
+
                     Text("dashboard.today_checkin.title")
                         .font(.system(size: 13, weight: .semibold))
                         .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
+                        .frame(maxWidth: .infinity, alignment: .center)
 
-                    Spacer(minLength: 0)
-
-                    HStack(spacing: 4) {
-                        Image(systemName: "bell.fill")
-                            .font(.system(size: 10, weight: .semibold))
-                            .accessibilityHidden(true)
-                        Text("dashboard.today_checkin.reminder_badge")
-                            .font(.system(size: 11, weight: .semibold))
-                            .lineLimit(1)
-                    }
-                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 3)
-                    .background(
-                        Capsule().fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.16), light: TodayCheckInColors.badgeBackground))
-                    )
+                    reminderBadge
                 }
 
                 // Um bloco por agendamento confirmado (ordem cronológica do ViewModel), com divisor interno
