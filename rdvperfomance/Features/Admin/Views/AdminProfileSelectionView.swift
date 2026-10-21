@@ -99,27 +99,27 @@ struct AdminProfileSelectionView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                // Ícone + título alinhados à esquerda (mesma posição inicial nos três cards)
-                HStack(spacing: 8) {
-                    Image(systemName: icon)
-                        .font(.system(size: 16, weight: .semibold))
-                        .frame(width: 22)
+            // Ícone à esquerda, centralizado verticalmente em relação ao conjunto título + subtítulo
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .frame(width: 22)
 
+                VStack(spacing: 8) {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold))
-                }
-                .foregroundStyle(Theme.Colors.ink(0.92))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.horizontal, 14)
+                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                Text(subtitle)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(Theme.Colors.ink(0.65))
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
-                    .padding(.horizontal, 14)
+                    Text(subtitle)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(Theme.Colors.ink(0.65))
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                }
             }
+            .padding(.horizontal, 14)
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
