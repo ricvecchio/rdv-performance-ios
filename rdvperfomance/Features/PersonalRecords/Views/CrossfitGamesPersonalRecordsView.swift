@@ -1476,9 +1476,24 @@ struct CrossfitGamesPersonalRecordsView: View {
                         .buttonStyle(.plain)
 
                         Button { addNewItem() } label: {
-                            Text("common.add")
-                                .frame(maxWidth: .infinity)
-                                .primaryGreenActionButton()
+                            if appTheme == .light {
+                                // Tema Claro: mesmo padrão do botão Salvar do Novo Recorde (verde militar 80% e texto branco)
+                                Text("common.add")
+                                    .frame(maxWidth: .infinity)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(Color.white)
+                                    .padding(.vertical, 14)
+                                    .background(AppThemePalette.lightBar.opacity(0.80))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(appTheme == .light ? LightColors.chevron : AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                                    )
+                            } else {
+                                Text("common.add")
+                                    .frame(maxWidth: .infinity)
+                                    .primaryGreenActionButton()
+                            }
                         }
                         .buttonStyle(.plain)
                     }
