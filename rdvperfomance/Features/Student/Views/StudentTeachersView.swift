@@ -301,9 +301,9 @@ struct StudentTeachersView: View {
 
     private var teachersSectionSelector: some View {
         HStack(spacing: 0) {
-            teachersSectionSegmentButton(title: "student_teachers.linked_coaches_section", section: .linked)
-            teachersSectionSegmentButton(title: "student_teachers.sent_invitations_section", section: .sentInvites)
-            teachersSectionSegmentButton(title: "student_teachers.received_invitations_section", section: .receivedInvites)
+            teachersSectionSegmentButton(title: "student_teachers.linked_coaches_tab", section: .linked)
+            teachersSectionSegmentButton(title: "student_teachers.sent_invitations_tab", section: .sentInvites)
+            teachersSectionSegmentButton(title: "student_teachers.received_invitations_tab", section: .receivedInvites)
         }
         // Mesma altura nos três segmentos, mesmo quando algum título quebra em duas linhas
         .fixedSize(horizontal: false, vertical: true)
