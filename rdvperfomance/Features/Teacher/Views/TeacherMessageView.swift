@@ -202,7 +202,7 @@ struct TeacherMessageView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -267,7 +267,7 @@ struct TeacherMessageView: View {
                     .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                     .frame(minHeight: 140)
                     .padding(10)
-                    .background(AppThemeColor(dark: Theme.Colors.ink(0.06).dark, light: LightColors.innerSurface))
+                    .background(AppThemeColor(dark: Theme.Colors.ink(0.06).dark, light: Theme.Colors.ink(0.10).light))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -300,7 +300,7 @@ struct TeacherMessageView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
