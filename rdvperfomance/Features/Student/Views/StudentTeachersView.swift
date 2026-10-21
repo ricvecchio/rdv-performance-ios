@@ -88,6 +88,15 @@ struct StudentTeachersView: View {
     @State private var showRequestLinkModal: Bool = false
     @State private var resolvedStudentEmail: String = ""
 
+    // Abas do corpo da tela (somente apresentação; não afeta carregamento de dados)
+    private enum TeachersSection: Hashable {
+        case linked
+        case sentInvites
+        case receivedInvites
+    }
+
+    @State private var selectedTeachersSection: TeachersSection = .linked
+
     init(
         path: Binding<[AppRoute]>,
         studentEmail: String,
@@ -133,6 +142,8 @@ struct StudentTeachersView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
+                        teachersSectionSelector
+
                         VStack(alignment: .leading, spacing: 10) {
                             Button {
                                 teacherEmailInput = ""
@@ -159,9 +170,14 @@ struct StudentTeachersView: View {
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
 
-                        linkedTeachersCard
-                        sentRequestsCard
-                        receivedInvitesCard
+                        switch selectedTeachersSection {
+                        case .linked:
+                            linkedTeachersCard
+                        case .sentInvites:
+                            sentRequestsCard
+                        case .receivedInvites:
+                            receivedInvitesCard
+                        }
                     }
                     .frame(width: min(contentMaxWidth, max(0, viewport.size.width - 32)))
                     .padding(.top, 16)
@@ -279,6 +295,80 @@ struct StudentTeachersView: View {
         } message: {
             Text(actionErrorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
         }
+    }
+
+    // MARK: - Abas (mesmo padrão visual de `studentsSectionSelector` da TeacherStudentsListView)
+
+    private var teachersSectionSelector: some View {
+        HStack(spacing: 0) {
+            teachersSectionSegmentButton(title: "student_teachers.linked_coaches_section", section: .linked)
+            teachersSectionSegmentButton(title: "student_teachers.sent_invitations_section", section: .sentInvites)
+            teachersSectionSegmentButton(title: "student_teachers.received_invitations_section", section: .receivedInvites)
+        }
+        // Mesma altura nos três segmentos, mesmo quando algum título quebra em duas linhas
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(3)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+                // Profundidade apenas no Tema Claro
+                .shadow(
+                    color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                    radius: appTheme == .light ? 10 : 0,
+                    y: appTheme == .light ? 6 : 0
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
+        )
+    }
+
+    // Segmento: selecionado com preenchimento (verde militar no Tema Claro / verde original no Tema Escuro);
+    // não selecionado transparente, sem borda.
+    private func teachersSectionSegmentButton(title: LocalizedStringKey, section: TeachersSection) -> some View {
+        let isSelected = selectedTeachersSection == section
+        let isLightSelected = appTheme == .light && isSelected
+
+        return Button {
+            selectedTeachersSection = section
+        } label: {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: Color.white, light: LightColors.primaryText))
+                )
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.vertical, 9)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                : isSelected
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Theme.Colors.primaryGreen.opacity(0.55),
+                                            Theme.Colors.primaryGreen.opacity(0.25)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                : AnyShapeStyle(Color.clear)
+                        )
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
     }
 
     private var linkedTeachersCard: some View {
