@@ -87903,6 +87903,28 @@
         }
       }
     },
+    "student_teachers.linked_coaches_tab" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Linked coaches"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Entrenadores vinculados"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Professores vinculados"
+          }
+        }
+      }
+    },
     "student_teachers.loading_invitations" : {
       "localizations" : {
         "en" : {
@@ -88148,6 +88170,28 @@
         }
       }
     },
+    "student_teachers.received_invitations_tab" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Received invitations"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitaciones recibidas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convites recebidos"
+          }
+        }
+      }
+    },
     "student_teachers.send_invitation" : {
       "extractionState" : "stale",
       "localizations" : {
@@ -88189,6 +88233,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "CONVITES ENVIADOS"
+          }
+        }
+      }
+    },
+    "student_teachers.sent_invitations_tab" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sent invitations"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitaciones enviadas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convites enviados"
           }
         }
       }
