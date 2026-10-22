@@ -372,7 +372,7 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -515,7 +515,7 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -751,7 +751,7 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -966,7 +966,7 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -991,7 +991,7 @@ struct TrainingDayDetailView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(AppThemeColor(dark: Color.black.opacity(0.35), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
