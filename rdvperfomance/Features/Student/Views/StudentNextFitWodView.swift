@@ -81,12 +81,13 @@ private enum NextFitLightColors {
 
 private struct NextFitCardStyle: ViewModifier {
     @Environment(\.appTheme) private var appTheme
+    var lightBackground: Color = NextFitLightColors.cardSurface
 
     func body(content: Content) -> some View {
         content
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
+            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: lightBackground))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
@@ -273,7 +274,7 @@ struct StudentNextFitWodView: View {
 
             if viewModel.isNextFitAgendaSelected {
                 nextFitAgendaContent
-                    .modifier(NextFitCardStyle())
+                    .modifier(NextFitCardStyle(lightBackground: NextFitLightColors.innerSurface))
             } else {
                 nextFitSelectedDateWodContent
             }
@@ -685,13 +686,7 @@ struct StudentNextFitWodView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            ZStack {
-                // Tema Claro: verde pastel solido, sem sobreposicao
-                AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface)
-                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
-            }
-        )
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -814,7 +809,7 @@ struct StudentNextFitWodView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(AppThemeColor(dark: Color.white.opacity(0.06), light: NextFitLightColors.innerSurface))
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.innerSurface))
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
@@ -970,7 +965,7 @@ struct StudentNextFitWodView: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppThemeColor(dark: Color.white.opacity(0.06), light: NextFitLightColors.innerSurface))
+            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.innerSurface))
             .cornerRadius(12)
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: NextFitLightColors.chevron), lineWidth: 1))
 
