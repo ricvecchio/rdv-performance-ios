@@ -404,35 +404,39 @@ struct TrainingDayDetailView: View {
                     HStack(spacing: 10) {
 
                         Image(systemName: "dumbbell.fill")
-                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
+                            .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk)))
                             .font(.system(size: 14))
                             .frame(width: 22)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("personal_records.movement")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Theme.Colors.ink(0.55))
+                                .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.55)))
 
                             Text(selectedMovementName ?? AppLocalization.string("workout_day_detail.select", locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                                .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText)))
                                 .lineLimit(1)
                         }
 
                         Spacer(minLength: 6)
 
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
+                            .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron)))
                             .font(.system(size: 12, weight: .semibold))
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .frame(maxWidth: .infinity)
-                    .background(AppThemeColor(dark: Color.white.opacity(0.03), light: LightColors.innerSurface))
+                    .background(
+                        appTheme == .light
+                            ? (selectedMovementName != nil ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80)) : AnyShapeStyle(Theme.Colors.ink(0.10)))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    )
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                            .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.primaryGreen.opacity(selectedMovementName != nil ? 0.35 : 0.28)), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -444,14 +448,14 @@ struct TrainingDayDetailView: View {
                     HStack(spacing: 10) {
 
                         Image(systemName: "percent")
-                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
+                            .foregroundStyle(appTheme == .light && isPercentFieldFocused ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk)))
                             .font(.system(size: 14))
                             .frame(width: 22)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("%")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Theme.Colors.ink(0.55))
+                                .foregroundStyle(appTheme == .light && isPercentFieldFocused ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.55)))
 
                             TextField("workout_day_detail.e_g_50", text: $percentText)
                                 .keyboardType(.decimalPad)
@@ -459,7 +463,8 @@ struct TrainingDayDetailView: View {
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Theme.Colors.ink(0.92))
+                                .foregroundStyle(appTheme == .light && isPercentFieldFocused ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
+                                .tint(appTheme == .light && isPercentFieldFocused ? Color.white : nil)
                         }
 
                         Spacer(minLength: 0)
@@ -467,11 +472,15 @@ struct TrainingDayDetailView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .frame(width: 120)
-                    .background(AppThemeColor(dark: Color.white.opacity(0.03), light: LightColors.innerSurface))
+                    .background(
+                        appTheme == .light
+                            ? (isPercentFieldFocused ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80)) : AnyShapeStyle(Theme.Colors.ink(0.10)))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    )
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                            .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.primaryGreen.opacity(isPercentFieldFocused ? 0.35 : 0.28)), lineWidth: 1)
                     )
 
                     // Peso (ocupa o resto)
