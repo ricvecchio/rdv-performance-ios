@@ -483,7 +483,7 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
@@ -538,31 +538,23 @@ struct StudentDashboardView: View {
                 }
 
                 Spacer()
-
-                if !viewModel.isLoadingCurrentWeekCheckIns {
-                    Text(
-                        String(
-                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
-                            locale: locale,
-                            arguments: [Int64((progress * 100).rounded())]
-                        )
-                    )
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
-                }
             }
 
             if !viewModel.isLoadingCurrentWeekCheckIns {
                 Spacer(minLength: 0)
 
                 ProgressView(value: progress)
-                    .tint(appTheme == .light ? AppThemePalette.lightBar : Theme.Colors.primaryGreen)
+                    .tint(appTheme == .light ? AppThemePalette.lightBar.opacity(0.80) : Theme.Colors.primaryGreen)
 
                 HStack(spacing: 10) {
                     ForEach(viewModel.currentWeekCheckInSummaries) { item in
                         VStack(spacing: 6) {
                             Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
-                                .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? (appTheme == .light ? AppThemePalette.lightBar : Theme.Colors.primaryGreen) : .white.opacity(0.35)))
+                                .foregroundStyle(
+                                    appTheme == .light && item.isCompleted
+                                        ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                        : AnyShapeStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                )
                             Text(weekdayAbbreviation(for: item.date))
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(Theme.Colors.ink(0.75))
@@ -575,7 +567,7 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
