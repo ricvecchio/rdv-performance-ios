@@ -318,7 +318,7 @@ struct YoutubeVideosView: View {
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
                                 // Tema Claro: área interna #F0F7EF e borda #294A2F. Tema Escuro: valores originais.
-                                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.innerSurface))
+                                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
@@ -334,7 +334,7 @@ struct YoutubeVideosView: View {
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         // Tema Claro: mesmo card do Adicionar Vídeo (#DDEDDC, borda #294A2F e sombra). Tema Escuro: valores originais.
-                        .background(AppThemeColor(dark: Theme.Colors.glass(0.68).dark, light: LightColors.cardSurface))
+                        .background(AppThemeColor(dark: Theme.Colors.glass(0.68).dark, light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
