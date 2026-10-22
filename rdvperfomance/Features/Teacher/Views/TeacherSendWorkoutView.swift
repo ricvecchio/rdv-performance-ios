@@ -778,7 +778,7 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -807,7 +807,7 @@ struct TeacherSendWorkoutView: View {
             templatePicker(category: .emCasa, title: "ui.home_workouts")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -995,7 +995,7 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -1117,7 +1117,7 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
@@ -1229,18 +1229,22 @@ struct TeacherSendWorkoutView: View {
         return HStack(spacing: 12) {
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundStyle(AppThemeColor(dark: selectionColor, light: LightColors.iconInk))
+                .foregroundStyle(appTheme == .light && isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: selectionColor, light: LightColors.iconInk)))
             Text(weekdayTitle(for: day.date))
                 .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                .foregroundStyle(appTheme == .light && isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText)))
             Spacer()
             Text(dateTitle(for: day.date))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.55))
+                .foregroundStyle(appTheme == .light && isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.55)))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.clear)
+        .background(
+            appTheme == .light
+                ? AnyShapeStyle(isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.cardSurface)
+                : AnyShapeStyle(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.clear)
+        )
     }
 
     private func nextButton(enabled: Bool, action: @escaping () -> Void) -> some View {
