@@ -108,15 +108,20 @@ struct AddYoutubeVideoSheet: View {
                         handleCopyYoutubeLink()
                     } label: {
                         HStack(spacing: 10) {
-                            Image(systemName: "doc.on.doc")
-                                .appThemeIconForeground()
+                            if appTheme == .light {
+                                Image(systemName: "doc.on.doc")
+                                    .foregroundStyle(Color.white)
+                            } else {
+                                Image(systemName: "doc.on.doc")
+                                    .appThemeIconForeground()
+                            }
                             Text("ui.open_youtube")
                         }
                         .font(.system(size: 15, weight: .bold))
-                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: LightColors.primaryText))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: Color.white))
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 14)
-                        .background(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.cardSurface))
+                        .background(AppThemeColor(dark: Color.white.opacity(0.10), light: AppThemePalette.lightBar.opacity(0.80)))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
