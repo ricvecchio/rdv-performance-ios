@@ -809,7 +809,12 @@ struct StudentNextFitWodView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.innerSurface))
+                        .background(
+                            ZStack {
+                                AppThemeColor(dark: Color.black.opacity(0.90), light: NextFitLightColors.cardSurface)
+                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
+                            }
+                        )
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
@@ -968,6 +973,11 @@ struct StudentNextFitWodView: View {
             .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.innerSurface))
             .cornerRadius(12)
             .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: NextFitLightColors.chevron), lineWidth: 1))
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
+            )
 
             Text("dashboard.participants")
                 .font(.system(size: 14, weight: .bold))
