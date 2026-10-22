@@ -14,21 +14,42 @@ struct TeacherWorkoutTemplatesAddButton: View {
 
     let title: String
     let action: () -> Void
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
         Button(action: action) {
-            HStack(spacing: 10) {
-                Image(systemName: "plus")
-                    .appThemeIconForeground()
-                Text(title)
+            if appTheme == .light {
+                // Tema Claro: mesmas cores do botão Sair da ProfileView (verde militar translúcido, texto/ícone brancos);
+                // mesmas medidas do estilo compacto original.
+                HStack(spacing: 10) {
+                    Image(systemName: "plus")
+                        .foregroundStyle(Color.white)
+                    Text(title)
+                }
+                .padding(.horizontal, 14)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 9)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(TemplatesLightColors.chevron, lineWidth: 1)
+                )
+            } else {
+                HStack(spacing: 10) {
+                    Image(systemName: "plus")
+                        .appThemeIconForeground()
+                    Text(title)
+                }
+                .padding(.horizontal, 14)
+                .compactPrimaryGreenActionButton()
+                // Tema Claro: contorno verde-escuro (#294A2F). Tema Escuro: transparente (estilo original preservado)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemeColor(dark: Color.clear, light: TemplatesLightColors.chevron), lineWidth: 1)
+                )
             }
-            .padding(.horizontal, 14)
-            .compactPrimaryGreenActionButton()
-            // Tema Claro: contorno verde-escuro (#294A2F). Tema Escuro: transparente (estilo original preservado)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppThemeColor(dark: Color.clear, light: TemplatesLightColors.chevron), lineWidth: 1)
-            )
         }
         .buttonStyle(.plain)
     }
