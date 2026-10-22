@@ -243,7 +243,7 @@ struct CreateTreinoCasaView: View {
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Theme.Colors.ink(0.06))
+                    .background(appTheme == .light ? Theme.Colors.ink(0.10) : Theme.Colors.ink(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
@@ -330,7 +330,7 @@ struct CreateTreinoCasaView: View {
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Theme.Colors.ink(0.06))
+                            .background(appTheme == .light ? Theme.Colors.ink(0.10) : Theme.Colors.ink(0.06))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
