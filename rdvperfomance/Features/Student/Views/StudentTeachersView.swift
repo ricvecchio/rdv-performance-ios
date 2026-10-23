@@ -372,7 +372,7 @@ struct StudentTeachersView: View {
     }
 
     private var linkedTeachersCard: some View {
-        card(title: "student_teachers.linked_coaches_section") {
+        card(title: "student_teachers.linked_coaches_section", systemImage: "person.2.fill") {
             if isLoadingData {
                 loadingView(AppLocalization.string("student_teachers.loading_teachers", locale: locale))
             } else if linkedTeachers.isEmpty {
@@ -392,7 +392,7 @@ struct StudentTeachersView: View {
     }
 
     private var sentRequestsCard: some View {
-        card(title: "student_teachers.sent_invitations_section") {
+        card(title: "student_teachers.sent_invitations_section", systemImage: "paperplane.fill") {
             if isLoadingData {
                 loadingView(AppLocalization.string("student_teachers.loading_invitations", locale: locale))
             } else if sentRequests.isEmpty {
@@ -412,7 +412,7 @@ struct StudentTeachersView: View {
     }
 
     private var receivedInvitesCard: some View {
-        card(title: "student_teachers.received_invitations_section") {
+        card(title: "student_teachers.received_invitations_section", systemImage: "envelope.open.fill") {
             if isLoadingData {
                 loadingView(AppLocalization.string("student_teachers.loading_invitations", locale: locale))
             } else if receivedInvites.isEmpty {
@@ -431,15 +431,21 @@ struct StudentTeachersView: View {
         }
     }
 
-    private func card<Content: View>(title: LocalizedStringKey, @ViewBuilder content: () -> Content) -> some View {
+    private func card<Content: View>(title: LocalizedStringKey, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(title)
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.35))
-                .padding(.horizontal, 16)
-                .padding(.top, 14)
-                .padding(.bottom, 10)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: systemImage)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
+
+                Text(title)
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Theme.Colors.ink(0.35))
+            }
+            .padding(.horizontal, 16)
+            .padding(.top, 14)
+            .padding(.bottom, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             content()
             Color.clear.frame(height: 8)
