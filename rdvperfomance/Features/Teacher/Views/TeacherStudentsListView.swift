@@ -295,6 +295,20 @@ struct TeacherStudentsListView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private func iconSectionTitle(_ title: LocalizedStringKey, systemImage: String) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(Theme.Colors.ink(0.35))
+
+            Text(title)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(Theme.Colors.ink(0.35))
+        }
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
     // MARK: - Abas (mesmo padrão visual de `nextFitTabSelector` da StudentNextFitWodView)
 
     private var studentsSectionSelector: some View {
@@ -425,7 +439,7 @@ struct TeacherStudentsListView: View {
 
     private var contentCard: some View {
         VStack(spacing: 0) {
-            sectionTitle("ui.linked_students")
+            iconSectionTitle("ui.linked_students", systemImage: "person.2.fill")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -656,7 +670,7 @@ struct TeacherStudentsListView: View {
     private var pendingInvitesCard: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            sectionTitle("student_teachers.sent_invitations_section")
+            iconSectionTitle("student_teachers.sent_invitations_section", systemImage: "paperplane.fill")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -745,7 +759,7 @@ struct TeacherStudentsListView: View {
 
     private var pendingLinkRequestsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle("student_teachers.received_invitations_section")
+            iconSectionTitle("student_teachers.received_invitations_section", systemImage: "envelope.open.fill")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
