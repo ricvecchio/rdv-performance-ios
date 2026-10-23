@@ -127,9 +127,10 @@ final class StudentDashboardViewModel: ObservableObject {
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
     private var nextFitContractClientIdsByModality: [Int: Int] = [:]
-    // Contratos do próprio aluno autenticado, somente quando já carregados pelos fluxos existentes
-    // (nunca carregados apenas para classificar participantes; nunca atribuídos a terceiros).
-    private var nextFitOwnContracts: (clientId: Int, contracts: [NextFitClientMainDataResponse.Content.Contract])?
+    // Contratos do próprio aluno autenticado (mesmo CodigoCliente da sessão), em memória e carregados
+    // no máximo uma vez por sessão; nunca atribuídos a outros participantes.
+    @Published private var nextFitOwnContracts: (clientId: Int, contracts: [NextFitClientMainDataResponse.Content.Contract])?
+    private var isLoadingOwnNextFitContracts = false
 
     var nextFitWod: NextFitWodDisplay? {
         guard case let .wod(modalityId)? = selectedNextFitContent else {
@@ -797,6 +798,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 logNextFitParticipantCategories(detail)
             }
             #endif
+            // Contratos do próprio aluno: carregados uma única vez por sessão, sem bloquear o detalhe
+            if nextFitOwnContracts == nil {
+                Task { await loadOwnNextFitContractsIfNeeded() }
+            }
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -966,6 +971,39 @@ final class StudentDashboardViewModel: ObservableObject {
             participant: participant,
             ownContractType: ownNextFitContract(for: participant)?.type
         )
+    }
+
+    /// Carrega uma única vez por sessão os contratos do próprio aluno autenticado (mesmo `CodigoCliente`
+    /// do token da sessão) para a classificação dos participantes. Não altera check-in, cancelamento
+    /// nem agendamento. Falhas são ignoradas: a classificação permanece `unknown`.
+    private func loadOwnNextFitContractsIfNeeded() async {
+        guard nextFitOwnContracts == nil,
+              !isLoadingOwnNextFitContracts,
+              hasNextFitSession,
+              let clientId = try? nextFitService.clientId(sessionAccount: studentId) else {
+            return
+        }
+
+        isLoadingOwnNextFitContracts = true
+        defer { isLoadingOwnNextFitContracts = false }
+
+        guard let clientData = try? await nextFitService.loadClientMainData(sessionAccount: studentId),
+              clientData.clientId == clientId,
+              hasNextFitSession,
+              nextFitOwnContracts == nil else {
+            #if DEBUG
+            print("[NextFitCategoryDiag] CONTRATOS_PROPRIOS carga=indisponivel")
+            #endif
+            return
+        }
+
+        nextFitOwnContracts = (clientId, clientData.contracts)
+        #if DEBUG
+        print("[NextFitCategoryDiag] CONTRATOS_PROPRIOS carga=ok total=\(clientData.contracts.count)")
+        if let detail = selectedNextFitAgendaDetail {
+            logNextFitParticipantCategories(detail)
+        }
+        #endif
     }
 
     /// Contrato do próprio aluno autenticado vinculado ao participante por `CodigoContratoCliente`.
@@ -1493,6 +1531,10 @@ extension StudentDashboardViewModel {
             parts.append("Tipo=\(participant.type.map { String($0) } ?? "nil")")
             parts.append("Status=\(participant.status.map { String($0) } ?? "nil")")
             parts.append("contrato=\(participant.contractClientId == nil ? "ausente" : "presente")")
+            if let own = nextFitOwnContracts {
+                let isOwnClient = participant.clientId == own.clientId || ownContract != nil
+                parts.append("aluno=\(isOwnClient ? "sim" : "nao")")
+            }
             parts.append("proprio=\(ownContract == nil ? "nao" : "sim")")
             if let ownContract {
                 parts.append("contratoProprioTipo=\(ownContract.type) contratoProprioStatus=\(ownContract.status)")
