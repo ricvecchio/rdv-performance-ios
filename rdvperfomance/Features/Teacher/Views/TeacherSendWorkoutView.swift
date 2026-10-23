@@ -764,7 +764,23 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedStudentsSummary: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("ui.selected_students")
+            if appTheme == .light {
+                HStack(alignment: .center, spacing: 8) {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
+
+                    Text("ui.selected_students")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 18)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                cardSectionTitle("ui.selected_students")
+            }
 
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(selectedStudents) { student in
