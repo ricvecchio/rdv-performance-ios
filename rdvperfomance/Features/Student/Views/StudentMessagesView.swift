@@ -127,9 +127,16 @@ struct StudentMessagesView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("student_feedbacks.history")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                HStack(spacing: 8) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
+                        .accessibilityHidden(true)
+
+                    Text("student_feedbacks.history")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
+                }
 
                 Spacer()
 
