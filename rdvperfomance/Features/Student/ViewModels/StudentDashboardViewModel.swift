@@ -1519,7 +1519,10 @@ extension StudentDashboardViewModel {
 
         if let own = nextFitOwnContracts {
             for (index, contract) in own.contracts.enumerated() {
-                print("\(prefix) CONTRATO_PROPRIO #\(index + 1) Tipo=\(contract.type) Status=\(contract.status) modalidades=\(contract.modalities.count)")
+                let hasDescription = !(contract.descriptionText?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+                // Somente a presença de `Descricao` (texto livre pode conter dados pessoais); sem regra validada
+                print("\(prefix) CONTRATO_PROPRIO #\(index + 1) Tipo=\(contract.type) Status=\(contract.status) modalidades=\(contract.modalities.count) descricao=\(hasDescription ? "presente" : "ausente") categoriaDescricao=sem-regra-validada")
             }
         }
 

@@ -1048,6 +1048,9 @@ private enum NextFitHTTPError: Error {
 // (ex.: plano, produto, convênio). Registra SOMENTE os nomes dos campos, nunca os valores.
 // Remover quando o mapeamento de categorias estiver concluído.
 private extension NextFitService {
+    /// Conjuntos de campos já registrados nesta execução (evita repetir o mesmo log a cada aula).
+    static var categoryDiagLoggedFieldSets = Set<String>()
+
     func categoryDiagLogFieldNames(data: Data, arrayKey: String) {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let content = root["Content"] as? [String: Any],
@@ -1055,6 +1058,8 @@ private extension NextFitService {
             return
         }
         let fieldNames = Set(items.flatMap { $0.keys }).sorted()
+        let signature = "\(arrayKey):\(fieldNames.joined(separator: ","))"
+        guard Self.categoryDiagLoggedFieldSets.insert(signature).inserted else { return }
         print("[NextFitCategoryDiag] CAMPOS_\(arrayKey.uppercased()) \(fieldNames)")
     }
 }

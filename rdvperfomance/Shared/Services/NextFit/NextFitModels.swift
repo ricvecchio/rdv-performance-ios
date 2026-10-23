@@ -103,6 +103,9 @@ enum NextFitParticipantCategoryResolver {
     static let confirmedCategoryByContractType: [Int: NextFitParticipantCategory] = [
         1: .monthly
     ]
+    // `Contratos[].Descricao` é decodificado, mas não participa da classificação: é texto livre
+    // definido por cada unidade, sem conteúdo real validado; correspondência por palavras
+    // ("mensal", "pacote", "plano"...) seria ambígua. Incluir somente regras validadas com dados reais.
 
     /// - Parameter ownContractType: `Contratos[].Tipo` do contrato do próprio aluno autenticado
     ///   vinculado a este participante por `CodigoContratoCliente`; `nil` para os demais participantes.
@@ -229,6 +232,9 @@ struct NextFitClientMainDataResponse: Decodable {
             let status: Int
             let type: Int
             let modalities: [Modality]
+            /// `Contratos[].Descricao` (texto livre do plano/produto, opcional). Lido apenas como
+            /// evidência potencial; NÃO é usado na classificação enquanto não houver regras validadas.
+            let descriptionText: String?
 
             struct Modality: Decodable {
                 let id: Int
@@ -245,6 +251,17 @@ struct NextFitClientMainDataResponse: Decodable {
                 case status = "Status"
                 case type = "Tipo"
                 case modalities = "Modalidades"
+                case descriptionText = "Descricao"
+            }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(Int.self, forKey: .id)
+                status = try container.decode(Int.self, forKey: .status)
+                type = try container.decode(Int.self, forKey: .type)
+                modalities = try container.decode([Modality].self, forKey: .modalities)
+                // Tolerante: ausência ou formato inesperado de `Descricao` nunca invalida o contrato
+                descriptionText = try? container.decodeIfPresent(String.self, forKey: .descriptionText)
             }
         }
 
