@@ -989,9 +989,9 @@ struct StudentNextFitWodView: View {
                     .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ForEach(detail.participants) { participant in
-                    // Classificação exclusivamente pelo `Participantes[].Status` individual,
-                    // independente da situação da aula (disponível, agendada ou encerrada).
-                    let appearance = participantAppearance(for: participant.status)
+                    // Classificação pela categoria comercial resolvida (nunca por `Participantes[].Status`,
+                    // que varia com a situação da aula). Sem evidência confirmada: ícone neutro.
+                    let appearance = participantAppearance(for: viewModel.nextFitParticipantCategory(participant))
 
                     HStack(spacing: 6) {
                         Image(systemName: appearance.icon)
@@ -1022,19 +1022,19 @@ struct StudentNextFitWodView: View {
         }
     }
 
-    /// Ícone e cor do participante conforme `Participantes[].Status` individual:
-    /// nil/0 = pacote de check-ins (ticket, laranja); 1 = mensalista (cartão, azul);
-    /// 2 = acesso externo (globo, vermelho); demais valores = fallback neutro, sem categoria atribuída.
-    private func participantAppearance(for status: Int?) -> (icon: String, color: Color) {
-        switch status {
-        case nil, 0:
-            return ("ticket.fill", .orange)
-        case 1:
-            return ("person.text.rectangle.fill", .blue)
-        case 2:
-            return ("globe", .red)
-        default:
-            return ("questionmark.circle", .gray)
+    /// Ícone e cor do participante conforme a categoria comercial resolvida:
+    /// pacote (ticket, laranja); mensalista (cartão, azul); acesso externo (globo, vermelho);
+    /// desconhecida = fallback neutro, sem categoria atribuída.
+    private func participantAppearance(for category: NextFitParticipantCategory) -> (icon: String, color: Color) {
+        switch category {
+        case .package:
+            return (category.symbolName, .orange)
+        case .monthly:
+            return (category.symbolName, .blue)
+        case .external:
+            return (category.symbolName, .red)
+        case .unknown:
+            return (category.symbolName, .gray)
         }
     }
 

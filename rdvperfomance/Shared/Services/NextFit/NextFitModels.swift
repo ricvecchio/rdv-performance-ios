@@ -57,8 +57,81 @@ struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
     let name: String
     let clientId: Int?
     let contractClientId: Int?
-    /// `Participantes[].Status` individual (1: mensalista; 2: acesso flexível, ex.: Wellhub/TotalPass)
+    /// `Participantes[].Status` individual. Varia conforme a situação na aula (ex.: muda após o
+    /// encerramento); NÃO representa categoria comercial e não é usado para classificá-la.
     let status: Int?
+    /// `Participantes[].Tipo` individual, repassado sem alteração. Semântica ainda não confirmada.
+    let type: Int?
+}
+
+/// Categoria comercial do participante usada exclusivamente para o ícone da lista de participantes.
+enum NextFitParticipantCategory: Equatable {
+    case monthly
+    case package
+    case external
+    case unknown
+
+    /// SF Symbol já aprovado para cada categoria.
+    var symbolName: String {
+        switch self {
+        case .monthly: return "person.text.rectangle.fill"
+        case .package: return "ticket.fill"
+        case .external: return "globe"
+        case .unknown: return "questionmark.circle"
+        }
+    }
+}
+
+struct NextFitParticipantCategoryResolution: Equatable {
+    let category: NextFitParticipantCategory
+    let reason: String
+}
+
+/// Resolve a categoria comercial somente a partir de mapeamentos comprovados.
+/// Nunca usa `Participantes[].Status`, situação da aula, nome ou posição na lista.
+enum NextFitParticipantCategoryResolver {
+    /// `Participantes[].Tipo` → categoria. Vazio até a semântica ser confirmada pela NextFit
+    /// (ex.: Tipo=1 sem contrato e Tipo=2 com contrato foram observados, mas não comprovam plano).
+    static let confirmedCategoryByParticipantType: [Int: NextFitParticipantCategory] = [:]
+
+    /// `Contratos[].Tipo` (somente contratos do próprio aluno autenticado) → categoria.
+    /// Vazio até a semântica ser confirmada pela NextFit.
+    static let confirmedCategoryByContractType: [Int: NextFitParticipantCategory] = [:]
+
+    /// - Parameter ownContractType: `Contratos[].Tipo` do contrato do próprio aluno autenticado
+    ///   vinculado a este participante por `CodigoContratoCliente`; `nil` para os demais participantes.
+    static func resolve(
+        participant: NextFitAgendaParticipantDisplay,
+        ownContractType: Int?
+    ) -> NextFitParticipantCategoryResolution {
+        if let ownContractType {
+            if let category = confirmedCategoryByContractType[ownContractType] {
+                return NextFitParticipantCategoryResolution(
+                    category: category,
+                    reason: "contrato-proprio-tipo-confirmado"
+                )
+            }
+        }
+
+        guard let type = participant.type else {
+            return NextFitParticipantCategoryResolution(
+                category: .unknown,
+                reason: ownContractType == nil ? "tipo-ausente" : "contrato-proprio-nao-confirmado;tipo-ausente"
+            )
+        }
+
+        if let category = confirmedCategoryByParticipantType[type] {
+            return NextFitParticipantCategoryResolution(
+                category: category,
+                reason: "tipo-participante-confirmado"
+            )
+        }
+
+        return NextFitParticipantCategoryResolution(
+            category: .unknown,
+            reason: ownContractType == nil ? "tipo-nao-confirmado" : "contrato-proprio-nao-confirmado;tipo-nao-confirmado"
+        )
+    }
 }
 
 struct NextFitAgendaDetailDisplay: Equatable {
@@ -391,6 +464,7 @@ struct NextFitAgendaDetailResponse: Decodable {
             let codigoContratoCliente: Int?
             let codigoCliente: Int?
             let status: Int?
+            let tipo: Int?
 
             enum CodingKeys: String, CodingKey {
                 case id = "Id"
@@ -398,6 +472,7 @@ struct NextFitAgendaDetailResponse: Decodable {
                 case codigoContratoCliente = "CodigoContratoCliente"
                 case codigoCliente = "CodigoCliente"
                 case status = "Status"
+                case tipo = "Tipo"
             }
         }
 

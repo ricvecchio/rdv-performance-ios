@@ -127,6 +127,9 @@ final class StudentDashboardViewModel: ObservableObject {
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
     private var nextFitContractClientIdsByModality: [Int: Int] = [:]
+    // Contratos do próprio aluno autenticado, somente quando já carregados pelos fluxos existentes
+    // (nunca carregados apenas para classificar participantes; nunca atribuídos a terceiros).
+    private var nextFitOwnContracts: (clientId: Int, contracts: [NextFitClientMainDataResponse.Content.Contract])?
 
     var nextFitWod: NextFitWodDisplay? {
         guard case let .wod(modalityId)? = selectedNextFitContent else {
@@ -549,6 +552,9 @@ final class StudentDashboardViewModel: ObservableObject {
         if identity.contractClientIds == nil {
             do {
                 let clientData = try await nextFitService.loadClientMainData(sessionAccount: studentId)
+                if clientData.clientId == clientId {
+                    nextFitOwnContracts = (clientId, clientData.contracts)
+                }
                 // Usa os contratos somente se pertencerem ao mesmo cliente da sessão
                 identity.contractClientIds = clientData.clientId == clientId
                     ? Set(clientData.contracts.map(\.id))
@@ -682,6 +688,7 @@ final class StudentDashboardViewModel: ObservableObject {
                 sessionAccount: studentId
             )
             nextFitContractClientIdsByModality = [:]
+            nextFitOwnContracts = nil
             hasNextFitSession = true
             await loadNextFitWod(locale: locale)
             return true
@@ -784,6 +791,12 @@ final class StudentDashboardViewModel: ObservableObject {
                 agendaId: agendaId,
                 sessionAccount: studentId
             )
+            #if DEBUG
+            // Diagnóstico temporário da categoria dos participantes NextFit
+            if let detail = selectedNextFitAgendaDetail {
+                logNextFitParticipantCategories(detail)
+            }
+            #endif
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -941,9 +954,39 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitAgendaDetailError = nil
     }
 
+    /// Categoria comercial do participante para o ícone da lista (nunca derivada de `Status`).
+    func nextFitParticipantCategory(_ participant: NextFitAgendaParticipantDisplay) -> NextFitParticipantCategory {
+        resolveNextFitParticipantCategory(participant).category
+    }
+
+    private func resolveNextFitParticipantCategory(
+        _ participant: NextFitAgendaParticipantDisplay
+    ) -> NextFitParticipantCategoryResolution {
+        NextFitParticipantCategoryResolver.resolve(
+            participant: participant,
+            ownContractType: ownNextFitContract(for: participant)?.type
+        )
+    }
+
+    /// Contrato do próprio aluno autenticado vinculado ao participante por `CodigoContratoCliente`.
+    /// Retorna `nil` para qualquer outro participante ou quando os contratos ainda não foram carregados.
+    private func ownNextFitContract(
+        for participant: NextFitAgendaParticipantDisplay
+    ) -> NextFitClientMainDataResponse.Content.Contract? {
+        guard let own = nextFitOwnContracts,
+              let contractClientId = participant.contractClientId else {
+            return nil
+        }
+        if let participantClientId = participant.clientId, participantClientId != own.clientId {
+            return nil
+        }
+        return own.contracts.first { $0.id == contractClientId }
+    }
+
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
         nextFitContractClientIdsByModality = [:]
+        nextFitOwnContracts = nil
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []
@@ -1127,6 +1170,7 @@ final class StudentDashboardViewModel: ObservableObject {
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
         nextFitContractClientIdsByModality = [:]
+        nextFitOwnContracts = nil
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []
@@ -1294,6 +1338,7 @@ final class StudentDashboardViewModel: ObservableObject {
         guard clientData.clientId == clientId else {
             return nil
         }
+        nextFitOwnContracts = (clientId, clientData.contracts)
 
         let activeContracts = clientData.contracts.filter { $0.status == 1 }
 
@@ -1425,3 +1470,39 @@ final class StudentDashboardViewModel: ObservableObject {
         .map { $0 }
     }
 }
+
+#if DEBUG
+// MARK: - Diagnóstico temporário da categoria dos participantes NextFit (somente DEBUG — REMOVER após validação)
+// Usa apenas dados já carregados. Não registra nomes, tokens, códigos de cliente ou de contrato.
+extension StudentDashboardViewModel {
+    fileprivate func logNextFitParticipantCategories(_ detail: NextFitAgendaDetailDisplay) {
+        let prefix = "[NextFitCategoryDiag]"
+        print("\(prefix) DETALHE agenda=\(detail.id) total=\(detail.participants.count) contratosProprios=\(nextFitOwnContracts == nil ? "indisponiveis" : "disponiveis")")
+
+        if let own = nextFitOwnContracts {
+            for (index, contract) in own.contracts.enumerated() {
+                print("\(prefix) CONTRATO_PROPRIO #\(index + 1) Tipo=\(contract.type) Status=\(contract.status) modalidades=\(contract.modalities.count)")
+            }
+        }
+
+        for (index, participant) in detail.participants.enumerated() {
+            let resolution = resolveNextFitParticipantCategory(participant)
+            let ownContract = ownNextFitContract(for: participant)
+            var parts: [String] = []
+            parts.append("\(prefix) PARTICIPANTE agenda=\(detail.id) #\(index + 1)")
+            parts.append("Tipo=\(participant.type.map { String($0) } ?? "nil")")
+            parts.append("Status=\(participant.status.map { String($0) } ?? "nil")")
+            parts.append("contrato=\(participant.contractClientId == nil ? "ausente" : "presente")")
+            parts.append("proprio=\(ownContract == nil ? "nao" : "sim")")
+            if let ownContract {
+                parts.append("contratoProprioTipo=\(ownContract.type) contratoProprioStatus=\(ownContract.status)")
+            }
+            parts.append("categoria=\(resolution.category)")
+            parts.append("motivo=\(resolution.reason)")
+            parts.append("icone=\(resolution.category.symbolName)")
+            print(parts.joined(separator: " "))
+        }
+    }
+}
+#endif
+
