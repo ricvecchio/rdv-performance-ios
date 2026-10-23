@@ -90,13 +90,19 @@ struct NextFitParticipantCategoryResolution: Equatable {
 /// Resolve a categoria comercial somente a partir de mapeamentos comprovados.
 /// Nunca usa `Participantes[].Status`, situação da aula, nome ou posição na lista.
 enum NextFitParticipantCategoryResolver {
-    /// `Participantes[].Tipo` → categoria. Vazio até a semântica ser confirmada pela NextFit
-    /// (ex.: Tipo=1 sem contrato e Tipo=2 com contrato foram observados, mas não comprovam plano).
+    /// `Participantes[].Tipo` → categoria. Vazio: a semântica não está comprovada.
+    /// Observado em dados reais: Tipo=2 com `CodigoContratoCliente` (inclui o aluno mensalista
+    /// autenticado) e Tipo=1 sem contrato. Tipo=2 apenas indica vínculo por contrato — que também
+    /// pode ser pacote — e Tipo=1 sem contrato não comprova Wellhub/TotalPass (pode ser avulso/experimental).
     static let confirmedCategoryByParticipantType: [Int: NextFitParticipantCategory] = [:]
 
     /// `Contratos[].Tipo` (somente contratos do próprio aluno autenticado) → categoria.
-    /// Vazio até a semântica ser confirmada pela NextFit.
-    static let confirmedCategoryByContractType: [Int: NextFitParticipantCategory] = [:]
+    /// Evidência: `Cliente/RecuperarDadosPrincipais` do aluno autenticado, comprovadamente mensalista,
+    /// retornou um único contrato com Tipo=1 (Status=1), vinculado ao participante da agenda
+    /// 162075839 por `CodigoContratoCliente`. Demais valores permanecem sem mapeamento.
+    static let confirmedCategoryByContractType: [Int: NextFitParticipantCategory] = [
+        1: .monthly
+    ]
 
     /// - Parameter ownContractType: `Contratos[].Tipo` do contrato do próprio aluno autenticado
     ///   vinculado a este participante por `CodigoContratoCliente`; `nil` para os demais participantes.

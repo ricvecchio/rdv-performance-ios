@@ -271,10 +271,6 @@ struct NextFitService {
                     includeHistory: includeHistory
                 )
                 let data = try await responseData(for: request)
-                #if DEBUG
-                // Diagnóstico temporário da Agenda NextFit
-                agendaDiagLogList(data: data, date: selectedDate, page: page, includeHistory: includeHistory)
-                #endif
                 let response = try JSONDecoder().decode(NextFitAgendaResponse.self, from: data)
                 guard response.success, (response.errorCode ?? 0) == 0 else {
                     throw NextFitServiceError.unavailable
@@ -314,10 +310,6 @@ struct NextFitService {
                     hasCheckIn: hasCheckIn
                 )
             }
-            #if DEBUG
-            // Diagnóstico temporário da Agenda NextFit
-            print("[NextFitAgendaDiag] LISTA_RESUMO data=\(selectedDate) historico=\(includeHistory) retornadas=\(entries.count) exibidasNoDia=\(agenda.count)")
-            #endif
             return agenda.sorted { $0.startDate < $1.startDate }
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
@@ -515,6 +507,10 @@ struct NextFitService {
             applyAuthenticatedHeaders(to: &request, token: token)
 
             let data = try await responseData(for: request)
+            #if DEBUG
+            // Diagnóstico pendente: somente NOMES dos campos de Contratos[] (sem valores)
+            categoryDiagLogFieldNames(data: data, arrayKey: "Contratos")
+            #endif
             let response = try JSONDecoder().decode(NextFitClientMainDataResponse.self, from: data)
             guard response.success,
                   (response.errorCode ?? 0) == 0,
@@ -585,8 +581,8 @@ struct NextFitService {
 
             let data = try await responseData(for: request)
             #if DEBUG
-            // Diagnóstico temporário da Agenda NextFit
-            agendaDiagLogDetail(data: data, agendaId: agendaId)
+            // Diagnóstico pendente: somente NOMES dos campos de Participantes[] (sem valores)
+            categoryDiagLogFieldNames(data: data, arrayKey: "Participantes")
             #endif
             let response = try JSONDecoder().decode(NextFitAgendaDetailResponse.self, from: data)
             guard response.success,
@@ -1047,98 +1043,19 @@ private enum NextFitHTTPError: Error {
 }
 
 #if DEBUG
-// MARK: - Diagnóstico temporário da Agenda NextFit (somente DEBUG — REMOVER após a coleta)
-// Apenas leitura do JSON já recebido: não altera decodificação, retorno, erros nem faz requisições.
-// Não registra nomes, e-mails, tokens, códigos de cliente/contrato, URLs ou o JSON completo.
+// MARK: - Diagnóstico pendente da categoria comercial NextFit (somente DEBUG)
+// Mantido apenas para identificar campos comerciais ainda não interpretados pelos modelos
+// (ex.: plano, produto, convênio). Registra SOMENTE os nomes dos campos, nunca os valores.
+// Remover quando o mapeamento de categorias estiver concluído.
 private extension NextFitService {
-    func agendaDiagLogList(data: Data, date: String, page: Int, includeHistory: Bool) {
+    func categoryDiagLogFieldNames(data: Data, arrayKey: String) {
         guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let content = root["Content"] as? [[String: Any]] else {
-            print("[NextFitAgendaDiag] LISTA data=\(date) historico=\(includeHistory) pagina=\(page) conteudo=indisponivel")
+              let content = root["Content"] as? [String: Any],
+              let items = content[arrayKey] as? [[String: Any]] else {
             return
         }
-
-        print("[NextFitAgendaDiag] LISTA origem=AgendaV2 data=\(date) historico=\(includeHistory) pagina=\(page) total=\(content.count) last=\(agendaDiagValue(root["Last"]))")
-        print("[NextFitAgendaDiag] CAMPOS_AULA_LISTA \(Set(content.flatMap { $0.keys }).sorted())")
-        for item in content {
-            print(
-                "[NextFitAgendaDiag] AULA agenda=\(agendaDiagValue(item["Id"]))"
-                + " inicio=\(agendaDiagValue(item["DataInicial"]))"
-                + " fim=\(agendaDiagValue(item["DataFinal"]))"
-                + " modalidade=\(agendaDiagValue(item["CodigoModalidade"]))"
-                + " status=\(agendaDiagValue(item["Status"]))"
-                + " statusParticipante=\(agendaDiagValue(item["StatusAgendaParticipante"]))"
-                + " alunos=\(agendaDiagValue(item["QtdeAlunos"]))/\(agendaDiagValue(item["LimiteAlunos"]))"
-                + " fezCheckin=\(agendaDiagValue(item["FezCheckin"]))"
-            )
-        }
-    }
-
-    func agendaDiagLogDetail(data: Data, agendaId: Int) {
-        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
-              let content = root["Content"] as? [String: Any] else {
-            print("[NextFitAgendaDiag] DETALHE agenda=\(agendaId) conteudo=indisponivel")
-            return
-        }
-
-        let participants = content["Participantes"] as? [[String: Any]] ?? []
-        print(
-            "[NextFitAgendaDiag] DETALHE agenda=\(agendaDiagValue(content["Id"]))"
-            + " inicio=\(agendaDiagValue(content["DataInicial"]))"
-            + " fim=\(agendaDiagValue(content["DataFinal"]))"
-            + " modalidade=\(agendaDiagValue(content["CodigoModalidade"]))"
-            + " statusAula=\(agendaDiagValue(content["Status"]))"
-            + " statusAgendaParticipante=\(agendaDiagValue(content["StatusAgendaParticipante"]))"
-            + " fezCheckin=\(agendaDiagValue(content["FezCheckin"]))"
-            + " total=\(participants.count)"
-        )
-        print("[NextFitAgendaDiag] CAMPOS_AULA_DETALHE \(content.keys.sorted())")
-        print("[NextFitAgendaDiag] CAMPOS \(Set(participants.flatMap { $0.keys }).sorted())")
-
-        for (index, participant) in participants.enumerated() {
-            let status = participant["Status"]
-            print(
-                "[NextFitAgendaDiag] PARTICIPANTE #\(index + 1)"
-                + " Tipo=\(agendaDiagValue(participant["Tipo"]))"
-                + " Status=\(agendaDiagValue(status))"
-                + " contrato=\(agendaDiagPresence(participant["CodigoContratoCliente"]))"
-                + " cliente=\(agendaDiagPresence(participant["CodigoCliente"]))"
-                + " iconeAtual=\(agendaDiagCurrentIcon(for: status))"
-            )
-        }
-    }
-
-    /// Valor técnico legível (número, booleano ou texto curto); `nil` quando ausente/nulo.
-    func agendaDiagValue(_ value: Any?) -> String {
-        guard let value, !(value is NSNull) else { return "nil" }
-        if let number = value as? NSNumber {
-            if CFGetTypeID(number) == CFBooleanGetTypeID() {
-                return number.boolValue ? "true" : "false"
-            }
-            return number.stringValue
-        }
-        if let text = value as? String { return text }
-        return "<\(type(of: value))>"
-    }
-
-    func agendaDiagPresence(_ value: Any?) -> String {
-        guard let value, !(value is NSNull) else { return "ausente" }
-        return "presente"
-    }
-
-    /// Espelha somente para diagnóstico o mapeamento atual de `participantAppearance(for:)`.
-    func agendaDiagCurrentIcon(for value: Any?) -> String {
-        guard let value, !(value is NSNull) else { return "ticket.fill" }
-        guard let number = value as? NSNumber,
-              CFGetTypeID(number) != CFBooleanGetTypeID() else {
-            return "questionmark.circle"
-        }
-        switch number.intValue {
-        case 0: return "ticket.fill"
-        case 1: return "person.text.rectangle.fill"
-        case 2: return "globe"
-        default: return "questionmark.circle"
-        }
+        let fieldNames = Set(items.flatMap { $0.keys }).sorted()
+        print("[NextFitCategoryDiag] CAMPOS_\(arrayKey.uppercased()) \(fieldNames)")
     }
 }
 #endif
