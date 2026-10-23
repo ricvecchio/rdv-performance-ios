@@ -517,6 +517,13 @@ struct NextFitService {
                   let content = response.content else {
                 throw NextFitServiceError.unavailable
             }
+            #if DEBUG
+            // Auditoria ANTES x APÓS: reutiliza a resposta já obtida (sem nova requisição)
+            NextFitCheckInAuditStore.shared.recordClientMainData(
+                data: data,
+                sessionClientId: clientId(from: token)
+            )
+            #endif
             return content
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
@@ -591,6 +598,13 @@ struct NextFitService {
                   let endDate = agendaDate(from: content.dataFinal) else {
                 throw NextFitServiceError.unavailable
             }
+            #if DEBUG
+            // Auditoria ANTES x APÓS: reutiliza a resposta já obtida (sem nova requisição)
+            NextFitCheckInAuditStore.shared.recordAgendaDetail(
+                data: data,
+                sessionClientId: clientId(from: token)
+            )
+            #endif
 
             return NextFitAgendaDetailDisplay(
                 id: content.id,
