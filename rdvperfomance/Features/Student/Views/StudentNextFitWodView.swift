@@ -989,9 +989,9 @@ struct StudentNextFitWodView: View {
                     .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ForEach(detail.participants) { participant in
-                    // Representação visual legada baseada em `Participantes[].Status` da consulta atual.
-                    // É apenas indicação visual do status na agenda; não comprova categoria comercial.
-                    let appearance = participantAppearance(for: participant.status)
+                    // Categoria visual resolvida pelo ViewModel (confirmada > agregador > persistida > desconhecida).
+                    // Mudanças posteriores de `Status`/`Tipo` da mesma participação não alteram o ícone.
+                    let appearance = participantAppearance(for: viewModel.nextFitParticipantCategory(participant))
 
                     HStack(spacing: 6) {
                         Image(systemName: appearance.icon)
@@ -1022,19 +1022,19 @@ struct StudentNextFitWodView: View {
         }
     }
 
-    /// Ícone e cor do participante conforme `Participantes[].Status` individual (mapeamento visual legado,
-    /// restaurado de antes do commit 0be336e): nil/0 = ticket laranja; 1 = cartão azul; 2 = globo vermelho;
-    /// demais valores = fallback neutro. Não comprova mensalidade, pacote, Wellhub ou TotalPass.
-    private func participantAppearance(for status: Int?) -> (icon: String, color: Color) {
-        switch status {
-        case nil, 0:
-            return ("ticket.fill", .orange)
-        case 1:
-            return ("person.text.rectangle.fill", .blue)
-        case 2:
-            return ("globe", .red)
-        default:
-            return ("questionmark.circle", .gray)
+    /// Ícone e cor do participante conforme a categoria visual resolvida:
+    /// mensalista (cartão, azul); pacote (ticket, laranja); Wellhub/TotalPass (globo, vermelho);
+    /// VIP e desconhecida = ícone neutro existente (cinza).
+    private func participantAppearance(for category: NextFitParticipantCategory) -> (icon: String, color: Color) {
+        switch category {
+        case .monthly:
+            return (category.symbolName, .blue)
+        case .package:
+            return (category.symbolName, .orange)
+        case .external:
+            return (category.symbolName, .red)
+        case .vip, .unknown:
+            return (category.symbolName, .gray)
         }
     }
 

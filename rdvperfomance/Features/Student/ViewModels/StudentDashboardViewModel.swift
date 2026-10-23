@@ -98,7 +98,14 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var nextFitAgendaWodError: String?
     @Published var selectedNextFitAgendaWodModalityId: Int?
     @Published private(set) var selectedNextFitAgendaId: Int?
-    @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay?
+    @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay? {
+        didSet {
+            // Registra a categoria visual observada nesta consulta real (persistência dos ícones)
+            if let detail = selectedNextFitAgendaDetail {
+                observeNextFitParticipantCategories(detail)
+            }
+        }
+    }
     @Published private(set) var isLoadingNextFitAgendaDetail = false
     @Published var selectedNextFitContent: StudentDashboardNextFitSelection?
     @Published private(set) var needsNextFitAuthentication = false
@@ -131,6 +138,8 @@ final class StudentDashboardViewModel: ObservableObject {
     // no máximo uma vez por sessão; nunca atribuídos a outros participantes.
     @Published private var nextFitOwnContracts: (clientId: Int, contracts: [NextFitClientMainDataResponse.Content.Contract])?
     private var isLoadingOwnNextFitContracts = false
+    // Categorias visuais persistidas dos participantes, isoladas por conta + cliente NextFit da sessão
+    private var nextFitParticipantCategoryStore: NextFitParticipantCategoryStore?
 
     var nextFitWod: NextFitWodDisplay? {
         guard case let .wod(modalityId)? = selectedNextFitContent else {
@@ -502,6 +511,8 @@ final class StudentDashboardViewModel: ObservableObject {
                 hasFailedLookup = true
                 continue
             }
+            // Persistência das categorias visuais a partir da resposta já obtida (sem nova consulta)
+            observeNextFitParticipantCategories(detail)
 
             // Desistência do aluno nesta aula não é participação confirmada
             if detail.statusAgendaParticipante == Self.weeklyCheckInWithdrawnStatus {
@@ -629,6 +640,8 @@ final class StudentDashboardViewModel: ObservableObject {
                     // Falha temporária não confirma participação
                     continue
                 }
+                // Persistência das categorias visuais a partir da resposta já obtida (sem nova consulta)
+                observeNextFitParticipantCategories(detail)
 
                 if detail.statusAgendaParticipante == Self.weeklyCheckInWithdrawnStatus {
                     continue
@@ -690,6 +703,7 @@ final class StudentDashboardViewModel: ObservableObject {
             )
             nextFitContractClientIdsByModality = [:]
             nextFitOwnContracts = nil
+            nextFitParticipantCategoryStore = nil
             hasNextFitSession = true
             await loadNextFitWod(locale: locale)
             return true
@@ -967,10 +981,47 @@ final class StudentDashboardViewModel: ObservableObject {
     private func resolveNextFitParticipantCategory(
         _ participant: NextFitAgendaParticipantDisplay
     ) -> NextFitParticipantCategoryResolution {
-        NextFitParticipantCategoryResolver.resolve(
+        let store = currentNextFitParticipantCategoryStore()
+        let agendaId = selectedNextFitAgendaDetail?.id
+        let hasPersistedInference: Bool
+        if let store, let agendaId {
+            hasPersistedInference = store.hasInferredExternal(
+                agendaId: agendaId,
+                participantId: participant.id,
+                clientId: participant.clientId
+            )
+        } else {
+            hasPersistedInference = false
+        }
+        return NextFitParticipantCategoryResolver.resolve(
             participant: participant,
-            ownContractType: ownNextFitContract(for: participant)?.type
+            confirmedCategory: store?.confirmedCategory(
+                clientId: participant.clientId,
+                contractClientId: participant.contractClientId
+            ),
+            ownContractType: ownNextFitContract(for: participant)?.type,
+            hasPersistedInference: hasPersistedInference
         )
+    }
+
+    /// Armazenamento das categorias visuais da sessão NextFit atual (conta do app + `CodigoCliente`
+    /// do token). Retorna `nil` sem sessão válida; nunca compartilha dados entre contas.
+    private func currentNextFitParticipantCategoryStore() -> NextFitParticipantCategoryStore? {
+        if let store = nextFitParticipantCategoryStore {
+            return store
+        }
+        guard let sessionClientId = try? nextFitService.clientId(sessionAccount: studentId) else {
+            return nil
+        }
+        let store = NextFitParticipantCategoryStore(account: studentId, sessionClientId: sessionClientId)
+        nextFitParticipantCategoryStore = store
+        return store
+    }
+
+    /// Registra as categorias visuais observadas em uma consulta real de `Agenda/{id}`.
+    /// Não altera a lista de participantes nem dispara novas consultas.
+    private func observeNextFitParticipantCategories(_ detail: NextFitAgendaDetailDisplay) {
+        currentNextFitParticipantCategoryStore()?.observe(detail: detail)
     }
 
     /// Carrega uma única vez por sessão os contratos do próprio aluno autenticado (mesmo `CodigoCliente`
@@ -1025,6 +1076,7 @@ final class StudentDashboardViewModel: ObservableObject {
         try nextFitService.logout(sessionAccount: studentId)
         nextFitContractClientIdsByModality = [:]
         nextFitOwnContracts = nil
+        nextFitParticipantCategoryStore = nil
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []
@@ -1209,6 +1261,7 @@ final class StudentDashboardViewModel: ObservableObject {
         isLoadingNextFitWod = false
         nextFitContractClientIdsByModality = [:]
         nextFitOwnContracts = nil
+        nextFitParticipantCategoryStore = nil
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []

@@ -67,10 +67,14 @@ struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
 }
 
 /// Categoria comercial do participante usada exclusivamente para o ícone da lista de participantes.
-enum NextFitParticipantCategory: Equatable {
+/// `rawValue` é persistido localmente (`NextFitParticipantCategoryStore`); não renomear os casos.
+enum NextFitParticipantCategory: String, Codable, Equatable {
     case monthly
     case package
     case external
+    /// VIP gratuito (somente por classificação confirmada). Usa o ícone neutro existente até que
+    /// exista representação visual aprovada.
+    case vip
     case unknown
 
     /// SF Symbol já aprovado para cada categoria.
@@ -79,7 +83,7 @@ enum NextFitParticipantCategory: Equatable {
         case .monthly: return "person.text.rectangle.fill"
         case .package: return "ticket.fill"
         case .external: return "globe"
-        case .unknown: return "questionmark.circle"
+        case .vip, .unknown: return "questionmark.circle"
         }
     }
 }
@@ -89,35 +93,76 @@ struct NextFitParticipantCategoryResolution: Equatable {
     let reason: String
 }
 
-/// Resolve a categoria comercial somente a partir de campos efetivamente retornados pela API do aluno
-/// e com semântica documentada. Nunca usa `Participantes[].Status`, `Participantes[].Tipo`,
-/// `Descricao`, presença de contrato, situação/horário da aula, nome ou posição na lista.
+/// Resolve a categoria visual do participante, nesta ordem de prioridade:
+/// 1. Classificação comercial confirmada e persistida (`CodigoCliente` + `CodigoContratoCliente`).
+/// 2. Contrato do próprio aluno autenticado com tipo de agregador (evidência da API).
+/// 3. Heurística visual `inferredExternalFromReservation` (Tipo 1 + Status 5 + sem contrato), observada
+///    agora ou persistida para a MESMA participação. Não é confirmação comercial.
+/// 4. Contrato sem classificação confirmada: permanece desconhecido (contrato preenchido não prova
+///    mensalidade — VIP, pacote e agregador também possuem contrato).
+/// 5. Desconhecido.
+/// `Participantes[].Status`/`Tipo` só são usados na heurística da prioridade 3, nunca como categoria.
 ///
-/// Semântica: Swagger oficial "API Pública Next Fit" (integracao.nextfit.com.br/swagger/v1), enums
-/// numerados a partir de 1 — ordem confirmada pelos dados reais (StatusAgendaParticipante 8 = Desistente;
-/// Status 1/2 = Reservado/Presente; Tipo 1/2 = Cliente/ContratoCliente; Contratos[].Status 1 = Ativo).
-///
-/// Limitação comprovada: a API do aluno não retorna `Participantes[].Origem` nem `Modalidades[].Tipo`,
-/// e não expõe contratos de terceiros. `Contratos[].Tipo = 1` (Padrao) abrange mensalidades E pacotes,
-/// portanto não comprova mensalidade. Mensalista/pacote exigem a API Pública (X-Api-Key) via backend.
+/// Semântica: Swagger oficial "API Pública Next Fit" (integracao.nextfit.com.br/swagger/v1).
+/// EnumTipoContratoBase: 1 = Padrao; 2 = Gympass; 3 = GympassBooking; 4 = TotalPass; 5 = TotalPassBooking.
+/// `Contratos[].Tipo = 1` (Padrao) abrange mensalidades E pacotes, portanto não comprova mensalidade.
 enum NextFitParticipantCategoryResolver {
-    /// EnumTipoContratoBase: 1 = Padrao; 2 = Gympass; 3 = GympassBooking; 4 = TotalPass; 5 = TotalPassBooking.
     static let externalContractTypes: Set<Int> = [2, 3, 4, 5]
 
-    /// - Parameter ownContractType: `Contratos[].Tipo` do contrato do próprio aluno autenticado vinculado
-    ///   a este participante por `CodigoContratoCliente`; `nil` para todos os demais participantes.
+    static let inferredExternalReason = "inferredExternalFromReservation"
+    static let persistedInferredExternalReason = "inferredExternalFromReservation-persistida"
+
+    /// Combinação observada para participantes de agregador antes da consolidação da aula:
+    /// `Tipo == 1 && Status == 5 && CodigoContratoCliente == nil`. Heurística visual, não comercial.
+    static func matchesReservationAggregatorPattern(_ participant: NextFitAgendaParticipantDisplay) -> Bool {
+        participant.type == 1 && participant.status == 5 && participant.contractClientId == nil
+    }
+
+    /// - Parameters:
+    ///   - confirmedCategory: categoria confirmada e persistida para o cliente/contrato do participante.
+    ///   - ownContractType: `Contratos[].Tipo` do contrato do próprio aluno autenticado vinculado
+    ///     a este participante por `CodigoContratoCliente`; `nil` para todos os demais participantes.
+    ///   - hasPersistedInference: a mesma participação (`CodigoAgenda` + `Participantes[].Id`) já foi
+    ///     observada com o padrão de agregador.
+    static func resolve(
+        participant: NextFitAgendaParticipantDisplay,
+        confirmedCategory: NextFitParticipantCategory?,
+        ownContractType: Int?,
+        hasPersistedInference: Bool
+    ) -> NextFitParticipantCategoryResolution {
+        if let confirmedCategory, confirmedCategory != .unknown {
+            return NextFitParticipantCategoryResolution(category: confirmedCategory, reason: "classificacao-confirmada")
+        }
+        if let ownContractType, externalContractTypes.contains(ownContractType) {
+            return NextFitParticipantCategoryResolution(category: .external, reason: "contrato-proprio-agregador")
+        }
+        if matchesReservationAggregatorPattern(participant) {
+            return NextFitParticipantCategoryResolution(category: .external, reason: inferredExternalReason)
+        }
+        if hasPersistedInference {
+            return NextFitParticipantCategoryResolution(category: .external, reason: persistedInferredExternalReason)
+        }
+        if participant.type == 2, participant.contractClientId != nil {
+            return NextFitParticipantCategoryResolution(category: .unknown, reason: "contrato-sem-classificacao-confirmada")
+        }
+        if ownContractType != nil {
+            // Padrao (1) ou valor não documentado: mensalidade x pacote não é distinguível pela API do aluno
+            return NextFitParticipantCategoryResolution(category: .unknown, reason: "contrato-proprio-padrao-sem-plano")
+        }
+        return NextFitParticipantCategoryResolution(category: .unknown, reason: "sem-dado-comercial")
+    }
+
+    /// Compatibilidade (diagnóstico DEBUG): sem classificação confirmada nem inferência persistida.
     static func resolve(
         participant: NextFitAgendaParticipantDisplay,
         ownContractType: Int?
     ) -> NextFitParticipantCategoryResolution {
-        guard let ownContractType else {
-            return NextFitParticipantCategoryResolution(category: .unknown, reason: "sem-dado-comercial")
-        }
-        if externalContractTypes.contains(ownContractType) {
-            return NextFitParticipantCategoryResolution(category: .external, reason: "contrato-proprio-agregador")
-        }
-        // Padrao (1) ou valor não documentado: mensalidade x pacote não é distinguível pela API do aluno
-        return NextFitParticipantCategoryResolution(category: .unknown, reason: "contrato-proprio-padrao-sem-plano")
+        resolve(
+            participant: participant,
+            confirmedCategory: nil,
+            ownContractType: ownContractType,
+            hasPersistedInference: false
+        )
     }
 }
 
