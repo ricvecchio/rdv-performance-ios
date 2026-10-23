@@ -989,14 +989,14 @@ struct StudentNextFitWodView: View {
                     .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ForEach(detail.participants) { participant in
-                    // Classificação binária pelo `Participantes[].Status` individual:
-                    // Status 1 = mensalista (cartão, azul); qualquer outro valor, inclusive nil = externo (globo, vermelho).
-                    let isMonthlyMember = participant.status == 1
+                    // Classificação exclusivamente pelo `Participantes[].Status` individual,
+                    // independente da situação da aula (disponível, agendada ou encerrada).
+                    let appearance = participantAppearance(for: participant.status)
 
                     HStack(spacing: 6) {
-                        Image(systemName: isMonthlyMember ? "person.text.rectangle.fill" : "globe")
+                        Image(systemName: appearance.icon)
                             .font(.system(size: 12))
-                            .foregroundStyle(isMonthlyMember ? Color.blue : Color.red)
+                            .foregroundStyle(appearance.color)
                             .frame(width: 16)
                             .accessibilityHidden(true)
 
@@ -1019,6 +1019,22 @@ struct StudentNextFitWodView: View {
                     .font(.system(size: 13))
                     .foregroundColor(.red.opacity(0.9))
             }
+        }
+    }
+
+    /// Ícone e cor do participante conforme `Participantes[].Status` individual:
+    /// nil/0 = pacote de check-ins (ticket, laranja); 1 = mensalista (cartão, azul);
+    /// 2 = acesso externo (globo, vermelho); demais valores = fallback neutro, sem categoria atribuída.
+    private func participantAppearance(for status: Int?) -> (icon: String, color: Color) {
+        switch status {
+        case nil, 0:
+            return ("ticket.fill", .orange)
+        case 1:
+            return ("person.text.rectangle.fill", .blue)
+        case 2:
+            return ("globe", .red)
+        default:
+            return ("questionmark.circle", .gray)
         }
     }
 
