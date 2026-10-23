@@ -13,16 +13,15 @@ import Foundation
 // - Não altera modelos de produção, sessão NextFit, classificação comercial, ícones ou WOD.
 // - Persistência local, privada (Application Support), excluída de backup, com retenção limitada.
 // - Nunca grava tokens, cabeçalhos, URLs de imagem, e-mails, telefones ou documentos.
-// - Nomes de participantes nunca são exibidos em logs; só entram na exportação por ação explícita.
+// - Nomes de participantes nunca são exibidos em logs; entram SEMPRE na exportação (planilha/CSV),
+//   gerada somente por ação explícita, para conferência dos contratos com a academia.
 //
 // Ações do desenvolvedor (sem alteração de interface):
 // - Argumentos de execução (Xcode › Edit Scheme › Run › Arguments Passed On Launch):
-//     -NextFitCheckInAuditExport YES        gera/atualiza os CSVs a cada nova captura
-//     -NextFitCheckInAuditIncludeNames YES  inclui nomes nos CSVs (arquivo passa a conter dados pessoais)
+//     -NextFitCheckInAuditExport YES        gera/atualiza planilha e CSVs a cada nova captura
 //     -NextFitCheckInAuditReset YES         limpa todas as capturas ao iniciar o diagnóstico
 // - Console LLDB (app pausado):
 //     po NextFitCheckInAuditStore.shared.exportCSV()
-//     po NextFitCheckInAuditStore.shared.exportCSV(includeNames: true)
 //     po NextFitCheckInAuditStore.shared.printComparisons()
 //     po NextFitCheckInAuditStore.shared.reset()
 
@@ -660,28 +659,43 @@ final class NextFitCheckInAuditStore {
         }
     }
 
-    // MARK: Exportação CSV (ação explícita do desenvolvedor)
+    // MARK: Exportação Excel/CSV (ação explícita do desenvolvedor)
 
+    /// Gera a planilha Excel (abas PARTICIPANTES e COMPARATIVO ANTES-APOS) e os CSVs equivalentes.
+    /// Sempre inclui o nome completo original (`Participantes[].NomeParticipante`) para conferência
+    /// com a academia. Arquivos ficam somente no contêiner privado do app DEBUG; nada é enviado.
     @discardableResult
-    func exportCSV(includeNames: Bool = false) -> [URL] {
+    func exportCSV() -> [URL] {
         prepareDirectory(exportsURL)
-        if includeNames {
-            print(Self.logPrefix + " EXPORTACAO\nATENCAO=arquivo-contem-dados-pessoais(nomes-dos-participantes)-nao-compartilhar-sem-autorizacao")
-        }
-        let suffix: String = includeNames ? "_COM_NOMES_DADOS_PESSOAIS" : ""
-        let participantsURL: URL = exportsURL.appendingPathComponent("nextfit_participantes" + suffix + ".csv")
-        let comparisonURL: URL = exportsURL.appendingPathComponent("nextfit_comparativo" + suffix + ".csv")
+        print(Self.logPrefix + " EXPORTACAO\nATENCAO=arquivos-contem-dados-pessoais(nomes-completos-dos-participantes)-uso-restrito-a-conferencia-com-a-academia")
+
+        let participantRows: [[String]] = participantsTable()
+        let comparisonRows: [[String]] = comparisonTable()
+
+        let workbookURL: URL = exportsURL.appendingPathComponent("nextfit_auditoria.xml")
+        let participantsURL: URL = exportsURL.appendingPathComponent("nextfit_participantes.csv")
+        let comparisonURL: URL = exportsURL.appendingPathComponent("nextfit_comparativo.csv")
+
+        let sheets: [(name: String, rows: [[String]])] = [
+            (name: "PARTICIPANTES", rows: participantRows),
+            (name: "COMPARATIVO ANTES-APOS", rows: comparisonRows)
+        ]
 
         var written: [URL] = []
-        if write(participantsCSV(includeNames: includeNames), to: participantsURL) {
+        if write(Self.workbook(sheets), to: workbookURL, withBOM: false) {
+            written.append(workbookURL)
+        }
+        if write(Self.csv(participantRows), to: participantsURL, withBOM: true) {
             written.append(participantsURL)
         }
-        if write(comparisonCSV(includeNames: includeNames), to: comparisonURL) {
+        if write(Self.csv(comparisonRows), to: comparisonURL, withBOM: true) {
             written.append(comparisonURL)
         }
         let paths: [String] = written.map { $0.path }
         var lines: [String] = [Self.logPrefix + " EXPORTACAO"]
-        lines.append("nomesIncluidos=\(includeNames)")
+        lines.append("nomesIncluidos=true")
+        lines.append("linhasParticipantes=\(max(participantRows.count - 1, 0))")
+        lines.append("linhasComparativo=\(max(comparisonRows.count - 1, 0))")
         lines.append("arquivos=\(paths)")
         print(lines.joined(separator: "\n"))
         return written
@@ -981,18 +995,16 @@ final class NextFitCheckInAuditStore {
         print(lines.joined(separator: "\n"))
     }
 
-    // MARK: - Privados: CSV
+    // MARK: - Privados: tabelas da planilha
 
-    private func participantsCSV(includeNames: Bool) -> String {
-        var header: [String] = [
-            "dataAula", "horaInicialAula", "agendaId", "participanteId", "codigoCliente",
-            "codigoContratoCliente", "fase", "faseConfirmada", "encerramento", "situacaoTemporalApp",
-            "capturadoEm", "statusAula", "statusParticipante", "tipoParticipante", "motivo",
-            "reagendamento", "dadosContrato", "categoriaApp", "camposAdicionais"
+    private func participantsTable() -> [[String]] {
+        let header: [String] = [
+            "Data da Aula", "Hora Inicial da Aula", "ID da Agenda", "ID do Participante",
+            "Nome do Participante", "Código do Cliente", "Código do Contrato",
+            "Tipo da Participação", "Status da Participação", "Fase da Captura", "Fase Confirmada",
+            "Encerramento", "Situação Temporal (App)", "Capturado Em", "Status da Aula",
+            "Motivo", "Reagendamento", "Dados do Contrato", "Categoria App", "Campos Adicionais"
         ]
-        if includeNames {
-            header.append("nomeParticipante")
-        }
         var rows: [[String]] = [header]
 
         var captures: [NextFitAuditAgendaCapture] = file.agendaCaptures
@@ -1003,17 +1015,16 @@ final class NextFitCheckInAuditStore {
         for capture in captures {
             let start: (date: String, time: String) = Self.splitAgendaStart(capture.agendaStartText)
             for participant in capture.participants {
-                rows.append(participantRow(participant, capture: capture, start: start, includeNames: includeNames))
+                rows.append(participantRow(participant, capture: capture, start: start))
             }
         }
-        return Self.csv(rows)
+        return rows
     }
 
     private func participantRow(
         _ participant: NextFitAuditParticipant,
         capture: NextFitAuditAgendaCapture,
-        start: (date: String, time: String),
-        includeNames: Bool
+        start: (date: String, time: String)
     ) -> [String] {
         var extras: [String] = []
         for key in participant.fields.keys.sorted() where !Self.participantCSVCoreKeys.contains(key) {
@@ -1023,40 +1034,37 @@ final class NextFitCheckInAuditStore {
         }
         var row: [String] = [start.date, start.time, String(capture.agendaId)]
         row.append(Self.optionalText(participant.participantId))
+        // Nome completo original da API; vazio quando ausente (nunca inventado)
+        row.append(participant.name ?? "")
         row.append(Self.optionalText(participant.clientId))
         row.append(Self.optionalText(participant.contractClientId))
+        row.append(Self.fieldText(participant, "Tipo", absent: ""))
+        row.append(Self.fieldText(participant, "Status", absent: ""))
         row.append(capture.phase)
         row.append(capture.phaseConfirmed ? "true" : "false")
         row.append(capture.closure)
         row.append(capture.temporalSituation)
         row.append(Self.timestamp(capture.capturedAt))
         row.append(capture.agendaStatusApi)
-        row.append(Self.fieldText(participant, "Status", absent: ""))
-        row.append(Self.fieldText(participant, "Tipo", absent: ""))
         row.append(Self.fieldText(participant, "Motivo", absent: ""))
         row.append(Self.fieldText(participant, "Reagendamento", absent: ""))
         row.append(participant.contractData)
         row.append(participant.appCategory)
         row.append(extras.joined(separator: " | "))
-        if includeNames {
-            row.append(participant.name ?? "")
-        }
         return row
     }
 
-    private func comparisonCSV(includeNames: Bool) -> String {
-        var header: [String] = [
-            "agendaId", "dataAula", "horaInicialAula", "participanteId", "codigoCliente",
-            "codigoContratoCliente", "comparacao", "situacao", "correspondencia", "faseAntes",
-            "capturadoAntes", "faseApos", "capturadoApos", "encerramento", "statusAulaAntes",
-            "statusAulaApos", "statusAntes", "statusApos", "tipoAntes", "tipoApos",
-            "camposModificados", "alteracoesAula", "categoriaAppAntes", "categoriaAppApos",
-            "categoriaAppMudou", "contratoProprioRecuperavel", "categoriaConfirmadaApi",
-            "categoriaValidacaoAcademia(MENSALISTA|PACOTE|WELLHUB|TOTALPASS|OUTRO)"
+    private func comparisonTable() -> [[String]] {
+        let header: [String] = [
+            "ID da Agenda", "Data da Aula", "Hora Inicial da Aula", "ID do Participante",
+            "Nome do Participante", "Código do Cliente", "Código do Contrato", "Comparação",
+            "Situação", "Correspondência", "Fase ANTES", "Capturado ANTES", "Fase APÓS",
+            "Capturado APÓS", "Encerramento", "Status da Aula ANTES", "Status da Aula APÓS",
+            "Status ANTES", "Status APÓS", "Tipo ANTES", "Tipo APÓS", "Campos Alterados",
+            "Alterações da Aula", "Categoria App ANTES", "Categoria App APÓS", "Categoria App Mudou",
+            "Contrato Próprio Recuperável", "Categoria Confirmada pela API",
+            "Categoria para Validação pela Academia (MENSALISTA|PACOTE|WELLHUB|TOTALPASS|OUTRO)"
         ]
-        if includeNames {
-            header.append("nomeParticipante")
-        }
         var rows: [[String]] = [header]
 
         let agendaIds: [Int] = Set(file.agendaCaptures.map { $0.agendaId }).sorted()
@@ -1076,19 +1084,20 @@ final class NextFitCheckInAuditStore {
                 }
             }
             for row in comparisonRows {
-                rows.append(comparisonLine(row, result: result, start: start, includeNames: includeNames))
+                rows.append(comparisonLine(row, result: result, start: start))
             }
         }
-        return Self.csv(rows)
+        return rows
     }
 
     private func comparisonLine(
         _ row: NextFitAuditComparisonRow,
         result: NextFitAuditComparison,
-        start: (date: String, time: String),
-        includeNames: Bool
+        start: (date: String, time: String)
     ) -> [String] {
         let participant: NextFitAuditParticipant? = row.after ?? row.before
+        // Nome apenas para identificação visual; a correlação já foi feita por identificadores estáveis
+        let name: String = row.after?.name ?? row.before?.name ?? ""
         let beforeCapture: NextFitAuditAgendaCapture? = row.before == nil ? nil : result.before
         let afterCapture: NextFitAuditAgendaCapture? = row.after == nil ? nil : result.after
         let sessionCapture: NextFitAuditAgendaCapture? = afterCapture ?? beforeCapture
@@ -1109,6 +1118,7 @@ final class NextFitCheckInAuditStore {
 
         var line: [String] = [String(result.agendaId), start.date, start.time]
         line.append(Self.optionalText(participant?.participantId))
+        line.append(name)
         line.append(Self.optionalText(participant?.clientId))
         line.append(Self.optionalText(participant?.contractClientId))
         line.append(result.state)
@@ -1133,16 +1143,13 @@ final class NextFitCheckInAuditStore {
         line.append(recoverable)
         line.append(Self.confirmedCategory(for: linkage.contract))
         line.append("") // preenchimento manual pela academia; nunca inferido
-        if includeNames {
-            line.append(participant?.name ?? "")
-        }
         return line
     }
 
-    private func write(_ text: String, to url: URL) -> Bool {
+    private func write(_ text: String, to url: URL, withBOM: Bool) -> Bool {
         do {
-            // BOM UTF-8 para acentuação correta no Excel
-            let content: String = "\u{FEFF}" + text
+            // BOM UTF-8 nos CSVs para acentuação correta no Excel
+            let content: String = withBOM ? "\u{FEFF}" + text : text
             try Data(content.utf8).write(
                 to: url,
                 options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
@@ -1156,8 +1163,7 @@ final class NextFitCheckInAuditStore {
 
     private func exportIfRequestedByLaunchArgument() {
         guard UserDefaults.standard.bool(forKey: "NextFitCheckInAuditExport") else { return }
-        let includeNames: Bool = UserDefaults.standard.bool(forKey: "NextFitCheckInAuditIncludeNames")
-        exportCSV(includeNames: includeNames)
+        exportCSV()
     }
 
     // MARK: - Privados: persistência
@@ -1369,6 +1375,43 @@ final class NextFitCheckInAuditStore {
         guard cell.contains(where: { specialCharacters.contains($0) }) else { return cell }
         let escaped: String = cell.replacingOccurrences(of: "\"", with: "\"\"")
         return "\"\(escaped)\""
+    }
+
+    /// Escapa texto para XML preservando acentos e caracteres especiais (arquivo em UTF-8).
+    private static func xmlEscape(_ text: String) -> String {
+        var escaped: String = text.replacingOccurrences(of: "&", with: "&amp;")
+        escaped = escaped.replacingOccurrences(of: "<", with: "&lt;")
+        escaped = escaped.replacingOccurrences(of: ">", with: "&gt;")
+        escaped = escaped.replacingOccurrences(of: "\"", with: "&quot;")
+        escaped = escaped.replacingOccurrences(of: "\r\n", with: "&#10;")
+        escaped = escaped.replacingOccurrences(of: "\n", with: "&#10;")
+        return escaped
+    }
+
+    /// Planilha Excel (XML Spreadsheet 2003, UTF-8) com uma aba por tabela. Todas as células são
+    /// texto, preservando identificadores e nomes exatamente como recebidos.
+    private static func workbook(_ sheets: [(name: String, rows: [[String]])]) -> String {
+        var xml: [String] = []
+        xml.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>")
+        xml.append("<?mso-application progid=\"Excel.Sheet\"?>")
+        xml.append("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\">")
+        xml.append("<Styles><Style ss:ID=\"header\"><Font ss:Bold=\"1\"/></Style></Styles>")
+        for sheet in sheets {
+            let sheetName: String = xmlEscape(sheet.name)
+            xml.append("<Worksheet ss:Name=\"\(sheetName)\"><Table>")
+            for (index, row) in sheet.rows.enumerated() {
+                let style: String = index == 0 ? " ss:StyleID=\"header\"" : ""
+                var cells: [String] = []
+                for cell in row {
+                    let value: String = xmlEscape(cell)
+                    cells.append("<Cell\(style)><Data ss:Type=\"String\">\(value)</Data></Cell>")
+                }
+                xml.append("<Row>" + cells.joined() + "</Row>")
+            }
+            xml.append("</Table></Worksheet>")
+        }
+        xml.append("</Workbook>")
+        return xml.joined(separator: "\n")
     }
 
     private static func csv(_ rows: [[String]]) -> String {
