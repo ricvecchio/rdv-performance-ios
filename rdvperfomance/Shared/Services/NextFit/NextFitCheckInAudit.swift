@@ -666,6 +666,13 @@ final class NextFitCheckInAuditStore {
     /// com a academia. Arquivos ficam somente no contêiner privado do app DEBUG; nada é enviado.
     @discardableResult
     func exportCSV() -> [URL] {
+        do {
+            try FileManager.default.createDirectory(at: exportsURL, withIntermediateDirectories: true)
+        } catch {
+            let nsError = error as NSError
+            print(Self.logPrefix + " EXPORTACAO\nresultado=falha\nerro=\(nsError.domain)(\(nsError.code)) \(nsError.localizedDescription)")
+            return []
+        }
         prepareDirectory(exportsURL)
         print(Self.logPrefix + " EXPORTACAO\nATENCAO=arquivos-contem-dados-pessoais(nomes-completos-dos-participantes)-uso-restrito-a-conferencia-com-a-academia")
 
@@ -682,21 +689,59 @@ final class NextFitCheckInAuditStore {
         ]
 
         var written: [URL] = []
-        if write(Self.workbook(sheets), to: workbookURL, withBOM: false) {
-            written.append(workbookURL)
+        var errors: [String] = []
+        let outputs: [(url: URL, text: String, bom: Bool)] = [
+            (url: workbookURL, text: Self.workbook(sheets), bom: false),
+            (url: participantsURL, text: Self.csv(participantRows), bom: true),
+            (url: comparisonURL, text: Self.csv(comparisonRows), bom: true)
+        ]
+        for output in outputs {
+            if let error = write(output.text, to: output.url, withBOM: output.bom) {
+                errors.append(output.url.lastPathComponent + ": " + error)
+            } else {
+                written.append(output.url)
+            }
         }
-        if write(Self.csv(participantRows), to: participantsURL, withBOM: true) {
-            written.append(participantsURL)
+
+        let agendaIds: [Int] = Set(file.agendaCaptures.map { $0.agendaId }).sorted()
+        var totalParticipants: Int = 0
+        for capture in file.agendaCaptures {
+            totalParticipants += capture.participants.count
         }
-        if write(Self.csv(comparisonRows), to: comparisonURL, withBOM: true) {
-            written.append(comparisonURL)
+        var generatedComparisons: Int = 0
+        var withoutPrevious: Int = 0
+        var waitingLater: Int = 0
+        for agendaId in agendaIds {
+            switch comparison(for: agendaId).state {
+            case "ok": generatedComparisons += 1
+            case "sem-captura-anterior": withoutPrevious += 1
+            case "aguardando-captura-posterior": waitingLater += 1
+            default: break
+            }
         }
-        let paths: [String] = written.map { $0.path }
+        var confirmedClosures: Int = 0
+        for capture in file.agendaCaptures where capture.phaseConfirmed {
+            confirmedClosures += 1
+        }
+
+        // Somente contagens e caminhos: nenhum nome, token ou dado pessoal no console
         var lines: [String] = [Self.logPrefix + " EXPORTACAO"]
-        lines.append("nomesIncluidos=true")
-        lines.append("linhasParticipantes=\(max(participantRows.count - 1, 0))")
-        lines.append("linhasComparativo=\(max(comparisonRows.count - 1, 0))")
-        lines.append("arquivos=\(paths)")
+        lines.append("resultado=" + (errors.isEmpty ? "sucesso" : (written.isEmpty ? "falha" : "parcial")))
+        for url in written {
+            lines.append("arquivo=" + url.path)
+        }
+        for error in errors {
+            lines.append("erro=" + error)
+        }
+        lines.append("totalAgendas=\(agendaIds.count)")
+        lines.append("totalCapturas=\(file.agendaCaptures.count)")
+        lines.append("totalParticipantes=\(totalParticipants)")
+        lines.append("nomesIncluidos=sim")
+        lines.append("comparacoesGeradas=\(generatedComparisons)")
+        lines.append("agendasSemCapturaAnterior=\(withoutPrevious)")
+        lines.append("agendasAguardandoCapturaPosterior=\(waitingLater)")
+        lines.append("encerramentosConfirmados=\(confirmedClosures)")
+        lines.append("contratosProprios=" + (file.ownContracts == nil ? "nao-carregados" : "carregados"))
         print(lines.joined(separator: "\n"))
         return written
     }
@@ -1001,9 +1046,13 @@ final class NextFitCheckInAuditStore {
         let header: [String] = [
             "Data da Aula", "Hora Inicial da Aula", "ID da Agenda", "ID do Participante",
             "Nome do Participante", "Código do Cliente", "Código do Contrato",
-            "Tipo da Participação", "Status da Participação", "Fase da Captura", "Fase Confirmada",
-            "Encerramento", "Situação Temporal (App)", "Capturado Em", "Status da Aula",
-            "Motivo", "Reagendamento", "Dados do Contrato", "Categoria App", "Campos Adicionais"
+            "Tipo da Participação", "Status da Participação", "Fase da Captura", "Fase Comprovada",
+            "Encerramento Confirmado", "Situação Temporal (App)", "Capturado Em", "Status da Aula",
+            "Motivo", "Reagendamento", "Dados do Contrato", "Tipo do Contrato (próprio)",
+            "Status do Contrato (próprio)", "Descrição do Contrato (próprio)",
+            "Modalidades do Contrato (próprio)", "Categoria Confirmada pela API", "Categoria App",
+            "Categoria para Conferência pela Academia (MENSALISTA|PACOTE|WELLHUB|TOTALPASS|OUTRO)",
+            "Campos Adicionais"
         ]
         var rows: [[String]] = [header]
 
@@ -1032,6 +1081,19 @@ final class NextFitCheckInAuditStore {
                 extras.append(key + "=" + value.text)
             }
         }
+        // Vínculo comercial recalculado com os contratos próprios carregados mais recentes
+        // (somente o aluno autenticado; terceiros permanecem "nao-disponiveis-para-terceiros")
+        let linkage: NextFitAuditContractLinkage = contractLinkage(
+            clientId: participant.clientId,
+            contractClientId: participant.contractClientId,
+            sessionClientId: capture.sessionClientId
+        )
+        let contract: NextFitAuditContract? = linkage.contract
+        let contractType: String = Self.optionalText(contract?.type)
+            + Self.documented(contract?.type, Self.contractTypeDescriptions, "EnumTipoContratoBase")
+        let contractStatus: String = Self.optionalText(contract?.status)
+            + Self.documented(contract?.status, Self.contractStatusDescriptions, "Contratos[].Status")
+
         var row: [String] = [start.date, start.time, String(capture.agendaId)]
         row.append(Self.optionalText(participant.participantId))
         // Nome completo original da API; vazio quando ausente (nunca inventado)
@@ -1040,16 +1102,23 @@ final class NextFitCheckInAuditStore {
         row.append(Self.optionalText(participant.contractClientId))
         row.append(Self.fieldText(participant, "Tipo", absent: ""))
         row.append(Self.fieldText(participant, "Status", absent: ""))
+        let closureText: String = capture.phaseConfirmed ? "sim" : "nao (\(capture.closure))"
         row.append(capture.phase)
-        row.append(capture.phaseConfirmed ? "true" : "false")
-        row.append(capture.closure)
+        row.append(capture.phaseConfirmed ? "sim" : "nao")
+        row.append(closureText)
         row.append(capture.temporalSituation)
         row.append(Self.timestamp(capture.capturedAt))
         row.append(capture.agendaStatusApi)
         row.append(Self.fieldText(participant, "Motivo", absent: ""))
         row.append(Self.fieldText(participant, "Reagendamento", absent: ""))
-        row.append(participant.contractData)
+        row.append(linkage.description)
+        row.append(contract == nil ? "" : contractType)
+        row.append(contract == nil ? "" : contractStatus)
+        row.append(contract?.descriptionText ?? "")
+        row.append(contract?.modalities.joined(separator: " | ") ?? "")
+        row.append(Self.confirmedCategory(for: contract))
         row.append(participant.appCategory)
+        row.append("") // preenchimento manual pela academia; nunca inferido
         row.append(extras.joined(separator: " | "))
         return row
     }
@@ -1059,7 +1128,8 @@ final class NextFitCheckInAuditStore {
             "ID da Agenda", "Data da Aula", "Hora Inicial da Aula", "ID do Participante",
             "Nome do Participante", "Código do Cliente", "Código do Contrato", "Comparação",
             "Situação", "Correspondência", "Fase ANTES", "Capturado ANTES", "Fase APÓS",
-            "Capturado APÓS", "Encerramento", "Status da Aula ANTES", "Status da Aula APÓS",
+            "Capturado APÓS", "Encerramento Confirmado", "Limitação da Comparação",
+            "Status da Aula ANTES", "Status da Aula APÓS",
             "Status ANTES", "Status APÓS", "Tipo ANTES", "Tipo APÓS", "Campos Alterados",
             "Alterações da Aula", "Categoria App ANTES", "Categoria App APÓS", "Categoria App Mudou",
             "Contrato Próprio Recuperável", "Categoria Confirmada pela API",
@@ -1128,7 +1198,9 @@ final class NextFitCheckInAuditStore {
         line.append(beforeTime)
         line.append(afterCapture?.phase ?? "")
         line.append(afterTime)
-        line.append(result.after?.closure ?? "nao-confirmado")
+        let closureConfirmed: Bool = result.after?.phaseConfirmed == true
+        line.append(closureConfirmed ? "sim" : "nao")
+        line.append(Self.comparisonLimitation(result.state, closureConfirmed: closureConfirmed))
         line.append(beforeCapture?.agendaStatusApi ?? "")
         line.append(afterCapture?.agendaStatusApi ?? "")
         line.append(Self.fieldText(row.before, "Status", absent: ""))
@@ -1146,7 +1218,8 @@ final class NextFitCheckInAuditStore {
         return line
     }
 
-    private func write(_ text: String, to url: URL, withBOM: Bool) -> Bool {
+    /// Grava o arquivo e retorna `nil` em caso de sucesso ou a descrição técnica real do erro.
+    private func write(_ text: String, to url: URL, withBOM: Bool) -> String? {
         do {
             // BOM UTF-8 nos CSVs para acentuação correta no Excel
             let content: String = withBOM ? "\u{FEFF}" + text : text
@@ -1154,10 +1227,10 @@ final class NextFitCheckInAuditStore {
                 to: url,
                 options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication]
             )
-            return true
+            return nil
         } catch {
-            print(Self.logPrefix + " EXPORTACAO\nerro=" + error.localizedDescription)
-            return false
+            let nsError = error as NSError
+            return "\(nsError.domain)(\(nsError.code)) \(nsError.localizedDescription)"
         }
     }
 
@@ -1268,6 +1341,25 @@ final class NextFitCheckInAuditStore {
     private static func topLevelKey(_ path: String) -> String {
         let firstSegment: String = path.split(separator: ".").first.map { String($0) } ?? path
         return firstSegment.components(separatedBy: "[").first ?? firstSegment
+    }
+
+    /// Texto explícito da limitação da comparação para a planilha.
+    private static func comparisonLimitation(_ state: String, closureConfirmed: Bool) -> String {
+        var parts: [String] = []
+        switch state {
+        case "sem-captura-anterior":
+            parts.append("sem captura anterior (ANTES) desta aula; estado anterior não disponível")
+        case "aguardando-captura-posterior":
+            parts.append("somente captura ANTES; aguardando captura posterior")
+        case "ok":
+            break
+        default:
+            parts.append(state)
+        }
+        if !closureConfirmed {
+            parts.append("encerramento não confirmado pela API")
+        }
+        return parts.joined(separator: "; ")
     }
 
     private static func categoryChanged(_ row: NextFitAuditComparisonRow) -> String {
