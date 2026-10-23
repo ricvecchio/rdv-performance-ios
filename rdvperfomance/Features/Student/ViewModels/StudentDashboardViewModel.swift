@@ -969,29 +969,8 @@ final class StudentDashboardViewModel: ObservableObject {
     ) -> NextFitParticipantCategoryResolution {
         NextFitParticipantCategoryResolver.resolve(
             participant: participant,
-            ownContract: ownNextFitContractCommercialInfo(for: participant)
+            ownContractType: ownNextFitContract(for: participant)?.type
         )
-    }
-
-    /// Tipo do contrato próprio e `Modalidades[].Tipo` da modalidade da aula aberta (somente se
-    /// houver exatamente um tipo para essa modalidade no contrato; caso contrário, `nil`).
-    private func ownNextFitContractCommercialInfo(
-        for participant: NextFitAgendaParticipantDisplay
-    ) -> NextFitOwnContractCommercialInfo? {
-        guard let contract = ownNextFitContract(for: participant) else { return nil }
-
-        var modalityType: Int?
-        if let agendaModalityId = selectedNextFitAgendaDetail?.modalityId {
-            let types = Set(
-                contract.modalities
-                    .filter { $0.modalityId == agendaModalityId }
-                    .compactMap { $0.type }
-            )
-            if types.count == 1 {
-                modalityType = types.first
-            }
-        }
-        return NextFitOwnContractCommercialInfo(contractType: contract.type, modalityType: modalityType)
     }
 
     /// Carrega uma única vez por sessão os contratos do próprio aluno autenticado (mesmo `CodigoCliente`
@@ -1543,8 +1522,7 @@ extension StudentDashboardViewModel {
                 let hasDescription = !(contract.descriptionText?
                     .trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
                 // Somente a presença de `Descricao` (texto livre pode conter dados pessoais); sem regra validada
-                let modalityTypes = contract.modalities.map { $0.type.map { String($0) } ?? "nil" }
-                print("\(prefix) CONTRATO_PROPRIO #\(index + 1) Tipo=\(contract.type) Status=\(contract.status) modalidades=\(contract.modalities.count) tiposModalidade=\(modalityTypes) descricao=\(hasDescription ? "presente" : "ausente")")
+                print("\(prefix) CONTRATO_PROPRIO #\(index + 1) Tipo=\(contract.type) Status=\(contract.status) modalidades=\(contract.modalities.count) descricao=\(hasDescription ? "presente" : "ausente")")
             }
         }
 
@@ -1555,15 +1533,14 @@ extension StudentDashboardViewModel {
             parts.append("\(prefix) PARTICIPANTE agenda=\(detail.id) #\(index + 1)")
             parts.append("Tipo=\(participant.type.map { String($0) } ?? "nil")")
             parts.append("Status=\(participant.status.map { String($0) } ?? "nil")")
-            parts.append("Origem=\(participant.origin.map { String($0) } ?? "nil")")
             parts.append("contrato=\(participant.contractClientId == nil ? "ausente" : "presente")")
             if let own = nextFitOwnContracts {
                 let isOwnClient = participant.clientId == own.clientId || ownContract != nil
                 parts.append("aluno=\(isOwnClient ? "sim" : "nao")")
             }
             parts.append("proprio=\(ownContract == nil ? "nao" : "sim")")
-            if let info = ownNextFitContractCommercialInfo(for: participant) {
-                parts.append("contratoProprioTipo=\(info.contractType) modalidadeAulaTipo=\(info.modalityType.map { String($0) } ?? "nil")")
+            if let ownContract {
+                parts.append("contratoProprioTipo=\(ownContract.type)")
             }
             parts.append("categoria=\(resolution.category)")
             parts.append("motivo=\(resolution.reason)")

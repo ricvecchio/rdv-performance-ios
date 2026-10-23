@@ -613,8 +613,7 @@ struct NextFitService {
                         clientId: $0.codigoCliente,
                         contractClientId: $0.codigoContratoCliente,
                         status: $0.status,
-                        type: $0.tipo,
-                        origin: $0.origem
+                        type: $0.tipo
                     )
                 }
             )
