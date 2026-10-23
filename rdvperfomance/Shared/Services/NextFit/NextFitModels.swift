@@ -57,11 +57,15 @@ struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
     let name: String
     let clientId: Int?
     let contractClientId: Int?
-    /// `Participantes[].Status` individual. Varia conforme a situação na aula (ex.: muda após o
-    /// encerramento); NÃO representa categoria comercial e não é usado para classificá-la.
+    /// `Participantes[].Status` = EnumStatusAgendaParticipante (1 Reservado, 2 Presente, 3 Falta,
+    /// 4 FaltaJustificada, 5 Bloqueado, 6 Suspenso, 7 Cancelado, 8 Desistente). Situação na aula:
+    /// NÃO representa categoria comercial e não é usado para classificá-la.
     let status: Int?
-    /// `Participantes[].Tipo` individual, repassado sem alteração. Semântica ainda não confirmada.
+    /// `Participantes[].Tipo` = EnumTipoAgendaParticipante (1 Cliente, 2 ContratoCliente,
+    /// 3 Oportunidade, 4 ClienteServico). Forma de vínculo com a aula, não categoria comercial.
     let type: Int?
+    /// `Participantes[].Origem` = EnumOrigemAgendaParticipante (4 Gympass, 8 TotalPass, ...), quando enviado.
+    let origin: Int?
 }
 
 /// Categoria comercial do participante usada exclusivamente para o ícone da lista de participantes.
@@ -87,59 +91,72 @@ struct NextFitParticipantCategoryResolution: Equatable {
     let reason: String
 }
 
-/// Resolve a categoria comercial somente a partir de mapeamentos comprovados.
-/// Nunca usa `Participantes[].Status`, situação da aula, nome ou posição na lista.
+/// Dados comerciais do contrato do PRÓPRIO aluno autenticado vinculado ao participante.
+struct NextFitOwnContractCommercialInfo: Equatable {
+    /// `Contratos[].Tipo` = EnumTipoContratoBase.
+    let contractType: Int
+    /// `Modalidades[].Tipo` (EnumTipoContratoBaseModalidade) da modalidade da aula, quando disponível.
+    let modalityType: Int?
+}
+
+/// Resolve a categoria comercial somente a partir de campos com semântica documentada.
+/// Nunca usa `Participantes[].Status`, `Participantes[].Tipo`, `Descricao`, presença de contrato,
+/// situação/horário da aula, nome ou posição na lista.
+///
+/// Fonte da semântica: Swagger oficial "API Pública Next Fit" (integracao.nextfit.com.br/swagger/v1),
+/// enums numerados a partir de 1 — ordem confirmada pelos dados reais do app
+/// (StatusAgendaParticipante 8 = Desistente; Status 1/2 = Reservado/Presente; Tipo 1 sem contrato =
+/// Cliente, Tipo 2 com contrato = ContratoCliente; Contratos[].Status 1 = Ativo).
 enum NextFitParticipantCategoryResolver {
-    /// `Participantes[].Tipo` → categoria. Vazio: a semântica não está comprovada.
-    /// Observado em dados reais: Tipo=2 com `CodigoContratoCliente` (inclui o aluno mensalista
-    /// autenticado) e Tipo=1 sem contrato. Tipo=2 apenas indica vínculo por contrato — que também
-    /// pode ser pacote — e Tipo=1 sem contrato não comprova Wellhub/TotalPass (pode ser avulso/experimental).
-    static let confirmedCategoryByParticipantType: [Int: NextFitParticipantCategory] = [:]
+    /// EnumOrigemAgendaParticipante: 4 = Gympass, 8 = TotalPass.
+    static let externalParticipantOrigins: Set<Int> = [4, 8]
 
-    /// `Contratos[].Tipo` (somente contratos do próprio aluno autenticado) → categoria.
-    /// Evidência: `Cliente/RecuperarDadosPrincipais` do aluno autenticado, comprovadamente mensalista,
-    /// retornou um único contrato com Tipo=1 (Status=1), vinculado ao participante da agenda
-    /// 162075839 por `CodigoContratoCliente`. Demais valores permanecem sem mapeamento.
-    static let confirmedCategoryByContractType: [Int: NextFitParticipantCategory] = [
-        1: .monthly
-    ]
-    // `Contratos[].Descricao` é decodificado, mas não participa da classificação: é texto livre
-    // definido por cada unidade, sem conteúdo real validado; correspondência por palavras
-    // ("mensal", "pacote", "plano"...) seria ambígua. Incluir somente regras validadas com dados reais.
+    /// EnumTipoContratoBase: 1 = Padrao; 2 = Gympass; 3 = GympassBooking; 4 = TotalPass; 5 = TotalPassBooking.
+    static let standardContractType = 1
+    static let externalContractTypes: Set<Int> = [2, 3, 4, 5]
 
-    /// - Parameter ownContractType: `Contratos[].Tipo` do contrato do próprio aluno autenticado
-    ///   vinculado a este participante por `CodigoContratoCliente`; `nil` para os demais participantes.
+    /// EnumTipoContratoBaseModalidade: 1 = Periodo (mensalidade por período);
+    /// 2 = Sessao e 3 = PacoteAulas (quantidade de aulas/créditos).
+    static let periodModalityType = 1
+    static let packageModalityTypes: Set<Int> = [2, 3]
+
+    // `Contratos[].Descricao` é decodificado, mas não participa da classificação (texto livre ambíguo).
+
+    /// - Parameter ownContract: dados do contrato do próprio aluno autenticado vinculado a este
+    ///   participante por `CodigoContratoCliente`; `nil` para todos os demais participantes.
     static func resolve(
         participant: NextFitAgendaParticipantDisplay,
-        ownContractType: Int?
+        ownContract: NextFitOwnContractCommercialInfo?
     ) -> NextFitParticipantCategoryResolution {
-        if let ownContractType {
-            if let category = confirmedCategoryByContractType[ownContractType] {
-                return NextFitParticipantCategoryResolution(
-                    category: category,
-                    reason: "contrato-proprio-tipo-confirmado"
-                )
+        // 1. Origem documentada da reserva (vale para qualquer participante, quando enviada pela API)
+        if let origin = participant.origin, externalParticipantOrigins.contains(origin) {
+            return NextFitParticipantCategoryResolution(category: .external, reason: "origem-agregador")
+        }
+
+        // 2. Contrato do próprio aluno autenticado
+        if let ownContract {
+            if externalContractTypes.contains(ownContract.contractType) {
+                return NextFitParticipantCategoryResolution(category: .external, reason: "contrato-proprio-agregador")
             }
+            if ownContract.contractType == standardContractType {
+                if let modalityType = ownContract.modalityType {
+                    if modalityType == periodModalityType {
+                        return NextFitParticipantCategoryResolution(category: .monthly, reason: "contrato-proprio-modalidade-periodo")
+                    }
+                    if packageModalityTypes.contains(modalityType) {
+                        return NextFitParticipantCategoryResolution(category: .package, reason: "contrato-proprio-modalidade-pacote")
+                    }
+                    return NextFitParticipantCategoryResolution(category: .unknown, reason: "contrato-proprio-modalidade-desconhecida")
+                }
+                // Contrato Padrao sem `Modalidades[].Tipo` na resposta: preserva a identificação já
+                // validada com dados reais (aluno autenticado mensalista com contrato Padrao, Tipo=1).
+                return NextFitParticipantCategoryResolution(category: .monthly, reason: "contrato-proprio-padrao-sem-tipo-modalidade")
+            }
+            return NextFitParticipantCategoryResolution(category: .unknown, reason: "contrato-proprio-tipo-desconhecido")
         }
 
-        guard let type = participant.type else {
-            return NextFitParticipantCategoryResolution(
-                category: .unknown,
-                reason: ownContractType == nil ? "tipo-ausente" : "contrato-proprio-nao-confirmado;tipo-ausente"
-            )
-        }
-
-        if let category = confirmedCategoryByParticipantType[type] {
-            return NextFitParticipantCategoryResolution(
-                category: category,
-                reason: "tipo-participante-confirmado"
-            )
-        }
-
-        return NextFitParticipantCategoryResolution(
-            category: .unknown,
-            reason: ownContractType == nil ? "tipo-nao-confirmado" : "contrato-proprio-nao-confirmado;tipo-nao-confirmado"
-        )
+        // 3. Demais participantes: a API do aluno não expõe contrato/plano de terceiros
+        return NextFitParticipantCategoryResolution(category: .unknown, reason: "sem-dado-comercial")
     }
 }
 
@@ -239,10 +256,21 @@ struct NextFitClientMainDataResponse: Decodable {
             struct Modality: Decodable {
                 let id: Int
                 let modalityId: Int
+                /// `Modalidades[].Tipo` (EnumTipoContratoBaseModalidade; opcional, leitura tolerante).
+                let type: Int?
 
                 enum CodingKeys: String, CodingKey {
                     case id = "Id"
                     case modalityId = "CodigoModalidade"
+                    case type = "Tipo"
+                }
+
+                init(from decoder: Decoder) throws {
+                    let container = try decoder.container(keyedBy: CodingKeys.self)
+                    id = try container.decode(Int.self, forKey: .id)
+                    modalityId = try container.decode(Int.self, forKey: .modalityId)
+                    // Tolerante: ausência ou formato inesperado de `Tipo` nunca invalida o contrato
+                    type = try? container.decodeIfPresent(Int.self, forKey: .type)
                 }
             }
 
@@ -488,6 +516,8 @@ struct NextFitAgendaDetailResponse: Decodable {
             let codigoCliente: Int?
             let status: Int?
             let tipo: Int?
+            /// `Participantes[].Origem` (EnumOrigemAgendaParticipante; opcional, leitura tolerante).
+            let origem: Int?
 
             enum CodingKeys: String, CodingKey {
                 case id = "Id"
@@ -496,6 +526,19 @@ struct NextFitAgendaDetailResponse: Decodable {
                 case codigoCliente = "CodigoCliente"
                 case status = "Status"
                 case tipo = "Tipo"
+                case origem = "Origem"
+            }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(Int.self, forKey: .id)
+                nomeParticipante = try container.decode(String.self, forKey: .nomeParticipante)
+                codigoContratoCliente = try container.decodeIfPresent(Int.self, forKey: .codigoContratoCliente)
+                codigoCliente = try container.decodeIfPresent(Int.self, forKey: .codigoCliente)
+                status = try container.decodeIfPresent(Int.self, forKey: .status)
+                tipo = try container.decodeIfPresent(Int.self, forKey: .tipo)
+                // Tolerante: ausência ou formato inesperado de `Origem` nunca invalida o detalhe da aula
+                origem = try? container.decodeIfPresent(Int.self, forKey: .origem)
             }
         }
 
