@@ -68,13 +68,13 @@ struct StudentFeedbacksView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunosSobrePerfil(
-                        selectedCategory: category,
+                    kind: .studentHomeTreinosRecordsProfile(
                         isHomeSelected: false,
-                        isAlunosSelected: false,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
+                        isTreinosSelected: false,
+                        isRecordsSelected: false,
+                        isPerfilSelected: true
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .frame(maxWidth: .infinity)
