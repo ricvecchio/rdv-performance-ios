@@ -6,14 +6,72 @@ enum PersonalOrganizerError: LocalizedError {
     case notSignedIn
 
     var errorDescription: String? {
-        let locale = Locale(
+        PersonalOrganizerErrorKind(self).userMessage
+    }
+}
+
+/// Causa de uma falha de leitura/gravação, para exibir mensagem localizada coerente
+/// (nunca o texto técnico do Firebase).
+enum PersonalOrganizerErrorKind: Equatable {
+    case permission   // permissão negada ou sessão inválida
+    case network      // sem conectividade
+    case unexpected
+
+    init(_ error: Error) {
+        if error is PersonalOrganizerError {
+            self = .permission
+            return
+        }
+        let ns = error as NSError
+        if ns.domain == FirestoreErrorDomain {
+            switch FirestoreErrorCode.Code(rawValue: ns.code) {
+            case .permissionDenied, .unauthenticated:
+                self = .permission
+            case .unavailable, .deadlineExceeded:
+                self = .network
+            default:
+                self = .unexpected
+            }
+        } else if ns.domain == NSURLErrorDomain {
+            self = .network
+        } else {
+            self = .unexpected
+        }
+    }
+
+    private static var locale: Locale {
+        Locale(
             identifier: UserDefaults.standard.string(forKey: "selectedAppLanguage")
                 ?? AppLanguage.portugueseBrazil.rawValue
         )
+    }
+
+    /// Mensagem para falhas de carregamento.
+    var loadMessage: String {
         switch self {
-        case .notSignedIn:
-            return AppLocalization.string("account_security.errors.login_required", locale: locale)
+        case .permission:
+            return AppLocalization.string("personal.error.permission", locale: Self.locale)
+        case .network:
+            return AppLocalization.string("personal.error.network", locale: Self.locale)
+        case .unexpected:
+            return AppLocalization.string("personal.load_error", locale: Self.locale)
         }
+    }
+
+    /// Mensagem para falhas de gravação/exclusão.
+    var userMessage: String {
+        switch self {
+        case .permission:
+            return AppLocalization.string("personal.error.permission", locale: Self.locale)
+        case .network:
+            return AppLocalization.string("personal.error.network", locale: Self.locale)
+        case .unexpected:
+            return AppLocalization.string("personal.error.save", locale: Self.locale)
+        }
+    }
+
+    static func message(for error: Error) -> String {
+        PersonalOrganizerErrorKind(error).userMessage
     }
 }
 

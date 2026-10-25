@@ -136,7 +136,7 @@ struct StudentBirthdaysView: View {
                 try await store.deleteBirthday(birthday)
                 errorMessage = nil
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = PersonalOrganizerErrorKind.message(for: error)
             }
         }
     }
@@ -314,7 +314,7 @@ struct PersonalBirthdayEditorSheet: View {
                 )
                 dismiss()
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = PersonalOrganizerErrorKind.message(for: error)
             }
             isSaving = false
         }

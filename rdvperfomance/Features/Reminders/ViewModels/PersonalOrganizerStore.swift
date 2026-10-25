@@ -2,6 +2,7 @@ import Foundation
 import Combine
 import SwiftUI
 import FirebaseFirestore
+import FirebaseAuth
 
 /// Estado compartilhado de Anotações, Lembretes e Aniversários do usuário autenticado.
 ///

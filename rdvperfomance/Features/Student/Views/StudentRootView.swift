@@ -85,6 +85,7 @@ struct StudentRootView: View {
             .onChange(of: scenePhase) { _, phase in
                 guard phase == .active else { return }
                 Task { await tabsState.refresh(studentId: studentId) }
+                organizerStore.retryIfNeeded()
                 Task {
                     await organizerStore.refreshAuthorization()
                     organizerStore.reconcileNotifications()
@@ -94,7 +95,8 @@ struct StudentRootView: View {
                 organizerStore.reconcileNotifications()
             }
             // Vínculo/desvínculo (Home, Perfil > Professores): atualiza o rodapé sem novo login
-            .onChange(of: selectedSection) { _, _ in
+            .onChange(of: selectedSection) { _, section in
+                if section == .reminders { organizerStore.retryIfNeeded() }
                 Task { await tabsState.refresh(studentId: studentId) }
             }
             .onChange(of: homePath) { _, _ in

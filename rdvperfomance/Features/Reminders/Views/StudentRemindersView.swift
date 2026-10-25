@@ -293,7 +293,7 @@ struct StudentRemindersView: View {
                 try await store.deleteNote(note)
                 errorMessage = nil
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = PersonalOrganizerErrorKind.message(for: error)
             }
         }
     }
@@ -304,7 +304,7 @@ struct StudentRemindersView: View {
                 try await store.deleteReminder(reminder)
                 errorMessage = nil
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = PersonalOrganizerErrorKind.message(for: error)
             }
         }
     }
@@ -379,7 +379,7 @@ struct PersonalNoteEditorSheet: View {
                 try await store.saveNote(id: note?.id, title: title, details: details)
                 dismiss()
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = PersonalOrganizerErrorKind.message(for: error)
             }
             isSaving = false
         }
@@ -490,7 +490,7 @@ struct PersonalReminderEditorSheet: View {
                 )
                 dismiss()
             } catch {
-                errorMessage = error.localizedDescription
+                errorMessage = PersonalOrganizerErrorKind.message(for: error)
             }
             isSaving = false
         }
