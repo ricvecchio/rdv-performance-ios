@@ -224,6 +224,25 @@ struct NextFitAgendaDetailDisplay: Equatable {
     let instructorName: String
     let locationName: String
     let participants: [NextFitAgendaParticipantDisplay]
+    /// `Content.Status` da agenda (1 = aberta; 2 = encerrada, conforme respostas observadas).
+    /// Usado somente para preservar a categoria visual dos participantes.
+    var agendaStatus: Int? = nil
+    var startDate: Date? = nil
+    var endDate: Date? = nil
+
+    /// Aula encerrada: dados operacionais dos participantes podem ter sido atualizados pela NextFit.
+    var isClosed: Bool {
+        if agendaStatus == 2 { return true }
+        if let endDate, endDate <= Date() { return true }
+        return false
+    }
+
+    /// Aula já iniciada ou encerrada (não é aula futura).
+    var hasStarted: Bool {
+        if isClosed { return true }
+        if let startDate, startDate <= Date() { return true }
+        return false
+    }
 }
 
 struct NextFitIdentificationResponse: Decodable {
