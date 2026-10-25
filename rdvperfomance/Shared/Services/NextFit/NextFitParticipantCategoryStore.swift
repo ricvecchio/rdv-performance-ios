@@ -289,22 +289,43 @@ final class NextFitParticipantCategoryStore {
     }
 
     private func load() {
-        guard let data = try? Data(contentsOf: fileURL) else { return }
+        guard let data = try? Data(contentsOf: fileURL) else {
+            #if DEBUG
+            print("[NextFitParticipantCategoryStore] CARGA\nresultado=arquivo-ausente (sem historico)")
+            #endif
+            return
+        }
         let decoder = JSONDecoder()
         decoder.dateDecodingStrategy = .iso8601
         guard let decoded = try? decoder.decode(StoreFile.self, from: data),
               decoded.unitCode == Self.unitCode,
               decoded.sessionClientId == sessionClientId else {
+            #if DEBUG
+            print("[NextFitParticipantCategoryStore] CARGA\nresultado=falha-leitura-ou-sessao-diferente bytes=\(data.count)")
+            #endif
             return
         }
         file = decoded
+        #if DEBUG
+        print("[NextFitParticipantCategoryStore] CARGA\nresultado=sucesso confirmadas=\(decoded.confirmed.count) inferidas=\(decoded.inferred.count) visuais=\(decoded.visual?.count ?? 0)")
+        #endif
     }
 
     private func persist() {
         let encoder = JSONEncoder()
         encoder.dateEncodingStrategy = .iso8601
         guard let data = try? encoder.encode(file) else { return }
+        #if DEBUG
+        do {
+            try data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+            print("[NextFitParticipantCategoryStore] GRAVACAO\nresultado=sucesso visuais=\(file.visual?.count ?? 0) inferidas=\(file.inferred.count)")
+        } catch {
+            let nsError = error as NSError
+            print("[NextFitParticipantCategoryStore] GRAVACAO\nresultado=falha erro=\(nsError.domain)(\(nsError.code))")
+        }
+        #else
         try? data.write(to: fileURL, options: [.atomic, .completeFileProtectionUntilFirstUserAuthentication])
+        #endif
     }
 
     #if DEBUG

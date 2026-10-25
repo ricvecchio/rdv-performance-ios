@@ -1052,13 +1052,24 @@ final class StudentDashboardViewModel: ObservableObject {
 
         guard !detail.isClosed else {
             #if DEBUG
+            print("[NextFitCategoryDiag] VISUAL_AGENDA agenda=\(detail.id) encerrada=sim iniciada=\(detail.hasStarted ? "sim" : "nao") statusAgenda=\(detail.agendaStatus.map { String($0) } ?? "nil") fimPassou=\(detail.endDate.map { $0 <= Date() ? "sim" : "nao" } ?? "nil") gravacao=nao")
             for participant in detail.participants {
                 let record = store.visualRecord(
                     agendaId: detail.id,
                     participantId: participant.id,
                     clientId: participant.clientId
                 )
-                print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(participant.id) encerrada=sim armazenamento=\(record == nil ? "ausente" : "reutilizado") categoria=\(record?.category.rawValue ?? "-") origem=\(record?.origin ?? "-")")
+                let computed = resolveNextFitParticipantCategory(
+                    participant,
+                    agendaId: detail.id,
+                    usePersistedVisual: false
+                )
+                let recovered = resolveNextFitParticipantCategory(
+                    participant,
+                    agendaId: detail.id,
+                    usePersistedVisual: true
+                )
+                print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(participant.id) encerrada=sim calculada=\(computed.category.rawValue) origemCalculada=\(computed.reason) registroAnterior=\(record == nil ? "ausente" : "presente") categoriaRegistro=\(record?.category.rawValue ?? "-") origemRegistro=\(record?.origin ?? "-") persistencia=nao-gravado recuperada=\(recovered.category.rawValue) origemRecuperada=\(recovered.reason)")
             }
             #endif
             return
@@ -1075,10 +1086,21 @@ final class StudentDashboardViewModel: ObservableObject {
                 )
             )
         }
+        #if DEBUG
+        let previousRecords = detail.participants.map {
+            store.visualRecord(agendaId: detail.id, participantId: $0.id, clientId: $0.clientId)
+        }
+        #endif
         let outcomes = store.observeVisual(agendaId: detail.id, entries: entries)
         #if DEBUG
-        for (entry, outcome) in zip(entries, outcomes) {
-            print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(entry.participant.id) encerrada=nao categoria=\(entry.resolution.category.rawValue) origem=\(entry.resolution.reason) persistencia=\(outcome.outcome.rawValue)")
+        print("[NextFitCategoryDiag] VISUAL_AGENDA agenda=\(detail.id) encerrada=nao iniciada=\(detail.hasStarted ? "sim" : "nao") statusAgenda=\(detail.agendaStatus.map { String($0) } ?? "nil") participantes=\(detail.participants.count) gravacao=sim")
+        for ((entry, outcome), previous) in zip(zip(entries, outcomes), previousRecords) {
+            let stored = store.visualRecord(
+                agendaId: detail.id,
+                participantId: entry.participant.id,
+                clientId: entry.participant.clientId
+            )
+            print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(entry.participant.id) encerrada=nao calculada=\(entry.resolution.category.rawValue) origemCalculada=\(entry.resolution.reason) registroAnterior=\(previous.map { "presente(\($0.category.rawValue))" } ?? "ausente") persistencia=\(outcome.outcome.rawValue) registroAtual=\(stored?.category.rawValue ?? "-") origemRegistro=\(stored?.origin ?? "-")")
         }
         #else
         _ = outcomes
