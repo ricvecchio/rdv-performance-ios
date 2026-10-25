@@ -1,4 +1,5 @@
 import SwiftUI
+import Combine
 
 /// Estado observável e compartilhado que define se a aba "Treinos" está disponível no rodapé do aluno.
 ///

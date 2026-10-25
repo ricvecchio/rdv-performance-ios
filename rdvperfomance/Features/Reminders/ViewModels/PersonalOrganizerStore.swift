@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import SwiftUI
 import FirebaseFirestore
 
@@ -25,11 +26,11 @@ final class PersonalOrganizerStore: ObservableObject {
     private var reconcileTask: Task<Void, Never>?
 
     init(
-        repository: PersonalOrganizerRepository = .shared,
-        scheduler: PersonalNotificationScheduler = .shared
+        repository: PersonalOrganizerRepository? = nil,
+        scheduler: PersonalNotificationScheduler? = nil
     ) {
-        self.repository = repository
-        self.scheduler = scheduler
+        self.repository = repository ?? PersonalOrganizerRepository.shared
+        self.scheduler = scheduler ?? PersonalNotificationScheduler.shared
     }
 
     // MARK: - Ciclo de vida
