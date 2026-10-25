@@ -16,9 +16,11 @@ final class PersonalOrganizerStore: ObservableObject {
     @Published private(set) var reminders: [PersonalReminder] = []
     @Published private(set) var birthdays: [PersonalBirthday] = []
     @Published private(set) var authorization: PersonalNotificationAuthorization = .unknown
-    @Published private(set) var loadFailed = false
+    @Published private(set) var loadError: PersonalOrganizerErrorKind?
+    var loadFailed: Bool { loadError != nil }
 
     private(set) var ownerUid: String?
+    private var authHandle: AuthStateDidChangeListenerHandle?
 
     private let repository: PersonalOrganizerRepository
     private let scheduler: PersonalNotificationScheduler
@@ -37,29 +39,56 @@ final class PersonalOrganizerStore: ObservableObject {
     // MARK: - Ciclo de vida
 
     /// Inicia (ou reinicia, se o UID mudou) a escuta dos dados do usuário.
-    func start(ownerUid uid: String) {
+    func start(ownerUid uid: String, force: Bool = false) {
         let cleanUid = uid.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanUid.isEmpty else { return }
-        guard ownerUid != cleanUid else { return }
+        guard ownerUid != cleanUid || force else { return }
 
         stop()
         ownerUid = cleanUid
-        loadFailed = false
+        loadError = nil
 
-        for kind in PersonalOrganizerCollection.allCases {
-            let registration = repository.listen(uid: cleanUid, kind: kind) { [weak self] snapshot, error in
+        // Só escuta o Firestore quando o Firebase Auth já possui o mesmo UID (evita negação por sessão não pronta)
+        if Auth.auth().currentUser?.uid == cleanUid {
+            attachListeners(uid: cleanUid)
+        } else {
+            authHandle = Auth.auth().addStateDidChangeListener { [weak self] _, user in
                 Task { @MainActor [weak self] in
-                    self?.handle(snapshot: snapshot, error: error, kind: kind, uid: cleanUid)
+                    guard let self, user?.uid == cleanUid, self.ownerUid == cleanUid else { return }
+                    self.removeAuthHandle()
+                    self.attachListeners(uid: cleanUid)
                 }
             }
-            listeners.add(registration)
         }
 
         Task { await refreshAuthorization() }
     }
 
+    /// Reinicia a escuta quando houve falha de carregamento (sessão ainda não pronta ou sem conexão).
+    func retryIfNeeded() {
+        guard loadError != nil, let uid = ownerUid else { return }
+        start(ownerUid: uid, force: true)
+    }
+
+    private func attachListeners(uid: String) {
+        for kind in PersonalOrganizerCollection.allCases {
+            let registration = repository.listen(uid: uid, kind: kind) { [weak self] snapshot, error in
+                Task { @MainActor [weak self] in
+                    self?.handle(snapshot: snapshot, error: error, kind: kind, uid: uid)
+                }
+            }
+            listeners.add(registration)
+        }
+    }
+
+    private func removeAuthHandle() {
+        if let authHandle { Auth.auth().removeStateDidChangeListener(authHandle) }
+        authHandle = nil
+    }
+
     /// Interrompe a escuta e limpa os dados em memória (impede exibir dados de outra conta).
     func stop() {
+        removeAuthHandle()
         listeners.removeAll()
         loadedKinds.removeAll()
         notes = []
@@ -72,10 +101,10 @@ final class PersonalOrganizerStore: ObservableObject {
         guard uid == ownerUid else { return }
 
         guard let snapshot else {
-            if error != nil { loadFailed = true }
+            if let error { loadError = PersonalOrganizerErrorKind(error) }
             return
         }
-        loadFailed = false
+        loadError = nil
 
         // Um cache vazio inicial não é prova de ausência de dados: aguarda o servidor antes de reconciliar.
         let wasLoaded = loadedKinds.contains(kind)

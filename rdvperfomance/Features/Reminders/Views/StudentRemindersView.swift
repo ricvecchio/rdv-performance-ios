@@ -37,8 +37,8 @@ struct StudentRemindersView: View {
 
             if let errorMessage {
                 PersonalMessageCard(text: errorMessage)
-            } else if store.loadFailed {
-                PersonalMessageCard(text: AppLocalization.string("personal.load_error", locale: locale))
+            } else if let loadError = store.loadError {
+                PersonalMessageCard(text: loadError.loadMessage)
             }
 
             switch section {

@@ -26,6 +26,8 @@ struct StudentBirthdaysView: View {
         ) {
             if let errorMessage {
                 PersonalMessageCard(text: errorMessage)
+            } else if let loadError = store.loadError {
+                PersonalMessageCard(text: loadError.loadMessage)
             }
 
             let birthdays = store.upcomingBirthdays()
