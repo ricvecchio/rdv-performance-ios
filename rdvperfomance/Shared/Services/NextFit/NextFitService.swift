@@ -629,7 +629,10 @@ struct NextFitService {
                         status: $0.status,
                         type: $0.tipo
                     )
-                }
+                },
+                agendaStatus: content.status,
+                startDate: startDate,
+                endDate: endDate
             )
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)

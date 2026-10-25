@@ -17,6 +17,9 @@ import Foundation
 ///   explícita em DEBUG (ver `importConfirmedIfPresent`).
 /// - Isolada por conta do app + cliente NextFit da sessão + unidade; arquivo privado, sem backup,
 ///   com retenção limitada. Nenhum dado é enviado a servidores.
+/// - Fotografia visual (`VisualRecord`): categoria apresentada antes do encerramento, por participação
+///   (`CodigoAgenda` + `Participantes[].Id`, conferindo `CodigoCliente`). Gravada somente para aulas não
+///   encerradas e reutilizada após o encerramento; nunca recria participantes ausentes da resposta.
 final class NextFitParticipantCategoryStore {
     struct ConfirmedRecord: Codable, Equatable {
         let clientId: Int
@@ -34,23 +37,49 @@ final class NextFitParticipantCategoryStore {
         let observedAt: Date
     }
 
+    /// Fotografia da categoria visual efetivamente apresentada para uma participação antes do
+    /// encerramento da aula. Vinculada a `CodigoAgenda` + `Participantes[].Id` (conferindo `CodigoCliente`).
+    /// `origin` preserva a fonte (confirmada, contrato próprio, inferência ou fallback visual);
+    /// um fallback visual nunca é tratado como confirmação comercial.
+    struct VisualRecord: Codable, Equatable {
+        let agendaId: Int
+        let participantId: Int
+        let clientId: Int?
+        let category: NextFitParticipantCategory
+        let origin: String
+        let observedAt: Date
+    }
+
+    /// Resultado da observação visual (somente diagnóstico DEBUG).
+    enum VisualObservationOutcome: String {
+        case recorded = "gravado"
+        case updated = "atualizado"
+        case kept = "mantido"
+        case ignored = "ignorado"
+    }
+
     private struct StoreFile: Codable {
         var version: Int = 1
         var unitCode: Int
         var sessionClientId: Int
         var confirmed: [ConfirmedRecord] = []
         var inferred: [InferredRecord] = []
+        /// Opcional para manter a leitura dos arquivos já gravados (sem a chave `visual`).
+        var visual: [VisualRecord]? = nil
     }
 
     /// Unidade NextFit Muralha (mesma de `NextFitService`).
     static let unitCode = 30299
     private static let inferredRetentionDays = 180
     private static let maxInferredRecords = 5_000
+    /// Mesma retenção das inferências; limite maior pois há um registro por participante observado.
+    private static let maxVisualRecords = 20_000
 
     let sessionClientId: Int
     private var file: StoreFile
     private let fileURL: URL
     private var inferredIndex: [String: InferredRecord] = [:]
+    private var visualIndex: [String: VisualRecord] = [:]
 
     init(account: String, sessionClientId: Int) {
         self.sessionClientId = sessionClientId
@@ -74,6 +103,7 @@ final class NextFitParticipantCategoryStore {
         importConfirmedIfPresent(directory: directory)
         #endif
         pruneInferred()
+        pruneVisual()
         rebuildIndex()
     }
 
@@ -105,6 +135,81 @@ final class NextFitParticipantCategoryStore {
             return false
         }
         return true
+    }
+
+    /// Categoria visual persistida para a MESMA participação. Descarta o registro quando o
+    /// `CodigoCliente` atual e o registrado diferem (evita reaproveitamento indevido).
+    func visualRecord(agendaId: Int, participantId: Int, clientId: Int?) -> VisualRecord? {
+        guard let record = visualIndex[Self.key(agendaId: agendaId, participantId: participantId)],
+              record.category != .unknown else {
+            return nil
+        }
+        if let clientId, let recordClientId = record.clientId, clientId != recordClientId {
+            return nil
+        }
+        return record
+    }
+
+    /// Registra a categoria visual efetivamente apresentada para as participações de uma aula ainda não
+    /// encerrada. Não grava categorias desconhecidas; evidência mais fraca (ex.: fallback visual) nunca
+    /// substitui uma categoria registrada a partir de evidência mais forte. Grava o arquivo uma única vez
+    /// e somente se houver alteração efetiva.
+    @discardableResult
+    func observeVisual(
+        agendaId: Int,
+        entries: [(participant: NextFitAgendaParticipantDisplay, resolution: NextFitParticipantCategoryResolution)]
+    ) -> [(participantId: Int, outcome: VisualObservationOutcome)] {
+        var outcomes: [(participantId: Int, outcome: VisualObservationOutcome)] = []
+        var changed = false
+        let now = Date()
+        var visual = file.visual ?? []
+
+        for (participant, resolution) in entries {
+            let newRank = NextFitParticipantCategoryResolver.evidenceRank(reason: resolution.reason)
+            guard resolution.category != .unknown, newRank > 0 else {
+                outcomes.append((participant.id, .ignored))
+                continue
+            }
+
+            let key = Self.key(agendaId: agendaId, participantId: participant.id)
+            let existing = visualIndex[key]
+            if let existing {
+                let sameClient = existing.clientId == nil || participant.clientId == nil
+                    || existing.clientId == participant.clientId
+                if sameClient {
+                    let existingRank = NextFitParticipantCategoryResolver.evidenceRank(reason: existing.origin)
+                    // Mesma categoria: só atualiza a origem quando a evidência for mais forte.
+                    // Categoria diferente: nunca aceita evidência mais fraca.
+                    if (existing.category == resolution.category && newRank <= existingRank)
+                        || (existing.category != resolution.category && newRank < existingRank) {
+                        outcomes.append((participant.id, .kept))
+                        continue
+                    }
+                }
+            }
+
+            let record = VisualRecord(
+                agendaId: agendaId,
+                participantId: participant.id,
+                clientId: participant.clientId ?? existing?.clientId,
+                category: resolution.category,
+                origin: resolution.reason,
+                observedAt: now
+            )
+            visual.removeAll { $0.agendaId == agendaId && $0.participantId == participant.id }
+            visual.append(record)
+            visualIndex[key] = record
+            changed = true
+            outcomes.append((participant.id, existing == nil ? .recorded : .updated))
+        }
+
+        if changed {
+            file.visual = visual
+            pruneVisual()
+            rebuildIndex()
+            persist()
+        }
+        return outcomes
     }
 
     // MARK: Observação (chamada somente após cargas reais de `Agenda/{id}`)
@@ -153,6 +258,23 @@ final class NextFitParticipantCategoryStore {
             index[Self.key(agendaId: record.agendaId, participantId: record.participantId)] = record
         }
         inferredIndex = index
+        var visualIndex: [String: VisualRecord] = [:]
+        for record in file.visual ?? [] {
+            visualIndex[Self.key(agendaId: record.agendaId, participantId: record.participantId)] = record
+        }
+        self.visualIndex = visualIndex
+    }
+
+    private func pruneVisual() {
+        guard let visual = file.visual else { return }
+        let retention = TimeInterval(Self.inferredRetentionDays) * 86_400
+        let cutoff = Date().addingTimeInterval(-retention)
+        var kept = visual.filter { $0.observedAt >= cutoff }
+        if kept.count > Self.maxVisualRecords {
+            kept.sort { $0.observedAt < $1.observedAt }
+            kept = Array(kept.suffix(Self.maxVisualRecords))
+        }
+        file.visual = kept
     }
 
     private func pruneInferred() {

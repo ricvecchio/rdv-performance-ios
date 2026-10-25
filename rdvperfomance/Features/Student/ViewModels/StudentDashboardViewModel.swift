@@ -981,8 +981,22 @@ final class StudentDashboardViewModel: ObservableObject {
     private func resolveNextFitParticipantCategory(
         _ participant: NextFitAgendaParticipantDisplay
     ) -> NextFitParticipantCategoryResolution {
+        let detail = selectedNextFitAgendaDetail
+        // A fotografia visual só é considerada em aulas iniciadas/encerradas; aulas futuras mantêm as regras atuais
+        return resolveNextFitParticipantCategory(
+            participant,
+            agendaId: detail?.id,
+            usePersistedVisual: detail?.hasStarted == true
+        )
+    }
+
+    /// Resolução sem efeitos colaterais (segura durante a renderização).
+    private func resolveNextFitParticipantCategory(
+        _ participant: NextFitAgendaParticipantDisplay,
+        agendaId: Int?,
+        usePersistedVisual: Bool
+    ) -> NextFitParticipantCategoryResolution {
         let store = currentNextFitParticipantCategoryStore()
-        let agendaId = selectedNextFitAgendaDetail?.id
         let hasPersistedInference: Bool
         if let store, let agendaId {
             hasPersistedInference = store.hasInferredExternal(
@@ -993,6 +1007,14 @@ final class StudentDashboardViewModel: ObservableObject {
         } else {
             hasPersistedInference = false
         }
+        var persistedVisual: NextFitParticipantCategoryStore.VisualRecord?
+        if usePersistedVisual, let store, let agendaId {
+            persistedVisual = store.visualRecord(
+                agendaId: agendaId,
+                participantId: participant.id,
+                clientId: participant.clientId
+            )
+        }
         return NextFitParticipantCategoryResolver.resolve(
             participant: participant,
             confirmedCategory: store?.confirmedCategory(
@@ -1000,7 +1022,9 @@ final class StudentDashboardViewModel: ObservableObject {
                 contractClientId: participant.contractClientId
             ),
             ownContractType: ownNextFitContract(for: participant)?.type,
-            hasPersistedInference: hasPersistedInference
+            hasPersistedInference: hasPersistedInference,
+            persistedVisualCategory: persistedVisual?.category,
+            persistedVisualOrigin: persistedVisual?.origin
         )
     }
 
@@ -1020,8 +1044,45 @@ final class StudentDashboardViewModel: ObservableObject {
 
     /// Registra as categorias visuais observadas em uma consulta real de `Agenda/{id}`.
     /// Não altera a lista de participantes nem dispara novas consultas.
+    /// Aulas encerradas são somente consultadas: seus dados operacionais atualizados (`Tipo`/`Status`)
+    /// nunca sobrescrevem a categoria visual registrada antes do encerramento.
     private func observeNextFitParticipantCategories(_ detail: NextFitAgendaDetailDisplay) {
-        currentNextFitParticipantCategoryStore()?.observe(detail: detail)
+        guard let store = currentNextFitParticipantCategoryStore() else { return }
+        store.observe(detail: detail)
+
+        guard !detail.isClosed else {
+            #if DEBUG
+            for participant in detail.participants {
+                let record = store.visualRecord(
+                    agendaId: detail.id,
+                    participantId: participant.id,
+                    clientId: participant.clientId
+                )
+                print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(participant.id) encerrada=sim armazenamento=\(record == nil ? "ausente" : "reutilizado") categoria=\(record?.category.rawValue ?? "-") origem=\(record?.origin ?? "-")")
+            }
+            #endif
+            return
+        }
+
+        // Categoria efetivamente apresentada pelas regras atuais (sem a fotografia persistida)
+        let entries = detail.participants.map { participant in
+            (
+                participant: participant,
+                resolution: resolveNextFitParticipantCategory(
+                    participant,
+                    agendaId: detail.id,
+                    usePersistedVisual: false
+                )
+            )
+        }
+        let outcomes = store.observeVisual(agendaId: detail.id, entries: entries)
+        #if DEBUG
+        for (entry, outcome) in zip(entries, outcomes) {
+            print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(entry.participant.id) encerrada=nao categoria=\(entry.resolution.category.rawValue) origem=\(entry.resolution.reason) persistencia=\(outcome.outcome.rawValue)")
+        }
+        #else
+        _ = outcomes
+        #endif
     }
 
     /// Carrega uma única vez por sessão os contratos do próprio aluno autenticado (mesmo `CodigoCliente`
@@ -1049,6 +1110,10 @@ final class StudentDashboardViewModel: ObservableObject {
         }
 
         nextFitOwnContracts = (clientId, clientData.contracts)
+        // Refinamento antes do encerramento: atualiza a categoria visual registrada da aula aberta
+        if let detail = selectedNextFitAgendaDetail, !detail.isClosed {
+            observeNextFitParticipantCategories(detail)
+        }
         #if DEBUG
         print("[NextFitCategoryDiag] CONTRATOS_PROPRIOS carga=ok total=\(clientData.contracts.count)")
         if let detail = selectedNextFitAgendaDetail {
@@ -1338,7 +1403,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 modalityName: detail.modalityName,
                 instructorName: detail.instructorName,
                 locationName: detail.locationName,
-                participants: detail.participants
+                participants: detail.participants,
+                agendaStatus: detail.agendaStatus,
+                startDate: detail.startDate,
+                endDate: detail.endDate
             )
         }
     }

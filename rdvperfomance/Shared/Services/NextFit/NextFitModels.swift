@@ -112,6 +112,23 @@ enum NextFitParticipantCategoryResolver {
 
     static let inferredExternalReason = "inferredExternalFromReservation"
     static let persistedInferredExternalReason = "inferredExternalFromReservation-persistida"
+    static let confirmedReason = "classificacao-confirmada"
+    static let ownAggregatorContractReason = "contrato-proprio-agregador"
+    static let visualFallbackReason = "contrato-sem-classificacao-fallback-visual"
+    /// Prefixo do motivo quando a categoria vem da fotografia visual persistida da participação.
+    static let persistedVisualReasonPrefix = "categoria-visual-persistida"
+
+    /// Força da evidência que originou a categoria (usada somente para decidir se a fotografia visual
+    /// persistida pode ser atualizada). 0 = não persistível (desconhecido / derivado da própria fotografia).
+    static func evidenceRank(reason: String) -> Int {
+        switch reason {
+        case confirmedReason: return 4
+        case ownAggregatorContractReason: return 3
+        case inferredExternalReason, persistedInferredExternalReason: return 2
+        case visualFallbackReason: return 1
+        default: return 0
+        }
+    }
 
     /// Combinação observada para participantes de agregador antes da consolidação da aula:
     /// `Tipo == 1 && Status == 5 && CodigoContratoCliente == nil`. Heurística visual, não comercial.
@@ -125,20 +142,44 @@ enum NextFitParticipantCategoryResolver {
     ///     a este participante por `CodigoContratoCliente`; `nil` para todos os demais participantes.
     ///   - hasPersistedInference: a mesma participação (`CodigoAgenda` + `Participantes[].Id`) já foi
     ///     observada com o padrão de agregador.
+    ///   - persistedVisualCategory: categoria visual persistida para a MESMA participação, informada
+    ///     somente quando a aula já começou/encerrou (dados operacionais podem ter sido atualizados).
+    ///     `nil` para aulas futuras, preservando integralmente as regras atuais.
+    ///   - persistedVisualOrigin: motivo/origem com que a categoria persistida foi registrada.
     static func resolve(
         participant: NextFitAgendaParticipantDisplay,
         confirmedCategory: NextFitParticipantCategory?,
         ownContractType: Int?,
-        hasPersistedInference: Bool
+        hasPersistedInference: Bool,
+        persistedVisualCategory: NextFitParticipantCategory? = nil,
+        persistedVisualOrigin: String? = nil
     ) -> NextFitParticipantCategoryResolution {
         if let confirmedCategory, confirmedCategory != .unknown {
-            return NextFitParticipantCategoryResolution(category: confirmedCategory, reason: "classificacao-confirmada")
+            return NextFitParticipantCategoryResolution(category: confirmedCategory, reason: confirmedReason)
+        }
+        // Fotografia visual persistida (evidência forte): não é substituída por `Tipo`/`Status` atualizados
+        let persistedVisual: NextFitParticipantCategoryResolution?
+        if let persistedVisualCategory, persistedVisualCategory != .unknown {
+            persistedVisual = NextFitParticipantCategoryResolution(
+                category: persistedVisualCategory,
+                reason: "\(persistedVisualReasonPrefix):\(persistedVisualOrigin ?? "")"
+            )
+        } else {
+            persistedVisual = nil
+        }
+        let persistedVisualIsFallback = persistedVisualOrigin.map { evidenceRank(reason: $0) <= 1 } ?? true
+        if let persistedVisual, !persistedVisualIsFallback {
+            return persistedVisual
         }
         if let ownContractType, externalContractTypes.contains(ownContractType) {
-            return NextFitParticipantCategoryResolution(category: .external, reason: "contrato-proprio-agregador")
+            return NextFitParticipantCategoryResolution(category: .external, reason: ownAggregatorContractReason)
         }
         if hasPersistedInference {
             return NextFitParticipantCategoryResolution(category: .external, reason: persistedInferredExternalReason)
+        }
+        // Fotografia originada de fallback visual: preserva o ícone já apresentado, abaixo das evidências reais
+        if let persistedVisual {
+            return persistedVisual
         }
         if matchesReservationAggregatorPattern(participant) {
             return NextFitParticipantCategoryResolution(category: .external, reason: inferredExternalReason)
@@ -146,7 +187,7 @@ enum NextFitParticipantCategoryResolver {
         if participant.type == 2, participant.contractClientId != nil {
             // Fallback VISUAL padrão para vínculo contratual ainda não classificado (ícone azul).
             // Não afirma mensalidade e nunca é persistido como classificação confirmada.
-            return NextFitParticipantCategoryResolution(category: .monthly, reason: "contrato-sem-classificacao-fallback-visual")
+            return NextFitParticipantCategoryResolution(category: .monthly, reason: visualFallbackReason)
         }
         if ownContractType != nil {
             // Padrao (1) ou valor não documentado: mensalidade x pacote não é distinguível pela API do aluno
@@ -506,6 +547,8 @@ struct NextFitAgendaDetailResponse: Decodable {
         let limiteAlunos: Int
         let qtdeAlunos: Int
         let participantes: [Participant]
+        /// `Content.Status` da agenda (opcional; ausência não invalida a resposta).
+        let status: Int?
 
         struct Participant: Decodable {
             let id: Int
@@ -540,6 +583,7 @@ struct NextFitAgendaDetailResponse: Decodable {
             case limiteAlunos = "LimiteAlunos"
             case qtdeAlunos = "QtdeAlunos"
             case participantes = "Participantes"
+            case status = "Status"
         }
     }
 
