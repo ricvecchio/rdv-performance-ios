@@ -50,7 +50,8 @@ struct FooterBar: View {
             isHomeSelected: Bool,
             isTreinosSelected: Bool,
             isRecordsSelected: Bool,
-            isPerfilSelected: Bool
+            isPerfilSelected: Bool,
+            isRemindersSelected: Bool = false
         )
 
         case teacherHomeAlunosSobrePerfil(
@@ -86,7 +87,11 @@ struct FooterBar: View {
     @Environment(\.selectStudentMainSection) private var selectStudentMainSection
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
     @Environment(\.teacherMainSection) private var teacherMainSection
+    @Environment(\.studentShowsWorkoutsTab) private var studentShowsWorkoutsTab
     @State private var teacherStudentActivityCount = 0
+
+    // Largura de cada item no rodapé principal do aluno com 5 itens (cada item ocupa uma fração igual da largura)
+    private static let fiveItemWidth: CGFloat = 66
 
     // Constrói o footer com divider superior e botões de navegação
     var body: some View {
@@ -207,28 +212,66 @@ struct FooterBar: View {
             let isHomeSelected,
             let isTreinosSelected,
             let isRecordsSelected,
-            let isPerfilSelected
+            let isPerfilSelected,
+            let isRemindersSelected
         ):
-            HStack(spacing: 16) {
-                Button { goStudentHome() } label: {
-                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
-                }
-                .buttonStyle(.plain)
+            if studentShowsWorkoutsTab {
+                // Aluno com professor (ou vínculo ainda não confirmado): 5 itens distribuídos na largura disponível
+                HStack(spacing: 0) {
+                    Button { goStudentHome() } label: {
+                        FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
 
-                Button { goTreinosAluno() } label: {
-                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: isTreinosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
-                }
-                .buttonStyle(.plain)
+                    Button { goTreinosAluno() } label: {
+                        FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: isTreinosSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
 
-                Button { goPersonalRecords() } label: {
-                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
-                }
-                .buttonStyle(.plain)
+                    Button { goReminders() } label: {
+                        FooterItem(icon: .system("calendar.badge.clock"), title: "reminders.tab", isSelected: isRemindersSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
 
-                Button { goPerfilStudent() } label: {
-                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    Button { goPersonalRecords() } label: {
+                        FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
+
+                    Button { goPerfilStudent() } label: {
+                        FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+                    .frame(maxWidth: .infinity)
                 }
-                .buttonStyle(.plain)
+                .padding(.horizontal, 6)
+            } else {
+                // Ausência de professor confirmada: Lembretes substitui Treinos (layout original de 4 itens)
+                HStack(spacing: 16) {
+                    Button { goStudentHome() } label: {
+                        FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button { goReminders() } label: {
+                        FooterItem(icon: .system("calendar.badge.clock"), title: "reminders.tab", isSelected: isRemindersSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button { goPersonalRecords() } label: {
+                        FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+
+                    Button { goPerfilStudent() } label: {
+                        FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
 
         // ✅ PROFESSOR (4 ícones) — espaçamento igual ao ALUNO
@@ -304,6 +347,10 @@ struct FooterBar: View {
 
     private func goTreinosAluno() {
         selectStudentSection(.agenda)
+    }
+
+    private func goReminders() {
+        selectStudentSection(.reminders)
     }
 
     private func goPersonalRecords() {

@@ -39,6 +39,8 @@ import SwiftUI
 struct StudentRootView: View {
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.locale) private var locale
 
     let studentId: String
     let studentName: String
@@ -47,6 +49,7 @@ struct StudentRootView: View {
 
     @State private var homePath: [AppRoute] = []
     @State private var workoutsPath: [AppRoute] = []
+    @State private var remindersPath: [StudentRemindersRoute] = []
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
     @State private var workoutsInitialWeekId: String?
@@ -55,6 +58,12 @@ struct StudentRootView: View {
     /// Mantém o cache de Treinos da Semana entre trocas de aba (somente a aba
     /// selecionada é montada, o que recriaria o ViewModel a cada retorno).
     @StateObject private var workoutsViewModel: StudentWorkoutsViewModel
+
+    /// Disponibilidade da aba Treinos (vínculo com professor), compartilhada com o rodapé.
+    @StateObject private var tabsState = StudentTabsState()
+
+    /// Anotações, lembretes e aniversários pessoais (isolados por UID) e suas notificações locais.
+    @StateObject private var organizerStore = PersonalOrganizerStore()
 
     init(studentId: String, studentName: String) {
         self.studentId = studentId
@@ -67,6 +76,40 @@ struct StudentRootView: View {
     var body: some View {
         selectedTab
             .environment(\.selectStudentMainSection, selectSection)
+            .environment(\.studentShowsWorkoutsTab, tabsState.showsWorkouts)
+            .environmentObject(organizerStore)
+            .task(id: studentId) {
+                organizerStore.start(ownerUid: studentId)
+                await tabsState.refresh(studentId: studentId)
+            }
+            .onChange(of: scenePhase) { _, phase in
+                guard phase == .active else { return }
+                Task { await tabsState.refresh(studentId: studentId) }
+                Task {
+                    await organizerStore.refreshAuthorization()
+                    organizerStore.reconcileNotifications()
+                }
+            }
+            .onChange(of: locale) { _, _ in
+                organizerStore.reconcileNotifications()
+            }
+            // Vínculo/desvínculo (Home, Perfil > Professores): atualiza o rodapé sem novo login
+            .onChange(of: selectedSection) { _, _ in
+                Task { await tabsState.refresh(studentId: studentId) }
+            }
+            .onChange(of: homePath) { _, _ in
+                Task { await tabsState.refresh(studentId: studentId) }
+            }
+            .onChange(of: profilePath) { _, _ in
+                Task { await tabsState.refresh(studentId: studentId) }
+            }
+            // Perdeu o último vínculo enquanto estava em Treinos: volta à Home sem pilha residual
+            .onChange(of: tabsState.teacherLinkState) { _, state in
+                guard state == .unlinked, selectedSection == .agenda else { return }
+                workoutsPath = []
+                homePath = []
+                selectedSection = .home
+            }
     }
 
     @ViewBuilder
@@ -76,6 +119,8 @@ struct StudentRootView: View {
             homeTab
         case .agenda:
             workoutsTab
+        case .reminders:
+            remindersTab
         case .records:
             recordsTab
         case .profile:
@@ -91,11 +136,16 @@ struct StudentRootView: View {
     /// decisão de produto: "ao selecionar um ícone do rodapé, abrir a raiz
     /// daquela seção" (não é necessário preservar profundidade entre trocas
     /// de aba).
-    private func selectSection(_ target: StudentMainSection) {
+    private func selectSection(_ requested: StudentMainSection) {
+        // Sem professor confirmado a aba Treinos não existe: redireciona para a Home
+        let target: StudentMainSection =
+            (requested == .agenda && !tabsState.showsWorkouts) ? .home : requested
+
         let alreadyAtRoot: Bool
         switch target {
         case .home: alreadyAtRoot = homePath.isEmpty
         case .agenda: alreadyAtRoot = workoutsPath.isEmpty
+        case .reminders: alreadyAtRoot = remindersPath.isEmpty
         case .records: alreadyAtRoot = recordsPath.isEmpty
         case .profile: alreadyAtRoot = profilePath.isEmpty
         }
@@ -105,6 +155,7 @@ struct StudentRootView: View {
         switch target {
         case .home: homePath = []
         case .agenda: workoutsPath = []
+        case .reminders: remindersPath = []
         case .records: recordsPath = []
         case .profile: profilePath = []
         }
@@ -190,6 +241,24 @@ struct StudentRootView: View {
 
         default:
             EmptyView()
+        }
+    }
+
+    // MARK: - Lembretes
+
+    private var remindersTab: some View {
+        NavigationStack(path: $remindersPath) {
+            StudentRemindersView(
+                path: $remindersPath,
+                onBack: { selectSection(.home) },
+                onSelectSection: selectSection
+            )
+            .navigationDestination(for: StudentRemindersRoute.self) { route in
+                switch route {
+                case .birthdays:
+                    StudentBirthdaysView(path: $remindersPath, onSelectSection: selectSection)
+                }
+            }
         }
     }
 
