@@ -74,6 +74,17 @@ struct StudentRootView: View {
     }
 
     var body: some View {
+        tabContentWithObservers
+            .onChange(of: scenePhase) { _, phase in
+                handleScenePhase(phase)
+            }
+            .onChange(of: locale) { _, _ in
+                organizerStore.reconcileNotifications()
+            }
+    }
+
+    /// Conteúdo da aba selecionada com ambiente compartilhado e atualização do rodapé.
+    private var tabContentWithObservers: some View {
         selectedTab
             .environment(\.selectStudentMainSection, selectSection)
             .environment(\.studentShowsWorkoutsTab, tabsState.showsWorkouts)
@@ -82,36 +93,46 @@ struct StudentRootView: View {
                 organizerStore.start(ownerUid: studentId)
                 await tabsState.refresh(studentId: studentId)
             }
-            .onChange(of: scenePhase) { _, phase in
-                guard phase == .active else { return }
-                Task { await tabsState.refresh(studentId: studentId) }
-                organizerStore.retryIfNeeded()
-                Task {
-                    await organizerStore.refreshAuthorization()
-                    organizerStore.reconcileNotifications()
-                }
-            }
-            .onChange(of: locale) { _, _ in
-                organizerStore.reconcileNotifications()
-            }
             // Vínculo/desvínculo (Home, Perfil > Professores): atualiza o rodapé sem novo login
             .onChange(of: selectedSection) { _, section in
-                if section == .reminders { organizerStore.retryIfNeeded() }
-                Task { await tabsState.refresh(studentId: studentId) }
+                handleSectionChange(section)
             }
             .onChange(of: homePath) { _, _ in
-                Task { await tabsState.refresh(studentId: studentId) }
+                refreshTabs()
             }
             .onChange(of: profilePath) { _, _ in
-                Task { await tabsState.refresh(studentId: studentId) }
+                refreshTabs()
             }
-            // Perdeu o último vínculo enquanto estava em Treinos: volta à Home sem pilha residual
             .onChange(of: tabsState.teacherLinkState) { _, state in
-                guard state == .unlinked, selectedSection == .agenda else { return }
-                workoutsPath = []
-                homePath = []
-                selectedSection = .home
+                handleTeacherLinkChange(state)
             }
+    }
+
+    private func refreshTabs() {
+        Task { await tabsState.refresh(studentId: studentId) }
+    }
+
+    private func handleScenePhase(_ phase: ScenePhase) {
+        guard phase == .active else { return }
+        refreshTabs()
+        organizerStore.retryIfNeeded()
+        Task {
+            await organizerStore.refreshAuthorization()
+            organizerStore.reconcileNotifications()
+        }
+    }
+
+    private func handleSectionChange(_ section: StudentMainSection) {
+        if section == .reminders { organizerStore.retryIfNeeded() }
+        refreshTabs()
+    }
+
+    /// Perdeu o último vínculo enquanto estava em Treinos: volta à Home sem pilha residual.
+    private func handleTeacherLinkChange(_ state: StudentDashboardTeacherLinkState) {
+        guard state == .unlinked, selectedSection == .agenda else { return }
+        workoutsPath = []
+        homePath = []
+        selectedSection = .home
     }
 
     @ViewBuilder
