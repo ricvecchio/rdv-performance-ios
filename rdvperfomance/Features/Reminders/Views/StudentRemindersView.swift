@@ -416,7 +416,7 @@ struct PersonalReminderEditorSheet: View {
         _title = State(initialValue: reminder?.title ?? "")
         _details = State(initialValue: reminder?.details ?? "")
         _remindAt = State(initialValue: reminder?.remindAt ?? Self.defaultDate())
-        _notificationsEnabled = State(initialValue: reminder?.notificationsEnabled ?? false)
+        _notificationsEnabled = State(initialValue: reminder?.notificationsEnabled ?? true)
         _repeatsDaily = State(initialValue: reminder?.repeatsDaily ?? false)
     }
 

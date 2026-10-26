@@ -114,15 +114,10 @@ struct PersonalBirthdaysContent: View {
         let isToday = isBirthdayToday(birthday)
 
         return HStack(spacing: 12) {
-            Image(systemName: isToday ? "birthday.cake.fill" : "gift.fill")
-                .font(.system(size: 18))
-                .foregroundStyle(
-                    AppThemeColor(dark: Color.green.opacity(0.85), light: PersonalOrganizerLightColors.iconInk)
-                )
-                .frame(width: 28)
+            PersonalRowIcon(systemName: "gift.fill")
 
             VStack(alignment: .leading, spacing: 4) {
-                Text(verbatim: birthday.name)
+                Text(verbatim: isToday ? "🎂 \(birthday.name)" : birthday.name)
                     .font(.system(size: 17, weight: .semibold))
                     .modifier(PersonalPrimaryTextStyle())
                     .multilineTextAlignment(.leading)
