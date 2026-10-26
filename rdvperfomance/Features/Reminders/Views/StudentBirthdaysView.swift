@@ -1,22 +1,13 @@
 import SwiftUI
+import UIKit
 
-/// Tela dedicada de Aniversários: lista (próximos primeiro), cadastro, edição e exclusão.
+/// Tela dedicada de Aniversários (rota existente). O conteúdo é compartilhado com a aba Lembretes.
 struct StudentBirthdaysView: View {
 
     @Binding var path: [StudentRemindersRoute]
     let onSelectSection: (StudentMainSection) -> Void
 
     @EnvironmentObject private var store: PersonalOrganizerStore
-    @Environment(\.locale) private var locale
-
-    @State private var editor: BirthdayEditorTarget?
-    @State private var pendingDeletion: PersonalBirthday?
-    @State private var errorMessage: String?
-
-    struct BirthdayEditorTarget: Identifiable {
-        let id = UUID()
-        let birthday: PersonalBirthday?
-    }
 
     var body: some View {
         PersonalScreenScaffold(
@@ -24,13 +15,41 @@ struct StudentBirthdaysView: View {
             onBack: { if !path.isEmpty { path.removeLast() } },
             onSelectSection: onSelectSection
         ) {
-            if let errorMessage {
-                PersonalMessageCard(text: errorMessage)
-            } else if let loadError = store.loadError {
+            if let loadError = store.loadError {
                 PersonalMessageCard(text: loadError.loadMessage)
             }
 
-            let birthdays = store.upcomingBirthdays()
+            PersonalBirthdaysContent()
+        }
+    }
+}
+
+/// Lista de aniversários (próximos primeiro), cadastro, edição e exclusão, sem estrutura de tela.
+/// Usada dentro de `StudentRemindersView` e de `StudentBirthdaysView`.
+struct PersonalBirthdaysContent: View {
+
+    @EnvironmentObject private var store: PersonalOrganizerStore
+    @Environment(\.locale) private var locale
+    @Environment(\.scenePhase) private var scenePhase
+
+    @State private var editor: BirthdayEditorTarget?
+    @State private var pendingDeletion: PersonalBirthday?
+    @State private var errorMessage: String?
+    /// Data de referência do ícone de bolo; atualizada ao voltar ao primeiro plano e na virada do dia.
+    @State private var today = Date()
+
+    struct BirthdayEditorTarget: Identifiable {
+        let id = UUID()
+        let birthday: PersonalBirthday?
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            if let errorMessage {
+                PersonalMessageCard(text: errorMessage)
+            }
+
+            let birthdays = store.upcomingBirthdays(now: today)
 
             if birthdays.isEmpty {
                 VStack(spacing: 14) {
@@ -64,6 +83,12 @@ struct StudentBirthdaysView: View {
                 }
             }
         }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { today = Date() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            today = Date()
+        }
         .sheet(item: $editor) { target in
             PersonalBirthdayEditorSheet(birthday: target.birthday)
                 .presentationDetents([.large])
@@ -86,8 +111,10 @@ struct StudentBirthdaysView: View {
     }
 
     private func row(_ birthday: PersonalBirthday) -> some View {
-        HStack(spacing: 12) {
-            Image(systemName: "gift.fill")
+        let isToday = isBirthdayToday(birthday)
+
+        return HStack(spacing: 12) {
+            Image(systemName: isToday ? "birthday.cake.fill" : "gift.fill")
                 .font(.system(size: 18))
                 .foregroundStyle(
                     AppThemeColor(dark: Color.green.opacity(0.85), light: PersonalOrganizerLightColors.iconInk)
@@ -100,7 +127,7 @@ struct StudentBirthdaysView: View {
                     .modifier(PersonalPrimaryTextStyle())
                     .multilineTextAlignment(.leading)
 
-                Text(verbatim: PersonalDateFormat.dayMonth(day: birthday.day, month: birthday.month, locale: locale))
+                Text(verbatim: dateText(for: birthday))
                     .font(.system(size: 14))
                     .foregroundStyle(Theme.Colors.ink(0.75))
             }
@@ -122,7 +149,7 @@ struct StudentBirthdaysView: View {
             } label: {
                 Image(systemName: "trash")
                     .font(.system(size: 15))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .foregroundColor(.red.opacity(0.9))
                     .frame(width: 36, height: 36)
                     .contentShape(Rectangle())
             }
@@ -130,6 +157,24 @@ struct StudentBirthdaysView: View {
             .accessibilityLabel(Text("common.delete"))
         }
         .personalCard()
+    }
+
+    /// "26 de outubro" ou, com ano de nascimento informado, "26 de outubro de 1965".
+    private func dateText(for birthday: PersonalBirthday) -> String {
+        if let year = birthday.birthYear {
+            return PersonalDateFormat.dayMonthYear(
+                day: birthday.day, month: birthday.month, year: year, locale: locale
+            )
+        }
+        return PersonalDateFormat.dayMonth(day: birthday.day, month: birthday.month, locale: locale)
+    }
+
+    /// Hoje (data local do dispositivo). 29/02 em ano não bissexto vale em 28/02.
+    private func isBirthdayToday(_ birthday: PersonalBirthday) -> Bool {
+        let calendar = Calendar.current
+        let year = calendar.component(.year, from: today)
+        guard let occurrence = birthday.occurrenceDay(year: year, calendar: calendar) else { return false }
+        return calendar.isDate(occurrence, inSameDayAs: today)
     }
 
     private func delete(_ birthday: PersonalBirthday) {
@@ -174,7 +219,7 @@ struct PersonalBirthdayEditorSheet: View {
         _month = State(initialValue: birthday?.month ?? calendar.component(.month, from: Date()))
         _includesYear = State(initialValue: birthday?.birthYear != nil)
         _birthYear = State(initialValue: birthday?.birthYear ?? (Self.currentYear - 30))
-        _remindersEnabled = State(initialValue: birthday?.remindersEnabled ?? false)
+        _remindersEnabled = State(initialValue: birthday?.remindersEnabled ?? true)
         _notifyOneMonthBefore = State(initialValue: birthday?.notifyOneMonthBefore ?? false)
         _notifyOneWeekBefore = State(initialValue: birthday?.notifyOneWeekBefore ?? false)
     }

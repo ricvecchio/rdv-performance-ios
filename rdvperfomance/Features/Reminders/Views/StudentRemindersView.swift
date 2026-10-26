@@ -279,7 +279,7 @@ struct StudentRemindersView: View {
         Button(action: action) {
             Image(systemName: "trash")
                 .font(.system(size: 15))
-                .foregroundStyle(Theme.Colors.ink(0.55))
+                .foregroundColor(.red.opacity(0.9))
                 .frame(width: 36, height: 36)
                 .contentShape(Rectangle())
         }
@@ -398,6 +398,7 @@ struct PersonalReminderEditorSheet: View {
     @State private var details: String
     @State private var remindAt: Date
     @State private var notificationsEnabled: Bool
+    @State private var repeatsDaily: Bool
     @State private var isSaving = false
     @State private var errorMessage: String?
 
@@ -407,6 +408,7 @@ struct PersonalReminderEditorSheet: View {
         _details = State(initialValue: reminder?.details ?? "")
         _remindAt = State(initialValue: reminder?.remindAt ?? Self.defaultDate())
         _notificationsEnabled = State(initialValue: reminder?.notificationsEnabled ?? false)
+        _repeatsDaily = State(initialValue: reminder?.repeatsDaily ?? false)
     }
 
     /// Próxima hora cheia.
@@ -462,6 +464,15 @@ struct PersonalReminderEditorSheet: View {
                 if isOn { Task { await store.requestNotificationAuthorizationIfNeeded() } }
             }
 
+            if notificationsEnabled {
+                Toggle(isOn: $repeatsDaily) {
+                    Text("personal.field.repeat_daily")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.ink(0.85))
+                }
+                .tint(Theme.Colors.primaryGreen)
+            }
+
             if notificationsEnabled && store.authorization == .denied {
                 PersonalNotificationsDisabledBanner()
             }
@@ -486,7 +497,8 @@ struct PersonalReminderEditorSheet: View {
                     title: title,
                     details: details,
                     remindAt: remindAt,
-                    notificationsEnabled: notificationsEnabled
+                    notificationsEnabled: notificationsEnabled,
+                    repeatsDaily: notificationsEnabled && repeatsDaily
                 )
                 dismiss()
             } catch {

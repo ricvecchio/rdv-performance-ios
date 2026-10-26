@@ -245,10 +245,13 @@ final class PersonalNotificationScheduler {
         if !ids.isEmpty { center.removePendingNotificationRequests(withIdentifiers: ids) }
     }
 
-    func cancelReminder(ownerUid: String, id: String) {
-        center.removePendingNotificationRequests(
-            withIdentifiers: [PersonalNotificationIdentifier.reminder(uid: ownerUid, id: id)]
-        )
+    /// Cancela o lembrete (disparo único, recorrente diário e ocorrências antecipadas).
+    func cancelReminder(ownerUid: String, id: String) async {
+        let single = PersonalNotificationIdentifier.reminder(uid: ownerUid, id: id)
+        let dailyPrefix = PersonalNotificationIdentifier.reminderDailyPrefix(uid: ownerUid, id: id)
+        let pending = await center.pendingNotificationRequests()
+        let ids = pending.map(\.identifier).filter { $0 == single || $0.hasPrefix(dailyPrefix) }
+        if !ids.isEmpty { center.removePendingNotificationRequests(withIdentifiers: ids) }
     }
 
     /// Remove todas as notificações desta funcionalidade (logout, troca de conta ou exclusão de conta).

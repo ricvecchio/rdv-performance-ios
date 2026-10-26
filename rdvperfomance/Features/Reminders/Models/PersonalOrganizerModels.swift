@@ -124,9 +124,11 @@ struct PersonalReminder: Identifiable, Equatable {
             && details == other.details
             && remindAt == other.remindAt
             && notificationsEnabled == other.notificationsEnabled
+            && repeatsDaily == other.repeatsDaily
     }
 
-    var isOverdue: Bool { remindAt < Date() }
+    /// Lembrete diário com notificação ativa continua sendo disparado todos os dias: nunca é "vencido".
+    var isOverdue: Bool { !(notificationsEnabled && repeatsDaily) && remindAt < Date() }
 }
 
 // MARK: - Aniversário

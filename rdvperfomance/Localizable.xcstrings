@@ -100582,6 +100582,28 @@
         }
       }
     },
+    "personal.field.repeat_daily" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repeat daily"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetir diariamente"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Repetir diariamente"
+          }
+        }
+      }
+    },
     "personal.field.notify" : {
       "localizations" : {
         "en" : {

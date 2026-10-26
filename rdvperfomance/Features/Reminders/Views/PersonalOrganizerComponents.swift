@@ -9,6 +9,24 @@ enum PersonalOrganizerLightColors {
     static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)   // #171C17
     static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)        // #C9DFC9
     static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)       // #294A2F
+    static let iconSurface = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)   // #85C995
+}
+
+/// Ícone à esquerda dos itens de lista (mesmo padrão visual das listas de Recordes).
+struct PersonalRowIcon: View {
+    let systemName: String
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 9)
+                .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: PersonalOrganizerLightColors.iconSurface))
+                .frame(width: 34, height: 34)
+
+            Image(systemName: systemName)
+                .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: PersonalOrganizerLightColors.iconInk))
+                .font(.system(size: 16, weight: .semibold))
+        }
+    }
 }
 
 /// Card no estilo das telas do aluno (Tema Escuro/Claro).

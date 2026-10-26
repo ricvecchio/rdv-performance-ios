@@ -141,6 +141,24 @@ enum PersonalDateFormat {
         return formatter.string(from: date)
     }
 
+    /// "15 de março de 1965" (dia, mês e ano de nascimento informado).
+    static func dayMonthYear(day: Int, month: Int, year: Int, locale: Locale) -> String {
+        var components = DateComponents()
+        components.year = year
+        components.month = month
+        components.day = day
+        let calendar = Calendar(identifier: .gregorian)
+        guard let date = calendar.date(from: components),
+              calendar.component(.day, from: date) == day else {
+            return dayMonth(day: day, month: month, locale: locale)
+        }
+        let formatter = DateFormatter()
+        formatter.locale = locale
+        formatter.calendar = calendar
+        formatter.setLocalizedDateFormatFromTemplate("dMMMMyyyy")
+        return formatter.string(from: date)
+    }
+
     static func dateTime(_ date: Date, locale: Locale) -> String {
         let formatter = DateFormatter()
         formatter.locale = locale

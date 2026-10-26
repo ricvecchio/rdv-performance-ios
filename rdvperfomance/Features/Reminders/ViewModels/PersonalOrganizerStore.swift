@@ -259,6 +259,7 @@ final class PersonalOrganizerStore: ObservableObject {
                 details: details.trimmingCharacters(in: .whitespacesAndNewlines),
                 remindAt: remindAt,
                 notificationsEnabled: notificationsEnabled,
+                repeatsDaily: repeatsDaily,
                 createdAt: now,
                 updatedAt: now
             )
@@ -268,7 +269,7 @@ final class PersonalOrganizerStore: ObservableObject {
 
     func deleteReminder(_ reminder: PersonalReminder) async throws {
         guard let uid = ownerUid else { throw PersonalOrganizerError.notSignedIn }
-        scheduler.cancelReminder(ownerUid: uid, id: reminder.id)
+        await scheduler.cancelReminder(ownerUid: uid, id: reminder.id)
         try await repository.delete(uid: uid, kind: .reminders, id: reminder.id)
     }
 
