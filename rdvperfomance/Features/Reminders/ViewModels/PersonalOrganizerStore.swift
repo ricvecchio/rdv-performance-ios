@@ -48,6 +48,10 @@ final class PersonalOrganizerStore: ObservableObject {
         ownerUid = cleanUid
         loadError = nil
 
+        #if DEBUG
+        print("[PersonalOrganizer] start ownerUid=\(cleanUid) authUid=\(Auth.auth().currentUser?.uid ?? "nil") force=\(force)")
+        #endif
+
         // Só escuta o Firestore quando o Firebase Auth já possui o mesmo UID (evita negação por sessão não pronta)
         if Auth.auth().currentUser?.uid == cleanUid {
             attachListeners(uid: cleanUid)

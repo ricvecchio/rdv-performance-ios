@@ -91,6 +91,32 @@ final class PersonalOrganizerListenerBag {
     deinit { removeAll() }
 }
 
+/// Diagnóstico temporário (somente DEBUG). Não registra tokens nem conteúdo dos registros.
+enum PersonalOrganizerDebug {
+    static func log(
+        _ operation: String,
+        kind: PersonalOrganizerCollection,
+        pathUid: String,
+        error: Error? = nil
+    ) {
+        #if DEBUG
+        let project = FirebaseApp.app()?.options.projectID ?? "nil"
+        let authUid = Auth.auth().currentUser?.uid ?? "nil"
+        var line = "[PersonalOrganizer] op=\(operation) path=users/\(pathUid)/\(kind.rawValue) "
+            + "authUid=\(authUid) match=\(authUid == pathUid) project=\(project)"
+        if let error {
+            let ns = error as NSError
+            line += " ERROR domain=\(ns.domain) code=\(ns.code) "
+                + "(\(FirestoreErrorCode.Code(rawValue: ns.code).map { "\($0)" } ?? "?")) "
+                + "desc=\(ns.localizedDescription)"
+        } else {
+            line += " OK"
+        }
+        print(line)
+        #endif
+    }
+}
+
 /// Acesso ao Firestore para `users/{uid}/personal_notes|personal_reminders|personal_birthdays`.
 /// Cada operação só é feita para o UID autenticado; não depende de professor vinculado.
 final class PersonalOrganizerRepository {
@@ -116,18 +142,31 @@ final class PersonalOrganizerRepository {
     ) -> ListenerRegistration {
         collection(uid: uid, kind: kind)
             .addSnapshotListener(includeMetadataChanges: true) { snapshot, error in
+                PersonalOrganizerDebug.log("read", kind: kind, pathUid: uid, error: error)
                 onChange(snapshot, error)
             }
     }
 
     func save(uid: String, kind: PersonalOrganizerCollection, id: String, data: [String: Any]) async throws {
         try requireAuthenticated(uid: uid)
-        try await collection(uid: uid, kind: kind).document(id).setData(data)
+        do {
+            try await collection(uid: uid, kind: kind).document(id).setData(data)
+            PersonalOrganizerDebug.log("write", kind: kind, pathUid: uid)
+        } catch {
+            PersonalOrganizerDebug.log("write", kind: kind, pathUid: uid, error: error)
+            throw error
+        }
     }
 
     func delete(uid: String, kind: PersonalOrganizerCollection, id: String) async throws {
         try requireAuthenticated(uid: uid)
-        try await collection(uid: uid, kind: kind).document(id).delete()
+        do {
+            try await collection(uid: uid, kind: kind).document(id).delete()
+            PersonalOrganizerDebug.log("delete", kind: kind, pathUid: uid)
+        } catch {
+            PersonalOrganizerDebug.log("delete", kind: kind, pathUid: uid, error: error)
+            throw error
+        }
     }
 
     /// Remove todos os registros pessoais do usuário (usado na exclusão de conta).
