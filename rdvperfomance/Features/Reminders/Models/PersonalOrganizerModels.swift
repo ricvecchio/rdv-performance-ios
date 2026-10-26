@@ -67,6 +67,8 @@ struct PersonalReminder: Identifiable, Equatable {
     var details: String
     var remindAt: Date
     var notificationsEnabled: Bool
+    /// Repete a notificação todos os dias a partir de `remindAt`. Documentos antigos: `false`.
+    var repeatsDaily: Bool
     var createdAt: Date
     var updatedAt: Date
 
@@ -77,6 +79,7 @@ struct PersonalReminder: Identifiable, Equatable {
         details: String,
         remindAt: Date,
         notificationsEnabled: Bool,
+        repeatsDaily: Bool = false,
         createdAt: Date,
         updatedAt: Date
     ) {
@@ -86,6 +89,7 @@ struct PersonalReminder: Identifiable, Equatable {
         self.details = details
         self.remindAt = remindAt
         self.notificationsEnabled = notificationsEnabled
+        self.repeatsDaily = repeatsDaily
         self.createdAt = createdAt
         self.updatedAt = updatedAt
     }
@@ -101,6 +105,7 @@ struct PersonalReminder: Identifiable, Equatable {
             details: data["details"] as? String ?? "",
             remindAt: remindAt,
             notificationsEnabled: data["notificationsEnabled"] as? Bool ?? false,
+            repeatsDaily: data["repeatsDaily"] as? Bool ?? false,
             createdAt: (data["createdAt"] as? Timestamp)?.dateValue() ?? Date(),
             updatedAt: (data["updatedAt"] as? Timestamp)?.dateValue() ?? Date()
         )
@@ -114,6 +119,7 @@ struct PersonalReminder: Identifiable, Equatable {
             "details": details,
             "remindAt": Timestamp(date: remindAt),
             "notificationsEnabled": notificationsEnabled,
+            "repeatsDaily": repeatsDaily,
             "createdAt": Timestamp(date: createdAt),
             "updatedAt": Timestamp(date: updatedAt)
         ]

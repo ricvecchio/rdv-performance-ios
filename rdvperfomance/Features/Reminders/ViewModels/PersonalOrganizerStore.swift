@@ -237,7 +237,8 @@ final class PersonalOrganizerStore: ObservableObject {
         title: String,
         details: String,
         remindAt: Date,
-        notificationsEnabled: Bool
+        notificationsEnabled: Bool,
+        repeatsDaily: Bool = false
     ) async throws {
         guard let uid = ownerUid else { throw PersonalOrganizerError.notSignedIn }
         let now = Date()
@@ -249,6 +250,7 @@ final class PersonalOrganizerStore: ObservableObject {
             reminder.details = details.trimmingCharacters(in: .whitespacesAndNewlines)
             reminder.remindAt = remindAt
             reminder.notificationsEnabled = notificationsEnabled
+            reminder.repeatsDaily = repeatsDaily
             guard !reminder.hasSameContent(as: existing) else { return }
             reminder.updatedAt = now
         } else {

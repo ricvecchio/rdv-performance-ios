@@ -16,6 +16,15 @@ enum PersonalNotificationIdentifier {
         "\(userPrefix(uid: uid))reminder.\(id)"
     }
 
+    /// Ocorrências antecipadas (uma a uma) de um lembrete diário com início futuro: `...reminder.{id}.d{n}`.
+    static func reminderDailyOccurrence(uid: String, id: String, offset: Int) -> String {
+        offset == 0 ? reminder(uid: uid, id: id) : "\(reminder(uid: uid, id: id)).d\(offset)"
+    }
+
+    static func reminderDailyPrefix(uid: String, id: String) -> String {
+        "\(reminder(uid: uid, id: id)).d"
+    }
+
     static func birthdayPrefix(uid: String, id: String) -> String {
         "\(userPrefix(uid: uid))birthday.\(id)."
     }
@@ -38,10 +47,13 @@ struct PersonalNotificationPlan: Equatable {
     let fireDate: Date
     let title: String
     let body: String
+    /// `true`: gatilho diário recorrente (somente hora e minuto de `fireDate`).
+    var repeatsDaily: Bool = false
 
     /// Muda quando data, idioma ou texto mudam (usada para evitar reagendamentos desnecessários).
     var signature: String {
-        "\(Int(fireDate.timeIntervalSince1970))|\(title)|\(body)"
+        let base = "\(Int(fireDate.timeIntervalSince1970))|\(title)|\(body)"
+        return repeatsDaily ? base + "|daily" : base
     }
 }
 
@@ -58,6 +70,12 @@ enum PersonalNotificationPlanner {
     /// Limite próprio, abaixo do máximo de 64 pendentes do iOS.
     static let maxPlans = 60
 
+    /// Lembrete diário com início futuro: o iOS não permite um gatilho diário com data inicial arbitrária
+    /// (ele dispararia antes do início). Por isso são agendadas, uma a uma, as ocorrências dos primeiros dias
+    /// a partir do início. Quando o início passa e o app é aberto, a reconciliação troca essas ocorrências por
+    /// um único gatilho diário recorrente (hora e minuto), que segue disparando sem precisar reabrir o app.
+    static let dailyLeadOccurrences = 7
+
     static func plans(
         ownerUid: String,
         reminders: [PersonalReminder],
@@ -69,18 +87,54 @@ enum PersonalNotificationPlanner {
         var result: [PersonalNotificationPlan] = []
 
         // Lembretes pessoais
-        for reminder in reminders where reminder.notificationsEnabled && reminder.remindAt > now {
+        for reminder in reminders where reminder.notificationsEnabled {
             let trimmedDetails = reminder.details.trimmingCharacters(in: .whitespacesAndNewlines)
-            result.append(
-                PersonalNotificationPlan(
-                    identifier: PersonalNotificationIdentifier.reminder(uid: ownerUid, id: reminder.id),
-                    fireDate: reminder.remindAt,
-                    title: reminder.title,
-                    body: trimmedDetails.isEmpty
-                        ? AppLocalization.string("personal_notification.reminder_default_body", locale: locale)
-                        : trimmedDetails
+            let body = trimmedDetails.isEmpty
+                ? AppLocalization.string("personal_notification.reminder_default_body", locale: locale)
+                : trimmedDetails
+
+            guard reminder.repeatsDaily else {
+                // Comportamento original: disparo único na data e hora definidas
+                guard reminder.remindAt > now else { continue }
+                result.append(
+                    PersonalNotificationPlan(
+                        identifier: PersonalNotificationIdentifier.reminder(uid: ownerUid, id: reminder.id),
+                        fireDate: reminder.remindAt,
+                        title: reminder.title,
+                        body: body
+                    )
                 )
-            )
+                continue
+            }
+
+            if reminder.remindAt > now {
+                // Início futuro: ocorrências individuais (sem disparo antes da data inicial)
+                for offset in 0..<dailyLeadOccurrences {
+                    guard let fire = calendar.date(byAdding: .day, value: offset, to: reminder.remindAt),
+                          fire > now else { continue }
+                    result.append(
+                        PersonalNotificationPlan(
+                            identifier: PersonalNotificationIdentifier.reminderDailyOccurrence(
+                                uid: ownerUid, id: reminder.id, offset: offset
+                            ),
+                            fireDate: fire,
+                            title: reminder.title,
+                            body: body
+                        )
+                    )
+                }
+            } else {
+                // Início já ocorreu: gatilho diário recorrente (hora e minuto)
+                result.append(
+                    PersonalNotificationPlan(
+                        identifier: PersonalNotificationIdentifier.reminder(uid: ownerUid, id: reminder.id),
+                        fireDate: reminder.remindAt,
+                        title: reminder.title,
+                        body: body,
+                        repeatsDaily: true
+                    )
+                )
+            }
         }
 
         // Aniversários
@@ -227,11 +281,17 @@ final class PersonalNotificationScheduler {
             content.sound = .default
             content.userInfo = ["signature": plan.signature]
 
-            let components = calendar.dateComponents(
-                [.year, .month, .day, .hour, .minute],
-                from: plan.fireDate
-            )
-            let trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            let trigger: UNCalendarNotificationTrigger
+            if plan.repeatsDaily {
+                let components = calendar.dateComponents([.hour, .minute], from: plan.fireDate)
+                trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: true)
+            } else {
+                let components = calendar.dateComponents(
+                    [.year, .month, .day, .hour, .minute],
+                    from: plan.fireDate
+                )
+                trigger = UNCalendarNotificationTrigger(dateMatching: components, repeats: false)
+            }
             let request = UNNotificationRequest(identifier: plan.identifier, content: content, trigger: trigger)
             try? await center.add(request)
         }

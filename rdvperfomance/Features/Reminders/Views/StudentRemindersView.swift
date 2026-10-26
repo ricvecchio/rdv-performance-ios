@@ -44,7 +44,7 @@ struct StudentRemindersView: View {
             switch section {
             case .notes: notesSection
             case .reminders: remindersSection
-            case .birthdays: EmptyView()
+            case .birthdays: PersonalBirthdaysContent()
             }
         }
         .sheet(item: $noteEditor) { target in
@@ -97,8 +97,8 @@ struct StudentRemindersView: View {
             sectionChip(titleKey: "personal.section.reminders", icon: "bell", isSelected: section == .reminders) {
                 section = .reminders
             }
-            sectionChip(titleKey: "personal.section.birthdays", icon: "gift", isSelected: false) {
-                path.append(.birthdays)
+            sectionChip(titleKey: "personal.section.birthdays", icon: "gift", isSelected: section == .birthdays) {
+                section = .birthdays
             }
         }
     }
@@ -170,6 +170,8 @@ struct StudentRemindersView: View {
 
     private func noteRow(_ note: PersonalNote) -> some View {
         HStack(alignment: .top, spacing: 12) {
+            PersonalRowIcon(systemName: "note.text")
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(verbatim: note.title)
                     .font(.system(size: 17, weight: .semibold))
@@ -221,6 +223,8 @@ struct StudentRemindersView: View {
         let overdue = reminder.isOverdue
 
         return HStack(alignment: .top, spacing: 12) {
+            PersonalRowIcon(systemName: "bell")
+
             VStack(alignment: .leading, spacing: 4) {
                 Text(verbatim: reminder.title)
                     .font(.system(size: 17, weight: .semibold))
@@ -251,6 +255,11 @@ struct StudentRemindersView: View {
                         Image(systemName: "bell.fill")
                             .font(.system(size: 12))
                             .accessibilityLabel(Text("personal.notifications_on"))
+                        if reminder.repeatsDaily {
+                            Image(systemName: "repeat")
+                                .font(.system(size: 12))
+                                .accessibilityLabel(Text("personal.field.repeat_daily"))
+                        }
                     }
                 }
                 .foregroundStyle(
