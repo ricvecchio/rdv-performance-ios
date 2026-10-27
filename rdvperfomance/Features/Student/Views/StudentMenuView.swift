@@ -36,14 +36,8 @@ struct StudentMenuView: View {
             }
 
             category("menu.category.personal") {
-                menuRow(icon: "note.text", titleKey: "menu.notes") {
+                menuRow(icon: "calendar.badge.clock", titleKey: "menu.my_routine") {
                     onOpenOrganizer(.notes)
-                }
-                menuRow(icon: "bell", titleKey: "menu.reminders") {
-                    onOpenOrganizer(.reminders)
-                }
-                menuRow(icon: "gift", titleKey: "menu.birthdays") {
-                    onOpenOrganizer(.birthdays)
                 }
             }
 

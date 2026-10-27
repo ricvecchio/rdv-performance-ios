@@ -76289,6 +76289,28 @@
         }
       }
     },
+    "menu.athletes" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Athletes"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atletas"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Atletas"
+          }
+        }
+      }
+    },
     "menu.birthdays" : {
       "localizations" : {
         "en" : {
@@ -76396,6 +76418,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "TREINAMENTOS"
+          }
+        }
+      }
+    },
+    "menu.championships" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Championships"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Campeonatos"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Campeonatos"
           }
         }
       }
@@ -76513,6 +76557,7 @@
       }
     },
     "menu.progress" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -76557,6 +76602,7 @@
       }
     },
     "menu.search_athletes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -76579,6 +76625,7 @@
       }
     },
     "menu.search_championships" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -101621,46 +101668,24 @@
         }
       }
     },
-    "menu.athletes" : {
+    "menu.my_routine" : {
       "localizations" : {
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Athletes"
+            "value" : "My Routine"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Atletas"
+            "value" : "Mi Rutina"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Atletas"
-          }
-        }
-      }
-    },
-    "menu.championships" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Championships"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Campeonatos"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Campeonatos"
+            "value" : "Minha Rotina"
           }
         }
       }
