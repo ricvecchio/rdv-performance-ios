@@ -229,46 +229,46 @@ struct StudentRemindersView: View {
     private func reminderRow(_ reminder: PersonalReminder) -> some View {
         let overdue = reminder.isOverdue
 
-        return HStack(alignment: .top, spacing: 12) {
-            PersonalRowIcon(systemName: "bell")
+        return VStack(alignment: .leading, spacing: 4) {
+            // Parte superior: ícone, título/descrição e lixeira
+            HStack(alignment: .top, spacing: 12) {
+                PersonalRowIcon(systemName: "bell")
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text(verbatim: reminder.title)
-                    .font(.system(size: 17, weight: .semibold))
-                    .modifier(PersonalPrimaryTextStyle())
-                    .multilineTextAlignment(.leading)
-
-                if !reminder.details.isEmpty {
-                    Text(verbatim: reminder.details)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.Colors.ink(0.75))
-                        .lineLimit(3)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(verbatim: reminder.title)
+                        .font(.system(size: 17, weight: .semibold))
+                        .modifier(PersonalPrimaryTextStyle())
                         .multilineTextAlignment(.leading)
-                }
 
+                    if !reminder.details.isEmpty {
+                        Text(verbatim: reminder.details)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.Colors.ink(0.75))
+                            .lineLimit(3)
+                            .multilineTextAlignment(.leading)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+                deleteButton { reminderPendingDeletion = reminder }
+            }
+
+            // Parte inferior: data/horário à esquerda; status + sino à direita (mesma linha)
+            HStack(alignment: .center, spacing: 8) {
                 HStack(spacing: 8) {
                     Image(systemName: overdue ? "exclamationmark.circle.fill" : "clock")
                         .font(.system(size: 12))
                     Text(verbatim: PersonalDateFormat.dateTime(reminder.remindAt, locale: locale))
                         .font(.system(size: 12, weight: .semibold))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.8)
+                        .minimumScaleFactor(0.7)
                     if reminder.notificationsEnabled && reminder.repeatsDaily {
                         Image(systemName: "repeat")
                             .font(.system(size: 12))
                             .accessibilityLabel(Text("personal.field.repeat_daily"))
                     }
                 }
-                .foregroundStyle(
-                    overdue
-                        ? AnyShapeStyle(Color.orange)
-                        : AnyShapeStyle(Theme.Colors.systemAccentForeground())
-                )
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-
-            VStack(alignment: .trailing, spacing: 0) {
-                deleteButton { reminderPendingDeletion = reminder }
+                .layoutPriority(0)
 
                 Spacer(minLength: 0)
 
@@ -276,7 +276,6 @@ struct StudentRemindersView: View {
                     Text(overdue ? "personal.reminder.overdue" : "personal.reminder.upcoming")
                         .font(.system(size: 11, weight: .bold))
                         .lineLimit(1)
-                        .minimumScaleFactor(0.7)
                         .padding(.horizontal, 8)
                         .padding(.vertical, 2)
                         .background(
@@ -290,13 +289,15 @@ struct StudentRemindersView: View {
                             .accessibilityLabel(Text("personal.notifications_on"))
                     }
                 }
-                .foregroundStyle(
-                    overdue
-                        ? AnyShapeStyle(Color.orange)
-                        : AnyShapeStyle(Theme.Colors.systemAccentForeground())
-                )
-                .fixedSize(horizontal: true, vertical: false)
+                .fixedSize()
+                .layoutPriority(1)
             }
+            .foregroundStyle(
+                overdue
+                    ? AnyShapeStyle(Color.orange)
+                    : AnyShapeStyle(Theme.Colors.systemAccentForeground())
+            )
+            .padding(.leading, 46) // 34 (ícone) + 12 (espaçamento): alinha com o texto do título
         }
         .modifier(ReminderRowCardModifier())
     }
