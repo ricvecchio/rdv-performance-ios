@@ -251,12 +251,12 @@ private struct AppThemeLightHeaderColorSchemeModifier: ViewModifier {
 // MARK: - Rodapé
 
 private struct AppThemeFooterColorSchemeModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.colorScheme) private var colorScheme
 
     func body(content: Content) -> some View {
-        // O rodapé é sempre escuro (preto 75% no Tema Escuro, verde-escuro no Claro): fixa o esquema
-        // escuro nos dois temas, sem depender do esquema herdado do sistema na inicialização.
         content
-            .environment(\.colorScheme, .dark)
+            .environment(\.colorScheme, appTheme == .light ? .dark : colorScheme)
     }
 }
 

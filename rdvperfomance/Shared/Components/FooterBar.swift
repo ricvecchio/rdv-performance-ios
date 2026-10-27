@@ -217,35 +217,31 @@ struct FooterBar: View {
             let isRemindersSelected,
             let isMenuSelected
         ):
-            // Navegação principal do aluno: Home | Menu | Perfil (itens distribuídos igualmente).
+            // Navegação principal do aluno: Home | Menu | Perfil.
             // O item Menu também fica destacado nas telas abertas a partir dele (Treinos, Recordes, Lembretes).
+            // Larguras fixas (sem `maxWidth: .infinity`): o fundo `scaledToFill` das telas pode propor ao rodapé
+            // uma largura maior que a tela (ex.: `rdv_fundo`, quase quadrado, no Tema Escuro), o que espalharia
+            // Home e Perfil para fora da área visível. Grupo centralizado, mesmo padrão dos demais rodapés.
             let isMenuHighlighted = isMenuSelected || isTreinosSelected || isRecordsSelected || isRemindersSelected
-            HStack(spacing: 0) {
+            HStack(spacing: 16) {
                 Button { goStudentHome() } label: {
-                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
-                        .frame(maxWidth: .infinity)
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
 
                 Button { goMenu() } label: {
-                    FooterItem(icon: .system("line.3.horizontal"), title: "menu.title", isSelected: isMenuHighlighted, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
-                        .frame(maxWidth: .infinity)
+                    FooterItem(icon: .system("line.3.horizontal"), title: "menu.title", isSelected: isMenuHighlighted, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
 
                 Button { goPerfilStudent() } label: {
-                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
-                        .frame(maxWidth: .infinity)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
-                .frame(maxWidth: .infinity)
             }
-            .padding(.horizontal, 16)
 
         // ✅ PROFESSOR (4 ícones) — espaçamento igual ao ALUNO
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
