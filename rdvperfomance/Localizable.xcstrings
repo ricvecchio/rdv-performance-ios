@@ -76312,6 +76312,7 @@
       }
     },
     "menu.category.account" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -76422,6 +76423,7 @@
       }
     },
     "menu.help_support" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -76599,6 +76601,7 @@
       }
     },
     "menu.settings" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
