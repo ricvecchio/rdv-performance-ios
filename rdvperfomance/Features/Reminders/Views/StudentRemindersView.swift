@@ -120,25 +120,31 @@ struct StudentRemindersView: View {
                     .minimumScaleFactor(0.7)
             }
             .foregroundStyle(
-                isSelected
-                    ? AnyShapeStyle(Theme.Colors.systemAccentForeground())
-                    : AnyShapeStyle(Theme.Colors.ink(0.75))
+                appTheme == .light
+                    ? (isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
+                    : (isSelected
+                        ? AnyShapeStyle(Theme.Colors.systemAccentForeground())
+                        : AnyShapeStyle(Theme.Colors.ink(0.75)))
             )
             .frame(maxWidth: .infinity)
             .padding(.vertical, 12)
             .background(
                 AppThemeColor(
                     dark: Color.black.opacity(isSelected ? 0.68 : 0.45),
-                    light: PersonalOrganizerLightColors.innerSurface.opacity(isSelected ? 1 : 0.75)
+                    light: isSelected
+                        ? AppThemePalette.lightBar.opacity(0.80)
+                        : Color(red: 0xEE / 255, green: 0xF8 / 255, blue: 0xF0 / 255)
                 )
             )
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(
-                        isSelected
-                            ? AnyShapeStyle(Theme.Colors.cardBorder)
-                            : AnyShapeStyle(Theme.Colors.ink(0.10)),
+                        appTheme == .light
+                            ? AnyShapeStyle(Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255))
+                            : (isSelected
+                                ? AnyShapeStyle(Theme.Colors.cardBorder)
+                                : AnyShapeStyle(Theme.Colors.ink(0.10))),
                         lineWidth: 1
                     )
             )
@@ -245,22 +251,12 @@ struct StudentRemindersView: View {
                         .font(.system(size: 12))
                     Text(verbatim: PersonalDateFormat.dateTime(reminder.remindAt, locale: locale))
                         .font(.system(size: 12, weight: .semibold))
-                    Text(overdue ? "personal.reminder.overdue" : "personal.reminder.upcoming")
-                        .font(.system(size: 11, weight: .bold))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 2)
-                        .background(
-                            Capsule().fill(overdue ? Color.orange.opacity(0.25) : Color.green.opacity(0.22))
-                        )
-                    if reminder.notificationsEnabled {
-                        Image(systemName: "bell.fill")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    if reminder.notificationsEnabled && reminder.repeatsDaily {
+                        Image(systemName: "repeat")
                             .font(.system(size: 12))
-                            .accessibilityLabel(Text("personal.notifications_on"))
-                        if reminder.repeatsDaily {
-                            Image(systemName: "repeat")
-                                .font(.system(size: 12))
-                                .accessibilityLabel(Text("personal.field.repeat_daily"))
-                        }
+                            .accessibilityLabel(Text("personal.field.repeat_daily"))
                     }
                 }
                 .foregroundStyle(
@@ -271,9 +267,34 @@ struct StudentRemindersView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            deleteButton { reminderPendingDeletion = reminder }
+            VStack(alignment: .trailing, spacing: 0) {
+                deleteButton { reminderPendingDeletion = reminder }
+
+                HStack(spacing: 6) {
+                    if reminder.notificationsEnabled {
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 12))
+                            .accessibilityLabel(Text("personal.notifications_on"))
+                    }
+                    Text(overdue ? "personal.reminder.overdue" : "personal.reminder.upcoming")
+                        .font(.system(size: 11, weight: .bold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .background(
+                            Capsule().fill(overdue ? Color.orange.opacity(0.25) : Color.green.opacity(0.22))
+                        )
+                }
+                .foregroundStyle(
+                    overdue
+                        ? AnyShapeStyle(Color.orange)
+                        : AnyShapeStyle(Theme.Colors.systemAccentForeground())
+                )
+                .fixedSize(horizontal: true, vertical: false)
+            }
         }
-        .personalCard()
+        .modifier(ReminderRowCardModifier())
     }
 
     // MARK: - Auxiliares
