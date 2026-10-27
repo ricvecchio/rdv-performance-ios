@@ -128,6 +128,8 @@ enum AppRoute: Hashable {
     case studentFeedbacks(category: TreinoTipo)
     case studentTeachers(studentEmail: String)
     case studentNextFitWod
+    /// Destino provisório de funcionalidades do Menu ainda em desenvolvimento (chave de título localizada).
+    case studentComingSoon(titleKey: String)
 
     case studentPersonalRecords
     case studentPersonalRecordsBarbell

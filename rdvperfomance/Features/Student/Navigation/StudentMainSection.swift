@@ -12,6 +12,7 @@ enum StudentMainSection: Hashable {
     case reminders
     case records
     case profile
+    case menu
 }
 
 /// Rotas internas da seção Lembretes (pilha própria, independente do `AppRoute`).

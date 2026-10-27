@@ -291,7 +291,7 @@ struct StudentRootView: View {
         NavigationStack(path: $recordsPath) {
             PersonalRecordsView(
                 path: $recordsPath,
-                onBack: { selectSection(.agenda) },
+                onBack: { selectSection(.menu) },
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in
@@ -342,26 +342,66 @@ struct StudentRootView: View {
         }
     }
 
+    // MARK: - Menu
+
+    private var menuTab: some View {
+        NavigationStack(path: $menuPath) {
+            StudentMenuView(
+                path: $menuPath,
+                onBack: { selectSection(.home) },
+                onSelectSection: selectSection,
+                onOpenOrganizer: openOrganizer
+            )
+            .navigationDestination(for: AppRoute.self) { route in
+                menuDestination(for: route)
+            }
+        }
+    }
+
+    /// Destinos empilhados a partir do Menu (reutiliza as telas existentes de WOD, Configurações e Ajuda).
+    @ViewBuilder
+    private func menuDestination(for route: AppRoute) -> some View {
+        switch route {
+
+        case .studentNextFitWod:
+            StudentNextFitWodView(
+                path: $menuPath,
+                studentId: studentId,
+                onSelectSection: selectSection
+            )
+
+        case .studentComingSoon(let titleKey):
+            StudentComingSoonView(
+                path: $menuPath,
+                titleKey: titleKey,
+                onSelectSection: selectSection
+            )
+
+        default:
+            profileDestination(for: route, path: $menuPath)
+        }
+    }
+
     // MARK: - Perfil
 
     private var profileTab: some View {
         NavigationStack(path: $profilePath) {
             ProfileView(
                 path: $profilePath,
-                onBack: { selectSection(.agenda) }
+                onBack: { selectSection(.home) }
             )
             .navigationDestination(for: AppRoute.self) { route in
-                profileDestination(for: route)
+                profileDestination(for: route, path: $profilePath)
             }
         }
     }
 
     @ViewBuilder
-    private func profileDestination(for route: AppRoute) -> some View {
+    private func profileDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
         switch route {
 
         case .configuracoes:
-            SettingsView(path: $profilePath)
+            SettingsView(path: path)
 
         case .idioma:
             LanguageSettingsView()
@@ -370,32 +410,32 @@ struct StudentRootView: View {
             ThemeSettingsView()
 
         case .editarPerfil:
-            EditProfileView(path: $profilePath)
+            EditProfileView(path: path)
 
         case .alterarSenha:
-            ChangePasswordView(path: $profilePath)
+            ChangePasswordView(path: path)
 
         case .excluirConta:
-            DeleteAccountView(path: $profilePath)
+            DeleteAccountView(path: path)
 
         case .infoLegal(let kind):
-            InfoLegalView(path: $profilePath, kind: kind, onSelectSection: selectSection)
+            InfoLegalView(path: path, kind: kind, onSelectSection: selectSection)
 
         case .sobre:
-            AboutView(path: $profilePath, onSelectSection: selectSection)
+            AboutView(path: path, onSelectSection: selectSection)
 
         case .spriteDemo:
-            SpriteDemoView(path: $profilePath, onSelectSection: selectSection)
+            SpriteDemoView(path: path, onSelectSection: selectSection)
 
         case .studentMessages(let category):
-            StudentMessagesView(path: $profilePath, category: category, onSelectSection: selectSection)
+            StudentMessagesView(path: path, category: category, onSelectSection: selectSection)
 
         case .studentFeedbacks(let category):
-            StudentFeedbacksView(path: $profilePath, category: category, onSelectSection: selectSection)
+            StudentFeedbacksView(path: path, category: category, onSelectSection: selectSection)
 
         case .studentTeachers(let studentEmail):
             StudentTeachersView(
-                path: $profilePath,
+                path: path,
                 studentEmail: studentEmail,
                 onSelectSection: selectSection
             )

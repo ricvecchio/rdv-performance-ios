@@ -1267,7 +1267,7 @@ struct TrainingWeeksView: View {
         if isTeacherViewing {
             pop()
         } else {
-            onSelectSection(.home)
+            onSelectSection(.menu)
         }
     }
 

@@ -11,12 +11,25 @@ struct StudentRemindersView: View {
     @Environment(\.locale) private var locale
     @Environment(\.appTheme) private var appTheme
 
-    @State private var section: PersonalOrganizerSection = .notes
+    @State private var section: PersonalOrganizerSection
     @State private var noteEditor: NoteEditorTarget?
     @State private var reminderEditor: ReminderEditorTarget?
     @State private var notePendingDeletion: PersonalNote?
     @State private var reminderPendingDeletion: PersonalReminder?
     @State private var errorMessage: String?
+
+    /// `initialSection` permite abrir diretamente Anotações, Lembretes ou Aniversários (a partir do Menu).
+    init(
+        path: Binding<[StudentRemindersRoute]>,
+        onBack: @escaping () -> Void,
+        onSelectSection: @escaping (StudentMainSection) -> Void,
+        initialSection: PersonalOrganizerSection = .notes
+    ) {
+        self._path = path
+        self.onBack = onBack
+        self.onSelectSection = onSelectSection
+        _section = State(initialValue: initialSection)
+    }
 
     struct NoteEditorTarget: Identifiable {
         let id = UUID()
