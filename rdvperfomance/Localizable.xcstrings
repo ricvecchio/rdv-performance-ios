@@ -76312,6 +76312,7 @@
       }
     },
     "menu.birthdays" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -76512,7 +76513,30 @@
         }
       }
     },
+    "menu.my_routine" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "My Routine"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mi Rutina"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Minha Rotina"
+          }
+        }
+      }
+    },
     "menu.notes" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -76580,6 +76604,7 @@
       }
     },
     "menu.reminders" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -101664,28 +101689,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "YouTube"
-          }
-        }
-      }
-    },
-    "menu.my_routine" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "My Routine"
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Mi Rutina"
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Minha Rotina"
           }
         }
       }

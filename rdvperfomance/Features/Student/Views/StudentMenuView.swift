@@ -91,9 +91,44 @@ struct StudentMenuView: View {
                         )
                     )
             }
-            .personalCard()
+            .modifier(StudentMenuCardModifier())
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// Igual a `PersonalCardModifier`, alterando somente o fundo do Tema Claro (#DDEDDC).
+private struct StudentMenuCardModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+
+    private static let lightSurface = Color(
+        red: 0xDD / 255,
+        green: 0xED / 255,
+        blue: 0xDC / 255
+    )
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: Self.lightSurface))
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(
+                        AppThemeColor(
+                            dark: Theme.Colors.primaryGreen.opacity(0.28),
+                            light: PersonalOrganizerLightColors.chevron
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
+            )
     }
 }
 
