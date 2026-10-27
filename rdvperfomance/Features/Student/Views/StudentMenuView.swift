@@ -58,15 +58,6 @@ struct StudentMenuView: View {
                     path.append(.studentComingSoon(titleKey: "menu.search_championships"))
                 }
             }
-
-            category("menu.category.account") {
-                menuRow(icon: "gearshape", titleKey: "menu.settings") {
-                    path.append(.configuracoes)
-                }
-                menuRow(icon: "questionmark.circle", titleKey: "menu.help_support") {
-                    path.append(.infoLegal(.helpCenter))
-                }
-            }
         }
     }
 
