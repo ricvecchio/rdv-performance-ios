@@ -52,6 +52,9 @@ struct StudentRootView: View {
     @State private var remindersPath: [StudentRemindersRoute] = []
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
+    @State private var menuPath: [AppRoute] = []
+    /// Seção (Anotações/Lembretes/Aniversários) a abrir diretamente ao entrar em Lembretes pelo Menu.
+    @State private var remindersInitialSection: PersonalOrganizerSection = .notes
     @State private var workoutsInitialWeekId: String?
     @State private var workoutsInitialDayId: String?
 
@@ -148,6 +151,8 @@ struct StudentRootView: View {
             recordsTab
         case .profile:
             profileTab
+        case .menu:
+            menuTab
         }
     }
 
@@ -171,6 +176,7 @@ struct StudentRootView: View {
         case .reminders: alreadyAtRoot = remindersPath.isEmpty
         case .records: alreadyAtRoot = recordsPath.isEmpty
         case .profile: alreadyAtRoot = profilePath.isEmpty
+        case .menu: alreadyAtRoot = menuPath.isEmpty
         }
 
         if selectedSection == target && alreadyAtRoot { return }
@@ -181,9 +187,17 @@ struct StudentRootView: View {
         case .reminders: remindersPath = []
         case .records: recordsPath = []
         case .profile: profilePath = []
+        case .menu: menuPath = []
         }
 
         selectedSection = target
+    }
+
+    /// Abre Anotações, Lembretes ou Aniversários diretamente (sem passar por outra tela).
+    private func openOrganizer(_ organizerSection: PersonalOrganizerSection) {
+        remindersPath = []
+        remindersInitialSection = organizerSection
+        selectedSection = .reminders
     }
 
     private func openWorkouts(weekId: String, dayId: String) {
@@ -273,8 +287,9 @@ struct StudentRootView: View {
         NavigationStack(path: $remindersPath) {
             StudentRemindersView(
                 path: $remindersPath,
-                onBack: { selectSection(.home) },
-                onSelectSection: selectSection
+                onBack: { selectSection(.menu) },
+                onSelectSection: selectSection,
+                initialSection: remindersInitialSection
             )
             .navigationDestination(for: StudentRemindersRoute.self) { route in
                 switch route {
