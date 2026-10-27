@@ -9,6 +9,7 @@ struct StudentRemindersView: View {
 
     @EnvironmentObject private var store: PersonalOrganizerStore
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
 
     @State private var section: PersonalOrganizerSection = .notes
     @State private var noteEditor: NoteEditorTarget?
@@ -316,6 +317,42 @@ struct StudentRemindersView: View {
                 errorMessage = PersonalOrganizerErrorKind.message(for: error)
             }
         }
+    }
+}
+
+// MARK: - Card local dos registros de lembrete
+
+/// Mesmo estilo de `PersonalCardModifier`, com fundo #DDEDDC apenas no Tema Claro.
+private struct ReminderRowCardModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+
+    func body(content: Content) -> some View {
+        content
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                AppThemeColor(
+                    dark: Color.black.opacity(0.68),
+                    light: Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)
+                )
+            )
+            .cornerRadius(14)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(
+                        AppThemeColor(
+                            dark: Theme.Colors.primaryGreen.opacity(0.28),
+                            light: PersonalOrganizerLightColors.chevron
+                        ),
+                        lineWidth: 1
+                    )
+            )
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
+            )
     }
 }
 
