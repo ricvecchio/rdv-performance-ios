@@ -270,12 +270,9 @@ struct StudentRemindersView: View {
             VStack(alignment: .trailing, spacing: 0) {
                 deleteButton { reminderPendingDeletion = reminder }
 
-                HStack(spacing: 6) {
-                    if reminder.notificationsEnabled {
-                        Image(systemName: "bell.fill")
-                            .font(.system(size: 12))
-                            .accessibilityLabel(Text("personal.notifications_on"))
-                    }
+                Spacer(minLength: 0)
+
+                HStack(spacing: 0) {
                     Text(overdue ? "personal.reminder.overdue" : "personal.reminder.upcoming")
                         .font(.system(size: 11, weight: .bold))
                         .lineLimit(1)
@@ -285,6 +282,13 @@ struct StudentRemindersView: View {
                         .background(
                             Capsule().fill(overdue ? Color.orange.opacity(0.25) : Color.green.opacity(0.22))
                         )
+                    if reminder.notificationsEnabled {
+                        // Largura 36 = mesma da lixeira, para alinhar o centro do sino com o dela
+                        Image(systemName: "bell.fill")
+                            .font(.system(size: 15))
+                            .frame(width: 36)
+                            .accessibilityLabel(Text("personal.notifications_on"))
+                    }
                 }
                 .foregroundStyle(
                     overdue
@@ -343,7 +347,7 @@ struct StudentRemindersView: View {
 
 // MARK: - Card local dos registros de lembrete
 
-/// Mesmo estilo de `PersonalCardModifier`, com fundo #DDEDDC apenas no Tema Claro.
+/// Mesmo estilo de `PersonalCardModifier` (fundo igual ao dos cards de Anotações no Tema Claro).
 private struct ReminderRowCardModifier: ViewModifier {
     @Environment(\.appTheme) private var appTheme
 
@@ -355,7 +359,7 @@ private struct ReminderRowCardModifier: ViewModifier {
             .background(
                 AppThemeColor(
                     dark: Color.black.opacity(0.68),
-                    light: Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)
+                    light: PersonalOrganizerLightColors.innerSurface
                 )
             )
             .cornerRadius(14)
