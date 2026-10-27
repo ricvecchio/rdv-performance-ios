@@ -60,9 +60,6 @@ struct StudentMenuView: View {
             }
 
             category("menu.category.account") {
-                menuRow(icon: "person", titleKey: "menu.my_profile") {
-                    onSelectSection(.profile)
-                }
                 menuRow(icon: "gearshape", titleKey: "menu.settings") {
                     path.append(.configuracoes)
                 }

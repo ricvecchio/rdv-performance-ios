@@ -224,20 +224,26 @@ struct FooterBar: View {
                 Button { goStudentHome() } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                         .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
 
                 Button { goMenu() } label: {
                     FooterItem(icon: .system("line.3.horizontal"), title: "menu.title", isSelected: isMenuHighlighted, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                         .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
 
                 Button { goPerfilStudent() } label: {
                     FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Self.fiveItemWidth, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
                         .frame(maxWidth: .infinity)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .frame(maxWidth: .infinity)
             }
             .padding(.horizontal, 16)
 
