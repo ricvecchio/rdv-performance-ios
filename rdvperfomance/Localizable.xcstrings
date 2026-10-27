@@ -76444,6 +76444,7 @@
       }
     },
     "menu.my_profile" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
