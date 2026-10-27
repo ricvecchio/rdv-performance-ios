@@ -22,19 +22,16 @@ struct StudentMenuView: View {
             onSelectSection: onSelectSection
         ) {
             category("menu.category.training") {
+                menuRow(icon: "trophy.fill", titleKey: "menu.personal_records") {
+                    onSelectSection(.records)
+                }
+                menuRow(icon: "dumbbell.fill", titleKey: "menu.wod") {
+                    path.append(.studentNextFitWod)
+                }
                 if showsWorkouts {
                     menuRow(icon: "figure.strengthtraining.traditional", titleKey: "menu.workouts") {
                         onSelectSection(.agenda)
                     }
-                }
-                menuRow(icon: "trophy.fill", titleKey: "menu.personal_records") {
-                    onSelectSection(.records)
-                }
-                menuRow(icon: "chart.line.uptrend.xyaxis", titleKey: "menu.progress") {
-                    path.append(.studentComingSoon(titleKey: "menu.progress"))
-                }
-                menuRow(icon: "dumbbell.fill", titleKey: "menu.wod") {
-                    path.append(.studentNextFitWod)
                 }
             }
 
@@ -51,10 +48,10 @@ struct StudentMenuView: View {
             }
 
             category("menu.category.explore") {
-                menuRow(icon: "magnifyingglass", titleKey: "menu.search_athletes") {
+                menuRow(icon: "magnifyingglass", titleKey: "menu.athletes") {
                     path.append(.studentComingSoon(titleKey: "menu.search_athletes"))
                 }
-                menuRow(icon: "trophy", titleKey: "menu.search_championships") {
+                menuRow(icon: "trophy", titleKey: "menu.championships") {
                     path.append(.studentComingSoon(titleKey: "menu.search_championships"))
                 }
             }
