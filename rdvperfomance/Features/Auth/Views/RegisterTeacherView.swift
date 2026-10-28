@@ -14,11 +14,13 @@ struct RegisterTeacherView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Tema Claro: mesmo fundo do card "Escolha o tema do app" (#DDEDDC)
+    private let registrationCardLightSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)
+
     // Interface principal com formulário de cadastro de professor
     var body: some View {
         ZStack {
 
-            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -55,6 +57,10 @@ struct RegisterTeacherView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // O fundo fica em `background` (não participa do layout): dentro do ZStack ele ignora a safe area
+        // (inclusive a do teclado) e mantinha o ZStack com a altura total da tela, deslocando o formulário
+        // para cima do cabeçalho quando o teclado abria.
+        .background(AppThemeBackgroundImage())
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -168,7 +174,7 @@ struct RegisterTeacherView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: AuthLightPalette.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: registrationCardLightSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
