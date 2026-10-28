@@ -188,7 +188,7 @@ struct AccountTypeSelectionView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .authPrimaryActionButton()
+                        .authPrimaryActionButton(usesLogoutButtonBackground: true)
                     }
                     .buttonStyle(.plain)
                     .disabled(
