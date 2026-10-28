@@ -56,6 +56,7 @@ struct StudentTeachersView: View {
     // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
     private enum LightColors {
         static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF (igual à TeacherStudentsListView)
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
         static let pendingStatus = Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) // #B77900 (mesmo da TeacherStudentsListView)
@@ -144,31 +145,6 @@ struct StudentTeachersView: View {
                     VStack(spacing: 16) {
                         teachersSectionSelector
 
-                        VStack(alignment: .leading, spacing: 10) {
-                            Button {
-                                teacherEmailInput = ""
-                                linkActionMessage = nil
-                                linkActionMessageIsError = false
-                                showRequestLinkModal = true
-                            } label: {
-                                HStack(spacing: 10) {
-                                    if appTheme == .light {
-                                        // Tema Claro: ícone herda o branco do botão (contraste sobre o verde militar)
-                                        Image(systemName: "person.badge.plus")
-                                    } else {
-                                        Image(systemName: "person.badge.plus")
-                                            .appThemeIconForeground()
-                                    }
-
-                                    Text("dashboard.invite_coach")
-                                }
-                                .padding(.horizontal, 14)
-                                .modifier(StudentTeachersLightBarButtonModifier(compact: true))
-                            }
-                            .buttonStyle(.plain)
-                            .disabled(isProcessingLinkAction)
-                        }
-                        .frame(maxWidth: .infinity, alignment: .leading)
 
                         switch selectedTeachersSection {
                         case .linked:
@@ -237,6 +213,28 @@ struct StudentTeachersView: View {
                     .foregroundStyle(Theme.Colors.ink())
                     .lineLimit(1)
                     .minimumScaleFactor(0.85)
+            }
+
+            // Convidar no cabeçalho (mesmo padrão visual da TeacherStudentsListView); abre o mesmo modal de convite
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    teacherEmailInput = ""
+                    linkActionMessage = nil
+                    linkActionMessageIsError = false
+                    showRequestLinkModal = true
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "paperplane.fill")
+                        Text("ui.invite")
+                    }
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 8)
+                    .background(Capsule().fill(Color.green.opacity(0.16)))
+                }
+                .buttonStyle(.plain)
+                .disabled(isProcessingLinkAction)
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -755,17 +753,17 @@ struct StudentTeachersView: View {
                             .foregroundStyle(Theme.Colors.ink())
                             .padding(.top, 4)
 
-                        // Tema Claro: card em verde militar (padrão do botão Sair) com textos claros para contraste.
-                        // Tema Escuro: valores originais.
+                        // Tema Claro: card no padrão do modal "Selecione a categoria do vínculo" (TeacherStudentsListView):
+                        // fundo #F0F7EF, borda #294A2F e textos escuros. Tema Escuro: valores originais.
                         VStack(alignment: .leading, spacing: 14) {
                             Text("dashboard.enter_the_coach_s_email_to_send_the_request")
                                 .font(.system(size: 13))
-                                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.45).dark, light: Color.white.opacity(0.85)))
+                                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.45).dark, light: LightColors.primaryText.opacity(0.75)))
 
                             VStack(alignment: .leading, spacing: 8) {
                                 Text("dashboard.coach_email")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.75).dark, light: Color.white))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.75).dark, light: LightColors.primaryText))
 
                                 TextField("dashboard.coach_email_placeholder", text: $teacherEmailInput)
                                     .textInputAutocapitalization(.never)
@@ -788,14 +786,14 @@ struct StudentTeachersView: View {
                                     .font(.system(size: 13))
                                     .foregroundColor(
                                         linkActionMessageIsError
-                                            ? .yellow.opacity(0.95)
-                                            : (appTheme == .light ? Color.white : .green.opacity(0.95))
+                                            ? (appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.95))
+                                            : (appTheme == .light ? LightColors.darkGreenBorder : .green.opacity(0.95))
                                     )
                             }
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: AppThemePalette.lightBar.opacity(0.80)))
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
