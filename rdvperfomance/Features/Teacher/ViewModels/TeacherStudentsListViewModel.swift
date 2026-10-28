@@ -392,6 +392,13 @@ final class TeacherStudentsListViewModel: ObservableObject {
             return
         }
 
+        // ✅ Formato do e-mail validado antes de qualquer consulta ao Firestore.
+        let emailPattern = #"^[a-z0-9._%+\-]+@[a-z0-9\-]+(\.[a-z0-9\-]+)*\.[a-z]{2,}$"#
+        guard email.range(of: emailPattern, options: .regularExpression) != nil else {
+            setInviteError(AppLocalization.string("student_teachers.link_request.invalid_email", locale: locale))
+            return
+        }
+
         guard !isInvitesLoading else { return }
         isInvitesLoading = true
         invitesErrorMessageInline = nil
