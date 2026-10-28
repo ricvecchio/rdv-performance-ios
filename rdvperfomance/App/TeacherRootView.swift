@@ -38,6 +38,16 @@ struct TeacherRootView: View {
                     ProfileView(path: $profilePath, onBack: { select(.home) })
                         .navigationDestination(for: AppRoute.self, destination: teacherDestination)
                 }
+            case .menu:
+                NavigationStack(path: $menuPath) {
+                    MenuView(
+                        context: .teacher,
+                        path: $menuPath,
+                        onBack: { select(.home) },
+                        onSelectTeacherSection: select
+                    )
+                    .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
             }
         }
         .environment(\.selectTeacherMainSection, select)
@@ -52,6 +62,7 @@ struct TeacherRootView: View {
         case .students: studentsPath.removeAll()
         case .workouts: workoutsPath.removeAll()
         case .profile: profilePath.removeAll()
+        case .menu: menuPath.removeAll()
         }
 
         selectedSection = section
@@ -209,6 +220,7 @@ struct TeacherRootView: View {
         case .students: $studentsPath
         case .workouts: $workoutsPath
         case .profile: $profilePath
+        case .menu: $menuPath
         case .menu: $menuPath
         }
     }
