@@ -117,9 +117,6 @@ struct PersonalRecordsView: View {
 
                             VStack(alignment: .leading, spacing: 8) {
 
-                                if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
-                                    tecnofitImportButton
-                                }
 
                                 VStack(spacing: distributedSpacing ?? Self.defaultCardSpacing) {
                                     ForEach(menuItems) { item in
@@ -236,7 +233,27 @@ struct PersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    // Importar do Tecnofit: somente após a consulta confirmar que a importação está pendente
+                    if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
+                        Button {
+                            isTecnofitImportPresented = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "square.and.arrow.down.fill")
+                                Text("tecnofit_import.import_action")
+                            }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Color.green.opacity(0.16)))
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -337,22 +354,6 @@ struct PersonalRecordsView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var tecnofitImportButton: some View {
-        Button {
-            isTecnofitImportPresented = true
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "plus")
-                    .appThemeIconForeground()
-                Text("personal_records.import_from_tecnofit")
-            }
-            .padding(.horizontal, 14)
-            .compactPrimaryGreenActionButton()
-            // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: LightColors.chevron), lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-    }
 
     private func loadTecnofitImportStatus() async {
         hasLoadedTecnofitImportStatus = false

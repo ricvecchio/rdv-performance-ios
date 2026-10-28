@@ -145,9 +145,7 @@ struct TecnofitImportSheet: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 14)
                         .stroke(
-                            appTheme == .light
-                                ? AnyShapeStyle(LightColors.chevron)
-                                : AnyShapeStyle(Theme.Colors.ink(0.10)),
+                            Theme.Colors.ink(0.10),
                             lineWidth: 1
                         )
                 )
