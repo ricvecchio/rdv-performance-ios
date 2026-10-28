@@ -1233,7 +1233,7 @@ struct TeacherStudentsListView: View {
                 .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.fraction(1.0 / 4.0)])
+        .presentationDetents([.fraction(2.0 / 4.0)])
         // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
         .presentationContentInteraction(.scrolls)
         .alert("common.error", isPresented: $vm.showInviteErrorAlert) {
