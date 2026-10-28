@@ -58,7 +58,7 @@ struct TeacherRootView: View {
                 }
             case .reminders:
                 NavigationStack(path: $remindersPath) {
-                    StudentRemindersView(
+                    PersonalRoutineView(
                         path: $remindersPath,
                         onBack: { select(.menu) },
                         onSelectSection: { _ in }

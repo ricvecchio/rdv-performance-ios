@@ -285,7 +285,7 @@ struct StudentRootView: View {
 
     private var remindersTab: some View {
         NavigationStack(path: $remindersPath) {
-            StudentRemindersView(
+            PersonalRoutineView(
                 path: $remindersPath,
                 onBack: { selectSection(.menu) },
                 onSelectSection: selectSection,
