@@ -90859,6 +90859,182 @@
         }
       }
     },
+    "teacher_students.invite.already_linked" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This student is already linked to you."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este alumno ya está vinculado a ti."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Este aluno já está vinculado a você."
+          }
+        }
+      }
+    },
+    "teacher_students.invite.invalid_email" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a valid email address to invite the student."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ingresa un correo electrónico válido para invitar al alumno."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Informe um e-mail válido para convidar o aluno."
+          }
+        }
+      }
+    },
+    "teacher_students.invite.lookup_failed" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to verify the student's data. Please try again."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudieron verificar los datos del alumno. Inténtalo de nuevo."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível verificar os dados do aluno. Tente novamente."
+          }
+        }
+      }
+    },
+    "teacher_students.invite.not_student_profile" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "The email address does not belong to a student account."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "El correo electrónico ingresado no pertenece a un perfil de alumno."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "O e-mail informado não pertence a um perfil de aluno."
+          }
+        }
+      }
+    },
+    "teacher_students.invite.pending_exists" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "There is already a pending invitation for this student."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ya existe una invitación pendiente para este alumno."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Já existe um convite pendente para este aluno."
+          }
+        }
+      }
+    },
+    "teacher_students.invite.student_not_found" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Student not found. Check the email address entered."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Alumno no encontrado. Verifica el correo electrónico ingresado."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Aluno não encontrado. Verifique o e-mail informado."
+          }
+        }
+      }
+    },
+    "teacher_students.invite.success" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitation sent to the student successfully."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Invitación enviada al alumno con éxito."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Convite enviado ao aluno com sucesso."
+          }
+        }
+      }
+    },
+    "teacher_students.invite.teacher_not_identified" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Unable to identify the authenticated trainer."
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "No se pudo identificar al entrenador autenticado."
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Não foi possível identificar o professor autenticado."
+          }
+        }
+      }
+    },
     "teacher_students.invites_received_card_title" : {
       "localizations" : {
         "en" : {
@@ -94109,182 +94285,6 @@
         }
       }
     },
-    "teacher_students.invite.invalid_email" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Enter a valid email address to invite the student."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ingresa un correo electrónico válido para invitar al alumno."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Informe um e-mail válido para convidar o aluno."
-          }
-        }
-      }
-    },
-    "teacher_students.invite.student_not_found" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Student not found. Check the email address entered."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Alumno no encontrado. Verifica el correo electrónico ingresado."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Aluno não encontrado. Verifique o e-mail informado."
-          }
-        }
-      }
-    },
-    "teacher_students.invite.not_student_profile" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "The email address does not belong to a student account."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "El correo electrónico ingresado no pertenece a un perfil de alumno."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "O e-mail informado não pertence a um perfil de aluno."
-          }
-        }
-      }
-    },
-    "teacher_students.invite.already_linked" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "This student is already linked to you."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Este alumno ya está vinculado a ti."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Este aluno já está vinculado a você."
-          }
-        }
-      }
-    },
-    "teacher_students.invite.pending_exists" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "There is already a pending invitation for this student."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Ya existe una invitación pendiente para este alumno."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Já existe um convite pendente para este aluno."
-          }
-        }
-      }
-    },
-    "teacher_students.invite.teacher_not_identified" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unable to identify the authenticated trainer."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudo identificar al entrenador autenticado."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível identificar o professor autenticado."
-          }
-        }
-      }
-    },
-    "teacher_students.invite.lookup_failed" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Unable to verify the student's data. Please try again."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "No se pudieron verificar los datos del alumno. Inténtalo de nuevo."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Não foi possível verificar os dados do aluno. Tente novamente."
-          }
-        }
-      }
-    },
-    "teacher_students.invite.success" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invitation sent to the student successfully."
-          }
-        },
-        "es" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Invitación enviada al alumno con éxito."
-          }
-        },
-        "pt-BR" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Convite enviado ao aluno com sucesso."
-          }
-        }
-      }
-    },
     "ui.enter_student_email" : {
       "localizations" : {
         "en" : {
@@ -95035,6 +95035,7 @@
       }
     },
     "ui.invitation_sent_to_value" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -96579,6 +96580,7 @@
       }
     },
     "ui.pending_request_for_student_exists" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -97875,6 +97877,7 @@
       }
     },
     "ui.student_already_linked" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
@@ -98565,6 +98568,7 @@
       }
     },
     "ui.unable_to_identify_teacher_email" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
