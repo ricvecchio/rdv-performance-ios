@@ -33,14 +33,14 @@ struct StudentMenuView: View {
                         onSelectSection(.agenda)
                     }
                 }
-                menuRow(icon: "video.fill", titleKey: "workout.my_videos") {
-                    path.append(.studentVideos)
-                }
             }
 
             category("menu.category.personal") {
                 menuRow(icon: "calendar.badge.clock", titleKey: "menu.my_routine") {
                     onOpenOrganizer(.notes)
+                }
+                menuRow(icon: "video.fill", titleKey: "workout.my_videos") {
+                    path.append(.studentVideos)
                 }
             }
 
