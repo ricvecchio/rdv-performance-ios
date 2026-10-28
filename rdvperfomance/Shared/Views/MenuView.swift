@@ -45,6 +45,11 @@ struct MenuView: View {
             onBack: onBack,
             onSelectSection: onSelectSection
         ) {
+            Text("settings.section.account")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(Theme.Colors.ink(0.55))
+                .padding(.horizontal, 6)
+
             category("menu.category.training") {
                 menuRow(icon: "trophy.fill", titleKey: "ui.my_records") {
                     onSelectSection(.records)

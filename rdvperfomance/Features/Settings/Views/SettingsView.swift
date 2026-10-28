@@ -192,14 +192,6 @@ struct SettingsView: View {
             cardRow(icon: "doc.text.fill", title: "settings.terms_of_use") {
                 path.append(.infoLegal(.termsOfUse))
             }
-
-            if !session.isStudent {
-                divider()
-
-                cardRow(icon: "gamecontroller.fill", title: "settings.progress_preview") {
-                    path.append(.spriteDemo)
-                }
-            }
         }
     }
 
