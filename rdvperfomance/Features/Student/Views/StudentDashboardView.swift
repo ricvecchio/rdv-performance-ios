@@ -1026,6 +1026,8 @@ private struct DashboardPrimaryActionButtonModifier: ViewModifier {
 
     let isCompact: Bool
 
+    private static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+
     func body(content: Content) -> some View {
         if appTheme == .light {
             content
