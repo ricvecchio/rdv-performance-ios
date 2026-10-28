@@ -1,21 +1,43 @@
 import SwiftUI
 
-/// Tela Menu do aluno: centraliza o acesso às funcionalidades que antes ficavam no rodapé.
-///
-/// Reutiliza as telas existentes — a navegação é feita pelo `StudentRootView`
-/// (seleção de seção ou push na pilha própria do Menu).
-struct StudentMenuView: View {
+/// Contexto de uso do Menu compartilhado. Define quais itens e qual rodapé são apresentados.
+enum MenuContext {
+    case student
+    case teacher
+}
 
+/// Tela Menu compartilhada entre Aluno e Professor: centraliza o acesso às funcionalidades
+/// que antes ficavam no rodapé.
+///
+/// Reutiliza as telas existentes — a navegação é feita pela raiz de cada tipo de usuário
+/// (`StudentRootView` / `TeacherRootView`), com callbacks independentes por contexto.
+struct MenuView: View {
+
+    let context: MenuContext
     @Binding var path: [AppRoute]
     let onBack: () -> Void
-    let onSelectSection: (StudentMainSection) -> Void
-    /// Abre diretamente Anotações, Lembretes ou Aniversários.
-    let onOpenOrganizer: (PersonalOrganizerSection) -> Void
+    /// Callbacks do aluno (ignorados no contexto professor).
+    var onSelectSection: (StudentMainSection) -> Void = { _ in }
+    /// Abre diretamente Anotações, Lembretes ou Aniversários (aluno).
+    var onOpenOrganizer: (PersonalOrganizerSection) -> Void = { _ in }
+    /// Callback do professor (ignorado no contexto aluno).
+    var onSelectTeacherSection: (TeacherMainSection) -> Void = { _ in }
 
     /// Treinos só existe para alunos com professor vinculado (regra já existente do rodapé).
     @Environment(\.studentShowsWorkoutsTab) private var showsWorkouts
 
     var body: some View {
+        switch context {
+        case .student:
+            studentMenu
+        case .teacher:
+            teacherMenu
+        }
+    }
+
+    // MARK: - Aluno
+
+    private var studentMenu: some View {
         PersonalScreenScaffold(
             titleKey: "menu.title",
             onBack: onBack,
@@ -50,6 +72,32 @@ struct StudentMenuView: View {
                 }
                 menuRow(icon: "trophy", titleKey: "menu.championships") {
                     path.append(.studentComingSoon(titleKey: "menu.search_championships"))
+                }
+            }
+        }
+    }
+
+    // MARK: - Professor
+
+    private var teacherMenu: some View {
+        PersonalScreenScaffold(
+            titleKey: "menu.title",
+            onBack: onBack,
+            onSelectSection: onSelectSection,
+            footerKind: .teacherHomeAlunosSobrePerfil(
+                selectedCategory: .crossfit,
+                isHomeSelected: false,
+                isAlunosSelected: false,
+                isSobreSelected: false,
+                isPerfilSelected: false
+            )
+        ) {
+            category("menu.category.training") {
+                menuRow(icon: "person.3", titleKey: "common.students") {
+                    onSelectTeacherSection(.students)
+                }
+                menuRow(icon: "figure.strengthtraining.traditional", titleKey: "menu.workouts") {
+                    onSelectTeacherSection(.workouts)
                 }
             }
         }
@@ -134,4 +182,3 @@ private struct StudentMenuCardModifier: ViewModifier {
             )
     }
 }
-

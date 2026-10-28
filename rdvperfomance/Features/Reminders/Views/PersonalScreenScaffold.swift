@@ -39,13 +39,7 @@ struct PersonalScreenScaffold<Content: View>: View {
 
                 FooterBar(
                     path: .constant([]),
-                    kind: .studentHomeTreinosRecordsProfile(
-                        isHomeSelected: false,
-                        isTreinosSelected: false,
-                        isRecordsSelected: false,
-                        isPerfilSelected: false,
-                        isRemindersSelected: true
-                    ),
+                    kind: footerKind,
                     onSelectStudentSection: onSelectSection
                 )
                 .frame(height: Theme.Layout.footerHeight)

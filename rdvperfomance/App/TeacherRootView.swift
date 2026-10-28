@@ -9,6 +9,7 @@ struct TeacherRootView: View {
     @State private var studentsPath: [AppRoute] = []
     @State private var workoutsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
+    @State private var menuPath: [AppRoute] = []
 
     private var category: TreinoTipo {
         TreinoTipo(rawValue: lastSelectedTraining) ?? .crossfit
@@ -208,6 +209,7 @@ struct TeacherRootView: View {
         case .students: $studentsPath
         case .workouts: $workoutsPath
         case .profile: $profilePath
+        case .menu: $menuPath
         }
     }
 }

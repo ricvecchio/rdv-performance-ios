@@ -243,26 +243,29 @@ struct FooterBar: View {
                 .buttonStyle(.plain)
             }
 
-        // ✅ PROFESSOR (4 ícones) — espaçamento igual ao ALUNO
+        // ✅ PROFESSOR (3 ícones: Home | Menu | Perfil) — mesma distribuição do rodapé do ALUNO.
+        // O item Menu também fica destacado em Alunos e Treinos, acessados a partir dele.
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
+            let isMenuHighlighted = isAlunosSelected
+                || teacherMainSection == .menu
+                || teacherMainSection == .students
+                || teacherMainSection == .workouts
             HStack(spacing: 16) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
-                Button { goTeacherAlunos(category: selectedCategory) } label: {
-                    teacherStudentsFooterItem(isSelected: isAlunosSelected)
-                }
-                .buttonStyle(.plain)
-
-                Button { goTeacherWorkouts(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: teacherMainSection == .workouts, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                Button { goTeacherMenu() } label: {
+                    FooterItem(icon: .system("line.3.horizontal"), title: "menu.title", isSelected: isMenuHighlighted, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
                 Button { goTeacherPerfil(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -356,6 +359,10 @@ struct FooterBar: View {
 
     private func goTeacherWorkouts(category: TreinoTipo) {
         selectTeacherMainSection(.workouts)
+    }
+
+    private func goTeacherMenu() {
+        selectTeacherMainSection(.menu)
     }
 
     private func teacherStudentsFooterItem(isSelected: Bool) -> some View {

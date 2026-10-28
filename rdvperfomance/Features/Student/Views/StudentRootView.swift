@@ -361,7 +361,8 @@ struct StudentRootView: View {
 
     private var menuTab: some View {
         NavigationStack(path: $menuPath) {
-            StudentMenuView(
+            MenuView(
+                context: .student,
                 path: $menuPath,
                 onBack: { selectSection(.home) },
                 onSelectSection: selectSection,
