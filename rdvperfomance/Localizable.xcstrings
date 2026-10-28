@@ -76603,6 +76603,7 @@
       }
     },
     "menu.personal_records" : {
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
