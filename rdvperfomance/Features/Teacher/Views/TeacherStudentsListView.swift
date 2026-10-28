@@ -1170,9 +1170,8 @@ struct TeacherStudentsListView: View {
                                 }
                             }
                             .pickerStyle(.segmented)
-                            // Tema Claro: aparência escura nativa do seletor para manter contraste e a
-                            // distinção entre aba selecionada/não selecionada sobre o verde militar.
-                            .environment(\.colorScheme, appTheme == .light ? .dark : colorScheme)
+                            // Tema Claro: aparência clara nativa do seletor sobre o fundo verde-claro.
+                            .environment(\.colorScheme, appTheme == .light ? .light : colorScheme)
 
                             Group {
                                 switch inviteTab {
@@ -1185,8 +1184,8 @@ struct TeacherStudentsListView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        // Tema Claro: mesmo verde militar/transparência do botão Sair da ProfileView. Tema Escuro: valores originais.
-                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: AppThemePalette.lightBar.opacity(0.80)))
+                        // Tema Claro: mesmo verde-claro (innerSurface) dos cards de seleção de categoria. Tema Escuro: valores originais.
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
@@ -1309,7 +1308,7 @@ struct TeacherStudentsListView: View {
                     Task { await loadInvitesIfPossible(force: true) }
                 } label: {
                     Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.55)).dark, light: Color.white))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.55)).dark, light: LightColors.iconInk))
                 }
                 .buttonStyle(.plain)
                 .disabled(vm.isInvitesLoading)
@@ -1320,18 +1319,18 @@ struct TeacherStudentsListView: View {
                     ProgressView()
                     Text("ui.loading_invitations")
                         .font(.system(size: 13))
-                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: Color.white.opacity(0.85)))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.primaryText))
                 }
                 .padding(.vertical, 6)
             } else if let msg = vm.invitesErrorMessageInline {
                 Text(msg)
                     .font(.system(size: 13))
-                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: Color.white.opacity(0.85)))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.primaryText))
                     .multilineTextAlignment(.leading)
             } else if vm.invites.isEmpty {
                 Text("ui.no_invitation_has_been_sent_yet")
                     .font(.system(size: 13))
-                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: Color.white.opacity(0.85)))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.primaryText))
             } else {
                 VStack(spacing: 0) {
                     ForEach(Array(vm.invites.enumerated()), id: \.offset) { idx, inv in
