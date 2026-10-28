@@ -32,7 +32,7 @@ struct TeacherRootView: View {
                 }
             case .students:
                 NavigationStack(path: $studentsPath) {
-                    TeacherStudentsListView(path: $studentsPath, selectedCategory: category, initialFilter: nil, onBack: { select(.home) })
+                    TeacherStudentsListView(path: $studentsPath, selectedCategory: category, initialFilter: nil, onBack: { select(.menu) })
                         .navigationDestination(for: AppRoute.self, destination: teacherDestination)
                 }
             case .workouts:

@@ -115,7 +115,7 @@ struct TeacherWorkoutsView: View {
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
-                Button { selectTeacherMainSection(.home) } label: {
+                Button { selectTeacherMainSection(.menu) } label: {
                     ZStack {
                         Color.clear
                             .frame(width: 44, height: 44)
