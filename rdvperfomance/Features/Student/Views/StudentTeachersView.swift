@@ -370,7 +370,7 @@ struct StudentTeachersView: View {
     }
 
     private var linkedTeachersCard: some View {
-        card(title: "student_teachers.linked_coaches_section", systemImage: "person.2.fill") {
+        card(title: "student_teachers.linked_coaches_section", systemImage: "person.2.fill", isCompact: appTheme == .light) {
             if isLoadingData {
                 loadingView(AppLocalization.string("student_teachers.loading_teachers", locale: locale))
             } else if linkedTeachers.isEmpty {
@@ -429,7 +429,7 @@ struct StudentTeachersView: View {
         }
     }
 
-    private func card<Content: View>(title: LocalizedStringKey, systemImage: String, @ViewBuilder content: () -> Content) -> some View {
+    private func card<Content: View>(title: LocalizedStringKey, systemImage: String, isCompact: Bool = false, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 0) {
             HStack(alignment: .center, spacing: 8) {
                 Image(systemName: systemImage)
@@ -441,12 +441,12 @@ struct StudentTeachersView: View {
                     .foregroundStyle(Theme.Colors.ink(0.35))
             }
             .padding(.horizontal, 16)
-            .padding(.top, 14)
-            .padding(.bottom, 10)
+            .padding(.top, isCompact ? 8 : 14)
+            .padding(.bottom, isCompact ? 2 : 10)
             .frame(maxWidth: .infinity, alignment: .leading)
 
             content()
-            Color.clear.frame(height: 8)
+            Color.clear.frame(height: isCompact ? 4 : 8)
         }
         .frame(maxWidth: .infinity)
         .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
@@ -506,7 +506,7 @@ struct StudentTeachersView: View {
             .disabled(isProcessingLinkAction)
         }
         .padding(.horizontal, 16)
-        .padding(.vertical, 14)
+        .padding(.vertical, appTheme == .light ? 6 : 14)
         .frame(maxWidth: .infinity)
     }
 
