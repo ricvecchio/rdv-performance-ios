@@ -353,7 +353,7 @@ struct StudentDashboardView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -373,7 +373,7 @@ struct StudentDashboardView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -913,13 +913,13 @@ struct StudentDashboardView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Theme.Colors.ink(0.10))
+                                    .background(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.06)))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                            .stroke(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.08)), lineWidth: 1)
                                     )
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.92)) : AnyShapeStyle(Color.white.opacity(0.92)))
                             }
 
                             VStack(alignment: .leading, spacing: 8) {
@@ -933,13 +933,13 @@ struct StudentDashboardView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Theme.Colors.ink(0.10))
+                                    .background(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.06)))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                            .stroke(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.08)), lineWidth: 1)
                                     )
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.92)) : AnyShapeStyle(Color.white.opacity(0.92)))
                             }
 
                             if let error = viewModel.nextFitLoginError {
@@ -950,7 +950,7 @@ struct StudentDashboardView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.innerSurface))
+                        .background(AppThemeColor(dark: Color.white.opacity(0.06), light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
@@ -974,7 +974,7 @@ struct StudentDashboardView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -999,7 +999,7 @@ struct StudentDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .modifier(DashboardSendRequestButtonModifier())
+                        .modifier(DashboardSignInButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isAuthenticatingNextFit)
@@ -1062,10 +1062,10 @@ private struct DashboardSendRequestButtonModifier: ViewModifier {
     private static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
 
     func body(content: Content) -> some View {
-        if appTheme == .light {
+        if appTheme == .light && isEnabled {
             content
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Color.white.opacity(isEnabled ? 1 : 0.55))
+                .foregroundStyle(Color.white)
                 .padding(.vertical, 14)
                 .background(AppThemePalette.lightBar.opacity(0.80))
                 .cornerRadius(12)
@@ -1073,12 +1073,37 @@ private struct DashboardSendRequestButtonModifier: ViewModifier {
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(Self.darkGreenBorder, lineWidth: 1)
                 )
-                .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
-                // Conteúdo sobre o verde militar usa os valores claros (ProgressView)
-                .environment(\.colorScheme, .dark)
         } else {
-            content.primaryGreenActionButton()
+            content
+                .primaryGreenActionButton()
         }
     }
 }
 
+// Botão "Entrar" (modal NextFit). Mesmo padrão do botão "Enviar convite" da TeacherStudentsListView:
+// Tema Claro + habilitado: verde militar a 80%, texto branco, contorno #294A2F (1 pt) e raio 12.
+// Tema Escuro ou desabilitado: `primaryGreenActionButton()` original.
+private struct DashboardSignInButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    private static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Self.darkGreenBorder, lineWidth: 1)
+                )
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
+    }
+}
