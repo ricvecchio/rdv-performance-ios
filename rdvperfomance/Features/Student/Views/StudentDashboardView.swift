@@ -917,7 +917,7 @@ struct StudentDashboardView: View {
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.08)), lineWidth: 1)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                                     )
                                     .foregroundStyle(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.92)) : AnyShapeStyle(Color.white.opacity(0.92)))
                             }
@@ -937,7 +937,7 @@ struct StudentDashboardView: View {
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.08)), lineWidth: 1)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                                     )
                                     .foregroundStyle(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.92)) : AnyShapeStyle(Color.white.opacity(0.92)))
                             }
@@ -954,7 +954,7 @@ struct StudentDashboardView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -974,7 +974,7 @@ struct StudentDashboardView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
