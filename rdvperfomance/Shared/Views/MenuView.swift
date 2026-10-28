@@ -46,7 +46,7 @@ struct MenuView: View {
             onSelectSection: onSelectSection
         ) {
             category("menu.category.training") {
-                menuRow(icon: "trophy.fill", titleKey: "menu.personal_records") {
+                menuRow(icon: "trophy.fill", titleKey: "ui.my_records") {
                     onSelectSection(.records)
                 }
                 menuRow(icon: "dumbbell.fill", titleKey: "menu.wod") {
@@ -87,13 +87,16 @@ struct MenuView: View {
             onBack: onBack,
             onSelectSection: onSelectSection
         ) {
-            category("menu.category.training") {
+            category("menu.category.training_management") {
                 menuRow(icon: "person.3", titleKey: "common.students") {
                     onSelectTeacherSection(.students)
                 }
                 menuRow(icon: "figure.strengthtraining.traditional", titleKey: "menu.workouts") {
                     onSelectTeacherSection(.workouts)
                 }
+            }
+
+            category("menu.category.my_training") {
                 menuRow(icon: "trophy.fill", titleKey: "ui.my_records") {
                     path.append(.teacherPersonalRecords(category: teacherCategory))
                 }

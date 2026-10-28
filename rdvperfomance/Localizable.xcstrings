@@ -76379,6 +76379,28 @@
         }
       }
     },
+    "menu.category.my_training" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MY TRAINING"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MI ENTRENAMIENTO"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "MEUS TREINAMENTOS"
+          }
+        }
+      }
+    },
     "menu.category.personal" : {
       "localizations" : {
         "en" : {
@@ -76419,6 +76441,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "TREINAMENTOS"
+          }
+        }
+      }
+    },
+    "menu.category.training_management" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "TRAINING MANAGEMENT"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GESTIÓN DE ENTRENAMIENTOS"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "GESTÃO DE TREINAMENTOS"
           }
         }
       }
