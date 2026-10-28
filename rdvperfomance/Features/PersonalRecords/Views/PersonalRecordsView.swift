@@ -274,7 +274,7 @@ struct PersonalRecordsView: View {
     /// Importar Tecnofit já terminou e o botão não é mais exibido. Retorna `nil` nos demais casos
     /// (carregando, botão visível ou sem espaço extra), mantendo o layout original.
     private func distributedCardSpacing(availableHeight: CGFloat) -> CGFloat? {
-        guard hasLoadedTecnofitImportStatus, hasCompletedTecnofitImport, menuItems.count > 1 else {
+        guard menuItems.count > 1 else {
             return nil
         }
 

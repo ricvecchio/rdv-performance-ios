@@ -201,12 +201,20 @@ struct TecnofitImportSheet: View {
             )
                 .frame(maxWidth: .infinity)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(AppThemeAdaptiveColor(actionButtonIsEnabled ? .white.opacity(0.92) : .white.opacity(0.55)))
+                .foregroundStyle(
+                    // Tema Claro habilitado: texto branco (padrão do botão Salvar da TeacherStudentsListView)
+                    appTheme == .light && actionButtonIsEnabled
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeAdaptiveColor(actionButtonIsEnabled ? .white.opacity(0.92) : .white.opacity(0.55)))
+                )
                 .padding(.vertical, 14)
                 .background(
-                    actionButtonIsEnabled
-                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.24))
-                        : AnyShapeStyle(Theme.Colors.ink(0.10))
+                    // Tema Claro habilitado: verde militar 80% (mesmo fundo do botão Salvar), sem sombra
+                    appTheme == .light && actionButtonIsEnabled
+                        ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                        : actionButtonIsEnabled
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.24))
+                            : AnyShapeStyle(Theme.Colors.ink(0.10))
                 )
                 .cornerRadius(12)
                 .overlay(
@@ -219,11 +227,6 @@ struct TecnofitImportSheet: View {
                                     : AnyShapeStyle(Theme.Colors.ink(0.12)),
                             lineWidth: 1
                         )
-                )
-                .shadow(
-                    color: appTheme == .light && actionButtonIsEnabled ? .black.opacity(0.25) : .clear,
-                    radius: appTheme == .light && actionButtonIsEnabled ? 10 : 0,
-                    y: appTheme == .light && actionButtonIsEnabled ? 6 : 0
                 )
         }
         .buttonStyle(.plain)
