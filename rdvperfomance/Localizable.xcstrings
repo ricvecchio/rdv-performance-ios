@@ -88220,6 +88220,7 @@
     },
     "settings.progress_preview" : {
       "comment" : "Stable semantic key for: Preview do Progresso",
+      "extractionState" : "stale",
       "localizations" : {
         "en" : {
           "stringUnit" : {
