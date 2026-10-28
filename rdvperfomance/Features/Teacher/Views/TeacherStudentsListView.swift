@@ -1157,7 +1157,7 @@ struct TeacherStudentsListView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                         )
                         .shadow(
                             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1183,7 +1183,7 @@ struct TeacherStudentsListView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -1224,6 +1224,17 @@ struct TeacherStudentsListView: View {
                         }
                         // Tema Claro (habilitado): cores do botão Sair da ProfileView. Demais casos: `primaryGreenActionButton()` original.
                         .modifier(TeacherStudentsLightBarActionButtonModifier())
+                        // Contorno verde do padrão do modal NextFit em ambos os temas (inclusive desabilitado).
+                        // Tema Claro habilitado já recebe #294A2F do modificador acima (evita borda duplicada).
+                        .overlay {
+                            if !(appTheme == .light && !(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)) {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron),
+                                        lineWidth: 1
+                                    )
+                            }
+                        }
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
@@ -1281,7 +1292,7 @@ struct TeacherStudentsListView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
         }
     }
