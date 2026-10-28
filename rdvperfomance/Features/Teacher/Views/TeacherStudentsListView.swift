@@ -128,6 +128,9 @@ struct TeacherStudentsListView: View {
 
                     Button {
                         inviteEmail = ""
+                        // Evita exibir no card um erro antigo ao abrir um novo convite
+                        vm.inviteErrorMessage = nil
+                        vm.showInviteErrorAlert = false
                         showInviteSheet = true
                         Task { await loadInvitesIfPossible() }
                     } label: {
@@ -1190,6 +1193,9 @@ struct TeacherStudentsListView: View {
                     .disabled(vm.isInvitesLoading)
 
                     Button {
+                        // Nova tentativa: limpa o erro anterior exibido no card
+                        vm.inviteErrorMessage = nil
+                        vm.showInviteErrorAlert = false
                         Task {
                             guard let teacherId = session.uid, !teacherId.isEmpty else {
                                 vm.setInviteError(AppLocalization.string(
@@ -1247,11 +1253,6 @@ struct TeacherStudentsListView: View {
         .presentationDetents([.fraction(2.0 / 4.0)])
         // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
         .presentationContentInteraction(.scrolls)
-        .alert("common.error", isPresented: $vm.showInviteErrorAlert) {
-            Button("common.ok", role: .cancel) {}
-        } message: {
-            Text(vm.inviteErrorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
-        }
         .alert("ui.success", isPresented: $vm.showInviteSuccessAlert) {
             // ✅ OK fecha o modal e limpa o campo — o onDismiss da sheet recarrega dados
             Button("common.ok") {
@@ -1264,7 +1265,12 @@ struct TeacherStudentsListView: View {
     }
 
     private var inviteByEmailCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
+
+            // Rótulo no padrão do campo "E-mail do professor" (StudentTeachersView)
+            Text("common.email")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.75).dark, light: LightColors.primaryText))
 
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
@@ -1294,6 +1300,14 @@ struct TeacherStudentsListView: View {
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
+
+            // Erro do envio exibido dentro do card (mesmo padrão visual do modal Convidar professor)
+            if vm.showInviteErrorAlert, let message = vm.inviteErrorMessage {
+                Text(message)
+                    .font(.system(size: 13))
+                    .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.95))
+                    .padding(.top, 6)
+            }
         }
     }
 
