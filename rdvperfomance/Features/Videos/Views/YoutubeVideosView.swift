@@ -91,7 +91,6 @@ struct YoutubeVideosView: View {
                             if appTheme != .light {
                                 header
                             }
-                            addButtonCard
                             contentCard
                             
                             if let err = errorMessage {
@@ -114,6 +113,9 @@ struct YoutubeVideosView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // Desfoca o conteúdo ao fundo enquanto o modal Adicionar Vídeo está aberto (o modal permanece nítido)
+        .blur(radius: isAddSheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: isAddSheetPresented)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -139,7 +141,28 @@ struct YoutubeVideosView: View {
             }
             
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    Button {
+                        errorMessage = nil
+                        isAddSheetPresented = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.green.opacity(0.16))
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -193,32 +216,6 @@ struct YoutubeVideosView: View {
                 .foregroundStyle(Theme.Colors.ink(0.35))
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
-    private var addButtonCard: some View {
-        Button {
-            errorMessage = nil
-            isAddSheetPresented = true
-        } label: {
-            HStack(spacing: 10) {
-                if appTheme == .light {
-                    // Tema Claro: ícone herda o branco do botão (contraste sobre o verde militar)
-                    Image(systemName: "plus")
-                } else {
-                    Image(systemName: "plus")
-                        .appThemeIconForeground()
-                }
-                Text("ui.add_video")
-            }
-            .padding(.horizontal, 14)
-            .modifier(LightBarActionButtonModifier(compact: true))
-            .shadow(
-                color: appTheme == .light ? .black.opacity(0.25) : .clear,
-                radius: appTheme == .light ? 10 : 0,
-                y: appTheme == .light ? 6 : 0
-            )
-        }
-        .buttonStyle(.plain)
     }
     
     private var contentCard: some View {
