@@ -65,6 +65,9 @@ struct PersonalRecordsView: View {
     @State private var isTecnofitImportPresented = false
     @State private var hasCompletedTecnofitImport = false
     @State private var hasLoadedTecnofitImportStatus = false
+    /// Indica que a consulta do status terminou (com sucesso, erro ou sem usuário). Enquanto for `false`,
+    /// a lista de cards não é exibida, para não mostrar um espaçamento provisório que seria trocado em seguida.
+    @State private var hasFinishedTecnofitImportCheck = false
 
     private struct PRMenuItem: Identifiable, Hashable {
         let id = UUID()
@@ -180,6 +183,9 @@ struct PersonalRecordsView: View {
                             Spacer(minLength: 0)
                         }
                     }
+                    // Só a lista aguarda o status inicial: o layout definitivo aparece de uma vez
+                    .opacity(hasFinishedTecnofitImportCheck ? 1 : 0)
+                    .allowsHitTesting(hasFinishedTecnofitImportCheck)
                 }
 
                 PersonalRecordsFooter(
@@ -351,10 +357,13 @@ struct PersonalRecordsView: View {
     private func loadTecnofitImportStatus() async {
         hasLoadedTecnofitImportStatus = false
         hasCompletedTecnofitImport = false
+        hasFinishedTecnofitImportCheck = false
 
         guard let uid = session.currentUid?.trimmingCharacters(in: .whitespacesAndNewlines),
               !uid.isEmpty
         else {
+            // Sem usuário: não há consulta a aguardar; mantém o comportamento atual (sem botão)
+            hasFinishedTecnofitImportCheck = true
             return
         }
 
@@ -363,7 +372,12 @@ struct PersonalRecordsView: View {
             guard !Task.isCancelled, session.currentUid == uid else { return }
             hasCompletedTecnofitImport = hasCompletedImport
             hasLoadedTecnofitImportStatus = true
+            hasFinishedTecnofitImportCheck = true
         } catch {
+            // Erro: não assume importação concluída nem exibe o botão; apenas libera a lista
+            // (se a tarefa foi cancelada/trocou de usuário, a nova consulta libera a lista).
+            guard !Task.isCancelled, session.currentUid == uid else { return }
+            hasFinishedTecnofitImportCheck = true
         }
     }
 
