@@ -96,6 +96,8 @@ struct StudentDashboardView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // Desfoca a Home ao fundo enquanto o modal "Entrar no NextFit" está aberto (padrão dos demais modais: raio 8)
+        .blur(radius: isNextFitLoginSheetPresented ? 8 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -208,7 +210,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
@@ -289,7 +291,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
         .onAppear {
             isTeacherLinkIconPulsing = true
@@ -952,7 +954,7 @@ struct StudentDashboardView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -972,7 +974,7 @@ struct StudentDashboardView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -997,7 +999,7 @@ struct StudentDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .modifier(DashboardPrimaryActionButtonModifier(isCompact: false))
+                        .modifier(DashboardSendRequestButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isAuthenticatingNextFit)
@@ -1034,7 +1036,7 @@ private struct DashboardPrimaryActionButtonModifier: ViewModifier {
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                        .stroke(Self.darkGreenBorder, lineWidth: 1)
                 )
                 .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
                 // Conteúdo sobre o verde militar usa os valores claros (ícones, ProgressView)
