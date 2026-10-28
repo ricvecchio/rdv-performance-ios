@@ -105,70 +105,80 @@ struct PersonalRecordsView: View {
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                GeometryReader { geometry in
+                    let distributedSpacing = distributedCardSpacing(availableHeight: geometry.size.height)
 
-                        VStack(alignment: .leading, spacing: 8) {
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                            if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
-                                tecnofitImportButton
-                            }
+                            VStack(alignment: .leading, spacing: 8) {
 
-                            VStack(spacing: 6) {
-                                ForEach(menuItems) { item in
-                                    actionRow(
-                                        title: item.title,
-                                        localizedTitle: item.localizedTitle,
-                                        icon: item.icon
-                                    ) {
+                                if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
+                                    tecnofitImportButton
+                                }
 
-                                        if item.sectionKey == "barbell" {
-                                            path.append(.studentPersonalRecordsBarbell)
-                                        }
+                                VStack(spacing: distributedSpacing ?? Self.defaultCardSpacing) {
+                                    ForEach(menuItems) { item in
+                                        actionRow(
+                                            title: item.title,
+                                            localizedTitle: item.localizedTitle,
+                                            icon: item.icon
+                                        ) {
 
-                                        if item.sectionKey == "gymnastic" {
-                                            path.append(.studentPersonalRecordsGymnastic)
-                                        }
+                                            if item.sectionKey == "barbell" {
+                                                path.append(.studentPersonalRecordsBarbell)
+                                            }
 
-                                        if item.sectionKey == "endurance" {
-                                            path.append(.studentPersonalRecordsEndurance)
-                                        }
+                                            if item.sectionKey == "gymnastic" {
+                                                path.append(.studentPersonalRecordsGymnastic)
+                                            }
 
-                                        if item.sectionKey == "notables" {
-                                            path.append(.studentPersonalRecordsNotables)
-                                        }
+                                            if item.sectionKey == "endurance" {
+                                                path.append(.studentPersonalRecordsEndurance)
+                                            }
 
-                                        if item.sectionKey == "girls" {
-                                            path.append(.studentPersonalRecordsGirls)
-                                        }
+                                            if item.sectionKey == "notables" {
+                                                path.append(.studentPersonalRecordsNotables)
+                                            }
 
-                                        if item.sectionKey == "open" {
-                                            path.append(.studentPersonalRecordsOpen)
-                                        }
+                                            if item.sectionKey == "girls" {
+                                                path.append(.studentPersonalRecordsGirls)
+                                            }
 
-                                        if item.sectionKey == "theHeroes" {
-                                            path.append(.studentPersonalRecordsHeroes)
-                                        }
+                                            if item.sectionKey == "open" {
+                                                path.append(.studentPersonalRecordsOpen)
+                                            }
 
-                                        if item.sectionKey == "campeonatos" {
-                                            path.append(.studentPersonalRecordsCampeonatos)
-                                        }
+                                            if item.sectionKey == "theHeroes" {
+                                                path.append(.studentPersonalRecordsHeroes)
+                                            }
 
-                                        if item.sectionKey == "crossfitGames" {
-                                            path.append(.studentPersonalRecordsCrossfitGames)
+                                            if item.sectionKey == "campeonatos" {
+                                                path.append(.studentPersonalRecordsCampeonatos)
+                                            }
+
+                                            if item.sectionKey == "crossfitGames" {
+                                                path.append(.studentPersonalRecordsCrossfitGames)
+                                            }
                                         }
                                     }
                                 }
+
+                                // Com espaçamento distribuído o rodapé já é um irmão da rolagem (não sobrepõe);
+                                // caso contrário mantém a reserva original.
+                                Color.clear.frame(
+                                    height: distributedSpacing != nil
+                                        ? Self.distributedBottomMargin
+                                        : Theme.Layout.footerHeight + 20
+                                )
                             }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, Self.contentTopPadding)
 
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-
-                        Spacer(minLength: 0)
                     }
                 }
 
@@ -227,6 +237,31 @@ struct PersonalRecordsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // Espaçamento original entre os cards e parâmetros da distribuição vertical
+    private static let defaultCardSpacing: CGFloat = 6
+    private static let contentTopPadding: CGFloat = 8
+    private static let distributedBottomMargin: CGFloat = 16
+    private static let contentStackSpacing: CGFloat = 8
+    /// Altura de cada card: minHeight (52) + padding vertical (4 + 4) de `actionRow`.
+    private static let cardRowHeight: CGFloat = 60
+
+    /// Espaçamento uniforme para distribuir os cards na altura útil, somente quando a verificação do
+    /// Importar Tecnofit já terminou e o botão não é mais exibido. Retorna `nil` nos demais casos
+    /// (carregando, botão visível ou sem espaço extra), mantendo o layout original.
+    private func distributedCardSpacing(availableHeight: CGFloat) -> CGFloat? {
+        guard hasLoadedTecnofitImportStatus, hasCompletedTecnofitImport, menuItems.count > 1 else {
+            return nil
+        }
+
+        let itemsHeight = CGFloat(menuItems.count) * Self.cardRowHeight
+        let reserved = Self.contentTopPadding + Self.contentStackSpacing + Self.distributedBottomMargin
+        let freeHeight = availableHeight - reserved - itemsHeight
+        let spacing = freeHeight / CGFloat(menuItems.count - 1)
+
+        guard spacing.isFinite, spacing > Self.defaultCardSpacing else { return nil }
+        return spacing
     }
 
     private func actionRow(
