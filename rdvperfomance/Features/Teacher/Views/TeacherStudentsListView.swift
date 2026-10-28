@@ -38,7 +38,6 @@ struct TeacherStudentsListView: View {
 
     // Modal convite
     @State private var showInviteSheet: Bool = false
-    @State private var inviteTab: InviteTab = .invite
     @State private var inviteEmail: String = ""
 
     // ✅ Cancelamento de convite pendente na lista principal
@@ -128,7 +127,6 @@ struct TeacherStudentsListView: View {
                 HStack(spacing: 12) {
 
                     Button {
-                        inviteTab = .invite
                         inviteEmail = ""
                         showInviteSheet = true
                         Task { await loadInvitesIfPossible() }
@@ -1129,20 +1127,6 @@ struct TeacherStudentsListView: View {
 
     // MARK: - ✅ Invite Sheet
 
-    private enum InviteTab: Int, CaseIterable {
-        case invite = 0
-        case sent = 1
-
-        func title(locale: Locale) -> String {
-            switch self {
-            case .invite:
-                AppLocalization.string("ui.invite", locale: locale)
-            case .sent:
-                AppLocalization.string("teacher_students.invites_sent_card_title", locale: locale)
-            }
-        }
-    }
-
     private var inviteSheet: some View {
         ZStack {
             Theme.Colors.sheetBackground
@@ -1164,23 +1148,7 @@ struct TeacherStudentsListView: View {
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Picker("", selection: $inviteTab) {
-                                ForEach(InviteTab.allCases, id: \.rawValue) { tab in
-                                    Text(tab.title(locale: locale)).tag(tab)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-                            // Tema Claro: aparência clara nativa do seletor sobre o fundo verde-claro.
-                            .environment(\.colorScheme, appTheme == .light ? .light : colorScheme)
-
-                            Group {
-                                switch inviteTab {
-                                case .invite:
-                                    inviteByEmailCard
-                                case .sent:
-                                    invitesSentCard
-                                }
-                            }
+                            inviteByEmailCard
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -1191,13 +1159,36 @@ struct TeacherStudentsListView: View {
                             RoundedRectangle(cornerRadius: 14)
                                 .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
                         )
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
                     }
                 }
                 .scrollDismissesKeyboard(.interactively)
 
-                if inviteTab == .invite {
+                HStack(spacing: 12) {
+                    Button {
+                        showInviteSheet = false
+                    } label: {
+                        Text("common.cancel")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Theme.Colors.ink(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isInvitesLoading)
+
                     Button {
                         Task {
                             guard let teacherId = session.uid, !teacherId.isEmpty else {
@@ -1236,18 +1227,15 @@ struct TeacherStudentsListView: View {
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 6)
-                    .padding(.bottom, 16)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
         }
         .presentationDetents([.fraction(2.0 / 3.0)])
         // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
         .presentationContentInteraction(.scrolls)
-        .onAppear {
-            Task { await loadInvitesIfPossible() }
-        }
         .alert("common.error", isPresented: $vm.showInviteErrorAlert) {
             Button("common.ok", role: .cancel) {}
         } message: {
@@ -1288,116 +1276,14 @@ struct TeacherStudentsListView: View {
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            // Tema Claro: campo em verde pastel (#DDEDDC) com borda #C9DFC9 para permanecer identificável. Tema Escuro: valores originais.
-            .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.cardSurface))
+            // Tema Claro: mesmo padrão dos campos do modal Adicionar Vídeo. Tema Escuro: valores originais.
+            .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
             )
         }
-    }
-
-    private var invitesSentCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-
-            HStack {
-                Spacer()
-
-                Button {
-                    Task { await loadInvitesIfPossible(force: true) }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.55)).dark, light: LightColors.iconInk))
-                }
-                .buttonStyle(.plain)
-                .disabled(vm.isInvitesLoading)
-            }
-
-            if vm.isInvitesLoading {
-                HStack(spacing: 10) {
-                    ProgressView()
-                    Text("ui.loading_invitations")
-                        .font(.system(size: 13))
-                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.primaryText))
-                }
-                .padding(.vertical, 6)
-            } else if let msg = vm.invitesErrorMessageInline {
-                Text(msg)
-                    .font(.system(size: 13))
-                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.primaryText))
-                    .multilineTextAlignment(.leading)
-            } else if vm.invites.isEmpty {
-                Text("ui.no_invitation_has_been_sent_yet")
-                    .font(.system(size: 13))
-                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.55).dark, light: LightColors.primaryText))
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(vm.invites.enumerated()), id: \.offset) { idx, inv in
-                        inviteRow(inv)
-                        if idx < vm.invites.count - 1 {
-                            Divider()
-                                .background(Theme.Colors.divider)
-                                .padding(.leading, 12)
-                        }
-                    }
-                }
-                // Tema Claro: lista em verde pastel (#DDEDDC) com borda #C9DFC9 para manter a legibilidade das linhas. Tema Escuro: valores originais.
-                .background(AppThemeColor(dark: Theme.Colors.ink(0.06).dark, light: LightColors.cardSurface))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
-                )
-            }
-        }
-    }
-
-    private func inviteRow(_ inv: TeacherStudentInviteFS) -> some View {
-        let statusText = vm.statusText(inv.status, locale: locale)
-
-        return HStack(spacing: 12) {
-            Image(systemName: "envelope")
-                .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(inv.studentEmail)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
-                    .lineLimit(1)
-
-                Text(statusText)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
-            }
-
-            Spacer()
-
-            if inv.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending",
-               let id = inv.id, !id.isEmpty {
-                Button {
-                    Task {
-                        guard let teacherId = session.uid, !teacherId.isEmpty else { return }
-                        await vm.cancelInvite(inviteId: id, teacherId: teacherId)
-                    }
-                } label: {
-                    Text("common.cancel")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.90))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(Capsule().fill(Color.red.opacity(0.16)))
-                        .overlay(
-                            Capsule()
-                                .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(vm.isInvitesLoading)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
     }
 
     private func loadInvitesIfPossible(force: Bool = false) async {
