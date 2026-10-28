@@ -6,6 +6,7 @@ enum TeacherMainSection: Hashable {
     case workouts
     case profile
     case menu
+    case reminders
 }
 
 private struct SelectStudentMainSectionKey: EnvironmentKey {

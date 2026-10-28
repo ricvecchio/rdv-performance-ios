@@ -22,6 +22,8 @@ struct MenuView: View {
     var onOpenOrganizer: (PersonalOrganizerSection) -> Void = { _ in }
     /// Callback do professor (ignorado no contexto aluno).
     var onSelectTeacherSection: (TeacherMainSection) -> Void = { _ in }
+    /// Categoria de treino do professor (usada ao abrir Meus Recordes).
+    var teacherCategory: TreinoTipo = .crossfit
 
     /// Treinos só existe para alunos com professor vinculado (regra já existente do rodapé).
     @Environment(\.studentShowsWorkoutsTab) private var showsWorkouts
@@ -83,14 +85,7 @@ struct MenuView: View {
         PersonalScreenScaffold(
             titleKey: "menu.title",
             onBack: onBack,
-            onSelectSection: onSelectSection,
-            footerKind: .teacherHomeAlunosSobrePerfil(
-                selectedCategory: .crossfit,
-                isHomeSelected: false,
-                isAlunosSelected: false,
-                isSobreSelected: false,
-                isPerfilSelected: false
-            )
+            onSelectSection: onSelectSection
         ) {
             category("menu.category.training") {
                 menuRow(icon: "person.3", titleKey: "common.students") {
@@ -98,6 +93,27 @@ struct MenuView: View {
                 }
                 menuRow(icon: "figure.strengthtraining.traditional", titleKey: "menu.workouts") {
                     onSelectTeacherSection(.workouts)
+                }
+                menuRow(icon: "trophy.fill", titleKey: "ui.my_records") {
+                    path.append(.teacherPersonalRecords(category: teacherCategory))
+                }
+                menuRow(icon: "dumbbell.fill", titleKey: "menu.wod") {
+                    path.append(.studentNextFitWod)
+                }
+            }
+
+            category("menu.category.personal") {
+                menuRow(icon: "calendar.badge.clock", titleKey: "menu.my_routine") {
+                    onSelectTeacherSection(.reminders)
+                }
+            }
+
+            category("menu.category.explore") {
+                menuRow(icon: "magnifyingglass", titleKey: "menu.athletes") {
+                    path.append(.studentComingSoon(titleKey: "menu.search_athletes"))
+                }
+                menuRow(icon: "trophy", titleKey: "menu.championships") {
+                    path.append(.studentComingSoon(titleKey: "menu.search_championships"))
                 }
             }
         }

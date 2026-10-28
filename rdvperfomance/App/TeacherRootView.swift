@@ -10,6 +10,13 @@ struct TeacherRootView: View {
     @State private var workoutsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
     @State private var menuPath: [AppRoute] = []
+    @State private var remindersPath: [StudentRemindersRoute] = []
+
+    @EnvironmentObject private var session: AppSession
+    @Environment(\.scenePhase) private var scenePhase
+
+    /// Anotações, lembretes e aniversários pessoais (isolados por UID) usados em Menu > Minha Rotina.
+    @StateObject private var organizerStore = PersonalOrganizerStore()
 
     private var category: TreinoTipo {
         TreinoTipo(rawValue: lastSelectedTraining) ?? .crossfit
@@ -44,14 +51,43 @@ struct TeacherRootView: View {
                         context: .teacher,
                         path: $menuPath,
                         onBack: { select(.home) },
-                        onSelectTeacherSection: select
+                        onSelectTeacherSection: select,
+                        teacherCategory: category
                     )
                     .navigationDestination(for: AppRoute.self, destination: teacherDestination)
+                }
+            case .reminders:
+                NavigationStack(path: $remindersPath) {
+                    StudentRemindersView(
+                        path: $remindersPath,
+                        onBack: { select(.menu) },
+                        onSelectSection: { _ in }
+                    )
+                    .navigationDestination(for: StudentRemindersRoute.self) { route in
+                        switch route {
+                        case .birthdays:
+                            StudentBirthdaysView(path: $remindersPath, onSelectSection: { _ in })
+                        }
+                    }
                 }
             }
         }
         .environment(\.selectTeacherMainSection, select)
         .environment(\.teacherMainSection, selectedSection)
+        .environmentObject(organizerStore)
+        .task(id: session.uid ?? "") {
+            if let uid = session.uid, !uid.isEmpty {
+                organizerStore.start(ownerUid: uid)
+            }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            guard phase == .active else { return }
+            organizerStore.retryIfNeeded()
+            Task {
+                await organizerStore.refreshAuthorization()
+                organizerStore.reconcileNotifications()
+            }
+        }
     }
 
     private func select(_ section: TeacherMainSection) {
@@ -63,6 +99,7 @@ struct TeacherRootView: View {
         case .workouts: workoutsPath.removeAll()
         case .profile: profilePath.removeAll()
         case .menu: menuPath.removeAll()
+        case .reminders: remindersPath.removeAll()
         }
 
         selectedSection = section
@@ -71,6 +108,18 @@ struct TeacherRootView: View {
     @ViewBuilder
     private func teacherDestination(_ route: AppRoute) -> some View {
         switch route {
+        case .studentNextFitWod:
+            StudentNextFitWodView(
+                path: destinationPath,
+                studentId: session.uid ?? "",
+                onSelectSection: { _ in }
+            )
+        case .studentComingSoon(let titleKey):
+            StudentComingSoonView(
+                path: destinationPath,
+                titleKey: titleKey,
+                onSelectSection: { _ in }
+            )
         case .teacherPersonalRecords(let category):
             PersonalRecordsView(
                 path: destinationPath,
@@ -221,7 +270,7 @@ struct TeacherRootView: View {
         case .workouts: $workoutsPath
         case .profile: $profilePath
         case .menu: $menuPath
-        case .menu: $menuPath
+        case .reminders: $menuPath
         }
     }
 }

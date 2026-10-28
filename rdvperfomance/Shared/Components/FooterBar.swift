@@ -250,6 +250,7 @@ struct FooterBar: View {
                 || teacherMainSection == .menu
                 || teacherMainSection == .students
                 || teacherMainSection == .workouts
+                || teacherMainSection == .reminders
             HStack(spacing: 16) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
                     FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)

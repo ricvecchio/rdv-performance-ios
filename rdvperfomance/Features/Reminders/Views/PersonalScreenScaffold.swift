@@ -6,15 +6,29 @@ struct PersonalScreenScaffold<Content: View>: View {
     let titleKey: LocalizedStringKey
     let onBack: () -> Void
     let onSelectSection: (StudentMainSection) -> Void
-    /// Rodapé exibido; o padrão é o do aluno com "Lembretes/Menu" destacado (o Menu do professor informa o seu).
-    var footerKind: FooterBar.Kind = .studentHomeTreinosRecordsProfile(
-        isHomeSelected: false,
-        isTreinosSelected: false,
-        isRecordsSelected: false,
-        isPerfilSelected: false,
-        isRemindersSelected: true
-    )
     @ViewBuilder let content: Content
+
+    @EnvironmentObject private var session: AppSession
+
+    /// Aluno: rodapé com Menu destacado. Professor: rodapé Home | Menu | Perfil (Menu destacado pelo ambiente).
+    private var footerKind: FooterBar.Kind {
+        if session.isTrainer {
+            return .teacherHomeAlunosSobrePerfil(
+                selectedCategory: .crossfit,
+                isHomeSelected: false,
+                isAlunosSelected: false,
+                isSobreSelected: false,
+                isPerfilSelected: false
+            )
+        }
+        return .studentHomeTreinosRecordsProfile(
+            isHomeSelected: false,
+            isTreinosSelected: false,
+            isRecordsSelected: false,
+            isPerfilSelected: false,
+            isRemindersSelected: true
+        )
+    }
 
     private let contentMaxWidth: CGFloat = 380
 
