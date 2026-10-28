@@ -158,6 +158,10 @@ struct YoutubeVideosView: View {
                             Capsule()
                                 .fill(Color.green.opacity(0.16))
                         )
+                        .overlay(
+                            Capsule()
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: Color.clear), lineWidth: 1)
+                        )
                     }
                     .buttonStyle(.plain)
 
@@ -319,7 +323,7 @@ struct YoutubeVideosView: View {
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                                 )
 
                             if let editTitleErrorMessage {
@@ -335,7 +339,7 @@ struct YoutubeVideosView: View {
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: LightColors.chevron), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                         )
                         .shadow(
                             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -360,7 +364,7 @@ struct YoutubeVideosView: View {
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                     )
                     .disabled(isSavingVideoTitle)
 
@@ -559,7 +563,7 @@ struct YoutubeVideosView: View {
                 .stroke(
                     appTheme == .light
                         ? AnyShapeStyle(LightColors.chevron)
-                        : AnyShapeStyle(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28))),
+                        : AnyShapeStyle(AppThemeAdaptiveColor(Theme.Colors.primaryGreen.opacity(0.28))),
                     lineWidth: 1
                 )
         )
