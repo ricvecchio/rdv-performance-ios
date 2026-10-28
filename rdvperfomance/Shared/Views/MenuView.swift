@@ -182,7 +182,13 @@ private struct StudentMenuCardModifier: ViewModifier {
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: Self.lightSurface))
+            .background(
+                ZStack {
+                    AppThemeColor(dark: Color.black.opacity(0.90), light: Self.lightSurface)
+
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
+                }
+            )
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
