@@ -349,6 +349,17 @@ final class FirestoreRepository {
         )
     }
 
+    func getUserByEmail(email: String) async throws -> AppUser? {
+        try await userRepository.getUserByEmail(email: email)
+    }
+
+    func getPendingInviteSentByTeacher(
+        teacherId: String,
+        studentEmail: String
+    ) async throws -> TeacherStudentInviteFS? {
+        try await userRepository.getPendingInviteSentByTeacher(teacherId: teacherId, studentEmail: studentEmail)
+    }
+
     func createTeacherInviteByEmail(
         teacherId: String,
         teacherEmail: String,

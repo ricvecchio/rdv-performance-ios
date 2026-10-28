@@ -395,7 +395,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
         // ✅ Formato do e-mail validado antes de qualquer consulta ao Firestore.
         let emailPattern = #"^[a-z0-9._%+\-]+@[a-z0-9\-]+(\.[a-z0-9\-]+)*\.[a-z]{2,}$"#
         guard email.range(of: emailPattern, options: .regularExpression) != nil else {
-            setInviteError(AppLocalization.string("student_teachers.link_request.invalid_email", locale: locale))
+            setInviteError(AppLocalization.string("teacher_students.invite.invalid_email", locale: locale))
             return
         }
 
@@ -408,26 +408,38 @@ final class TeacherStudentsListViewModel: ObservableObject {
             }
         }
 
+        // Fase 1: verificações (falhas de consulta nunca são tratadas como "aluno inexistente").
+        let teacherEmail: String
         do {
             let teacher = try await repository.getUser(uid: teacherId)
             guard isActiveTeacher(teacherId, generation: generation) else { return }
-            let teacherEmail = teacher?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+            teacherEmail = teacher?.email.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
 
             if teacherEmail.isEmpty {
                 setInviteError(AppLocalization.string(
-                    "ui.unable_to_identify_teacher_email",
+                    "teacher_students.invite.teacher_not_identified",
                     locale: locale
                 ))
                 return
             }
 
-            async let groupedStudents = repository.getStudentsGroupedByTeacher(teacherId: teacherId)
-            async let sentInvites = repository.getInvitesSentByTeacher(
-                teacherId: teacherId,
-                status: "pending",
-                limit: 50
-            )
-            let (studentsByCategory, pendingInvites) = try await (groupedStudents, sentInvites)
+            // Aluno cadastrado e com perfil de aluno.
+            let foundUser = try await repository.getUserByEmail(email: email)
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            guard let foundUser else {
+                setInviteError(AppLocalization.string("teacher_students.invite.student_not_found", locale: locale))
+                return
+            }
+            let foundType = foundUser.userType
+                .trimmingCharacters(in: .whitespacesAndNewlines)
+                .uppercased()
+            guard ["STUDENT", "ALUNO"].contains(foundType) else {
+                setInviteError(AppLocalization.string("teacher_students.invite.not_student_profile", locale: locale))
+                return
+            }
+
+            // Vínculo existente (todas as categorias do professor).
+            let studentsByCategory = try await repository.getStudentsGroupedByTeacher(teacherId: teacherId)
             guard isActiveTeacher(teacherId, generation: generation) else { return }
 
             let isStudentLinked = studentsByCategory.values
@@ -438,26 +450,29 @@ final class TeacherStudentsListViewModel: ObservableObject {
                         .lowercased() == email
                 }
             if isStudentLinked {
-                setInviteError(AppLocalization.string("ui.student_already_linked", locale: locale))
+                setInviteError(AppLocalization.string("teacher_students.invite.already_linked", locale: locale))
                 return
             }
 
-            let hasPendingInvite = pendingInvites.contains {
-                $0.studentEmail
-                    .trimmingCharacters(in: .whitespacesAndNewlines)
-                    .lowercased() == email
-                    && $0.status
-                        .trimmingCharacters(in: .whitespacesAndNewlines)
-                        .lowercased() == "pending"
-            }
-            if hasPendingInvite {
-                setInviteError(AppLocalization.string(
-                    "ui.pending_request_for_student_exists",
-                    locale: locale
-                ))
+            // Convite pendente: consulta direta por professor + e-mail + status (sem limite de lista).
+            let existingPending = try await repository.getPendingInviteSentByTeacher(
+                teacherId: teacherId,
+                studentEmail: email
+            )
+            guard isActiveTeacher(teacherId, generation: generation) else { return }
+            if existingPending != nil {
+                setInviteError(AppLocalization.string("teacher_students.invite.pending_exists", locale: locale))
                 return
             }
+        } catch {
+            if isActiveTeacher(teacherId, generation: generation) {
+                setInviteError(AppLocalization.string("teacher_students.invite.lookup_failed", locale: locale))
+            }
+            return
+        }
 
+        // Fase 2: criação (somente após todas as validações).
+        do {
             // ✅ A categoria já é conhecida no momento do convite (a tela está sempre
             // escopada a uma categoria). Isso permite que o aceite do aluno conclua o
             // vínculo atomicamente, sem exigir uma 2ª aprovação do professor.
@@ -469,8 +484,7 @@ final class TeacherStudentsListViewModel: ObservableObject {
             )
 
             guard isActiveTeacher(teacherId, generation: generation) else { return }
-            let format = AppLocalization.string("ui.invitation_sent_to_value", locale: locale)
-            inviteSuccessMessage = String(format: format, locale: locale, arguments: [email])
+            inviteSuccessMessage = AppLocalization.string("teacher_students.invite.success", locale: locale)
             showInviteSuccessAlert = true
 
             await loadInvites(teacherId: teacherId, force: true)
