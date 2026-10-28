@@ -392,6 +392,12 @@ struct StudentRootView: View {
                 onSelectSection: selectSection
             )
 
+        case .studentVideos:
+            YoutubeVideosView(
+                path: $menuPath,
+                context: .student(studentId: studentId)
+            )
+
         default:
             profileDestination(for: route, path: $menuPath)
         }

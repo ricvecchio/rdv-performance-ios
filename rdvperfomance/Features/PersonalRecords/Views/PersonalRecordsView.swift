@@ -160,16 +160,6 @@ struct PersonalRecordsView: View {
                                         }
                                     }
                                 }
-
-                                if case .student = navigationContext {
-                                    actionRow(
-                                        title: "Meus Vídeos",
-                                        localizedTitle: "workout.my_videos",
-                                        icon: "video.fill"
-                                    ) {
-                                        path.append(.studentVideos)
-                                    }
-                                }
                             }
 
                             Color.clear.frame(height: Theme.Layout.footerHeight + 20)
