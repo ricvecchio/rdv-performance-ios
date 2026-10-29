@@ -42,6 +42,31 @@ final class AthletesService: @unchecked Sendable {
         active: Bool?,
         allowAdmin: Bool = false
     ) async {
+        do {
+            try await writePublicProfile(
+                uid: uid,
+                name: name,
+                photoBase64: photoBase64,
+                userType: userType,
+                active: active,
+                allowAdmin: allowAdmin
+            )
+        } catch {
+            // Chamada no login: falhas não interrompem o fluxo, mas ficam identificáveis no log.
+            Self.log("ensurePublicProfile", Collections.athletes, error)
+        }
+    }
+
+    /// Mesma lógica de `ensurePublicProfile`, porém propagando os erros do Firestore ao chamador.
+    /// Retorna sem erro quando não há o que publicar (nome vazio, conta inativa ou ADMIN sem `allowAdmin`).
+    private func writePublicProfile(
+        uid: String,
+        name: String?,
+        photoBase64: String?,
+        userType: String?,
+        active: Bool?,
+        allowAdmin: Bool
+    ) async throws {
         let cleanUid = uid.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanName = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanUid.isEmpty, !cleanName.isEmpty, active != false else { return }
@@ -53,64 +78,56 @@ final class AthletesService: @unchecked Sendable {
 
         let reference = db.collection(Collections.athletes).document(cleanUid)
 
-        do {
-            let snapshot = try await reference.getDocument(source: .server)
-            let existing = snapshot.data()
+        let snapshot = try await reference.getDocument(source: .server)
+        let existing = snapshot.data()
 
-            var data: [String: Any] = [
-                "ownerId": cleanUid,
-                "name": cleanName,
-                "nameLower": AthleteSearchText.normalize(cleanName),
-                "searchPrefixes": AthleteSearchText.prefixes(for: cleanName),
-                "photoThumbBase64": thumbnail ?? "",
-                "updatedAt": FieldValue.serverTimestamp()
-            ]
+        var data: [String: Any] = [
+            "ownerId": cleanUid,
+            "name": cleanName,
+            "nameLower": AthleteSearchText.normalize(cleanName),
+            "searchPrefixes": AthleteSearchText.prefixes(for: cleanName),
+            "photoThumbBase64": thumbnail ?? "",
+            "updatedAt": FieldValue.serverTimestamp()
+        ]
 
-            if let existing {
-                let unchanged = existing["name"] as? String == cleanName
-                    && (existing["photoThumbBase64"] as? String ?? "") == (thumbnail ?? "")
-                    && existing["searchPrefixes"] is [Any]
-                    && existing["ownerId"] as? String == cleanUid
-                    && existing["privacy"] is String
-                    && existing["prCount"] is NSNumber
-                if unchanged { return }
+        if let existing {
+            let unchanged = existing["name"] as? String == cleanName
+                && (existing["photoThumbBase64"] as? String ?? "") == (thumbnail ?? "")
+                && existing["searchPrefixes"] is [Any]
+                && existing["ownerId"] as? String == cleanUid
+                && existing["privacy"] is String
+                && existing["prCount"] is NSNumber
+            if unchanged { return }
 
-                // Preserva privacidade e contagem (prCount é mantido pelo backend);
-                // completa campos ausentes de perfis antigos.
-                data["privacy"] = AthletePrivacy(storedValue: existing["privacy"] as? String).rawValue
-                if !(existing["prCount"] is NSNumber) {
-                    data["prCount"] = 0
-                }
-                try await reference.setData(data, merge: true)
-            } else {
-                data["privacy"] = AthletePrivacy.private.rawValue
+            // Preserva privacidade e contagem (prCount é mantido pelo backend);
+            // completa campos ausentes de perfis antigos.
+            data["privacy"] = AthletePrivacy(storedValue: existing["privacy"] as? String).rawValue
+            if !(existing["prCount"] is NSNumber) {
                 data["prCount"] = 0
-                try await reference.setData(data)
             }
-        } catch {
-            Self.log("ensurePublicProfile", Collections.athletes, error)
+            try await reference.setData(data, merge: true)
+        } else {
+            data["privacy"] = AthletePrivacy.private.rawValue
+            data["prCount"] = 0
+            try await reference.setData(data)
         }
     }
 
     /// Cria a projeção pública do próprio usuário a partir de `users/{uid}` (leitura permitida ao dono)
     /// quando ela ainda não existe. Usada ao salvar a privacidade: a escolha do usuário é explícita,
     /// inclusive para contas administradoras que usam o modo Aluno/Professor.
-    private func createOwnProfileIfMissing(uid: String) async {
-        do {
-            let snapshot = try await db.collection(Collections.users).document(uid).getDocument(source: .server)
-            guard let data = snapshot.data() else { return }
+    private func createOwnProfileIfMissing(uid: String) async throws {
+        let snapshot = try await db.collection(Collections.users).document(uid).getDocument(source: .server)
+        guard let data = snapshot.data() else { throw ServiceError.profileUnavailable }
 
-            await ensurePublicProfile(
-                uid: uid,
-                name: data["name"] as? String,
-                photoBase64: data["photoBase64"] as? String,
-                userType: data["userType"] as? String,
-                active: data["active"] as? Bool,
-                allowAdmin: true
-            )
-        } catch {
-            Self.log("createOwnProfileIfMissing", Collections.users, error)
-        }
+        try await writePublicProfile(
+            uid: uid,
+            name: data["name"] as? String,
+            photoBase64: data["photoBase64"] as? String,
+            userType: data["userType"] as? String,
+            active: data["active"] as? Bool,
+            allowAdmin: true
+        )
     }
 
     func athlete(id: String) async throws -> PublicAthlete? {
@@ -234,7 +251,7 @@ final class AthletesService: @unchecked Sendable {
             var snapshot = try await reference.getDocument(source: .server)
             if !snapshot.exists {
                 // Perfil público ainda inexistente (ex.: conta anterior à funcionalidade): cria sem alterar `users`.
-                await createOwnProfileIfMissing(uid: uid)
+                try await createOwnProfileIfMissing(uid: uid)
                 snapshot = try await reference.getDocument(source: .server)
             }
             guard snapshot.exists else { throw ServiceError.profileUnavailable }
@@ -359,7 +376,22 @@ final class AthletesService: @unchecked Sendable {
     private static func log(_ operation: String, _ collection: String, _ error: Error) {
         #if DEBUG
         let nsError = error as NSError
-        print("[Athletes] operação=\(operation) coleção=\(collection) domínio=\(nsError.domain) código=\(nsError.code)")
+        let kind: String
+        if error is ServiceError {
+            kind = "erro do serviço (\(error))"
+        } else if nsError.domain == FirestoreErrorDomain {
+            switch nsError.code {
+            case 7: kind = "permission-denied (regras não publicadas ou negadas)"
+            case 9: kind = "failed-precondition (possível índice ausente)"
+            case 14: kind = "unavailable (conectividade)"
+            case 5: kind = "not-found"
+            case 16: kind = "unauthenticated"
+            default: kind = "firestore"
+            }
+        } else {
+            kind = "outro"
+        }
+        print("[Athletes] operação=\(operation) coleção=\(collection) domínio=\(nsError.domain) código=\(nsError.code) tipo=\(kind)")
         #endif
     }
 
