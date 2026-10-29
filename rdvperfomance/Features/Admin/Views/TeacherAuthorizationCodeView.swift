@@ -11,6 +11,9 @@ struct TeacherAuthorizationCodeView: View {
     // Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
     private let lightDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
 
+    // Tema Claro: superfície interna (#F0F7EF), mesma do card Adicionar Vídeo
+    private let lightInnerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255)
+
     var body: some View {
         ZStack {
             Theme.Colors.sheetBackground.ignoresSafeArea()
@@ -104,7 +107,7 @@ struct TeacherAuthorizationCodeView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: lightInnerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
