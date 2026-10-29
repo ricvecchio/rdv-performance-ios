@@ -883,7 +883,17 @@ struct StudentDashboardView: View {
         return formatter.string(from: date).replacingOccurrences(of: ".", with: "").capitalized
     }
 
-    private var nextFitLoginSheet: some View {
+    /// Modal "Entrar no NextFit". Reutilizado também pelo Menu (WOD do dia), sem alterar o conteúdo original.
+    struct NextFitLoginSheetView: View {
+        @ObservedObject var viewModel: StudentDashboardViewModel
+        @Binding var nextFitEmailInput: String
+        @Binding var nextFitPasswordInput: String
+        @Binding var isNextFitLoginSheetPresented: Bool
+
+        @Environment(\.locale) private var locale
+        @Environment(\.appTheme) private var appTheme
+
+        var body: some View {
         ZStack {
             Theme.Colors.sheetBackground.ignoresSafeArea()
 
@@ -1009,6 +1019,16 @@ struct StudentDashboardView: View {
                 .padding(.bottom, 16)
             }
         }
+        }
+    }
+
+    private var nextFitLoginSheet: some View {
+        NextFitLoginSheetView(
+            viewModel: viewModel,
+            nextFitEmailInput: $nextFitEmailInput,
+            nextFitPasswordInput: $nextFitPasswordInput,
+            isNextFitLoginSheetPresented: $isNextFitLoginSheetPresented
+        )
     }
 
     private func clearNextFitCredentials() {

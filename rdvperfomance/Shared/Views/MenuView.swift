@@ -32,6 +32,7 @@ struct MenuView: View {
     /// Estado da sessão NextFit da conta atual (mesma fonte do `StudentDashboardViewModel.hasNextFitSession`).
     /// `nil` enquanto ainda não foi lido: nesse caso o indicador não é exibido.
     @State private var hasNextFitSession: Bool? = nil
+    @State private var isNextFitLoginSheetPresented = false
 
     var body: some View {
         Group {
@@ -45,6 +46,14 @@ struct MenuView: View {
         // Reavalia ao abrir/voltar ao Menu (após login ou logout feitos na tela WOD do dia)
         .onAppear(perform: refreshNextFitSession)
         .onChange(of: session.uid) { _, _ in refreshNextFitSession() }
+        // Mesmo modal "Entrar no NextFit" da Home do aluno; ao fechar, reavalia a sessão
+        .sheet(isPresented: $isNextFitLoginSheetPresented, onDismiss: refreshNextFitSession) {
+            MenuNextFitLoginSheet(
+                studentId: session.uid ?? "",
+                isPresented: $isNextFitLoginSheetPresented
+            )
+            .presentationDetents([.fraction(0.50)])
+        }
     }
 
     private func refreshNextFitSession() {
@@ -71,7 +80,8 @@ struct MenuView: View {
                 menuRow(
                     icon: "dumbbell.fill",
                     titleKey: "menu.wod",
-                    showsSignedOutIndicator: hasNextFitSession == false
+                    showsSignedOutIndicator: hasNextFitSession == false,
+                    onConnectNextFit: hasNextFitSession == false ? { isNextFitLoginSheetPresented = true } : nil
                 ) {
                     path.append(.studentNextFitWod)
                 }
@@ -126,7 +136,8 @@ struct MenuView: View {
                 menuRow(
                     icon: "dumbbell.fill",
                     titleKey: "menu.wod",
-                    showsSignedOutIndicator: hasNextFitSession == false
+                    showsSignedOutIndicator: hasNextFitSession == false,
+                    onConnectNextFit: hasNextFitSession == false ? { isNextFitLoginSheetPresented = true } : nil
                 ) {
                     path.append(.studentNextFitWod)
                 }
@@ -167,6 +178,7 @@ struct MenuView: View {
         icon: String,
         titleKey: LocalizedStringKey,
         showsSignedOutIndicator: Bool = false,
+        onConnectNextFit: (() -> Void)? = nil,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -202,6 +214,55 @@ struct MenuView: View {
             .modifier(StudentMenuCardModifier())
         }
         .buttonStyle(.plain)
+        // Botão Conectar (apenas WOD do dia sem sessão NextFit): fica fora do Button do card para não disparar a navegação
+        .overlay(alignment: .trailing) {
+            if let onConnectNextFit {
+                Button(action: onConnectNextFit) {
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: PersonalOrganizerLightColors.iconSurface))
+                            .frame(width: 34, height: 34)
+
+                        Image(systemName: "link")
+                            .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: PersonalOrganizerLightColors.iconInk))
+                            .font(.system(size: 16, weight: .semibold))
+                    }
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("dashboard.connect_nextfit")
+                .padding(.trailing, 34)
+            }
+        }
+    }
+}
+
+/// Hospeda o modal "Entrar no NextFit" da Home do aluno (`StudentDashboardView.NextFitLoginSheetView`),
+/// usando a mesma autenticação (`StudentDashboardViewModel.authenticateNextFit`) e os mesmos erros.
+private struct MenuNextFitLoginSheet: View {
+    let studentId: String
+    @Binding var isPresented: Bool
+
+    @StateObject private var viewModel: StudentDashboardViewModel
+    @State private var email = ""
+    @State private var password = ""
+
+    init(studentId: String, isPresented: Binding<Bool>) {
+        self.studentId = studentId
+        self._isPresented = isPresented
+        _viewModel = StateObject(
+            wrappedValue: StudentDashboardViewModel(studentId: studentId, repository: .shared)
+        )
+    }
+
+    var body: some View {
+        StudentDashboardView.NextFitLoginSheetView(
+            viewModel: viewModel,
+            nextFitEmailInput: $email,
+            nextFitPasswordInput: $password,
+            isNextFitLoginSheetPresented: $isPresented
+        )
     }
 }
 
