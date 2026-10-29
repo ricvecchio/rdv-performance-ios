@@ -56,6 +56,15 @@ struct MenuView: View {
         }
     }
 
+    /// Toque na linha do WOD do dia: sem sessão NextFit abre o modal "Entrar no NextFit"; com sessão, navega ao WOD.
+    private func openWodOrNextFitLogin() {
+        if hasNextFitSession == false {
+            isNextFitLoginSheetPresented = true
+        } else {
+            path.append(.studentNextFitWod)
+        }
+    }
+
     private func refreshNextFitSession() {
         guard let uid = session.uid, !uid.isEmpty else {
             hasNextFitSession = nil
@@ -83,7 +92,7 @@ struct MenuView: View {
                     showsSignedOutIndicator: hasNextFitSession == false,
                     onConnectNextFit: hasNextFitSession == false ? { isNextFitLoginSheetPresented = true } : nil
                 ) {
-                    path.append(.studentNextFitWod)
+                    openWodOrNextFitLogin()
                 }
                 if showsWorkouts {
                     menuRow(icon: "figure.strengthtraining.traditional", titleKey: "menu.workouts") {
@@ -139,7 +148,7 @@ struct MenuView: View {
                     showsSignedOutIndicator: hasNextFitSession == false,
                     onConnectNextFit: hasNextFitSession == false ? { isNextFitLoginSheetPresented = true } : nil
                 ) {
-                    path.append(.studentNextFitWod)
+                    openWodOrNextFitLogin()
                 }
             }
 
