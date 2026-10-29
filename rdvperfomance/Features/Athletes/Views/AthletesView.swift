@@ -14,9 +14,9 @@ struct AthletesView: View {
         PersonalScreenScaffold(
             titleKey: "athletes.title",
             onBack: { if !path.isEmpty { path.removeLast() } },
-            onSelectSection: onSelectSection
+            onSelectSection: onSelectSection,
+            pinned: { searchField }
         ) {
-            searchField
 
             if let errorKey = viewModel.errorKey {
                 PersonalMessageCard(text: AppLocalization.string(String.LocalizationValue(errorKey), locale: locale))

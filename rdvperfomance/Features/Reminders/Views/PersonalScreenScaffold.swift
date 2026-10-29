@@ -2,11 +2,28 @@ import SwiftUI
 
 /// Estrutura de tela das telas da seção Lembretes: fundo, cabeçalho existente, conteúdo rolável e rodapé
 /// do aluno com "Lembretes" selecionado.
-struct PersonalScreenScaffold<Content: View>: View {
+struct PersonalScreenScaffold<Content: View, Pinned: View>: View {
     let titleKey: LocalizedStringKey
     let onBack: () -> Void
     let onSelectSection: (StudentMainSection) -> Void
-    @ViewBuilder let content: Content
+    let pinned: Pinned
+    let content: Content
+
+    /// `pinned`: conteúdo opcional fixo no topo (fora da rolagem), ex.: campo de busca que não deve
+    /// rolar para trás do cabeçalho quando o teclado é aberto.
+    init(
+        titleKey: LocalizedStringKey,
+        onBack: @escaping () -> Void,
+        onSelectSection: @escaping (StudentMainSection) -> Void,
+        @ViewBuilder pinned: () -> Pinned,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.titleKey = titleKey
+        self.onBack = onBack
+        self.onSelectSection = onSelectSection
+        self.pinned = pinned()
+        self.content = content()
+    }
 
     @EnvironmentObject private var session: AppSession
 
@@ -42,6 +59,19 @@ struct PersonalScreenScaffold<Content: View>: View {
                     .frame(height: 1)
                     .frame(maxWidth: .infinity)
 
+                if Pinned.self != EmptyView.self {
+                    HStack {
+                        Spacer(minLength: 0)
+
+                        pinned
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, 16)
+
+                        Spacer(minLength: 0)
+                    }
+                }
+
                 ScrollView(showsIndicators: false) {
                     HStack {
                         Spacer(minLength: 0)
@@ -52,7 +82,7 @@ struct PersonalScreenScaffold<Content: View>: View {
                         }
                         .frame(maxWidth: contentMaxWidth)
                         .padding(.horizontal, 16)
-                        .padding(.top, 16)
+                        .padding(.top, Pinned.self == EmptyView.self ? 16 : 14)
 
                         Spacer(minLength: 0)
                     }
@@ -100,6 +130,23 @@ struct PersonalScreenScaffold<Content: View>: View {
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
+    }
+}
+
+extension PersonalScreenScaffold where Pinned == EmptyView {
+    init(
+        titleKey: LocalizedStringKey,
+        onBack: @escaping () -> Void,
+        onSelectSection: @escaping (StudentMainSection) -> Void,
+        @ViewBuilder content: () -> Content
+    ) {
+        self.init(
+            titleKey: titleKey,
+            onBack: onBack,
+            onSelectSection: onSelectSection,
+            pinned: { EmptyView() },
+            content: content
+        )
     }
 }
 
