@@ -140,6 +140,7 @@ struct MenuView: View {
     private func menuRow(
         icon: String,
         titleKey: LocalizedStringKey,
+        showsSignedOutIndicator: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
@@ -151,6 +152,16 @@ struct MenuView: View {
                     .modifier(PersonalPrimaryTextStyle())
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
+
+                if showsSignedOutIndicator {
+                    HStack(spacing: 4) {
+                        Image(systemName: "person.crop.circle.badge.xmark")
+                        Text("menu.wod_logged_out")
+                    }
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .lineLimit(1)
+                }
 
                 Spacer(minLength: 0)
 
