@@ -344,7 +344,7 @@ final class AthletesService: @unchecked Sendable {
     }
 
     /// Foto reduzida (96 px) para listas; a foto original em `users` não é exposta.
-    private static func thumbnailBase64(from base64: String?) -> String? {
+    nonisolated private static func thumbnailBase64(from base64: String?) -> String? {
         var raw = (base64 ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !raw.isEmpty else { return nil }
 

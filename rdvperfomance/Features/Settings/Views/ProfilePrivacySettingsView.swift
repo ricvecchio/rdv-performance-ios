@@ -31,7 +31,7 @@ struct ProfilePrivacySettingsView: View {
 
                         VStack(alignment: .leading, spacing: 16) {
                             if let errorKey {
-                                PersonalMessageCard(text: AppLocalization.string(errorKey, locale: locale))
+                                PersonalMessageCard(text: AppLocalization.string(String.LocalizationValue(errorKey), locale: locale))
                             }
 
                             VStack(spacing: 0) {

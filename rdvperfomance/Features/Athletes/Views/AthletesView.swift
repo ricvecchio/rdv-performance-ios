@@ -19,7 +19,7 @@ struct AthletesView: View {
             searchField
 
             if let errorKey = viewModel.errorKey {
-                PersonalMessageCard(text: AppLocalization.string(errorKey, locale: locale))
+                PersonalMessageCard(text: AppLocalization.string(String.LocalizationValue(errorKey), locale: locale))
             }
 
             if viewModel.trimmedQuery.isEmpty {

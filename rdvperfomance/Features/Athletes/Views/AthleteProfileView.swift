@@ -25,7 +25,7 @@ struct AthleteProfileView: View {
             onSelectSection: onSelectSection
         ) {
             if let errorKey = viewModel.errorKey {
-                PersonalMessageCard(text: AppLocalization.string(errorKey, locale: locale))
+                PersonalMessageCard(text: AppLocalization.string(String.LocalizationValue(errorKey), locale: locale))
             }
 
             switch viewModel.state {
