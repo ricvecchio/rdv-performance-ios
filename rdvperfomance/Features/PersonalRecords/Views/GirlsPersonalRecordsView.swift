@@ -1353,12 +1353,12 @@ Jasmine (AMRAP 20 min)
                 .textInputAutocapitalization(.sentences)
                 .autocorrectionDisabled(true)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
-                .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1))
         }
     }
 
