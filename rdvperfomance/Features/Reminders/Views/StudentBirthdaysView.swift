@@ -41,6 +41,13 @@ struct PersonalBirthdaysContent: View {
     /// Data de referência do ícone de bolo; atualizada ao voltar ao primeiro plano e na virada do dia.
     @State private var today = Date()
 
+    /// Informa à tela de origem quando o formulário está aberto (usado para desfocar a tela).
+    var onEditorPresentationChange: (Bool) -> Void
+
+    init(onEditorPresentationChange: @escaping (Bool) -> Void = { _ in }) {
+        self.onEditorPresentationChange = onEditorPresentationChange
+    }
+
     struct BirthdayEditorTarget: Identifiable {
         let id = UUID()
         let birthday: PersonalBirthday?
@@ -94,7 +101,10 @@ struct PersonalBirthdaysContent: View {
         }
         .sheet(item: $editor) { target in
             PersonalBirthdayEditorSheet(birthday: target.birthday)
-                .presentationDetents([.large])
+                .presentationDetents([.fraction(0.75)])
+        }
+        .onChange(of: editor != nil) { _, isPresented in
+            onEditorPresentationChange(isPresented)
         }
         .alert(
             "birthdays.delete_title",
