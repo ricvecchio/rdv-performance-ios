@@ -27,14 +27,32 @@ struct MenuView: View {
 
     /// Treinos só existe para alunos com professor vinculado (regra já existente do rodapé).
     @Environment(\.studentShowsWorkoutsTab) private var showsWorkouts
+    @EnvironmentObject private var session: AppSession
+
+    /// Estado da sessão NextFit da conta atual (mesma fonte do `StudentDashboardViewModel.hasNextFitSession`).
+    /// `nil` enquanto ainda não foi lido: nesse caso o indicador não é exibido.
+    @State private var hasNextFitSession: Bool? = nil
 
     var body: some View {
-        switch context {
-        case .student:
-            studentMenu
-        case .teacher:
-            teacherMenu
+        Group {
+            switch context {
+            case .student:
+                studentMenu
+            case .teacher:
+                teacherMenu
+            }
         }
+        // Reavalia ao abrir/voltar ao Menu (após login ou logout feitos na tela WOD do dia)
+        .onAppear(perform: refreshNextFitSession)
+        .onChange(of: session.uid) { _, _ in refreshNextFitSession() }
+    }
+
+    private func refreshNextFitSession() {
+        guard let uid = session.uid, !uid.isEmpty else {
+            hasNextFitSession = nil
+            return
+        }
+        hasNextFitSession = NextFitService().hasSession(sessionAccount: uid)
     }
 
     // MARK: - Aluno
@@ -50,7 +68,11 @@ struct MenuView: View {
                 menuRow(icon: "trophy.fill", titleKey: "ui.my_records") {
                     onSelectSection(.records)
                 }
-                menuRow(icon: "dumbbell.fill", titleKey: "menu.wod") {
+                menuRow(
+                    icon: "dumbbell.fill",
+                    titleKey: "menu.wod",
+                    showsSignedOutIndicator: hasNextFitSession == false
+                ) {
                     path.append(.studentNextFitWod)
                 }
                 if showsWorkouts {
@@ -101,7 +123,11 @@ struct MenuView: View {
                 menuRow(icon: "trophy.fill", titleKey: "ui.my_records") {
                     path.append(.teacherPersonalRecords(category: teacherCategory))
                 }
-                menuRow(icon: "dumbbell.fill", titleKey: "menu.wod") {
+                menuRow(
+                    icon: "dumbbell.fill",
+                    titleKey: "menu.wod",
+                    showsSignedOutIndicator: hasNextFitSession == false
+                ) {
                     path.append(.studentNextFitWod)
                 }
             }

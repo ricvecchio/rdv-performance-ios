@@ -221,6 +221,7 @@ struct PersonalRecordsView: View {
             TecnofitImportSheet {
                 hasCompletedTecnofitImport = true
             }
+            .modifier(TeacherSharpSheetBackground(isTeacher: isTeacherContext))
         }
         .task(id: session.currentUid) {
             await loadTecnofitImportStatus()
@@ -279,6 +280,11 @@ struct PersonalRecordsView: View {
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var isTeacherContext: Bool {
+        if case .teacher = navigationContext { return true }
+        return false
     }
 
     // Espaçamento original entre os cards e parâmetros da distribuição vertical
