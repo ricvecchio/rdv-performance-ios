@@ -18,11 +18,13 @@
  */
 
 const { onCall, HttpsError } = require("firebase-functions/v2/https");
+const { onDocumentWritten } = require("firebase-functions/v2/firestore");
 const { setGlobalOptions } = require("firebase-functions/v2");
 const { defineString } = require("firebase-functions/params");
 const logger = require("firebase-functions/logger");
 const admin = require("firebase-admin");
 const crypto = require("crypto");
+const { computePrCount, isChunkDocumentId } = require("./prCount");
 
 admin.initializeApp();
 
@@ -415,3 +417,47 @@ exports.createTeacherAccount = onCall(async (request) => {
   return { uid: userRecord.uid };
 });
 
+// ---------------------------------------------------------------------------
+// Contagem de Personal Records (publicAthletes/{uid}.prCount)
+// ---------------------------------------------------------------------------
+
+// Região do trigger do Firestore: deve coincidir com a localização do banco de dados.
+const FIRESTORE_TRIGGER_REGION = defineString("FIRESTORE_TRIGGER_REGION", { default: "us-central1" });
+
+/**
+ * Recalcula prCount sempre que os Personal Records do usuário mudam (inclusão, alteração ou exclusão).
+ * Somente LEITURA em users/{uid}/student_personal_records; escreve apenas publicAthletes/{uid}.prCount.
+ * Documentos de chunk são ignorados: o cabeçalho do payload é gravado depois deles e dispara o recálculo.
+ * O cálculo é idempotente e executado dentro de uma transação (leituras consistentes, sem condição de corrida).
+ */
+exports.syncPublicAthletePrCount = onDocumentWritten(
+  {
+    document: "users/{uid}/student_personal_records/{docId}",
+    region: FIRESTORE_TRIGGER_REGION,
+  },
+  async (event) => {
+    const { uid, docId } = event.params;
+    if (!uid || isChunkDocumentId(docId)) return;
+
+    const athleteRef = db.collection("publicAthletes").doc(uid);
+
+    try {
+      await db.runTransaction(async (tx) => {
+        const athleteSnap = await tx.get(athleteRef);
+        if (!athleteSnap.exists) return; // perfil público ainda não criado (o backfill/app o cria com 0)
+
+        const { count, complete } = await computePrCount(db, (refs) => tx.getAll(...refs), uid);
+        if (!complete) {
+          logger.warn("PR payload incomplete; prCount not updated.");
+          return;
+        }
+        if (athleteSnap.get("prCount") === count) return;
+
+        tx.update(athleteRef, { prCount: count, updatedAt: FieldValue.serverTimestamp() });
+      });
+    } catch (error) {
+      logger.error("Unable to sync prCount.", { code: error && error.code });
+      throw error;
+    }
+  }
+);

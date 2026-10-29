@@ -244,6 +244,19 @@ final class AppSession: ObservableObject {
             self.reportInstalledAppVersionIfNeeded(uid: uid, profileData: data)
             self.reportLastAccessAndDeviceIfNeeded(uid: uid, profileData: data)
 
+            // Projeção pública mínima para o recurso Atletas (nome e foto reduzida; privacidade padrão: privado)
+            let publicPhoto = remotePhotoBase64
+            let publicActive = data["active"] as? Bool
+            Task.detached {
+                await AthletesService.shared.ensurePublicProfile(
+                    uid: uid,
+                    name: name,
+                    photoBase64: publicPhoto,
+                    userType: typeRaw,
+                    active: publicActive
+                )
+            }
+
             switch remoteMeasurementUnit {
             case "kg", "lbs":
                 self.preferredWeightUnit = remoteMeasurementUnit

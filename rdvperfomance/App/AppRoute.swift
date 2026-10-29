@@ -130,6 +130,12 @@ enum AppRoute: Hashable {
     case studentNextFitWod
     /// Destino provisório de funcionalidades do Menu ainda em desenvolvimento (chave de título localizada).
     case studentComingSoon(titleKey: String)
+    /// Busca de atletas e favoritos (Menu).
+    case athletes
+    /// Perfil (somente leitura) de outro atleta.
+    case athleteProfile(athleteId: String)
+    /// Configurações > Privacidade do perfil (Público/Privado).
+    case privacidadePerfil
 
     case studentPersonalRecords
     case studentPersonalRecordsBarbell

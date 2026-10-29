@@ -169,6 +169,10 @@ struct SettingsView: View {
             cardRow(icon: "circle.lefthalf.filled", title: "settings.theme.title") {
                 path.append(.tema)
             }
+            divider()
+            cardRow(icon: "lock.shield.fill", title: "settings.privacy.title") {
+                path.append(.privacidadePerfil)
+            }
         }
     }
 

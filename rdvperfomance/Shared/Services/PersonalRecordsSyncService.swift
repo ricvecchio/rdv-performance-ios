@@ -365,6 +365,11 @@ final class PersonalRecordsSyncService {
         defaults.set(uid, forKey: StorageKeys.ownerUID)
         persistCustomBaseline(from: snapshot, for: uid)
         synchronizedUIDs.insert(uid)
+
+        // Atualiza a quantidade de PRs (e a cópia pública, se o perfil for público) para o recurso Atletas
+        Task.detached(priority: .utility) {
+            await AthletesService.shared.publishRecords(uid: uid, payloads: snapshot)
+        }
         resetRetryState(for: uid)
 
         if hasNewerLocalRevision {

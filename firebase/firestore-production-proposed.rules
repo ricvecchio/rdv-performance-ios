@@ -450,6 +450,97 @@ service cloud.firestore {
     }
 
     // =========================================================
+    // 5.1 ATLETAS (busca, favoritos e privacidade de recordes)
+    // Ver firebase/ATHLETES.md. Regras ADITIVAS: nenhuma permissao
+    // existente de users/* foi ampliada ou alterada.
+    // =========================================================
+
+    // Projecao publica minima (sem e-mail, telefone, dados administrativos
+    // ou de autenticacao). Cada usuario escreve somente o proprio documento.
+    function validPublicAthlete(athleteId) {
+      let data = request.resource.data;
+
+      return data.keys().hasOnly([
+          'ownerId', 'name', 'nameLower', 'searchPrefixes',
+          'photoThumbBase64', 'privacy', 'prCount', 'updatedAt'
+        ])
+        && data.keys().hasAll([
+          'ownerId', 'name', 'nameLower', 'searchPrefixes', 'privacy', 'prCount'
+        ])
+        && data.ownerId == athleteId
+        && data.name is string
+        && data.name.size() > 0
+        && data.name.size() <= 120
+        && data.nameLower is string
+        && data.nameLower.size() <= 120
+        && data.searchPrefixes is list
+        && data.searchPrefixes.size() <= 150
+        && data.privacy in ['public', 'private']
+        && data.prCount is int
+        && data.prCount >= 0
+        && data.prCount <= 100000
+        && (
+          !('photoThumbBase64' in data)
+          || (data.photoThumbBase64 is string && data.photoThumbBase64.size() <= 60000)
+        );
+    }
+
+    // Ausencia do campo (ou do documento) = privado.
+    function athleteIsPublic(athleteId) {
+      return exists(/databases/$(database)/documents/publicAthletes/$(athleteId))
+        && get(/databases/$(database)/documents/publicAthletes/$(athleteId))
+          .data.get('privacy', 'private') == 'public';
+    }
+
+    match /publicAthletes/{athleteId} {
+      allow get, list: if isSignedIn();
+
+      // prCount e mantido exclusivamente pelo backend (Cloud Function syncPublicAthletePrCount
+      // e script de backfill, via Admin SDK). O cliente nao pode altera-lo.
+      allow create: if isOwner(athleteId)
+        && validPublicAthlete(athleteId)
+        && request.resource.data.prCount == 0;
+
+      allow update: if isOwner(athleteId)
+        && validPublicAthlete(athleteId)
+        && request.resource.data.prCount == resource.data.get('prCount', 0);
+
+      allow delete: if isOwner(athleteId) || isAdmin();
+
+      // Copia resumida dos PRs. Leitura por terceiros somente com perfil publico;
+      // ao tornar o perfil privado a leitura e negada imediatamente pelo servidor.
+      match /records/{categoryKey} {
+        allow get, list: if isOwner(athleteId)
+          || (isSignedIn() && athleteIsPublic(athleteId));
+
+        allow create, update: if isOwner(athleteId)
+          && categoryKey in [
+            'barbell', 'gymnastic', 'endurance', 'notables', 'girls',
+            'open', 'heroes', 'campeonatos', 'crossfit_games'
+          ]
+          && request.resource.data.keys().hasOnly([
+            'ownerId', 'categoryKey', 'items', 'updatedAt'
+          ])
+          && request.resource.data.ownerId == athleteId
+          && request.resource.data.categoryKey == categoryKey
+          && request.resource.data.items is list
+          && request.resource.data.items.size() <= 300;
+
+        allow delete: if isOwner(athleteId);
+      }
+    }
+
+    // Favoritos do usuario autenticado (um documento por atleta: sem duplicidade).
+    match /users/{userId}/favoriteAthletes/{athleteId} {
+      allow get, list, delete: if isOwner(userId);
+
+      allow create, update: if isOwner(userId)
+        && athleteId != userId
+        && request.resource.data.keys().hasOnly(['athleteId', 'createdAt'])
+        && request.resource.data.athleteId == athleteId;
+    }
+
+    // =========================================================
     // 6. MENSAGENS DOS PROFESSORES
     // =========================================================
 

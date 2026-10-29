@@ -246,6 +246,12 @@ struct TeacherRootView: View {
             LanguageSettingsView()
         case .tema:
             ThemeSettingsView()
+        case .privacidadePerfil:
+            ProfilePrivacySettingsView()
+        case .athletes:
+            AthletesView(path: destinationPath, onSelectSection: { _ in })
+        case .athleteProfile(let athleteId):
+            AthleteProfileView(path: destinationPath, athleteId: athleteId, onSelectSection: { _ in })
         case .editarPerfil:
             EditProfileView(path: destinationPath)
         case .alterarSenha:

@@ -115,7 +115,7 @@ struct MenuView: View {
 
             category("menu.category.explore") {
                 menuRow(icon: "magnifyingglass", titleKey: "menu.athletes") {
-                    path.append(.studentComingSoon(titleKey: "menu.search_athletes"))
+                    path.append(.athletes)
                 }
                 menuRow(icon: "trophy", titleKey: "menu.championships") {
                     path.append(.studentComingSoon(titleKey: "menu.search_championships"))
@@ -163,7 +163,7 @@ struct MenuView: View {
 
             category("menu.category.explore") {
                 menuRow(icon: "magnifyingglass", titleKey: "menu.athletes") {
-                    path.append(.studentComingSoon(titleKey: "menu.search_athletes"))
+                    path.append(.athletes)
                 }
                 menuRow(icon: "trophy", titleKey: "menu.championships") {
                     path.append(.studentComingSoon(titleKey: "menu.search_championships"))

@@ -399,6 +399,19 @@ struct StudentRootView: View {
                 context: .student(studentId: studentId)
             )
 
+        case .athletes:
+            AthletesView(
+                path: $menuPath,
+                onSelectSection: selectSection
+            )
+
+        case .athleteProfile(let athleteId):
+            AthleteProfileView(
+                path: $menuPath,
+                athleteId: athleteId,
+                onSelectSection: selectSection
+            )
+
         default:
             profileDestination(for: route, path: $menuPath)
         }
@@ -430,6 +443,9 @@ struct StudentRootView: View {
 
         case .tema:
             ThemeSettingsView()
+
+        case .privacidadePerfil:
+            ProfilePrivacySettingsView()
 
         case .editarPerfil:
             EditProfileView(path: path)

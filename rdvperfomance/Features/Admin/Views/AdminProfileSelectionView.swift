@@ -11,6 +11,10 @@ struct AdminProfileSelectionView: View {
     // Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
     private let lightDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
 
+    // Tema Claro: fundo (#85C995) e ícone (#25482B) dos ícones de perfil
+    private let iconSurfaceLight = Color(red: 0x85 / 255, green: 0xC9 / 255, blue: 0x95 / 255)
+    private let iconInkLight = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)
+
     var body: some View {
         ZStack {
             AppThemeBackgroundImage()
