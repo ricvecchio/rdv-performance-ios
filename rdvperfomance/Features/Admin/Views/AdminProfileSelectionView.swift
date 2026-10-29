@@ -50,7 +50,7 @@ struct AdminProfileSelectionView: View {
                     selectionButton(
                         title: "admin.profile_selection.trainer.title",
                         subtitle: "admin.profile_selection.trainer.subtitle",
-                        icon: "person.2.circle"
+                        icon: "graduationcap.fill"
                     ) {
                         session.selectAdminProfile(.trainer)
                     }
@@ -114,11 +114,30 @@ struct AdminProfileSelectionView: View {
     ) -> some View {
         Button(action: action) {
             // Ícone à esquerda, centralizado verticalmente em relação ao conjunto título + subtítulo
-            HStack(alignment: .center, spacing: 8) {
-                Image(systemName: icon)
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
-                    .frame(width: 22)
+            HStack(alignment: .center, spacing: 6) {
+                // Mesmo padrão dos ícones de perfil da AdminUsersView
+                ZStack {
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(
+                            AppThemeColor(
+                                dark: Color.green.opacity(0.14),
+                                light: iconSurfaceLight,
+                                followsBarColorScheme: false
+                            )
+                        )
+                        .frame(width: 34, height: 34)
+
+                    Image(systemName: icon)
+                        .foregroundStyle(
+                            AppThemeColor(
+                                dark: Color.green.opacity(0.85),
+                                light: iconInkLight,
+                                followsBarColorScheme: false
+                            )
+                        )
+                        .font(.system(size: 16, weight: .semibold))
+                }
+                .frame(width: 34, height: 34)
 
                 VStack(spacing: 8) {
                     Text(title)
