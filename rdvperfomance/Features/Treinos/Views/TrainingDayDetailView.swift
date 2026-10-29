@@ -1039,53 +1039,65 @@ struct TrainingDayDetailView: View {
     // Sheet de edição com campos e botões de ação
     private var editDaySheet: some View {
         ZStack {
-            Theme.Colors.glass(0.92).ignoresSafeArea()
+            Theme.Colors.sheetBackground
+                .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Theme.Colors.ink(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                Text("workout_day_detail.edit_training_day")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                        Text("workout_day_detail.edit_training_day")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink().dark, light: LightColors.primaryText))
+                            .padding(.top, 4)
 
-                UnderlineTextField(
-                    title: "workout_day_detail.title_field",
-                    text: $editTitle,
-                    isSecure: false,
-                    showPassword: .constant(false),
-                    lineColor: Theme.Colors.divider,
-                    textColor: .white.opacity(0.92),
-                    placeholderColor: .white.opacity(0.55)
-                )
+                        VStack(alignment: .leading, spacing: 14) {
+                            editTextField(title: "workout_day_detail.title_field", text: $editTitle)
+                            editTextField(title: "workout_day_detail.description_field", text: $editDescription)
 
-                UnderlineTextField(
-                    title: "workout_day_detail.description_field",
-                    text: $editDescription,
-                    isSecure: false,
-                    showPassword: .constant(false),
-                    lineColor: Theme.Colors.divider,
-                    textColor: .white.opacity(0.92),
-                    placeholderColor: .white.opacity(0.55)
-                )
+                            // Blocos editor section
+                            blocksEditorSection
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                        )
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                    }
+                }
 
-                Divider().background(Theme.Colors.divider)
-
-                // Blocos editor section
-                blocksEditorSection
-
-                Divider().background(Theme.Colors.divider)
-
-                HStack(spacing: 10) {
-
+                HStack(spacing: 12) {
                     Button { showEditSheet = false } label: {
                         Text("common.cancel")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.90))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Theme.Colors.ink(0.10))
-                            .cornerRadius(12)
-                            // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: LightColors.chevron), lineWidth: 1))
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: Color.white))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(AppThemeColor(dark: Color.white.opacity(0.10), light: AppThemePalette.lightBar.opacity(0.80)))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.chevron), lineWidth: 1)
+                            )
+                            .shadow(
+                                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                                radius: appTheme == .light ? 10 : 0,
+                                y: appTheme == .light ? 6 : 0
+                            )
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
@@ -1095,23 +1107,67 @@ struct TrainingDayDetailView: View {
                             if isSaving { ProgressView().tint(Theme.Colors.ink()) }
                             Text("common.save")
                         }
-                        .padding(.horizontal, 14)
-                        .primaryGreenActionButton()
-                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: LightColors.chevron), lineWidth: 1))
+                        .frame(maxWidth: .infinity)
+                        .modifier(EditDaySaveButtonStyle(isLight: appTheme == .light && !isSaving))
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
-
-                    Spacer()
                 }
-
-                Spacer()
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
-            .padding(16)
-            .frame(maxWidth: 420)
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.large])
+    }
+
+    // Campo de texto com o visual dos campos do formulário Adicionar Vídeo
+    private func editTextField(title: LocalizedStringKey, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.ink(0.75))
+
+            TextField("", text: text)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                )
+        }
+    }
+
+    // Botão Salvar: Tema Claro com verde militar 80% e texto branco; Tema Escuro mantém o estilo original
+    private struct EditDaySaveButtonStyle: ViewModifier {
+        let isLight: Bool
+
+        func body(content: Content) -> some View {
+            if isLight {
+                content
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.white)
+                    .padding(.vertical, 14)
+                    .background(AppThemePalette.lightBar.opacity(0.80))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(LightColors.chevron, lineWidth: 1)
+                    )
+            } else {
+                content
+                    .primaryGreenActionButton()
+            }
+        }
     }
 
     private var blocksEditorSection: some View {
@@ -1133,21 +1189,23 @@ struct TrainingDayDetailView: View {
 
                                 Text(displayedBlockName(editBlocks[i]))
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
 
                                 TextEditor(text: Binding(
                                     get: { editBlocks[i].details },
                                     set: { editBlocks[i].details = $0 }
                                 ))
                                 .font(.system(size: 14))
-                                .foregroundStyle(Theme.Colors.ink(0.85))
+                                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                                 .scrollContentBackground(.hidden)
-                                .background(Theme.Colors.ink(0.06))
-                                .cornerRadius(10)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 4)
+                                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                                .cornerRadius(14)
                                 .frame(minHeight: 70)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                                 )
                             }
                         }
