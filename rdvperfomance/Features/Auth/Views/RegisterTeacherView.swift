@@ -41,6 +41,9 @@ struct RegisterTeacherView: View {
                             // Escolha do tema (preferência local, aplicada imediatamente)
                             RegisterThemeSelectionSection()
 
+                            // Privacidade do perfil (padrão: Privado)
+                            RegisterPrivacySelectionSection(privacy: $vm.privacy)
+
                             actionArea()
 
                             Color.clear

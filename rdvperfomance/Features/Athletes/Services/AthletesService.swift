@@ -78,6 +78,9 @@ final class AthletesService: @unchecked Sendable {
 
         let reference = db.collection(Collections.athletes).document(cleanUid)
 
+        // Privacidade escolhida no cadastro e ainda não persistida (ver `applyInitialPrivacy`).
+        let desiredPrivacy = pendingPrivacy(for: cleanUid)
+
         let snapshot = try await reference.getDocument(source: .server)
         let existing = snapshot.data()
 
@@ -97,20 +100,99 @@ final class AthletesService: @unchecked Sendable {
                 && existing["ownerId"] as? String == cleanUid
                 && existing["privacy"] is String
                 && existing["prCount"] is NSNumber
-            if unchanged { return }
+                && (desiredPrivacy == nil || existing["privacy"] as? String == desiredPrivacy?.rawValue)
+            if unchanged {
+                clearPendingPrivacy(for: cleanUid)
+                return
+            }
 
-            // Preserva privacidade e contagem (prCount é mantido pelo backend);
-            // completa campos ausentes de perfis antigos.
-            data["privacy"] = AthletePrivacy(storedValue: existing["privacy"] as? String).rawValue
+            // Privacidade: só é enviada se houver escolha pendente do cadastro ou valor inválido;
+            // caso contrário o merge preserva o valor atual (evita sobrescrever uma alteração concorrente).
+            // prCount é mantido pelo backend; só é completado em perfis antigos que não o possuem.
+            if let desiredPrivacy {
+                data["privacy"] = desiredPrivacy.rawValue
+            } else if !(existing["privacy"] is String) {
+                data["privacy"] = AthletePrivacy.private.rawValue
+            }
             if !(existing["prCount"] is NSNumber) {
                 data["prCount"] = 0
             }
             try await reference.setData(data, merge: true)
         } else {
-            data["privacy"] = AthletePrivacy.private.rawValue
+            data["privacy"] = (desiredPrivacy ?? .private).rawValue
             data["prCount"] = 0
-            try await reference.setData(data)
+
+            // Criação em transação: se outro fluxo (ex.: login e cadastro simultâneos) criar o documento
+            // primeiro, ele não é sobrescrito; a escolha pendente é aplicada no passo seguinte.
+            let payload = data
+            _ = try await db.runTransaction { transaction, errorPointer -> Any? in
+                do {
+                    let current = try transaction.getDocument(reference)
+                    if !current.exists {
+                        transaction.setData(payload, forDocument: reference)
+                    }
+                } catch let error as NSError {
+                    errorPointer?.pointee = error
+                }
+                return nil
+            }
+
+            // Se outro fluxo criou antes, aplica agora a escolha pendente (se houver).
+            if let desiredPrivacy {
+                let created = try await reference.getDocument(source: .server)
+                if created.data()?["privacy"] as? String != desiredPrivacy.rawValue {
+                    try await reference.updateData([
+                        "privacy": desiredPrivacy.rawValue,
+                        "updatedAt": FieldValue.serverTimestamp()
+                    ])
+                }
+            }
         }
+
+        clearPendingPrivacy(for: cleanUid)
+    }
+
+    // MARK: - Privacidade escolhida no cadastro
+
+    /// Persiste em `publicAthletes/{uid}` a privacidade escolhida no cadastro (Aluno ou Professor).
+    /// Deve ser chamada somente com sessão autenticada do próprio `uid` e após o perfil em `users` existir.
+    /// A escolha é guardada como pendente antes da gravação: se falhar, será aplicada com segurança no
+    /// próximo `ensurePublicProfile` (login), sem repetir o cadastro. Não altera `prCount`.
+    /// - Returns: `true` quando a preferência foi gravada no Firestore.
+    @discardableResult
+    func applyInitialPrivacy(uid: String, privacy: AthletePrivacy) async -> Bool {
+        let cleanUid = uid.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !cleanUid.isEmpty else { return false }
+
+        storePendingPrivacy(privacy, for: cleanUid)
+
+        do {
+            // Cria o documento já com a privacidade pendente ou, se existir, aplica-a ao documento atual.
+            try await createOwnProfileIfMissing(uid: cleanUid)
+        } catch {
+            Self.log("applyInitialPrivacy", Collections.athletes, error)
+        }
+
+        return pendingPrivacy(for: cleanUid) == nil
+    }
+
+    /// Guarda a escolha quando não é possível gravá-la agora (ex.: login automático falhou após o cadastro).
+    func storePendingPrivacy(_ privacy: AthletePrivacy, for uid: String) {
+        guard !uid.isEmpty else { return }
+        UserDefaults.standard.set(privacy.rawValue, forKey: Self.pendingPrivacyKey(uid))
+    }
+
+    private func pendingPrivacy(for uid: String) -> AthletePrivacy? {
+        guard let raw = UserDefaults.standard.string(forKey: Self.pendingPrivacyKey(uid)) else { return nil }
+        return AthletePrivacy(storedValue: raw)
+    }
+
+    private func clearPendingPrivacy(for uid: String) {
+        UserDefaults.standard.removeObject(forKey: Self.pendingPrivacyKey(uid))
+    }
+
+    private static func pendingPrivacyKey(_ uid: String) -> String {
+        "athletes.pendingPrivacy.\(uid)"
     }
 
     /// Cria a projeção pública do próprio usuário a partir de `users/{uid}` (leitura permitida ao dono)
@@ -266,7 +348,8 @@ final class AthletesService: @unchecked Sendable {
             throw error
         }
         clearSignature(for: uid)
-
+        // A escolha explícita feita agora prevalece sobre qualquer escolha pendente do cadastro.
+        clearPendingPrivacy(for: uid)
         switch privacy {
         case .private:
             await deleteAllRecords(uid: uid)

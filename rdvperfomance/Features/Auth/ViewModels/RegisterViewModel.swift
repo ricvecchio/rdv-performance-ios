@@ -23,6 +23,9 @@ final class RegisterViewModel: ObservableObject {
     @Published var bio: String = ""
     @Published var gymName: String = ""
 
+    // Privacidade do perfil (recurso Atletas); padrão: Privado
+    @Published var privacy: AthletePrivacy = .private
+
     @Published var isLoading: Bool = false
     @Published var errorMessage: String? = nil
     @Published var successMessage: String? = nil
@@ -142,6 +145,15 @@ final class RegisterViewModel: ObservableObject {
         // A conta já foi criada no backend; autentica para manter o comportamento anterior.
         // Em caso de falha no login automático, o usuário retorna ao login e entra manualmente.
         _ = try? await service.login(email: form.email, password: form.password)
+
+        // Privacidade escolhida: só é gravada com a sessão do novo professor ativa (UID igual ao da conta criada).
+        // Sem sessão (login automático falhou), fica pendente e é aplicada no primeiro login.
+        if Auth.auth().currentUser?.uid == teacherUid {
+            await AthletesService.shared.applyInitialPrivacy(uid: teacherUid, privacy: privacy)
+        } else {
+            AthletesService.shared.storePendingPrivacy(privacy, for: teacherUid)
+        }
+
         successMessage = AppLocalization.string("auth.registration.success", locale: Self.localizationLocale)
     }
 

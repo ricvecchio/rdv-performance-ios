@@ -88895,6 +88895,28 @@
         }
       }
     },
+    "auth.register.privacy.title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Profile privacy"
+          }
+        },
+        "es" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacidad del perfil"
+          }
+        },
+        "pt-BR" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Privacidade do perfil"
+          }
+        }
+      }
+    },
     "settings.privacy.error" : {
       "extractionState" : "stale",
       "localizations" : {
