@@ -38,7 +38,7 @@ struct AdminProfileSelectionView: View {
                     selectionButton(
                         title: "admin.profile_selection.administrator.title",
                         subtitle: "admin.profile_selection.administrator.subtitle",
-                        icon: "person.crop.circle.badge.checkmark"
+                        icon: "gearshape.fill"
                     ) {
                         session.selectAdminProfile(.administrator)
                     }
@@ -46,7 +46,7 @@ struct AdminProfileSelectionView: View {
                     selectionButton(
                         title: "admin.profile_selection.student.title",
                         subtitle: "admin.profile_selection.student.subtitle",
-                        icon: "person.crop.circle"
+                        icon: "person.fill"
                     ) {
                         session.selectAdminProfile(.student)
                     }
@@ -156,7 +156,7 @@ struct AdminProfileSelectionView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .padding(.horizontal, 14)
+            .padding(.horizontal, 12)
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
