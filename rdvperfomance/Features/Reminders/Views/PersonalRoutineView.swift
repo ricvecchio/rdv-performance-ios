@@ -14,6 +14,7 @@ struct PersonalRoutineView: View {
     @State private var section: PersonalOrganizerSection
     @State private var noteEditor: NoteEditorTarget?
     @State private var reminderEditor: ReminderEditorTarget?
+    @State private var isBirthdayEditorPresented = false
     @State private var notePendingDeletion: PersonalNote?
     @State private var reminderPendingDeletion: PersonalReminder?
     @State private var errorMessage: String?
@@ -67,16 +68,18 @@ struct PersonalRoutineView: View {
             switch section {
             case .notes: notesSection
             case .reminders: remindersSection
-            case .birthdays: PersonalBirthdaysContent()
+            case .birthdays: PersonalBirthdaysContent(onEditorPresentationChange: { isBirthdayEditorPresented = $0 })
             }
         }
+        .blur(radius: (noteEditor != nil || reminderEditor != nil || isBirthdayEditorPresented) ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: noteEditor != nil || reminderEditor != nil || isBirthdayEditorPresented)
         .sheet(item: $noteEditor) { target in
             PersonalNoteEditorSheet(note: target.note)
-                .presentationDetents([.large])
+                .presentationDetents([.fraction(0.75)])
         }
         .sheet(item: $reminderEditor) { target in
             PersonalReminderEditorSheet(reminder: target.reminder)
-                .presentationDetents([.large])
+                .presentationDetents([.fraction(0.75)])
         }
         .alert(
             "personal.note.delete_title",

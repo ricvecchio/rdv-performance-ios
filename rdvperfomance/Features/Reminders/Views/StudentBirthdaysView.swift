@@ -8,6 +8,7 @@ struct StudentBirthdaysView: View {
     let onSelectSection: (StudentMainSection) -> Void
 
     @EnvironmentObject private var store: PersonalOrganizerStore
+    @State private var isBirthdayEditorPresented = false
 
     var body: some View {
         PersonalScreenScaffold(
@@ -19,8 +20,10 @@ struct StudentBirthdaysView: View {
                 PersonalMessageCard(text: loadError.loadMessage)
             }
 
-            PersonalBirthdaysContent()
+            PersonalBirthdaysContent(onEditorPresentationChange: { isBirthdayEditorPresented = $0 })
         }
+        .blur(radius: isBirthdayEditorPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: isBirthdayEditorPresented)
     }
 }
 
