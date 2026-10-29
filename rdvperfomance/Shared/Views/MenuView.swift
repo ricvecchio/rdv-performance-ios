@@ -43,6 +43,9 @@ struct MenuView: View {
                 teacherMenu
             }
         }
+        // Desfoca o menu ao fundo enquanto o modal "Entrar no NextFit" está aberto (o modal permanece nítido)
+        .blur(radius: isNextFitLoginSheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: isNextFitLoginSheetPresented)
         // Reavalia ao abrir/voltar ao Menu (após login ou logout feitos na tela WOD do dia)
         .onAppear(perform: refreshNextFitSession)
         .onChange(of: session.uid) { _, _ in refreshNextFitSession() }

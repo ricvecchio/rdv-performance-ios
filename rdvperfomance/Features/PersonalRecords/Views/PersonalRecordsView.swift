@@ -216,6 +216,9 @@ struct PersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // Desfoca a tela ao fundo enquanto o modal Importar do Tecnofit está aberto (o modal permanece nítido)
+        .blur(radius: isTecnofitImportPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: isTecnofitImportPresented)
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $isTecnofitImportPresented) {
             TecnofitImportSheet {
