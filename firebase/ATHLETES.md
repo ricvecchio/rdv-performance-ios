@@ -34,6 +34,10 @@ Categorias: `barbell`, `gymnastic`, `endurance`, `notables`, `girls`, `open`, `h
   (criação exige `0`; atualização exige o valor atual). Visível para perfis públicos e privados; `records/*` segue restrito ao dono/público.
 - `prCount` = quantidade de movimentos/provas com resultado válido (Barbell: número > 0; demais: texto não vazio).
   Atualizações históricas do mesmo movimento não são contadas em duplicidade.
+- **Requer plano Blaze** (Cloud Functions não podem ser implantadas no Spark). Verificado em 2026-10-29: faturamento do projeto
+  `rdvperformanceapp` desativado e nenhuma Function implantada; por isso `prCount` permanece 0 até a implantação.
+  Banco em `nam5`: a região `us-central1` do trigger é a correta. Enquanto a Function não existir, rode o backfill
+  (abaixo) para recalcular `prCount` manualmente.
 - Deploy: `firebase deploy --only functions:syncPublicAthletePrCount` (a região do trigger deve coincidir com a do Firestore;
   parâmetro `FIRESTORE_TRIGGER_REGION`, padrão `us-central1`). Publique as regras e rode o backfill **depois**/em conjunto.
 

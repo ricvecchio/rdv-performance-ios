@@ -51,7 +51,6 @@ struct PersonalScreenScaffold<Content: View, Pinned: View>: View {
 
     var body: some View {
         ZStack {
-            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
                 Rectangle()
@@ -100,6 +99,10 @@ struct PersonalScreenScaffold<Content: View, Pinned: View>: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // O fundo fica em `.background` (e não como filho do ZStack): a imagem usa scaledToFill e, no Tema Claro
+        // (900×1600, mais alta que larga), ultrapassava a altura reduzida pelo teclado, aumentando o ZStack e
+        // deslocando o conteúdo para trás do cabeçalho. Em `.background` ela não participa do layout.
+        .background { AppThemeBackgroundImage() }
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
