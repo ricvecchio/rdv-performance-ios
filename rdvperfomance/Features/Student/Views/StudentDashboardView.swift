@@ -17,6 +17,8 @@ struct StudentDashboardView: View {
     @State private var isNextFitLoginSheetPresented = false
     @State private var nextFitEmailInput = ""
     @State private var nextFitPasswordInput = ""
+    // Indica que a Home já foi exibida (as reexibições, ex.: retorno do WOD do dia, atualizam o lembrete de check-in)
+    @State private var hasAppearedOnce = false
 
     private let contentMaxWidth: CGFloat = 380
     private let summaryCardHeight: CGFloat = 132
@@ -94,6 +96,8 @@ struct StudentDashboardView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // Desfoca a Home ao fundo enquanto o modal "Entrar no NextFit" está aberto (padrão dos demais modais: raio 8)
+        .blur(radius: isNextFitLoginSheetPresented ? 8 : 0)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -114,9 +118,18 @@ struct StudentDashboardView: View {
         .appThemeNavigationBarColorScheme()
         .onAppear {
             Task { await viewModel.load(locale: locale) }
+            // Retorno à Home (ex.: após agendar/cancelar no WOD do dia): atualiza o lembrete de check-in.
+            // A primeira exibição é atendida pela `.task(id:)` abaixo (evita consulta duplicada).
+            if hasAppearedOnce {
+                Task { await viewModel.loadTodayConfirmedCheckIns() }
+            }
+            hasAppearedOnce = true
         }
         .task(id: viewModel.hasNextFitSession) {
             await viewModel.loadCurrentWeekCheckIns()
+        }
+        .task(id: viewModel.hasNextFitSession) {
+            await viewModel.loadTodayConfirmedCheckIns()
         }
         .sheet(isPresented: $isRequestLinkSheetPresented) {
             requestLinkSheet
@@ -125,6 +138,10 @@ struct StudentDashboardView: View {
         .sheet(isPresented: $isNextFitLoginSheetPresented, onDismiss: clearNextFitCredentials) {
             nextFitLoginSheet
                 .presentationDetents([.fraction(0.50)])
+        }
+        // Aviso único da novidade de temas (1.0.25); "Escolher meu tema" abre a ThemeSettingsView na pilha da Home
+        .themeAnnouncement {
+            path.append(.tema)
         }
     }
 
@@ -170,7 +187,7 @@ struct StudentDashboardView: View {
         VStack(alignment: .leading, spacing: 14) {
             HStack(spacing: 8) {
                 Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundColor(.yellow.opacity(0.85))
+                    .foregroundColor(appTheme == .light ? Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) : .yellow.opacity(0.85)) // Claro: #B77900
                 Text("dashboard.notices")
                     .font(.system(size: 17, weight: .bold))
                     .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
@@ -193,7 +210,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
@@ -266,7 +283,7 @@ struct StudentDashboardView: View {
                     Text("dashboard.invite_coach")
                 }
                 .padding(.horizontal, 14)
-                .compactPrimaryGreenActionButton()
+                .modifier(DashboardPrimaryActionButtonModifier(isCompact: true))
             }
             .buttonStyle(.plain)
         }
@@ -274,7 +291,7 @@ struct StudentDashboardView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
         .onAppear {
             isTeacherLinkIconPulsing = true
@@ -332,11 +349,11 @@ struct StudentDashboardView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.65), light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -356,7 +373,7 @@ struct StudentDashboardView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -381,7 +398,7 @@ struct StudentDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(DashboardSendRequestButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isProcessingLinkAction)
@@ -438,7 +455,7 @@ struct StudentDashboardView: View {
                 Spacer(minLength: 0)
 
                 ProgressView(value: progress)
-                    .tint(Theme.Colors.primaryGreen)
+                    .tint(appTheme == .light ? AppThemePalette.lightBar.opacity(0.80) : Theme.Colors.primaryGreen)
 
                 if total == 0 {
                     Text("dashboard.you_do_not_have_workouts_scheduled_for_this_week")
@@ -449,7 +466,12 @@ struct StudentDashboardView: View {
                         ForEach(viewModel.currentWeekDaySummaries) { item in
                             VStack(spacing: 6) {
                                 Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
-                                    .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                    .foregroundStyle(
+                                        // Tema Claro: dia concluído em verde militar translúcido (80%); pendente mantém o original
+                                        appTheme == .light && item.isCompleted
+                                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                            : AnyShapeStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                    )
                                 Text(weekdayAbbreviation(for: item.date))
                                     .font(.system(size: 12, weight: .medium))
                                     .foregroundStyle(Theme.Colors.ink(0.75))
@@ -463,9 +485,9 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
@@ -518,31 +540,23 @@ struct StudentDashboardView: View {
                 }
 
                 Spacer()
-
-                if !viewModel.isLoadingCurrentWeekCheckIns {
-                    Text(
-                        String(
-                            format: AppLocalization.string("dashboard.progress_percentage", locale: locale),
-                            locale: locale,
-                            arguments: [Int64((progress * 100).rounded())]
-                        )
-                    )
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
-                }
             }
 
             if !viewModel.isLoadingCurrentWeekCheckIns {
                 Spacer(minLength: 0)
 
                 ProgressView(value: progress)
-                    .tint(Theme.Colors.primaryGreen)
+                    .tint(appTheme == .light ? AppThemePalette.lightBar.opacity(0.80) : Theme.Colors.primaryGreen)
 
                 HStack(spacing: 10) {
                     ForEach(viewModel.currentWeekCheckInSummaries) { item in
                         VStack(spacing: 6) {
                             Image(systemName: item.isCompleted ? "checkmark.seal.fill" : "circle")
-                                .foregroundStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                .foregroundStyle(
+                                    appTheme == .light && item.isCompleted
+                                        ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                        : AnyShapeStyle(AppThemeAdaptiveColor(item.isCompleted ? Theme.Colors.primaryGreen : .white.opacity(0.35)))
+                                )
                             Text(weekdayAbbreviation(for: item.date))
                                 .font(.system(size: 12, weight: .medium))
                                 .foregroundStyle(Theme.Colors.ink(0.75))
@@ -555,9 +569,9 @@ struct StudentDashboardView: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, minHeight: summaryCardHeight, maxHeight: summaryCardHeight, alignment: .topLeading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
 
@@ -576,8 +590,26 @@ struct StudentDashboardView: View {
             .accessibilityHidden(true)
     }
 
-    @ViewBuilder
+    // Card WOD do dia + faixa integrada do lembrete "Seu check-in de hoje" (Sugestão 3).
+    // Sem check-in confirmado o conjunto contém somente o WOD, com exatamente o visual original
+    // (cantos de 14, contorno e sombra únicos). A faixa fica fora do Button: não dispara a navegação.
     private var nextFitWodEntryCard: some View {
+        let reminders = viewModel.hasNextFitSession ? viewModel.todayConfirmedCheckIns : []
+
+        return VStack(spacing: 0) {
+            nextFitWodEntryCardTop
+
+            if !reminders.isEmpty {
+                todayCheckInReminderStrip(reminders)
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1))
+        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
+    }
+
+    @ViewBuilder
+    private var nextFitWodEntryCardTop: some View {
         if viewModel.hasNextFitSession {
             Button {
                 path.append(.studentNextFitWod)
@@ -612,7 +644,7 @@ struct StudentDashboardView: View {
                             Text("dashboard.connect_nextfit")
                         }
                         .padding(.horizontal, 14)
-                        .compactPrimaryGreenActionButton()
+                        .modifier(DashboardPrimaryActionButtonModifier(isCompact: true))
                     }
                     .buttonStyle(.plain)
                 }
@@ -665,14 +697,14 @@ struct StudentDashboardView: View {
         .background(
             ZStack {
                 if appTheme == .light {
-                    // Tema Claro: escurece a foto com preto translúcido e verde-escuro (verde militar das barras),
+                    // Tema Claro: escurecimento moderado (preto e verde militar das barras) para manter a foto mais viva,
                     // mais intenso à esquerda (textos) e mais leve à direita (detalhes da fotografia)
-                    Color.black.opacity(0.30)
+                    Color.black.opacity(0.15)
                     LinearGradient(
                         colors: [
-                            AppThemePalette.lightBar.opacity(0.85),
-                            AppThemePalette.lightBar.opacity(0.55),
-                            AppThemePalette.lightBar.opacity(0.25)
+                            AppThemePalette.lightBar.opacity(0.65),
+                            AppThemePalette.lightBar.opacity(0.35),
+                            AppThemePalette.lightBar.opacity(0.10)
                         ],
                         startPoint: .leading,
                         endPoint: .trailing
@@ -696,10 +728,142 @@ struct StudentDashboardView: View {
                 .resizable()
                 .scaledToFill()
         )
-        .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1))
+        // Recorta a foto na área original do WOD (132 pt) para não invadir a faixa do lembrete;
+        // o arredondamento, o contorno e a sombra são aplicados ao conjunto em `nextFitWodEntryCard`.
+        .clipped()
         .contentShape(RoundedRectangle(cornerRadius: 14))
-        .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
+    }
+
+    // MARK: - Lembrete "Seu check-in de hoje" (faixa integrada ao WOD do dia; informativo)
+
+    // Cores locais exclusivas da faixa do lembrete (Tema Claro — Sugestão 3)
+    private enum TodayCheckInColors {
+        static let modality = Color(red: 0x07 / 255, green: 0xB9 / 255, blue: 0x66 / 255)        // #07B966
+        static let badgeBackground = Color(red: 0xBA / 255, green: 0xF1 / 255, blue: 0xD0 / 255) // #BAF1D0
+    }
+
+    // Tema Claro: #F0F7EF / #85C995 / #171C17 / #294A2F / #25482B (valores já presentes em `LightColors`)
+    private var todayCheckInDividerColor: AppThemeColor {
+        AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.iconSurface)
+    }
+
+    private func todayCheckInReminderStrip(_ reminders: [NextFitAgendaDisplay]) -> some View {
+        // Indicador visual "Lembrete" (sem notificação nem ação)
+        let reminderBadge = HStack(spacing: 4) {
+            Image(systemName: "bell.fill")
+                .font(.system(size: 10, weight: .semibold))
+                .accessibilityHidden(true)
+            Text("dashboard.today_checkin.reminder_badge")
+                .font(.system(size: 11, weight: .semibold))
+                .lineLimit(1)
+        }
+        .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
+        .padding(.horizontal, 8)
+        .padding(.vertical, 3)
+        .background(
+            Capsule().fill(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.16), light: TodayCheckInColors.badgeBackground))
+        )
+
+        return VStack(spacing: 0) {
+            // Divisor horizontal discreto entre o WOD e o lembrete
+            Rectangle()
+                .fill(todayCheckInDividerColor)
+                .frame(height: 1)
+
+            VStack(alignment: .leading, spacing: 8) {
+                // Linha superior: título centralizado + indicador "Lembrete" à direita.
+                // Uma cópia invisível do indicador à esquerda reserva a mesma largura,
+                // mantendo o título centralizado na faixa sem sobreposição.
+                HStack(alignment: .center, spacing: 8) {
+                    reminderBadge
+                        .hidden()
+                        .accessibilityHidden(true)
+
+                    Text("dashboard.today_checkin.title")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.85)
+                        .frame(maxWidth: .infinity, alignment: .center)
+
+                    reminderBadge
+                }
+
+                // Um bloco por agendamento confirmado (ordem cronológica do ViewModel), com divisor interno
+                ForEach(Array(reminders.enumerated()), id: \.element.id) { index, entry in
+                    if index > 0 {
+                        Rectangle()
+                            .fill(todayCheckInDividerColor)
+                            .frame(height: 1)
+                    }
+                    todayCheckInReminderRow(entry)
+                }
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
+        .accessibilityElement(children: .combine)
+    }
+
+    private func todayCheckInReminderRow(_ entry: NextFitAgendaDisplay) -> some View {
+        let modalityName = entry.modalityName.trimmingCharacters(in: .whitespacesAndNewlines)
+        let locationName = entry.locationName.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        return HStack(alignment: .center, spacing: 10) {
+            // Metade esquerda: ícone + horário (prioridade) e local, alinhados à esquerda.
+            // `minWidth: 0` + `maxWidth: .infinity` nas duas metades garante a mesma flexibilidade,
+            // fazendo o HStack dividir a largura igualmente e manter o divisor no centro.
+            HStack(alignment: .center, spacing: 10) {
+                Image(systemName: "calendar.badge.clock")
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: LightColors.iconInk))
+                    .frame(width: 34, height: 34)
+                    .background(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.14), light: LightColors.iconSurface))
+                    .clipShape(RoundedRectangle(cornerRadius: 9))
+                    .accessibilityHidden(true)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(verbatim: entry.scheduleText(locale: locale))
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+
+                    if !locationName.isEmpty {
+                        Text(verbatim: locationName)
+                            .font(.system(size: 12, weight: .medium))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.70), light: LightColors.chevron))
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                .layoutPriority(1)
+            }
+            .frame(minWidth: 0, maxWidth: .infinity, alignment: .leading)
+
+            if !modalityName.isEmpty {
+                // Divisor vertical discreto (centralizado entre as duas metades)
+                Rectangle()
+                    .fill(todayCheckInDividerColor)
+                    .frame(width: 1, height: 30)
+
+                // Metade direita: conjunto ícone + modalidade centralizado
+                HStack(spacing: 6) {
+                    Image(systemName: "dumbbell.fill")
+                        .font(.system(size: 12, weight: .semibold))
+                        .accessibilityHidden(true)
+                    Text(verbatim: modalityName)
+                        .font(.system(size: 14, weight: .semibold))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.primaryGreen, light: TodayCheckInColors.modality))
+                .frame(minWidth: 0, maxWidth: .infinity, alignment: .center)
+            }
+        }
     }
 
     private func weeklyProgressText(completed: Int, total: Int) -> String {
@@ -719,7 +883,17 @@ struct StudentDashboardView: View {
         return formatter.string(from: date).replacingOccurrences(of: ".", with: "").capitalized
     }
 
-    private var nextFitLoginSheet: some View {
+    /// Modal "Entrar no NextFit". Reutilizado também pelo Menu (WOD do dia), sem alterar o conteúdo original.
+    struct NextFitLoginSheetView: View {
+        @ObservedObject var viewModel: StudentDashboardViewModel
+        @Binding var nextFitEmailInput: String
+        @Binding var nextFitPasswordInput: String
+        @Binding var isNextFitLoginSheetPresented: Bool
+
+        @Environment(\.locale) private var locale
+        @Environment(\.appTheme) private var appTheme
+
+        var body: some View {
         ZStack {
             Theme.Colors.sheetBackground.ignoresSafeArea()
 
@@ -749,13 +923,13 @@ struct StudentDashboardView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Theme.Colors.ink(0.10))
+                                    .background(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.06)))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                                     )
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.92)) : AnyShapeStyle(Color.white.opacity(0.92)))
                             }
 
                             VStack(alignment: .leading, spacing: 8) {
@@ -769,13 +943,13 @@ struct StudentDashboardView: View {
                                     .font(.system(size: 16, weight: .semibold))
                                     .padding(.horizontal, 14)
                                     .padding(.vertical, 14)
-                                    .background(Theme.Colors.ink(0.10))
+                                    .background(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.10)) : AnyShapeStyle(Color.white.opacity(0.06)))
                                     .cornerRadius(14)
                                     .overlay(
                                         RoundedRectangle(cornerRadius: 14)
-                                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                                     )
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(appTheme == .light ? AnyShapeStyle(Theme.Colors.ink(0.92)) : AnyShapeStyle(Color.white.opacity(0.92)))
                             }
 
                             if let error = viewModel.nextFitLoginError {
@@ -786,11 +960,11 @@ struct StudentDashboardView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Color.white.opacity(0.06), light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -810,7 +984,7 @@ struct StudentDashboardView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -835,7 +1009,7 @@ struct StudentDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(DashboardSignInButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(viewModel.isAuthenticatingNextFit)
@@ -845,10 +1019,111 @@ struct StudentDashboardView: View {
                 .padding(.bottom, 16)
             }
         }
+        }
+    }
+
+    private var nextFitLoginSheet: some View {
+        NextFitLoginSheetView(
+            viewModel: viewModel,
+            nextFitEmailInput: $nextFitEmailInput,
+            nextFitPasswordInput: $nextFitPasswordInput,
+            isNextFitLoginSheetPresented: $isNextFitLoginSheetPresented
+        )
     }
 
     private func clearNextFitCredentials() {
         nextFitEmailInput = ""
         nextFitPasswordInput = ""
+    }
+}
+
+// Botões principais da dashboard (uso exclusivo deste arquivo).
+// Escuro: aplica exatamente o estilo original (`primaryGreenActionButton` / `compactPrimaryGreenActionButton`).
+// Claro: mesmo formato e dimensões, com fundo verde militar sólido (#29452C), conteúdo claro e sombra.
+private struct DashboardPrimaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    let isCompact: Bool
+
+    private static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+
+    func body(content: Content) -> some View {
+        if appTheme == .light {
+            content
+                .font(.system(size: isCompact ? 15 : 16, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(isEnabled ? 0.92 : 0.55))
+                .padding(.vertical, isCompact ? 9 : 14)
+                .background(AppThemePalette.lightBar)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Self.darkGreenBorder, lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
+                // Conteúdo sobre o verde militar usa os valores claros (ícones, ProgressView)
+                .environment(\.colorScheme, .dark)
+        } else if isCompact {
+            content.compactPrimaryGreenActionButton()
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
+// Botão "Enviar solicitação" (modal de vínculo da Home).
+// Tema Claro: mesmo padrão do botão "Sair" da ProfileView — verde militar (#29452C) a 80%, texto branco
+// e contorno #294A2F — com as mesmas medidas, sombra e estados do `DashboardPrimaryActionButtonModifier`.
+// Tema Escuro: exatamente o `primaryGreenActionButton()` original.
+private struct DashboardSendRequestButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    private static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Self.darkGreenBorder, lineWidth: 1)
+                )
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
+    }
+}
+
+// Botão "Entrar" (modal NextFit). Mesmo padrão do botão "Enviar convite" da TeacherStudentsListView:
+// Tema Claro + habilitado: verde militar a 80%, texto branco, contorno #294A2F (1 pt) e raio 12.
+// Tema Escuro ou desabilitado: `primaryGreenActionButton()` original.
+private struct DashboardSignInButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    private static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Self.darkGreenBorder, lineWidth: 1)
+                )
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
     }
 }

@@ -11,6 +11,15 @@ struct ProfileView: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Cores locais exclusivas do Tema Claro (padrão da PersonalRecordsView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255) // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
+        static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+        static let cardBorder = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)  // #C9DFC9
+    }
 
     private let contentMaxWidth: CGFloat = 380
 
@@ -287,7 +296,8 @@ struct ProfileView: View {
                 .buttonStyle(.plain)
             }
         }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme`: atualiza a barra imediatamente ao alternar o tema
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
@@ -918,11 +928,16 @@ struct ProfileView: View {
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface, followsBarColorScheme: false))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder, followsBarColorScheme: false), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -1058,11 +1073,16 @@ struct ProfileView: View {
             }
         }
         .padding(.vertical, 8)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface, followsBarColorScheme: false))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder, followsBarColorScheme: false), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -1226,12 +1246,30 @@ struct ProfileView: View {
         Button {
             session.logout()
         } label: {
-            HStack {
-                Spacer()
-                Text("auth.logout")
-                Spacer()
+            if appTheme == .light {
+                // Tema Claro: mesmas dimensões/raio do `primaryGreenActionButton()`, com verde militar (#29452C) translúcido mais escuro no fundo e texto branco para melhor contraste
+                HStack {
+                    Spacer()
+                    Text("auth.logout")
+                    Spacer()
+                }
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(LightColors.darkGreenBorder, lineWidth: 1)
+                )
+            } else {
+                HStack {
+                    Spacer()
+                    Text("auth.logout")
+                    Spacer()
+                }
+                .primaryGreenActionButton()
             }
-            .primaryGreenActionButton()
         }
         .buttonStyle(.plain)
     }

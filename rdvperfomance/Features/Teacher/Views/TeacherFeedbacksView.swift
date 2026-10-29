@@ -170,7 +170,11 @@ struct TeacherFeedbacksView: View {
     private var listCard: some View {
         VStack(alignment: .leading, spacing: 12) {
 
-            HStack {
+            HStack(spacing: 8) {
+                Image(systemName: "clock.arrow.circlepath")
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
+                    .font(.system(size: 14))
+
                 Text("ui.history")
                     .font(.system(size: 17, weight: .semibold))
                     .foregroundStyle(Theme.Colors.ink(0.35))
@@ -198,11 +202,11 @@ struct TeacherFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -258,15 +262,16 @@ struct TeacherFeedbacksView: View {
                 TextEditor(text: $newFeedbackText)
                     .focused($isFeedbackFocused)
                     .scrollContentBackground(.hidden)
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    // Tema Claro: paleta (#171C17 / #F0F7EF / #C9DFC9). Tema Escuro: valores originais.
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                     .frame(minHeight: 120)
                     .padding(10)
-                    .background(Theme.Colors.ink(0.06))
+                    .background(AppThemeColor(dark: Theme.Colors.ink(0.06).dark, light: Theme.Colors.ink(0.10).light))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
                             .stroke(
-                                Theme.Colors.primaryGreen.opacity(0.28),
+                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron),
                                 lineWidth: 1
                             )
                     )
@@ -284,7 +289,9 @@ struct TeacherFeedbacksView: View {
                     }
                     Spacer()
                 }
-                .primaryGreenActionButton()
+                // Tema Claro (habilitado): cores do botão Sair da ProfileView + profundidade da AdminProfileSelectionView.
+                // Tema Escuro ou desabilitado: `primaryGreenActionButton()` original.
+                .modifier(TeacherFeedbacksLightBarActionButtonModifier())
             }
             .buttonStyle(.plain)
             .disabled(isSaving || isLoading)
@@ -292,11 +299,11 @@ struct TeacherFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -320,7 +327,12 @@ struct TeacherFeedbacksView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(LightColors.chevron)
+                        : AnyShapeStyle(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28))),
+                    lineWidth: 1
+                )
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -451,3 +463,34 @@ struct TeacherFeedbacksView: View {
         path.removeLast()
     }
 }
+
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let teacherFeedbacksDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
+// Tema Claro + habilitado: mesmas cores/transparências do botão Sair da ProfileView e sombra da
+// AdminProfileSelectionView, preservando fonte, padding e arredondamento de `primaryGreenActionButton()`.
+// Tema Escuro ou desabilitado: aplica exatamente o `primaryGreenActionButton()` original.
+private struct TeacherFeedbacksLightBarActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(teacherFeedbacksDarkGreenBorder, lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(0.25), radius: 10, y: 6)
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
+    }
+}
+

@@ -9,6 +9,14 @@ import Foundation
 enum StudentMainSection: Hashable {
     case home
     case agenda
+    case reminders
     case records
     case profile
+    case menu
 }
+
+/// Rotas internas da seção Lembretes (pilha própria, independente do `AppRoute`).
+enum StudentRemindersRoute: Hashable {
+    case birthdays
+}
+

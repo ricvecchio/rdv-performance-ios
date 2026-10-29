@@ -105,13 +105,6 @@ struct TeacherWorkoutTemplatesView: View {
                                     .foregroundStyle(Theme.Colors.ink(0.92))
                             }
 
-                            if shouldShowAddButton {
-                                TeacherWorkoutTemplatesAddButton(
-                                    title: addButtonTitle,
-                                    action: { handleAddButtonTap() }
-                                )
-                            }
-
                             TeacherWorkoutTemplatesContentCard(
                                 isLoading: isLoading,
                                 hasLoadedInitialData: hasLoadedInitialData,
@@ -189,7 +182,26 @@ struct TeacherWorkoutTemplatesView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    if shouldShowAddButton {
+                        Button {
+                            handleAddButtonTap()
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "plus")
+                                Text("common.add")
+                            }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Color.green.opacity(0.16)))
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)

@@ -5,6 +5,7 @@ struct RegisterStudentView: View {
 
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showPassword: Bool = false
 
@@ -13,13 +14,15 @@ struct RegisterStudentView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Tema Claro: mesmo fundo do card "Escolha o tema do app" (#DDEDDC)
+    private let registrationCardLightSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)
+
     private let studentFocusOptions: [FocusAreaDTO] = [.CROSSFIT, .GYM, .HOME]
 
     // Interface principal com formulário de cadastro de aluno
     var body: some View {
         ZStack {
 
-            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -37,6 +40,9 @@ struct RegisterStudentView: View {
                             formCardStudent()
                                 .padding(.top, 24)
 
+                            // Escolha do tema (preferência local, aplicada imediatamente)
+                            RegisterThemeSelectionSection()
+
                             actionArea()
 
                             Color.clear
@@ -52,6 +58,10 @@ struct RegisterStudentView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // O fundo fica em `background` (não participa do layout): dentro do ZStack ele ignora a safe area
+        // (inclusive a do teclado) e mantinha o ZStack com a altura total da tela, deslocando o formulário
+        // para cima do cabeçalho quando o teclado abria.
+        .background(AppThemeBackgroundImage())
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -76,7 +86,8 @@ struct RegisterStudentView: View {
                     .foregroundStyle(Theme.Colors.ink())
             }
         }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme` (mesmos valores de `headerBackground`): a barra acompanha a troca de tema imediatamente
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .onChange(of: vm.successMessage) { _, newValue in
@@ -142,11 +153,14 @@ struct RegisterStudentView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: registrationCardLightSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.indicator),
+                    lineWidth: 1
+                )
         )
     }
 
@@ -192,7 +206,7 @@ struct RegisterStudentView: View {
                     )
                 }
                 .frame(maxWidth: .infinity)
-                .primaryGreenActionButton()
+                .authPrimaryActionButton(usesLogoutButtonBackground: true)
             }
             .buttonStyle(.plain)
             .disabled(vm.isLoading)
@@ -246,13 +260,13 @@ struct RegisterStudentView: View {
             } label: {
                 HStack {
                     Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: AuthLightPalette.primaryText))
                         .font(.system(size: 16))
 
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: AuthLightPalette.indicator))
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, 10)

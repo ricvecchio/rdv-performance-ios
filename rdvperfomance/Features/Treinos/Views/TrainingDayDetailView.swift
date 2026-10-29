@@ -372,11 +372,11 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -404,35 +404,39 @@ struct TrainingDayDetailView: View {
                     HStack(spacing: 10) {
 
                         Image(systemName: "dumbbell.fill")
-                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
+                            .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk)))
                             .font(.system(size: 14))
                             .frame(width: 22)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("personal_records.movement")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Theme.Colors.ink(0.55))
+                                .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.55)))
 
                             Text(selectedMovementName ?? AppLocalization.string("workout_day_detail.select", locale: locale))
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                                .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText)))
                                 .lineLimit(1)
                         }
 
                         Spacer(minLength: 6)
 
                         Image(systemName: "chevron.right")
-                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron))
+                            .foregroundStyle(appTheme == .light && selectedMovementName != nil ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.chevron)))
                             .font(.system(size: 12, weight: .semibold))
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .frame(maxWidth: .infinity)
-                    .background(AppThemeColor(dark: Color.white.opacity(0.03), light: LightColors.innerSurface))
+                    .background(
+                        appTheme == .light
+                            ? (selectedMovementName != nil ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80)) : AnyShapeStyle(Theme.Colors.ink(0.10)))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    )
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                            .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.primaryGreen.opacity(selectedMovementName != nil ? 0.35 : 0.28)), lineWidth: 1)
                     )
                 }
                 .buttonStyle(.plain)
@@ -444,14 +448,14 @@ struct TrainingDayDetailView: View {
                     HStack(spacing: 10) {
 
                         Image(systemName: "percent")
-                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk))
+                            .foregroundStyle(appTheme == .light && isPercentFieldFocused ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground(0.85).dark, light: LightColors.iconInk)))
                             .font(.system(size: 14))
                             .frame(width: 22)
 
                         VStack(alignment: .leading, spacing: 2) {
                             Text("%")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Theme.Colors.ink(0.55))
+                                .foregroundStyle(appTheme == .light && isPercentFieldFocused ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.55)))
 
                             TextField("workout_day_detail.e_g_50", text: $percentText)
                                 .keyboardType(.decimalPad)
@@ -459,7 +463,8 @@ struct TrainingDayDetailView: View {
                                 .textInputAutocapitalization(.never)
                                 .autocorrectionDisabled(true)
                                 .font(.system(size: 14, weight: .semibold))
-                                .foregroundStyle(Theme.Colors.ink(0.92))
+                                .foregroundStyle(appTheme == .light && isPercentFieldFocused ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
+                                .tint(appTheme == .light && isPercentFieldFocused ? Color.white : nil)
                         }
 
                         Spacer(minLength: 0)
@@ -467,11 +472,15 @@ struct TrainingDayDetailView: View {
                     .padding(.horizontal, 12)
                     .padding(.vertical, 12)
                     .frame(width: 120)
-                    .background(AppThemeColor(dark: Color.white.opacity(0.03), light: LightColors.innerSurface))
+                    .background(
+                        appTheme == .light
+                            ? (isPercentFieldFocused ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80)) : AnyShapeStyle(Theme.Colors.ink(0.10)))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    )
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                            .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.primaryGreen.opacity(isPercentFieldFocused ? 0.35 : 0.28)), lineWidth: 1)
                     )
 
                     // Peso (ocupa o resto)
@@ -503,7 +512,7 @@ struct TrainingDayDetailView: View {
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                     )
                 }
             }
@@ -515,11 +524,11 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -751,11 +760,11 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -966,11 +975,11 @@ struct TrainingDayDetailView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -991,11 +1000,12 @@ struct TrainingDayDetailView: View {
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(AppThemeColor(dark: Color.black.opacity(0.35), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro mantém o original
+                .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.10)), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1029,51 +1039,65 @@ struct TrainingDayDetailView: View {
     // Sheet de edição com campos e botões de ação
     private var editDaySheet: some View {
         ZStack {
-            Theme.Colors.glass(0.92).ignoresSafeArea()
+            Theme.Colors.sheetBackground
+                .ignoresSafeArea()
 
-            VStack(alignment: .leading, spacing: 14) {
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Theme.Colors.ink(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                Text("workout_day_detail.edit_training_day")
-                    .font(.system(size: 18, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                        Text("workout_day_detail.edit_training_day")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink().dark, light: LightColors.primaryText))
+                            .padding(.top, 4)
 
-                UnderlineTextField(
-                    title: "workout_day_detail.title_field",
-                    text: $editTitle,
-                    isSecure: false,
-                    showPassword: .constant(false),
-                    lineColor: Theme.Colors.divider,
-                    textColor: .white.opacity(0.92),
-                    placeholderColor: .white.opacity(0.55)
-                )
+                        VStack(alignment: .leading, spacing: 14) {
+                            editTextField(title: "workout_day_detail.title_field", text: $editTitle)
+                            editTextField(title: "workout_day_detail.description_field", text: $editDescription)
 
-                UnderlineTextField(
-                    title: "workout_day_detail.description_field",
-                    text: $editDescription,
-                    isSecure: false,
-                    showPassword: .constant(false),
-                    lineColor: Theme.Colors.divider,
-                    textColor: .white.opacity(0.92),
-                    placeholderColor: .white.opacity(0.55)
-                )
+                            // Blocos editor section
+                            blocksEditorSection
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                        )
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
+                        .padding(.horizontal, 16)
+                        .padding(.top, 14)
+                    }
+                }
 
-                Divider().background(Theme.Colors.divider)
-
-                // Blocos editor section
-                blocksEditorSection
-
-                Divider().background(Theme.Colors.divider)
-
-                HStack(spacing: 10) {
-
+                HStack(spacing: 12) {
                     Button { showEditSheet = false } label: {
                         Text("common.cancel")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.90))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 10)
-                            .background(Theme.Colors.ink(0.10))
-                            .cornerRadius(12)
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: Color.white))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(AppThemeColor(dark: Color.white.opacity(0.10), light: AppThemePalette.lightBar.opacity(0.80)))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.chevron), lineWidth: 1)
+                            )
+                            .shadow(
+                                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                                radius: appTheme == .light ? 10 : 0,
+                                y: appTheme == .light ? 6 : 0
+                            )
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
@@ -1083,21 +1107,67 @@ struct TrainingDayDetailView: View {
                             if isSaving { ProgressView().tint(Theme.Colors.ink()) }
                             Text("common.save")
                         }
-                        .padding(.horizontal, 14)
-                        .primaryGreenActionButton()
+                        .frame(maxWidth: .infinity)
+                        .modifier(EditDaySaveButtonStyle(isLight: appTheme == .light && !isSaving))
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
                     }
                     .buttonStyle(.plain)
                     .disabled(isSaving)
-
-                    Spacer()
                 }
-
-                Spacer()
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
-            .padding(16)
-            .frame(maxWidth: 420)
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.large])
+    }
+
+    // Campo de texto com o visual dos campos do formulário Adicionar Vídeo
+    private func editTextField(title: LocalizedStringKey, text: Binding<String>) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 14, weight: .semibold))
+                .foregroundStyle(Theme.Colors.ink(0.75))
+
+            TextField("", text: text)
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                .cornerRadius(14)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 14)
+                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                )
+        }
+    }
+
+    // Botão Salvar: Tema Claro com verde militar 80% e texto branco; Tema Escuro mantém o estilo original
+    private struct EditDaySaveButtonStyle: ViewModifier {
+        let isLight: Bool
+
+        func body(content: Content) -> some View {
+            if isLight {
+                content
+                    .font(.system(size: 16, weight: .semibold))
+                    .foregroundStyle(Color.white)
+                    .padding(.vertical, 14)
+                    .background(AppThemePalette.lightBar.opacity(0.80))
+                    .cornerRadius(12)
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(LightColors.chevron, lineWidth: 1)
+                    )
+            } else {
+                content
+                    .primaryGreenActionButton()
+            }
+        }
     }
 
     private var blocksEditorSection: some View {
@@ -1119,28 +1189,30 @@ struct TrainingDayDetailView: View {
 
                                 Text(displayedBlockName(editBlocks[i]))
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
 
                                 TextEditor(text: Binding(
                                     get: { editBlocks[i].details },
                                     set: { editBlocks[i].details = $0 }
                                 ))
                                 .font(.system(size: 14))
-                                .foregroundStyle(Theme.Colors.ink(0.85))
+                                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                                 .scrollContentBackground(.hidden)
-                                .background(Theme.Colors.ink(0.06))
-                                .cornerRadius(10)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 4)
+                                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                                .cornerRadius(14)
                                 .frame(minHeight: 70)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 10)
-                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                                 )
                             }
                         }
                     }
                     .padding(.top, 2)
                 }
-                .frame(maxHeight: 220)
+                .frame(maxHeight: 420)
             }
         }
     }

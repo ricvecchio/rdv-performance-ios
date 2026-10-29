@@ -171,7 +171,7 @@ struct TeacherMyWorkoutsView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         // Tema Escuro: sombra original. Tema Claro: mesma profundidade da AdminProfileSelectionView (substitui, nao duplica)
         .shadow(
@@ -226,7 +226,7 @@ struct TeacherMyWorkoutsView: View {
             .frame(width: 38, height: 38)
             .overlay(
                 RoundedRectangle(cornerRadius: 10)
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.22), light: LightColors.chevron), lineWidth: 1)
             )
 
             Text(text)
@@ -239,7 +239,7 @@ struct TeacherMyWorkoutsView: View {
 
             ZStack {
                 Circle()
-                    .stroke(Theme.Colors.primaryGreen.opacity(0.42), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.42), light: LightColors.chevron), lineWidth: 1)
 
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .semibold))

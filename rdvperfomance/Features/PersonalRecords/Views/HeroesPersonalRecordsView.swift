@@ -14,6 +14,7 @@ struct HeroesPersonalRecordsView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let contentSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
     }
 
     @Binding var path: [AppRoute]
@@ -624,7 +625,7 @@ struct HeroesPersonalRecordsView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -746,11 +747,12 @@ struct HeroesPersonalRecordsView: View {
                             .foregroundStyle(Theme.Colors.ink(0.92))
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
+                            // Tema Claro: superfície de conteúdo (#F0F7EF) e borda (#C9DFC9) da TrainingWeeksView. Tema Escuro: valores originais.
+                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .padding(.horizontal, 16)
@@ -800,7 +802,7 @@ struct HeroesPersonalRecordsView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.10)), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -810,9 +812,25 @@ struct HeroesPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedWod = nil
                     } label: {
-                        Text("common.save")
-                            .frame(maxWidth: .infinity)
-                            .primaryGreenActionButton()
+                        if appTheme == .light {
+                            // Tema Claro: padrão do botão Sair da ProfileView (verde militar 80%/90% e texto branco),
+                            // mantendo as dimensões/raio do `primaryGreenActionButton()`
+                            Text("common.save")
+                                .frame(maxWidth: .infinity)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.white)
+                                .padding(.vertical, 14)
+                                .background(AppThemePalette.lightBar.opacity(0.80))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(appTheme == .light ? LightColors.chevron : AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                                )
+                        } else {
+                            Text("common.save")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
                     }
                     .buttonStyle(.plain)
 
@@ -893,7 +911,7 @@ struct HeroesPersonalRecordsView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1008,22 +1026,29 @@ struct HeroesPersonalRecordsView: View {
             Button {
                 showPRDatePicker = true
             } label: {
+                // Tema Claro: cores do agrupador de dias da TrainingWeeksView. Tema Escuro: valores originais.
                 HStack(spacing: 10) {
                     Image(systemName: "calendar")
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)).dark, light: LightColors.iconInk))
+                        // Fundo do ícone (#85C995) apenas no Tema Claro; o background não altera o tamanho/layout
+                        .background {
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(AppThemeColor(dark: .clear, light: LightColors.iconSurface))
+                                .frame(width: 28, height: 28)
+                        }
                     Text(formatPRDate(selectedPRDate))
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                     Spacer()
                     Image(systemName: "chevron.right")
                         .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.chevron(0.25))
+                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.chevron(0.25).dark, light: LightColors.chevron))
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
-                .background(Theme.Colors.cardBackground)
+                .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.cardSurface))
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -1074,13 +1099,14 @@ struct HeroesPersonalRecordsView: View {
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
                                 HStack {
+                                    // Tema Claro: paleta da TrainingWeeksView. Tema Escuro: valores originais.
                                     Text(entry.value)
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(Theme.Colors.ink(0.92))
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
-                                            .foregroundStyle(Theme.Colors.systemAccentForeground())
+                                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground().dark, light: LightColors.chevron))
                                     }
                                     Spacer()
                                     Text(entry.createdAt.formatted(.dateTime.day(.twoDigits).month(.twoDigits).year().locale(locale)))
@@ -1103,9 +1129,10 @@ struct HeroesPersonalRecordsView: View {
                                 }
                             }
                         }
-                        .background(Theme.Colors.cardBackground)
+                        // Tema Claro: fundo #F0F7EF e borda #C9DFC9 (TrainingWeeksView). Tema Escuro: valores originais.
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                         .cornerRadius(14)
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
+                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1))
                     }
                 }
                 .frame(maxWidth: contentMaxWidth)
@@ -1173,7 +1200,7 @@ struct HeroesPersonalRecordsView: View {
             .padding(14)
             .background(Theme.Colors.cardBackground)
             .cornerRadius(14)
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1))
         }
     }
 
@@ -1252,73 +1279,100 @@ struct HeroesPersonalRecordsView: View {
             Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
-            ScrollView(showsIndicators: false) {
-                VStack(spacing: 14) {
-                    Capsule()
-                        .fill(Theme.Colors.ink(0.18))
-                        .frame(width: 44, height: 5)
-                        .padding(.top, 10)
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
+                        Capsule()
+                            .fill(Theme.Colors.ink(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                    Text("personal_records_heroes.new_hero_wod")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(Theme.Colors.ink())
-                        .padding(.top, 4)
+                        Text("personal_records_heroes.new_hero_wod")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink().dark, light: LightColors.primaryText))
+                            .padding(.top, 4)
 
-                    Text("personal_records_girls.create_a_wod_and_if_you_want_enter_your_initial_result_now")
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.Colors.ink(0.60))
-                        .multilineTextAlignment(.center)
+                        Text("personal_records_girls.create_a_wod_and_if_you_want_enter_your_initial_result_now")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.Colors.ink(0.60))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+
+                        VStack(alignment: .leading, spacing: 10) {
+                        addItemField("personal_records.heroes.wod_name_field", placeholder: "personal_records.placeholder.hero_wod_name", text: $newItemName)
+
+                        addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.for_time_five_rounds", text: $newItemDescription)
+
+                        addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time", text: $newItemValue)
+
+                            if let message = addItemErrorMessage {
+                                Text(message)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.yellow.opacity(0.85))
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.contentSurface))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                        )
+                        .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
                         .padding(.horizontal, 16)
 
-                    VStack(alignment: .leading, spacing: 10) {
-                    addItemField("personal_records.heroes.wod_name_field", placeholder: "personal_records.placeholder.hero_wod_name", text: $newItemName)
-
-                    addItemField("personal_records.form.description_optional", placeholder: "personal_records.placeholder.for_time_five_rounds", text: $newItemDescription)
-
-                    addItemField("personal_records.form.initial_result_optional", placeholder: "personal_records.placeholder.time", text: $newItemValue)
-
-                        if let message = addItemErrorMessage {
-                            Text(message)
-                                .font(.system(size: 14, weight: .semibold))
-                                .foregroundColor(.yellow.opacity(0.85))
-                        }
                     }
-                    .padding(.horizontal, 16)
+                }
+                HStack(spacing: 12) {
+                    Button {
+                        showAddItemSheet = false
+                    } label: {
+                        Text("common.cancel")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Theme.Colors.ink(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
 
-                    HStack(spacing: 12) {
-                        Button {
-                            showAddItemSheet = false
-                        } label: {
-                            Text("common.cancel")
-                                .font(.system(size: 15, weight: .bold))
-                                .foregroundStyle(Theme.Colors.ink(0.85))
+                    Button {
+                        addNewItem()
+                    } label: {
+                        if appTheme == .light {
+                            // Tema Claro: mesmo padrão do botão Salvar do Novo Recorde (verde militar 80% e texto branco)
+                            Text("common.add")
                                 .frame(maxWidth: .infinity)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.white)
                                 .padding(.vertical, 14)
-                                .background(Theme.Colors.ink(0.10))
-                                .cornerRadius(14)
+                                .background(AppThemePalette.lightBar.opacity(0.80))
+                                .cornerRadius(12)
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(appTheme == .light ? LightColors.chevron : AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
                                 )
-                        }
-                        .buttonStyle(.plain)
-
-                        Button {
-                            addNewItem()
-                        } label: {
+                                .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
+                        } else {
                             Text("common.add")
                                 .frame(maxWidth: .infinity)
                                 .primaryGreenActionButton()
                         }
-                        .buttonStyle(.plain)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.top, 6)
-                    .padding(.bottom, 24)
+                    .buttonStyle(.plain)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 24)
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
     }
 
     private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
@@ -1331,12 +1385,12 @@ struct HeroesPersonalRecordsView: View {
                 .textInputAutocapitalization(.sentences)
                 .autocorrectionDisabled(true)
                 .font(.system(size: 16, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                 .padding(.horizontal, 14)
                 .padding(.vertical, 14)
-                .background(Theme.Colors.cardBackground)
+                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
                 .cornerRadius(14)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Theme.Colors.ink(0.08), lineWidth: 1))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1))
         }
     }
 

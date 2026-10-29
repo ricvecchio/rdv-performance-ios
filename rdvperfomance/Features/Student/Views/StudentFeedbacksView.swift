@@ -17,9 +17,11 @@ struct StudentFeedbacksView: View {
     // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView; Tema Escuro usa os valores originais)
     private enum LightColors {
         static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
         static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
     }
 
     @State private var isLoading: Bool = false
@@ -66,13 +68,13 @@ struct StudentFeedbacksView: View {
 
                 FooterBar(
                     path: $path,
-                    kind: .teacherHomeAlunosSobrePerfil(
-                        selectedCategory: category,
+                    kind: .studentHomeTreinosRecordsProfile(
                         isHomeSelected: false,
-                        isAlunosSelected: false,
-                        isSobreSelected: false,
-                        isPerfilSelected: false
-                    )
+                        isTreinosSelected: false,
+                        isRecordsSelected: false,
+                        isPerfilSelected: true
+                    ),
+                    onSelectStudentSection: onSelectSection
                 )
                 .frame(height: Theme.Layout.footerHeight)
                 .frame(maxWidth: .infinity)
@@ -125,9 +127,16 @@ struct StudentFeedbacksView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                Text("student_feedbacks.history")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.35))
+                HStack(spacing: 8) {
+                    Image(systemName: "clock.arrow.circlepath")
+                        .font(.system(size: 14))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
+                        .accessibilityHidden(true)
+
+                    Text("student_feedbacks.history")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Theme.Colors.ink(0.35))
+                }
 
                 Spacer()
 
@@ -157,11 +166,11 @@ struct StudentFeedbacksView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -218,7 +227,12 @@ struct StudentFeedbacksView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(LightColors.chevron)
+                        : AnyShapeStyle(Theme.Colors.ink(0.10)),
+                    lineWidth: 1
+                )
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,

@@ -57,6 +57,157 @@ struct NextFitAgendaParticipantDisplay: Equatable, Identifiable {
     let name: String
     let clientId: Int?
     let contractClientId: Int?
+    /// `Participantes[].Status` = EnumStatusAgendaParticipante (1 Reservado, 2 Presente, 3 Falta,
+    /// 4 FaltaJustificada, 5 Bloqueado, 6 Suspenso, 7 Cancelado, 8 Desistente). Situação na aula:
+    /// NÃO representa categoria comercial e não é usado para classificá-la.
+    let status: Int?
+    /// `Participantes[].Tipo` = EnumTipoAgendaParticipante (1 Cliente, 2 ContratoCliente,
+    /// 3 Oportunidade, 4 ClienteServico). Forma de vínculo com a aula, não categoria comercial.
+    let type: Int?
+}
+
+/// Categoria comercial do participante usada exclusivamente para o ícone da lista de participantes.
+/// `rawValue` é persistido localmente (`NextFitParticipantCategoryStore`); não renomear os casos.
+enum NextFitParticipantCategory: String, Codable, Equatable {
+    case monthly
+    case package
+    case external
+    /// VIP gratuito (somente por classificação confirmada). Usa o ícone neutro existente até que
+    /// exista representação visual aprovada.
+    case vip
+    case unknown
+
+    /// SF Symbol já aprovado para cada categoria.
+    var symbolName: String {
+        switch self {
+        case .monthly: return "person.text.rectangle.fill"
+        case .package: return "ticket.fill"
+        case .external: return "globe"
+        case .vip, .unknown: return "questionmark.circle"
+        }
+    }
+}
+
+struct NextFitParticipantCategoryResolution: Equatable {
+    let category: NextFitParticipantCategory
+    let reason: String
+}
+
+/// Resolve a categoria visual do participante, nesta ordem de prioridade:
+/// 1. Classificação comercial confirmada e persistida (`CodigoCliente` + `CodigoContratoCliente`).
+/// 2. Contrato do próprio aluno autenticado com tipo de agregador (evidência da API).
+/// 3. Inferência de agregador persistida para a MESMA participação (`CodigoAgenda` + `Participantes[].Id`).
+/// 4. Heurística visual `inferredExternalFromReservation` (Tipo 1 + Status 5 + sem contrato) na consulta
+///    atual. Não é confirmação comercial.
+/// 5. `Tipo == 2` com contrato preenchido: fallback VISUAL azul (`.monthly`) para vínculo contratual ainda
+///    não classificado. Não afirma mensalidade e nunca é persistido.
+/// 6. Desconhecido.
+/// `Participantes[].Status`/`Tipo` só são usados nas regras visuais 4 e 5.
+///
+/// Semântica: Swagger oficial "API Pública Next Fit" (integracao.nextfit.com.br/swagger/v1).
+/// EnumTipoContratoBase: 1 = Padrao; 2 = Gympass; 3 = GympassBooking; 4 = TotalPass; 5 = TotalPassBooking.
+/// `Contratos[].Tipo = 1` (Padrao) abrange mensalidades E pacotes, portanto não comprova mensalidade.
+enum NextFitParticipantCategoryResolver {
+    static let externalContractTypes: Set<Int> = [2, 3, 4, 5]
+
+    static let inferredExternalReason = "inferredExternalFromReservation"
+    static let persistedInferredExternalReason = "inferredExternalFromReservation-persistida"
+    static let confirmedReason = "classificacao-confirmada"
+    static let ownAggregatorContractReason = "contrato-proprio-agregador"
+    static let visualFallbackReason = "contrato-sem-classificacao-fallback-visual"
+    /// Prefixo do motivo quando a categoria vem da fotografia visual persistida da participação.
+    static let persistedVisualReasonPrefix = "categoria-visual-persistida"
+
+    /// Força da evidência que originou a categoria (usada somente para decidir se a fotografia visual
+    /// persistida pode ser atualizada). 0 = não persistível (desconhecido / derivado da própria fotografia).
+    static func evidenceRank(reason: String) -> Int {
+        switch reason {
+        case confirmedReason: return 4
+        case ownAggregatorContractReason: return 3
+        case inferredExternalReason, persistedInferredExternalReason: return 2
+        case visualFallbackReason: return 1
+        default: return 0
+        }
+    }
+
+    /// Combinação observada para participantes de agregador antes da consolidação da aula:
+    /// `Tipo == 1 && Status == 5 && CodigoContratoCliente == nil`. Heurística visual, não comercial.
+    static func matchesReservationAggregatorPattern(_ participant: NextFitAgendaParticipantDisplay) -> Bool {
+        participant.type == 1 && participant.status == 5 && participant.contractClientId == nil
+    }
+
+    /// - Parameters:
+    ///   - confirmedCategory: categoria confirmada e persistida para o cliente/contrato do participante.
+    ///   - ownContractType: `Contratos[].Tipo` do contrato do próprio aluno autenticado vinculado
+    ///     a este participante por `CodigoContratoCliente`; `nil` para todos os demais participantes.
+    ///   - hasPersistedInference: a mesma participação (`CodigoAgenda` + `Participantes[].Id`) já foi
+    ///     observada com o padrão de agregador.
+    ///   - persistedVisualCategory: categoria visual persistida para a MESMA participação, informada
+    ///     somente quando a aula já começou/encerrou (dados operacionais podem ter sido atualizados).
+    ///     `nil` para aulas futuras, preservando integralmente as regras atuais.
+    ///   - persistedVisualOrigin: motivo/origem com que a categoria persistida foi registrada.
+    static func resolve(
+        participant: NextFitAgendaParticipantDisplay,
+        confirmedCategory: NextFitParticipantCategory?,
+        ownContractType: Int?,
+        hasPersistedInference: Bool,
+        persistedVisualCategory: NextFitParticipantCategory? = nil,
+        persistedVisualOrigin: String? = nil
+    ) -> NextFitParticipantCategoryResolution {
+        if let confirmedCategory, confirmedCategory != .unknown {
+            return NextFitParticipantCategoryResolution(category: confirmedCategory, reason: confirmedReason)
+        }
+        // Fotografia visual persistida (evidência forte): não é substituída por `Tipo`/`Status` atualizados
+        let persistedVisual: NextFitParticipantCategoryResolution?
+        if let persistedVisualCategory, persistedVisualCategory != .unknown {
+            persistedVisual = NextFitParticipantCategoryResolution(
+                category: persistedVisualCategory,
+                reason: "\(persistedVisualReasonPrefix):\(persistedVisualOrigin ?? "")"
+            )
+        } else {
+            persistedVisual = nil
+        }
+        let persistedVisualIsFallback = persistedVisualOrigin.map { evidenceRank(reason: $0) <= 1 } ?? true
+        if let persistedVisual, !persistedVisualIsFallback {
+            return persistedVisual
+        }
+        if let ownContractType, externalContractTypes.contains(ownContractType) {
+            return NextFitParticipantCategoryResolution(category: .external, reason: ownAggregatorContractReason)
+        }
+        if hasPersistedInference {
+            return NextFitParticipantCategoryResolution(category: .external, reason: persistedInferredExternalReason)
+        }
+        // Fotografia originada de fallback visual: preserva o ícone já apresentado, abaixo das evidências reais
+        if let persistedVisual {
+            return persistedVisual
+        }
+        if matchesReservationAggregatorPattern(participant) {
+            return NextFitParticipantCategoryResolution(category: .external, reason: inferredExternalReason)
+        }
+        if participant.type == 2, participant.contractClientId != nil {
+            // Fallback VISUAL padrão para vínculo contratual ainda não classificado (ícone azul).
+            // Não afirma mensalidade e nunca é persistido como classificação confirmada.
+            return NextFitParticipantCategoryResolution(category: .monthly, reason: visualFallbackReason)
+        }
+        if ownContractType != nil {
+            // Padrao (1) ou valor não documentado: mensalidade x pacote não é distinguível pela API do aluno
+            return NextFitParticipantCategoryResolution(category: .unknown, reason: "contrato-proprio-padrao-sem-plano")
+        }
+        return NextFitParticipantCategoryResolution(category: .unknown, reason: "sem-dado-comercial")
+    }
+
+    /// Compatibilidade (diagnóstico DEBUG): sem classificação confirmada nem inferência persistida.
+    static func resolve(
+        participant: NextFitAgendaParticipantDisplay,
+        ownContractType: Int?
+    ) -> NextFitParticipantCategoryResolution {
+        resolve(
+            participant: participant,
+            confirmedCategory: nil,
+            ownContractType: ownContractType,
+            hasPersistedInference: false
+        )
+    }
 }
 
 struct NextFitAgendaDetailDisplay: Equatable {
@@ -73,6 +224,25 @@ struct NextFitAgendaDetailDisplay: Equatable {
     let instructorName: String
     let locationName: String
     let participants: [NextFitAgendaParticipantDisplay]
+    /// `Content.Status` da agenda (1 = aberta; 2 = encerrada, conforme respostas observadas).
+    /// Usado somente para preservar a categoria visual dos participantes.
+    var agendaStatus: Int? = nil
+    var startDate: Date? = nil
+    var endDate: Date? = nil
+
+    /// Aula encerrada: dados operacionais dos participantes podem ter sido atualizados pela NextFit.
+    var isClosed: Bool {
+        if agendaStatus == 2 { return true }
+        if let endDate, endDate <= Date() { return true }
+        return false
+    }
+
+    /// Aula já iniciada ou encerrada (não é aula futura).
+    var hasStarted: Bool {
+        if isClosed { return true }
+        if let startDate, startDate <= Date() { return true }
+        return false
+    }
 }
 
 struct NextFitIdentificationResponse: Decodable {
@@ -148,6 +318,9 @@ struct NextFitClientMainDataResponse: Decodable {
             let status: Int
             let type: Int
             let modalities: [Modality]
+            /// `Contratos[].Descricao` (texto livre do plano/produto, opcional). Lido apenas como
+            /// evidência potencial; NÃO é usado na classificação enquanto não houver regras validadas.
+            let descriptionText: String?
 
             struct Modality: Decodable {
                 let id: Int
@@ -164,6 +337,17 @@ struct NextFitClientMainDataResponse: Decodable {
                 case status = "Status"
                 case type = "Tipo"
                 case modalities = "Modalidades"
+                case descriptionText = "Descricao"
+            }
+
+            init(from decoder: Decoder) throws {
+                let container = try decoder.container(keyedBy: CodingKeys.self)
+                id = try container.decode(Int.self, forKey: .id)
+                status = try container.decode(Int.self, forKey: .status)
+                type = try container.decode(Int.self, forKey: .type)
+                modalities = try container.decode([Modality].self, forKey: .modalities)
+                // Tolerante: ausência ou formato inesperado de `Descricao` nunca invalida o contrato
+                descriptionText = try? container.decodeIfPresent(String.self, forKey: .descriptionText)
             }
         }
 
@@ -382,18 +566,24 @@ struct NextFitAgendaDetailResponse: Decodable {
         let limiteAlunos: Int
         let qtdeAlunos: Int
         let participantes: [Participant]
+        /// `Content.Status` da agenda (opcional; ausência não invalida a resposta).
+        let status: Int?
 
         struct Participant: Decodable {
             let id: Int
             let nomeParticipante: String
             let codigoContratoCliente: Int?
             let codigoCliente: Int?
+            let status: Int?
+            let tipo: Int?
 
             enum CodingKeys: String, CodingKey {
                 case id = "Id"
                 case nomeParticipante = "NomeParticipante"
                 case codigoContratoCliente = "CodigoContratoCliente"
                 case codigoCliente = "CodigoCliente"
+                case status = "Status"
+                case tipo = "Tipo"
             }
         }
 
@@ -412,6 +602,7 @@ struct NextFitAgendaDetailResponse: Decodable {
             case limiteAlunos = "LimiteAlunos"
             case qtdeAlunos = "QtdeAlunos"
             case participantes = "Participantes"
+            case status = "Status"
         }
     }
 

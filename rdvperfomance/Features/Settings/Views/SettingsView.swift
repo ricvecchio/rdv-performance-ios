@@ -14,6 +14,7 @@ struct SettingsView: View {
         static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
     }
 
     private let contentMaxWidth: CGFloat = 380
@@ -95,7 +96,8 @@ struct SettingsView: View {
             }
         }
 
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme`: atualiza a barra imediatamente ao alternar o tema
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeNavigationBarColorScheme()
         .navigationBarTitleDisplayMode(.inline)
@@ -190,11 +192,6 @@ struct SettingsView: View {
             cardRow(icon: "doc.text.fill", title: "settings.terms_of_use") {
                 path.append(.infoLegal(.termsOfUse))
             }
-            divider()
-
-            cardRow(icon: "gamecontroller.fill", title: "settings.progress_preview") {
-                path.append(.spriteDemo)
-            }
         }
     }
 
@@ -206,7 +203,7 @@ struct SettingsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
             )
             .shadow(
                 color: appTheme == .light ? .black.opacity(0.25) : .clear,

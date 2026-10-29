@@ -2,9 +2,44 @@ import SwiftUI
 import FirebaseAuth
 import FirebaseFirestore
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let youtubeVideosDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 enum YoutubeVideosContext {
     case teacher(category: TreinoTipo)
     case student(studentId: String)
+}
+
+// Tema Claro (habilitado): padrão do botão Sair da ProfileView (verde militar 80%/90% e texto branco),
+// mantendo as dimensões dos estilos originais. Tema Escuro e estado desabilitado: estilo original.
+private struct LightBarActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    /// `true`: dimensões do `compactPrimaryGreenActionButton()`; `false`: do `primaryGreenActionButton()`.
+    let compact: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: compact ? 15 : 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, compact ? 9 : 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(youtubeVideosDarkGreenBorder, lineWidth: 1)
+                )
+        } else if compact {
+            content
+                .compactPrimaryGreenActionButton()
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
+    }
 }
 
 struct YoutubeVideosView: View {
@@ -52,8 +87,10 @@ struct YoutubeVideosView: View {
                         Spacer(minLength: 0)
                         
                         VStack(alignment: .leading, spacing: 14) {
-                            header
-                            addButtonCard
+                            // Tema Claro: texto inicial removido (e o espaçamento associado). Tema Escuro: exibição original.
+                            if appTheme != .light {
+                                header
+                            }
                             contentCard
                             
                             if let err = errorMessage {
@@ -76,6 +113,9 @@ struct YoutubeVideosView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // Desfoca o conteúdo ao fundo enquanto o modal Adicionar Vídeo está aberto (o modal permanece nítido)
+        .blur(radius: isAddSheetPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: isAddSheetPresented)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -101,7 +141,32 @@ struct YoutubeVideosView: View {
             }
             
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    Button {
+                        errorMessage = nil
+                        isAddSheetPresented = true
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "plus")
+                            Text("common.add")
+                        }
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 8)
+                        .background(
+                            Capsule()
+                                .fill(Color.green.opacity(0.16))
+                        )
+                        .overlay(
+                            Capsule()
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: Color.clear), lineWidth: 1)
+                        )
+                    }
+                    .buttonStyle(.plain)
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
@@ -157,27 +222,6 @@ struct YoutubeVideosView: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
     
-    private var addButtonCard: some View {
-        Button {
-            errorMessage = nil
-            isAddSheetPresented = true
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "plus")
-                    .appThemeIconForeground()
-                Text("ui.add_video")
-            }
-            .padding(.horizontal, 14)
-            .compactPrimaryGreenActionButton()
-            .shadow(
-                color: appTheme == .light ? .black.opacity(0.25) : .clear,
-                radius: appTheme == .light ? 10 : 0,
-                y: appTheme == .light ? 6 : 0
-            )
-        }
-        .buttonStyle(.plain)
-    }
-    
     private var contentCard: some View {
         VStack(spacing: 0) {
             if isLoading {
@@ -194,7 +238,7 @@ struct YoutubeVideosView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -259,7 +303,7 @@ struct YoutubeVideosView: View {
 
                         Text("ui.edit_title")
                             .font(.system(size: 17, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink())
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink().dark, light: LightColors.primaryText))
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 8) {
@@ -271,14 +315,15 @@ struct YoutubeVideosView: View {
                                 .textInputAutocapitalization(.sentences)
                                 .autocorrectionDisabled(false)
                                 .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(Theme.Colors.ink(0.92))
+                                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
-                                .background(Theme.Colors.ink(0.10))
+                                // Tema Claro: área interna #F0F7EF e borda #294A2F. Tema Escuro: valores originais.
+                                .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                                 )
 
                             if let editTitleErrorMessage {
@@ -289,11 +334,17 @@ struct YoutubeVideosView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.glass(0.68))
+                        // Tema Claro: mesmo card do Adicionar Vídeo (#DDEDDC, borda #294A2F e sombra). Tema Escuro: valores originais.
+                        .background(AppThemeColor(dark: Theme.Colors.glass(0.68).dark, light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                        )
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -313,7 +364,7 @@ struct YoutubeVideosView: View {
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
                     )
                     .disabled(isSavingVideoTitle)
 
@@ -324,13 +375,18 @@ struct YoutubeVideosView: View {
                             if isSavingVideoTitle {
                                 ProgressView().tint(Theme.Colors.ink())
                             } else {
-                                Image(systemName: "checkmark")
-                                    .appThemeIconForeground()
+                                if appTheme == .light {
+                                    // Tema Claro: ícone herda o branco do botão (contraste sobre o verde militar)
+                                    Image(systemName: "checkmark")
+                                } else {
+                                    Image(systemName: "checkmark")
+                                        .appThemeIconForeground()
+                                }
                                 Text("common.save")
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(LightBarActionButtonModifier(compact: false))
                     }
                     .buttonStyle(.plain)
                     .disabled(isSavingVideoTitle)
@@ -504,7 +560,12 @@ struct YoutubeVideosView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(LightColors.chevron)
+                        : AnyShapeStyle(AppThemeAdaptiveColor(Theme.Colors.primaryGreen.opacity(0.28))),
+                    lineWidth: 1
+                )
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,

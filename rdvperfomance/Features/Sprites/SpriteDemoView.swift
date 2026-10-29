@@ -5,6 +5,15 @@ import SpriteKit
 struct SpriteDemoView: View {
 
     @Binding var path: [AppRoute]
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da PersonalRecordsView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let innerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255)  // #F0F7EF
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F (contorno do card "Acesso rápido" da TeacherDashboardView)
+    }
 
     init(
         path: Binding<[AppRoute]>,
@@ -48,13 +57,32 @@ struct SpriteDemoView: View {
                             Button {
                                 Task { await vm.randomizePreview() }
                             } label: {
-                                HStack(spacing: 10) {
-                                    Image(systemName: "shuffle")
-                                        .appThemeIconForeground()
-                                    Text("gamification.preview.randomize")
+                                if appTheme == .light {
+                                    // Tema Claro: mesmo padrão de cores do botão Sair da ProfileView, com as dimensões do `primaryGreenActionButton()`
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "shuffle")
+                                            .foregroundStyle(Color.white)
+                                        Text("gamification.preview.randomize")
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(Color.white)
+                                    .padding(.vertical, 14)
+                                    .background(AppThemePalette.lightBar.opacity(0.80))
+                                    .cornerRadius(12)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(LightColors.darkGreenBorder, lineWidth: 1)
+                                    )
+                                } else {
+                                    HStack(spacing: 10) {
+                                        Image(systemName: "shuffle")
+                                            .appThemeIconForeground()
+                                        Text("gamification.preview.randomize")
+                                    }
+                                    .padding(.horizontal, 14)
+                                    .primaryGreenActionButton()
                                 }
-                                .padding(.horizontal, 14)
-                                .primaryGreenActionButton()
                             }
                             .buttonStyle(.plain)
 
@@ -123,18 +151,23 @@ struct SpriteDemoView: View {
             .clipShape(RoundedRectangle(cornerRadius: 12))
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.darkGreenBorder), lineWidth: 1)
             )
             .padding(.horizontal, 12)
 
             Color.clear.frame(height: 12)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 

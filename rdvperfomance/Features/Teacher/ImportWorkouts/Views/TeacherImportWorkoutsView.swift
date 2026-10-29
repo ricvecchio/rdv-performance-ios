@@ -3,6 +3,47 @@ import FirebaseAuth
 import UniformTypeIdentifiers
 import FirebaseFirestore
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let importWorkoutsDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
+// Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `compactPrimaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado: mantém exatamente o `compactPrimaryGreenActionButton()` original.
+private struct LightMilitaryCompactActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 9)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(importWorkoutsDarkGreenBorder, lineWidth: 1)
+                )
+        } else {
+            content.compactPrimaryGreenActionButton()
+        }
+    }
+}
+
+// Tema Claro (habilitado): ícone branco sobre o verde militar. Demais casos: `appThemeIconForeground()` original.
+private struct LightMilitaryCompactActionIconModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content.foregroundStyle(Color.white)
+        } else {
+            content.appThemeIconForeground()
+        }
+    }
+}
+
 struct TeacherImportWorkoutsView: View {
     
     @Binding var path: [AppRoute]
@@ -104,7 +145,6 @@ struct TeacherImportWorkoutsView: View {
                         Spacer(minLength: 0)
                         
                         VStack(alignment: .leading, spacing: 14) {
-                            header
                             actionsRow
                             contentCard
                             
@@ -248,15 +288,6 @@ struct TeacherImportWorkoutsView: View {
         }
     }
     
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("ui.import_workouts_through_a_spreadsheet_to_add_them_automatically")
-                .font(.system(size: 14))
-                .foregroundStyle(Theme.Colors.ink(0.35))
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-    
     private var actionsRow: some View {
         HStack(spacing: 10) {
             Button {
@@ -266,11 +297,11 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "plus")
-                        .appThemeIconForeground()
+                        .modifier(LightMilitaryCompactActionIconModifier())
                     Text("ui.import_excel")
                 }
                 .padding(.horizontal, 14)
-                .compactPrimaryGreenActionButton()
+                .modifier(LightMilitaryCompactActionButtonModifier())
                 .shadow(
                     color: appTheme == .light ? .black.opacity(0.25) : .clear,
                     radius: appTheme == .light ? 10 : 0,
@@ -289,11 +320,11 @@ struct TeacherImportWorkoutsView: View {
             } label: {
                 HStack(spacing: 10) {
                     Image(systemName: "arrow.down.doc")
-                        .appThemeIconForeground()
+                        .modifier(LightMilitaryCompactActionIconModifier())
                     Text("ui.download_excel_spreadsheet")
                 }
                 .padding(.horizontal, 14)
-                .compactPrimaryGreenActionButton()
+                .modifier(LightMilitaryCompactActionButtonModifier())
                 .shadow(
                     color: appTheme == .light ? .black.opacity(0.25) : .clear,
                     radius: appTheme == .light ? 10 : 0,
@@ -321,7 +352,7 @@ struct TeacherImportWorkoutsView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -442,7 +473,12 @@ struct TeacherImportWorkoutsView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28)), lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(LightColors.chevron)
+                        : AnyShapeStyle(AppThemeAdaptiveColor(isError ? Color.white.opacity(0.10) : Theme.Colors.primaryGreen.opacity(0.28))),
+                    lineWidth: 1
+                )
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,

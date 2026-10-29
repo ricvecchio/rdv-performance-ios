@@ -424,6 +424,31 @@ service cloud.firestore {
         if isOwner(userId);
     }
 
+    // Aba Lembretes (anotacoes, lembretes e aniversarios pessoais).
+    // Somente o proprio usuario autenticado; nunca professores, administradores
+    // ou outros alunos. O ownerUid gravado deve ser o UID da sessao.
+
+    match /users/{userId}/personal_notes/{noteId} {
+      allow get, list, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.id == noteId;
+    }
+
+    match /users/{userId}/personal_reminders/{reminderId} {
+      allow get, list, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.id == reminderId;
+    }
+
+    match /users/{userId}/personal_birthdays/{birthdayId} {
+      allow get, list, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.id == birthdayId;
+    }
+
     // =========================================================
     // 6. MENSAGENS DOS PROFESSORES
     // =========================================================

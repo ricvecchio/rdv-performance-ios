@@ -1,6 +1,7 @@
 import SwiftUI
 import FirebaseCore
 import CoreData
+import UserNotifications
 
 // Ponto de entrada principal do aplicativo RDV Performance
 @main
@@ -59,6 +60,10 @@ final class AppDelegate: NSObject, UIApplicationDelegate {
         didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
     ) -> Bool {
         FirebaseApp.configure()
+        // Permite exibir as notificações locais pessoais (Lembretes/Aniversários) com o app aberto
+        UNUserNotificationCenter.current().delegate = PersonalNotificationPresenter.shared
+        // Data de corte do aviso de temas (1.0.25): gravada somente na primeira abertura desta versão
+        ThemeAnnouncementStore.recordReleaseCutoffIfNeeded()
         return true
     }
 }

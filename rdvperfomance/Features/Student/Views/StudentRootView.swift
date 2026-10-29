@@ -39,6 +39,8 @@ import SwiftUI
 struct StudentRootView: View {
 
     @EnvironmentObject private var session: AppSession
+    @Environment(\.scenePhase) private var scenePhase
+    @Environment(\.locale) private var locale
 
     let studentId: String
     let studentName: String
@@ -47,14 +49,24 @@ struct StudentRootView: View {
 
     @State private var homePath: [AppRoute] = []
     @State private var workoutsPath: [AppRoute] = []
+    @State private var remindersPath: [StudentRemindersRoute] = []
     @State private var recordsPath: [AppRoute] = []
     @State private var profilePath: [AppRoute] = []
+    @State private var menuPath: [AppRoute] = []
+    /// Seção (Anotações/Lembretes/Aniversários) a abrir diretamente ao entrar em Lembretes pelo Menu.
+    @State private var remindersInitialSection: PersonalOrganizerSection = .notes
     @State private var workoutsInitialWeekId: String?
     @State private var workoutsInitialDayId: String?
 
     /// Mantém o cache de Treinos da Semana entre trocas de aba (somente a aba
     /// selecionada é montada, o que recriaria o ViewModel a cada retorno).
     @StateObject private var workoutsViewModel: StudentWorkoutsViewModel
+
+    /// Disponibilidade da aba Treinos (vínculo com professor), compartilhada com o rodapé.
+    @StateObject private var tabsState = StudentTabsState()
+
+    /// Anotações, lembretes e aniversários pessoais (isolados por UID) e suas notificações locais.
+    @StateObject private var organizerStore = PersonalOrganizerStore()
 
     init(studentId: String, studentName: String) {
         self.studentId = studentId
@@ -65,8 +77,65 @@ struct StudentRootView: View {
     }
 
     var body: some View {
+        tabContentWithObservers
+            .onChange(of: scenePhase) { _, phase in
+                handleScenePhase(phase)
+            }
+            .onChange(of: locale) { _, _ in
+                organizerStore.reconcileNotifications()
+            }
+    }
+
+    /// Conteúdo da aba selecionada com ambiente compartilhado e atualização do rodapé.
+    private var tabContentWithObservers: some View {
         selectedTab
             .environment(\.selectStudentMainSection, selectSection)
+            .environment(\.studentShowsWorkoutsTab, tabsState.showsWorkouts)
+            .environmentObject(organizerStore)
+            .task(id: studentId) {
+                organizerStore.start(ownerUid: studentId)
+                await tabsState.refresh(studentId: studentId)
+            }
+            // Vínculo/desvínculo (Home, Perfil > Professores): atualiza o rodapé sem novo login
+            .onChange(of: selectedSection) { _, section in
+                handleSectionChange(section)
+            }
+            .onChange(of: homePath) { _, _ in
+                refreshTabs()
+            }
+            .onChange(of: profilePath) { _, _ in
+                refreshTabs()
+            }
+            .onChange(of: tabsState.teacherLinkState) { _, state in
+                handleTeacherLinkChange(state)
+            }
+    }
+
+    private func refreshTabs() {
+        Task { await tabsState.refresh(studentId: studentId) }
+    }
+
+    private func handleScenePhase(_ phase: ScenePhase) {
+        guard phase == .active else { return }
+        refreshTabs()
+        organizerStore.retryIfNeeded()
+        Task {
+            await organizerStore.refreshAuthorization()
+            organizerStore.reconcileNotifications()
+        }
+    }
+
+    private func handleSectionChange(_ section: StudentMainSection) {
+        if section == .reminders { organizerStore.retryIfNeeded() }
+        refreshTabs()
+    }
+
+    /// Perdeu o último vínculo enquanto estava em Treinos: volta à Home sem pilha residual.
+    private func handleTeacherLinkChange(_ state: StudentDashboardTeacherLinkState) {
+        guard state == .unlinked, selectedSection == .agenda else { return }
+        workoutsPath = []
+        homePath = []
+        selectedSection = .home
     }
 
     @ViewBuilder
@@ -76,10 +145,14 @@ struct StudentRootView: View {
             homeTab
         case .agenda:
             workoutsTab
+        case .reminders:
+            remindersTab
         case .records:
             recordsTab
         case .profile:
             profileTab
+        case .menu:
+            menuTab
         }
     }
 
@@ -91,13 +164,19 @@ struct StudentRootView: View {
     /// decisão de produto: "ao selecionar um ícone do rodapé, abrir a raiz
     /// daquela seção" (não é necessário preservar profundidade entre trocas
     /// de aba).
-    private func selectSection(_ target: StudentMainSection) {
+    private func selectSection(_ requested: StudentMainSection) {
+        // Sem professor confirmado a aba Treinos não existe: redireciona para a Home
+        let target: StudentMainSection =
+            (requested == .agenda && !tabsState.showsWorkouts) ? .home : requested
+
         let alreadyAtRoot: Bool
         switch target {
         case .home: alreadyAtRoot = homePath.isEmpty
         case .agenda: alreadyAtRoot = workoutsPath.isEmpty
+        case .reminders: alreadyAtRoot = remindersPath.isEmpty
         case .records: alreadyAtRoot = recordsPath.isEmpty
         case .profile: alreadyAtRoot = profilePath.isEmpty
+        case .menu: alreadyAtRoot = menuPath.isEmpty
         }
 
         if selectedSection == target && alreadyAtRoot { return }
@@ -105,11 +184,20 @@ struct StudentRootView: View {
         switch target {
         case .home: homePath = []
         case .agenda: workoutsPath = []
+        case .reminders: remindersPath = []
         case .records: recordsPath = []
         case .profile: profilePath = []
+        case .menu: menuPath = []
         }
 
         selectedSection = target
+    }
+
+    /// Abre Anotações, Lembretes ou Aniversários diretamente (sem passar por outra tela).
+    private func openOrganizer(_ organizerSection: PersonalOrganizerSection) {
+        remindersPath = []
+        remindersInitialSection = organizerSection
+        selectedSection = .reminders
     }
 
     private func openWorkouts(weekId: String, dayId: String) {
@@ -184,8 +272,31 @@ struct StudentRootView: View {
                 onSelectSection: selectSection
             )
 
+        // Aberta pelo aviso de novidade de temas (1.0.25) na Home do aluno
+        case .tema:
+            ThemeSettingsView()
+
         default:
             EmptyView()
+        }
+    }
+
+    // MARK: - Lembretes
+
+    private var remindersTab: some View {
+        NavigationStack(path: $remindersPath) {
+            PersonalRoutineView(
+                path: $remindersPath,
+                onBack: { selectSection(.menu) },
+                onSelectSection: selectSection,
+                initialSection: remindersInitialSection
+            )
+            .navigationDestination(for: StudentRemindersRoute.self) { route in
+                switch route {
+                case .birthdays:
+                    StudentBirthdaysView(path: $remindersPath, onSelectSection: selectSection)
+                }
+            }
         }
     }
 
@@ -195,7 +306,7 @@ struct StudentRootView: View {
         NavigationStack(path: $recordsPath) {
             PersonalRecordsView(
                 path: $recordsPath,
-                onBack: { selectSection(.agenda) },
+                onBack: { selectSection(.menu) },
                 onSelectSection: selectSection
             )
             .navigationDestination(for: AppRoute.self) { route in
@@ -246,26 +357,73 @@ struct StudentRootView: View {
         }
     }
 
+    // MARK: - Menu
+
+    private var menuTab: some View {
+        NavigationStack(path: $menuPath) {
+            MenuView(
+                context: .student,
+                path: $menuPath,
+                onBack: { selectSection(.home) },
+                onSelectSection: selectSection,
+                onOpenOrganizer: openOrganizer
+            )
+            .navigationDestination(for: AppRoute.self) { route in
+                menuDestination(for: route)
+            }
+        }
+    }
+
+    /// Destinos empilhados a partir do Menu (reutiliza as telas existentes de WOD, Configurações e Ajuda).
+    @ViewBuilder
+    private func menuDestination(for route: AppRoute) -> some View {
+        switch route {
+
+        case .studentNextFitWod:
+            StudentNextFitWodView(
+                path: $menuPath,
+                studentId: studentId,
+                onSelectSection: selectSection
+            )
+
+        case .studentComingSoon(let titleKey):
+            StudentComingSoonView(
+                path: $menuPath,
+                titleKey: titleKey,
+                onSelectSection: selectSection
+            )
+
+        case .studentVideos:
+            YoutubeVideosView(
+                path: $menuPath,
+                context: .student(studentId: studentId)
+            )
+
+        default:
+            profileDestination(for: route, path: $menuPath)
+        }
+    }
+
     // MARK: - Perfil
 
     private var profileTab: some View {
         NavigationStack(path: $profilePath) {
             ProfileView(
                 path: $profilePath,
-                onBack: { selectSection(.agenda) }
+                onBack: { selectSection(.home) }
             )
             .navigationDestination(for: AppRoute.self) { route in
-                profileDestination(for: route)
+                profileDestination(for: route, path: $profilePath)
             }
         }
     }
 
     @ViewBuilder
-    private func profileDestination(for route: AppRoute) -> some View {
+    private func profileDestination(for route: AppRoute, path: Binding<[AppRoute]>) -> some View {
         switch route {
 
         case .configuracoes:
-            SettingsView(path: $profilePath)
+            SettingsView(path: path)
 
         case .idioma:
             LanguageSettingsView()
@@ -274,32 +432,32 @@ struct StudentRootView: View {
             ThemeSettingsView()
 
         case .editarPerfil:
-            EditProfileView(path: $profilePath)
+            EditProfileView(path: path)
 
         case .alterarSenha:
-            ChangePasswordView(path: $profilePath)
+            ChangePasswordView(path: path)
 
         case .excluirConta:
-            DeleteAccountView(path: $profilePath)
+            DeleteAccountView(path: path)
 
         case .infoLegal(let kind):
-            InfoLegalView(path: $profilePath, kind: kind, onSelectSection: selectSection)
+            InfoLegalView(path: path, kind: kind, onSelectSection: selectSection)
 
         case .sobre:
-            AboutView(path: $profilePath, onSelectSection: selectSection)
+            AboutView(path: path, onSelectSection: selectSection)
 
         case .spriteDemo:
-            SpriteDemoView(path: $profilePath, onSelectSection: selectSection)
+            SpriteDemoView(path: path, onSelectSection: selectSection)
 
         case .studentMessages(let category):
-            StudentMessagesView(path: $profilePath, category: category, onSelectSection: selectSection)
+            StudentMessagesView(path: path, category: category, onSelectSection: selectSection)
 
         case .studentFeedbacks(let category):
-            StudentFeedbacksView(path: $profilePath, category: category, onSelectSection: selectSection)
+            StudentFeedbacksView(path: path, category: category, onSelectSection: selectSection)
 
         case .studentTeachers(let studentEmail):
             StudentTeachersView(
-                path: $profilePath,
+                path: path,
                 studentEmail: studentEmail,
                 onSelectSection: selectSection
             )

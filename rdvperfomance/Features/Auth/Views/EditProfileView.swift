@@ -8,6 +8,14 @@ struct EditProfileView: View {
     @Binding var path: [AppRoute]
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
+
+    // Paleta do Tema Claro (mesmos valores da `LightColors` da PersonalRecordsView; Tema Escuro usa os valores originais)
+    private enum LightColors {
+        static let cardSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)  // #DDEDDC
+        static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F
+    }
 
     @State private var selectedItem: PhotosPickerItem? = nil
     @State private var previewImage: UIImage? = nil
@@ -37,6 +45,8 @@ struct EditProfileView: View {
 
     // ✅ FocusState para fechar o teclado do campo de telefone
     @FocusState private var phoneFieldFocused: Bool
+    // ✅ FocusState para fechar o teclado do campo Bio
+    @FocusState private var bioFieldFocused: Bool
 
     private let textSecondary = Color.white.opacity(0.60)
     private let lineColor = Color.white.opacity(0.35)
@@ -161,6 +171,7 @@ struct EditProfileView: View {
                 Spacer()
                 Button("common.done") {
                     phoneFieldFocused = false
+                    bioFieldFocused = false
                 }
             }
         }
@@ -240,11 +251,16 @@ struct EditProfileView: View {
         }
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
@@ -307,16 +323,24 @@ struct EditProfileView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
+        )
+        .shadow(
+            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+            radius: appTheme == .light ? 10 : 0,
+            y: appTheme == .light ? 6 : 0
         )
     }
 
     private func actionButtons() -> some View {
-        VStack(spacing: 10) {
+        // Tema Claro (habilitado): mesmo padrão de cores do botão Sair da ProfileView; demais casos mantêm os valores originais
+        let isLightEnabled = appTheme == .light && canSave
+
+        return VStack(spacing: 10) {
 
             Button {
                 Task { await saveAllAndSync() }
@@ -327,6 +351,9 @@ struct EditProfileView: View {
                         if isSaving {
                             ProgressView()
                                 .tint(Theme.Colors.ink(0.9))
+                        } else if isLightEnabled {
+                            Image(systemName: "checkmark.circle.fill")
+                                .foregroundStyle(Color.white)
                         } else {
                             Image(systemName: "checkmark.circle.fill")
                                 .appThemeIconForeground()
@@ -339,16 +366,24 @@ struct EditProfileView: View {
                         )
                     }
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(isLightEnabled ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
                     Spacer()
                 }
                 .padding(.vertical, 14)
-                .background(AppThemeAdaptiveColor(canSave ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10)))
+                .background(
+                    isLightEnabled
+                        ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                        : AnyShapeStyle(AppThemeAdaptiveColor(canSave ? Theme.Colors.primaryGreen.opacity(0.18) : Color.white.opacity(0.10)))
+                )
                 .cornerRadius(12)
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            AppThemeAdaptiveColor(canSave ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.12)),
+                            appTheme == .light
+                                ? AnyShapeStyle(LightColors.darkGreenBorder)
+                                : isLightEnabled
+                                    ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.90))
+                                : AnyShapeStyle(AppThemeAdaptiveColor(canSave ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.12))),
                             lineWidth: 1
                         )
                 )
@@ -425,6 +460,7 @@ struct EditProfileView: View {
                 .font(.system(size: 16))
                 .background(Color.clear)
                 .scrollContentBackground(.hidden)
+                .focused($bioFieldFocused)
                 .overlay(
                     Rectangle()
                         .fill(AppThemeAdaptiveColor(lineColor))
@@ -504,6 +540,7 @@ struct EditProfileView: View {
         guard !isSaving else { return }
         isSaving = true
         phoneFieldFocused = false  // Fecha teclado antes de salvar
+        bioFieldFocused = false
         defer { isSaving = false }
 
         do {

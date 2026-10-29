@@ -151,7 +151,7 @@ struct TeacherDashboardView: View {
             ToolbarItem(placement: .principal) {
                 Text("ui.coach_area")
                     .font(Theme.Fonts.headerTitle())
-                    .foregroundStyle(Theme.Colors.ink())
+                    .foregroundStyle(Color.white)
             }
 
             ToolbarItem(placement: .topBarTrailing) {
@@ -167,6 +167,10 @@ struct TeacherDashboardView: View {
         }
         .sheet(isPresented: $isQuickAccessEditorPresented) {
             quickAccessEditorSheet
+        }
+        // Aviso único da novidade de temas (1.0.25); "Escolher meu tema" abre a ThemeSettingsView na pilha da Home
+        .themeAnnouncement {
+            path.append(.tema)
         }
     }
 
@@ -220,11 +224,11 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
@@ -258,7 +262,8 @@ struct TeacherDashboardView: View {
                     quickAccessItem(
                         title: item.title,
                         subtitle: item.subtitle,
-                        icon: item.systemImage
+                        icon: item.systemImage,
+                        centersGraphicsVertically: item == .myVideos
                     ) {
                         openQuickAccessItem(item)
                     }
@@ -266,11 +271,11 @@ struct TeacherDashboardView: View {
             }
         }
         .padding(14)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
     }
@@ -294,9 +299,6 @@ struct TeacherDashboardView: View {
                             .foregroundStyle(Theme.Colors.ink())
                             .frame(maxWidth: .infinity, alignment: .center)
 
-                        Text("ui.choose_3_shortcuts_to_show_in_the_coach_area")
-                            .font(.system(size: 14))
-                            .foregroundStyle(Theme.Colors.ink(0.55))
 
                         Text("ui.select_3_shortcuts")
                             .font(.system(size: 13, weight: .semibold))
@@ -346,7 +348,7 @@ struct TeacherDashboardView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(DashboardPrimaryActionButtonModifier())
                     }
                     .buttonStyle(.plain)
                     .disabled(editableQuickAccessItems.count != 3 || isSavingQuickAccessItems)
@@ -372,27 +374,30 @@ struct TeacherDashboardView: View {
             HStack(spacing: 12) {
                 Image(systemName: item.systemImage)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                    .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
                     .frame(width: 22)
 
                 Text(item.title)
                     .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                 Spacer()
 
                 Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
                     .font(.system(size: 20))
-                    .foregroundStyle(Theme.Colors.icon(isSelected ? .green : .white.opacity(0.35)))
+                    .foregroundStyle(AppThemeColor(dark: isSelected ? .green : .white.opacity(0.35), light: LightColors.chevron))
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Theme.Colors.ink(0.06))
+            .background(AppThemeColor(dark: Color.white.opacity(0.06), light: LightColors.innerSurface))
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08)),
+                        AppThemeColor(
+                            dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08),
+                            light: isSelected ? LightColors.chevron : LightColors.border
+                        ),
                         lineWidth: 1
                     )
             )
@@ -527,11 +532,11 @@ struct TeacherDashboardView: View {
         }
         .frame(maxWidth: .infinity, minHeight: 118)
         .padding(.horizontal, 6)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: Theme.Colors.ink(0.10).light))
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
     }
 
@@ -658,10 +663,12 @@ struct TeacherDashboardView: View {
         title: LocalizedStringKey,
         subtitle: LocalizedStringKey,
         icon: String,
+        centersGraphicsVertically: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(alignment: .top, spacing: 10) {
+            // "Meus Vídeos": ícone e seta centralizados verticalmente; demais atalhos mantêm o alinhamento original.
+            HStack(alignment: centersGraphicsVertically ? .center : .top, spacing: 10) {
                 ZStack {
                     RoundedRectangle(cornerRadius: 9)
                         .fill(AppThemeColor(dark: Color.green.opacity(0.14), light: LightColors.iconSurface))
@@ -695,17 +702,46 @@ struct TeacherDashboardView: View {
             .padding(.vertical, 8)
             .background(
                 ZStack {
-                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface)
+                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface)
                     AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
             .shadow(color: cardShadowColor, radius: cardShadowRadius, y: cardShadowY)
         }
         .buttonStyle(.plain)
     }
 }
+
+// Botão principal da dashboard (uso exclusivo deste arquivo).
+// Escuro: aplica exatamente o estilo original (`primaryGreenActionButton`).
+// Claro: mesmo formato e dimensões, com fundo verde militar sólido (#29452C), conteúdo claro e sombra.
+private struct DashboardPrimaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white.opacity(isEnabled ? 0.92 : 0.55))
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar)
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
+                .shadow(color: .black.opacity(isEnabled ? 0.25 : 0.12), radius: 10, y: 6)
+                // Conteúdo sobre o verde militar usa os valores claros (ProgressView)
+                .environment(\.colorScheme, .dark)
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+

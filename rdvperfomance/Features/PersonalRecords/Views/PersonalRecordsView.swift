@@ -35,6 +35,21 @@ struct PersonalRecordsFooter: View {
     }
 }
 
+// Remove o material nativo (desfoque) por trás do sheet no fluxo do Professor.
+// O fundo próprio do sheet (`Theme.Colors.sheetBackground`) continua sendo desenhado normalmente.
+private struct TeacherSharpSheetBackground: ViewModifier {
+    let isTeacher: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isTeacher {
+            content.presentationBackground(.clear)
+        } else {
+            content
+        }
+    }
+}
+
 // Tela compartilhada de Recordes Pessoais.
 struct PersonalRecordsView: View {
 
@@ -65,6 +80,9 @@ struct PersonalRecordsView: View {
     @State private var isTecnofitImportPresented = false
     @State private var hasCompletedTecnofitImport = false
     @State private var hasLoadedTecnofitImportStatus = false
+    /// Indica que a consulta do status terminou (com sucesso, erro ou sem usuário). Enquanto for `false`,
+    /// a lista de cards não é exibida, para não mostrar um espaçamento provisório que seria trocado em seguida.
+    @State private var hasFinishedTecnofitImportCheck = false
 
     private struct PRMenuItem: Identifiable, Hashable {
         let id = UUID()
@@ -105,81 +123,81 @@ struct PersonalRecordsView: View {
                     .fill(Theme.Colors.divider)
                     .frame(height: 1)
 
-                ScrollView(showsIndicators: false) {
-                    HStack {
-                        Spacer(minLength: 0)
+                GeometryReader { geometry in
+                    let distributedSpacing = distributedCardSpacing(availableHeight: geometry.size.height)
 
-                        VStack(alignment: .leading, spacing: 8) {
+                    ScrollView(showsIndicators: false) {
+                        HStack {
+                            Spacer(minLength: 0)
 
-                            if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
-                                tecnofitImportButton
-                            }
+                            VStack(alignment: .leading, spacing: 8) {
 
-                            VStack(spacing: 6) {
-                                ForEach(menuItems) { item in
-                                    actionRow(
-                                        title: item.title,
-                                        localizedTitle: item.localizedTitle,
-                                        icon: item.icon
-                                    ) {
 
-                                        if item.sectionKey == "barbell" {
-                                            path.append(.studentPersonalRecordsBarbell)
-                                        }
+                                VStack(spacing: distributedSpacing ?? Self.defaultCardSpacing) {
+                                    ForEach(menuItems) { item in
+                                        actionRow(
+                                            title: item.title,
+                                            localizedTitle: item.localizedTitle,
+                                            icon: item.icon
+                                        ) {
 
-                                        if item.sectionKey == "gymnastic" {
-                                            path.append(.studentPersonalRecordsGymnastic)
-                                        }
+                                            if item.sectionKey == "barbell" {
+                                                path.append(.studentPersonalRecordsBarbell)
+                                            }
 
-                                        if item.sectionKey == "endurance" {
-                                            path.append(.studentPersonalRecordsEndurance)
-                                        }
+                                            if item.sectionKey == "gymnastic" {
+                                                path.append(.studentPersonalRecordsGymnastic)
+                                            }
 
-                                        if item.sectionKey == "notables" {
-                                            path.append(.studentPersonalRecordsNotables)
-                                        }
+                                            if item.sectionKey == "endurance" {
+                                                path.append(.studentPersonalRecordsEndurance)
+                                            }
 
-                                        if item.sectionKey == "girls" {
-                                            path.append(.studentPersonalRecordsGirls)
-                                        }
+                                            if item.sectionKey == "notables" {
+                                                path.append(.studentPersonalRecordsNotables)
+                                            }
 
-                                        if item.sectionKey == "open" {
-                                            path.append(.studentPersonalRecordsOpen)
-                                        }
+                                            if item.sectionKey == "girls" {
+                                                path.append(.studentPersonalRecordsGirls)
+                                            }
 
-                                        if item.sectionKey == "theHeroes" {
-                                            path.append(.studentPersonalRecordsHeroes)
-                                        }
+                                            if item.sectionKey == "open" {
+                                                path.append(.studentPersonalRecordsOpen)
+                                            }
 
-                                        if item.sectionKey == "campeonatos" {
-                                            path.append(.studentPersonalRecordsCampeonatos)
-                                        }
+                                            if item.sectionKey == "theHeroes" {
+                                                path.append(.studentPersonalRecordsHeroes)
+                                            }
 
-                                        if item.sectionKey == "crossfitGames" {
-                                            path.append(.studentPersonalRecordsCrossfitGames)
+                                            if item.sectionKey == "campeonatos" {
+                                                path.append(.studentPersonalRecordsCampeonatos)
+                                            }
+
+                                            if item.sectionKey == "crossfitGames" {
+                                                path.append(.studentPersonalRecordsCrossfitGames)
+                                            }
                                         }
                                     }
                                 }
 
-                                if case .student = navigationContext {
-                                    actionRow(
-                                        title: "Meus Vídeos",
-                                        localizedTitle: "workout.my_videos",
-                                        icon: "video.fill"
-                                    ) {
-                                        path.append(.studentVideos)
-                                    }
-                                }
+                                // Com espaçamento distribuído o rodapé já é um irmão da rolagem (não sobrepõe);
+                                // caso contrário mantém a reserva original.
+                                Color.clear.frame(
+                                    height: distributedSpacing != nil
+                                        ? Self.distributedBottomMargin
+                                        : Theme.Layout.footerHeight + 20
+                                )
                             }
+                            .frame(maxWidth: contentMaxWidth)
+                            .padding(.horizontal, 16)
+                            .padding(.top, Self.contentTopPadding)
 
-                            Color.clear.frame(height: Theme.Layout.footerHeight + 20)
+                            Spacer(minLength: 0)
                         }
-                        .frame(maxWidth: contentMaxWidth)
-                        .padding(.horizontal, 16)
-                        .padding(.top, 8)
-
-                        Spacer(minLength: 0)
                     }
+                    // Só a lista aguarda o status inicial: o layout definitivo aparece de uma vez
+                    .opacity(hasFinishedTecnofitImportCheck ? 1 : 0)
+                    .allowsHitTesting(hasFinishedTecnofitImportCheck)
                 }
 
                 PersonalRecordsFooter(
@@ -198,11 +216,15 @@ struct PersonalRecordsView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // Desfoca a tela ao fundo enquanto o modal Importar do Tecnofit está aberto (o modal permanece nítido)
+        .blur(radius: isTecnofitImportPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.18), value: isTecnofitImportPresented)
         .navigationBarBackButtonHidden(true)
         .sheet(isPresented: $isTecnofitImportPresented) {
             TecnofitImportSheet {
                 hasCompletedTecnofitImport = true
             }
+            .modifier(TeacherSharpSheetBackground(isTeacher: isTeacherContext))
         }
         .task(id: session.currentUid) {
             await loadTecnofitImportStatus()
@@ -230,13 +252,67 @@ struct PersonalRecordsView: View {
             }
 
             ToolbarItem(placement: .topBarTrailing) {
-                HeaderAvatarView(size: 38)
+                HStack(spacing: 12) {
+                    // Importar do Tecnofit: somente após a consulta confirmar que a importação está pendente
+                    if hasLoadedTecnofitImportStatus && !hasCompletedTecnofitImport {
+                        Button {
+                            isTecnofitImportPresented = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "square.and.arrow.down.fill")
+                                Text("tecnofit_import.import_action")
+                            }
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 8)
+                            .background(Capsule().fill(Color.green.opacity(0.16)))
+                            .overlay(
+                                Capsule()
+                                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: .clear), lineWidth: 1)
+                            )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    HeaderAvatarView(size: 38)
+                }
             }
         }
         .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    private var isTeacherContext: Bool {
+        if case .teacher = navigationContext { return true }
+        return false
+    }
+
+    // Espaçamento original entre os cards e parâmetros da distribuição vertical
+    private static let defaultCardSpacing: CGFloat = 6
+    private static let contentTopPadding: CGFloat = 8
+    private static let distributedBottomMargin: CGFloat = 16
+    private static let contentStackSpacing: CGFloat = 8
+    /// Altura de cada card: minHeight (52) + padding vertical (4 + 4) de `actionRow`.
+    private static let cardRowHeight: CGFloat = 60
+
+    /// Espaçamento uniforme para distribuir os cards na altura útil, somente quando a verificação do
+    /// Importar Tecnofit já terminou e o botão não é mais exibido. Retorna `nil` nos demais casos
+    /// (carregando, botão visível ou sem espaço extra), mantendo o layout original.
+    private func distributedCardSpacing(availableHeight: CGFloat) -> CGFloat? {
+        guard menuItems.count > 1 else {
+            return nil
+        }
+
+        let itemsHeight = CGFloat(menuItems.count) * Self.cardRowHeight
+        let reserved = Self.contentTopPadding + Self.contentStackSpacing + Self.distributedBottomMargin
+        let freeHeight = availableHeight - reserved - itemsHeight
+        let spacing = freeHeight / CGFloat(menuItems.count - 1)
+
+        guard spacing.isFinite, spacing > Self.defaultCardSpacing else { return nil }
+        return spacing
     }
 
     private func actionRow(
@@ -293,7 +369,7 @@ struct PersonalRecordsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
             // Tema Claro: mesma profundidade dos botoes da AdminProfileSelectionView (Tema Escuro: sem sombra)
             .shadow(
@@ -306,28 +382,17 @@ struct PersonalRecordsView: View {
         .frame(maxWidth: .infinity)
     }
 
-    private var tecnofitImportButton: some View {
-        Button {
-            isTecnofitImportPresented = true
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "plus")
-                    .appThemeIconForeground()
-                Text("personal_records.import_from_tecnofit")
-            }
-            .padding(.horizontal, 14)
-            .compactPrimaryGreenActionButton()
-        }
-        .buttonStyle(.plain)
-    }
 
     private func loadTecnofitImportStatus() async {
         hasLoadedTecnofitImportStatus = false
         hasCompletedTecnofitImport = false
+        hasFinishedTecnofitImportCheck = false
 
         guard let uid = session.currentUid?.trimmingCharacters(in: .whitespacesAndNewlines),
               !uid.isEmpty
         else {
+            // Sem usuário: não há consulta a aguardar; mantém o comportamento atual (sem botão)
+            hasFinishedTecnofitImportCheck = true
             return
         }
 
@@ -336,7 +401,12 @@ struct PersonalRecordsView: View {
             guard !Task.isCancelled, session.currentUid == uid else { return }
             hasCompletedTecnofitImport = hasCompletedImport
             hasLoadedTecnofitImportStatus = true
+            hasFinishedTecnofitImportCheck = true
         } catch {
+            // Erro: não assume importação concluída nem exibe o botão; apenas libera a lista
+            // (se a tarefa foi cancelada/trocou de usuário, a nova consulta libera a lista).
+            guard !Task.isCancelled, session.currentUid == uid else { return }
+            hasFinishedTecnofitImportCheck = true
         }
     }
 

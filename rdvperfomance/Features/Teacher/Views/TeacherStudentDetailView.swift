@@ -147,9 +147,6 @@ struct TeacherStudentDetailView: View {
 
         return VStack(alignment: .leading, spacing: 10) {
 
-            Text("common.student")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.55))
 
             Text(student.name)
                 .font(.system(size: 20, weight: .semibold))
@@ -201,11 +198,11 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -255,11 +252,11 @@ struct TeacherStudentDetailView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -286,14 +283,20 @@ struct TeacherStudentDetailView: View {
             .padding(14)
             .background(
                 ZStack {
-                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface)
+                    AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface)
                     AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
                 }
             )
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+            )
+            // Profundidade somente no Tema Claro (referência: AdminProfileSelectionView); Tema Escuro sem sombra
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
             )
         }
         .buttonStyle(.plain)

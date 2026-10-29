@@ -3,6 +3,31 @@ import SwiftUI
 import Combine
 import UIKit
 
+// Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `primaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado: mantém exatamente o `primaryGreenActionButton()` original.
+private struct LightMilitaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        // Tema Claro: contorno verde-escuro #294A2F (mesmo valor de `LightColors.militaryText`)
+                        .stroke(Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255), lineWidth: 1)
+                )
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
 struct TrainingWeeksView: View {
 
     // Bindings, parâmetros e ViewModel
@@ -273,7 +298,7 @@ struct TrainingWeeksView: View {
                 Text("workout.publish_workout")
                 Spacer()
             }
-            .primaryGreenActionButton()
+            .modifier(LightMilitaryActionButtonModifier())
         }
         .buttonStyle(.plain)
     }
@@ -304,15 +329,15 @@ struct TrainingWeeksView: View {
                 .padding(.vertical, 9)
                 .background(
                     selectedFilter == filter
-                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.18), light: AppThemePalette.lightBar))
+                        ? AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.18), light: AppThemePalette.lightBar.opacity(0.80)))
                         : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.chipSurface))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
                             selectedFilter == filter
-                                ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: AppThemePalette.lightBar)
-                                : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.subtleBorder),
+                                ? AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.55), light: LightColors.militaryText)
+                                : AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.militaryText),
                             lineWidth: 1
                         )
                 )
@@ -517,7 +542,7 @@ struct TrainingWeeksView: View {
                 .stroke(
                     AppThemeColor(
                         dark: Theme.Colors.primaryGreen.opacity(isExpanded ? 0.42 : 0.28),
-                        light: LightColors.cardBorder
+                        light: LightColors.militaryText
                     ),
                     lineWidth: 1
                 )
@@ -608,7 +633,7 @@ struct TrainingWeeksView: View {
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.cardBorder), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.militaryText), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -939,7 +964,7 @@ struct TrainingWeeksView: View {
                 .stroke(
                     AppThemeColor(
                         dark: isExpanded ? Theme.Colors.primaryGreen.opacity(0.40) : Theme.Colors.primaryGreen.opacity(0.28),
-                        light: LightColors.cardBorder
+                        light: LightColors.militaryText
                     ),
                     lineWidth: 1
                 )
@@ -999,22 +1024,28 @@ struct TrainingWeeksView: View {
                 } label: {
                     ZStack {
                         Circle()
-                            .fill(isCompleted ? Theme.Colors.primaryGreen : .clear)
+                            // Tema Claro: concluído em verde militar translúcido (padrão do botão Sair)
+                            .fill(isCompleted ? (appTheme == .light ? AppThemePalette.lightBar.opacity(0.80) : Theme.Colors.primaryGreen) : .clear)
                         Circle()
                             .stroke(
-                                // Tema Claro: borda cinza-esverdeada quando pendente; concluído mantém o verde original
+                                // Tema Claro: borda cinza-esverdeada quando pendente; concluído em verde militar (90%)
                                 isCompleted
-                                    ? AppThemeColor(dark: Theme.Colors.primaryGreen, light: Theme.Colors.primaryGreen)
+                                    ? AppThemeColor(dark: Theme.Colors.primaryGreen, light: AppThemePalette.lightBar.opacity(0.90))
                                     : AppThemeColor(dark: Color.white.opacity(0.35), light: LightColors.pendingBorder),
                                 lineWidth: 1.5
                             )
                         if isCompleted {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundColor(.black.opacity(0.78))
+                                .foregroundColor(appTheme == .light ? .white : .black.opacity(0.78))
                         }
                     }
                     .frame(width: 24, height: 24)
+                    // Área de toque de 44×44 (o círculo pendente tem fundo `.clear`, que não recebe toques;
+                    // só o anel de 1,5pt respondia). O padding negativo mantém o layout original de 24×24.
+                    .frame(width: 44, height: 44)
+                    .contentShape(Rectangle())
+                    .padding(-10)
                 }
                 .buttonStyle(.plain)
             }
@@ -1025,7 +1056,7 @@ struct TrainingWeeksView: View {
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .stroke(
-                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.rowBorder),
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.militaryText),
                     lineWidth: 1
                 )
         )
@@ -1170,7 +1201,7 @@ struct TrainingWeeksView: View {
             } label: {
                 Text("dashboard.try_again_action")
                     .padding(.horizontal, 14)
-                    .primaryGreenActionButton()
+                    .modifier(LightMilitaryActionButtonModifier())
             }
             .buttonStyle(.plain)
         }
@@ -1236,7 +1267,7 @@ struct TrainingWeeksView: View {
         if isTeacherViewing {
             pop()
         } else {
-            onSelectSection(.home)
+            onSelectSection(.menu)
         }
     }
 

@@ -1,6 +1,7 @@
 import SwiftUI
 
 private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
     @Environment(\.isEnabled) private var isEnabled
 
     func body(content: Content) -> some View {
@@ -13,16 +14,57 @@ private struct CompactDestructiveAgendaActionButtonModifier: ViewModifier {
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12)),
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro mantém o original
+                        appTheme == .light
+                            ? AnyShapeStyle(NextFitLightColors.chevron)
+                            : AnyShapeStyle(AppThemeAdaptiveColor(isEnabled ? Color.red.opacity(0.35) : Color.white.opacity(0.12))),
                         lineWidth: 1
                     )
             )
     }
 }
 
+// Botão "Agendar": no Tema Claro (habilitado) usa o padrão do botão Sair da ProfileView
+// (verde militar 80%/90% e texto branco), mantendo as dimensões do `compactPrimaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado permanecem com o estilo original.
+private struct CompactScheduleAgendaActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 9)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(NextFitLightColors.chevron, lineWidth: 1)
+                )
+        } else if appTheme == .light {
+            // Tema Claro (desabilitado/processando): estilo original com contorno verde-escuro (#294A2F)
+            content
+                .compactPrimaryGreenActionButton()
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(NextFitLightColors.chevron, lineWidth: 1)
+                )
+        } else {
+            content
+                .compactPrimaryGreenActionButton()
+        }
+    }
+}
+
 private extension View {
     func compactDestructiveAgendaActionButton() -> some View {
         modifier(CompactDestructiveAgendaActionButtonModifier())
+    }
+
+    func compactScheduleAgendaActionButton() -> some View {
+        modifier(CompactScheduleAgendaActionButtonModifier())
     }
 }
 
@@ -39,16 +81,17 @@ private enum NextFitLightColors {
 
 private struct NextFitCardStyle: ViewModifier {
     @Environment(\.appTheme) private var appTheme
+    var lightBackground: Color = NextFitLightColors.cardSurface
 
     func body(content: Content) -> some View {
         content
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
+            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: lightBackground))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
             )
             .shadow(
                 color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -218,6 +261,8 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             }
@@ -229,7 +274,7 @@ struct StudentNextFitWodView: View {
 
             if viewModel.isNextFitAgendaSelected {
                 nextFitAgendaContent
-                    .modifier(NextFitCardStyle())
+                    .modifier(NextFitCardStyle(lightBackground: NextFitLightColors.innerSurface))
             } else {
                 nextFitSelectedDateWodContent
             }
@@ -305,15 +350,52 @@ struct StudentNextFitWodView: View {
 
     // MARK: - Abas
 
+    // Apresentação: modalidades agrupadas em um único controle segmentado e AGENDA como botão independente.
+    // Ordem e montagem das opções permanecem as de `nextFitTabOptions`.
     private var nextFitTabSelector: some View {
-        HStack(spacing: 8) {
-            ForEach(nextFitTabOptions) { option in
-                nextFitTabButton(option)
+        let options = nextFitTabOptions
+        let modalityOptions = options.filter { $0.selection != .agenda }
+        let agendaOptions = options.filter { $0.selection == .agenda }
+
+        return HStack(spacing: 8) {
+            if !modalityOptions.isEmpty {
+                HStack(spacing: 0) {
+                    ForEach(modalityOptions) { option in
+                        nextFitSegmentButton(option)
+                    }
+                }
+                .padding(3)
+                .frame(maxWidth: .infinity)
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
+                        // Profundidade apenas no Tema Claro (mesmo padrão dos botões não selecionados)
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
+                        )
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
+                )
+
+                ForEach(agendaOptions) { option in
+                    nextFitTabButton(option, horizontalPadding: 16)
+                        .fixedSize(horizontal: true, vertical: false)
+                }
+            } else {
+                ForEach(agendaOptions) { option in
+                    nextFitTabButton(option)
+                }
             }
         }
     }
 
-    private func nextFitTabButton(_ option: StudentDashboardNextFitContentOption) -> some View {
+    // Segmento de modalidade dentro do contêiner agrupado: selecionado com preenchimento
+    // (verde militar no Tema Claro / verde original no Tema Escuro); não selecionado transparente, sem borda.
+    private func nextFitSegmentButton(_ option: StudentDashboardNextFitContentOption) -> some View {
         let isSelected: Bool = {
             switch option.selection {
             case .agenda:
@@ -322,6 +404,8 @@ struct StudentNextFitWodView: View {
                 return highlightedNextFitModalityId == modalityId
             }
         }()
+
+        let isLightSelected = appTheme == .light && isSelected
 
         return Button {
             let selection = option.selection
@@ -332,16 +416,78 @@ struct StudentNextFitWodView: View {
         } label: {
             nextFitContentOptionLabel(option)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(AppThemeColor(dark: Color.white, light: NextFitLightColors.primaryText))
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: Color.white, light: NextFitLightColors.primaryText))
+                )
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 9)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                : isSelected
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Theme.Colors.primaryGreen.opacity(0.55),
+                                            Theme.Colors.primaryGreen.opacity(0.25)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                : AnyShapeStyle(Color.clear)
+                        )
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func nextFitTabButton(_ option: StudentDashboardNextFitContentOption, horizontalPadding: CGFloat = 6) -> some View {
+        let isSelected: Bool = {
+            switch option.selection {
+            case .agenda:
+                return viewModel.isNextFitAgendaSelected
+            case .wod(let modalityId):
+                return highlightedNextFitModalityId == modalityId
+            }
+        }()
+
+        let isLightSelected = appTheme == .light && isSelected
+
+        return Button {
+            let selection = option.selection
+            viewModel.selectedNextFitContent = selection
+            if selection != .agenda {
+                viewModel.clearNextFitAgendaDetail()
+            }
+        } label: {
+            nextFitContentOptionLabel(option)
+                .font(.system(size: 15, weight: .semibold))
+                // Tema Claro: aba selecionada com o padrão do botão Sair (verde militar 80%/90% e texto branco)
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: Color.white, light: NextFitLightColors.primaryText))
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
-                .padding(.horizontal, 6)
+                .padding(.horizontal, horizontalPadding)
                 .background(
                     RoundedRectangle(cornerRadius: 12)
                         .fill(
-                            isSelected
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                : isSelected
                                 ? AnyShapeStyle(
                                     LinearGradient(
                                         colors: [
@@ -358,9 +504,11 @@ struct StudentNextFitWodView: View {
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            isSelected
+                            isLightSelected
+                                ? AnyShapeStyle(NextFitLightColors.chevron)
+                                : isSelected
                                 ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
-                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
+                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron)),
                             lineWidth: 1
                         )
                 )
@@ -401,6 +549,8 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             }
@@ -484,12 +634,19 @@ struct StudentNextFitWodView: View {
                     .resizable()
                     .scaledToFill()
 
+                // Tema Claro: camada mais leve para deixar a foto mais viva (mais intensa à esquerda, nos textos)
                 AppThemeNeutralGradient(
-                    colors: [
-                        Color.black.opacity(0.92),
-                        Color.black.opacity(0.6),
-                        Color.black.opacity(0.35)
-                    ],
+                    colors: appTheme == .light
+                        ? [
+                            Color.black.opacity(0.70),
+                            Color.black.opacity(0.35),
+                            Color.black.opacity(0.12)
+                        ]
+                        : [
+                            Color.black.opacity(0.92),
+                            Color.black.opacity(0.6),
+                            Color.black.opacity(0.35)
+                        ],
                     startPoint: .leading,
                     endPoint: .trailing
                 )
@@ -500,7 +657,7 @@ struct StudentNextFitWodView: View {
         .clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(
             RoundedRectangle(cornerRadius: 16)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -529,17 +686,11 @@ struct StudentNextFitWodView: View {
         }
         .padding(16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(
-            ZStack {
-                // Tema Claro: verde pastel solido, sem sobreposicao
-                AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface)
-                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
-            }
-        )
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -591,6 +742,8 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.try_again_action")
                         .padding(.horizontal, 14)
                         .compactPrimaryGreenActionButton()
+                        // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
                 }
                 .buttonStyle(.plain)
             } else if viewModel.nextFitAgenda.isEmpty {
@@ -624,7 +777,10 @@ struct StudentNextFitWodView: View {
                                         icon: "dumbbell.fill",
                                         text: entry.modalityName,
                                         font: .system(size: 16, weight: .semibold),
-                                        textColor: Theme.Colors.primaryGreen
+                                        // Tema Claro: verde militar do botão Agendar habilitado; Tema Escuro inalterado
+                                        textColor: appTheme == .light
+                                            ? AppThemePalette.lightBar.opacity(0.80)
+                                            : Theme.Colors.primaryGreen
                                     )
                                     nextFitAgendaDetailRow(
                                         icon: "person.fill",
@@ -653,11 +809,22 @@ struct StudentNextFitWodView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(AppThemeColor(dark: Color.white.opacity(0.06), light: NextFitLightColors.innerSurface))
+                        .background(
+                            ZStack {
+                                AppThemeColor(dark: Color.black.opacity(0.90), light: NextFitLightColors.cardSurface)
+                                AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.05), light: .clear)
+                            }
+                        )
                         .cornerRadius(12)
                         .overlay(
                             RoundedRectangle(cornerRadius: 12)
-                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron), lineWidth: 1)
+                        )
+                        // Profundidade apenas no Tema Claro (padrão da AdminProfileSelectionView)
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
                         )
                     }
                 }
@@ -700,6 +867,8 @@ struct StudentNextFitWodView: View {
         formatter.locale = Locale(identifier: "pt_BR")
         formatter.timeZone = calendar.timeZone
         formatter.dateFormat = "dd/MM"
+        // Tema Claro: data selecionada com o padrão do botão Sair (verde militar 80%/90% e texto branco)
+        let isLightSelected = appTheme == .light && isSelected
         return Button {
             Task { await viewModel.selectNextFitAgendaDate(date, locale: locale) }
         } label: {
@@ -713,24 +882,32 @@ struct StudentNextFitWodView: View {
                     .font(.system(size: 16, weight: .semibold))
                     .monospacedDigit()
             }
-            .foregroundStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85)))
+            .foregroundStyle(
+                isLightSelected
+                    ? AnyShapeStyle(Color.white)
+                    : AnyShapeStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen : .white.opacity(0.85)))
+            )
             .frame(minWidth: 58)
             .padding(.horizontal, 10)
             .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 12)
                     .fill(
-                        isSelected
-                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
-                            : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
+                        isLightSelected
+                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                            : isSelected
+                                ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                                : AnyShapeStyle(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.cardSurface))
                     )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
                     .stroke(
-                        isSelected
-                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
-                            : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.border)),
+                        isLightSelected
+                            ? AnyShapeStyle(NextFitLightColors.chevron)
+                            : isSelected
+                                ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.85))
+                                : AnyShapeStyle(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: NextFitLightColors.chevron)),
                         lineWidth: 1
                     )
             )
@@ -793,9 +970,14 @@ struct StudentNextFitWodView: View {
             }
             .padding(14)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(AppThemeColor(dark: Color.white.opacity(0.06), light: NextFitLightColors.innerSurface))
+            .background(AppThemeColor(dark: Color.black.opacity(0.68), light: NextFitLightColors.innerSurface))
             .cornerRadius(12)
-            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: NextFitLightColors.border), lineWidth: 1))
+            .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: NextFitLightColors.chevron), lineWidth: 1))
+            .shadow(
+                color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                radius: appTheme == .light ? 10 : 0,
+                y: appTheme == .light ? 6 : 0
+            )
 
             Text("dashboard.participants")
                 .font(.system(size: 14, weight: .bold))
@@ -807,9 +989,21 @@ struct StudentNextFitWodView: View {
                     .foregroundStyle(Theme.Colors.ink(0.55))
             } else {
                 ForEach(detail.participants) { participant in
-                    Text(participant.name)
-                        .font(.system(size: 14))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                    // Categoria visual resolvida pelo ViewModel (confirmada > agregador > persistida > desconhecida).
+                    // Mudanças posteriores de `Status`/`Tipo` da mesma participação não alteram o ícone.
+                    let appearance = participantAppearance(for: viewModel.nextFitParticipantCategory(participant))
+
+                    HStack(spacing: 6) {
+                        Image(systemName: appearance.icon)
+                            .font(.system(size: 12))
+                            .foregroundStyle(appearance.color)
+                            .frame(width: 16)
+                            .accessibilityHidden(true)
+
+                        Text(participant.name)
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.Colors.ink(0.92))
+                    }
                 }
             }
 
@@ -825,6 +1019,22 @@ struct StudentNextFitWodView: View {
                     .font(.system(size: 13))
                     .foregroundColor(.red.opacity(0.9))
             }
+        }
+    }
+
+    /// Ícone e cor do participante conforme a categoria visual resolvida:
+    /// mensalista (cartão, azul); pacote (ticket, laranja); Wellhub/TotalPass (globo, vermelho);
+    /// VIP e desconhecida = ícone neutro existente (cinza).
+    private func participantAppearance(for category: NextFitParticipantCategory) -> (icon: String, color: Color) {
+        switch category {
+        case .monthly:
+            return (category.symbolName, .blue)
+        case .package:
+            return (category.symbolName, .orange)
+        case .external:
+            return (category.symbolName, .red)
+        case .vip, .unknown:
+            return (category.symbolName, .gray)
         }
     }
 
@@ -854,6 +1064,8 @@ struct StudentNextFitWodView: View {
                 Text("dashboard.try_again_action")
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
+                    // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
             }
             .buttonStyle(.plain)
         }
@@ -894,6 +1106,8 @@ struct StudentNextFitWodView: View {
                 }
                     .padding(.horizontal, 14)
                     .compactPrimaryGreenActionButton()
+                    // Tema Claro: contorno verde-escuro (#294A2F); Tema Escuro inalterado
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(AppThemeColor(dark: .clear, light: NextFitLightColors.chevron), lineWidth: 1))
             }
             .buttonStyle(.plain)
             .disabled(true)
@@ -943,6 +1157,9 @@ struct StudentNextFitWodView: View {
                 HStack(spacing: 10) {
                     if isProcessing {
                         ProgressView()
+                    } else if appTheme == .light {
+                        // Tema Claro: ícone herda o branco do botão (contraste sobre o verde militar)
+                        Image(systemName: "calendar.badge.plus")
                     } else {
                         Image(systemName: "calendar.badge.plus")
                             .appThemeIconForeground()
@@ -950,7 +1167,7 @@ struct StudentNextFitWodView: View {
                     Text("dashboard.schedule")
                 }
                 .padding(.horizontal, 14)
-                .compactPrimaryGreenActionButton()
+                .compactScheduleAgendaActionButton()
             }
             .buttonStyle(.plain)
             .disabled(isProcessing || !viewModel.canScheduleAgendaCheckIn(agendaId))

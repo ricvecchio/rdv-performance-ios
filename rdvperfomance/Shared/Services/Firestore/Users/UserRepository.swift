@@ -251,6 +251,40 @@ final class UserRepository: FirestoreBaseRepository {
         )
     }
 
+    // MARK: - Usuário por e-mail (qualquer perfil; o chamador valida o tipo)
+
+    func getUserByEmail(email: String) async throws -> AppUser? {
+        let e = clean(email).lowercased()
+        guard !e.isEmpty else { return nil }
+
+        let snap = try await db.collection(Collections.users)
+            .whereField("email", isEqualTo: e)
+            .limit(to: 1)
+            .getDocuments()
+
+        return try snap.documents.first?.data(as: AppUser.self)
+    }
+
+    /// Convite pendente enviado por um professor para um e-mail específico (consulta direta, sem limite de lista).
+    func getPendingInviteSentByTeacher(
+        teacherId: String,
+        studentEmail: String
+    ) async throws -> TeacherStudentInviteFS? {
+        let tid = clean(teacherId)
+        let sEmail = clean(studentEmail).lowercased()
+        guard !tid.isEmpty else { throw FirestoreRepositoryError.missingTeacherId }
+        guard !sEmail.isEmpty else { return nil }
+
+        let snap = try await db.collection(Collections.invites)
+            .whereField("teacherId", isEqualTo: tid)
+            .whereField("studentEmail", isEqualTo: sEmail)
+            .whereField("status", isEqualTo: "pending")
+            .limit(to: 1)
+            .getDocuments()
+
+        return try snap.documents.first?.data(as: TeacherStudentInviteFS.self)
+    }
+
     func createTeacherInviteByEmail(
         teacherId: String,
         teacherEmail: String,

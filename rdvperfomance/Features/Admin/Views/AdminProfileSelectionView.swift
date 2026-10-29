@@ -2,10 +2,14 @@ import SwiftUI
 
 struct AdminProfileSelectionView: View {
     @EnvironmentObject private var session: AppSession
+    @Environment(\.appTheme) private var appTheme
 
     @State private var isTeacherAuthorizationSheetPresented = false
 
     private let textSecondary = Color.white.opacity(0.60)
+
+    // Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+    private let lightDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
 
     var body: some View {
         ZStack {
@@ -29,21 +33,24 @@ struct AdminProfileSelectionView: View {
                 VStack(spacing: 14) {
                     selectionButton(
                         title: "admin.profile_selection.administrator.title",
-                        subtitle: "admin.profile_selection.administrator.subtitle"
+                        subtitle: "admin.profile_selection.administrator.subtitle",
+                        icon: "person.crop.circle.badge.checkmark"
                     ) {
                         session.selectAdminProfile(.administrator)
                     }
 
                     selectionButton(
                         title: "admin.profile_selection.student.title",
-                        subtitle: "admin.profile_selection.student.subtitle"
+                        subtitle: "admin.profile_selection.student.subtitle",
+                        icon: "person.crop.circle"
                     ) {
                         session.selectAdminProfile(.student)
                     }
 
                     selectionButton(
                         title: "admin.profile_selection.trainer.title",
-                        subtitle: "admin.profile_selection.trainer.subtitle"
+                        subtitle: "admin.profile_selection.trainer.subtitle",
+                        icon: "person.2.circle"
                     ) {
                         session.selectAdminProfile(.trainer)
                     }
@@ -59,13 +66,26 @@ struct AdminProfileSelectionView: View {
                     Button {
                         isTeacherAuthorizationSheetPresented = true
                     } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "key.fill")
-                                .appThemeIconForeground()
-                            Text("teacher_authorization.admin.entry")
+                        Group {
+                            if appTheme == .light {
+                                // Tema Claro: chave e texto maiores, em verde-escuro (#294A2F)
+                                HStack(spacing: 6) {
+                                    Image(systemName: "key.fill")
+                                        .font(.system(size: 18, weight: .semibold))
+                                    Text("teacher_authorization.admin.entry")
+                                        .font(.system(size: 16, weight: .semibold))
+                                }
+                                .foregroundStyle(lightDarkGreenBorder)
+                            } else {
+                                HStack(spacing: 6) {
+                                    Image(systemName: "key.fill")
+                                        .appThemeIconForeground()
+                                    Text("teacher_authorization.admin.entry")
+                                }
+                                .font(.system(size: 14, weight: .medium))
+                                .foregroundStyle(Theme.Colors.accentForeground)
+                            }
                         }
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(Theme.Colors.accentForeground)
                         .padding(.vertical, 8)
                         .contentShape(Rectangle())
                     }
@@ -89,30 +109,57 @@ struct AdminProfileSelectionView: View {
     private func selectionButton(
         title: LocalizedStringKey,
         subtitle: LocalizedStringKey,
+        icon: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            VStack(spacing: 8) {
-                Text(title)
+            // Ícone à esquerda, centralizado verticalmente em relação ao conjunto título + subtítulo
+            HStack(alignment: .center, spacing: 8) {
+                Image(systemName: icon)
                     .font(.system(size: 16, weight: .semibold))
                     .foregroundStyle(Theme.Colors.ink(0.92))
+                    .frame(width: 22)
 
-                Text(subtitle)
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(Theme.Colors.ink(0.65))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 14)
+                VStack(spacing: 8) {
+                    Text(title)
+                        .font(.system(size: 16, weight: .semibold))
+                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Text(subtitle)
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(Theme.Colors.ink(0.65))
+                        .multilineTextAlignment(.leading)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
             }
+            .padding(.horizontal, 14)
             .frame(width: 300, height: 74)
             .background(
                 RoundedRectangle(cornerRadius: 16)
-                    .fill(Theme.Colors.glass(0.68))
+                    // Tema Claro: mesmo verde militar a 80% do botão "Sou Aluno"; Tema Escuro inalterado
+                    .fill(
+                        AppThemeColor(
+                            dark: Theme.Colors.glass(0.68).dark,
+                            light: AppThemePalette.lightBar.opacity(0.80),
+                            followsBarColorScheme: false
+                        )
+                    )
                     .overlay(
                         RoundedRectangle(cornerRadius: 16)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(
+                                AppThemeColor(
+                                    dark: Theme.Colors.cardBorder.dark,
+                                    light: lightDarkGreenBorder,
+                                    followsBarColorScheme: false
+                                ),
+                                lineWidth: 1
+                            )
                     )
             )
             .shadow(color: .black.opacity(0.25), radius: 10, y: 6)
+            // Conteúdo claro sobre o verde militar no Tema Claro (igual ao "Sou Aluno")
+            .authLightOnMilitaryGreen()
         }
         .buttonStyle(.plain)
     }

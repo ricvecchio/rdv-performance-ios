@@ -12,6 +12,7 @@ struct ThemeSettingsView: View {
         static let iconInk = Color(red: 0x25 / 255, green: 0x48 / 255, blue: 0x2B / 255)      // #25482B
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let darkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255) // #294A2F (contorno do card "Acesso rápido" da TeacherDashboardView)
     }
 
     private let contentMaxWidth: CGFloat = 380
@@ -78,7 +79,8 @@ struct ThemeSettingsView: View {
                     .foregroundStyle(Theme.Colors.ink())
             }
         }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme`: o valor muda ao alternar o tema e a barra é atualizada imediatamente
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeNavigationBarColorScheme()
         .navigationBarTitleDisplayMode(.inline)
@@ -102,7 +104,7 @@ struct ThemeSettingsView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.darkGreenBorder), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
