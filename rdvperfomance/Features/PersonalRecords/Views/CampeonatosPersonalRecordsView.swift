@@ -1079,16 +1079,15 @@ struct CampeonatosPersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: Color.white))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(AppThemeColor(dark: Color.white.opacity(0.10), light: AppThemePalette.lightBar.opacity(0.80)))
+                            .background(Theme.Colors.ink(0.10))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.chevron), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                             )
-                            .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
                     }
                     .buttonStyle(.plain)
 
