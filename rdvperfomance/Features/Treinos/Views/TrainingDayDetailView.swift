@@ -1212,7 +1212,7 @@ struct TrainingDayDetailView: View {
                     }
                     .padding(.top, 2)
                 }
-                .frame(maxHeight: 220)
+                .frame(maxHeight: 420)
             }
         }
     }
