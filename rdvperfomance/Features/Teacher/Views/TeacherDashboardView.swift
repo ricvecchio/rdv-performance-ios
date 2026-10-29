@@ -144,6 +144,8 @@ struct TeacherDashboardView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        .blur(radius: isQuickAccessEditorPresented ? 8 : 0)
+        .animation(.easeInOut(duration: 0.20), value: isQuickAccessEditorPresented)
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -167,6 +169,7 @@ struct TeacherDashboardView: View {
         }
         .sheet(isPresented: $isQuickAccessEditorPresented) {
             quickAccessEditorSheet
+                .presentationDetents([.fraction(0.75)])
         }
         // Aviso único da novidade de temas (1.0.25); "Escolher meu tema" abre a ThemeSettingsView na pilha da Home
         .themeAnnouncement {
