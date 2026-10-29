@@ -248,6 +248,10 @@ struct PersonalRecordsView: View {
                             .padding(.horizontal, 10)
                             .padding(.vertical, 8)
                             .background(Capsule().fill(Color.green.opacity(0.16)))
+                            .overlay(
+                                Capsule()
+                                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: .clear), lineWidth: 1)
+                            )
                         }
                         .buttonStyle(.plain)
                     }
