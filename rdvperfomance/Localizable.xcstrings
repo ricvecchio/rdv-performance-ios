@@ -89011,19 +89011,19 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Profile privacy"
+            "value" : "Privacy"
           }
         },
         "es" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Privacidad del perfil"
+            "value" : "Privacidad"
           }
         },
         "pt-BR" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "Privacidade do perfil"
+            "value" : "Privacidade"
           }
         }
       }
