@@ -1,6 +1,66 @@
 import SwiftUI
 import FirebaseAuth
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let createWorkoutDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
+// Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `primaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado: mantém exatamente o `primaryGreenActionButton()` original.
+private struct LightMilitaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(createWorkoutDarkGreenBorder, lineWidth: 1)
+                )
+        } else {
+            content.primaryGreenActionButton()
+        }
+    }
+}
+
+// Tema Claro (habilitado): mesma estrutura e medidas do `WorkoutTemplateAttachmentButton` (`compactPrimaryGreenActionButton()`),
+// com as cores do botão Sair da ProfileView. Tema Escuro e carregando: usa exatamente o componente compartilhado original.
+private struct LightThemeAttachmentButton: View {
+    @Environment(\.appTheme) private var appTheme
+    let isLoading: Bool
+    let action: () -> Void
+
+    var body: some View {
+        if appTheme == .light && !isLoading {
+            Button(action: action) {
+                HStack(spacing: 10) {
+                    Image(systemName: "paperclip")
+                    Text("workouts.attach_from_my_workouts")
+                }
+                .padding(.horizontal, 12)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 9)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(createWorkoutDarkGreenBorder, lineWidth: 1)
+                )
+            }
+            .buttonStyle(.plain)
+            .disabled(isLoading)
+        } else {
+            WorkoutTemplateAttachmentButton(isLoading: isLoading, action: action)
+        }
+    }
+}
+
 /// Tela para criar um Treino (Em Casa) — layout idêntico ao "Adicionar WOD"
 struct CreateTreinoCasaView: View {
     @Environment(\.locale) private var locale
@@ -15,6 +75,7 @@ struct CreateTreinoCasaView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let pendingStatus = Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) // #B77900 (status Pendente da TeacherStudentsListView)
     }
 
     @Binding var path: [AppRoute]
@@ -182,22 +243,22 @@ struct CreateTreinoCasaView: View {
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 90)
                     .padding(10)
-                    .background(Theme.Colors.ink(0.06))
+                    .background(appTheme == .light ? Theme.Colors.ink(0.10) : Theme.Colors.ink(0.06))
                     .cornerRadius(12)
                     .overlay(
                         RoundedRectangle(cornerRadius: 12)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: LightColors.chevron), lineWidth: 1)
                     )
             }
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -210,7 +271,7 @@ struct CreateTreinoCasaView: View {
         VStack(alignment: .leading, spacing: 12) {
 
             HStack {
-                WorkoutTemplateAttachmentButton(isLoading: false) {
+                LightThemeAttachmentButton(isLoading: false) {
                     isSelectingTemplateAttachment = true
                     path.append(.teacherEmCasaLibrary(mode: .library, templateMode: .attach))
                 }
@@ -257,7 +318,7 @@ struct CreateTreinoCasaView: View {
                             }
                         } label: {
                             Image(systemName: "trash")
-                                .foregroundColor(.yellow.opacity(0.85))
+                                .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.85))
                         }
                         .buttonStyle(.plain)
                     }
@@ -269,11 +330,11 @@ struct CreateTreinoCasaView: View {
                             .scrollContentBackground(.hidden)
                             .frame(minHeight: 70)
                             .padding(10)
-                            .background(Theme.Colors.ink(0.06))
+                            .background(appTheme == .light ? Theme.Colors.ink(0.10) : Theme.Colors.ink(0.06))
                             .cornerRadius(12)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
 
@@ -291,11 +352,11 @@ struct CreateTreinoCasaView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 16)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -317,7 +378,7 @@ struct CreateTreinoCasaView: View {
                 }
                 Spacer()
             }
-            .primaryGreenActionButton()
+            .modifier(LightMilitaryActionButtonModifier())
             .shadow(
                 color: appTheme == .light ? .black.opacity(0.25) : .clear,
                 radius: appTheme == .light ? 10 : 0,
@@ -346,7 +407,7 @@ struct CreateTreinoCasaView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,

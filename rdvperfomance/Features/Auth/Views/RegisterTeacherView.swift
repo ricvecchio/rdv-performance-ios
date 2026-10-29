@@ -5,6 +5,7 @@ struct RegisterTeacherView: View {
 
     @Binding var path: [AppRoute]
     @StateObject private var vm = RegisterViewModel()
+    @Environment(\.appTheme) private var appTheme
 
     @State private var showPassword: Bool = false
 
@@ -13,11 +14,13 @@ struct RegisterTeacherView: View {
 
     private let contentMaxWidth: CGFloat = 380
 
+    // Tema Claro: mesmo fundo do card "Escolha o tema do app" (#DDEDDC)
+    private let registrationCardLightSurface = Color(red: 0xDD / 255, green: 0xED / 255, blue: 0xDC / 255)
+
     // Interface principal com formulário de cadastro de professor
     var body: some View {
         ZStack {
 
-            AppThemeBackgroundImage()
 
             VStack(spacing: 0) {
 
@@ -35,6 +38,9 @@ struct RegisterTeacherView: View {
                             formCardTrainer()
                                 .padding(.top, 8)
 
+                            // Escolha do tema (preferência local, aplicada imediatamente)
+                            RegisterThemeSelectionSection()
+
                             actionArea()
 
                             Color.clear
@@ -51,6 +57,10 @@ struct RegisterTeacherView: View {
             }
             .ignoresSafeArea(.container, edges: [.bottom])
         }
+        // O fundo fica em `background` (não participa do layout): dentro do ZStack ele ignora a safe area
+        // (inclusive a do teclado) e mantinha o ZStack com a altura total da tela, deslocando o formulário
+        // para cima do cabeçalho quando o teclado abria.
+        .background(AppThemeBackgroundImage())
         .navigationBarBackButtonHidden(true)
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -75,7 +85,8 @@ struct RegisterTeacherView: View {
                     .foregroundStyle(Theme.Colors.ink())
             }
         }
-        .toolbarBackground(Theme.Colors.headerBackground, for: .navigationBar)
+        // Cor explícita dependente de `appTheme` (mesmos valores de `headerBackground`): a barra acompanha a troca de tema imediatamente
+        .toolbarBackground(Theme.Colors.headerBackgroundColor(for: appTheme), for: .navigationBar)
         .toolbarBackground(.visible, for: .navigationBar)
         .appThemeLightHeaderColorScheme()
         .onChange(of: vm.successMessage) { _, newValue in
@@ -163,11 +174,14 @@ struct RegisterTeacherView: View {
         .padding(.horizontal, 16)
         .padding(.vertical, 18)
         .frame(maxWidth: .infinity)
-        .background(Theme.Colors.glass(0.68))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: registrationCardLightSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(
+                    AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: AuthLightPalette.indicator),
+                    lineWidth: 1
+                )
         )
     }
 
@@ -236,7 +250,7 @@ struct RegisterTeacherView: View {
                     )
                 }
                 .frame(maxWidth: .infinity)
-                .primaryGreenActionButton()
+                .authPrimaryActionButton(usesLogoutButtonBackground: true)
             }
             .buttonStyle(.plain)
             .disabled(vm.isLoading)
@@ -287,13 +301,13 @@ struct RegisterTeacherView: View {
             } label: {
                 HStack {
                     Text(displayText?(selection.wrappedValue) ?? selection.wrappedValue.rawValue)
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: AuthLightPalette.primaryText))
                         .font(.system(size: 16))
 
                     Spacer()
 
                     Image(systemName: "chevron.down")
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
+                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.55), light: AuthLightPalette.indicator))
                 }
                 .contentShape(Rectangle())
                 .padding(.vertical, 10)

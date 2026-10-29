@@ -8,6 +8,12 @@ struct TeacherAuthorizationCodeView: View {
 
     @State private var isRotateConfirmationPresented = false
 
+    // Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+    private let lightDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
+    // Tema Claro: superfície interna (#F0F7EF), mesma do card Adicionar Vídeo
+    private let lightInnerSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255)
+
     var body: some View {
         ZStack {
             Theme.Colors.sheetBackground.ignoresSafeArea()
@@ -61,7 +67,11 @@ struct TeacherAuthorizationCodeView: View {
                                                     .appThemeIconForeground()
                                             }
                                                 .padding(.horizontal, 12)
-                                                .compactPrimaryGreenActionButton()
+                                                .modifier(AuthorizationLightBarButtonModifier(compact: true))
+                                                .overlay(
+                                                    RoundedRectangle(cornerRadius: 12)
+                                                        .stroke(AppThemeColor(dark: Color.clear, light: lightDarkGreenBorder), lineWidth: 1)
+                                                )
                                         }
                                         .buttonStyle(.plain)
                                         .disabled(vm.isBusy)
@@ -79,7 +89,7 @@ struct TeacherAuthorizationCodeView: View {
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: lightDarkGreenBorder), lineWidth: 1)
                                 )
                             }
 
@@ -97,11 +107,11 @@ struct TeacherAuthorizationCodeView: View {
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: lightInnerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: lightDarkGreenBorder), lineWidth: 1)
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -121,7 +131,7 @@ struct TeacherAuthorizationCodeView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: lightDarkGreenBorder), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -138,7 +148,11 @@ struct TeacherAuthorizationCodeView: View {
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .primaryGreenActionButton()
+                        .modifier(AuthorizationLightBarButtonModifier(compact: false))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12)
+                                .stroke(AppThemeColor(dark: Color.clear, light: lightDarkGreenBorder), lineWidth: 1)
+                        )
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isBusy)
@@ -162,6 +176,38 @@ struct TeacherAuthorizationCodeView: View {
         }
         .onDisappear {
             vm.clear()
+        }
+    }
+}
+
+// Botões "Copiar" e "Gerar novo código".
+// Tema Claro (habilitado): fundo do botão "Sair" da ProfileView — verde militar #29452C a 80% — com texto e
+// ícone brancos, mantendo as medidas/tipografia do estilo original. O contorno #294A2F continua sendo o overlay
+// já aplicado em cada botão (sem borda duplicada).
+// Tema Escuro e estado desabilitado: exatamente o estilo original (`primaryGreenActionButton()` /
+// `compactPrimaryGreenActionButton()`).
+private struct AuthorizationLightBarButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    /// `true`: medidas do `compactPrimaryGreenActionButton()`; `false`: do `primaryGreenActionButton()`.
+    let compact: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: compact ? 15 : 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, compact ? 9 : 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                // Ícone e indicadores sobre o verde militar usam os valores claros (brancos)
+                .environment(\.colorScheme, .dark)
+        } else if compact {
+            content.compactPrimaryGreenActionButton()
+        } else {
+            content.primaryGreenActionButton()
         }
     }
 }

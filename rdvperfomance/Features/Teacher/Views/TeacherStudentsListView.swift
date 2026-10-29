@@ -12,6 +12,8 @@ struct TeacherStudentsListView: View {
     @EnvironmentObject private var session: AppSession
     @Environment(\.locale) private var locale
     @Environment(\.appTheme) private var appTheme
+    // Usado apenas para manter o esquema atual do seletor de abas do convite fora do Tema Claro
+    @Environment(\.colorScheme) private var colorScheme
 
     // Paleta do Tema Claro (mesmos valores da `LightColors` da TrainingWeeksView)
     private enum LightColors {
@@ -22,6 +24,8 @@ struct TeacherStudentsListView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        // Ícone e texto do status Pendente (laranja mostarda)
+        static let pendingStatus = Color(red: 0xB7 / 255, green: 0x79 / 255, blue: 0x00 / 255) // #B77900
     }
     @StateObject private var vm: TeacherStudentsListViewModel
 
@@ -34,7 +38,6 @@ struct TeacherStudentsListView: View {
 
     // Modal convite
     @State private var showInviteSheet: Bool = false
-    @State private var inviteTab: InviteTab = .invite
     @State private var inviteEmail: String = ""
 
     // ✅ Cancelamento de convite pendente na lista principal
@@ -47,6 +50,15 @@ struct TeacherStudentsListView: View {
 
     @State private var linkRequestPendingDecline: StudentLinkItem? = nil
     @State private var showDeclineLinkRequestConfirm: Bool = false
+
+    // Abas do corpo da tela (somente apresentação; não afeta carregamento de dados)
+    private enum StudentsSection: Hashable {
+        case linked
+        case sentInvites
+        case receivedInvites
+    }
+
+    @State private var selectedStudentsSection: StudentsSection = .linked
 
     init(
         path: Binding<[AppRoute]>,
@@ -115,8 +127,10 @@ struct TeacherStudentsListView: View {
                 HStack(spacing: 12) {
 
                     Button {
-                        inviteTab = .invite
                         inviteEmail = ""
+                        // Evita exibir no card um erro antigo ao abrir um novo convite
+                        vm.inviteErrorMessage = nil
+                        vm.showInviteErrorAlert = false
                         showInviteSheet = true
                         Task { await loadInvitesIfPossible() }
                     } label: {
@@ -237,12 +251,17 @@ struct TeacherStudentsListView: View {
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 16) {
-                        filterRow
-                        contentCard
-                        if vm.hasLoadedStudents && !vm.pendingInvites.isEmpty {
+                        studentsSectionSelector
+
+                        switch selectedStudentsSection {
+                        case .linked:
+                            filterRow
+                            contentCard
+                        case .sentInvites:
                             pendingInvitesCard
+                        case .receivedInvites:
+                            pendingLinkRequestsCard
                         }
-                        pendingLinkRequestsCard
                     }
                     .frame(maxWidth: contentMaxWidth)
                     .padding(.horizontal, 16)
@@ -277,6 +296,94 @@ struct TeacherStudentsListView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
     }
 
+    private func iconSectionTitle(_ title: LocalizedStringKey, systemImage: String) -> some View {
+        HStack(alignment: .center, spacing: 8) {
+            Image(systemName: systemImage)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(Theme.Colors.ink(0.35))
+
+            Text(title)
+                .font(.system(size: 14, weight: .bold))
+                .foregroundStyle(Theme.Colors.ink(0.35))
+        }
+        .padding(.horizontal, 16)
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    // MARK: - Abas (mesmo padrão visual de `nextFitTabSelector` da StudentNextFitWodView)
+
+    private var studentsSectionSelector: some View {
+        HStack(spacing: 0) {
+            studentsSectionSegmentButton(title: "admin.trainer.linked_students", section: .linked)
+            studentsSectionSegmentButton(title: "teacher_students.invites_sent_card_title", section: .sentInvites)
+            studentsSectionSegmentButton(title: "teacher_students.invites_received_card_title", section: .receivedInvites)
+        }
+        // Mesma altura nos três segmentos, mesmo quando algum título quebra em duas linhas
+        .fixedSize(horizontal: false, vertical: true)
+        .padding(3)
+        .frame(maxWidth: .infinity)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+                // Profundidade apenas no Tema Claro
+                .shadow(
+                    color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                    radius: appTheme == .light ? 10 : 0,
+                    y: appTheme == .light ? 6 : 0
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+        )
+    }
+
+    // Segmento: selecionado com preenchimento (verde militar no Tema Claro / verde original no Tema Escuro);
+    // não selecionado transparente, sem borda.
+    private func studentsSectionSegmentButton(title: LocalizedStringKey, section: StudentsSection) -> some View {
+        let isSelected = selectedStudentsSection == section
+        let isLightSelected = appTheme == .light && isSelected
+
+        return Button {
+            selectedStudentsSection = section
+        } label: {
+            Text(title)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : AnyShapeStyle(AppThemeColor(dark: Color.white, light: LightColors.primaryText))
+                )
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.7)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .padding(.vertical, 9)
+                .padding(.horizontal, 6)
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(
+                            isLightSelected
+                                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                                : isSelected
+                                ? AnyShapeStyle(
+                                    LinearGradient(
+                                        colors: [
+                                            Theme.Colors.primaryGreen.opacity(0.55),
+                                            Theme.Colors.primaryGreen.opacity(0.25)
+                                        ],
+                                        startPoint: .top,
+                                        endPoint: .bottom
+                                    )
+                                )
+                                : AnyShapeStyle(Color.clear)
+                        )
+                )
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+    }
+
     private var filterRow: some View {
         HStack(spacing: 6) {
             filterChip(title: "common.all", isSelected: filter == nil) { filter = nil }
@@ -295,25 +402,45 @@ struct TeacherStudentsListView: View {
         Button(action: action) {
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                // Tema Claro: selecionado em verde militar (#29452C) com texto branco; demais em verde claro com texto escuro.
+                // Tema Escuro: valores originais.
+                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: isSelected ? Color.white : LightColors.primaryText))
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
-                .background(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68)))
+                .background(
+                    AppThemeColor(
+                        dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.18) : Color.black.opacity(0.68),
+                        // Tema Claro (selecionado): mesmo verde militar/transparência do botão Sair da ProfileView.
+                        light: isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.innerSurface
+                    )
+                )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
-                        .stroke(isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28), lineWidth: 1)
+                        .stroke(
+                            AppThemeColor(
+                                dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.30) : Theme.Colors.primaryGreen.opacity(0.28),
+                                light: LightColors.chevron
+                            ),
+                            lineWidth: 1
+                        )
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 12))
+                // Profundidade somente no Tema Claro (referência: AdminProfileSelectionView); Tema Escuro sem sombra
+                .shadow(
+                    color: appTheme == .light ? .black.opacity(isSelected ? 0.25 : 0.10) : .clear,
+                    radius: appTheme == .light ? (isSelected ? 10 : 4) : 0,
+                    y: appTheme == .light ? (isSelected ? 6 : 2) : 0
+                )
         }
         .buttonStyle(.plain)
     }
 
     private var contentCard: some View {
         VStack(spacing: 0) {
-            sectionTitle("ui.linked_students")
+            iconSectionTitle("ui.linked_students", systemImage: "person.2.fill")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -334,7 +461,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -447,6 +574,10 @@ struct TeacherStudentsListView: View {
                 Text("ui.try_again")
                     .padding(.horizontal, 14)
                     .primaryGreenActionButton()
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 12)
+                            .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
+                    )
             }
             .buttonStyle(.plain)
         }
@@ -540,17 +671,27 @@ struct TeacherStudentsListView: View {
     private var pendingInvitesCard: some View {
         VStack(alignment: .leading, spacing: 0) {
 
-            sectionTitle("student_teachers.sent_invitations_section")
+            iconSectionTitle("student_teachers.sent_invitations_section", systemImage: "paperplane.fill")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
             let pending = vm.pendingInvites
+
+            // Estado vazio (mesmo padrão visual da mensagem de "Convites recebidos")
+            if pending.isEmpty && !vm.isInvitesLoading {
+                Text("student_teachers.no_pending_invitation")
+                    .font(.system(size: 13))
+                    .foregroundStyle(Theme.Colors.ink(0.55))
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 6)
+            }
+
             ForEach(Array(pending.enumerated()), id: \.offset) { idx, inv in
 
                 HStack(spacing: 12) {
 
                     Image(systemName: "clock.fill")
-                        .foregroundColor(.yellow.opacity(0.75))
+                        .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.75))
                         .font(.system(size: 15))
                         .frame(width: 26)
 
@@ -563,7 +704,7 @@ struct TeacherStudentsListView: View {
                         HStack(spacing: 6) {
                             Text("ui.pending")
                                 .font(.system(size: 12, weight: .semibold))
-                                .foregroundColor(.yellow.opacity(0.85))
+                                .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.85))
                                 .padding(.horizontal, 8)
                                 .padding(.vertical, 3)
                                 .background(Capsule().fill(Color.yellow.opacity(0.12)))
@@ -608,7 +749,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -619,7 +760,7 @@ struct TeacherStudentsListView: View {
 
     private var pendingLinkRequestsCard: some View {
         VStack(alignment: .leading, spacing: 0) {
-            sectionTitle("student_teachers.received_invitations_section")
+            iconSectionTitle("student_teachers.received_invitations_section", systemImage: "envelope.open.fill")
                 .padding(.top, 14)
                 .padding(.bottom, 10)
 
@@ -657,7 +798,7 @@ struct TeacherStudentsListView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -790,46 +931,50 @@ struct TeacherStudentsListView: View {
                         .foregroundStyle(Theme.Colors.ink())
                         .padding(.top, 4)
 
-                    VStack(spacing: 0) {
+                    // Itens individuais no mesmo padrão visual de `quickAccessEditorItem(_:)` da TeacherDashboardView
+                    VStack(spacing: 10) {
                         ForEach(categories, id: \.self) { category in
+                            let isSelected = selectedCategories.contains(category)
+
                             Button {
                                 toggle(category)
                             } label: {
                                 HStack(spacing: 12) {
-                                    Image(systemName: selectedCategories.contains(category) ? "checkmark.square.fill" : "square")
-                                        .foregroundStyle(Theme.Colors.icon(
-                                            selectedCategories.contains(category)
-                                                ? Theme.Colors.primaryGreen
-                                                : .white.opacity(0.35)
-                                        ))
-                                        .font(.system(size: 20, weight: .semibold))
+                                    Image(systemName: iconName(for: category))
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(AppThemeColor(dark: Color.green.opacity(0.85), light: LightColors.iconInk))
+                                        .frame(width: 22)
 
                                     Text(title(for: category))
                                         .font(.system(size: 16, weight: .semibold))
-                                        .foregroundStyle(Theme.Colors.ink(0.92))
+                                        .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
 
                                     Spacer()
+
+                                    Image(systemName: isSelected ? "checkmark.circle.fill" : "circle")
+                                        .font(.system(size: 20))
+                                        .foregroundStyle(AppThemeColor(dark: isSelected ? .green : .white.opacity(0.35), light: LightColors.chevron))
                                 }
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
+                                .background(AppThemeColor(dark: Color.white.opacity(0.06), light: LightColors.innerSurface))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(
+                                            AppThemeColor(
+                                                dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Color.white.opacity(0.08),
+                                                light: LightColors.chevron
+                                            ),
+                                            lineWidth: 1
+                                        )
+                                )
                                 .contentShape(Rectangle())
                             }
                             .buttonStyle(.plain)
                             .disabled(isSaving)
-
-                            if category != categories.last {
-                                Divider()
-                                    .background(Theme.Colors.divider)
-                                    .padding(.leading, 16)
-                            }
                         }
                     }
-                    .background(Theme.Colors.cardBackground)
-                    .cornerRadius(14)
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
-                    )
                     .padding(.horizontal, 16)
                     .padding(.top, 14)
 
@@ -844,6 +989,10 @@ struct TeacherStudentsListView: View {
                                 .padding(.vertical, 14)
                                 .background(Theme.Colors.ink(0.10))
                                 .cornerRadius(14)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 14)
+                                        .stroke(AppThemeColor(dark: Color.clear, light: LightColors.chevron), lineWidth: 1)
+                                )
                         }
                         .buttonStyle(.plain)
                         .disabled(isSaving)
@@ -851,7 +1000,8 @@ struct TeacherStudentsListView: View {
                         Button(action: onSave) {
                             Text("common.save")
                                 .frame(maxWidth: .infinity)
-                                .primaryGreenActionButton()
+                                // Tema Claro (habilitado): cores do botão Sair da ProfileView. Demais casos: `primaryGreenActionButton()` original.
+                                .modifier(TeacherStudentsLightBarActionButtonModifier())
                         }
                         .buttonStyle(.plain)
                         .disabled(selectedCategories.isEmpty || isSaving)
@@ -877,6 +1027,15 @@ struct TeacherStudentsListView: View {
             case .crossfit: "video.category.crossfit"
             case .academia: "video.category.gym"
             case .emCasa: "video.category.home"
+            }
+        }
+
+        // Mesmos SF Symbols das categorias usados em TeacherWorkoutTemplatesComponents
+        private func iconName(for category: TreinoTipo) -> String {
+            switch category {
+            case .crossfit: "figure.strengthtraining.traditional"
+            case .academia: "dumbbell"
+            case .emCasa: "house.fill"
             }
         }
     }
@@ -971,20 +1130,6 @@ struct TeacherStudentsListView: View {
 
     // MARK: - ✅ Invite Sheet
 
-    private enum InviteTab: Int, CaseIterable {
-        case invite = 0
-        case sent = 1
-
-        func title(locale: Locale) -> String {
-            switch self {
-            case .invite:
-                AppLocalization.string("ui.invite", locale: locale)
-            case .sent:
-                AppLocalization.string("student_teachers.sent_invitations_section", locale: locale)
-            }
-        }
-    }
-
     private var inviteSheet: some View {
         ZStack {
             Theme.Colors.sheetBackground
@@ -1006,29 +1151,21 @@ struct TeacherStudentsListView: View {
                             .padding(.top, 4)
 
                         VStack(alignment: .leading, spacing: 14) {
-                            Picker("", selection: $inviteTab) {
-                                ForEach(InviteTab.allCases, id: \.rawValue) { tab in
-                                    Text(tab.title(locale: locale)).tag(tab)
-                                }
-                            }
-                            .pickerStyle(.segmented)
-
-                            Group {
-                                switch inviteTab {
-                                case .invite:
-                                    inviteByEmailCard
-                                case .sent:
-                                    invitesSentCard
-                                }
-                            }
+                            inviteByEmailCard
                         }
                         .padding(14)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        .background(Theme.Colors.cardBackground)
+                        // Tema Claro: mesmo verde-claro (innerSurface) dos cards de seleção de categoria. Tema Escuro: valores originais.
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.innerSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                        )
+                        .shadow(
+                            color: appTheme == .light ? .black.opacity(0.25) : .clear,
+                            radius: appTheme == .light ? 10 : 0,
+                            y: appTheme == .light ? 6 : 0
                         )
                         .padding(.horizontal, 16)
                         .padding(.top, 14)
@@ -1036,8 +1173,29 @@ struct TeacherStudentsListView: View {
                 }
                 .scrollDismissesKeyboard(.interactively)
 
-                if inviteTab == .invite {
+                HStack(spacing: 12) {
                     Button {
+                        showInviteSheet = false
+                    } label: {
+                        Text("common.cancel")
+                            .font(.system(size: 15, weight: .bold))
+                            .foregroundStyle(Theme.Colors.ink(0.85))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Theme.Colors.ink(0.10))
+                            .cornerRadius(14)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 14)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                            )
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(vm.isInvitesLoading)
+
+                    Button {
+                        // Nova tentativa: limpa o erro anterior exibido no card
+                        vm.inviteErrorMessage = nil
+                        vm.showInviteErrorAlert = false
                         Task {
                             guard let teacherId = session.uid, !teacherId.isEmpty else {
                                 vm.setInviteError(AppLocalization.string(
@@ -1059,33 +1217,42 @@ struct TeacherStudentsListView: View {
                             if vm.isInvitesLoading {
                                 ProgressView()
                             } else {
-                                Image(systemName: "paperplane.fill")
-                                    .appThemeIconForeground()
+                                // Tema Claro: ícone herda o branco do botão; Tema Escuro: comportamento original.
+                                if appTheme == .light {
+                                    Image(systemName: "paperplane.fill")
+                                } else {
+                                    Image(systemName: "paperplane.fill")
+                                        .appThemeIconForeground()
+                                }
                                 Text("ui.send_invitation")
                             }
                             Spacer()
                         }
-                        .primaryGreenActionButton()
+                        // Tema Claro (habilitado): cores do botão Sair da ProfileView. Demais casos: `primaryGreenActionButton()` original.
+                        .modifier(TeacherStudentsLightBarActionButtonModifier())
+                        // Contorno verde do padrão do modal NextFit em ambos os temas (inclusive desabilitado).
+                        // Tema Claro habilitado já recebe #294A2F do modificador acima (evita borda duplicada).
+                        .overlay {
+                            if !(appTheme == .light && !(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)) {
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron),
+                                        lineWidth: 1
+                                    )
+                            }
+                        }
                     }
                     .buttonStyle(.plain)
                     .disabled(vm.isInvitesLoading || inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-                    .padding(.horizontal, 16)
-                    .padding(.top, 6)
-                    .padding(.bottom, 16)
                 }
+                .padding(.horizontal, 16)
+                .padding(.top, 6)
+                .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.fraction(2.0 / 3.0)])
+        .presentationDetents([.fraction(2.0 / 4.0)])
         // ✅ impede a sheet de “crescer” agressivamente por mudança de conteúdo; rola por dentro quando necessário
         .presentationContentInteraction(.scrolls)
-        .onAppear {
-            Task { await loadInvitesIfPossible() }
-        }
-        .alert("common.error", isPresented: $vm.showInviteErrorAlert) {
-            Button("common.ok", role: .cancel) {}
-        } message: {
-            Text(vm.inviteErrorMessage ?? AppLocalization.string("common.unexpected_error", locale: locale))
-        }
         .alert("ui.success", isPresented: $vm.showInviteSuccessAlert) {
             // ✅ OK fecha o modal e limpa o campo — o onDismiss da sheet recarrega dados
             Button("common.ok") {
@@ -1098,18 +1265,19 @@ struct TeacherStudentsListView: View {
     }
 
     private var inviteByEmailCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 8) {
 
-            Text("ui.invite_by_email")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.35))
+            // Rótulo no padrão do campo "E-mail do professor" (StudentTeachersView)
+            Text("common.email")
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.75).dark, light: LightColors.primaryText))
 
             HStack(spacing: 10) {
                 Image(systemName: "envelope.fill")
-                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.35)).dark, light: LightColors.iconInk))
 
                 TextField("ui.student_email", text: $inviteEmail)
-                    .foregroundStyle(Theme.Colors.ink(0.92))
+                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
                     .autocorrectionDisabled(true)
                     .textInputAutocapitalization(.never)
                     .keyboardType(.emailAddress)
@@ -1118,129 +1286,62 @@ struct TeacherStudentsListView: View {
                 if !inviteEmail.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
                     Button { inviteEmail = "" } label: {
                         Image(systemName: "xmark.circle.fill")
-                            .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.35)))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.ink(0.35)).dark, light: LightColors.iconInk))
                     }
                     .buttonStyle(.plain)
                 }
             }
             .padding(.horizontal, 14)
             .padding(.vertical, 14)
-            .background(Theme.Colors.ink(0.10))
+            // Tema Claro: mesmo padrão dos campos do modal Adicionar Vídeo. Tema Escuro: valores originais.
+            .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
 
-            Text("ui.the_student_will_only_appear_in_your_list_after_accepting_the_app_invitation")
-                .font(.system(size: 13))
-                .foregroundStyle(Theme.Colors.ink(0.35))
-        }
-    }
-
-    private var invitesSentCard: some View {
-        VStack(alignment: .leading, spacing: 12) {
-
-            HStack {
-                Text("student_teachers.sent_invitations_section")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.35))
-
-                Spacer()
-
-                Button {
-                    Task { await loadInvitesIfPossible(force: true) }
-                } label: {
-                    Image(systemName: "arrow.clockwise")
-                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
-                }
-                .buttonStyle(.plain)
-                .disabled(vm.isInvitesLoading)
-            }
-
-            if vm.isInvitesLoading {
-                HStack(spacing: 10) {
-                    ProgressView()
-                    Text("ui.loading_invitations")
-                        .font(.system(size: 13))
-                        .foregroundStyle(Theme.Colors.ink(0.55))
-                }
-                .padding(.vertical, 6)
-            } else if let msg = vm.invitesErrorMessageInline {
-                Text(msg)
+            // Erro do envio exibido dentro do card (mesmo padrão visual do modal Convidar professor)
+            if vm.showInviteErrorAlert, let message = vm.inviteErrorMessage {
+                Text(message)
                     .font(.system(size: 13))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
-                    .multilineTextAlignment(.leading)
-            } else if vm.invites.isEmpty {
-                Text("ui.no_invitation_has_been_sent_yet")
-                    .font(.system(size: 13))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
-            } else {
-                VStack(spacing: 0) {
-                    ForEach(Array(vm.invites.enumerated()), id: \.offset) { idx, inv in
-                        inviteRow(inv)
-                        if idx < vm.invites.count - 1 {
-                            Divider()
-                                .background(Theme.Colors.divider)
-                                .padding(.leading, 12)
-                        }
-                    }
-                }
-                .background(Theme.Colors.ink(0.06))
-                .cornerRadius(12)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
-                )
+                    .foregroundColor(appTheme == .light ? LightColors.pendingStatus : .yellow.opacity(0.95))
+                    .padding(.top, 6)
             }
         }
-    }
-
-    private func inviteRow(_ inv: TeacherStudentInviteFS) -> some View {
-        let statusText = vm.statusText(inv.status, locale: locale)
-
-        return HStack(spacing: 12) {
-            Image(systemName: "envelope")
-                .foregroundStyle(Theme.Colors.icon(Theme.Colors.ink(0.55)))
-
-            VStack(alignment: .leading, spacing: 4) {
-                Text(inv.studentEmail)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Theme.Colors.ink(0.92))
-                    .lineLimit(1)
-
-                Text(statusText)
-                    .font(.system(size: 12, weight: .medium))
-                    .foregroundStyle(Theme.Colors.ink(0.55))
-            }
-
-            Spacer()
-
-            if inv.status.trimmingCharacters(in: .whitespacesAndNewlines).lowercased() == "pending",
-               let id = inv.id, !id.isEmpty {
-                Button {
-                    Task {
-                        guard let teacherId = session.uid, !teacherId.isEmpty else { return }
-                        await vm.cancelInvite(inviteId: id, teacherId: teacherId)
-                    }
-                } label: {
-                    Text("common.cancel")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.90))
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 7)
-                        .background(Capsule().fill(Color.red.opacity(0.16)))
-                }
-                .buttonStyle(.plain)
-                .disabled(vm.isInvitesLoading)
-            }
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 12)
     }
 
     private func loadInvitesIfPossible(force: Bool = false) async {
         guard let teacherId = session.uid, !teacherId.isEmpty else { return }
         await vm.loadInvites(teacherId: teacherId, force: force)
+    }
+}
+
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let teacherStudentsDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
+// Tema Claro + habilitado: mesmas cores/transparências do botão Sair da ProfileView,
+// preservando fonte, padding e arredondamento de `primaryGreenActionButton()`.
+// Tema Escuro ou desabilitado: aplica exatamente o `primaryGreenActionButton()` original.
+private struct TeacherStudentsLightBarActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(teacherStudentsDarkGreenBorder, lineWidth: 1)
+                )
+        } else {
+            content
+                .primaryGreenActionButton()
+        }
     }
 }

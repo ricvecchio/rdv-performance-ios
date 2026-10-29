@@ -36,7 +36,7 @@ struct TeacherWorkoutsView: View {
                     HStack {
                         Spacer(minLength: 0)
 
-                        VStack(alignment: .leading, spacing: 14) {
+                        VStack(alignment: .leading, spacing: 24) {
                             quickAccessCard(
                                 title: "ui.send_workout",
                                 subtitle: "ui.send_a_workout_to_your_students",
@@ -74,13 +74,6 @@ struct TeacherWorkoutsView: View {
                                 path.append(.teacherImportWorkouts(category: category))
                             }
 
-                            quickAccessCard(
-                                title: "ui.my_records",
-                                subtitle: "ui.track_and_record_your_results",
-                                icon: "trophy.fill"
-                            ) {
-                                path.append(.teacherPersonalRecords(category: category))
-                            }
 
                             quickAccessCard(
                                 title: "workout.my_videos",
@@ -122,7 +115,7 @@ struct TeacherWorkoutsView: View {
         .toolbar {
 
             ToolbarItem(placement: .topBarLeading) {
-                Button { selectTeacherMainSection(.home) } label: {
+                Button { selectTeacherMainSection(.menu) } label: {
                     ZStack {
                         Color.clear
                             .frame(width: 44, height: 44)
@@ -198,7 +191,7 @@ struct TeacherWorkoutsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
             // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
             .shadow(

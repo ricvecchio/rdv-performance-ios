@@ -246,7 +246,13 @@ struct NextFitService {
         try await loadAgenda(for: Date(), sessionAccount: sessionAccount)
     }
 
-    func loadAgenda(for date: Date, sessionAccount: String) async throws -> [NextFitAgendaDisplay] {
+    /// - Parameter includeHistory: uso exclusivo do resumo semanal de Check-in da Home
+    ///   (envia `FiltrarHistorico=true`). O padrão `false` mantém a consulta original da Agenda.
+    func loadAgenda(
+        for date: Date,
+        sessionAccount: String,
+        includeHistory: Bool = false
+    ) async throws -> [NextFitAgendaDisplay] {
         guard let token = try NextFitKeychainStore.token(for: sessionAccount) else {
             throw NextFitServiceError.missingSession
         }
@@ -261,7 +267,8 @@ struct NextFitService {
                 let request = try agendaRequest(
                     date: selectedDate,
                     page: page,
-                    token: token
+                    token: token,
+                    includeHistory: includeHistory
                 )
                 let data = try await responseData(for: request)
                 let response = try JSONDecoder().decode(NextFitAgendaResponse.self, from: data)
@@ -500,12 +507,23 @@ struct NextFitService {
             applyAuthenticatedHeaders(to: &request, token: token)
 
             let data = try await responseData(for: request)
+            #if DEBUG
+            // Diagnóstico pendente: somente NOMES dos campos de Contratos[] (sem valores)
+            categoryDiagLogFieldNames(data: data, arrayKey: "Contratos")
+            #endif
             let response = try JSONDecoder().decode(NextFitClientMainDataResponse.self, from: data)
             guard response.success,
                   (response.errorCode ?? 0) == 0,
                   let content = response.content else {
                 throw NextFitServiceError.unavailable
             }
+            #if DEBUG
+            // Auditoria ANTES x APÓS: reutiliza a resposta já obtida (sem nova requisição)
+            NextFitCheckInAuditStore.shared.recordClientMainData(
+                data: data,
+                sessionClientId: clientId(from: token)
+            )
+            #endif
             return content
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
@@ -569,6 +587,10 @@ struct NextFitService {
             applyAuthenticatedHeaders(to: &request, token: token)
 
             let data = try await responseData(for: request)
+            #if DEBUG
+            // Diagnóstico pendente: somente NOMES dos campos de Participantes[] (sem valores)
+            categoryDiagLogFieldNames(data: data, arrayKey: "Participantes")
+            #endif
             let response = try JSONDecoder().decode(NextFitAgendaDetailResponse.self, from: data)
             guard response.success,
                   let content = response.content,
@@ -576,6 +598,13 @@ struct NextFitService {
                   let endDate = agendaDate(from: content.dataFinal) else {
                 throw NextFitServiceError.unavailable
             }
+            #if DEBUG
+            // Auditoria ANTES x APÓS: reutiliza a resposta já obtida (sem nova requisição)
+            NextFitCheckInAuditStore.shared.recordAgendaDetail(
+                data: data,
+                sessionClientId: clientId(from: token)
+            )
+            #endif
 
             return NextFitAgendaDetailDisplay(
                 id: content.id,
@@ -596,9 +625,14 @@ struct NextFitService {
                         id: $0.id,
                         name: $0.nomeParticipante,
                         clientId: $0.codigoCliente,
-                        contractClientId: $0.codigoContratoCliente
+                        contractClientId: $0.codigoContratoCliente,
+                        status: $0.status,
+                        type: $0.tipo
                     )
-                }
+                },
+                agendaStatus: content.status,
+                startDate: startDate,
+                endDate: endDate
             )
         } catch NextFitHTTPError.unauthorized {
             try? NextFitKeychainStore.deleteToken(for: sessionAccount)
@@ -768,7 +802,12 @@ struct NextFitService {
         )
     }
 
-    private func agendaRequest(date: String, page: Int, token: String) throws -> URLRequest {
+    private func agendaRequest(
+        date: String,
+        page: Int,
+        token: String,
+        includeHistory: Bool = false
+    ) throws -> URLRequest {
         var components = URLComponents(
             url: Self.baseURL.appending(path: "AgendaV2"),
             resolvingAgainstBaseURL: false
@@ -777,7 +816,7 @@ struct NextFitService {
             URLQueryItem(name: "DataInicialStr", value: date),
             URLQueryItem(name: "DataFinalStr", value: date),
             URLQueryItem(name: "FiltrarMeusAgendamentos", value: "false"),
-            URLQueryItem(name: "FiltrarHistorico", value: "false"),
+            URLQueryItem(name: "FiltrarHistorico", value: includeHistory ? "true" : "false"),
             URLQueryItem(name: "PeriodosStr", value: "[]"),
             URLQueryItem(name: "CodigosModalidadesStr", value: "[]"),
             URLQueryItem(name: "page", value: String(page)),
@@ -1019,3 +1058,27 @@ private struct AgendaCancelCheckInRequest: Encodable {
 private enum NextFitHTTPError: Error {
     case unauthorized
 }
+
+#if DEBUG
+// MARK: - Diagnóstico pendente da categoria comercial NextFit (somente DEBUG)
+// Mantido apenas para identificar campos comerciais ainda não interpretados pelos modelos
+// (ex.: plano, produto, convênio). Registra SOMENTE os nomes dos campos, nunca os valores.
+// Remover quando o mapeamento de categorias estiver concluído.
+private extension NextFitService {
+    /// Conjuntos de campos já registrados nesta execução (evita repetir o mesmo log a cada aula).
+    static var categoryDiagLoggedFieldSets = Set<String>()
+
+    func categoryDiagLogFieldNames(data: Data, arrayKey: String) {
+        guard let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let content = root["Content"] as? [String: Any],
+              let items = content[arrayKey] as? [[String: Any]] else {
+            return
+        }
+        let fieldNames = Set(items.flatMap { $0.keys }).sorted()
+        let signature = "\(arrayKey):\(fieldNames.joined(separator: ","))"
+        guard Self.categoryDiagLoggedFieldSets.insert(signature).inserted else { return }
+        print("[NextFitCategoryDiag] CAMPOS_\(arrayKey.uppercased()) \(fieldNames)")
+    }
+}
+#endif
+

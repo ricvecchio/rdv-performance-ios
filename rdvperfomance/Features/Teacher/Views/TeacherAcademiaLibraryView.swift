@@ -155,7 +155,7 @@ struct TeacherAcademiaLibraryView: View {
                 .frame(width: 42, height: 42)
                 .overlay(
                     RoundedRectangle(cornerRadius: 11)
-                        .stroke(Theme.Colors.primaryGreen.opacity(0.22), lineWidth: 1)
+                        .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.22), light: LightColors.chevron), lineWidth: 1)
                 )
 
                 Text(title)
@@ -180,7 +180,7 @@ struct TeacherAcademiaLibraryView: View {
             .clipShape(RoundedRectangle(cornerRadius: 16))
             .overlay(
                 RoundedRectangle(cornerRadius: 16)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
             // Tema Claro: mesma profundidade da AdminProfileSelectionView (Tema Escuro: sem sombra)
             .shadow(

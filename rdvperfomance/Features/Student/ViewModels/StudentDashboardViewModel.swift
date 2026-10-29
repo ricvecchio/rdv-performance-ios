@@ -98,7 +98,14 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var nextFitAgendaWodError: String?
     @Published var selectedNextFitAgendaWodModalityId: Int?
     @Published private(set) var selectedNextFitAgendaId: Int?
-    @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay?
+    @Published private(set) var selectedNextFitAgendaDetail: NextFitAgendaDetailDisplay? {
+        didSet {
+            // Registra a categoria visual observada nesta consulta real (persistência dos ícones)
+            if let detail = selectedNextFitAgendaDetail {
+                observeNextFitParticipantCategories(detail)
+            }
+        }
+    }
     @Published private(set) var isLoadingNextFitAgendaDetail = false
     @Published var selectedNextFitContent: StudentDashboardNextFitSelection?
     @Published private(set) var needsNextFitAuthentication = false
@@ -116,13 +123,23 @@ final class StudentDashboardViewModel: ObservableObject {
     @Published private(set) var currentWeekCheckInSummaries: [StudentDashboardDaySummary] =
         StudentDashboardViewModel.makeCurrentWeekCheckInSummaries(checkedInDays: [])
     @Published private(set) var isLoadingCurrentWeekCheckIns = false
+    /// Aulas de hoje com participação confirmada do aluno autenticado (lembrete "Seu check-in de hoje" da Home)
+    @Published private(set) var todayConfirmedCheckIns: [NextFitAgendaDisplay] = []
 
     private let studentId: String
+    // Identifica a consulta mais recente do lembrete de check-in (descarta resultados antigos)
+    private var todayConfirmedCheckInsGeneration = 0
     private let repository: FirestoreRepository
     private let nextFitService: NextFitService
     private var isLoadingData = false
     private var currentStudentUser: AppUser?
     private var nextFitContractClientIdsByModality: [Int: Int] = [:]
+    // Contratos do próprio aluno autenticado (mesmo CodigoCliente da sessão), em memória e carregados
+    // no máximo uma vez por sessão; nunca atribuídos a outros participantes.
+    @Published private var nextFitOwnContracts: (clientId: Int, contracts: [NextFitClientMainDataResponse.Content.Contract])?
+    private var isLoadingOwnNextFitContracts = false
+    // Categorias visuais persistidas dos participantes, isoladas por conta + cliente NextFit da sessão
+    private var nextFitParticipantCategoryStore: NextFitParticipantCategoryStore?
 
     var nextFitWod: NextFitWodDisplay? {
         guard case let .wod(modalityId)? = selectedNextFitContent else {
@@ -328,15 +345,74 @@ final class StudentDashboardViewModel: ObservableObject {
         isLoadingCurrentWeekCheckIns = true
         var checkedInDays = Set<Date>()
         var failedDays = Set<Date>()
+        // Identidade NextFit do aluno autenticado (CodigoCliente do token da sessão) usada
+        // para localizar o aluno na lista de participantes das aulas.
+        var participantIdentity = WeeklyCheckInParticipantIdentity(
+            clientId: try? nextFitService.clientId(sessionAccount: studentId)
+        )
 
         for date in weekDates where date <= today {
             if Task.isCancelled { return }
             do {
                 let agenda = try await nextFitService.loadAgenda(for: date, sessionAccount: studentId)
-                if agenda.contains(where: {
-                    $0.hasCheckIn && calendar.isDate($0.startDate, inSameDayAs: date)
-                }) {
+                #if DEBUG
+                print("[StudentDashboard] Check-ins: \(agenda.count) aula(s) retornada(s) para \(date).")
+                #endif
+                // Aulas cuja lista de participantes já foi verificada nesta data (evita chamadas repetidas)
+                var verifiedAgendaIds = Set<Int>()
+                var participation = try await weeklyCheckInParticipation(
+                    in: agenda,
+                    on: date,
+                    calendar: calendar,
+                    identity: &participantIdentity,
+                    verifiedAgendaIds: &verifiedAgendaIds
+                )
+                if Task.isCancelled { return }
+                // Dias anteriores: a consulta padrão da Agenda (FiltrarHistorico=false) pode não
+                // retornar as aulas já encerradas. Somente para este resumo, e apenas quando a
+                // participação ainda não foi confirmada, consulta também o histórico da data.
+                // A conclusão continua exigindo FezCheckin ou o aluno na lista de participantes.
+                if participation != .confirmed, date < today {
+                    let historyParticipation: WeeklyCheckInDayParticipation
+                    do {
+                        let history = try await nextFitService.loadAgenda(
+                            for: date,
+                            sessionAccount: studentId,
+                            includeHistory: true
+                        )
+                        #if DEBUG
+                        print("[StudentDashboard] Check-ins (histórico): \(history.count) aula(s) retornada(s) para \(date).")
+                        #endif
+                        historyParticipation = try await weeklyCheckInParticipation(
+                            in: history,
+                            on: date,
+                            calendar: calendar,
+                            identity: &participantIdentity,
+                            verifiedAgendaIds: &verifiedAgendaIds
+                        )
+                    } catch NextFitServiceError.missingSession {
+                        throw NextFitServiceError.missingSession
+                    } catch NextFitServiceError.invalidSession {
+                        throw NextFitServiceError.invalidSession
+                    } catch {
+                        // Falha temporária no histórico não confirma ausência
+                        historyParticipation = .indeterminate
+                    }
+                    if Task.isCancelled { return }
+                    if historyParticipation == .confirmed {
+                        participation = .confirmed
+                    } else if historyParticipation == .indeterminate {
+                        participation = .indeterminate
+                    }
+                }
+                switch participation {
+                case .confirmed:
                     checkedInDays.insert(date)
+                case .notConfirmed:
+                    break
+                case .indeterminate:
+                    // Falha ao consultar a lista de participantes não confirma ausência
+                    failedDays.insert(date)
                 }
             } catch NextFitServiceError.missingSession, NextFitServiceError.invalidSession {
                 if Task.isCancelled { return }
@@ -367,6 +443,231 @@ final class StudentDashboardViewModel: ObservableObject {
 
         currentWeekCheckInSummaries = Self.makeCurrentWeekCheckInSummaries(checkedInDays: checkedInDays)
         isLoadingCurrentWeekCheckIns = false
+    }
+
+    // MARK: - Participação confirmada (exclusivo do resumo semanal de Check-in)
+
+    private enum WeeklyCheckInDayParticipation {
+        case confirmed
+        case notConfirmed
+        case indeterminate
+    }
+
+    private struct WeeklyCheckInParticipantIdentity {
+        let clientId: Int?
+        // Contratos (CodigoContratoCliente) do aluno, carregados somente se necessário
+        var contractClientIds: Set<Int>?
+    }
+
+    /// StatusAgendaParticipante já tratado no app como "Desistente" (ver `isAgendaWithdrawal`).
+    private static let weeklyCheckInWithdrawnStatus = 8
+
+    /// Determina se o aluno autenticado consta como participante confirmado em ao menos
+    /// uma aula do dia. Não altera a Agenda exibida nem a semântica de `hasCheckIn`.
+    private func weeklyCheckInParticipation(
+        in agenda: [NextFitAgendaDisplay],
+        on date: Date,
+        calendar: Calendar,
+        identity: inout WeeklyCheckInParticipantIdentity,
+        verifiedAgendaIds: inout Set<Int>
+    ) async throws -> WeeklyCheckInDayParticipation {
+        let dayEntries = agenda.filter {
+            calendar.isDate($0.startDate, inSameDayAs: date)
+                && $0.statusAgendaParticipante != Self.weeklyCheckInWithdrawnStatus
+        }
+
+        // Check-in formal (FezCheckin) do próprio aluno continua confirmando o dia
+        if dayEntries.contains(where: \.hasCheckIn) {
+            return .confirmed
+        }
+
+        // Sem identificador NextFit confiável não é possível verificar a lista de participantes
+        guard identity.clientId != nil else {
+            return .notConfirmed
+        }
+
+        // Somente aulas com participantes podem conter o aluno; aulas com
+        // StatusAgendaParticipante informado (vínculo do aluno com a aula) são verificadas primeiro.
+        let candidates = dayEntries
+            .filter { $0.enrolledStudents > 0 }
+            .sorted { lhs, rhs in
+                (lhs.statusAgendaParticipante != nil) && (rhs.statusAgendaParticipante == nil)
+            }
+
+        var hasFailedLookup = false
+        for entry in candidates where !verifiedAgendaIds.contains(entry.id) {
+            if Task.isCancelled { return .indeterminate }
+            let detail: NextFitAgendaDetailDisplay
+            do {
+                detail = try await nextFitService.loadAgendaDetail(
+                    agendaId: entry.id,
+                    sessionAccount: studentId
+                )
+            } catch NextFitServiceError.missingSession {
+                throw NextFitServiceError.missingSession
+            } catch NextFitServiceError.invalidSession {
+                throw NextFitServiceError.invalidSession
+            } catch {
+                hasFailedLookup = true
+                continue
+            }
+            // Persistência das categorias visuais a partir da resposta já obtida (sem nova consulta)
+            observeNextFitParticipantCategories(detail)
+
+            // Desistência do aluno nesta aula não é participação confirmada
+            if detail.statusAgendaParticipante == Self.weeklyCheckInWithdrawnStatus {
+                verifiedAgendaIds.insert(entry.id)
+                continue
+            }
+            if detail.hasCheckIn == true {
+                return .confirmed
+            }
+
+            var hasUnverifiedParticipant = false
+            for participant in detail.participants {
+                switch try await isAuthenticatedStudent(participant, identity: &identity) {
+                case true?:
+                    return .confirmed
+                case false?:
+                    continue
+                case nil:
+                    hasUnverifiedParticipant = true
+                }
+            }
+            if hasUnverifiedParticipant {
+                hasFailedLookup = true
+            } else {
+                verifiedAgendaIds.insert(entry.id)
+            }
+        }
+
+        return hasFailedLookup ? .indeterminate : .notConfirmed
+    }
+
+    /// Compara o participante com o aluno autenticado usando apenas identificadores NextFit
+    /// (CodigoCliente e, na sua ausência, CodigoContratoCliente). Nunca compara nomes.
+    /// Retorna `nil` quando não foi possível verificar (falha temporária).
+    private func isAuthenticatedStudent(
+        _ participant: NextFitAgendaParticipantDisplay,
+        identity: inout WeeklyCheckInParticipantIdentity
+    ) async throws -> Bool? {
+        guard let clientId = identity.clientId else { return false }
+
+        if let participantClientId = participant.clientId {
+            return participantClientId == clientId
+        }
+
+        guard let participantContractId = participant.contractClientId else {
+            return false
+        }
+
+        if identity.contractClientIds == nil {
+            do {
+                let clientData = try await nextFitService.loadClientMainData(sessionAccount: studentId)
+                if clientData.clientId == clientId {
+                    nextFitOwnContracts = (clientId, clientData.contracts)
+                }
+                // Usa os contratos somente se pertencerem ao mesmo cliente da sessão
+                identity.contractClientIds = clientData.clientId == clientId
+                    ? Set(clientData.contracts.map(\.id))
+                    : []
+            } catch NextFitServiceError.missingSession {
+                throw NextFitServiceError.missingSession
+            } catch NextFitServiceError.invalidSession {
+                throw NextFitServiceError.invalidSession
+            } catch {
+                return nil
+            }
+        }
+
+        return identity.contractClientIds?.contains(participantContractId) == true
+    }
+
+    // MARK: - Lembrete "Seu check-in de hoje" (exclusivo da Home do aluno)
+
+    /// Carrega as aulas de hoje em que o aluno autenticado está confirmado na NextFit.
+    /// Usa os mesmos critérios do resumo semanal (FezCheckin do próprio aluno ou o aluno na lista
+    /// de participantes por CodigoCliente/CodigoContratoCliente; nunca por nome nem por quantidade
+    /// de inscritos; desistência ignorada). Falhas nunca são tratadas como confirmação.
+    func loadTodayConfirmedCheckIns() async {
+        todayConfirmedCheckInsGeneration += 1
+        let generation = todayConfirmedCheckInsGeneration
+
+        guard nextFitService.hasSession(sessionAccount: studentId) else {
+            todayConfirmedCheckIns = []
+            return
+        }
+
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        do {
+            let agenda = try await nextFitService.loadAgenda(for: today, sessionAccount: studentId)
+            guard !Task.isCancelled, generation == todayConfirmedCheckInsGeneration else { return }
+
+            var identity = WeeklyCheckInParticipantIdentity(
+                clientId: try? nextFitService.clientId(sessionAccount: studentId)
+            )
+            let dayEntries = agenda.filter {
+                calendar.isDate($0.startDate, inSameDayAs: today)
+                    && $0.statusAgendaParticipante != Self.weeklyCheckInWithdrawnStatus
+            }
+
+            var confirmed: [NextFitAgendaDisplay] = []
+            for entry in dayEntries {
+                if Task.isCancelled || generation != todayConfirmedCheckInsGeneration { return }
+
+                // Check-in formal (FezCheckin) do próprio aluno
+                if entry.hasCheckIn {
+                    confirmed.append(entry)
+                    continue
+                }
+
+                // Sem identificador NextFit confiável ou sem inscritos não há como o aluno constar na aula
+                guard identity.clientId != nil, entry.enrolledStudents > 0 else { continue }
+
+                let detail: NextFitAgendaDetailDisplay
+                do {
+                    detail = try await nextFitService.loadAgendaDetail(
+                        agendaId: entry.id,
+                        sessionAccount: studentId
+                    )
+                } catch NextFitServiceError.missingSession {
+                    throw NextFitServiceError.missingSession
+                } catch NextFitServiceError.invalidSession {
+                    throw NextFitServiceError.invalidSession
+                } catch {
+                    // Falha temporária não confirma participação
+                    continue
+                }
+                // Persistência das categorias visuais a partir da resposta já obtida (sem nova consulta)
+                observeNextFitParticipantCategories(detail)
+
+                if detail.statusAgendaParticipante == Self.weeklyCheckInWithdrawnStatus {
+                    continue
+                }
+                if detail.hasCheckIn == true {
+                    confirmed.append(entry)
+                    continue
+                }
+                for participant in detail.participants {
+                    if try await isAuthenticatedStudent(participant, identity: &identity) == true {
+                        confirmed.append(entry)
+                        break
+                    }
+                }
+            }
+
+            guard !Task.isCancelled, generation == todayConfirmedCheckInsGeneration else { return }
+            todayConfirmedCheckIns = confirmed.sorted { $0.startDate < $1.startDate }
+        } catch {
+            guard !Task.isCancelled, generation == todayConfirmedCheckInsGeneration else { return }
+            // Sessão ausente/expirada ou falha na consulta: não exibe dados não confirmados
+            todayConfirmedCheckIns = []
+            #if DEBUG
+            print("[StudentDashboard] Não foi possível carregar o check-in de hoje: \(error.localizedDescription)")
+            #endif
+        }
     }
 
     func loadNextFit(locale: Locale) async {
@@ -401,6 +702,8 @@ final class StudentDashboardViewModel: ObservableObject {
                 sessionAccount: studentId
             )
             nextFitContractClientIdsByModality = [:]
+            nextFitOwnContracts = nil
+            nextFitParticipantCategoryStore = nil
             hasNextFitSession = true
             await loadNextFitWod(locale: locale)
             return true
@@ -503,6 +806,16 @@ final class StudentDashboardViewModel: ObservableObject {
                 agendaId: agendaId,
                 sessionAccount: studentId
             )
+            #if DEBUG
+            // Diagnóstico temporário da categoria dos participantes NextFit
+            if let detail = selectedNextFitAgendaDetail {
+                logNextFitParticipantCategories(detail)
+            }
+            #endif
+            // Contratos do próprio aluno: carregados uma única vez por sessão, sem bloquear o detalhe
+            if nextFitOwnContracts == nil {
+                Task { await loadOwnNextFitContractsIfNeeded() }
+            }
         } catch let error as NextFitServiceError {
             switch error {
             case .missingSession, .invalidSession:
@@ -660,9 +973,197 @@ final class StudentDashboardViewModel: ObservableObject {
         nextFitAgendaDetailError = nil
     }
 
+    /// Categoria comercial do participante para o ícone da lista (nunca derivada de `Status`).
+    func nextFitParticipantCategory(_ participant: NextFitAgendaParticipantDisplay) -> NextFitParticipantCategory {
+        resolveNextFitParticipantCategory(participant).category
+    }
+
+    private func resolveNextFitParticipantCategory(
+        _ participant: NextFitAgendaParticipantDisplay
+    ) -> NextFitParticipantCategoryResolution {
+        let detail = selectedNextFitAgendaDetail
+        // A fotografia visual só é considerada em aulas iniciadas/encerradas; aulas futuras mantêm as regras atuais
+        return resolveNextFitParticipantCategory(
+            participant,
+            agendaId: detail?.id,
+            usePersistedVisual: detail?.hasStarted == true
+        )
+    }
+
+    /// Resolução sem efeitos colaterais (segura durante a renderização).
+    private func resolveNextFitParticipantCategory(
+        _ participant: NextFitAgendaParticipantDisplay,
+        agendaId: Int?,
+        usePersistedVisual: Bool
+    ) -> NextFitParticipantCategoryResolution {
+        let store = currentNextFitParticipantCategoryStore()
+        let hasPersistedInference: Bool
+        if let store, let agendaId {
+            hasPersistedInference = store.hasInferredExternal(
+                agendaId: agendaId,
+                participantId: participant.id,
+                clientId: participant.clientId
+            )
+        } else {
+            hasPersistedInference = false
+        }
+        var persistedVisual: NextFitParticipantCategoryStore.VisualRecord?
+        if usePersistedVisual, let store, let agendaId {
+            persistedVisual = store.visualRecord(
+                agendaId: agendaId,
+                participantId: participant.id,
+                clientId: participant.clientId
+            )
+        }
+        return NextFitParticipantCategoryResolver.resolve(
+            participant: participant,
+            confirmedCategory: store?.confirmedCategory(
+                clientId: participant.clientId,
+                contractClientId: participant.contractClientId
+            ),
+            ownContractType: ownNextFitContract(for: participant)?.type,
+            hasPersistedInference: hasPersistedInference,
+            persistedVisualCategory: persistedVisual?.category,
+            persistedVisualOrigin: persistedVisual?.origin
+        )
+    }
+
+    /// Armazenamento das categorias visuais da sessão NextFit atual (conta do app + `CodigoCliente`
+    /// do token). Retorna `nil` sem sessão válida; nunca compartilha dados entre contas.
+    private func currentNextFitParticipantCategoryStore() -> NextFitParticipantCategoryStore? {
+        if let store = nextFitParticipantCategoryStore {
+            return store
+        }
+        guard let sessionClientId = try? nextFitService.clientId(sessionAccount: studentId) else {
+            return nil
+        }
+        let store = NextFitParticipantCategoryStore(account: studentId, sessionClientId: sessionClientId)
+        nextFitParticipantCategoryStore = store
+        return store
+    }
+
+    /// Registra as categorias visuais observadas em uma consulta real de `Agenda/{id}`.
+    /// Não altera a lista de participantes nem dispara novas consultas.
+    /// Aulas encerradas são somente consultadas: seus dados operacionais atualizados (`Tipo`/`Status`)
+    /// nunca sobrescrevem a categoria visual registrada antes do encerramento.
+    private func observeNextFitParticipantCategories(_ detail: NextFitAgendaDetailDisplay) {
+        guard let store = currentNextFitParticipantCategoryStore() else { return }
+        store.observe(detail: detail)
+
+        guard !detail.isClosed else {
+            #if DEBUG
+            print("[NextFitCategoryDiag] VISUAL_AGENDA agenda=\(detail.id) encerrada=sim iniciada=\(detail.hasStarted ? "sim" : "nao") statusAgenda=\(detail.agendaStatus.map { String($0) } ?? "nil") fimPassou=\(detail.endDate.map { $0 <= Date() ? "sim" : "nao" } ?? "nil") gravacao=nao")
+            for participant in detail.participants {
+                let record = store.visualRecord(
+                    agendaId: detail.id,
+                    participantId: participant.id,
+                    clientId: participant.clientId
+                )
+                let computed = resolveNextFitParticipantCategory(
+                    participant,
+                    agendaId: detail.id,
+                    usePersistedVisual: false
+                )
+                let recovered = resolveNextFitParticipantCategory(
+                    participant,
+                    agendaId: detail.id,
+                    usePersistedVisual: true
+                )
+                print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(participant.id) encerrada=sim calculada=\(computed.category.rawValue) origemCalculada=\(computed.reason) registroAnterior=\(record == nil ? "ausente" : "presente") categoriaRegistro=\(record?.category.rawValue ?? "-") origemRegistro=\(record?.origin ?? "-") persistencia=nao-gravado recuperada=\(recovered.category.rawValue) origemRecuperada=\(recovered.reason)")
+            }
+            #endif
+            return
+        }
+
+        // Categoria efetivamente apresentada pelas regras atuais (sem a fotografia persistida)
+        let entries = detail.participants.map { participant in
+            (
+                participant: participant,
+                resolution: resolveNextFitParticipantCategory(
+                    participant,
+                    agendaId: detail.id,
+                    usePersistedVisual: false
+                )
+            )
+        }
+        #if DEBUG
+        let previousRecords = detail.participants.map {
+            store.visualRecord(agendaId: detail.id, participantId: $0.id, clientId: $0.clientId)
+        }
+        #endif
+        let outcomes = store.observeVisual(agendaId: detail.id, entries: entries)
+        #if DEBUG
+        print("[NextFitCategoryDiag] VISUAL_AGENDA agenda=\(detail.id) encerrada=nao iniciada=\(detail.hasStarted ? "sim" : "nao") statusAgenda=\(detail.agendaStatus.map { String($0) } ?? "nil") participantes=\(detail.participants.count) gravacao=sim")
+        for ((entry, outcome), previous) in zip(zip(entries, outcomes), previousRecords) {
+            let stored = store.visualRecord(
+                agendaId: detail.id,
+                participantId: entry.participant.id,
+                clientId: entry.participant.clientId
+            )
+            print("[NextFitCategoryDiag] VISUAL agenda=\(detail.id) participante=\(entry.participant.id) encerrada=nao calculada=\(entry.resolution.category.rawValue) origemCalculada=\(entry.resolution.reason) registroAnterior=\(previous.map { "presente(\($0.category.rawValue))" } ?? "ausente") persistencia=\(outcome.outcome.rawValue) registroAtual=\(stored?.category.rawValue ?? "-") origemRegistro=\(stored?.origin ?? "-")")
+        }
+        #else
+        _ = outcomes
+        #endif
+    }
+
+    /// Carrega uma única vez por sessão os contratos do próprio aluno autenticado (mesmo `CodigoCliente`
+    /// do token da sessão) para a classificação dos participantes. Não altera check-in, cancelamento
+    /// nem agendamento. Falhas são ignoradas: a classificação permanece `unknown`.
+    private func loadOwnNextFitContractsIfNeeded() async {
+        guard nextFitOwnContracts == nil,
+              !isLoadingOwnNextFitContracts,
+              hasNextFitSession,
+              let clientId = try? nextFitService.clientId(sessionAccount: studentId) else {
+            return
+        }
+
+        isLoadingOwnNextFitContracts = true
+        defer { isLoadingOwnNextFitContracts = false }
+
+        guard let clientData = try? await nextFitService.loadClientMainData(sessionAccount: studentId),
+              clientData.clientId == clientId,
+              hasNextFitSession,
+              nextFitOwnContracts == nil else {
+            #if DEBUG
+            print("[NextFitCategoryDiag] CONTRATOS_PROPRIOS carga=indisponivel")
+            #endif
+            return
+        }
+
+        nextFitOwnContracts = (clientId, clientData.contracts)
+        // Refinamento antes do encerramento: atualiza a categoria visual registrada da aula aberta
+        if let detail = selectedNextFitAgendaDetail, !detail.isClosed {
+            observeNextFitParticipantCategories(detail)
+        }
+        #if DEBUG
+        print("[NextFitCategoryDiag] CONTRATOS_PROPRIOS carga=ok total=\(clientData.contracts.count)")
+        if let detail = selectedNextFitAgendaDetail {
+            logNextFitParticipantCategories(detail)
+        }
+        #endif
+    }
+
+    /// Contrato do próprio aluno autenticado vinculado ao participante por `CodigoContratoCliente`.
+    /// Retorna `nil` para qualquer outro participante ou quando os contratos ainda não foram carregados.
+    private func ownNextFitContract(
+        for participant: NextFitAgendaParticipantDisplay
+    ) -> NextFitClientMainDataResponse.Content.Contract? {
+        guard let own = nextFitOwnContracts,
+              let contractClientId = participant.contractClientId else {
+            return nil
+        }
+        if let participantClientId = participant.clientId, participantClientId != own.clientId {
+            return nil
+        }
+        return own.contracts.first { $0.id == contractClientId }
+    }
+
     func logoutNextFit() throws {
         try nextFitService.logout(sessionAccount: studentId)
         nextFitContractClientIdsByModality = [:]
+        nextFitOwnContracts = nil
+        nextFitParticipantCategoryStore = nil
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []
@@ -846,6 +1347,8 @@ final class StudentDashboardViewModel: ObservableObject {
     private func resetNextFitWod() {
         isLoadingNextFitWod = false
         nextFitContractClientIdsByModality = [:]
+        nextFitOwnContracts = nil
+        nextFitParticipantCategoryStore = nil
         nextFitWods = []
         nextFitAgenda = []
         nextFitAgendaWods = []
@@ -922,7 +1425,10 @@ final class StudentDashboardViewModel: ObservableObject {
                 modalityName: detail.modalityName,
                 instructorName: detail.instructorName,
                 locationName: detail.locationName,
-                participants: detail.participants
+                participants: detail.participants,
+                agendaStatus: detail.agendaStatus,
+                startDate: detail.startDate,
+                endDate: detail.endDate
             )
         }
     }
@@ -1013,6 +1519,7 @@ final class StudentDashboardViewModel: ObservableObject {
         guard clientData.clientId == clientId else {
             return nil
         }
+        nextFitOwnContracts = (clientId, clientData.contracts)
 
         let activeContracts = clientData.contracts.filter { $0.status == 1 }
 
@@ -1144,3 +1651,46 @@ final class StudentDashboardViewModel: ObservableObject {
         .map { $0 }
     }
 }
+
+#if DEBUG
+// MARK: - Diagnóstico temporário da categoria dos participantes NextFit (somente DEBUG — REMOVER após validação)
+// Usa apenas dados já carregados. Não registra nomes, tokens, códigos de cliente ou de contrato.
+extension StudentDashboardViewModel {
+    fileprivate func logNextFitParticipantCategories(_ detail: NextFitAgendaDetailDisplay) {
+        let prefix = "[NextFitCategoryDiag]"
+        print("\(prefix) DETALHE agenda=\(detail.id) total=\(detail.participants.count) contratosProprios=\(nextFitOwnContracts == nil ? "indisponiveis" : "disponiveis")")
+
+        if let own = nextFitOwnContracts {
+            for (index, contract) in own.contracts.enumerated() {
+                let hasDescription = !(contract.descriptionText?
+                    .trimmingCharacters(in: .whitespacesAndNewlines) ?? "").isEmpty
+                // Somente a presença de `Descricao` (texto livre pode conter dados pessoais); sem regra validada
+                print("\(prefix) CONTRATO_PROPRIO #\(index + 1) Tipo=\(contract.type) Status=\(contract.status) modalidades=\(contract.modalities.count) descricao=\(hasDescription ? "presente" : "ausente")")
+            }
+        }
+
+        for (index, participant) in detail.participants.enumerated() {
+            let resolution = resolveNextFitParticipantCategory(participant)
+            let ownContract = ownNextFitContract(for: participant)
+            var parts: [String] = []
+            parts.append("\(prefix) PARTICIPANTE agenda=\(detail.id) #\(index + 1)")
+            parts.append("Tipo=\(participant.type.map { String($0) } ?? "nil")")
+            parts.append("Status=\(participant.status.map { String($0) } ?? "nil")")
+            parts.append("contrato=\(participant.contractClientId == nil ? "ausente" : "presente")")
+            if let own = nextFitOwnContracts {
+                let isOwnClient = participant.clientId == own.clientId || ownContract != nil
+                parts.append("aluno=\(isOwnClient ? "sim" : "nao")")
+            }
+            parts.append("proprio=\(ownContract == nil ? "nao" : "sim")")
+            if let ownContract {
+                parts.append("contratoProprioTipo=\(ownContract.type)")
+            }
+            parts.append("categoria=\(resolution.category)")
+            parts.append("motivo=\(resolution.reason)")
+            parts.append("icone=\(resolution.category.symbolName)")
+            print(parts.joined(separator: " "))
+        }
+    }
+}
+#endif
+

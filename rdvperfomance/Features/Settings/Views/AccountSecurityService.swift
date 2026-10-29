@@ -80,6 +80,12 @@ final class AccountSecurityService {
         do {
             _ = try await user.reauthenticate(with: credential)
 
+            // Remove os registros pessoais (anotações, lembretes e aniversários) e suas notificações locais
+            // antes do perfil, enquanto as regras ainda identificam o usuário. Falhas aqui não impedem
+            // a exclusão da conta.
+            try? await PersonalOrganizerRepository.shared.deleteAll(uid: uid)
+            await PersonalNotificationScheduler.shared.removeAllPersonalNotifications()
+
             let db = Firestore.firestore()
             try await db.collection("users").document(uid).delete()
 

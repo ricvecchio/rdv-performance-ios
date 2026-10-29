@@ -1,6 +1,9 @@
 import SwiftUI
 import FirebaseAuth
 
+// Tema Claro: contorno verde-escuro (#294A2F), mesmo tom do card "Acesso rápido" da TeacherDashboardView
+private let sendWorkoutDarkGreenBorder = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)
+
 private struct WorkoutSectionOption: Identifiable, Hashable {
     let title: String
     let sectionKey: String
@@ -11,30 +14,75 @@ private struct WorkoutSectionOption: Identifiable, Hashable {
 private struct WorkoutPickerLabel: View {
     let title: DisplayText
     let isSelected: Bool
+    @Environment(\.appTheme) private var appTheme
 
     var body: some View {
-        let borderColor: Color = isSelected
-            ? Theme.Colors.primaryGreen.opacity(0.35)
-            : Theme.Colors.primaryGreen.opacity(0.28)
+        // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair) com texto/ícone brancos;
+        // sem seleção em cinza claro (mesmos tons do botão Próximo desabilitado) com texto/ícone escuros.
+        let isLightSelected = appTheme == .light && isSelected
+        let isLightUnselected = appTheme == .light && !isSelected
+        let borderColor: AnyShapeStyle = isLightSelected
+            ? AnyShapeStyle(sendWorkoutDarkGreenBorder)
+            : isLightUnselected
+                ? AnyShapeStyle(sendWorkoutDarkGreenBorder)
+                : isSelected
+                    ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.35))
+                    : AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.28))
 
         HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Theme.Colors.ink(0.92))
+            .foregroundStyle(isLightSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : isLightUnselected
+                            ? AnyShapeStyle(Theme.Colors.ink(0.70))
+                            : AnyShapeStyle(Theme.Colors.icon(isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25)))
+                )
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
-        .background(Theme.Colors.glass(0.68))
+        .background(
+            isLightSelected
+                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                : isLightUnselected
+                    ? AnyShapeStyle(Theme.Colors.ink(0.10))
+                    : AnyShapeStyle(Theme.Colors.glass(0.68))
+        )
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(borderColor, lineWidth: 1)
         )
+    }
+}
+
+// Tema Claro (habilitado): cores do botão Sair da ProfileView com as mesmas medidas do `primaryGreenActionButton()`.
+// Tema Escuro e estado desabilitado: mantém exatamente o `primaryGreenActionButton()` original.
+private struct LightMilitaryActionButtonModifier: ViewModifier {
+    @Environment(\.appTheme) private var appTheme
+    @Environment(\.isEnabled) private var isEnabled
+
+    func body(content: Content) -> some View {
+        if appTheme == .light && isEnabled {
+            content
+                .font(.system(size: 16, weight: .semibold))
+                .foregroundStyle(Color.white)
+                .padding(.vertical, 14)
+                .background(AppThemePalette.lightBar.opacity(0.80))
+                .cornerRadius(12)
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(sendWorkoutDarkGreenBorder, lineWidth: 1)
+                )
+        } else {
+            content.primaryGreenActionButton()
+        }
     }
 }
 
@@ -368,12 +416,21 @@ struct TeacherSendWorkoutView: View {
     ) -> some View {
         VStack(spacing: 4) {
             ZStack {
+                // Tema Claro: etapa ativa/concluída em verde militar translúcido com número branco; pendente mantém o estilo discreto original
                 Circle()
-                    .fill(AppThemeAdaptiveColor((isActive || isComplete) ? Color.green.opacity(0.18) : Color.white.opacity(0.10)))
+                    .fill(
+                        appTheme == .light && (isActive || isComplete)
+                            ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                            : AnyShapeStyle(AppThemeAdaptiveColor((isActive || isComplete) ? Color.green.opacity(0.18) : Color.white.opacity(0.10)))
+                    )
                     .frame(width: 26, height: 26)
                 Text("\(number)")
                     .font(.system(size: 13, weight: .semibold))
-                    .foregroundStyle(AppThemeAdaptiveColor((isActive || isComplete) ? .green : .white.opacity(0.55)))
+                    .foregroundStyle(
+                        appTheme == .light && (isActive || isComplete)
+                            ? AnyShapeStyle(Color.white)
+                            : AnyShapeStyle(AppThemeAdaptiveColor((isActive || isComplete) ? .green : .white.opacity(0.55)))
+                    )
             }
             title.view()
                 .font(.system(size: 11, weight: .medium))
@@ -531,25 +588,34 @@ struct TeacherSendWorkoutView: View {
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
+            // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair); não selecionado em verde pastel
             Text(title)
                 .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Theme.Colors.ink(0.92))
+                .foregroundStyle(
+                    appTheme == .light
+                        ? AnyShapeStyle(isSelected ? Color.white : LightColors.primaryText)
+                        : AnyShapeStyle(Theme.Colors.ink(0.92))
+                )
                 .lineLimit(1)
                 .minimumScaleFactor(0.85)
                 .padding(.horizontal, 6)
                 .padding(.vertical, 9)
                 .frame(maxWidth: .infinity)
                 .background(
-                    isSelected
-                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
-                        : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    appTheme == .light
+                        ? AnyShapeStyle(isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.cardSurface)
+                        : isSelected
+                            ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 12)
                         .stroke(
-                            isSelected
-                                ? Theme.Colors.primaryGreen.opacity(0.30)
-                                : Theme.Colors.primaryGreen.opacity(0.28),
+                            appTheme == .light
+                                ? LightColors.chevron
+                                : isSelected
+                                    ? Theme.Colors.primaryGreen.opacity(0.30)
+                                    : Theme.Colors.primaryGreen.opacity(0.28),
                             lineWidth: 1
                         )
                 )
@@ -594,11 +660,21 @@ struct TeacherSendWorkoutView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 12)
-        .background(Theme.Colors.glass(0.68))
+        // Tema Claro: mesmo cinza do "Selecionar treino" não selecionado. Tema Escuro: valores originais.
+        .background(
+            appTheme == .light
+                ? AnyShapeStyle(Theme.Colors.ink(0.10))
+                : AnyShapeStyle(Theme.Colors.glass(0.68))
+        )
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(
+                    appTheme == .light
+                        ? AnyShapeStyle(Theme.Colors.ink(0.12))
+                        : AnyShapeStyle(Theme.Colors.cardBorder),
+                    lineWidth: 1
+                )
         )
     }
 
@@ -640,7 +716,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -688,7 +764,23 @@ struct TeacherSendWorkoutView: View {
 
     private var selectedStudentsSummary: some View {
         VStack(spacing: 0) {
-            cardSectionTitle("ui.selected_students")
+            if appTheme == .light {
+                HStack(alignment: .center, spacing: 8) {
+                    Image(systemName: "person.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
+
+                    Text("ui.selected_students")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Theme.Colors.ink(0.55))
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 14)
+                .padding(.bottom, 18)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            } else {
+                cardSectionTitle("ui.selected_students")
+            }
 
             VStack(alignment: .leading, spacing: 8) {
                 ForEach(selectedStudents) { student in
@@ -702,11 +794,11 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -731,11 +823,11 @@ struct TeacherSendWorkoutView: View {
             templatePicker(category: .emCasa, title: "ui.home_workouts")
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -814,24 +906,45 @@ struct TeacherSendWorkoutView: View {
         title: DisplayText,
         isSelected: Bool
     ) -> some View {
-        HStack {
+        // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair) com texto/seta brancos;
+        // sem treino escolhido (ou carregando) em cinza claro (mesmos tons do botão Próximo desabilitado).
+        let isLightSelected = appTheme == .light && isSelected
+        let isLightUnselected = appTheme == .light && !isSelected
+
+        return HStack {
             title.view()
                 .font(.system(size: 17, weight: .semibold))
-            .foregroundStyle(Theme.Colors.ink(0.92))
+            .foregroundStyle(isLightSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.92)))
             .lineLimit(1)
             Spacer()
             Image(systemName: "chevron.down")
                 .font(.system(size: 13, weight: .semibold))
-                .foregroundStyle(AppThemeColor(dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25), light: LightColors.iconInk))
+                .foregroundStyle(
+                    isLightSelected
+                        ? AnyShapeStyle(Color.white)
+                        : isLightUnselected
+                            ? AnyShapeStyle(Theme.Colors.ink(0.70))
+                            : AnyShapeStyle(AppThemeColor(dark: isSelected ? Theme.Colors.primaryGreen.opacity(0.85) : .white.opacity(0.25), light: LightColors.iconInk))
+                )
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 12)
-        .background(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68)))
+        .background(
+            isLightSelected
+                ? AnyShapeStyle(AppThemePalette.lightBar.opacity(0.80))
+                : isLightUnselected
+                    ? AnyShapeStyle(Theme.Colors.ink(0.10))
+                    : AnyShapeStyle(AppThemeAdaptiveColor(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.black.opacity(0.68)))
+        )
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
                 .stroke(
-                    isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28),
+                    isLightSelected
+                        ? AnyShapeStyle(LightColors.chevron)
+                        : isLightUnselected
+                            ? AnyShapeStyle(LightColors.chevron)
+                            : AnyShapeStyle(isSelected ? Theme.Colors.primaryGreen.opacity(0.35) : Theme.Colors.primaryGreen.opacity(0.28)),
                     lineWidth: 1
                 )
         )
@@ -898,11 +1011,11 @@ struct TeacherSendWorkoutView: View {
             .padding(.bottom, 10)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -944,7 +1057,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Color.white.opacity(0.08), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1013,18 +1126,18 @@ struct TeacherSendWorkoutView: View {
             .cornerRadius(12)
             .overlay(
                 RoundedRectangle(cornerRadius: 12)
-                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
             )
             .disabled(isSending)
             .padding(.horizontal, 16)
             .padding(.bottom, 16)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.cardSurface))
+        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.innerSurface))
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1037,19 +1150,28 @@ struct TeacherSendWorkoutView: View {
         HStack(spacing: 6) {
             ForEach(DaySelectionPeriod.allCases, id: \.rawValue) { (period: DaySelectionPeriod) in
                 let isSelected: Bool = daySelectionPeriod == period
-                let backgroundColor: AnyShapeStyle = isSelected
-                    ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
-                    : AnyShapeStyle(Theme.Colors.glass(0.68))
-                let borderColor: Color = isSelected
-                    ? Theme.Colors.primaryGreen.opacity(0.30)
-                    : Theme.Colors.primaryGreen.opacity(0.28)
+                // Tema Claro: selecionado em verde militar translúcido (padrão do botão Sair); não selecionado em verde pastel
+                let isLight: Bool = appTheme == .light
+                let backgroundColor: AnyShapeStyle = isLight
+                    ? AnyShapeStyle(isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.cardSurface)
+                    : isSelected
+                        ? AnyShapeStyle(Theme.Colors.primaryGreen.opacity(0.18))
+                        : AnyShapeStyle(Theme.Colors.glass(0.68))
+                let borderColor: Color = isLight
+                    ? LightColors.chevron
+                    : isSelected
+                        ? Theme.Colors.primaryGreen.opacity(0.30)
+                        : Theme.Colors.primaryGreen.opacity(0.28)
+                let textStyle: AnyShapeStyle = isLight
+                    ? AnyShapeStyle(isSelected ? Color.white : LightColors.primaryText)
+                    : AnyShapeStyle(Theme.Colors.ink(0.92))
 
                 Button {
                     daySelectionPeriod = period
                 } label: {
                     Text(period.title)
                         .font(.system(size: 15, weight: .semibold))
-                        .foregroundStyle(Theme.Colors.ink(0.92))
+                        .foregroundStyle(textStyle)
                         .lineLimit(1)
                         .minimumScaleFactor(0.85)
                         .padding(.horizontal, 6)
@@ -1123,18 +1245,22 @@ struct TeacherSendWorkoutView: View {
         return HStack(spacing: 12) {
             Image(systemName: selectionIcon)
                 .font(.system(size: 20))
-                .foregroundStyle(AppThemeColor(dark: selectionColor, light: LightColors.iconInk))
+                .foregroundStyle(appTheme == .light && isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: selectionColor, light: LightColors.iconInk)))
             Text(weekdayTitle(for: day.date))
                 .font(.system(size: 17, weight: .medium))
-                .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText))
+                .foregroundStyle(appTheme == .light && isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(AppThemeColor(dark: Color.white.opacity(0.92), light: LightColors.primaryText)))
             Spacer()
             Text(dateTitle(for: day.date))
                 .font(.system(size: 14, weight: .medium))
-                .foregroundStyle(Theme.Colors.ink(0.55))
+                .foregroundStyle(appTheme == .light && isSelected ? AnyShapeStyle(Color.white) : AnyShapeStyle(Theme.Colors.ink(0.55)))
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 14)
-        .background(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.clear)
+        .background(
+            appTheme == .light
+                ? AnyShapeStyle(isSelected ? AppThemePalette.lightBar.opacity(0.80) : LightColors.cardSurface)
+                : AnyShapeStyle(isSelected ? Theme.Colors.primaryGreen.opacity(0.14) : Color.clear)
+        )
     }
 
     private func nextButton(enabled: Bool, action: @escaping () -> Void) -> some View {
@@ -1161,7 +1287,7 @@ struct TeacherSendWorkoutView: View {
             Text("ui.next")
             Spacer()
         }
-        .primaryGreenActionButton()
+        .modifier(LightMilitaryActionButtonModifier())
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
             radius: appTheme == .light ? 10 : 0,
@@ -1179,7 +1305,7 @@ struct TeacherSendWorkoutView: View {
             }
             Spacer()
         }
-        .primaryGreenActionButton()
+        .modifier(LightMilitaryActionButtonModifier())
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
             radius: appTheme == .light ? 10 : 0,
@@ -1458,7 +1584,7 @@ struct TeacherSendWorkoutView: View {
         .cornerRadius(12)
         .overlay(
             RoundedRectangle(cornerRadius: 12)
-                .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -1498,6 +1624,7 @@ private struct WorkoutTemplateSelectionSheet: View {
 
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
+    @Environment(\.appTheme) private var appTheme
     @State private var expandedPicker: ExpandedPicker?
     @State private var pendingSelectedTemplate: WorkoutTemplateFS?
     @State private var loadedSectionTemplates: [WorkoutTemplateFS] = []
@@ -1672,7 +1799,7 @@ private struct WorkoutTemplateSelectionSheet: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: sendWorkoutDarkGreenBorder), lineWidth: 1)
         )
     }
 
@@ -1716,7 +1843,7 @@ private struct WorkoutTemplateSelectionSheet: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                    .stroke(AppThemeColor(dark: Theme.Colors.cardBorder.dark, light: sendWorkoutDarkGreenBorder), lineWidth: 1)
             )
         }
     }
@@ -1828,14 +1955,24 @@ private struct WorkoutTemplateSelectionSheet: View {
             } label: {
                 Text("common.cancel")
                     .font(.system(size: 15, weight: .bold))
+                    // Tema Claro: mesmo cinza do Cancelar da CategoryMultiSelectionSheet, com contorno #294A2F. Tema Escuro: valores originais.
                     .foregroundStyle(Theme.Colors.ink(0.85))
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
-                    .background(Theme.Colors.glass(0.68))
+                    .background(
+                        appTheme == .light
+                            ? AnyShapeStyle(Theme.Colors.ink(0.10))
+                            : AnyShapeStyle(Theme.Colors.glass(0.68))
+                    )
                     .cornerRadius(14)
                     .overlay(
                         RoundedRectangle(cornerRadius: 14)
-                            .stroke(Theme.Colors.cardBorder, lineWidth: 1)
+                            .stroke(
+                                appTheme == .light
+                                    ? AnyShapeStyle(sendWorkoutDarkGreenBorder)
+                                    : AnyShapeStyle(Theme.Colors.cardBorder),
+                                lineWidth: 1
+                            )
                     )
             }
             .buttonStyle(.plain)
@@ -1847,7 +1984,8 @@ private struct WorkoutTemplateSelectionSheet: View {
             } label: {
                 Text("ui.select")
                     .frame(maxWidth: .infinity)
-                    .primaryGreenActionButton()
+                    // Tema Claro (habilitado): cores do botão Sair. Desabilitado/Tema Escuro: `primaryGreenActionButton()` original.
+                    .modifier(LightMilitaryActionButtonModifier())
             }
             .buttonStyle(.plain)
             .disabled(!canConfirmSelection)

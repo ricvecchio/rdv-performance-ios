@@ -150,6 +150,8 @@ final class AppSession: ObservableObject {
                     PersonalRecordsSyncService.shared.handleLogout()
                     self.clearSession()
                     self.isRestoringSession = false
+                    // Remove as notificações locais pessoais (Lembretes/Aniversários) da conta anterior
+                    await PersonalNotificationScheduler.shared.removeAllPersonalNotifications()
                 }
             }
         }
@@ -267,6 +269,7 @@ final class AppSession: ObservableObject {
     // Desconecta o usuário do Firebase e limpa a sessão
     func logout() {
         PersonalRecordsSyncService.shared.handleLogout()
+        Task { await PersonalNotificationScheduler.shared.removeAllPersonalNotifications() }
         do {
             try Auth.auth().signOut()
             clearSession()

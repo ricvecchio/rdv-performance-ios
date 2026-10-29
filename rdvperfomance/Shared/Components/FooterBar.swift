@@ -50,7 +50,9 @@ struct FooterBar: View {
             isHomeSelected: Bool,
             isTreinosSelected: Bool,
             isRecordsSelected: Bool,
-            isPerfilSelected: Bool
+            isPerfilSelected: Bool,
+            isRemindersSelected: Bool = false,
+            isMenuSelected: Bool = false
         )
 
         case teacherHomeAlunosSobrePerfil(
@@ -86,7 +88,11 @@ struct FooterBar: View {
     @Environment(\.selectStudentMainSection) private var selectStudentMainSection
     @Environment(\.selectTeacherMainSection) private var selectTeacherMainSection
     @Environment(\.teacherMainSection) private var teacherMainSection
+    @Environment(\.studentShowsWorkoutsTab) private var studentShowsWorkoutsTab
     @State private var teacherStudentActivityCount = 0
+
+    // Largura de cada item no rodapé principal do aluno com 5 itens (cada item ocupa uma fração igual da largura)
+    private static let fiveItemWidth: CGFloat = 64
 
     // Constrói o footer com divider superior e botões de navegação
     var body: some View {
@@ -207,50 +213,60 @@ struct FooterBar: View {
             let isHomeSelected,
             let isTreinosSelected,
             let isRecordsSelected,
-            let isPerfilSelected
+            let isPerfilSelected,
+            let isRemindersSelected,
+            let isMenuSelected
         ):
+            // Navegação principal do aluno: Home | Menu | Perfil.
+            // O item Menu também fica destacado nas telas abertas a partir dele (Treinos, Recordes, Lembretes).
+            // Larguras fixas (sem `maxWidth: .infinity`): o fundo `scaledToFill` das telas pode propor ao rodapé
+            // uma largura maior que a tela (ex.: `rdv_fundo`, quase quadrado, no Tema Escuro), o que espalharia
+            // Home e Perfil para fora da área visível. Grupo centralizado, mesmo padrão dos demais rodapés.
+            let isMenuHighlighted = isMenuSelected || isTreinosSelected || isRecordsSelected || isRemindersSelected
             HStack(spacing: 16) {
                 Button { goStudentHome() } label: {
-                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
-                Button { goTreinosAluno() } label: {
-                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: isTreinosSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
-                }
-                .buttonStyle(.plain)
-
-                Button { goPersonalRecords() } label: {
-                    FooterItem(icon: .system("trophy.fill"), title: "Recordes", isSelected: isRecordsSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                Button { goMenu() } label: {
+                    FooterItem(icon: .system("line.3.horizontal"), title: "menu.title", isSelected: isMenuHighlighted, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
                 Button { goPerfilStudent() } label: {
-                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
 
-        // ✅ PROFESSOR (4 ícones) — espaçamento igual ao ALUNO
+        // ✅ PROFESSOR (3 ícones: Home | Menu | Perfil) — mesma distribuição do rodapé do ALUNO.
+        // O item Menu também fica destacado em Alunos e Treinos, acessados a partir dele.
         case .teacherHomeAlunosSobrePerfil(let selectedCategory, let isHomeSelected, let isAlunosSelected, _, let isPerfilSelected):
+            let isMenuHighlighted = isAlunosSelected
+                || teacherMainSection == .menu
+                || teacherMainSection == .students
+                || teacherMainSection == .workouts
+                || teacherMainSection == .reminders
             HStack(spacing: 16) {
                 Button { goTeacherHome(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    FooterItem(icon: .system("house"), title: "Home", isSelected: isHomeSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
-                Button { goTeacherAlunos(category: selectedCategory) } label: {
-                    teacherStudentsFooterItem(isSelected: isAlunosSelected)
-                }
-                .buttonStyle(.plain)
-
-                Button { goTeacherWorkouts(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("figure.strengthtraining.traditional"), title: "Treinos", isSelected: teacherMainSection == .workouts, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                Button { goTeacherMenu() } label: {
+                    FooterItem(icon: .system("line.3.horizontal"), title: "menu.title", isSelected: isMenuHighlighted, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
 
                 Button { goTeacherPerfil(category: selectedCategory) } label: {
-                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthTreinosComPerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                    FooterItem(icon: .system("person"), title: "common.profile", isSelected: isPerfilSelected, width: Theme.Layout.footerItemWidthHomeSobrePerfil, iconSize: Theme.Layout.mainFooterItemIconSize, titleSize: Theme.Layout.mainFooterItemTitleSize)
+                        .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
             }
@@ -306,6 +322,14 @@ struct FooterBar: View {
         selectStudentSection(.agenda)
     }
 
+    private func goMenu() {
+        selectStudentSection(.menu)
+    }
+
+    private func goReminders() {
+        selectStudentSection(.reminders)
+    }
+
     private func goPersonalRecords() {
         selectStudentSection(.records)
     }
@@ -336,6 +360,10 @@ struct FooterBar: View {
 
     private func goTeacherWorkouts(category: TreinoTipo) {
         selectTeacherMainSection(.workouts)
+    }
+
+    private func goTeacherMenu() {
+        selectTeacherMainSection(.menu)
     }
 
     private func teacherStudentsFooterItem(isSelected: Bool) -> some View {

@@ -14,6 +14,7 @@ struct BarbellPersonalRecordsView: View {
         static let primaryText = Color(red: 0x17 / 255, green: 0x1C / 255, blue: 0x17 / 255)  // #171C17
         static let chevron = Color(red: 0x29 / 255, green: 0x4A / 255, blue: 0x2F / 255)      // #294A2F
         static let border = Color(red: 0xC9 / 255, green: 0xDF / 255, blue: 0xC9 / 255)       // #C9DFC9
+        static let contentSurface = Color(red: 0xF0 / 255, green: 0xF7 / 255, blue: 0xEF / 255) // #F0F7EF
     }
 
     @Binding var path: [AppRoute]
@@ -278,7 +279,7 @@ struct BarbellPersonalRecordsView: View {
         .cornerRadius(14)
         .overlay(
             RoundedRectangle(cornerRadius: 14)
-                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.border), lineWidth: 1)
+                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
         )
         .shadow(
             color: appTheme == .light ? .black.opacity(0.25) : .clear,
@@ -405,11 +406,12 @@ struct BarbellPersonalRecordsView: View {
                                 .foregroundStyle(Theme.Colors.ink(0.92))
                                 .padding(.horizontal, 14)
                                 .padding(.vertical, 14)
-                                .background(Theme.Colors.cardBackground)
+                                // Tema Claro: superfície de conteúdo (#F0F7EF) e borda (#C9DFC9) da TrainingWeeksView. Tema Escuro: valores originais.
+                                .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                                 .cornerRadius(14)
                                 .overlay(
                                     RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                        .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
                                 )
 
                             Text(preferredWeightUnit.shortLabel)
@@ -424,27 +426,34 @@ struct BarbellPersonalRecordsView: View {
                         Button {
                             showPRDatePicker = true
                         } label: {
+                            // Tema Claro: cores do agrupador de dias da TrainingWeeksView. Tema Escuro: valores originais.
                             HStack(spacing: 10) {
                                 Image(systemName: "calendar")
-                                    .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)).dark, light: LightColors.iconInk))
+                                    // Fundo do ícone (#85C995) apenas no Tema Claro; o background não altera o tamanho/layout
+                                    .background {
+                                        RoundedRectangle(cornerRadius: 8)
+                                            .fill(AppThemeColor(dark: .clear, light: LightColors.iconSurface))
+                                            .frame(width: 28, height: 28)
+                                    }
 
                                 Text(formatPRDate(selectedPRDate))
                                     .font(.system(size: 15, weight: .semibold))
-                                    .foregroundStyle(Theme.Colors.ink(0.92))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
 
                                 Spacer()
 
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 13, weight: .semibold))
-                                    .foregroundStyle(Theme.Colors.chevron(0.25))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.chevron(0.25).dark, light: LightColors.chevron))
                             }
                             .padding(.horizontal, 14)
                             .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
+                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.cardSurface))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
                             )
                         }
                         .buttonStyle(.plain)
@@ -511,7 +520,7 @@ struct BarbellPersonalRecordsView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.10)), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -521,9 +530,25 @@ struct BarbellPersonalRecordsView: View {
                         resetExistingPREditing()
                         selectedMove = nil
                     } label: {
-                        Text("common.save")
-                            .frame(maxWidth: .infinity)
-                            .primaryGreenActionButton()
+                        if appTheme == .light {
+                            // Tema Claro: padrão do botão Sair da ProfileView (verde militar 80%/90% e texto branco),
+                            // mantendo as dimensões/raio do `primaryGreenActionButton()`
+                            Text("common.save")
+                                .frame(maxWidth: .infinity)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.white)
+                                .padding(.vertical, 14)
+                                .background(AppThemePalette.lightBar.opacity(0.80))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(appTheme == .light ? LightColors.chevron : AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                                )
+                        } else {
+                            Text("common.save")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
                     }
                     .buttonStyle(.plain)
 
@@ -636,8 +661,9 @@ struct BarbellPersonalRecordsView: View {
                         VStack(spacing: 0) {
                             ForEach(entries.reversed()) { entry in
                                 HStack(spacing: 10) {
+                                    // Tema Claro: paleta da TrainingWeeksView. Tema Escuro: valores originais.
                                     Image(systemName: entry.id == recordID ? "trophy.fill" : "medal.fill")
-                                        .foregroundStyle(Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)))
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.icon(Theme.Colors.systemAccentForeground(0.85)).dark, light: LightColors.iconInk))
                                         .frame(width: 22)
 
                                     Text(
@@ -653,17 +679,17 @@ struct BarbellPersonalRecordsView: View {
                                         )
                                     )
                                         .font(.system(size: 15, weight: .semibold))
-                                        .foregroundStyle(Theme.Colors.ink(0.92))
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
 
                                     if entry.id == recordID {
                                         Text("personal_records_barbell.record")
                                             .font(.system(size: 11, weight: .bold))
-                                            .foregroundStyle(Theme.Colors.systemAccentForeground())
+                                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.systemAccentForeground().dark, light: LightColors.chevron))
                                             .padding(.horizontal, 8)
                                             .padding(.vertical, 4)
                                             .overlay(
                                                 RoundedRectangle(cornerRadius: 6)
-                                                    .stroke(Color.green.opacity(0.70), lineWidth: 1)
+                                                    .stroke(AppThemeColor(dark: Color.green.opacity(0.70), light: LightColors.chevron.opacity(0.70)), lineWidth: 1)
                                             )
                                     }
 
@@ -696,11 +722,12 @@ struct BarbellPersonalRecordsView: View {
                                 }
                             }
                         }
-                        .background(Theme.Colors.cardBackground)
+                        // Tema Claro: fundo #F0F7EF e borda #C9DFC9 (TrainingWeeksView). Tema Escuro: valores originais.
+                        .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
                         .cornerRadius(14)
                         .overlay(
                             RoundedRectangle(cornerRadius: 14)
-                                .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.08).dark, light: LightColors.chevron), lineWidth: 1)
                         )
                     }
                 }
@@ -766,7 +793,7 @@ struct BarbellPersonalRecordsView: View {
             .cornerRadius(14)
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
-                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1)
             )
         }
     }
@@ -777,99 +804,112 @@ struct BarbellPersonalRecordsView: View {
             Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
 
-                Capsule()
-                    .fill(Theme.Colors.ink(0.18))
-                    .frame(width: 44, height: 5)
-                    .padding(.top, 10)
+                        Capsule()
+                            .fill(Theme.Colors.ink(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                Text("personal_records_barbell.new_movement")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink())
-                    .padding(.top, 4)
+                        Text("personal_records_barbell.new_movement")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink().dark, light: LightColors.primaryText))
+                            .padding(.top, 4)
 
-                Text(
-                    String(
-                        format: AppLocalization.string("personal_records.barbell.new_movement_description",
-                            locale: locale
-                        ),
-                        locale: locale,
-                        arguments: [preferredWeightUnit.shortLabel]
-                    )
-                )
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.Colors.ink(0.60))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-
-                VStack(alignment: .leading, spacing: 10) {
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("personal_records_barbell.movement_name")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.75))
-
-                        TextField("personal_records_barbell.e_g_bulgarian_split_squat", text: $newMoveName)
-                            .textInputAutocapitalization(.words)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(Theme.Colors.cardBackground)
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
-                            )
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
                         Text(
                             String(
-                                format: AppLocalization.string("personal_records.barbell.max_load_optional_with_unit",
+                                format: AppLocalization.string("personal_records.barbell.new_movement_description",
                                     locale: locale
                                 ),
                                 locale: locale,
                                 arguments: [preferredWeightUnit.shortLabel]
                             )
                         )
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.75))
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.Colors.ink(0.60))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
 
-                        HStack(spacing: 10) {
-                            TextField("personal_records_barbell.e_g_90_50", text: $newMoveValue)
-                                .keyboardType(.decimalPad)
-                                .textInputAutocapitalization(.never)
-                                .autocorrectionDisabled(true)
-                                .font(.system(size: 16, weight: .semibold))
-                                .foregroundStyle(Theme.Colors.ink(0.92))
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 14)
-                                .background(Theme.Colors.cardBackground)
-                                .cornerRadius(14)
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .stroke(Theme.Colors.ink(0.08), lineWidth: 1)
+                        VStack(alignment: .leading, spacing: 10) {
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("personal_records_barbell.movement_name")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
+
+                                TextField("personal_records_barbell.e_g_bulgarian_split_squat", text: $newMoveName)
+                                    .textInputAutocapitalization(.words)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                    )
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(
+                                    String(
+                                        format: AppLocalization.string("personal_records.barbell.max_load_optional_with_unit",
+                                            locale: locale
+                                        ),
+                                        locale: locale,
+                                        arguments: [preferredWeightUnit.shortLabel]
+                                    )
                                 )
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
 
-                            Text(preferredWeightUnit.shortLabel)
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(Theme.Colors.ink(0.70))
+                                HStack(spacing: 10) {
+                                    TextField("personal_records_barbell.e_g_90_50", text: $newMoveValue)
+                                        .keyboardType(.decimalPad)
+                                        .textInputAutocapitalization(.never)
+                                        .autocorrectionDisabled(true)
+                                        .font(.system(size: 16, weight: .semibold))
+                                        .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
+                                        .padding(.horizontal, 14)
+                                        .padding(.vertical, 14)
+                                        .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                                        .cornerRadius(14)
+                                        .overlay(
+                                            RoundedRectangle(cornerRadius: 14)
+                                                .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                        )
+
+                                    Text(preferredWeightUnit.shortLabel)
+                                        .font(.system(size: 14, weight: .bold))
+                                        .foregroundStyle(Theme.Colors.ink(0.70))
+                                }
+                            }
+
+                            if let msg = addMoveErrorMessage {
+                                Text(msg)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.yellow.opacity(0.85))
+                                    .padding(.top, 4)
+                            }
                         }
-                    }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.contentSurface))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                        )
+                        .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
 
-                    if let msg = addMoveErrorMessage {
-                        Text(msg)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.yellow.opacity(0.85))
-                            .padding(.top, 4)
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-
                 HStack(spacing: 12) {
 
                     Button {
@@ -884,7 +924,7 @@ struct BarbellPersonalRecordsView: View {
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(Theme.Colors.ink(0.10), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
                             )
                     }
                     .buttonStyle(.plain)
@@ -892,19 +932,34 @@ struct BarbellPersonalRecordsView: View {
                     Button {
                         addNewMove()
                     } label: {
-                        Text("common.add")
-                            .frame(maxWidth: .infinity)
-                            .primaryGreenActionButton()
+                        if appTheme == .light {
+                            // Tema Claro: mesmo padrão do botão Salvar do Novo Recorde (verde militar 80% e texto branco)
+                            Text("common.add")
+                                .frame(maxWidth: .infinity)
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(Color.white)
+                                .padding(.vertical, 14)
+                                .background(AppThemePalette.lightBar.opacity(0.80))
+                                .cornerRadius(12)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(appTheme == .light ? LightColors.chevron : AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
+                                )
+                                .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
+                        } else {
+                            Text("common.add")
+                                .frame(maxWidth: .infinity)
+                                .primaryGreenActionButton()
+                        }
                     }
                     .buttonStyle(.plain)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-
-                Spacer()
+                .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
     }
 
     private func addNewMove() {
