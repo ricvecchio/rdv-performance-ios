@@ -39,12 +39,13 @@ final class AthletesService: @unchecked Sendable {
         name: String?,
         photoBase64: String?,
         userType: String?,
-        active: Bool?
+        active: Bool?,
+        allowAdmin: Bool = false
     ) async {
         let cleanUid = uid.trimmingCharacters(in: .whitespacesAndNewlines)
         let cleanName = (name ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
         guard !cleanUid.isEmpty, !cleanName.isEmpty, active != false else { return }
-        guard (userType ?? "").uppercased() != "ADMIN" else { return }
+        guard allowAdmin || (userType ?? "").uppercased() != "ADMIN" else { return }
 
         let thumbnail = await Task.detached(priority: .utility) {
             Self.thumbnailBase64(from: photoBase64)
@@ -87,16 +88,40 @@ final class AthletesService: @unchecked Sendable {
                 try await reference.setData(data)
             }
         } catch {
-            #if DEBUG
-            print("[Athletes] ensurePublicProfile falhou: \(error)")
-            #endif
+            Self.log("ensurePublicProfile", Collections.athletes, error)
+        }
+    }
+
+    /// Cria a projeção pública do próprio usuário a partir de `users/{uid}` (leitura permitida ao dono)
+    /// quando ela ainda não existe. Usada ao salvar a privacidade: a escolha do usuário é explícita,
+    /// inclusive para contas administradoras que usam o modo Aluno/Professor.
+    private func createOwnProfileIfMissing(uid: String) async {
+        do {
+            let snapshot = try await db.collection(Collections.users).document(uid).getDocument(source: .server)
+            guard let data = snapshot.data() else { return }
+
+            await ensurePublicProfile(
+                uid: uid,
+                name: data["name"] as? String,
+                photoBase64: data["photoBase64"] as? String,
+                userType: data["userType"] as? String,
+                active: data["active"] as? Bool,
+                allowAdmin: true
+            )
+        } catch {
+            Self.log("createOwnProfileIfMissing", Collections.users, error)
         }
     }
 
     func athlete(id: String) async throws -> PublicAthlete? {
-        let snapshot = try await db.collection(Collections.athletes).document(id).getDocument(source: .server)
-        guard let data = snapshot.data() else { return nil }
-        return Self.athlete(id: id, data: data)
+        do {
+            let snapshot = try await db.collection(Collections.athletes).document(id).getDocument(source: .server)
+            guard let data = snapshot.data() else { return nil }
+            return Self.athlete(id: id, data: data)
+        } catch {
+            Self.log("athlete", Collections.athletes, error)
+            throw error
+        }
     }
 
     func athletes(ids: [String]) async -> [PublicAthlete] {
@@ -125,10 +150,16 @@ final class AthletesService: @unchecked Sendable {
         guard let first = words.first else { return [] }
 
         let prefix = String(first.prefix(AthleteSearchText.maxPrefixLength))
-        let snapshot = try await db.collection(Collections.athletes)
-            .whereField("searchPrefixes", arrayContains: prefix)
-            .limit(to: limit)
-            .getDocuments()
+        let snapshot: QuerySnapshot
+        do {
+            snapshot = try await db.collection(Collections.athletes)
+                .whereField("searchPrefixes", arrayContains: prefix)
+                .limit(to: limit)
+                .getDocuments()
+        } catch {
+            Self.log("searchAthletes", Collections.athletes, error)
+            throw error
+        }
 
         return snapshot.documents
             .compactMap { document -> PublicAthlete? in
@@ -146,10 +177,16 @@ final class AthletesService: @unchecked Sendable {
     func favoriteIds(uid: String) async throws -> [String] {
         guard !uid.isEmpty else { throw ServiceError.missingUserId }
 
-        let snapshot = try await db.collection(Collections.users)
-            .document(uid)
-            .collection(Collections.favorites)
-            .getDocuments()
+        let snapshot: QuerySnapshot
+        do {
+            snapshot = try await db.collection(Collections.users)
+                .document(uid)
+                .collection(Collections.favorites)
+                .getDocuments()
+        } catch {
+            Self.log("favoriteIds", Collections.favorites, error)
+            throw error
+        }
 
         return snapshot.documents
             .sorted {
@@ -169,13 +206,18 @@ final class AthletesService: @unchecked Sendable {
             .collection(Collections.favorites)
             .document(athleteId)
 
-        if isFavorite {
-            try await reference.setData([
-                "athleteId": athleteId,
-                "createdAt": FieldValue.serverTimestamp()
-            ])
-        } else {
-            try await reference.delete()
+        do {
+            if isFavorite {
+                try await reference.setData([
+                    "athleteId": athleteId,
+                    "createdAt": FieldValue.serverTimestamp()
+                ])
+            } else {
+                try await reference.delete()
+            }
+        } catch {
+            Self.log("setFavorite", Collections.favorites, error)
+            throw error
         }
     }
 
@@ -187,13 +229,25 @@ final class AthletesService: @unchecked Sendable {
         guard !uid.isEmpty else { throw ServiceError.missingUserId }
 
         let reference = db.collection(Collections.athletes).document(uid)
-        let snapshot = try await reference.getDocument(source: .server)
-        guard snapshot.exists else { throw ServiceError.profileUnavailable }
 
-        try await reference.updateData([
-            "privacy": privacy.rawValue,
-            "updatedAt": FieldValue.serverTimestamp()
-        ])
+        do {
+            var snapshot = try await reference.getDocument(source: .server)
+            if !snapshot.exists {
+                // Perfil público ainda inexistente (ex.: conta anterior à funcionalidade): cria sem alterar `users`.
+                await createOwnProfileIfMissing(uid: uid)
+                snapshot = try await reference.getDocument(source: .server)
+            }
+            guard snapshot.exists else { throw ServiceError.profileUnavailable }
+
+            // Somente `privacy` e `updatedAt`: `prCount` não é enviado e permanece sob controle do backend.
+            try await reference.updateData([
+                "privacy": privacy.rawValue,
+                "updatedAt": FieldValue.serverTimestamp()
+            ])
+        } catch {
+            Self.log("setPrivacy", Collections.athletes, error)
+            throw error
+        }
         clearSignature(for: uid)
 
         switch privacy {
@@ -234,9 +288,7 @@ final class AthletesService: @unchecked Sendable {
 
             storeSignature(signature, for: uid)
         } catch {
-            #if DEBUG
-            print("[Athletes] publishRecords falhou: \(error)")
-            #endif
+            Self.log("publishRecords", Collections.records, error)
         }
     }
 
@@ -276,9 +328,7 @@ final class AthletesService: @unchecked Sendable {
             }
             try await batch.commit()
         } catch {
-            #if DEBUG
-            print("[Athletes] deleteAllRecords falhou: \(error)")
-            #endif
+            Self.log("deleteAllRecords", Collections.records, error)
         }
     }
 
@@ -303,6 +353,15 @@ final class AthletesService: @unchecked Sendable {
     }
 
     // MARK: - Auxiliares
+
+    /// Log técnico seguro: somente operação, coleção e código do erro (sem UID, e-mail, foto ou dados pessoais).
+    /// Código Firestore 7 = permission-denied, 9 = failed-precondition (índice), 14 = unavailable.
+    private static func log(_ operation: String, _ collection: String, _ error: Error) {
+        #if DEBUG
+        let nsError = error as NSError
+        print("[Athletes] operação=\(operation) coleção=\(collection) domínio=\(nsError.domain) código=\(nsError.code)")
+        #endif
+    }
 
     private static func athlete(id: String, data: [String: Any]) -> PublicAthlete? {
         guard let name = data["name"] as? String, !name.isEmpty else { return nil }

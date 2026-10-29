@@ -72,7 +72,11 @@ Nenhum índice composto é necessário (busca com `array-contains` em `searchPre
 - **Preexistente (não alterado):** a regra atual `allow list: if isSignedIn()` em `users/{userId}` já permite que qualquer usuário autenticado
   liste documentos de `users` (que contêm e-mail, telefone e foto). O recurso Atletas **não depende** dessa regra; recomenda-se
   restringi-la em uma etapa própria, avaliando o impacto em professores/administradores.
-- Contas ADMIN não são publicadas; ao alternar para o modo aluno/professor, a tela de privacidade não encontra o perfil público.
+- Contas ADMIN não são publicadas no login; ao escolher a privacidade (tela Privacidade), o app cria o `publicAthletes/{uid}` ausente
+  a partir de `users/{uid}` (leitura do próprio dono, sem alterá-lo), sempre preservando `prCount`.
+- **Diagnóstico:** em DEBUG, o app registra no console `operação / coleção / código` do erro Firestore (7 = `permission-denied`,
+  9 = `failed-precondition`/índice, 14 = `unavailable`), sem dados pessoais. `permission-denied` em `publicAthletes` ou
+  `favoriteAthletes` indica que as regras publicadas **não** contêm a seção 5.1: publique o arquivo completo no Console.
 
 - Versões antigas do app que tentarem gravar `prCount` terão a escrita negada pelas regras novas (publicação de `records/*`
   por elas pode falhar até atualizarem o app).
