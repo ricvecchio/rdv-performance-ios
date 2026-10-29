@@ -35,6 +35,21 @@ struct PersonalRecordsFooter: View {
     }
 }
 
+// Remove o material nativo (desfoque) por trás do sheet no fluxo do Professor.
+// O fundo próprio do sheet (`Theme.Colors.sheetBackground`) continua sendo desenhado normalmente.
+private struct TeacherSharpSheetBackground: ViewModifier {
+    let isTeacher: Bool
+
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        if isTeacher {
+            content.presentationBackground(.clear)
+        } else {
+            content
+        }
+    }
+}
+
 // Tela compartilhada de Recordes Pessoais.
 struct PersonalRecordsView: View {
 
