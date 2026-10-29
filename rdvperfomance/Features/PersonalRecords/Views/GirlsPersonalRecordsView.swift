@@ -1336,7 +1336,7 @@ Jasmine (AMRAP 20 min)
                 .padding(.bottom, 24)
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
     }
 
     private func addItemField(

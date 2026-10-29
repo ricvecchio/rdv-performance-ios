@@ -960,7 +960,7 @@ struct BarbellPersonalRecordsView: View {
                 .padding(.bottom, 16)
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
     }
 
     private func addNewMove() {

@@ -1373,7 +1373,7 @@ struct HeroesPersonalRecordsView: View {
                 .padding(.bottom, 24)
             }
         }
-        .presentationDetents([.medium])
+        .presentationDetents([.fraction(0.75)])
     }
 
     private func addItemField(_ label: LocalizedStringKey, placeholder: LocalizedStringKey, text: Binding<String>) -> some View {
