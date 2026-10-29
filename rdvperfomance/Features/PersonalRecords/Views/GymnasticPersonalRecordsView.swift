@@ -536,96 +536,109 @@ struct GymnasticPersonalRecordsView: View {
             Theme.Colors.sheetBackground
                 .ignoresSafeArea()
 
-            VStack(spacing: 14) {
+            VStack(spacing: 0) {
+                ScrollView(showsIndicators: false) {
+                    VStack(spacing: 14) {
 
-                Capsule()
-                    .fill(Theme.Colors.ink(0.18))
-                    .frame(width: 44, height: 5)
-                    .padding(.top, 10)
+                        Capsule()
+                            .fill(Theme.Colors.ink(0.18))
+                            .frame(width: 44, height: 5)
+                            .padding(.top, 10)
 
-                Text("personal_records_gymnastic.new_item")
-                    .font(.system(size: 18, weight: .bold))
-                    .foregroundStyle(Theme.Colors.ink())
-                    .padding(.top, 4)
-
-                Text("personal_records_gymnastic.create_an_item_and_if_you_want_enter_your_record_now")
-                    .font(.system(size: 14))
-                    .foregroundStyle(Theme.Colors.ink(0.60))
-                    .multilineTextAlignment(.center)
-                    .padding(.horizontal, 16)
-
-                VStack(alignment: .leading, spacing: 10) {
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("personal_records_barbell.movement_name")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.75))
-
-                        TextField("personal_records_gymnastic.e_g_rope_climb", text: $newItemName)
-                            .textInputAutocapitalization(.words)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1)
-                            )
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("personal_records_gymnastic.type_metric_optional")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.75))
-
-                        TextField("personal_records_gymnastic.e_g_max_reps_for_time_max_distance", text: $newItemMetric)
-                            .textInputAutocapitalization(.sentences)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1)
-                            )
-                    }
-
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text("personal_records_gymnastic.record_optional")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.75))
-
-                        TextField("personal_records_gymnastic.e_g_50_1_90m_3_25", text: $newItemValue)
-                            .textInputAutocapitalization(.never)
-                            .autocorrectionDisabled(true)
-                            .font(.system(size: 16, weight: .semibold))
-                            .foregroundStyle(Theme.Colors.ink(0.92))
-                            .padding(.horizontal, 14)
-                            .padding(.vertical, 14)
-                            .background(AppThemeColor(dark: Theme.Colors.cardBackground.dark, light: LightColors.contentSurface))
-                            .cornerRadius(14)
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.08)), lineWidth: 1)
-                            )
-                    }
-
-                    if let msg = addItemErrorMessage {
-                        Text(msg)
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.yellow.opacity(0.85))
+                        Text("personal_records_gymnastic.new_item")
+                            .font(.system(size: 17, weight: .semibold))
+                            .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink().dark, light: LightColors.primaryText))
                             .padding(.top, 4)
+
+                        Text("personal_records_gymnastic.create_an_item_and_if_you_want_enter_your_record_now")
+                            .font(.system(size: 14))
+                            .foregroundStyle(Theme.Colors.ink(0.60))
+                            .multilineTextAlignment(.center)
+                            .padding(.horizontal, 16)
+
+                        VStack(alignment: .leading, spacing: 10) {
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("personal_records_barbell.movement_name")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
+
+                                TextField("personal_records_gymnastic.e_g_rope_climb", text: $newItemName)
+                                    .textInputAutocapitalization(.words)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                    )
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("personal_records_gymnastic.type_metric_optional")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
+
+                                TextField("personal_records_gymnastic.e_g_max_reps_for_time_max_distance", text: $newItemMetric)
+                                    .textInputAutocapitalization(.sentences)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                    )
+                            }
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("personal_records_gymnastic.record_optional")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundStyle(Theme.Colors.ink(0.75))
+
+                                TextField("personal_records_gymnastic.e_g_50_1_90m_3_25", text: $newItemValue)
+                                    .textInputAutocapitalization(.never)
+                                    .autocorrectionDisabled(true)
+                                    .font(.system(size: 16, weight: .semibold))
+                                    .foregroundStyle(AppThemeColor(dark: Theme.Colors.ink(0.92).dark, light: LightColors.primaryText))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 14)
+                                    .background(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: Theme.Colors.ink(0.10).light))
+                                    .cornerRadius(14)
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .stroke(AppThemeColor(dark: Theme.Colors.ink(0.10).dark, light: LightColors.chevron), lineWidth: 1)
+                                    )
+                            }
+
+                            if let msg = addItemErrorMessage {
+                                Text(msg)
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.yellow.opacity(0.85))
+                                    .padding(.top, 4)
+                            }
+                        }
+                        .padding(14)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(AppThemeColor(dark: Color.black.opacity(0.68), light: LightColors.contentSurface))
+                        .cornerRadius(14)
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 14)
+                                .stroke(AppThemeColor(dark: Theme.Colors.primaryGreen.opacity(0.28), light: LightColors.chevron), lineWidth: 1)
+                        )
+                        .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 4)
+
                     }
                 }
-                .padding(.horizontal, 16)
-                .padding(.top, 4)
-
                 HStack(spacing: 12) {
 
                     Button {
@@ -633,15 +646,16 @@ struct GymnasticPersonalRecordsView: View {
                     } label: {
                         Text("common.cancel")
                             .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(Theme.Colors.ink(0.85))
+                            .foregroundStyle(AppThemeColor(dark: Color.white.opacity(0.85), light: Color.white))
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .background(Theme.Colors.ink(0.10))
+                            .background(AppThemeColor(dark: Color.white.opacity(0.10), light: AppThemePalette.lightBar.opacity(0.80)))
                             .cornerRadius(14)
                             .overlay(
                                 RoundedRectangle(cornerRadius: 14)
-                                    .stroke(appTheme == .light ? AnyShapeStyle(LightColors.chevron) : AnyShapeStyle(Theme.Colors.ink(0.10)), lineWidth: 1)
+                                    .stroke(AppThemeColor(dark: Color.white.opacity(0.10), light: LightColors.chevron), lineWidth: 1)
                             )
+                            .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
                     }
                     .buttonStyle(.plain)
 
@@ -661,6 +675,7 @@ struct GymnasticPersonalRecordsView: View {
                                     RoundedRectangle(cornerRadius: 12)
                                         .stroke(appTheme == .light ? LightColors.chevron : AppThemePalette.lightBar.opacity(0.90), lineWidth: 1)
                                 )
+                                .shadow(color: appTheme == .light ? .black.opacity(0.25) : .clear, radius: appTheme == .light ? 10 : 0, y: appTheme == .light ? 6 : 0)
                         } else {
                             Text("common.add")
                                 .frame(maxWidth: .infinity)
@@ -671,8 +686,7 @@ struct GymnasticPersonalRecordsView: View {
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 6)
-
-                Spacer()
+                .padding(.bottom, 16)
             }
         }
         .presentationDetents([.medium])
